@@ -1,0 +1,38 @@
+version: 2
+
+# Without this, nobody hears about a new CVE until someone happens to run CI.
+# Weekly cadence, with minor and patch bumps batched into a single PR so review
+# stays cheap. Majors are deliberately left out of the groups: Dependabot then
+# opens one PR per major, which is what a breaking change deserves.
+
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 10
+    commit-message:
+      prefix: 'chore(deps)'
+    groups:
+      npm-minor-and-patch:
+        patterns:
+          - '*'
+        update-types:
+          - minor
+          - patch
+
+  # Actions are pinned too, and they ship CVEs like anything else.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: 'chore(actions)'
+    groups:
+      actions-minor-and-patch:
+        patterns:
+          - '*'
+        update-types:
+          - minor
+          - patch

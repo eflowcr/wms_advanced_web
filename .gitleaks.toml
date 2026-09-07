@@ -1,0 +1,18 @@
+title = "eWMS Advance - frontend"
+
+# Start from the upstream rule set; add project-specific rules below as the
+# real secret shapes (API keys, connection strings) become known.
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Paths that are not ours to scan"
+paths = [
+  '''^node_modules/''',
+  '''^dist/''',
+  '''^coverage/''',
+  '''^\.angular/''',
+  '''^playwright-report/''',
+  '''^test-results/''',
+  '''package-lock\.json$''',
+]

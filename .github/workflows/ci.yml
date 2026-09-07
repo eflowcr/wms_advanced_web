@@ -1,0 +1,128 @@
+name: CI
+
+# Every job below FAILS the build. Nothing here is advisory.
+# If a gate is too strict, the gate changes deliberately -- it is never demoted
+# to a warning to get a branch green.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Pinned once here; every job reuses it.
+  GITLEAKS_VERSION: '8.30.1'
+
+jobs:
+  # --------------------------------------------------------------- gates 1,2,3,5,6,8,9
+  verify:
+    name: Types, lint, tests, budgets
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up Node
+        uses: actions/setup-node@v5
+        with:
+          # Single source of truth: the same file fnm reads locally.
+          # package.json `engines` + `.npmrc` engine-strict make a mismatch fail loudly.
+          node-version-file: .node-version
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Gate 1 -- any type error fails the build.
+      - name: Gate 1 - TypeScript (strict)
+        run: npm run typecheck
+
+      # Gate 2 + Gate 9 -- boundary rules and security rules are both ESLint errors.
+      # --max-warnings=0 means a warning is a failure too.
+      - name: Gate 2 + 9 - ESLint (boundaries, security, zero warnings)
+        run: npm run lint
+
+      # Gate 9 (template half) -- the ESLint rule covers .innerHTML in TypeScript;
+      # this covers the [innerHTML] binding in Angular templates.
+      - name: Gate 9 - no [innerHTML] bindings in templates
+        run: |
+          if grep -rn '\[innerHTML\]' projects --include='*.html'; then
+            echo "::error::[innerHTML] binding is forbidden (XSS). Render through a template or sanitise explicitly."
+            exit 1
+          fi
+          echo "No [innerHTML] bindings found."
+
+      # Gate 3 + Gate 5 -- unit tests, coverage thresholds, and the axe-core
+      # accessibility harness all run in this one Vitest suite.
+      - name: Gate 3 + 5 - Vitest, coverage thresholds, axe-core
+        run: npm test
+
+      # Gate 8 -- bundle budgets live in angular.json; exceeding maximumError fails here.
+      - name: Gate 8 - Production build and bundle budgets
+        run: npm run build
+
+      # Gate 6 -- dependency vulnerabilities.
+      - name: Gate 6 - npm audit
+        run: npm run audit:ci
+
+  # ------------------------------------------------------------------------ gate 4
+  e2e:
+    name: Playwright smoke
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up Node
+        uses: actions/setup-node@v5
+        with:
+          node-version-file: .node-version
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browser
+        run: npx playwright install chromium --with-deps
+
+      # Gate 4 -- boots the real app and checks the routes answer.
+      - name: Gate 4 - Playwright smoke test
+        run: npm run e2e
+
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
+
+  # ------------------------------------------------------------------------ gate 7
+  secrets:
+    name: Gitleaks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          # Full history so the scan covers every commit on the branch, not just the tip.
+          fetch-depth: 0
+
+      # The binary is used directly rather than gitleaks-action, which requires a
+      # licence key for organisation-owned repositories.
+      - name: Install gitleaks
+        run: |
+          curl -sSL -o /tmp/gitleaks.tar.gz \
+            "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          tar -xzf /tmp/gitleaks.tar.gz -C /tmp gitleaks
+          sudo mv /tmp/gitleaks /usr/local/bin/gitleaks
+          gitleaks version
+
+      # Gate 7 -- any detected secret fails the build.
+      - name: Gate 7 - Scan git history for secrets
+        run: gitleaks git . --config .gitleaks.toml --redact --no-banner
+
+      - name: Gate 7 - Scan working tree for secrets
+        run: gitleaks dir . --config .gitleaks.toml --redact --no-banner
