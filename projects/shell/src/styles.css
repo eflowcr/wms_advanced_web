@@ -1,0 +1,10 @@
+/*
+ * Global stylesheet.
+ *
+ * tokens.css must be imported HERE, in the same file as the Tailwind import:
+ * Tailwind v4 only turns an `@theme` block into utilities when it resolves the
+ * block in the stylesheet it is processing. The relative path is a CSS-layer
+ * import; the deep-import ban in eslint.config.js governs TypeScript modules.
+ */
+@import 'tailwindcss';
+@import '../../design-system/src/styles/tokens.css';

@@ -1,0 +1,93 @@
+/* Workspace TypeScript configuration.
+ * Path aliases point at library SOURCE (public-api.ts), not ./dist, so the app and the
+ * tests compile without pre-building every library. Crossing a library boundary is only
+ * legal through these aliases -- see eslint.config.js for the enforcing rules.
+ */
+{
+  "compileOnSave": false,
+  "compilerOptions": {
+    "paths": {
+      "@ewms/design-system": [
+        "./projects/design-system/src/public-api.ts"
+      ],
+      "@ewms/showroom": [
+        "./projects/showroom/src/public-api.ts"
+      ],
+      "@ewms/core": [
+        "./projects/core/src/public-api.ts"
+      ],
+      "@ewms/shared": [
+        "./projects/shared/src/public-api.ts"
+      ],
+      "@ewms/api-client": [
+        "./projects/api-client/src/public-api.ts"
+      ],
+      "@ewms/testing": [
+        "./projects/testing/src/public-api.ts"
+      ]
+    },
+    "noImplicitOverride": true,
+    "noPropertyAccessFromIndexSignature": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "skipLibCheck": true,
+    "isolatedModules": true,
+    "experimentalDecorators": true,
+    "importHelpers": true,
+    "target": "ES2022",
+    "module": "preserve",
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+  },
+  "angularCompilerOptions": {
+    "enableI18nLegacyMessageIdFormat": false,
+    "strictInjectionParameters": true,
+    "strictInputAccessModifiers": true
+  },
+  "files": [],
+  "references": [
+    {
+      "path": "./projects/shell/tsconfig.app.json"
+    },
+    {
+      "path": "./projects/shell/tsconfig.spec.json"
+    },
+    {
+      "path": "./projects/design-system/tsconfig.lib.json"
+    },
+    {
+      "path": "./projects/design-system/tsconfig.spec.json"
+    },
+    {
+      "path": "./projects/showroom/tsconfig.lib.json"
+    },
+    {
+      "path": "./projects/showroom/tsconfig.spec.json"
+    },
+    {
+      "path": "./projects/core/tsconfig.lib.json"
+    },
+    {
+      "path": "./projects/core/tsconfig.spec.json"
+    },
+    {
+      "path": "./projects/shared/tsconfig.lib.json"
+    },
+    {
+      "path": "./projects/shared/tsconfig.spec.json"
+    },
+    {
+      "path": "./projects/api-client/tsconfig.lib.json"
+    },
+    {
+      "path": "./projects/api-client/tsconfig.spec.json"
+    },
+    {
+      "path": "./projects/testing/tsconfig.lib.json"
+    },
+    {
+      "path": "./projects/testing/tsconfig.spec.json"
+    }
+  ]
+}

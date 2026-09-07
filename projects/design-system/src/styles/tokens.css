@@ -1,0 +1,36 @@
+/*
+ * TOKENS DEL DESIGN SYSTEM — FUENTE DE VERDAD
+ *
+ * Este archivo SE EDITA A MANO. Es la fuente de verdad de los tokens de
+ * eWMS Advance: no lo genera nada, no se sincroniza con nada, y no hay que
+ * regenerarlo despues de tocarlo.
+ *
+ * Se escribe y se revisa como cualquier otro codigo del repositorio: en un
+ * pull request, con alguien mirando el diff. Un cambio de color aca es un
+ * cambio de codigo, con el mismo peso que cualquier otro.
+ *
+ * LA REGLA
+ *
+ *   Ningun valor de color, espaciado, radio, sombra o tipografia puede
+ *   escribirse dentro de un componente. Todos viven aca, y los componentes
+ *   los consumen como utilidades de Tailwind o como var(--...).
+ *
+ *   Si falta un token, se agrega aca primero. No se pone el valor crudo en
+ *   el componente "por ahora".
+ *
+ * SOBRE FIGMA
+ *
+ *   Figma es referencia de diseno archivada, no la fuente de estos valores.
+ *   Cumplio su etapa. Si Figma y este archivo no coinciden, gana este
+ *   archivo: es lo que se compila y lo que ve el usuario.
+ *
+ * Ver ADR 0005 — El codigo es la fuente de verdad de los tokens.
+ * (Reemplaza al ADR 0004, que ponia a Figma como fuente con un generador
+ * intermedio. No hay generador, ni tokens.json, ni Style Dictionary.)
+ *
+ * Debe importarse desde el mismo archivo que hace @import 'tailwindcss'
+ * (projects/shell/src/styles.css): Tailwind v4 solo convierte un bloque
+ * @theme en utilidades cuando lo resuelve en la hoja que esta procesando.
+ *
+ * Todavia sin tokens: se escriben en la Fase 1.
+ */
