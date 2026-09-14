@@ -8,6 +8,7 @@ version: 2
 updates:
   - package-ecosystem: npm
     directory: /
+    target-branch: development
     schedule:
       interval: weekly
     open-pull-requests-limit: 10
@@ -35,6 +36,7 @@ updates:
   # Actions are pinned too, and they ship CVEs like anything else.
   - package-ecosystem: github-actions
     directory: /
+    target-branch: development
     schedule:
       interval: weekly
     open-pull-requests-limit: 5
