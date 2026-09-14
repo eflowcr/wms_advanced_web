@@ -31,6 +31,244 @@
  * Debe importarse desde el mismo archivo que hace @import 'tailwindcss'
  * (projects/shell/src/styles.css): Tailwind v4 solo convierte un bloque
  * @theme en utilidades cuando lo resuelve en la hoja que esta procesando.
- *
- * Todavia sin tokens: se escriben en la Fase 1.
  */
+
+/*
+ * ESTRUCTURA
+ *
+ *   Un unico :root y un unico tema claro (ADR 0007). Sin [data-theme], sin
+ *   prefers-color-scheme, sin ganchos vacios.
+ *
+ *   Capa 1 — PRIMITIVOS. Los valores crudos, nombrados por lo que son. Es el
+ *   unico lugar del repositorio donde un hex, un rgb() o un px son legitimos.
+ *   Ningun componente los consume, jamas.
+ *
+ *   Capa 2 — SEMANTICOS. Nombrados por su rol, aliasando primitivos. Son lo
+ *   unico que consumen los componentes y el @theme de Tailwind. Re-marcar es
+ *   cambiar a que primitivo apunta un semantico, sin tocar componentes.
+ *
+ *   La compuerta de CI (tools/ci/check-design-tokens.mjs) trata como
+ *   primitivo a todo token cuyo valor no contiene var(), y falla si alguno
+ *   se referencia fuera de este archivo.
+ *
+ * Valores: 08-Sistema-de-Diseno/Fundamentos de Marca (color, sombras),
+ * Escalas - Espaciado, Radios y Elevacion (geometria) y
+ * Estructura de Componentes §2 (tipografia).
+ */
+
+:root {
+  /* ======================================================================
+   * CAPA 1 — PRIMITIVOS
+   * ====================================================================== */
+
+  /*
+   * Color: <familia>-<tono>. El tono es la luminosidad CIE L* del hex,
+   * redondeada (0 = negro, 100 = blanco) — la convencion de tonos de
+   * Material 3. No es una escala inventada: sale del valor, y el contraste se
+   * lee de un vistazo (texto navy-7 sobre canvas navy-97).
+   */
+
+  /* navy — la marca y los neutros tenidos con ella */
+  --navy-7: #010f42;
+  --navy-28: #343f68;
+  --navy-46: #646b87;
+  --navy-52: #737b97;
+  --navy-57: #8087a0;
+  --navy-79: #c0c3d0;
+  --navy-81: #c7cad5;
+  --navy-91: #e3e5ea;
+  --navy-92: #e6e7ec;
+  --navy-95: #f0f1f4;
+  --navy-97: #f6f7f8;
+
+  /* navy translucido — sombras y overlay. Navy, no negro: tine con la marca */
+  --navy-7-a06: rgb(1 15 66 / 0.06);
+  --navy-7-a08: rgb(1 15 66 / 0.08);
+  --navy-7-a10: rgb(1 15 66 / 0.1);
+  --navy-7-a50: rgb(1 15 66 / 0.5);
+
+  /* blue — el azul de marca y sus derivados */
+  --blue-35: #3149aa;
+  --blue-41: #3a56c9;
+  --blue-48: #4465ec;
+  --blue-63: #7c93f2;
+  --blue-90: #dde3fc;
+  --blue-93: #e5e9fc;
+  --blue-96: #f0f3fd;
+
+  /* red */
+  --red-34: #9c2017;
+  --red-41: #b8261b;
+  --red-48: #d92d20;
+  --red-77: #f1afaa;
+  --red-91: #f9e0de;
+  --red-95: #fceeed;
+
+  /* orange */
+  --orange-42: #a14c03;
+  --orange-49: #bd5903;
+  --orange-80: #e6c09f;
+  --orange-96: #faf2eb;
+
+  /* green */
+  --green-42: #037341;
+  --green-49: #03874c;
+  --green-80: #9fd1bb;
+  --green-96: #ebf5f1;
+
+  /* Longitudes: size-<px> */
+  --size-4: 4px;
+  --size-6: 6px;
+  --size-8: 8px;
+  --size-12: 12px;
+  --size-13: 13px;
+  --size-14: 14px;
+  --size-18: 18px;
+  --size-24: 24px;
+  --size-32: 32px;
+  --size-pill: 9999px;
+
+  /* Pesos. Montserrat es variable 100–900: el @font-face declara el rango */
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+
+  /* Interlineados */
+  --ratio-1-2: 1.2;
+  --ratio-1-25: 1.25;
+  --ratio-1-3: 1.3;
+  --ratio-1-5: 1.5;
+
+  /* Familias tipograficas. 'Montserrat' es la cara auto-hospedada en
+   * projects/shell/public/fonts (ver @font-face en styles.css). */
+  --typeface-montserrat: 'Montserrat', ui-sans-serif, system-ui, sans-serif;
+  /* JetBrains Mono entra con su primer consumidor (la Tabla); hasta entonces
+   * la familia mono es solo la pila del sistema. */
+  --typeface-system-mono: ui-monospace, SFMono-Regular, monospace;
+
+  /* ======================================================================
+   * CAPA 2 — SEMANTICOS
+   * ====================================================================== */
+
+  /* ---------------------------------------------------------------- marca */
+  --color-brand-navy: var(--navy-7);
+  /* El azul significa "se hace clic": solo accion, nunca informativo,
+   * decorativo ni de estado. */
+  --color-brand-blue: var(--blue-48);
+
+  /* ---------------------------------------------------- texto y superficies */
+  --color-text-primary: var(--navy-7);
+  --color-text-secondary: var(--navy-46);
+  --color-text-disabled: var(--navy-79);
+
+  /* Divisores decorativos UNICAMENTE (1.15:1). Nunca el borde de un control. */
+  --color-border: var(--navy-92);
+  /* Bordes que definen un control (3.16:1, WCAG 1.4.11). */
+  --color-border-strong: var(--navy-57);
+
+  --color-canvas: var(--navy-97);
+  --color-bg-secondary: var(--navy-95);
+  --color-bg-secondary-hover: var(--navy-91);
+
+  /* --------------------------------------------------------------- accion */
+  --color-bg-primary: var(--blue-48);
+  --color-bg-primary-hover: var(--blue-41);
+  --color-bg-primary-active: var(--blue-35);
+  --color-bg-primary-disabled: var(--blue-90);
+  --color-ghost-hover: var(--blue-96);
+
+  --color-bg-danger: var(--red-48);
+  --color-bg-danger-hover: var(--red-41);
+  --color-bg-danger-active: var(--red-34);
+  --color-bg-danger-disabled: var(--red-91);
+
+  /* ------------------------------------------------- familias semanticas
+   * Cuatro tokens por familia: un banner necesita fondo, borde, icono y texto.
+   * No existe familia info: lo informativo usa neutral.
+   * Badge/Neutral usa surface + text, no solid + blanco (4.19:1). */
+  --color-danger-solid: var(--red-48);
+  --color-danger-surface: var(--red-95);
+  --color-danger-border: var(--red-77);
+  --color-danger-text: var(--red-41);
+
+  --color-warning-solid: var(--orange-49);
+  --color-warning-surface: var(--orange-96);
+  --color-warning-border: var(--orange-80);
+  --color-warning-text: var(--orange-42);
+
+  --color-success-solid: var(--green-49);
+  --color-success-surface: var(--green-96);
+  --color-success-border: var(--green-80);
+  --color-success-text: var(--green-42);
+
+  --color-neutral-solid: var(--navy-52);
+  --color-neutral-surface: var(--navy-95);
+  --color-neutral-border: var(--navy-81);
+  --color-neutral-text: var(--navy-28);
+
+  /* --------------------------------------------------- estados y superficies */
+  --color-focus-ring: var(--blue-48);
+  /* Sobre el rail navy: el azul de marca queda en 3.76:1, este en 6.37:1. */
+  --color-focus-ring-on-dark: var(--blue-63);
+  /* Siempre acompanado de una barra de acento: el tinte solo es fragil. */
+  --color-row-selected: var(--blue-93);
+  --color-overlay: var(--navy-7-a50);
+
+  /* ------------------------------------------------------------- elevacion
+   * sm: card en reposo · md: dropdown, popover, Select abierto · lg: modal.
+   * Sin nivel superior. */
+  --shadow-sm: 0 1px 2px var(--navy-7-a06);
+  --shadow-md: 0 4px 8px var(--navy-7-a08), 0 1px 2px var(--navy-7-a06);
+  --shadow-lg: 0 12px 24px var(--navy-7-a10), 0 2px 4px var(--navy-7-a06);
+
+  /* ------------------------------------------------------------- espaciado
+   * Base 4px. Tailwind deriva la escala entera de este unico multiplicador. */
+  --spacing-base: var(--size-4);
+
+  /* ---------------------------------------------------------------- radios */
+  --radius-sm: var(--size-4);
+  /* Boton, Input, Select. El 6px es firma visual del sistema. */
+  --radius-control: var(--size-6);
+  --radius-md: var(--size-8);
+  --radius-lg: var(--size-12);
+  --radius-full: var(--size-pill);
+
+  /* ------------------------------------------------------------ tipografia */
+  --font-family-sans: var(--typeface-montserrat);
+  --font-family-mono: var(--typeface-system-mono);
+
+  /* Text/H1 — titulo de pagina */
+  --text-h1-size: var(--size-32);
+  --text-h1-weight: var(--weight-bold);
+  --text-h1-line-height: var(--ratio-1-2);
+
+  /* Text/H2 — titulo de seccion */
+  --text-h2-size: var(--size-24);
+  --text-h2-weight: var(--weight-semibold);
+  --text-h2-line-height: var(--ratio-1-25);
+
+  /* Text/H3 — subseccion o encabezado de card */
+  --text-h3-size: var(--size-18);
+  --text-h3-weight: var(--weight-semibold);
+  --text-h3-line-height: var(--ratio-1-3);
+
+  /* Text/H4 — etiqueta destacada, en mayusculas (la transformacion la aplica
+   * el componente de tipografia). Interlineado (pendiente): no definido. */
+  --text-h4-size: var(--size-14);
+  --text-h4-weight: var(--weight-semibold);
+
+  /* Text/P — cuerpo de texto */
+  --text-p-size: var(--size-14);
+  --text-p-weight: var(--weight-regular);
+  --text-p-line-height: var(--ratio-1-5);
+
+  /* Text/Caption — metadatos, timestamps; color text-secondary.
+   * Interlineado (pendiente): no definido. */
+  --text-caption-size: var(--size-12);
+  --text-caption-weight: var(--weight-medium);
+
+  /* Text/Mono — codigos, SKUs, lotes, IDs.
+   * Peso e interlineado (pendiente): no definidos. */
+  --text-mono-size: var(--size-13);
+}

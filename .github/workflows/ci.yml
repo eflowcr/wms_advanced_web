@@ -19,7 +19,7 @@ env:
   GITLEAKS_VERSION: '8.30.1'
 
 jobs:
-  # --------------------------------------------------------------- gates 1,2,3,5,6,8,9
+  # ------------------------------------------------------------ gates 1,2,3,5,6,8,9,10
   verify:
     name: Types, lint, tests, budgets
     runs-on: ubuntu-latest
@@ -55,6 +55,13 @@ jobs:
             exit 1
           fi
           echo "No [innerHTML] bindings found."
+
+      # Gate 10 -- every visual value comes from a design token (ADR 0005, ADR 0009).
+      # Fails on raw hex / rgb() / rgba() / hsl() / px, on Tailwind default utilities
+      # (bg-blue-500 carries no hex and still bypasses the system), and on primitive
+      # tokens used outside tokens.css -- the single file where raw values are legitimate.
+      - name: Gate 10 - Design tokens (no raw values, no Tailwind defaults)
+        run: npm run lint:tokens
 
       # Gate 3 + Gate 5 -- unit tests, coverage thresholds, and the axe-core
       # accessibility harness all run in this one Vitest suite.

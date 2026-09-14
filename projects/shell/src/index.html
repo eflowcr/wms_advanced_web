@@ -2,10 +2,38 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <title>Shell</title>
+    <!--
+      Content Security Policy -- PLN-WMS-003 §4. Strict: no 'unsafe-inline', no
+      'unsafe-eval', and every fetch directive is 'self'.
+
+      font-src 'self' is why Montserrat is self-hosted (styles.css, public/fonts).
+
+      Kept first in <head> so it governs every resource that follows it.
+
+      Delivered as <meta> until a server exists. frame-ancestors, report-to
+      and sandbox are ignored in <meta> by specification, so clickjacking
+      protection (frame-ancestors 'none') must arrive as an HTTP header from
+      the server that serves this file.
+    -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self'; connect-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'"
+    />
+    <title>eWMS Advance</title>
     <base href="/" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <link rel="icon" type="image/x-icon" href="favicon.ico" />
+    <link rel="icon" href="favicon.ico" sizes="16x16" />
+    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <!-- Body text is Spanish, so the latin subset is always needed; preloading it avoids the swap flash. -->
+    <link
+      rel="preload"
+      href="fonts/montserrat-latin-wght-normal.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
   </head>
   <body>
     <app-root></app-root>
