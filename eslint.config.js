@@ -46,6 +46,16 @@ const LIBS = [
   '@ewms/testing',
 ];
 
+/**
+ * Component stylesheets are injected as inline <style> elements, which the
+ * strict CSP (`style-src 'self'`) blocks. Nothing fails at build or test time:
+ * the component just ships unstyled. Hence a lint error (ADR 0010).
+ */
+const COMPONENT_STYLES_MESSAGE =
+  'Los estilos de componente se inyectan en línea y la CSP estricta los bloquea (ADR 0010). ' +
+  "Estila con utilidades de Tailwind, y el host con `host: { class: '...' }`. " +
+  'Si falta una utilidad, agregá el token — no abras una hoja de estilos.';
+
 function restrict(project, forbidden, allowedText) {
   return [
     'error',
@@ -164,6 +174,20 @@ module.exports = tseslint.config(
           selector: 'MemberExpression[property.name=/^(localStorage|sessionStorage)$/]',
           message:
             'Web storage must never hold auth tokens. Use the token store from @ewms/core.',
+        },
+        {
+          // `styles: [...]` or `styles: '...'`, only as a direct key of the
+          // @Component({...}) metadata object. Quoted keys included.
+          selector:
+            "Decorator > CallExpression[callee.name='Component'] > ObjectExpression > Property:matches([key.name='styles'], [key.value='styles'])",
+          message: COMPONENT_STYLES_MESSAGE,
+        },
+        {
+          // `styleUrl: '...'`, plus the older `styleUrls: [...]` form, which
+          // is injected the same way.
+          selector:
+            "Decorator > CallExpression[callee.name='Component'] > ObjectExpression > Property:matches([key.name=/^styleUrls?$/], [key.value=/^styleUrls?$/])",
+          message: COMPONENT_STYLES_MESSAGE,
         },
       ],
 
