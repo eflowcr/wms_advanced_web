@@ -253,11 +253,11 @@ const DATA = {
     { type: 'path', d: 'M12 8l5 -3' },
   ],
   pallet: [
-    { type: 'path', d: 'M3 6h18v4h-18l0 -4' },
-    { type: 'path', d: 'M4 10v5h3v-5' },
-    { type: 'path', d: 'M10.5 10v5h3v-5' },
-    { type: 'path', d: 'M17 10v5h3v-5' },
-    { type: 'path', d: 'M3 18h18' },
+    { type: 'path', d: 'M3 7h18v4h-18l0 -4' },
+    { type: 'path', d: 'M5 11v5h3v-5' },
+    { type: 'path', d: 'M10.5 11v5h3v-5' },
+    { type: 'path', d: 'M16 11v5h3v-5' },
+    { type: 'path', d: 'M3 16h18' },
   ],
   plus: [
     { type: 'path', d: 'M12 5l0 14' },

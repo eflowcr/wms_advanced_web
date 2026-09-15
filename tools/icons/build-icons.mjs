@@ -10,9 +10,13 @@
  *
  * Rules, every one of them enforced here rather than trusted:
  *
- *   - The first child of every file must be Tabler's invisible bounding box,
- *     <path stroke="none" d="M0 0h24v24H0z" fill="none"/>. It is dropped. A file
- *     without it, or with it anywhere else, is a format change and fails.
+ *   - Tabler files: the first child must be the invisible bounding box,
+ *     <path stroke="none" d="M0 0h24v24H0z" fill="none"/>. It is dropped. A
+ *     Tabler file without it is a change in the package format and fails.
+ *   - Custom files: the bounding box is optional. If it is the first child it
+ *     is dropped exactly as for Tabler; if not, every child is geometry. A
+ *     custom icon should not need a Tabler artefact to be valid.
+ *   - In either kind of file, a bounding box anywhere but first fails.
  *   - Only geometry is kept: `d` for <path>, the shape attributes for <circle>,
  *     <rect> and <line>. Any other element, or any other attribute on a shape,
  *     fails instead of being silently dropped: dropping a `fill` would change
@@ -115,8 +119,13 @@ function toNumber(value, where) {
   return number;
 }
 
-/** Extracts the geometry of one SVG file as a list of primitives. */
-export function extractPrimitives(svg, where) {
+/**
+ * Extracts the geometry of one SVG file as a list of primitives.
+ *
+ * `requireBoundingBox` is true for Tabler files (a missing bounding box means
+ * the package format changed) and false for custom files (optional).
+ */
+export function extractPrimitives(svg, where, { requireBoundingBox }) {
   const root = /^\s*<svg\b([^>]*)>([\s\S]*)<\/svg>\s*$/.exec(svg);
   if (!root) {
     throw new Error(`${where}: expected a single <svg> root element.`);
@@ -138,12 +147,14 @@ export function extractPrimitives(svg, where) {
     );
   }
 
-  const [first, ...shapes] = elements;
-  if (first?.tag !== 'path' || first.attributes.get('d') !== BOUNDING_BOX) {
+  const [first] = elements;
+  const startsWithBoundingBox = first?.tag === 'path' && first.attributes.get('d') === BOUNDING_BOX;
+  if (requireBoundingBox && !startsWithBoundingBox) {
     throw new Error(`${where}: first element must be the bounding-box path "${BOUNDING_BOX}".`);
   }
+  const shapes = startsWithBoundingBox ? elements.slice(1) : elements;
   if (shapes.length === 0) {
-    throw new Error(`${where}: no geometry after the bounding box.`);
+    throw new Error(`${where}: no geometry in the file.`);
   }
 
   return shapes.map(({ tag, attributes }) => {
@@ -228,7 +239,8 @@ export async function buildIcons() {
           (entry.source.startsWith(CUSTOM_PREFIX) ? '.' : ` in @tabler/icons ${tabler.version}.`),
       );
     }
-    icons.push({ ...entry, primitives: extractPrimitives(svg, file) });
+    const requireBoundingBox = !entry.source.startsWith(CUSTOM_PREFIX);
+    icons.push({ ...entry, primitives: extractPrimitives(svg, file, { requireBoundingBox }) });
   }
 
   const byName = (a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0);

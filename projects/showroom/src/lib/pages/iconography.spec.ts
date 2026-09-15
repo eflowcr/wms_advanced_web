@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { ICON_CATEGORIES } from '@ewms/design-system';
 import { expectNoAxeViolations } from '@ewms/testing';
-import { ShowroomIconography } from './iconography';
+import { COPIED_FEEDBACK_MS, ShowroomIconography } from './iconography';
 
 describe('ShowroomIconography', () => {
   async function render() {
@@ -41,6 +41,33 @@ describe('ShowroomIconography', () => {
 
     expect(writeText).toHaveBeenCalledWith('pallet');
     expect(element.querySelector('[role="status"]')?.textContent).toContain('pallet');
+  });
+
+  it('clears the copy confirmation after the feedback delay', async () => {
+    Object.defineProperty(navigator, 'clipboard', {
+      value: { writeText: vi.fn().mockResolvedValue(undefined) },
+      configurable: true,
+    });
+    const { fixture, element } = await render();
+    const status = () => element.querySelector('[role="status"]')?.textContent ?? '';
+
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+    try {
+      element.querySelector<HTMLButtonElement>('[data-icon-name="pallet"]')?.click();
+      await vi.advanceTimersByTimeAsync(0);
+      fixture.detectChanges();
+      expect(status()).toContain('pallet');
+
+      await vi.advanceTimersByTimeAsync(COPIED_FEEDBACK_MS - 1);
+      fixture.detectChanges();
+      expect(status()).toContain('pallet');
+
+      await vi.advanceTimersByTimeAsync(1);
+      fixture.detectChanges();
+      expect(status()).not.toContain('pallet');
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('has no accessibility violations', async () => {

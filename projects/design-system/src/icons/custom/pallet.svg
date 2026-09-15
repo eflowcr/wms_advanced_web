@@ -8,12 +8,10 @@
   stroke-width="2"
   stroke-linecap="round"
   stroke-linejoin="round"
-  class="icon icon-ewms icons-ewms-outline icon-ewms-pallet"
 >
-  <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-  <path d="M3 6h18v4h-18l0 -4" />
-  <path d="M4 10v5h3v-5" />
-  <path d="M10.5 10v5h3v-5" />
-  <path d="M17 10v5h3v-5" />
-  <path d="M3 18h18" />
+  <path d="M3 7h18v4h-18l0 -4" />
+  <path d="M5 11v5h3v-5" />
+  <path d="M10.5 11v5h3v-5" />
+  <path d="M16 11v5h3v-5" />
+  <path d="M3 16h18" />
 </svg>

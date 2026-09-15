@@ -69,7 +69,8 @@ en un segundo mecanismo distinguible del primero.
 
 La tarima, y cualquier icono de dominio que falte en Tabler, **se dibuja sobre
 el mismo grid de 24 y con el mismo trazo de 2**, en el mismo formato de archivo
-que Tabler, y vive en `projects/design-system/src/icons/custom/`. El script lo
+que Tabler (el `<path>` de bounding box es opcional en un icono propio), y vive
+en `projects/design-system/src/icons/custom/`. El script lo
 procesa con exactamente el mismo tratamiento: en el archivo generado y en el
 consumo **no hay forma de distinguir el origen**. Si mañana Tabler publica
 `pallet`, se cambia una línea del manifiesto y nada más.
@@ -96,8 +97,10 @@ proveedor, y con los iconos propios indistinguibles de los de Tabler.
 que edita el manifiesto y regenera. Es el costo buscado.
 
 **Se sacrifica** tree-shaking por icono: la tabla completa viaja junta al primer
-consumidor (≈17 kB crudos / ≈5,5 kB gzip con 70 iconos). Con un catálogo curado
-es aceptable; si el catálogo crece un orden de magnitud, se revisa.
+consumidor: 17.382 B crudos / ≈3,9 kB gzip con 70 iconos (medido sobre
+`icons.generated.ts` el 2026-09-15: 3.911 B con zlib nivel 6), unos 248 B
+crudos y 56 B gzip por icono. Con un catálogo curado es aceptable; el umbral
+para revisarlo está abajo.
 
 **Actualizar Tabler** es un bump de la `devDependency` + `npm run icons:build`;
 la compuerta 11 obliga a hacerlo en el mismo PR.
@@ -106,3 +109,8 @@ la compuerta 11 obliga a hacerlo en el mismo PR.
 
 Se reevalúa si el catálogo supera ~300 iconos (el costo de no poder hacer
 tree-shaking deja de ser despreciable) o si Tabler cambia de licencia.
+
+De dónde sale el 300: a 248 B por icono, 300 iconos son ≈75 kB crudos
+(≈17 kB gzip), cerca de la mitad del margen que hoy queda entre el bundle
+inicial (236 kB) y el aviso de 400 kB del budget — y la tabla termina en el
+bundle inicial en cuanto la barra superior use un icono.

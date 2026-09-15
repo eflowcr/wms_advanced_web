@@ -2,6 +2,7 @@ import {
   afterNextRender,
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   DOCUMENT,
   inject,
   signal,
@@ -15,6 +16,9 @@ interface SizeSample {
 }
 
 const SIZES: readonly IconSize[] = ['sm', 'md', 'lg', 'xl'];
+
+/** How long the "Copiado" confirmation stays visible. */
+export const COPIED_FEEDBACK_MS = 2000;
 
 /** The icons that sit on the navy top bar, shown on both grounds. */
 const TOP_BAR: readonly IconName[] = [
@@ -53,8 +57,11 @@ export class ShowroomIconography {
     SIZES.map((size) => ({ size, width: '…', stroke: '…' })),
   );
   protected readonly copied = signal<IconName | null>(null);
+  private copiedTimer: ReturnType<typeof setTimeout> | undefined;
 
   constructor() {
+    inject(DestroyRef).onDestroy(() => clearTimeout(this.copiedTimer));
+
     afterNextRender(() => {
       const view = this.document.defaultView;
       if (!view) {
@@ -75,5 +82,7 @@ export class ShowroomIconography {
   protected async copy(name: IconName): Promise<void> {
     await this.document.defaultView?.navigator.clipboard?.writeText(name);
     this.copied.set(name);
+    clearTimeout(this.copiedTimer);
+    this.copiedTimer = setTimeout(() => this.copied.set(null), COPIED_FEEDBACK_MS);
   }
 }
