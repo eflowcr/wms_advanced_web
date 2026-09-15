@@ -13,6 +13,12 @@
 @import '../../design-system/src/styles/tokens.css';
 
 /*
+ * The icon sources are geometry and semantic names, never class names. Left
+ * in the scan, an icon called `filter` emits Tailwind's `.filter` utility.
+ */
+@source not '../../design-system/src/icons';
+
+/*
  * TAILWIND AS AN ENGINE, NOT AS A DESIGN SYSTEM (ADR 0009)
  *
  * `--*: initial` deletes Tailwind's whole default theme: its palette, spacing,
@@ -73,6 +79,17 @@
   --radius-lg: var(--radius-lg);
   --radius-full: var(--radius-full);
 
+  /* Icons: size-icon-md sets width and height, stroke-icon-md the stroke
+   * width. Always used in pairs; the stroke compensation is in tokens.css. */
+  --size-icon-sm: var(--size-icon-sm);
+  --size-icon-md: var(--size-icon-md);
+  --size-icon-lg: var(--size-icon-lg);
+  --size-icon-xl: var(--size-icon-xl);
+  --stroke-width-icon-sm: var(--stroke-icon-sm);
+  --stroke-width-icon-md: var(--stroke-icon-md);
+  --stroke-width-icon-lg: var(--stroke-icon-lg);
+  --stroke-width-icon-xl: var(--stroke-icon-xl);
+
   /* Elevation */
   --shadow-sm: var(--shadow-sm);
   --shadow-md: var(--shadow-md);
@@ -106,6 +123,7 @@
   --text-color-primary: var(--color-text-primary);
   --text-color-secondary: var(--color-text-secondary);
   --text-color-disabled: var(--color-text-disabled);
+  --text-color-on-dark: var(--color-text-on-dark);
   --text-color-danger: var(--color-danger-text);
   --text-color-warning: var(--color-warning-text);
   --text-color-success: var(--color-success-text);

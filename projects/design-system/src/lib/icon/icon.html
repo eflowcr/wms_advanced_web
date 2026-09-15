@@ -1,0 +1,42 @@
+<svg
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+  class="block"
+  [class]="sizeClass()"
+  [attr.role]="informative() ? 'img' : null"
+  [attr.aria-label]="informative() ? label() : null"
+  [attr.aria-hidden]="informative() ? null : 'true'"
+  [attr.focusable]="informative() ? null : 'false'"
+>
+  @for (primitive of primitives(); track $index) {
+    @switch (primitive.type) {
+      @case ('path') {
+        <path [attr.d]="primitive.d" />
+      }
+      @case ('circle') {
+        <circle [attr.cx]="primitive.cx" [attr.cy]="primitive.cy" [attr.r]="primitive.r" />
+      }
+      @case ('rect') {
+        <rect
+          [attr.x]="primitive.x"
+          [attr.y]="primitive.y"
+          [attr.width]="primitive.width"
+          [attr.height]="primitive.height"
+          [attr.rx]="primitive.rx"
+          [attr.ry]="primitive.ry"
+        />
+      }
+      @case ('line') {
+        <line
+          [attr.x1]="primitive.x1"
+          [attr.y1]="primitive.y1"
+          [attr.x2]="primitive.x2"
+          [attr.y2]="primitive.y2"
+        />
+      }
+    }
+  }
+</svg>

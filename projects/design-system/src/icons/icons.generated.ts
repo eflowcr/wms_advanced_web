@@ -1,0 +1,471 @@
+// GENERADO POR tools/icons/build-icons.mjs — NO EDITAR A MANO.
+//
+// Fuente: projects/design-system/src/icons/icons.manifest.json
+// Geometria: @tabler/icons 3.46.0 (MIT, ver THIRD-PARTY-NOTICES.md) y projects/design-system/src/icons/custom/.
+// Para cambiar un icono: editar el manifiesto y correr `npm run icons:build`. Ver ADR 0011.
+
+import type { IconPrimitive } from './icon-primitive';
+
+const DATA = {
+  'alert-triangle': [
+    { type: 'path', d: 'M12 9v4' },
+    { type: 'path', d: 'M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536a1.914 1.914 0 0 0 -3.274 0' },
+    { type: 'path', d: 'M12 16h.01' },
+  ],
+  'arrow-left': [
+    { type: 'path', d: 'M5 12l14 0' },
+    { type: 'path', d: 'M5 12l6 6' },
+    { type: 'path', d: 'M5 12l6 -6' },
+  ],
+  'arrow-right': [
+    { type: 'path', d: 'M5 12l14 0' },
+    { type: 'path', d: 'M13 18l6 -6' },
+    { type: 'path', d: 'M13 6l6 6' },
+  ],
+  'arrows-sort': [
+    { type: 'path', d: 'M3 9l4 -4l4 4m-4 -4v14' },
+    { type: 'path', d: 'M21 15l-4 4l-4 -4m4 4v-14' },
+  ],
+  barcode: [
+    { type: 'path', d: 'M4 7v-1a2 2 0 0 1 2 -2h2' },
+    { type: 'path', d: 'M4 17v1a2 2 0 0 0 2 2h2' },
+    { type: 'path', d: 'M16 4h2a2 2 0 0 1 2 2v1' },
+    { type: 'path', d: 'M16 20h2a2 2 0 0 0 2 -2v-1' },
+    { type: 'path', d: 'M5 11h1v2h-1l0 -2' },
+    { type: 'path', d: 'M10 11l0 2' },
+    { type: 'path', d: 'M14 11h1v2h-1l0 -2' },
+    { type: 'path', d: 'M19 11l0 2' },
+  ],
+  bell: [
+    { type: 'path', d: 'M10 5a2 2 0 1 1 4 0a7 7 0 0 1 4 6v3a4 4 0 0 0 2 3h-16a4 4 0 0 0 2 -3v-3a7 7 0 0 1 4 -6' },
+    { type: 'path', d: 'M9 17v1a3 3 0 0 0 6 0v-1' },
+  ],
+  calendar: [
+    { type: 'path', d: 'M4 7a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12' },
+    { type: 'path', d: 'M16 3v4' },
+    { type: 'path', d: 'M8 3v4' },
+    { type: 'path', d: 'M4 11h16' },
+    { type: 'path', d: 'M11 15h1' },
+    { type: 'path', d: 'M12 15v3' },
+  ],
+  check: [
+    { type: 'path', d: 'M5 12l5 5l10 -10' },
+  ],
+  'chevron-down': [
+    { type: 'path', d: 'M6 9l6 6l6 -6' },
+  ],
+  'chevron-left': [
+    { type: 'path', d: 'M15 6l-6 6l6 6' },
+  ],
+  'chevron-right': [
+    { type: 'path', d: 'M9 6l6 6l-6 6' },
+  ],
+  'chevron-up': [
+    { type: 'path', d: 'M6 15l6 -6l6 6' },
+  ],
+  'circle-check': [
+    { type: 'path', d: 'M3 12a9 9 0 1 0 18 0a9 9 0 1 0 -18 0' },
+    { type: 'path', d: 'M9 12l2 2l4 -4' },
+  ],
+  'circle-x': [
+    { type: 'path', d: 'M3 12a9 9 0 1 0 18 0a9 9 0 1 0 -18 0' },
+    { type: 'path', d: 'M10 10l4 4m0 -4l-4 4' },
+  ],
+  clock: [
+    { type: 'path', d: 'M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0' },
+    { type: 'path', d: 'M12 7v5l3 3' },
+  ],
+  controls: [
+    { type: 'path', d: 'M12 6a2 2 0 1 0 4 0a2 2 0 1 0 -4 0' },
+    { type: 'path', d: 'M4 6l8 0' },
+    { type: 'path', d: 'M16 6l4 0' },
+    { type: 'path', d: 'M6 12a2 2 0 1 0 4 0a2 2 0 1 0 -4 0' },
+    { type: 'path', d: 'M4 12l2 0' },
+    { type: 'path', d: 'M10 12l10 0' },
+    { type: 'path', d: 'M15 18a2 2 0 1 0 4 0a2 2 0 1 0 -4 0' },
+    { type: 'path', d: 'M4 18l11 0' },
+    { type: 'path', d: 'M19 18l1 0' },
+  ],
+  copy: [
+    { type: 'path', d: 'M7 9.667a2.667 2.667 0 0 1 2.667 -2.667h8.666a2.667 2.667 0 0 1 2.667 2.667v8.666a2.667 2.667 0 0 1 -2.667 2.667h-8.666a2.667 2.667 0 0 1 -2.667 -2.667l0 -8.666' },
+    { type: 'path', d: 'M4.012 16.737a2.005 2.005 0 0 1 -1.012 -1.737v-10c0 -1.1 .9 -2 2 -2h10c.75 0 1.158 .385 1.5 1' },
+  ],
+  crew: [
+    { type: 'path', d: 'M10 13a2 2 0 1 0 4 0a2 2 0 0 0 -4 0' },
+    { type: 'path', d: 'M8 21v-1a2 2 0 0 1 2 -2h4a2 2 0 0 1 2 2v1' },
+    { type: 'path', d: 'M15 5a2 2 0 1 0 4 0a2 2 0 0 0 -4 0' },
+    { type: 'path', d: 'M17 10h2a2 2 0 0 1 2 2v1' },
+    { type: 'path', d: 'M5 5a2 2 0 1 0 4 0a2 2 0 0 0 -4 0' },
+    { type: 'path', d: 'M3 13v-1a2 2 0 0 1 2 -2h2' },
+  ],
+  'cycle-count': [
+    { type: 'path', d: 'M3.5 5.5l1.5 1.5l2.5 -2.5' },
+    { type: 'path', d: 'M3.5 11.5l1.5 1.5l2.5 -2.5' },
+    { type: 'path', d: 'M3.5 17.5l1.5 1.5l2.5 -2.5' },
+    { type: 'path', d: 'M11 6l9 0' },
+    { type: 'path', d: 'M11 12l9 0' },
+    { type: 'path', d: 'M11 18l9 0' },
+  ],
+  dashboard: [
+    { type: 'path', d: 'M10 13a2 2 0 1 0 4 0a2 2 0 1 0 -4 0' },
+    { type: 'path', d: 'M13.45 11.55l2.05 -2.05' },
+    { type: 'path', d: 'M6.4 20a9 9 0 1 1 11.2 0l-11.2 0' },
+  ],
+  dock: [
+    { type: 'path', d: 'M2 3h1a2 2 0 0 1 2 2v10a2 2 0 0 0 2 2h15' },
+    { type: 'path', d: 'M9 9a3 3 0 0 1 3 -3h4a3 3 0 0 1 3 3v2a3 3 0 0 1 -3 3h-4a3 3 0 0 1 -3 -3l0 -2' },
+    { type: 'path', d: 'M7 19a2 2 0 1 0 4 0a2 2 0 1 0 -4 0' },
+    { type: 'path', d: 'M16 19a2 2 0 1 0 4 0a2 2 0 1 0 -4 0' },
+  ],
+  download: [
+    { type: 'path', d: 'M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2' },
+    { type: 'path', d: 'M7 11l5 5l5 -5' },
+    { type: 'path', d: 'M12 4l0 12' },
+  ],
+  edit: [
+    { type: 'path', d: 'M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1' },
+    { type: 'path', d: 'M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415' },
+    { type: 'path', d: 'M16 5l3 3' },
+  ],
+  'external-link': [
+    { type: 'path', d: 'M12 6h-6a2 2 0 0 0 -2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-6' },
+    { type: 'path', d: 'M11 13l9 -9' },
+    { type: 'path', d: 'M15 4h5v5' },
+  ],
+  eye: [
+    { type: 'path', d: 'M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0' },
+    { type: 'path', d: 'M21 12c-2.4 4 -5.4 6 -9 6c-3.6 0 -6.6 -2 -9 -6c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6' },
+  ],
+  'eye-off': [
+    { type: 'path', d: 'M10.585 10.587a2 2 0 0 0 2.829 2.828' },
+    { type: 'path', d: 'M16.681 16.673a8.717 8.717 0 0 1 -4.681 1.327c-3.6 0 -6.6 -2 -9 -6c1.272 -2.12 2.712 -3.678 4.32 -4.674m2.86 -1.146a9.055 9.055 0 0 1 1.82 -.18c3.6 0 6.6 2 9 6c-.666 1.11 -1.379 2.067 -2.138 2.87' },
+    { type: 'path', d: 'M3 3l18 18' },
+  ],
+  'file-text': [
+    { type: 'path', d: 'M14 3v4a1 1 0 0 0 1 1h4' },
+    { type: 'path', d: 'M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2' },
+    { type: 'path', d: 'M9 9l1 0' },
+    { type: 'path', d: 'M9 13l6 0' },
+    { type: 'path', d: 'M9 17l6 0' },
+  ],
+  filter: [
+    { type: 'path', d: 'M4 4h16v2.172a2 2 0 0 1 -.586 1.414l-4.414 4.414v7l-6 2v-8.5l-4.48 -4.928a2 2 0 0 1 -.52 -1.345v-2.227' },
+  ],
+  forklift: [
+    { type: 'path', d: 'M3 17a2 2 0 1 0 4 0a2 2 0 1 0 -4 0' },
+    { type: 'path', d: 'M12 17a2 2 0 1 0 4 0a2 2 0 1 0 -4 0' },
+    { type: 'path', d: 'M7 17l5 0' },
+    { type: 'path', d: 'M3 17v-6h13v6' },
+    { type: 'path', d: 'M5 11v-4h4' },
+    { type: 'path', d: 'M9 11v-6h4l3 6' },
+    { type: 'path', d: 'M22 15h-3v-10' },
+    { type: 'path', d: 'M16 13l3 0' },
+  ],
+  'help-circle': [
+    { type: 'path', d: 'M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0' },
+    { type: 'path', d: 'M12 16v.01' },
+    { type: 'path', d: 'M12 13a2 2 0 0 0 .914 -3.782a1.98 1.98 0 0 0 -2.414 .483' },
+  ],
+  home: [
+    { type: 'path', d: 'M5 12l-2 0l9 -9l9 9l-2 0' },
+    { type: 'path', d: 'M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-7' },
+    { type: 'path', d: 'M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6' },
+  ],
+  'info-circle': [
+    { type: 'path', d: 'M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0' },
+    { type: 'path', d: 'M12 9h.01' },
+    { type: 'path', d: 'M11 12h1v4h1' },
+  ],
+  inventory: [
+    { type: 'path', d: 'M12 4l-8 4l8 4l8 -4l-8 -4' },
+    { type: 'path', d: 'M4 12l8 4l8 -4' },
+    { type: 'path', d: 'M4 16l8 4l8 -4' },
+  ],
+  'label-print': [
+    { type: 'path', d: 'M17 17h2a2 2 0 0 0 2 -2v-4a2 2 0 0 0 -2 -2h-14a2 2 0 0 0 -2 2v4a2 2 0 0 0 2 2h2' },
+    { type: 'path', d: 'M17 9v-4a2 2 0 0 0 -2 -2h-6a2 2 0 0 0 -2 2v4' },
+    { type: 'path', d: 'M7 15a2 2 0 0 1 2 -2h6a2 2 0 0 1 2 2v4a2 2 0 0 1 -2 2h-6a2 2 0 0 1 -2 -2l0 -4' },
+  ],
+  location: [
+    { type: 'path', d: 'M9 11a3 3 0 1 0 6 0a3 3 0 0 0 -6 0' },
+    { type: 'path', d: 'M17.657 16.657l-4.243 4.243a2 2 0 0 1 -2.827 0l-4.244 -4.243a8 8 0 1 1 11.314 0' },
+  ],
+  lock: [
+    { type: 'path', d: 'M5 13a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2v6a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2v-6' },
+    { type: 'path', d: 'M11 16a1 1 0 1 0 2 0a1 1 0 0 0 -2 0' },
+    { type: 'path', d: 'M8 11v-4a4 4 0 1 1 8 0v4' },
+  ],
+  logout: [
+    { type: 'path', d: 'M14 8v-2a2 2 0 0 0 -2 -2h-7a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h7a2 2 0 0 0 2 -2v-2' },
+    { type: 'path', d: 'M9 12h12l-3 -3' },
+    { type: 'path', d: 'M18 15l3 -3' },
+  ],
+  lot: [
+    { type: 'path', d: 'M12 2l-8 4l8 4l8 -4l-8 -4' },
+    { type: 'path', d: 'M4 10l8 4l8 -4' },
+    { type: 'path', d: 'M4 18l8 4l8 -4' },
+    { type: 'path', d: 'M4 14l8 4l8 -4' },
+  ],
+  menu: [
+    { type: 'path', d: 'M4 6l16 0' },
+    { type: 'path', d: 'M4 12l16 0' },
+    { type: 'path', d: 'M4 18l16 0' },
+  ],
+  minus: [
+    { type: 'path', d: 'M5 12l14 0' },
+  ],
+  moon: [
+    { type: 'path', d: 'M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454l0 .008' },
+  ],
+  more: [
+    { type: 'path', d: 'M11 12a1 1 0 1 0 2 0a1 1 0 1 0 -2 0' },
+    { type: 'path', d: 'M11 19a1 1 0 1 0 2 0a1 1 0 1 0 -2 0' },
+    { type: 'path', d: 'M11 5a1 1 0 1 0 2 0a1 1 0 1 0 -2 0' },
+  ],
+  operator: [
+    { type: 'path', d: 'M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0' },
+    { type: 'path', d: 'M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2' },
+  ],
+  order: [
+    { type: 'path', d: 'M9 5h-2a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-12a2 2 0 0 0 -2 -2h-2' },
+    { type: 'path', d: 'M9 5a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2a2 2 0 0 1 -2 2h-2a2 2 0 0 1 -2 -2' },
+    { type: 'path', d: 'M9 12l.01 0' },
+    { type: 'path', d: 'M13 12l2 0' },
+    { type: 'path', d: 'M9 16l.01 0' },
+    { type: 'path', d: 'M13 16l2 0' },
+  ],
+  package: [
+    { type: 'path', d: 'M12 3l8 4.5l0 9l-8 4.5l-8 -4.5l0 -9l8 -4.5' },
+    { type: 'path', d: 'M12 12l8 -4.5' },
+    { type: 'path', d: 'M12 12l0 9' },
+    { type: 'path', d: 'M12 12l-8 -4.5' },
+    { type: 'path', d: 'M16 5.25l-8 4.5' },
+  ],
+  packages: [
+    { type: 'path', d: 'M7 16.5l-5 -3l5 -3l5 3v5.5l-5 3l0 -5.5' },
+    { type: 'path', d: 'M2 13.5v5.5l5 3' },
+    { type: 'path', d: 'M7 16.545l5 -3.03' },
+    { type: 'path', d: 'M17 16.5l-5 -3l5 -3l5 3v5.5l-5 3l0 -5.5' },
+    { type: 'path', d: 'M12 19l5 3' },
+    { type: 'path', d: 'M17 16.5l5 -3' },
+    { type: 'path', d: 'M12 13.5v-5.5l-5 -3l5 -3l5 3v5.5' },
+    { type: 'path', d: 'M7 5.03v5.455' },
+    { type: 'path', d: 'M12 8l5 -3' },
+  ],
+  pallet: [
+    { type: 'path', d: 'M3 6h18v4h-18l0 -4' },
+    { type: 'path', d: 'M4 10v5h3v-5' },
+    { type: 'path', d: 'M10.5 10v5h3v-5' },
+    { type: 'path', d: 'M17 10v5h3v-5' },
+    { type: 'path', d: 'M3 18h18' },
+  ],
+  plus: [
+    { type: 'path', d: 'M12 5l0 14' },
+    { type: 'path', d: 'M5 12l14 0' },
+  ],
+  'qr-code': [
+    { type: 'path', d: 'M4 5a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1l0 -4' },
+    { type: 'path', d: 'M7 17l0 .01' },
+    { type: 'path', d: 'M14 5a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1l0 -4' },
+    { type: 'path', d: 'M7 7l0 .01' },
+    { type: 'path', d: 'M4 15a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1l0 -4' },
+    { type: 'path', d: 'M17 7l0 .01' },
+    { type: 'path', d: 'M14 14l3 0' },
+    { type: 'path', d: 'M20 14l0 .01' },
+    { type: 'path', d: 'M14 14l0 3' },
+    { type: 'path', d: 'M14 20l3 0' },
+    { type: 'path', d: 'M17 17l3 0' },
+    { type: 'path', d: 'M20 17l0 3' },
+  ],
+  quarantine: [
+    { type: 'path', d: 'M3 12a9 9 0 1 0 18 0a9 9 0 1 0 -18 0' },
+    { type: 'path', d: 'M5.7 5.7l12.6 12.6' },
+  ],
+  refresh: [
+    { type: 'path', d: 'M20 11a8.1 8.1 0 0 0 -15.5 -2m-.5 -4v4h4' },
+    { type: 'path', d: 'M4 13a8.1 8.1 0 0 0 15.5 2m.5 4v-4h-4' },
+  ],
+  return: [
+    { type: 'path', d: 'M5 17a2 2 0 1 0 4 0a2 2 0 1 0 -4 0' },
+    { type: 'path', d: 'M15 17a2 2 0 1 0 4 0a2 2 0 1 0 -4 0' },
+    { type: 'path', d: 'M5 17h-2v-11a1 1 0 0 1 1 -1h9v6h-5l2 2m0 -4l-2 2' },
+    { type: 'path', d: 'M9 17l6 0' },
+    { type: 'path', d: 'M13 6h5l3 5v6h-2' },
+  ],
+  scan: [
+    { type: 'path', d: 'M5 12h14' },
+    { type: 'path', d: 'M3 7v-2a2 2 0 0 1 2 -2h2' },
+    { type: 'path', d: 'M3 17v2a2 2 0 0 0 2 2h2' },
+    { type: 'path', d: 'M17 3h2a2 2 0 0 1 2 2v2' },
+    { type: 'path', d: 'M17 21h2a2 2 0 0 0 2 -2v-2' },
+  ],
+  search: [
+    { type: 'path', d: 'M3 10a7 7 0 1 0 14 0a7 7 0 1 0 -14 0' },
+    { type: 'path', d: 'M21 21l-6 -6' },
+  ],
+  selector: [
+    { type: 'path', d: 'M8 9l4 -4l4 4' },
+    { type: 'path', d: 'M16 15l-4 4l-4 -4' },
+  ],
+  serial: [
+    { type: 'path', d: 'M5 9l14 0' },
+    { type: 'path', d: 'M5 15l14 0' },
+    { type: 'path', d: 'M11 4l-4 16' },
+    { type: 'path', d: 'M17 4l-4 16' },
+  ],
+  settings: [
+    { type: 'path', d: 'M10.325 4.317c.426 -1.756 2.924 -1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543 -.94 3.31 .826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756 .426 1.756 2.924 0 3.35a1.724 1.724 0 0 0 -1.066 2.573c.94 1.543 -.826 3.31 -2.37 2.37a1.724 1.724 0 0 0 -2.572 1.065c-.426 1.756 -2.924 1.756 -3.35 0a1.724 1.724 0 0 0 -2.573 -1.066c-1.543 .94 -3.31 -.826 -2.37 -2.37a1.724 1.724 0 0 0 -1.065 -2.572c-1.756 -.426 -1.756 -2.924 0 -3.35a1.724 1.724 0 0 0 1.066 -2.573c-.94 -1.543 .826 -3.31 2.37 -2.37c1 .608 2.296 .07 2.572 -1.065' },
+    { type: 'path', d: 'M9 12a3 3 0 1 0 6 0a3 3 0 0 0 -6 0' },
+  ],
+  shipment: [
+    { type: 'path', d: 'M5 17a2 2 0 1 0 4 0a2 2 0 1 0 -4 0' },
+    { type: 'path', d: 'M15 17a2 2 0 1 0 4 0a2 2 0 1 0 -4 0' },
+    { type: 'path', d: 'M5 17h-2v-4m-1 -8h11v12m-4 0h6m4 0h2v-6h-8m0 -5h5l3 5' },
+    { type: 'path', d: 'M3 9l4 0' },
+  ],
+  'sidebar-collapse': [
+    { type: 'path', d: 'M4 6a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2l0 -12' },
+    { type: 'path', d: 'M9 4v16' },
+    { type: 'path', d: 'M15 10l-2 2l2 2' },
+  ],
+  'sidebar-expand': [
+    { type: 'path', d: 'M4 6a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2l0 -12' },
+    { type: 'path', d: 'M9 4v16' },
+    { type: 'path', d: 'M14 10l2 2l-2 2' },
+  ],
+  spinner: [
+    { type: 'path', d: 'M12 3a9 9 0 1 0 9 9' },
+  ],
+  sun: [
+    { type: 'path', d: 'M8 12a4 4 0 1 0 8 0a4 4 0 1 0 -8 0' },
+    { type: 'path', d: 'M3 12h1m8 -9v1m8 8h1m-9 8v1m-6.4 -15.4l.7 .7m12.1 -.7l-.7 .7m0 11.4l.7 .7m-12.1 -.7l-.7 .7' },
+  ],
+  temperature: [
+    { type: 'path', d: 'M19 5a2.828 2.828 0 0 1 0 4l-8 8h-4v-4l8 -8a2.828 2.828 0 0 1 4 0' },
+    { type: 'path', d: 'M16 7l-1.5 -1.5' },
+    { type: 'path', d: 'M13 10l-1.5 -1.5' },
+    { type: 'path', d: 'M10 13l-1.5 -1.5' },
+    { type: 'path', d: 'M7 17l-3 3' },
+  ],
+  transfer: [
+    { type: 'path', d: 'M7 10h14l-4 -4' },
+    { type: 'path', d: 'M17 14h-14l4 4' },
+  ],
+  trash: [
+    { type: 'path', d: 'M4 7l16 0' },
+    { type: 'path', d: 'M10 11l0 6' },
+    { type: 'path', d: 'M14 11l0 6' },
+    { type: 'path', d: 'M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12' },
+    { type: 'path', d: 'M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3' },
+  ],
+  upload: [
+    { type: 'path', d: 'M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2' },
+    { type: 'path', d: 'M7 9l5 -5l5 5' },
+    { type: 'path', d: 'M12 4l0 12' },
+  ],
+  warehouse: [
+    { type: 'path', d: 'M3 21v-13l9 -4l9 4v13' },
+    { type: 'path', d: 'M13 13h4v8h-10v-6h6' },
+    { type: 'path', d: 'M13 21v-9a1 1 0 0 0 -1 -1h-2a1 1 0 0 0 -1 1v3' },
+  ],
+  weight: [
+    { type: 'path', d: 'M9 6a3 3 0 1 0 6 0a3 3 0 1 0 -6 0' },
+    { type: 'path', d: 'M6.835 9h10.33a1 1 0 0 1 .984 .821l1.637 9a1 1 0 0 1 -.984 1.179h-13.604a1 1 0 0 1 -.984 -1.179l1.637 -9a1 1 0 0 1 .984 -.821' },
+  ],
+  world: [
+    { type: 'path', d: 'M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0' },
+    { type: 'path', d: 'M3.6 9h16.8' },
+    { type: 'path', d: 'M3.6 15h16.8' },
+    { type: 'path', d: 'M11.5 3a17 17 0 0 0 0 18' },
+    { type: 'path', d: 'M12.5 3a17 17 0 0 1 0 18' },
+  ],
+  x: [
+    { type: 'path', d: 'M18 6l-12 12' },
+    { type: 'path', d: 'M6 6l12 12' },
+  ],
+} as const satisfies Record<string, readonly IconPrimitive[]>;
+
+/** Every icon that exists. A name outside this union is a compile error. */
+export type IconName = keyof typeof DATA;
+
+export const ICONS: Readonly<Record<IconName, readonly IconPrimitive[]>> = DATA;
+
+export type IconCategory = 'domain' | 'interface';
+
+/** Manifest grouping, names sorted. Used by the showroom catalogue. */
+export const ICON_CATEGORIES: Readonly<Record<IconCategory, readonly IconName[]>> = {
+  domain: [
+    'barcode',
+    'crew',
+    'cycle-count',
+    'dock',
+    'forklift',
+    'inventory',
+    'label-print',
+    'location',
+    'lot',
+    'operator',
+    'order',
+    'package',
+    'packages',
+    'pallet',
+    'qr-code',
+    'quarantine',
+    'return',
+    'scan',
+    'serial',
+    'shipment',
+    'temperature',
+    'transfer',
+    'warehouse',
+    'weight',
+  ],
+  interface: [
+    'alert-triangle',
+    'arrow-left',
+    'arrow-right',
+    'arrows-sort',
+    'bell',
+    'calendar',
+    'check',
+    'chevron-down',
+    'chevron-left',
+    'chevron-right',
+    'chevron-up',
+    'circle-check',
+    'circle-x',
+    'clock',
+    'controls',
+    'copy',
+    'dashboard',
+    'download',
+    'edit',
+    'external-link',
+    'eye',
+    'eye-off',
+    'file-text',
+    'filter',
+    'help-circle',
+    'home',
+    'info-circle',
+    'lock',
+    'logout',
+    'menu',
+    'minus',
+    'moon',
+    'more',
+    'plus',
+    'refresh',
+    'search',
+    'selector',
+    'settings',
+    'sidebar-collapse',
+    'sidebar-expand',
+    'spinner',
+    'sun',
+    'trash',
+    'upload',
+    'world',
+    'x',
+  ],
+};
