@@ -1,0 +1,90 @@
+<!-- The showroom is Spanish only, exempt from i18n (gate 12): declared so a screen reader never reads it as English. -->
+<article class="flex flex-col gap-10 p-8" lang="es">
+  <header class="flex flex-col gap-2">
+    <h1 class="text-h1">Iconografía</h1>
+    <p class="text-secondary">
+      Tabler outline (MIT), grid de 24×24 con trazo 2, más los iconos de dominio propios dibujados
+      sobre la misma grilla. Todos pasan por <code class="font-mono">&lt;ewms-icon&gt;</code> y
+      heredan el color del contenedor.
+    </p>
+  </header>
+
+  <aside class="flex flex-col gap-2 rounded-md border border-strong bg-secondary p-4">
+    <h2 class="text-h4">El catálogo es cerrado</h2>
+    <p>
+      Solo existen los {{ total }} iconos de abajo, y un nombre fuera de la lista no compila. Agregar
+      uno es editar <code class="font-mono">icons.manifest.json</code> y correr
+      <code class="font-mono">npm run icons:build</code>, en un PR. Nunca se pega un
+      <code class="font-mono">&lt;svg&gt;</code> en una plantilla: la compuerta 11 de CI lo bloquea.
+    </p>
+  </aside>
+
+  <section class="flex flex-col gap-4" aria-labelledby="iconography-sizes">
+    <h2 id="iconography-sizes" class="text-h2">Tamaños y compensación de trazo</h2>
+    <p class="text-secondary">
+      El trazo baja a medida que el icono crece, para que el grosor visible se mantenga parejo junto
+      al texto. Valores leídos en vivo de <code class="font-mono">tokens.css</code>.
+    </p>
+    <ul class="flex flex-wrap items-end gap-10">
+      @for (sample of sizes(); track sample.size) {
+        <li class="flex flex-col items-center gap-2" [attr.data-icon-size]="sample.size">
+          <ewms-icon name="pallet" [size]="sample.size" />
+          <span class="text-caption text-secondary">
+            {{ sample.size }} · {{ sample.width }} · trazo {{ sample.stroke }}
+          </span>
+        </li>
+      }
+    </ul>
+  </section>
+
+  <section class="flex flex-col gap-4" aria-labelledby="iconography-grounds">
+    <h2 id="iconography-grounds" class="text-h2">Sobre fondo claro y sobre navy</h2>
+    <p class="text-secondary">
+      En la barra superior los iconos van invertidos. El icono no cambia: cambia el color del
+      contenedor.
+    </p>
+    <div class="grid grid-cols-[repeat(auto-fit,minmax(18rem,1fr))] gap-4">
+      <ul class="flex flex-wrap items-center gap-6 rounded-md bg-secondary p-6 text-primary">
+        @for (name of topBar; track name) {
+          <li><ewms-icon [name]="name" size="lg" /></li>
+        }
+      </ul>
+      <ul class="flex flex-wrap items-center gap-6 rounded-md bg-brand-navy p-6 text-on-dark">
+        @for (name of topBar; track name) {
+          <li><ewms-icon [name]="name" size="lg" /></li>
+        }
+      </ul>
+    </div>
+  </section>
+
+  @for (group of groups; track group.id) {
+    <section class="flex flex-col gap-4" [attr.aria-labelledby]="'iconography-' + group.id">
+      <h2 [id]="'iconography-' + group.id" class="text-h2">
+        {{ group.title }} <span class="text-secondary">({{ group.names.length }})</span>
+      </h2>
+      <ul class="grid grid-cols-[repeat(auto-fill,minmax(8rem,1fr))] gap-2">
+        @for (name of group.names; track name) {
+          <li>
+            <button
+              type="button"
+              class="flex w-full flex-col items-center gap-2 rounded-md p-4 text-primary hover:bg-ghost-hover focus-visible:outline-2 focus-visible:outline-focus"
+              [attr.data-icon-name]="name"
+              (click)="copy(name)"
+            >
+              <ewms-icon [name]="name" size="xl" />
+              <span class="text-caption font-mono">
+                <span class="sr-only">Copiar nombre </span>{{ name }}
+              </span>
+            </button>
+          </li>
+        }
+      </ul>
+    </section>
+  }
+
+  <p class="text-caption text-secondary" role="status">
+    @if (copied(); as name) {
+      Copiado: <code class="font-mono">{{ name }}</code>
+    }
+  </p>
+</article>

@@ -1,9 +1,10 @@
 <div class="app-layout">
   <header class="app-layout__header">
     <nav>
-      <a routerLink="/">Inicio</a>
-      <a routerLink="/design-system">Sistema de diseno</a>
+      <a routerLink="/">{{ 'shell.nav.home' | transloco }}</a>
+      <a routerLink="/design-system">{{ 'shell.nav.designSystem' | transloco }}</a>
     </nav>
+    <app-language-switcher />
   </header>
   <main class="app-layout__content">
     <router-outlet />

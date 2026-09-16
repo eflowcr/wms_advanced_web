@@ -1,2 +1,24 @@
-<h1>eWMS Advance</h1>
-<p>Scaffold de la Fase 0. Las pantallas del producto llegan mas adelante.</p>
+<h1>{{ brandName }}</h1>
+<p>{{ 'shell.home.intro' | transloco }}</p>
+
+<!-- PROVISIONAL: one working example of each i18n case until real screens exist (i18n.md). -->
+<section aria-labelledby="home-samples">
+  <h2 id="home-samples">{{ 'shell.home.samples.title' | transloco }}</h2>
+  <ul>
+    @for (count of unitCounts; track count) {
+      <li data-sample="plural">{{ 'shell.home.samples.unitsFound' | transloco: { count } }}</li>
+    }
+    <li data-sample="date">
+      {{ 'shell.home.samples.today' | transloco: { date: (today | translocoDate: { dateStyle: 'long' }) } }}
+    </li>
+    <li data-sample="number">
+      {{ 'shell.home.samples.netWeight' | transloco: { weight: (netWeightKg | translocoDecimal) } }}
+    </li>
+    <li data-sample="currency">
+      {{
+        'shell.home.samples.amount'
+          | transloco: { amount: (amount | translocoCurrency: 'symbol' : {} : amountCurrency) }
+      }}
+    </li>
+  </ul>
+</section>

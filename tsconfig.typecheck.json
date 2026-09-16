@@ -5,5 +5,5 @@
     "types": ["node"]
   },
   "include": ["projects/**/*.ts", "e2e/**/*.ts"],
-  "exclude": ["**/*.spec.ts"]
+  "exclude": ["**/*.spec.ts", "**/*.testing.ts"]
 }

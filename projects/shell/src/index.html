@@ -1,13 +1,80 @@
 <!doctype html>
-<html lang="en">
+<!--
+  lang="es" is the default language (ADR 0008). LanguageService rewrites it at
+  startup and on every switch, before the first render.
+-->
+<html lang="es">
   <head>
     <meta charset="utf-8" />
-    <title>Shell</title>
+    <!--
+      Content Security Policy -- PLN-WMS-003 §4. Strict: no 'unsafe-inline', no
+      'unsafe-eval', and every fetch directive is 'self'.
+
+      font-src 'self' is why Montserrat is self-hosted (styles.css, public/fonts).
+
+      No inline <style>, <script>, style="" or on*="" in this page: the CSP
+      blocks them silently. tools/ci/host-page.test.mjs fails if one appears.
+
+      Kept first in <head> so it governs every resource that follows it.
+
+      Delivered as <meta> until a server exists. frame-ancestors, report-to
+      and sandbox are ignored in <meta> by specification, so clickjacking
+      protection (frame-ancestors 'none') must arrive as an HTTP header from
+      the server that serves this file.
+    -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self'; connect-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'"
+    />
+    <title>eWMS Advance</title>
     <base href="/" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <link rel="icon" type="image/x-icon" href="favicon.ico" />
+    <link rel="icon" href="favicon.ico" sizes="16x16" />
+    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <!-- Body text is Spanish, so the latin subset is always needed; preloading it avoids the swap flash. -->
+    <link
+      rel="preload"
+      href="fonts/montserrat-latin-wght-normal.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <!-- Styles of the startup-failure notice below. Not in the bundle on purpose: see the file. -->
+    <link rel="stylesheet" href="startup-failure.css" />
   </head>
   <body>
     <app-root></app-root>
+    <!--
+      STARTUP-FAILURE NOTICE -- case B of i18n.md, "Cuando el diccionario no carga".
+
+      Shown by main.ts only when startup could not load any dictionary. The
+      i18n system is exactly what failed, so this text cannot come from it: it
+      is written by hand, in Spanish and in English at once, because what knows
+      which language the reader speaks is what failed. Each line carries its
+      own lang, so a screen reader pronounces it as what it is.
+
+      Gate 12 exempts host pages. This is the only hand-written interface text
+      in the project, and the reason it is allowed.
+    -->
+    <div id="startup-failure" class="startup-failure" hidden>
+      <main class="startup-failure__panel">
+        <h1 class="startup-failure__brand">eWMS Advance</h1>
+        <div role="alert">
+          <p class="startup-failure__message" lang="es">
+            No se pudo cargar el idioma de la interfaz. Vuelva a intentarlo; si el problema
+            continúa, avise a soporte.
+          </p>
+          <p class="startup-failure__message" lang="en">
+            The interface language could not be loaded. Please try again; if the problem
+            continues, contact support.
+          </p>
+        </div>
+        <button type="button" class="startup-failure__retry">
+          <span lang="es">Reintentar</span> / <span lang="en">Try again</span>
+        </button>
+      </main>
+    </div>
   </body>
 </html>

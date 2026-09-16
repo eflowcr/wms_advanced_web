@@ -20,13 +20,13 @@ export default defineConfig({
         '**/main.ts',
         'e2e/**',
       ],
-      // DECIDIDO (Fase 0): los umbrales quedan en 0 a proposito. No es un TODO
+      // DECIDIDO (DS-0): los umbrales quedan en 0 a proposito. No es un TODO
       // pendiente de numero, es la decision.
       //
       // Con dos pruebas triviales, cualquier umbral seria teatro: fijar 80% hoy
       // no mide nada y solo invita a escribir pruebas de relleno para alcanzarlo.
       //
-      // Se fijan en la Fase 2, cuando el design system tenga pruebas de verdad.
+      // Se fijan en la fase DS-2, cuando el design system tenga pruebas de verdad.
       // El valor se toma de la cobertura MEDIDA en ese momento, no de una cifra
       // aspiracional. Desde ahi el umbral solo puede subir, nunca bajar: si un
       // cambio lo hace bajar, se arregla el cambio, no el umbral.

@@ -1,0 +1,28 @@
+{
+  "common": {
+    "languages": {
+      "en": "English",
+      "es": "Español"
+    }
+  },
+  "shell": {
+    "home": {
+      "intro": "DS-0 phase scaffold. The product screens arrive later.",
+      "samples": {
+        "amount": "Amount: {{ amount }}",
+        "netWeight": "Net weight: {{ weight }} kg",
+        "title": "Language and regional format samples",
+        "today": "Today is {{ date }}",
+        "unitsFound": "{count, plural, =0 {No packages} one {# package} other {# packages}}"
+      }
+    },
+    "languageSwitcher": {
+      "label": "Language",
+      "unavailable": "The selected language could not be loaded. The interface stays in English; please try again later."
+    },
+    "nav": {
+      "designSystem": "Design system",
+      "home": "Home"
+    }
+  }
+}

@@ -1,0 +1,60 @@
+name: CodeQL
+
+# SAST for TypeScript -- PLN-WMS-003 §8 requires static security analysis as a
+# CI gate. The repository is public, so CodeQL code scanning costs nothing.
+#
+# This workflow uploads findings to GitHub code scanning. What makes it BLOCK a
+# merge is the repository ruleset "Require code scanning results" on main and
+# development (CodeQL, severity "high or higher" / security alerts "high or
+# higher"). That rule lives in the repository settings, not in this file.
+
+on:
+  push:
+    branches: [main, development]
+  pull_request:
+    branches: [main, development]
+  schedule:
+    # Weekly, so new queries run against code that has not changed.
+    - cron: '27 6 * * 1'
+
+concurrency:
+  group: codeql-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  analyze:
+    name: Analyze (${{ matrix.language }})
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    strategy:
+      fail-fast: false
+      matrix:
+        # actions: the workflows themselves are attack surface (injection
+        # through untrusted event data, over-broad tokens).
+        language: [javascript-typescript, actions]
+    steps:
+      - uses: actions/checkout@v5
+
+      # No build step: CodeQL extracts JavaScript/TypeScript and workflow files
+      # straight from source.
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v4
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: none
+          queries: security-extended
+          config: |
+            paths-ignore:
+              - node_modules
+              - dist
+              - coverage
+
+      - name: Perform CodeQL analysis
+        uses: github/codeql-action/analyze@v4
+        with:
+          category: '/language:${{ matrix.language }}'

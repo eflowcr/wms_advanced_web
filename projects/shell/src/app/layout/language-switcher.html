@@ -1,0 +1,10 @@
+<label for="language-switcher">{{ 'shell.languageSwitcher.label' | transloco }}</label>
+<select #control id="language-switcher" (change)="select($event)">
+  @for (option of language.languages; track option) {
+    <option [value]="option" [attr.lang]="option">{{ labels[option] | transloco }}</option>
+  }
+</select>
+@if (language.unavailable()) {
+  <!-- PROVISIONAL notice, like the switcher itself: replaced by Notificaciones (i18n.md). -->
+  <p role="alert">{{ 'shell.languageSwitcher.unavailable' | transloco }}</p>
+}

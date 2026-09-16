@@ -1,4 +1,5 @@
 import { Component } from '@angular/core';
+import { RouterLink } from '@angular/router';
 
 /**
  * Landing page of the internal showroom.
@@ -8,6 +9,7 @@ import { Component } from '@angular/core';
  */
 @Component({
   selector: 'ewms-showroom-home',
+  imports: [RouterLink],
   templateUrl: './showroom-home.html',
 })
 export class ShowroomHome {}

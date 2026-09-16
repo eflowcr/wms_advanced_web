@@ -3,7 +3,10 @@
  *
  * This is the ONLY legal entry point into this library. Nothing outside it may
  * reach into src/lib/** directly -- see the boundary rules in eslint.config.js.
- *
- * Intentionally empty in Fase 0. Content arrives in later phases.
  */
-export {};
+export { Icon, type IconSize } from './lib/icon/icon';
+export {
+  ICON_CATEGORIES,
+  type IconCategory,
+  type IconName,
+} from './icons/icons.generated';

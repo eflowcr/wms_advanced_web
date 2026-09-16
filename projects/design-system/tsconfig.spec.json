@@ -4,7 +4,9 @@
   "extends": "../../tsconfig.json",
   "compilerOptions": {
     "outDir": "../../out-tsc/spec",
-    "types": ["vitest/globals"]
+    "types": ["vitest/globals"],
+    // icon.spec.ts reads icons.manifest.json to compare it with the generated table.
+    "resolveJsonModule": true
   },
   "include": ["src/**/*.d.ts", "src/**/*.spec.ts"]
 }
