@@ -22,9 +22,24 @@ import { fileURLToPath } from 'node:url';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const HOST_PAGE = 'projects/shell/src/index.html';
 
+export function stripHtmlComments(input) {
+  let previous;
+  let current = input;
+  do {
+    previous = current;
+    current = current.replace(/<!--[\s\S]*?-->/g, '');
+  } while (current !== previous);
+  return current;
+}
+
 // Comments dropped, as the browser does: they mention <style> and CSP too.
-const html = (await readFile(path.join(ROOT, HOST_PAGE), 'utf8')).replace(/<!--[\s\S]*?-->/g, '');
+const html = stripHtmlComments(await readFile(path.join(ROOT, HOST_PAGE), 'utf8'));
 const csp = /<meta\s+http-equiv="Content-Security-Policy"\s+content="([^"]*)"/i.exec(html)?.[1];
+
+test('strips nested HTML comments until no opener remains', () => {
+  const stripped = stripHtmlComments('<!-- a <!-- b --> c -->');
+  assert.doesNotMatch(stripped, /<!--/);
+});
 
 test('the CSP stays strict: no unsafe-inline, no unsafe-eval, no hash, no nonce', () => {
   assert.ok(csp, `${HOST_PAGE} has no Content-Security-Policy <meta>`);

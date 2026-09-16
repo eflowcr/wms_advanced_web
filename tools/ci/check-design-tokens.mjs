@@ -39,7 +39,8 @@
  */
 import { readdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+import { parseTemplate, TmplAstRecursiveVisitor, tmplAstVisitAll } from '@angular/compiler';
 import { compile } from 'tailwindcss';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -126,10 +127,10 @@ async function utilityProbe(css, base) {
 
 /**
  * The parts of a file where a class name can live, with their offsets:
- * attributes of HTML tags (names too, for `[class.foo]`), string literals in
- * TypeScript (inline templates, host bindings, class lists) and `@apply` in
- * CSS. Prose and comments stay out, so a word like "shadow" in a sentence is
- * never mistaken for the utility.
+ * attributes and inputs in Angular HTML, string literals in TypeScript
+ * (inline templates, host bindings, class lists) and `@apply` in CSS. Prose
+ * and comments stay out, so a word like "shadow" in a sentence is never
+ * mistaken for the utility.
  */
 function classSegments(content, extension) {
   const segments = [];
@@ -144,14 +145,52 @@ function classSegments(content, extension) {
   if (extension === '.css') {
     collect(/@apply\s+([^;}]+)/g, 1);
   } else if (extension === '.html') {
-    collect(
-      /<[a-zA-Z][^\s>/]*((?:\s+[^\s"'>/=]+(?:\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+))?)*)\s*\/?>/g,
-      1,
-    );
+    const parsed = parseTemplate(content, 'design-tokens.html', { preserveWhitespaces: false });
+    classSegmentsFromNodes(parsed.nodes, segments);
   } else {
     collect(/'(?:\\.|[^'\\\n])*'|"(?:\\.|[^"\\\n])*"|`(?:\\.|[^`\\])*`/g);
   }
   return segments;
+}
+
+class ClassSegmentVisitor extends TmplAstRecursiveVisitor {
+  constructor(segments) {
+    super();
+    this.segments = segments;
+  }
+
+  add(value, source) {
+    if (typeof value === 'string' && value) {
+      this.segments.push({ text: value, offset: source?.start.offset ?? 0 });
+    }
+  }
+
+  visitElement(element) {
+    if (element.name === 'code' || element.name === 'pre') return;
+    this.visitAttributes(element);
+    super.visitElement(element);
+  }
+
+  visitTemplate(template) {
+    this.visitAttributes(template);
+    super.visitTemplate(template);
+  }
+
+  visitAttributes(node) {
+    for (const attribute of node.attributes ?? []) {
+      this.add(attribute.value, attribute.valueSpan);
+    }
+    for (const input of node.inputs ?? []) {
+      if (input.keySpan?.details?.startsWith('class.')) {
+        this.add(input.name, input.keySpan);
+      }
+      this.add(input.value?.source, input.value?.sourceSpan);
+    }
+  }
+}
+
+function classSegmentsFromNodes(nodes, segments) {
+  tmplAstVisitAll(new ClassSegmentVisitor(segments), nodes);
 }
 
 /**
@@ -167,6 +206,10 @@ function candidates(content, extension) {
     );
   }
   return found;
+}
+
+export function classCandidates(content, extension) {
+  return candidates(content, extension).map(({ token }) => token);
 }
 
 function tokens(text) {
@@ -197,6 +240,21 @@ function tokens(text) {
   return found;
 }
 
+export function rawValueMatches(content) {
+  return RAW_VALUES.flatMap(({ pattern, label }) =>
+    [...content.matchAll(pattern)].map((match) => ({ value: match[0], label, index: match.index })),
+  );
+}
+
+const ANY_TOKEN = /(?<![\w-])--[\w-]+(?![\w-])/g;
+
+export function primitiveTokenMatches(content, primitiveNames) {
+  const names = new Set(primitiveNames);
+  return [...content.matchAll(ANY_TOKEN)]
+    .filter((match) => names.has(match[0]))
+    .map((match) => ({ value: match[0], index: match.index }));
+}
+
 // ------------------------------------------------------------------ gate
 
 async function main() {
@@ -211,9 +269,6 @@ async function main() {
   if (primitives.length === 0) {
     throw new Error(`No primitive tokens found in ${TOKENS_FILE}; the gate would be vacuous.`);
   }
-  const escaped = primitives.map((name) => name.replace(/[-]/g, '\\-'));
-  const primitivePattern = new RegExp(`(?<![\\w-])(?:${escaped.join('|')})(?![\\w-])`, 'g');
-
   const entry = path.join(ROOT, TAILWIND_ENTRY);
   const isStock = await utilityProbe(`@import 'tailwindcss';`, ROOT);
   const isOurs = await utilityProbe(await readFile(entry, 'utf8'), path.dirname(entry));
@@ -236,30 +291,29 @@ async function main() {
   for (const file of files) {
     const content = await readFile(path.join(ROOT, file), 'utf8');
 
-    for (const { pattern, label, comparable } of RAW_VALUES) {
-      for (const match of content.matchAll(pattern)) {
-        if (
-          TOKEN_VALUES_ONLY.has(file) &&
-          comparable &&
-          primitiveValues.has(match[0].toLowerCase())
-        ) {
-          continue;
-        }
-        report(
-          file,
-          content,
-          match.index,
-          `raw ${label} \`${match[0]}\`. Use a semantic token from tokens.css; if it is missing, add it there first.`,
-        );
+    for (const match of rawValueMatches(content)) {
+      const comparable = RAW_VALUES.find(({ label }) => label === match.label).comparable;
+      if (
+        TOKEN_VALUES_ONLY.has(file) &&
+        comparable &&
+        primitiveValues.has(match.value.toLowerCase())
+      ) {
+        continue;
       }
-    }
-
-    for (const match of content.matchAll(primitivePattern)) {
       report(
         file,
         content,
         match.index,
-        `primitive token \`${match[0]}\` used outside tokens.css. Consume the semantic token that aliases it.`,
+        `raw ${match.label} \`${match.value}\`. Use a semantic token from tokens.css; if it is missing, add it there first.`,
+      );
+    }
+
+    for (const match of primitiveTokenMatches(content, primitives)) {
+      report(
+        file,
+        content,
+        match.index,
+        `primitive token \`${match.value}\` used outside tokens.css. Consume the semantic token that aliases it.`,
       );
     }
 
@@ -298,7 +352,9 @@ async function main() {
   process.exitCode = 1;
 }
 
-main().catch((error) => {
-  console.error(error);
-  process.exitCode = 1;
-});
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  main().catch((error) => {
+    console.error(error);
+    process.exitCode = 1;
+  });
+}
