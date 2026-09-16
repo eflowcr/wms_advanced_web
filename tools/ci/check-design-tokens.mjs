@@ -23,8 +23,17 @@
  *      re-branding (ADR 0007). A primitive is any token in tokens.css whose
  *      value contains no var().
  *
- * The single exception is tokens.css: the one file where raw values are the
- * point. It is excluded by exact path, nothing else is.
+ * The exception is tokens.css: the one file where raw values are the point.
+ * It is excluded by exact path, nothing else is.
+ *
+ * One narrower allowance, also by exact path: the stylesheet of the
+ * startup-failure notice (projects/shell/public/startup-failure.css). The
+ * notice must render when the app did not start, so it cannot read
+ * tokens.css and carries raw values. It may carry ONLY values tokens.css
+ * defines as a primitive: a hex or pixel value that is not in tokens.css
+ * still fails, so the notice cannot drift away from the brand. Colour
+ * functions and every other check apply as usual (i18n.md, "Cuando el
+ * diccionario no carga").
  *
  * Run locally with `npm run lint:tokens`.
  */
@@ -38,6 +47,7 @@ const SCAN_DIR = 'projects';
 const EXTENSIONS = new Set(['.css', '.html', '.ts']);
 const TOKENS_FILE = 'projects/design-system/src/styles/tokens.css';
 const TAILWIND_ENTRY = 'projects/shell/src/styles.css';
+const TOKEN_VALUES_ONLY = new Set(['projects/shell/public/startup-failure.css']);
 
 const RAW_VALUES = [
   {
@@ -45,15 +55,18 @@ const RAW_VALUES = [
     // identifiers such as `a#fff` out.
     pattern: /(?<![\w&#])#(?:[0-9a-f]{8}|[0-9a-f]{6}|[0-9a-f]{3,4})(?![\w-])/gi,
     label: 'hex colour',
+    comparable: true,
   },
   {
     pattern: /(?<![\w-])(?:rgba?|hsla?|hwb|lab|lch|oklab|oklch)\s*\(/gi,
     label: 'colour function',
+    comparable: false,
   },
   {
     // The sign is not part of the match, so `-4px` is caught through `4px`.
     pattern: /(?<![\w.])\d*\.?\d+px(?![\w-])/gi,
     label: 'pixel value',
+    comparable: true,
   },
 ];
 
@@ -188,9 +201,13 @@ function tokens(text) {
 
 async function main() {
   const tokensCss = await readFile(path.join(ROOT, TOKENS_FILE), 'utf8');
-  const primitives = [...tokensCss.matchAll(/(--[\w-]+)\s*:\s*([^;]+);/g)]
-    .filter(([, , value]) => !value.includes('var('))
-    .map(([, name]) => name);
+  const primitiveDeclarations = [...tokensCss.matchAll(/(--[\w-]+)\s*:\s*([^;]+);/g)].filter(
+    ([, , value]) => !value.includes('var('),
+  );
+  const primitives = primitiveDeclarations.map(([, name]) => name);
+  const primitiveValues = new Set(
+    primitiveDeclarations.map(([, , value]) => value.trim().toLowerCase()),
+  );
   if (primitives.length === 0) {
     throw new Error(`No primitive tokens found in ${TOKENS_FILE}; the gate would be vacuous.`);
   }
@@ -219,8 +236,15 @@ async function main() {
   for (const file of files) {
     const content = await readFile(path.join(ROOT, file), 'utf8');
 
-    for (const { pattern, label } of RAW_VALUES) {
+    for (const { pattern, label, comparable } of RAW_VALUES) {
       for (const match of content.matchAll(pattern)) {
+        if (
+          TOKEN_VALUES_ONLY.has(file) &&
+          comparable &&
+          primitiveValues.has(match[0].toLowerCase())
+        ) {
+          continue;
+        }
         report(
           file,
           content,
@@ -254,7 +278,10 @@ async function main() {
   }
 
   if (violations.length === 0) {
-    console.log(`Design tokens: ${files.length} files clean (tokens.css excluded).`);
+    console.log(
+      `Design tokens: ${files.length} files clean (tokens.css excluded; ` +
+        `limited to tokens.css values: ${[...TOKEN_VALUES_ONLY].join(', ')}).`,
+    );
     return;
   }
 

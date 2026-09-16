@@ -17,7 +17,7 @@ const angular = require('angular-eslint');
  *   -------------  -----------------------------  -------------------------
  *   shell          everything                     -
  *   showroom       design-system, shared          core, api-client, domains
- *   design-system  shared                         core, api-client, domains
+ *   design-system  shared                         core, api-client, domains, @jsverse/*
  *   core           shared, api-client             design-system, domains
  *   shared         nothing from the project       everything
  *   api-client     nothing from the project       everything
@@ -56,7 +56,21 @@ const COMPONENT_STYLES_MESSAGE =
   "Estila con utilidades de Tailwind, y el host con `host: { class: '...' }`. " +
   'Si falta una utilidad, agregá el token — no abras una hoja de estilos.';
 
-function restrict(project, forbidden, allowedText) {
+/**
+ * The design system speaks no language (ADR 0008). Every visible text reaches
+ * a component as an input, already translated by the consumer, exactly like
+ * the `label` of ewms-icon (ADR 0011). A component that imports the
+ * translation library forces its dictionary to load before a button can be
+ * drawn, and ties the presentation library to this app.
+ */
+const NO_TRANSLATION_LIBRARY = {
+  group: ['@jsverse/*'],
+  message:
+    '@ewms/design-system speaks no language (ADR 0008): no Transloco here. ' +
+    'Receive the text as an input, already translated by the consumer.',
+};
+
+function restrict(project, forbidden, allowedText, extraPatterns) {
   return [
     'error',
     {
@@ -67,6 +81,7 @@ function restrict(project, forbidden, allowedText) {
             `Boundary violation: @ewms/${project} may only import ${allowedText}. ` +
             'If this dependency is genuinely needed, the architecture changes first, not this import.',
         },
+        ...extraPatterns,
       ],
     },
   ];
@@ -85,7 +100,7 @@ function restrict(project, forbidden, allowedText) {
  * door into the architecture -- what a spec is allowed to import is what the
  * code under test will eventually be written against.
  */
-function boundary(project, forbidden, allowed) {
+function boundary(project, forbidden, allowed, extraPatterns = []) {
   const allowedText = allowed.length ? allowed.join(', ') : 'nothing from this workspace';
   const inSpecs = forbidden
     .flatMap((pattern) => (pattern === '@ewms/*' ? LIBS : [pattern]))
@@ -95,7 +110,12 @@ function boundary(project, forbidden, allowed) {
     {
       files: [`projects/${project}/**/*.ts`],
       rules: {
-        '@typescript-eslint/no-restricted-imports': restrict(project, forbidden, allowedText),
+        '@typescript-eslint/no-restricted-imports': restrict(
+          project,
+          forbidden,
+          allowedText,
+          extraPatterns,
+        ),
       },
     },
     {
@@ -105,6 +125,7 @@ function boundary(project, forbidden, allowed) {
           project,
           inSpecs,
           `${allowedText}, plus @ewms/testing in specs`,
+          extraPatterns,
         ),
       },
     },
@@ -264,6 +285,7 @@ module.exports = tseslint.config(
     'design-system',
     ['@ewms/core', '@ewms/api-client', '@ewms/showroom', '@ewms/testing', ...DOMAINS],
     ['@ewms/shared'],
+    [NO_TRANSLATION_LIBRARY],
   ),
   ...boundary(
     'showroom',

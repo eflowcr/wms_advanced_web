@@ -3,7 +3,9 @@
 {
   "extends": "../../tsconfig.json",
   "compilerOptions": {
-    "types": ["vitest/globals"]
+    "types": ["vitest/globals"],
+    // Specs read the real dictionaries in public/i18n.
+    "resolveJsonModule": true
   },
   "include": ["src/**/*.d.ts", "src/**/*.spec.ts"]
 }

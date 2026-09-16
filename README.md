@@ -1,6 +1,6 @@
 # eWMS Advance — frontend
 
-Angular workspace for the eWMS Advance WMS. This repository holds the **Fase 0
+Angular workspace for the eWMS Advance WMS. This repository holds the **DS-0
 scaffold**: the workspace, the empty libraries with their boundaries, and every
 CI gate wired and blocking. It ships no product screens yet.
 
@@ -39,7 +39,7 @@ npm start        # http://localhost:4200
 ```
 projects/
   shell/            the application (app + layout/ + pages/)
-  design-system/    @ewms/design-system   primitives and tokens (Fase 1-2)
+  design-system/    @ewms/design-system   primitives and tokens (DS-1, DS-2)
   showroom/         @ewms/showroom        internal route /design-system, not Storybook
   core/             @ewms/core            cross-cutting runtime concerns
   shared/           @ewms/shared          leaf utilities, depends on nothing
@@ -56,7 +56,7 @@ by hand, in a pull request, like any other code. Nothing generates it and
 nothing syncs it.
 
 **No component may contain a raw design value.** If a token is missing, it gets
-added to `tokens.css` first — never inlined into a component "for now". Fase 1
+added to `tokens.css` first — never inlined into a component "for now". DS-1
 fills the file and adds the CI gate that fails a build containing raw values.
 
 Figma is archived design reference, not a live dependency. Where Figma and this

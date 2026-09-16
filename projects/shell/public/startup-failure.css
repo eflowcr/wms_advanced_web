@@ -1,0 +1,71 @@
+/*
+ * STARTUP-FAILURE NOTICE -- the one exception to "every style comes from the
+ * bundle and every value from tokens.css".
+ *
+ * The notice in index.html shows when the app could not start (i18n.md,
+ * "Cuando el diccionario no carga", case B), so it cannot depend on anything
+ * the app builds: not the bundle CSS, not tokens.css. Hence a static file,
+ * copied as is, with raw values.
+ *
+ * Why a file and not a <style> in index.html:
+ *   - the CSP (style-src 'self') blocks inline <style>;
+ *   - allowing it by hash does not hold: the dev server rewrites inline
+ *     styles (it appends a source map), so the hash never matches there.
+ *
+ * Raw values, but only values tokens.css defines as primitives; gate 10
+ * checks it, so the notice cannot drift from the brand:
+ *   #010f42 navy-7 (text)          #f6f7f8 navy-97 (canvas, text on blue)
+ *   #4465ec blue-48 (action, focus) #3a56c9 blue-41 (action hover)
+ * The family is the stack of the sans token, so it still reads when the font
+ * did not load either.
+ *
+ * If this file is missing too (a deploy without public/), the notice still
+ * shows, unstyled: `hidden` and the text are HTML, not CSS.
+ */
+.startup-failure:not([hidden]) {
+  display: flex;
+  justify-content: center;
+  padding: 32px 24px;
+  background-color: #f6f7f8;
+  color: #010f42;
+  font-family: 'Montserrat', ui-sans-serif, system-ui, sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.startup-failure__panel {
+  max-width: 60ch;
+}
+
+.startup-failure__brand {
+  margin: 0 0 24px;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.startup-failure__message {
+  margin: 0 0 12px;
+}
+
+.startup-failure__retry {
+  margin-top: 12px;
+  padding: 12px 16px;
+  border: 0;
+  border-radius: 6px;
+  background-color: #4465ec;
+  color: #f6f7f8;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.startup-failure__retry:hover {
+  background-color: #3a56c9;
+}
+
+.startup-failure__retry:focus-visible {
+  outline: 4px solid #4465ec;
+  outline-offset: 4px;
+}

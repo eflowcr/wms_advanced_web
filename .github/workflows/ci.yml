@@ -19,7 +19,7 @@ env:
   GITLEAKS_VERSION: '8.30.1'
 
 jobs:
-  # --------------------------------------------------------- gates 1,2,3,5,6,8,9,10,11
+  # ------------------------------------------------------ gates 1,2,3,5,6,8,9,10,11,12
   verify:
     name: Types, lint, tests, budgets
     runs-on: ubuntu-latest
@@ -68,6 +68,13 @@ jobs:
       # hand-written <svg>: every icon goes through <ewms-icon>.
       - name: Gate 11 - Icons (generated table in sync, no loose <svg>)
         run: npm run lint:icons
+
+      # Gate 12 -- i18n (ADR 0008). Keys used vs. defined in both directions
+      # (transloco-keys-manager), identical key sets in every dictionary,
+      # canonical dictionary format with valid ICU, and no hardcoded human
+      # text in templates. The showroom is exempt; the reason lives in the script.
+      - name: Gate 12 - i18n (keys in sync, same keys per language, no hardcoded text)
+        run: npm run lint:i18n
 
       # Gate 3 + Gate 5 -- unit tests, coverage thresholds, and the axe-core
       # accessibility harness all run in this one Vitest suite.

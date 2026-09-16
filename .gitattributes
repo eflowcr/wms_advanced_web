@@ -3,3 +3,5 @@
 # and tools/ci/check-icons.mjs would report them out of sync.
 projects/design-system/src/icons/icons.generated.ts text eol=lf
 projects/design-system/src/icons/custom/*.svg text eol=lf
+# Gate 12 (tools/ci/check-i18n.mjs) requires LF in the dictionaries.
+projects/shell/public/i18n/**/*.json text eol=lf
