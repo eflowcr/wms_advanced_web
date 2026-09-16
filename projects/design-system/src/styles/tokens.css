@@ -72,6 +72,7 @@
   --navy-7: #010f42;
   --navy-28: #343f68;
   --navy-46: #646b87;
+  --navy-49: #6d7388;
   --navy-52: #737b97;
   --navy-57: #8087a0;
   --navy-79: #c0c3d0;
@@ -80,7 +81,6 @@
   --navy-92: #e6e7ec;
   --navy-95: #f0f1f4;
   --navy-97: #f6f7f8;
-  /* Blanco puro: el extremo claro de la escala, solo para --color-surface. */
   --navy-100: #ffffff;
 
   /* navy translucido — sombras y overlay. Navy, no negro: tine con la marca */
@@ -186,6 +186,11 @@
   --color-border: var(--navy-92);
   /* Bordes que definen un control (3.16:1, WCAG 1.4.11). */
   --color-border-strong: var(--navy-57);
+  /* Hover de un borde de control (track apagado del Toggle). Derivado de
+   * border-strong con la regla de hover (15 % negro): 4.71:1 sobre surface,
+   * 4.39:1 sobre canvas, 4.17:1 sobre bg-secondary. Reemplaza al #aeb2c1 de
+   * Figma, que derivaba del border-strong viejo y daba 2.11:1 sobre blanco. */
+  --color-border-strong-hover: var(--navy-49);
 
   --color-canvas: var(--navy-97);
   /* Lo que se apoya sobre el canvas: campo de Input y Select, interior de
@@ -204,6 +209,14 @@
   --color-bg-primary-active: var(--blue-35);
   --color-bg-primary-disabled: var(--blue-90);
   --color-ghost-hover: var(--blue-96);
+  /* Texto e iconos sobre el azul de accion y sobre el boton de peligro.
+   * Blanco, como registra Fundamentos de Marca: 4.86:1 sobre bg-primary,
+   * 4.83:1 sobre bg-danger (6.26 / 7.88 y 6.30 / 7.98 en hover / active).
+   * No es --color-text-on-dark aunque sea texto claro: aquel es texto sobre
+   * navy y vale navy-97, que sobre bg-danger queda en 4.50:1, sin margen.
+   * Dos superficies distintas, dos tokens (mismo criterio que text-on-dark
+   * frente al canvas y danger-solid frente a bg-danger). */
+  --color-text-on-primary: var(--navy-100);
 
   --color-bg-danger: var(--red-48);
   --color-bg-danger-hover: var(--red-41);

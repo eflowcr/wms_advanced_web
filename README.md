@@ -33,6 +33,7 @@ npm start        # http://localhost:4200
 | `npm test` | Vitest + coverage thresholds + axe-core |
 | `npm run e2e` | Playwright smoke tests |
 | `npm run audit:ci` | `npm audit --audit-level=high` |
+| `npm run vault:check-tokens -- <vault>` | Lists `--color-*` names cited in the docs vault that `tokens.css` does not define. Manual tool, **not a CI gate**: the vault is outside this repo |
 
 ## Layout
 

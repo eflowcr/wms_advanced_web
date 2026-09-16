@@ -129,6 +129,7 @@
   --text-color-secondary: var(--color-text-secondary);
   --text-color-disabled: var(--color-text-disabled);
   --text-color-on-dark: var(--color-text-on-dark);
+  --text-color-on-primary: var(--color-text-on-primary);
   --text-color-danger: var(--color-danger-text);
   --text-color-warning: var(--color-warning-text);
   --text-color-success: var(--color-success-text);
@@ -138,6 +139,7 @@
    * a border that defines a control is `border-strong`. */
   --border-color-default: var(--color-border);
   --border-color-strong: var(--color-border-strong);
+  --border-color-strong-hover: var(--color-border-strong-hover);
   --border-color-danger: var(--color-danger-border);
   --border-color-warning: var(--color-warning-border);
   --border-color-success: var(--color-success-border);
