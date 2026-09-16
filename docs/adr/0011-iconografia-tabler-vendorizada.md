@@ -77,9 +77,15 @@ consumo **no hay forma de distinguir el origen**. Si mañana Tabler publica
 
 ### Renderizado
 
-`<ewms-icon>` recorre las primitivas con `@for` y liga cada atributo
-(`[attr.d]`, `[attr.cx]`…). **Prohibido `innerHTML` y `DomSanitizer`**: la
+`<ewms-icon>` recorre las primitivas con `@for` y liga `[attr.d]` de cada
+`<path>`. **Prohibido `innerHTML` y `DomSanitizer`**: la
 geometría es dato, no marcado. El color es siempre `currentColor`.
+
+**El formato admite solo `<path>`, a propósito** (2026-09-15): Tabler outline y
+la tarima son solo `path`, así que `circle`/`rect`/`line` eran tres tipos, tres
+reglas del generador y tres ramas de plantilla que ningún icono alcanzaba; una
+forma así se convierte a `path` antes de entrar, y el generador lo exige con ese
+mensaje.
 
 ### Licencia
 
@@ -107,10 +113,17 @@ la compuerta 11 obliga a hacerlo en el mismo PR.
 
 ## Revisión
 
-Se reevalúa si el catálogo supera ~300 iconos (el costo de no poder hacer
+Se reevalúa si el catálogo supera **~180 iconos** (el costo de no poder hacer
 tree-shaking deja de ser despreciable) o si Tabler cambia de licencia.
 
-De dónde sale el 300: a 248 B por icono, 300 iconos son ≈75 kB crudos
-(≈17 kB gzip), cerca de la mitad del margen que hoy queda entre el bundle
-inicial (236 kB) y el aviso de 400 kB del budget — y la tabla termina en el
-bundle inicial en cuanto la barra superior use un icono.
+De dónde sale el 180: el mismo criterio de antes — que la tabla no se coma más
+de **la mitad del margen** entre el bundle inicial y el aviso de 400 kB del
+budget —, recalculado con la cifra real. Medición: `npm run build` del
+2026-09-16, *Initial total* **310.61 kB** crudos, así que el margen es
+**≈89 kB**. La mitad son ≈45 kB, y a 248 B por icono eso son **≈180 iconos**
+(≈10 kB gzip). La tabla termina en el bundle inicial en cuanto la barra
+superior use un icono.
+
+*Corregido el 2026-09-16:* decía ~300, justificado contra un bundle inicial de
+236 kB (margen de 164 kB). Con 310.61 kB, 300 iconos (≈75 kB) serían el 84 %
+del margen, no la mitad.

@@ -37,4 +37,18 @@ describe('extractPrimitives', () => {
       { message: 'tabler/x.svg: first element must be the bounding-box path "M0 0h24v24H0z".' },
     );
   });
+
+  it('rejects any shape other than <path> and says how to fix it', () => {
+    assert.throws(
+      () =>
+        extractPrimitives(`${OPEN}<circle cx="12" cy="12" r="9" /></svg>`, 'custom/c.svg', {
+          requireBoundingBox: false,
+        }),
+      {
+        message:
+          'custom/c.svg <circle>: unsupported element. Icons are <path> only (ADR 0011): convert the ' +
+          'shape to a path before adding the icon, as any vector editor does on export.',
+      },
+    );
+  });
 });

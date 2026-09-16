@@ -17,10 +17,12 @@
  *     is dropped exactly as for Tabler; if not, every child is geometry. A
  *     custom icon should not need a Tabler artefact to be valid.
  *   - In either kind of file, a bounding box anywhere but first fails.
- *   - Only geometry is kept: `d` for <path>, the shape attributes for <circle>,
- *     <rect> and <line>. Any other element, or any other attribute on a shape,
- *     fails instead of being silently dropped: dropping a `fill` would change
- *     how the icon looks.
+ *   - Only <path> is accepted, and only its `d`. The set is paths on purpose
+ *     (ADR 0011): Tabler outline and the custom pallet are paths only, so a
+ *     <circle>, <rect> or <line> would be a second format that no icon uses.
+ *     Any other element fails with the fix (convert it to a path, as any
+ *     editor does on export). Any other attribute fails instead of being
+ *     silently dropped: dropping a `fill` would change how the icon looks.
  *   - Output is deterministic: icons sorted by name, primitives in file order,
  *     one serialisation. tools/ci/check-icons.mjs regenerates in memory and
  *     compares byte for byte, like a lockfile.
@@ -48,13 +50,9 @@ const BOUNDING_BOX = 'M0 0h24v24H0z';
 const CATEGORIES = ['domain', 'interface'];
 const NAME_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
-/** Geometry attributes per element, in serialisation order. `?` = optional. */
-const SHAPES = {
-  path: ['d'],
-  circle: ['cx', 'cy', 'r'],
-  rect: ['x', 'y', 'width', 'height', 'rx?', 'ry?'],
-  line: ['x1', 'y1', 'x2', 'y2'],
-};
+/** The only element an icon may contain, and its only attribute (ADR 0011). */
+const SHAPE = 'path';
+const GEOMETRY_ATTRIBUTE = 'd';
 
 // ----------------------------------------------------------------- manifest
 
@@ -111,14 +109,6 @@ function parseAttributes(text, where) {
   return attributes;
 }
 
-function toNumber(value, where) {
-  const number = Number(value);
-  if (value.trim() === '' || !Number.isFinite(number)) {
-    throw new Error(`${where}: ${JSON.stringify(value)} is not a number.`);
-  }
-  return number;
-}
-
 /**
  * Extracts the geometry of one SVG file as a list of primitives.
  *
@@ -159,16 +149,17 @@ export function extractPrimitives(svg, where, { requireBoundingBox }) {
 
   return shapes.map(({ tag, attributes }) => {
     const element = `${where} <${tag}>`;
-    const spec = SHAPES[tag];
-    if (!spec) {
-      throw new Error(`${element}: unsupported element. Allowed: ${Object.keys(SHAPES).join(', ')}.`);
+    if (tag !== SHAPE) {
+      throw new Error(
+        `${element}: unsupported element. Icons are <path> only (ADR 0011): convert the shape to a ` +
+          'path before adding the icon, as any vector editor does on export.',
+      );
     }
-    if (tag === 'path' && attributes.get('d') === BOUNDING_BOX) {
+    if (attributes.get(GEOMETRY_ATTRIBUTE) === BOUNDING_BOX) {
       throw new Error(`${element}: bounding-box path found outside first position.`);
     }
 
-    const names = spec.map((name) => name.replace('?', ''));
-    const extra = [...attributes.keys()].filter((name) => !names.includes(name));
+    const extra = [...attributes.keys()].filter((name) => name !== GEOMETRY_ATTRIBUTE);
     if (extra.length > 0) {
       throw new Error(
         `${element}: non-geometry attribute(s) ${extra.join(', ')}. The component sets presentation ` +
@@ -176,19 +167,11 @@ export function extractPrimitives(svg, where, { requireBoundingBox }) {
       );
     }
 
-    const primitive = { type: tag };
-    for (const entry of spec) {
-      const optional = entry.endsWith('?');
-      const name = entry.replace('?', '');
-      const value = attributes.get(name);
-      if (value === undefined) {
-        if (optional) continue;
-        throw new Error(`${element}: missing "${name}".`);
-      }
-      primitive[name] =
-        name === 'd' ? value.replace(/\s+/g, ' ').trim() : toNumber(value, `${element} ${name}`);
+    const d = attributes.get(GEOMETRY_ATTRIBUTE);
+    if (d === undefined) {
+      throw new Error(`${element}: missing "${GEOMETRY_ATTRIBUTE}".`);
     }
-    return primitive;
+    return { type: SHAPE, d: d.replace(/\s+/g, ' ').trim() };
   });
 }
 
@@ -202,11 +185,8 @@ function key(name) {
   return /^[a-z][a-z0-9]*$/.test(name) ? name : quote(name);
 }
 
-function serialisePrimitive(primitive) {
-  const fields = Object.entries(primitive).map(
-    ([name, value]) => `${name}: ${typeof value === 'number' ? String(value) : quote(value)}`,
-  );
-  return `{ ${fields.join(', ')} }`;
+function serialisePrimitive({ type, d }) {
+  return `{ type: ${quote(type)}, d: ${quote(d)} }`;
 }
 
 /** Returns the full text of icons.generated.ts and the icon count. Reads, never writes. */
