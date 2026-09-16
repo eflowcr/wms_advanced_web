@@ -80,6 +80,8 @@
   --navy-92: #e6e7ec;
   --navy-95: #f0f1f4;
   --navy-97: #f6f7f8;
+  /* Blanco puro: el extremo claro de la escala, solo para --color-surface. */
+  --navy-100: #ffffff;
 
   /* navy translucido — sombras y overlay. Navy, no negro: tine con la marca */
   --navy-7-a06: rgb(1 15 66 / 0.06);
@@ -161,7 +163,11 @@
   /* ---------------------------------------------------------------- marca */
   --color-brand-navy: var(--navy-7);
   /* El azul significa "se hace clic": solo accion, nunca informativo,
-   * decorativo ni de estado. */
+   * decorativo ni de estado.
+   * SIN UTILIDAD EN EL TEMA A PROPOSITO — no borrar por parecer muerto. Su
+   * unico uso previsto (iconos de KPI del Dashboard) choca con la regla de
+   * arriba y esta diferido: se decide al construir los KPI, antes de escribir
+   * su plantilla. Ver Fundamentos de Marca, "Decisiones diferidas". */
   --color-brand-blue: var(--blue-48);
 
   /* ---------------------------------------------------- texto y superficies */
@@ -169,8 +175,11 @@
   --color-text-secondary: var(--navy-46);
   --color-text-disabled: var(--navy-79);
   /* Texto e iconos sobre superficies navy (barra superior, rail).
-   * (pendiente) de confirmar en diseno: hoy reutiliza el canvas, que ya se
-   * valida contra navy a 17.05:1. */
+   * Confirmado 2026-09-15: vale lo mismo que el canvas (17.05:1 contra navy)
+   * pero significa otra cosa, y la capa semantica existe para poder separarlos
+   * sin tocar componentes. Consumidores: App Shell (header y rail navy) y la
+   * demo invertida del showroom. No colapsar en --navy-97: un primitivo no se
+   * usa fuera de este archivo (compuerta 10). */
   --color-text-on-dark: var(--navy-97);
 
   /* Divisores decorativos UNICAMENTE (1.15:1). Nunca el borde de un control. */
@@ -179,6 +188,13 @@
   --color-border-strong: var(--navy-57);
 
   --color-canvas: var(--navy-97);
+  /* Lo que se apoya sobre el canvas: campo de Input y Select, interior de
+   * Checkbox/Radio, panel del dropdown, Card, Modal. Blanco, un paso mas claro
+   * que el canvas (1.07:1: la separacion la dan borde y sombra, no el color).
+   * Sobre blanco todo contrasta mas que sobre canvas: texto primario 18.29:1,
+   * secundario 5.26:1, border-strong 3.56:1. Decision del equipo (2026-09-16),
+   * ver Fundamentos de Marca. */
+  --color-surface: var(--navy-100);
   --color-bg-secondary: var(--navy-95);
   --color-bg-secondary-hover: var(--navy-91);
 
@@ -197,7 +213,13 @@
   /* ------------------------------------------------- familias semanticas
    * Cuatro tokens por familia: un banner necesita fondo, borde, icono y texto.
    * No existe familia info: lo informativo usa neutral.
-   * Badge/Neutral usa surface + text, no solid + blanco (4.19:1). */
+   * Badge/Neutral usa surface + text, no solid + blanco (4.19:1).
+   *
+   * --color-danger-solid NO es un duplicado de --color-bg-danger aunque hoy
+   * valgan lo mismo: aquel es la severidad, este el fondo del boton de peligro
+   * (con su hover/active derivados). Utilidades: bg-<familia>-solid y
+   * bg-<familia>-surface, iguales para las cuatro familias. Decision del
+   * equipo (2026-09-15). */
   --color-danger-solid: var(--red-48);
   --color-danger-surface: var(--red-95);
   --color-danger-border: var(--red-77);

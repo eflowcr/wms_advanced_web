@@ -97,6 +97,7 @@
 
   /* Backgrounds -> bg-* */
   --background-color-canvas: var(--color-canvas);
+  --background-color-surface: var(--color-surface);
   --background-color-brand-navy: var(--color-brand-navy);
   --background-color-secondary: var(--color-bg-secondary);
   --background-color-secondary-hover: var(--color-bg-secondary-hover);
@@ -109,12 +110,16 @@
   --background-color-danger-hover: var(--color-bg-danger-hover);
   --background-color-danger-active: var(--color-bg-danger-active);
   --background-color-danger-disabled: var(--color-bg-danger-disabled);
+  /* Semantic families: bg-<family>-solid and bg-<family>-surface, the same
+   * shape for all four. `-solid` keeps them apart from bg-danger, which is
+   * the danger BUTTON (same value today, different meaning). */
+  --background-color-danger-solid: var(--color-danger-solid);
   --background-color-danger-surface: var(--color-danger-surface);
-  --background-color-warning: var(--color-warning-solid);
+  --background-color-warning-solid: var(--color-warning-solid);
   --background-color-warning-surface: var(--color-warning-surface);
-  --background-color-success: var(--color-success-solid);
+  --background-color-success-solid: var(--color-success-solid);
   --background-color-success-surface: var(--color-success-surface);
-  --background-color-neutral: var(--color-neutral-solid);
+  --background-color-neutral-solid: var(--color-neutral-solid);
   --background-color-neutral-surface: var(--color-neutral-surface);
   --background-color-row-selected: var(--color-row-selected);
   --background-color-overlay: var(--color-overlay);
