@@ -1,0 +1,17 @@
+<svg
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+  class="block"
+  [class]="sizeClass()"
+  [attr.role]="informative() ? 'img' : null"
+  [attr.aria-label]="informative() ? label() : null"
+  [attr.aria-hidden]="informative() ? null : 'true'"
+  [attr.focusable]="informative() ? null : 'false'"
+>
+  @for (primitive of primitives(); track $index) {
+    <path [attr.d]="primitive.d" />
+  }
+</svg>

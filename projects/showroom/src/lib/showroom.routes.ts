@@ -7,4 +7,9 @@ export const showroomRoutes: Routes = [
     loadComponent: async () =>
       (await import('./pages/showroom-home')).ShowroomHome,
   },
+  {
+    path: 'iconografia',
+    loadComponent: async () =>
+      (await import('./pages/iconography')).ShowroomIconography,
+  },
 ];

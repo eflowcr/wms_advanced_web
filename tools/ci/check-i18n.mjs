@@ -1,0 +1,492 @@
+/**
+ * Gate 12 -- i18n (ADR 0008).
+ *
+ * Four checks, all blocking.
+ *
+ *   1. Keys used vs. keys defined, via `transloco-keys-manager find`. Both
+ *      directions block: a key used but not defined is broken text on screen;
+ *      a key defined but used nowhere is dead weight someone will translate
+ *      for nothing. It also catches keys built by concatenation indirectly:
+ *      the static extractor cannot see them, so their entries show up as
+ *      unused.
+ *
+ *   2. Every dictionary has exactly the same set of keys as the default one.
+ *      Without this, English falls behind and nobody notices. The report
+ *      names the keys missing and extra on each side.
+ *
+ *   3. Deterministic format and sound structure, like icons.generated.ts:
+ *      keys sorted, 2-space indent, LF, final newline -- so the diff of a
+ *      translation PR is readable. Compared against the canonical rewrite,
+ *      like a lockfile; `npm run i18n:format` fixes it. Structure: key
+ *      segments in camelCase, every leaf a non-empty string, and every
+ *      message valid for the ICU interpreter in @ewms/core (the gate imports
+ *      that very file, so the two can never disagree on the grammar).
+ *
+ *   4. No hardcoded human text in templates: Angular templates under
+ *      projects/ (.html files, and inline `template:` in non-spec .ts) are
+ *      parsed with @angular/compiler and fail on visible text outside an
+ *      interpolation, and on literal values of the attributes a person reads
+ *      or hears (aria-label, title, placeholder, alt, ...). Deliberately
+ *      conservative: text inside <code> and <pre> is not checked, and
+ *      technical attributes (class, id, type, routerLink, data-*) are never
+ *      looked at. Only text containing a letter counts, so separators such as
+ *      "·" or "—" pass. The exclusions are the EXEMPT list below, each with
+ *      its reason; do not grow it to silence noise -- report the noise.
+ *
+ * Run locally with `npm run lint:i18n`.
+ */
+import { spawnSync } from 'node:child_process';
+import { cp, mkdtemp, readdir, readFile, rm, stat, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+import {
+  LiteralPrimitive,
+  parseTemplate,
+  TmplAstBoundText,
+  TmplAstRecursiveVisitor,
+  tmplAstVisitAll,
+} from '@angular/compiler';
+import { parseIcu } from '../../projects/core/src/lib/i18n/icu.ts';
+import { DEFAULT_LANGUAGE, LANGUAGES } from '../../projects/core/src/lib/i18n/language.types.ts';
+
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
+const SCAN_DIR = 'projects';
+export const TRANSLATIONS_DIR = 'projects/shell/public/i18n';
+
+/**
+ * Paths gate 12 does not look at. Each entry carries its reason; an entry
+ * without a reason written next to it does not belong here.
+ */
+const EXEMPT = [
+  {
+    prefix: 'projects/showroom/',
+    reason:
+      'The showroom is an internal development tool, not product UI: translating it is cost ' +
+      'with no reader (decided 2026-09-15, Showroom - Especificacion.md §8). The exemption ' +
+      'covers only the text of the catalogue pages themselves; text a component shows to ' +
+      'an end user still arrives translated from its consumer.',
+  },
+  {
+    prefix: 'projects/testing/',
+    reason: 'Dev-only test support. Never rendered to a user and never shipped.',
+  },
+];
+
+/** Attributes whose value a person reads or a screen reader speaks. */
+const HUMAN_ATTRIBUTES = new Set([
+  'alt',
+  'aria-description',
+  'aria-label',
+  'aria-placeholder',
+  'aria-roledescription',
+  'aria-valuetext',
+  'label',
+  'placeholder',
+  'title',
+]);
+
+/** Elements whose content is code, not prose. */
+const CODE_ELEMENTS = new Set(['code', 'pre']);
+
+const LETTER = /\p{L}/u;
+const KEY_SEGMENT = /^[a-z][a-zA-Z0-9]*$/;
+
+// ------------------------------------------------------------------ utilities
+
+function isExempt(file) {
+  return EXEMPT.some(({ prefix }) => file.startsWith(prefix));
+}
+
+async function listFiles(dir, extensions) {
+  const entries = await readdir(path.join(ROOT, dir), { withFileTypes: true });
+  const files = [];
+  for (const entry of entries) {
+    const relative = `${dir}/${entry.name}`;
+    if (entry.isDirectory()) {
+      if (entry.name !== 'node_modules' && entry.name !== 'dist') {
+        files.push(...(await listFiles(relative, extensions)));
+      }
+    } else if (extensions.has(path.extname(entry.name))) {
+      files.push(relative);
+    }
+  }
+  return files;
+}
+
+function isTestFile(file) {
+  return file.endsWith('.spec.ts') || file.endsWith('.testing.ts');
+}
+
+function report(problems, file, line, message) {
+  problems.push({ file, line, message });
+}
+
+function print({ file, line, message }) {
+  console.error(
+    process.env.GITHUB_ACTIONS
+      ? `::error file=${file}${line ? `,line=${line}` : ''}::${message}`
+      : `${file}${line ? `:${line}` : ''} ${message}`,
+  );
+}
+
+/** Flattens a dictionary into `a.b.c` keys with their leaf values. */
+export function flattenKeys(node, prefix = '') {
+  if (node === null || typeof node !== 'object' || Array.isArray(node)) {
+    return [[prefix, node]];
+  }
+  return Object.entries(node).flatMap(([key, value]) =>
+    flattenKeys(value, prefix ? `${prefix}.${key}` : key),
+  );
+}
+
+/** The canonical text of a dictionary: keys sorted recursively, 2 spaces, LF. */
+export function canonicalJson(dictionary) {
+  const sort = (node) =>
+    node !== null && typeof node === 'object' && !Array.isArray(node)
+      ? Object.fromEntries(
+          Object.keys(node)
+            .sort()
+            .map((key) => [key, sort(node[key])]),
+        )
+      : node;
+  return `${JSON.stringify(sort(dictionary), null, 2)}\n`;
+}
+
+// -------------------------------------------------------- check 2: same keys
+
+/** Keys missing from and extra in `other`, relative to `reference`. */
+export function compareKeySets(reference, other) {
+  const referenceKeys = new Set(flattenKeys(reference).map(([key]) => key));
+  const otherKeys = new Set(flattenKeys(other).map(([key]) => key));
+  return {
+    missing: [...referenceKeys].filter((key) => !otherKeys.has(key)).sort(),
+    extra: [...otherKeys].filter((key) => !referenceKeys.has(key)).sort(),
+  };
+}
+
+// ---------------------------------------------- check 3: format and structure
+
+export function checkStructure(dictionary) {
+  const problems = [];
+  for (const [key, value] of flattenKeys(dictionary)) {
+    const bad = key.split('.').filter((segment) => !KEY_SEGMENT.test(segment));
+    if (bad.length) {
+      problems.push(`'${key}': segment(s) ${bad.map((s) => `'${s}'`).join(', ')} not camelCase`);
+    }
+    if (typeof value !== 'string' || value.trim() === '') {
+      problems.push(`'${key}': the value must be a non-empty string`);
+      continue;
+    }
+    try {
+      parseIcu(value);
+    } catch (error) {
+      problems.push(`'${key}': invalid ICU: ${error.message}`);
+    }
+  }
+  return problems;
+}
+
+// ------------------------------------------------ check 4: hardcoded template text
+
+class HardcodedTextVisitor extends TmplAstRecursiveVisitor {
+  constructor() {
+    super();
+    this.found = [];
+  }
+
+  add(node, message) {
+    this.found.push({ line: node.sourceSpan.start.line + 1, message });
+  }
+
+  visitElement(element) {
+    if (CODE_ELEMENTS.has(element.name)) {
+      return;
+    }
+    this.checkAttributes(element);
+    super.visitElement(element);
+  }
+
+  visitTemplate(template) {
+    this.checkAttributes(template);
+    super.visitTemplate(template);
+  }
+
+  checkAttributes(node) {
+    for (const attribute of node.attributes ?? []) {
+      if (HUMAN_ATTRIBUTES.has(attribute.name) && LETTER.test(attribute.value)) {
+        this.add(attribute, `hardcoded text in ${attribute.name}="${attribute.value.trim()}"`);
+      }
+    }
+    for (const input of node.inputs ?? []) {
+      const ast = input.value?.ast;
+      if (
+        HUMAN_ATTRIBUTES.has(input.name) &&
+        ast instanceof LiteralPrimitive &&
+        typeof ast.value === 'string' &&
+        LETTER.test(ast.value)
+      ) {
+        this.add(input, `hardcoded text in [${input.name}]="'${ast.value.trim()}'"`);
+      }
+    }
+  }
+
+  visitText(text) {
+    if (LETTER.test(text.value)) {
+      this.add(text, `hardcoded text "${text.value.trim()}"`);
+    }
+  }
+
+  visitBoundText(text) {
+    const strings = text.value?.ast?.strings ?? [];
+    const literal = strings.filter((part) => LETTER.test(part)).map((part) => part.trim());
+    if (literal.length) {
+      this.add(text, `hardcoded text around an interpolation: "${literal.join(' … ')}"`);
+    }
+  }
+}
+
+/** Returns `{ line, message }` for each piece of hardcoded human text. */
+export function findHardcodedText(template, url = 'template.html') {
+  const parsed = parseTemplate(template, url, { preserveWhitespaces: false });
+  const problems = (parsed.errors ?? []).map((error) => ({
+    line: (error.span?.start.line ?? 0) + 1,
+    message: `template does not parse: ${error.msg}`,
+  }));
+  const visitor = new HardcodedTextVisitor();
+  tmplAstVisitAll(visitor, parsed.nodes);
+  return [...problems, ...visitor.found];
+}
+
+/** Inline `template:` strings in a TypeScript file, with their starting line. */
+export function inlineTemplates(source) {
+  const found = [];
+  const pattern = /\btemplate\s*:\s*(`(?:\\.|[^`\\])*`|'(?:\\.|[^'\\])*'|"(?:\\.|[^"\\])*")/g;
+  for (const match of source.matchAll(pattern)) {
+    const literal = match[1];
+    const offset = match.index + match[0].indexOf(literal) + 1;
+    found.push({
+      template: literal.slice(1, -1),
+      line: source.slice(0, offset).split('\n').length,
+    });
+  }
+  return found;
+}
+
+/** Each application's host page (index.html) is a document, not a template. */
+async function hostPages() {
+  const workspace = JSON.parse(
+    (await readFile(path.join(ROOT, 'angular.json'), 'utf8')).replace(/^\s*\/\/.*$/gm, ''),
+  );
+  return Object.values(workspace.projects)
+    .filter((project) => project.projectType === 'application')
+    .map((project) => {
+      const index = project.architect?.build?.options?.index;
+      const file = typeof index === 'string' ? index : (index?.input ?? 'index.html');
+      return path.posix.join(project.sourceRoot ?? `${project.root}/src`, path.posix.basename(file));
+    });
+}
+
+// ------------------------------------------------------------------------ gate
+
+async function readDictionaries() {
+  const problems = [];
+  const dictionaries = new Map();
+  for (const lang of LANGUAGES) {
+    const file = `${TRANSLATIONS_DIR}/${lang}.json`;
+    let raw;
+    try {
+      raw = await readFile(path.join(ROOT, file), 'utf8');
+    } catch {
+      report(problems, file, 0, `is missing. Every language in LANGUAGES needs its dictionary.`);
+      continue;
+    }
+    try {
+      dictionaries.set(lang, { file, raw, data: JSON.parse(raw.replace(/^\uFEFF/, '')) });
+    } catch (error) {
+      report(problems, file, 0, `is not valid JSON: ${error.message}`);
+    }
+  }
+  return { dictionaries, problems };
+}
+
+/**
+ * Check 1. keys-manager scans directories and cannot skip spec files, whose
+ * keys are fixtures. So the sources are mirrored into a temp directory without
+ * specs, test support or exempt paths, and `find` runs on the mirror against
+ * the real dictionaries.
+ */
+async function checkUsedKeys() {
+  const problems = [];
+  const sources = (await listFiles(SCAN_DIR, new Set(['.ts', '.html']))).filter(
+    (file) => !isTestFile(file) && !isExempt(file),
+  );
+  const mirror = await mkdtemp(path.join(tmpdir(), 'ewms-i18n-'));
+  try {
+    for (const file of sources) {
+      await cp(path.join(ROOT, file), path.join(mirror, file));
+    }
+    // keys-manager exits 0 on a wrong path; never let that pass for green.
+    for (const dir of [mirror, path.join(ROOT, TRANSLATIONS_DIR)]) {
+      if (!(await stat(dir)).isDirectory()) {
+        throw new Error(`${dir} is not a directory`);
+      }
+    }
+    const cli = path.join(ROOT, 'node_modules/@jsverse/transloco-keys-manager/index.js');
+    const result = spawnSync(
+      process.execPath,
+      [
+        cli,
+        'find',
+        '--input',
+        path.join(mirror, SCAN_DIR),
+        '--translations-path',
+        path.join(ROOT, TRANSLATIONS_DIR),
+        '--emit-error-on-extra-keys',
+      ],
+      { cwd: ROOT, encoding: 'utf8', env: { ...process.env, FORCE_COLOR: '0' } },
+    );
+    const output = `${result.stdout ?? ''}${result.stderr ?? ''}`;
+    if (result.status === 0 && /No missing keys/i.test(output)) {
+      console.log(`i18n: keys used and defined match (${sources.length} source files).`);
+    } else {
+      console.error(output.trim());
+      const reason =
+        result.status === 1
+          ? 'keys used in code are missing from the dictionaries (column "Missing Keys").'
+          : result.status === 2
+            ? 'keys in the dictionaries are used nowhere (column "Extra Keys"). Delete them, ' +
+              'or if the key is built from data, write the literal keys in a Record with a ' +
+              '/** t(key.a, key.b) */ marker (i18n.md).'
+            : `transloco-keys-manager did not report a clean result (exit ${result.status}).`;
+      report(problems, TRANSLATIONS_DIR, 0, reason);
+    }
+  } finally {
+    await rm(mirror, { recursive: true, force: true });
+  }
+  return problems;
+}
+
+function checkSameKeys(dictionaries) {
+  const problems = [];
+  const reference = dictionaries.get(DEFAULT_LANGUAGE);
+  if (!reference) {
+    return problems;
+  }
+  for (const [lang, dictionary] of dictionaries) {
+    if (lang === DEFAULT_LANGUAGE) {
+      continue;
+    }
+    const { missing, extra } = compareKeySets(reference.data, dictionary.data);
+    if (missing.length) {
+      report(
+        problems,
+        dictionary.file,
+        0,
+        `lacks ${missing.length} key(s) that ${reference.file} has: ${missing.join(', ')}`,
+      );
+    }
+    if (extra.length) {
+      report(
+        problems,
+        dictionary.file,
+        0,
+        `has ${extra.length} key(s) that ${reference.file} lacks: ${extra.join(', ')}`,
+      );
+    }
+  }
+  if (!problems.length) {
+    const count = flattenKeys(reference.data).length;
+    console.log(`i18n: ${[...dictionaries.keys()].join(', ')} share the same ${count} keys.`);
+  }
+  return problems;
+}
+
+async function checkFormat(dictionaries, write) {
+  const problems = [];
+  for (const { file, raw, data } of dictionaries.values()) {
+    for (const problem of checkStructure(data)) {
+      report(problems, file, 0, problem);
+    }
+    const canonical = canonicalJson(data);
+    if (raw !== canonical) {
+      if (write) {
+        await writeFile(path.join(ROOT, file), canonical, 'utf8');
+        console.log(`i18n: formatted ${file}.`);
+      } else {
+        const hint = raw.includes('\r\n') ? ' It has CRLF line endings; .gitattributes pins LF.' : '';
+        report(
+          problems,
+          file,
+          0,
+          `is not in canonical format (keys sorted, 2-space indent, LF, final newline). ` +
+            `Run \`npm run i18n:format\`.${hint}`,
+        );
+      }
+    }
+  }
+  if (!problems.length) {
+    console.log(`i18n: dictionaries are canonical and well-formed.`);
+  }
+  return problems;
+}
+
+async function checkTemplates() {
+  const problems = [];
+  const hosts = new Set(await hostPages());
+  const files = (await listFiles(SCAN_DIR, new Set(['.html', '.ts']))).filter(
+    (file) => !isExempt(file) && !isTestFile(file) && !hosts.has(file),
+  );
+  let templates = 0;
+  for (const file of files) {
+    const content = await readFile(path.join(ROOT, file), 'utf8');
+    const found = file.endsWith('.html')
+      ? [{ template: content, line: 1 }]
+      : inlineTemplates(content);
+    for (const { template, line } of found) {
+      templates += 1;
+      for (const problem of findHardcodedText(template, file)) {
+        report(
+          problems,
+          file,
+          line + problem.line - 1,
+          `${problem.message}. Move it to the dictionaries and render it with the transloco pipe.`,
+        );
+      }
+    }
+  }
+  if (!problems.length) {
+    console.log(
+      `i18n: no hardcoded text in ${templates} template(s) ` +
+        `(exempt: ${EXEMPT.map(({ prefix }) => prefix).join(', ')}; host pages: ${[...hosts].join(', ')}).`,
+    );
+  }
+  return problems;
+}
+
+async function main() {
+  const write = process.argv.includes('--write');
+  const { dictionaries, problems } = await readDictionaries();
+  if (write) {
+    problems.push(...(await checkFormat(dictionaries, true)));
+  } else {
+    problems.push(
+      ...(await checkUsedKeys()),
+      ...checkSameKeys(dictionaries),
+      ...(await checkFormat(dictionaries, false)),
+      ...(await checkTemplates()),
+    );
+  }
+  if (problems.length) {
+    problems.forEach(print);
+    console.error(`\ni18n: ${problems.length} problem(s). See ADR 0008 and i18n.md.`);
+    process.exitCode = 1;
+  }
+}
+
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  main().catch((error) => {
+    console.error(error instanceof Error ? error.message : error);
+    process.exitCode = 1;
+  });
+}

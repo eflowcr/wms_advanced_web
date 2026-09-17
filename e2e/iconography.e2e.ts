@@ -1,0 +1,54 @@
+import AxeBuilder from '@axe-core/playwright';
+import { expect, test } from '@playwright/test';
+
+/**
+ * The icon tokens only exist in the real stylesheet, so the per-size
+ * width / stroke-width pair (tokens.css, ADR 0011) is asserted here, in a
+ * browser, rather than in jsdom.
+ */
+const EXPECTED = {
+  sm: { width: 16, strokeWidth: 2.25 },
+  md: { width: 18, strokeWidth: 2 },
+  lg: { width: 20, strokeWidth: 2 },
+  xl: { width: 24, strokeWidth: 1.75 },
+} as const;
+
+test.describe('/design-system/iconografia', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/design-system/iconografia');
+    await expect(page.getByRole('heading', { level: 1, name: 'Iconografía' })).toBeVisible();
+  });
+
+  test('each size applies its width and compensated stroke width', async ({ page }) => {
+    for (const [size, expected] of Object.entries(EXPECTED)) {
+      const svg = page.locator(`[data-icon-size="${size}"] svg`);
+      const box = await svg.boundingBox();
+      expect(box?.width, size).toBe(expected.width);
+      expect(box?.height, size).toBe(expected.width);
+      // Chromium serialises the computed stroke-width in user units as "2.25px".
+      const strokeWidth = await svg.evaluate((el) => parseFloat(getComputedStyle(el).strokeWidth));
+      expect(strokeWidth, size).toBe(expected.strokeWidth);
+    }
+  });
+
+  test('icons inherit the colour of their container', async ({ page }) => {
+    const colours = await page
+      .locator('[aria-labelledby="iconography-grounds"] ul')
+      .evaluateAll((lists) =>
+        lists.map((list) => {
+          const svg = list.querySelector('svg');
+          return svg ? [getComputedStyle(list).color, getComputedStyle(svg).stroke] : [];
+        }),
+      );
+    expect(colours).toHaveLength(2);
+    for (const [container, stroke] of colours) {
+      expect(stroke).toBe(container);
+    }
+    expect(colours[0]?.[0]).not.toBe(colours[1]?.[0]);
+  });
+
+  test('has no accessibility violations', async ({ page }) => {
+    const results = await new AxeBuilder({ page }).analyze();
+    expect(results.violations).toEqual([]);
+  });
+});

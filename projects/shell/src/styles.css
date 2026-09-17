@@ -5,6 +5,226 @@
  * Tailwind v4 only turns an `@theme` block into utilities when it resolves the
  * block in the stylesheet it is processing. The relative path is a CSS-layer
  * import; the deep-import ban in eslint.config.js governs TypeScript modules.
+ *
+ * This file holds no raw values: the design-token gate (ci.yml, gate 10)
+ * scans it like any other. Every value comes from tokens.css.
  */
 @import 'tailwindcss';
 @import '../../design-system/src/styles/tokens.css';
+
+/*
+ * The icon sources are geometry and semantic names, never class names. Left
+ * in the scan, an icon called `filter` emits Tailwind's `.filter` utility.
+ */
+@source not '../../design-system/src/icons';
+
+/*
+ * TAILWIND AS AN ENGINE, NOT AS A DESIGN SYSTEM (ADR 0009)
+ *
+ * `--*: initial` deletes Tailwind's whole default theme: its palette, spacing,
+ * radii, shadows, type scale, easings and breakpoints. The only utilities that
+ * exist are the ones mapped below, and each one points at a semantic token.
+ *
+ * A default utility does NOT fail the Tailwind compile: Tailwind silently
+ * drops class names it does not recognise, so the markup keeps it and it
+ * simply applies no style. The build cannot catch it; gate 10 does.
+ *
+ * `inline`: utilities are emitted with the referenced token itself, e.g.
+ *   .bg-primary { background-color: var(--color-bg-primary) }
+ * `reference`: Tailwind emits no CSS variables of its own for this block.
+ *   Several names below are identical on both sides (`--radius-lg:
+ *   var(--radius-lg)`); without `reference` Tailwind would also emit that
+ *   self-reference into :root and it would fight tokens.css in the cascade.
+ *
+ * Utility names follow the property namespaces, so a colour role only exists
+ * where it makes sense: `bg-primary`, `text-secondary`, `border-strong`,
+ * `outline-focus`. Breakpoints are intentionally absent until a layout needs
+ * them, and then they are tokens too.
+ */
+@theme inline reference {
+  --*: initial;
+
+  /* Spacing: one multiplier derives the whole scale (p-2 = 2 x base, gap-4 = 4 x base) */
+  --spacing: var(--spacing-base);
+
+  /* Families. `--default-*` feeds Tailwind's preflight for html and code. */
+  --default-font-family: var(--font-family-sans);
+  --default-mono-font-family: var(--font-family-mono);
+  --font-sans: var(--font-family-sans);
+  --font-mono: var(--font-family-mono);
+
+  /* Type scale: text-h1 sets size, weight and line-height together */
+  --text-h1: var(--text-h1-size);
+  --text-h1--font-weight: var(--text-h1-weight);
+  --text-h1--line-height: var(--text-h1-line-height);
+  --text-h2: var(--text-h2-size);
+  --text-h2--font-weight: var(--text-h2-weight);
+  --text-h2--line-height: var(--text-h2-line-height);
+  --text-h3: var(--text-h3-size);
+  --text-h3--font-weight: var(--text-h3-weight);
+  --text-h3--line-height: var(--text-h3-line-height);
+  --text-h4: var(--text-h4-size);
+  --text-h4--font-weight: var(--text-h4-weight);
+  --text-p: var(--text-p-size);
+  --text-p--font-weight: var(--text-p-weight);
+  --text-p--line-height: var(--text-p-line-height);
+  --text-caption: var(--text-caption-size);
+  --text-caption--font-weight: var(--text-caption-weight);
+  --text-mono: var(--text-mono-size);
+
+  /* Radii */
+  --radius-sm: var(--radius-sm);
+  --radius-control: var(--radius-control);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+  --radius-full: var(--radius-full);
+
+  /* Icons: size-icon-md sets width and height, stroke-icon-md the stroke
+   * width. Always used in pairs; the stroke compensation is in tokens.css. */
+  --size-icon-sm: var(--size-icon-sm);
+  --size-icon-md: var(--size-icon-md);
+  --size-icon-lg: var(--size-icon-lg);
+  --size-icon-xl: var(--size-icon-xl);
+  --stroke-width-icon-sm: var(--stroke-icon-sm);
+  --stroke-width-icon-md: var(--stroke-icon-md);
+  --stroke-width-icon-lg: var(--stroke-icon-lg);
+  --stroke-width-icon-xl: var(--stroke-icon-xl);
+
+  /* Elevation */
+  --shadow-sm: var(--shadow-sm);
+  --shadow-md: var(--shadow-md);
+  --shadow-lg: var(--shadow-lg);
+
+  /* Backgrounds -> bg-* */
+  --background-color-canvas: var(--color-canvas);
+  --background-color-surface: var(--color-surface);
+  --background-color-brand-navy: var(--color-brand-navy);
+  --background-color-secondary: var(--color-bg-secondary);
+  --background-color-secondary-hover: var(--color-bg-secondary-hover);
+  --background-color-primary: var(--color-bg-primary);
+  --background-color-primary-hover: var(--color-bg-primary-hover);
+  --background-color-primary-active: var(--color-bg-primary-active);
+  --background-color-primary-disabled: var(--color-bg-primary-disabled);
+  --background-color-ghost-hover: var(--color-ghost-hover);
+  --background-color-danger: var(--color-bg-danger);
+  --background-color-danger-hover: var(--color-bg-danger-hover);
+  --background-color-danger-active: var(--color-bg-danger-active);
+  --background-color-danger-disabled: var(--color-bg-danger-disabled);
+  /* Semantic families: bg-<family>-solid and bg-<family>-surface, the same
+   * shape for all four. `-solid` keeps them apart from bg-danger, which is
+   * the danger BUTTON (same value today, different meaning). */
+  --background-color-danger-solid: var(--color-danger-solid);
+  --background-color-danger-surface: var(--color-danger-surface);
+  --background-color-warning-solid: var(--color-warning-solid);
+  --background-color-warning-surface: var(--color-warning-surface);
+  --background-color-success-solid: var(--color-success-solid);
+  --background-color-success-surface: var(--color-success-surface);
+  --background-color-neutral-solid: var(--color-neutral-solid);
+  --background-color-neutral-surface: var(--color-neutral-surface);
+  --background-color-row-selected: var(--color-row-selected);
+  --background-color-overlay: var(--color-overlay);
+
+  /* Text colours -> text-* */
+  --text-color-primary: var(--color-text-primary);
+  --text-color-secondary: var(--color-text-secondary);
+  --text-color-disabled: var(--color-text-disabled);
+  --text-color-on-dark: var(--color-text-on-dark);
+  --text-color-on-primary: var(--color-text-on-primary);
+  --text-color-danger: var(--color-danger-text);
+  --text-color-warning: var(--color-warning-text);
+  --text-color-success: var(--color-success-text);
+  --text-color-neutral: var(--color-neutral-text);
+
+  /* Borders -> border-*. `border-default` is for decorative dividers only;
+   * a border that defines a control is `border-strong`. */
+  --border-color-default: var(--color-border);
+  --border-color-strong: var(--color-border-strong);
+  --border-color-strong-hover: var(--color-border-strong-hover);
+  --border-color-danger: var(--color-danger-border);
+  --border-color-warning: var(--color-warning-border);
+  --border-color-success: var(--color-success-border);
+  --border-color-neutral: var(--color-neutral-border);
+
+  /* Focus -> outline-* and ring-* */
+  --outline-color-focus: var(--color-focus-ring);
+  --outline-color-focus-on-dark: var(--color-focus-ring-on-dark);
+  --ring-color-focus: var(--color-focus-ring);
+  --ring-color-focus-on-dark: var(--color-focus-ring-on-dark);
+}
+
+/*
+ * MONTSERRAT, SELF-HOSTED
+ *
+ * Served from 'self' because the CSP (index.html) allows `font-src 'self'`
+ * and nothing else. Source files and the subset command: assets-src/fonts/.
+ *
+ * `font-weight: 100 900` IS LOAD-BEARING. The variable font's `wght` axis
+ * defaults to 100 (Thin). Without the range, the browser treats the face as a
+ * single weight and renders every weight at the axis default: the whole app
+ * turns Thin. The range lets each requested weight select its instance.
+ *
+ * One face per subset: the browser only downloads latin-ext when a character
+ * in its unicode-range is actually on the page. Spanish lives in latin.
+ */
+@font-face {
+  font-family: 'Montserrat';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('/fonts/montserrat-latin-wght-normal.woff2') format('woff2');
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+    U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'Montserrat';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('/fonts/montserrat-latin-ext-wght-normal.woff2') format('woff2');
+  unicode-range:
+    U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329,
+    U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F,
+    U+A720-A7FF;
+}
+
+@font-face {
+  font-family: 'Montserrat';
+  font-style: italic;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('/fonts/montserrat-latin-wght-italic.woff2') format('woff2');
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+    U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'Montserrat';
+  font-style: italic;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('/fonts/montserrat-latin-ext-wght-italic.woff2') format('woff2');
+  unicode-range:
+    U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329,
+    U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F,
+    U+A720-A7FF;
+}
+
+/*
+ * Document defaults. The weight is set explicitly as well, so body text never
+ * depends on the browser's `normal` resolving against a variable font.
+ */
+@layer base {
+  html {
+    background-color: var(--color-canvas);
+    color: var(--color-text-primary);
+  }
+
+  body {
+    font-size: var(--text-p-size);
+    font-weight: var(--text-p-weight);
+    line-height: var(--text-p-line-height);
+  }
+}

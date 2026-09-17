@@ -47,6 +47,20 @@
                   "maximumError": "8kB"
                 }
               ],
+              // inlineCritical OFF because of the strict CSP in index.html (PLN-WMS-003 §4).
+              // Critical-CSS inlining writes an inline <style> (blocked by style-src 'self')
+              // and loads the stylesheet with onload="this.media='all'" (an inline handler,
+              // blocked by script-src 'self'): the app would render unstyled. The cost is
+              // one render-blocking request for a ~2 kB stylesheet. Loosening the CSP to
+              // keep it is not an option.
+              "optimization": {
+                "scripts": true,
+                "styles": {
+                  "minify": true,
+                  "inlineCritical": false
+                },
+                "fonts": true
+              },
               "outputHashing": "all"
             },
             "development": {
