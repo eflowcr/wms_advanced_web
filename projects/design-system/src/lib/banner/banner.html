@@ -1,0 +1,43 @@
+<!--
+  `role` is bound rather than written, because it is the one attribute here
+  that changes meaning with the variant: Danger and Warning interrupt the
+  screen reader, Success and Info wait their turn. Giving all four `alert`
+  would make every "saved" cut into whatever was being read.
+
+  The whole box is the live region, not just the text: a banner that appeared
+  has to be announced with its severity, and the severity is the icon's label.
+-->
+<div [attr.role]="role()" class="flex items-start gap-3 rounded-md border p-4" [class]="surfaceClasses()">
+  <!--
+    `label` and not aria-hidden: this icon carries information that no visible
+    text repeats -- which of the four this is -- so it is the one icon in the
+    system that is never decorative.
+  -->
+  <ewms-icon [name]="iconName()" [size]="iconSize" [label]="severityLabel()" />
+
+  <div class="flex min-w-0 flex-1 flex-col gap-1">
+    <p class="text-h4">{{ title() }}</p>
+    @if (description()) {
+      <p class="text-p">{{ description() }}</p>
+    }
+  </div>
+
+  @if (dismissible()) {
+    <!--
+      The close button is a real `ewms-icon-button`, not a bare <button> with
+      an x in it: the focus ring, the hit box and the disabled behaviour are
+      already decided there, and a second copy of them here would drift.
+
+      Ghost keeps it quiet inside a coloured surface, and its foreground is the
+      action blue -- which is correct rather than a clash: closing the banner
+      IS the click, and blue means "you click this".
+    -->
+    <ewms-icon-button
+      icon="x"
+      size="sm"
+      [label]="dismissLabel()"
+      [tooltip]="dismissLabel()"
+      (click)="onDismiss()"
+    />
+  }
+</div>

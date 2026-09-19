@@ -9,4 +9,23 @@
   <main class="app-layout__content">
     <router-outlet />
   </main>
+
+  <!--
+    THE ONE TOAST OUTLET OF THE APPLICATION. There is no second one anywhere,
+    and that is the whole contract: one queue, one aria-live region, so a
+    screen reader is not interrupted afresh by every message.
+
+    The severity words are built here, at the single mounting point, because
+    the design system speaks no language (ADR 0008) and this is the only place
+    they would have to be translated.
+  -->
+  <ewms-toast-outlet
+    [severityLabels]="{
+      success: 'shell.toast.severity.success' | transloco,
+      warning: 'shell.toast.severity.warning' | transloco,
+      danger: 'shell.toast.severity.danger' | transloco,
+      info: 'shell.toast.severity.info' | transloco
+    }"
+    [regionLabel]="'shell.toast.region' | transloco"
+  />
 </div>

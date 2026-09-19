@@ -78,6 +78,20 @@
     </nav>
   </div>
 
+  <!--
+    NO `<ewms-toast-outlet>` HERE, AND THAT IS THE POINT.
+
+    The showroom is mounted inside the shell's MainLayout (app.routes.ts), and
+    MainLayout already carries the application's one outlet. A second one on
+    this page would put two aria-live regions in the same document and have a
+    screen reader announce every message twice -- exactly the failure the
+    single-region rule exists to prevent.
+
+    The toast demo on /components/toast therefore raises its messages into the
+    SHELL's outlet, with the shell's translated severity words. That is real
+    dogfooding rather than a rig: what the demo exercises is the path a product
+    screen will use.
+  -->
   <div class="min-w-0 p-8">
     <router-outlet />
   </div>

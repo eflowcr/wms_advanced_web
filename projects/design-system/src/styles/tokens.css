@@ -151,6 +151,11 @@
   --stroke-2: 2;
   --stroke-2-25: 2.25;
 
+  /* Duraciones: ms-<milisegundos>. Primera capa de tiempo del sistema,
+   * agregada en DS-3 (Toast). Un tiempo es un valor de diseno como un color:
+   * cuanto dura un mensaje en pantalla se decide una vez y en un solo lugar. */
+  --ms-3000: 3000ms;
+
   /* Familias tipograficas. 'Montserrat' es la cara auto-hospedada en
    * projects/shell/public/fonts (ver @font-face en styles.css). */
   --typeface-montserrat: 'Montserrat', ui-sans-serif, system-ui, sans-serif;
@@ -271,6 +276,18 @@
   --shadow-sm: 0 1px 2px var(--navy-7-a06);
   --shadow-md: 0 4px 8px var(--navy-7-a08), 0 1px 2px var(--navy-7-a06);
   --shadow-lg: 0 12px 24px var(--navy-7-a10), 0 2px 4px var(--navy-7-a06);
+
+  /* ---------------------------------------------------------------- tiempos
+   * Cuanto vive un toast en pantalla antes de irse solo. La ficha de
+   * Notificaciones fija 3000 ms; el consumidor puede pasar otro numero por
+   * llamada, pero el valor por defecto es de diseno y vive aca.
+   *
+   * ES EL PRIMER TOKEN QUE UN COMPONENTE LEE DESDE TYPESCRIPT, y eso tiene
+   * una consecuencia: `ToastService` lo lee del documento con
+   * getComputedStyle, no lo copia. Si esta hoja no esta cargada, el servicio
+   * no inventa un numero -- deja el toast fijo hasta que alguien lo cierre.
+   * Ver lib/tokens/read-token.ts. */
+  --duration-toast: var(--ms-3000);
 
   /* ------------------------------------------------------------- espaciado
    * Base 4px. Tailwind deriva la escala entera de este unico multiplicador. */

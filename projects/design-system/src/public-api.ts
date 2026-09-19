@@ -32,3 +32,25 @@ export { Radio } from './lib/radio/radio';
 export { Toggle } from './lib/toggle/toggle';
 export { Select, type SelectOption } from './lib/select/select';
 export { ICON_CATEGORIES, type IconCategory, type IconName } from './icons/icons.generated';
+
+/*
+ * Feedback (DS-3). Two formats of one message, one vocabulary of severity.
+ *
+ * `FeedbackVariant` is exported once, from the banner, and the toast uses the
+ * same type: a screen that raises a danger banner and a danger toast must not
+ * be able to spell the two differently.
+ *
+ * Info is called Info and is painted `neutral`. There is no `info` colour
+ * family and there is not going to be one -- the blue means "you click this"
+ * (Fundamentos de Marca).
+ */
+export { Banner, type FeedbackVariant } from './lib/banner/banner';
+export { ToastService } from './lib/toast/toast.service';
+export { ToastOutlet, type Toast } from './lib/toast/toast-outlet';
+
+/*
+ * Cards (DS-3). One component, two uses, decided by where it is written: an
+ * option when it is inside an `ewms-card-group`, a container anywhere else.
+ */
+export { Card } from './lib/card/card';
+export { CardGroup } from './lib/card/card-group';

@@ -25,11 +25,14 @@ const SELECT = '/design-system/components/select';
 const CHECKBOX = '/design-system/components/checkbox';
 const RADIO = '/design-system/components/radio';
 const TOGGLE = '/design-system/components/toggle';
+const BANNER = '/design-system/components/banner';
+const TOAST = '/design-system/components/toast';
+const CARD = '/design-system/components/card';
 
 /**
- * Every navigable route. Fifteen since DS-2 PR 4: the seven of PR 3 plus one
- * sheet per built component, which is what "nothing built is undocumented"
- * looks like when it is a test rather than a promise.
+ * Every navigable route. Eighteen since DS-3 lote A: the fifteen of DS-2 plus
+ * one sheet per component built here, which is what "nothing built is
+ * undocumented" looks like when it is a test rather than a promise.
  */
 const PAGES = [
   { url: '/design-system', heading: 'Showroom del sistema de diseño' },
@@ -47,6 +50,9 @@ const PAGES = [
   { url: CHECKBOX, heading: 'Checkbox' },
   { url: RADIO, heading: 'Radio' },
   { url: TOGGLE, heading: 'Toggle' },
+  { url: BANNER, heading: 'Banner' },
+  { url: TOAST, heading: 'Toast' },
+  { url: CARD, heading: 'Card' },
 ] as const;
 
 /** Fonts change every width measured, so nothing is measured before they land. */
@@ -1108,5 +1114,127 @@ test.describe('keyboard only', () => {
     await expect(submit).toBeFocused();
     await page.keyboard.press('Enter');
     await expect(counter).toHaveText('Envíos registrados: 1');
+  });
+});
+
+/**
+ * DS-3 LOTE A — the facts that needed a browser.
+ *
+ * The three sheets built in this lote make claims jsdom cannot judge: an icon
+ * that does not grow with the severity, an accent bar four pixels wide, and a
+ * group of cards that is one tab stop rather than four. All three are read off
+ * the rendered page here, and all three are shown on the page itself, so a
+ * failure names the same number a reader would have seen.
+ */
+test.describe('DS-3 lote A: notificaciones y card', () => {
+  test('the banner keeps its icon at 18 px in all four variants', async ({ page }) => {
+    await page.goto(BANNER);
+    await ready(page);
+
+    for (const variant of ['success', 'warning', 'danger', 'info'] as const) {
+      const icon = await page.locator(`[data-icon-sample="${variant}"] svg`).boundingBox();
+      expect(round(icon?.width), `banner ${variant} icon width`).toBe(18);
+      expect(round(icon?.height), `banner ${variant} icon height`).toBe(18);
+    }
+    // The page derives its own verdict from the same read.
+    await expect(page.getByText('no son 18 px')).toHaveCount(0);
+  });
+
+  test('the banner does not remove itself when it is dismissed', async ({ page }) => {
+    await page.goto(BANNER);
+    await ready(page);
+
+    const banner = page.locator('[data-demo-banner] ewms-banner');
+    await expect(banner).toBeVisible();
+
+    await page.locator('[data-demo-banner] button').click();
+
+    await expect(page.locator('[data-dismiss-count]')).toHaveText('1');
+    // Still there: whether it goes away is the consumer's call.
+    await expect(banner).toBeVisible();
+  });
+
+  test('a toast comes up in the shell outlet, with a 4 px accent, and Escape closes it', async ({
+    page,
+  }) => {
+    await page.goto(TOAST);
+    await ready(page);
+
+    const stack = page.locator('[role="status"][aria-live="polite"]');
+    // ONE live region in the whole document, even before anything is in it.
+    await expect(stack).toHaveCount(1);
+
+    await page.locator('[data-raise-sticky] button').click();
+
+    const toast = stack.locator('> div');
+    await expect(toast).toHaveCount(1);
+
+    const accent = await toast.locator('> span').boundingBox();
+    expect(round(accent?.width), 'toast accent width').toBe(4);
+    await expect(page.locator('[data-accent-width]')).toHaveText('4 px');
+
+    // A toast that was raised with duration 0 never expires on its own; the
+    // keyboard is the only way out, and it takes the most recent one.
+    await page.keyboard.press('Escape');
+    await expect(toast).toHaveCount(0);
+  });
+
+  test('a toast with the default duration goes away on its own', async ({ page }) => {
+    await page.goto(TOAST);
+    await ready(page);
+
+    await page.locator('[data-raise="success"] button').click();
+    const toast = page.locator('[role="status"][aria-live="polite"] > div');
+    await expect(toast).toHaveCount(1);
+
+    // --duration-toast is 3000 ms; the wait is the token's value plus slack,
+    // and the point of the assertion is that SOMETHING expired it -- the
+    // service read the token rather than inventing a number.
+    await expect(toast).toHaveCount(0, { timeout: 6000 });
+  });
+
+  test('the card group is one tab stop, and the arrows choose inside it', async ({ page }) => {
+    await page.goto(CARD);
+    await ready(page);
+
+    const cards = page.locator('[data-demo-warehouses] [role="radio"]');
+    await expect(cards).toHaveCount(4);
+    await expect(page.locator('[data-tab-stops]')).toHaveText('1');
+
+    // Enter the group at the chosen card, which the form seeded with Central.
+    await cards.nth(1).focus();
+    await expect(cards.nth(1)).toHaveAttribute('aria-checked', 'true');
+
+    await page.keyboard.press('ArrowDown');
+    await expect(cards.nth(2)).toHaveAttribute('aria-checked', 'true');
+    await expect(cards.nth(2)).toBeFocused();
+    await expect(page.locator('[data-demo-value]')).toHaveText('devoluciones');
+
+    // Sur is unavailable, so the next one round is Norte: the arrows skip a
+    // disabled card and wrap, which is what a radio group does.
+    await page.keyboard.press('ArrowDown');
+    await expect(cards.nth(0)).toHaveAttribute('aria-checked', 'true');
+    await expect(page.locator('[data-demo-value]')).toHaveText('norte');
+  });
+
+  test('the chosen card is marked three ways, none of them only colour', async ({ page }) => {
+    await page.goto(CARD);
+    await ready(page);
+
+    const chosen = page.locator('[data-demo-warehouses] [role="radio"][aria-checked="true"]');
+    await expect(chosen).toHaveCount(1);
+
+    const marks = await chosen.evaluate((element) => {
+      const style = getComputedStyle(element);
+      return {
+        background: style.backgroundColor,
+        border: style.borderTopColor,
+        check: element.querySelectorAll('svg').length,
+      };
+    });
+
+    // The fill and the border are different colours, and there is a glyph.
+    expect(marks.background).not.toBe(marks.border);
+    expect(marks.check).toBeGreaterThan(0);
   });
 });

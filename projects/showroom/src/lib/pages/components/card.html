@@ -1,0 +1,472 @@
+<!-- The showroom is Spanish only, exempt from i18n (gate 12): declared so a screen reader never reads it as English. -->
+<article class="flex flex-col gap-10" lang="es">
+  <!-- ============================================================ 1. Encabezado -->
+  <header class="flex flex-col gap-2" data-block="1-encabezado">
+    <div class="flex flex-wrap items-baseline gap-3">
+      <h1 class="text-h1">Card</h1>
+      <code class="font-mono text-primary">&lt;ewms-card&gt;</code>
+      <code class="font-mono text-primary">&lt;ewms-card-group&gt;</code>
+    </div>
+    <ul class="flex flex-wrap gap-2 text-caption">
+      <li class="rounded-sm bg-secondary px-2 py-1 text-secondary">
+        Versión <span class="font-mono">{{ version }}</span>
+      </li>
+      <li class="rounded-sm bg-success-surface px-2 py-1 text-success">Construido y en verde</li>
+      <li class="rounded-sm bg-secondary px-2 py-1 text-secondary">
+        Ficha: <span class="font-mono">08-Sistema-de-Diseno/Componentes/Cards.md</span>
+      </li>
+    </ul>
+  </header>
+
+  <!-- ================================================ 2. Qué resuelve / cuándo no -->
+  <section class="flex flex-col gap-4" aria-labelledby="ca-purpose" data-block="2-proposito">
+    <h2 id="ca-purpose" class="text-h2">Qué resuelve, y cuándo NO usarlo</h2>
+    <div class="grid grid-cols-[repeat(auto-fit,minmax(20rem,1fr))] gap-4">
+      <div class="flex flex-col gap-2 rounded-md border border-default bg-surface p-4">
+        <h3 class="text-h3">Qué resuelve</h3>
+        <p>
+          <strong>Dos usos bajo un nombre</strong>, como dice la ficha. Dentro de un
+          <code class="font-mono">&lt;ewms-card-group&gt;</code> es una
+          <strong>opción</strong>: elegir con más contexto visual que un radio. En cualquier otro
+          lado es un <strong>contenedor</strong>: header, cuerpo y pie, sin estado propio.
+        </p>
+        <p class="text-caption text-secondary">
+          Cuál de los dos es <strong>sale de dónde está escrita</strong>, no de una propiedad. Ver
+          el bloque 4.
+        </p>
+      </div>
+      <div class="flex flex-col gap-2 rounded-md border border-danger bg-danger-surface p-4">
+        <h3 class="text-h3">Cuándo NO usarlo</h3>
+        <ul class="flex flex-col gap-2">
+          <li>
+            <strong>Si las opciones son texto corto, va Radio.</strong> Una card existe para
+            mostrar contexto —un meta, un icono, un número—; sin nada de eso es un radio con un
+            borde caro alrededor.
+          </li>
+          <li>
+            <strong>Si hay que elegir varias, todavía no existe.</strong> El grupo es single-select
+            por diseño; el multi-select está declarado como pendiente en la ficha.
+          </li>
+          <li>
+            <strong>Si la card entera navega a otro lado, va un link.</strong> Esto es un control
+            de formulario: su trabajo es guardar un valor, no llevarte a una ruta.
+          </li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================= 3. Demo principal -->
+  <section class="flex flex-col gap-4" aria-labelledby="ca-demo" data-block="3-demo">
+    <h2 id="ca-demo" class="text-h2">Demo principal</h2>
+    <div class="grid grid-cols-[repeat(auto-fit,minmax(24rem,1fr))] gap-6">
+      <ewms-demo-frame ground="canvas" label="Selector de almacén, en un formulario reactivo real">
+        <form [formGroup]="form" class="flex flex-col gap-4">
+          <p class="text-caption text-secondary" id="ca-warehouse-label">Almacén de destino</p>
+          <div data-demo-warehouses>
+            <ewms-card-group formControlName="almacen" label="Almacén de destino">
+              @for (warehouse of warehouses; track warehouse.value) {
+                <!--
+                  El meta NO lleva `text-secondary`, y es un hallazgo medido,
+                  no un descuido: el gris secundario sobre el tinte de la card
+                  elegida da 4.35:1 y no llega al 4.5 de AA. Ver el bloque 7.
+                -->
+                <ewms-card [optionValue]="warehouse.value" [disabled]="warehouse.disabled">
+                  <span class="text-h4">{{ warehouse.name }}</span>
+                  <span class="text-caption">{{ warehouse.meta }}</span>
+                </ewms-card>
+              }
+            </ewms-card-group>
+          </div>
+          <dl class="flex flex-col gap-1 rounded-md border border-default bg-surface p-3 text-caption">
+            <div class="flex flex-wrap gap-2">
+              <dt class="text-secondary">Valor del control:</dt>
+              <dd class="font-mono text-primary" data-demo-value>{{ chosen() }}</dd>
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <dt class="text-secondary">Etiqueta correspondiente:</dt>
+              <dd class="text-primary">{{ chosenLabel() }}</dd>
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <dt class="text-secondary">Cards en el grupo:</dt>
+              <dd class="font-mono text-primary" data-cards-count>{{ cardsInGroup() }}</dd>
+              <dt class="text-secondary">Paradas de tabulación:</dt>
+              <dd class="font-mono text-primary" data-tab-stops>{{ tabStops() }}</dd>
+              <dd>
+                @if (isOneStop()) {
+                  <span class="rounded-sm bg-success-surface px-1 text-success">
+                    una sola, como un radio group
+                  </span>
+                }
+              </dd>
+            </div>
+          </dl>
+        </form>
+      </ewms-demo-frame>
+      <ewms-prop-table [rows]="props" caption="Propiedades de <ewms-card> y <ewms-card-group>" />
+    </div>
+    <p class="text-caption text-secondary">
+      <strong>Probalo con el teclado.</strong> Un solo <kbd class="font-mono">Tab</kbd> entra al
+      grupo, y entra en la card elegida. Las flechas mueven <em>y eligen</em> —selección sigue al
+      foco, que es lo que hace un grupo de radios nativo—, saltan la deshabilitada y dan la vuelta
+      en los extremos. <kbd class="font-mono">Space</kbd> elige la enfocada.
+      <kbd class="font-mono">Enter</kbd> no hace nada acá a propósito: pertenece al formulario que
+      la rodea, que es lo que hace rápido un formulario manejado con teclado.
+    </p>
+  </section>
+
+  <!-- =============================================================== 4. Variantes -->
+  <section class="flex flex-col gap-4" aria-labelledby="ca-variants" data-block="4-variantes">
+    <h2 id="ca-variants" class="text-h2">Variantes</h2>
+    <p class="text-secondary">
+      Dos usos, y <strong>no hay una propiedad que los distinga</strong>: la card le pregunta al
+      inyector si tiene un grupo arriba.
+    </p>
+
+    <div class="grid grid-cols-[repeat(auto-fit,minmax(20rem,1fr))] gap-4">
+      <div class="flex flex-col gap-3">
+        <h3 class="text-h3">De contenido</h3>
+        <ewms-demo-frame ground="canvas">
+          <ewms-card>
+            <div ewmsCardHeader class="flex items-center justify-between gap-2">
+              <span class="text-h3">Resumen de bodega</span>
+              <ewms-icon name="warehouse" size="md" />
+            </div>
+            <dl class="flex flex-col gap-1 text-caption">
+              <div class="flex justify-between gap-4">
+                <dt class="text-secondary">Recepciones abiertas</dt>
+                <dd class="font-mono text-primary">12</dd>
+              </div>
+              <div class="flex justify-between gap-4">
+                <dt class="text-secondary">Expediciones del día</dt>
+                <dd class="font-mono text-primary">38</dd>
+              </div>
+              <div class="flex justify-between gap-4">
+                <dt class="text-secondary">Ubicaciones bloqueadas</dt>
+                <dd class="font-mono text-primary">3</dd>
+              </div>
+            </dl>
+            <div ewmsCardFooter class="flex gap-2">
+              <ewms-button variant="primary" size="sm">Ver detalle</ewms-button>
+              <ewms-button variant="ghost" size="sm">Exportar</ewms-button>
+            </div>
+          </ewms-card>
+        </ewms-demo-frame>
+        <p class="text-caption text-secondary">
+          Sin <code class="font-mono">role</code>, sin
+          <code class="font-mono">tabindex</code> y sin
+          <code class="font-mono">aria-checked</code> — ausentes, no vacíos. Un contenedor con
+          <code class="font-mono">role="radio"</code> y ningún radiogroup alrededor es marcado
+          inválido, y axe lo dice.
+        </p>
+      </div>
+
+      <div class="flex flex-col gap-2 rounded-md border border-strong bg-secondary p-4">
+        <h3 class="text-h4">Por qué no hay un input <code class="font-mono">selectable</code></h3>
+        <p class="text-caption">
+          Con una bandera, <code class="font-mono">&lt;ewms-card selectable&gt;</code> fuera de un
+          grupo sería código que compila: un radio sin nada donde ser radio. Preguntarle al
+          inyector <strong>elimina la posibilidad</strong> en vez de documentarla.
+        </p>
+        <p class="text-caption">
+          Es el mismo criterio por el que <code class="font-mono">&lt;ewms-icon-button&gt;</code> es
+          un componente aparte del Botón en vez de una variante suya: lo que no debe existir no
+          debería compilar.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================= 5. Matriz de estados -->
+  <section class="flex flex-col gap-4" aria-labelledby="ca-matrix" data-block="5-matriz">
+    <h2 id="ca-matrix" class="text-h2">Matriz de estados</h2>
+    <p class="text-secondary">
+      Los dos usos contra los cuatro estados de la ficha. Todas las celdas menos una son entradas
+      reales.
+    </p>
+    <ewms-demo-frame ground="canvas">
+      <ewms-state-matrix
+        [variants]="matrixVariants"
+        [states]="matrixStates"
+        rowHeader="Uso"
+        caption="Los dos usos de la card por sus cuatro estados"
+      >
+        <ng-template let-variant="variant" let-state="state">
+          @if (isOption(variant.id)) {
+            <span class="inline-block" [class]="forced(variant.id, state.id)">
+              <ewms-card-group
+                label="Muestra de estado"
+                [value]="matrixValue(state.id)"
+                [disabled]="matrixDisabled(state.id)"
+              >
+                <ewms-card optionValue="central">
+                  <span class="text-h4">Central</span>
+                </ewms-card>
+              </ewms-card-group>
+            </span>
+          } @else {
+            <ewms-card>
+              <span class="text-h4">Central</span>
+            </ewms-card>
+          }
+        </ng-template>
+      </ewms-state-matrix>
+    </ewms-demo-frame>
+    <p class="text-caption text-secondary">
+      <strong>La card de contenido es la misma en las cuatro columnas, y eso es la información.</strong>
+      No tiene hover, no tiene selección y no se puede deshabilitar: es layout. La fila de arriba es
+      la que cambia.
+    </p>
+    <p class="text-caption text-secondary">
+      <strong>Hover es la única celda forzada</strong>, con el mismo token que usa la regla del
+      componente (<code class="font-mono">--color-border-strong</code>): no se puede sostener el
+      puntero quieto en una grilla. <strong>Focus no está</strong>, por lo mismo que en el Input y
+      el Select: el anillo es un <code class="font-mono">box-shadow</code> de
+      <code class="font-mono">:focus-visible</code>, y una clase envolvente no puede producirlo sin
+      mentir sobre cuándo aparece. Se recorre con Tab en la demo de arriba, que es donde de verdad
+      se ve.
+    </p>
+  </section>
+
+  <!-- ================================================================ 6. Tamaños -->
+  <section class="flex flex-col gap-4" aria-labelledby="ca-sizes" data-block="6-tamanos">
+    <h2 id="ca-sizes" class="text-h2">Tamaños</h2>
+    <div class="flex flex-col gap-2 rounded-md border border-strong bg-secondary p-4">
+      <h3 class="text-h4">No aplica — la card no tiene escala</h3>
+      <p>
+        No hay <code class="font-mono">size</code>. Una card se dimensiona por su contenido y por el
+        ancho que le deja el layout, no por la escala 32 / 40 / 48 de los controles: no se alinea
+        con un botón en una fila, que es la única razón por la que esa escala existe.
+      </p>
+    </div>
+    <p class="text-caption text-secondary">
+      Lo único fijo es el <strong>padding interno</strong> y el radio, y los dos salen de tokens —
+      están en el bloque siguiente.
+    </p>
+  </section>
+
+  <!-- ==================================================== 7. Anatomía y tokens -->
+  <section class="flex flex-col gap-4" aria-labelledby="ca-anatomy" data-block="7-anatomia">
+    <h2 id="ca-anatomy" class="text-h2">Anatomía y tokens</h2>
+    <div class="overflow-x-auto">
+      <table class="w-full border-collapse text-caption">
+        <caption class="mb-2 text-left text-secondary">
+          Tokens que consume &lt;ewms-card&gt;
+        </caption>
+        <thead>
+          <tr>
+            <th scope="col" class="border-b border-default p-2 text-left text-secondary">Parte</th>
+            <th scope="col" class="border-b border-default p-2 text-left text-secondary">
+              Token, cadena y valor
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of anatomy; track row.token) {
+            <tr>
+              <th scope="row" class="border-b border-default p-2 text-left text-primary">
+                {{ row.part }}
+              </th>
+              <td class="border-b border-default p-2">
+                <ewms-token-value [token]="row.token" [swatch]="true" />
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <div class="flex flex-col gap-2 rounded-md border border-strong bg-secondary p-4">
+      <h3 class="text-h4">
+        <code class="font-mono">--color-row-selected</code> nunca va solo, y acá el acento es el
+        borde entero
+      </h3>
+      <p class="text-caption">
+        Fundamentos de Marca empareja ese tinte con una barra de acento de 3 px porque el tinte por
+        sí solo queda a un pelo de <code class="font-mono">--color-ghost-hover</code>, y un WMS pone
+        botones ghost <em>dentro</em> de filas seleccionables. La card no necesita la barra: su
+        contorno completo se vuelve el azul de acción, que es la misma garantía dibujada más
+        grande. El check de la esquina es la tercera pista.
+      </p>
+      <p class="text-caption">
+        Tres señales para un solo estado, y ninguna de las tres es sólo el color: eso es
+        exactamente lo que pide WCAG 1.4.1.
+      </p>
+    </div>
+
+    <div
+      class="flex flex-col gap-2 rounded-md border border-warning bg-warning-surface p-4"
+      data-finding="row-selected-secondary"
+    >
+      <h3 class="text-h4">
+        Hallazgo medido: el gris secundario no sobrevive al tinte de «elegida»
+      </h3>
+      <p class="text-caption">
+        <code class="font-mono">--color-text-secondary</code> sobre
+        <code class="font-mono">--color-row-selected</code> mide
+        <strong class="font-mono">4.35:1</strong> y no llega al 4.5:1 de WCAG 1.4.3 para texto
+        normal. Lo encontró axe sobre esta misma página: el meta de la card elegida era
+        <code class="font-mono">text-caption text-secondary</code>, que es lo natural de escribir.
+      </p>
+      <p class="text-caption">
+        Es una combinación que la especificación permite y que <strong>nunca se había
+        dibujado</strong> —el mismo modo de fallo que el Ghost en hover encontró en DS-2—, y no es
+        exclusiva de la card: <strong>toca a la Tabla</strong>, cuyas filas seleccionadas llevan
+        texto de caption y de mono.
+      </p>
+      <div class="overflow-x-auto">
+        <table class="w-full border-collapse text-caption">
+          <caption class="mb-2 text-left text-secondary">
+            Los adyacentes, medidos, sobre <code class="font-mono">--color-row-selected</code>
+          </caption>
+          <thead>
+            <tr>
+              <th scope="col" class="border-b border-default p-2 text-left text-secondary">Token</th>
+              <th scope="col" class="border-b border-default p-2 text-left text-secondary">Ratio</th>
+              <th scope="col" class="border-b border-default p-2 text-left text-secondary">AA 4.5:1</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row" class="border-b border-default p-2 text-left font-mono text-primary">
+                --color-text-primary
+              </th>
+              <td class="border-b border-default p-2 font-mono text-primary">15.15:1</td>
+              <td class="border-b border-default p-2 text-success">pasa</td>
+            </tr>
+            <tr>
+              <th scope="row" class="border-b border-default p-2 text-left font-mono text-primary">
+                --color-neutral-text
+              </th>
+              <td class="border-b border-default p-2 font-mono text-primary">8.46:1</td>
+              <td class="border-b border-default p-2 text-success">pasa</td>
+            </tr>
+            <tr>
+              <th scope="row" class="border-b border-default p-2 text-left font-mono text-primary">
+                --color-text-secondary
+              </th>
+              <td class="border-b border-default p-2 font-mono text-primary">4.35:1</td>
+              <td class="border-b border-default p-2 text-danger">no pasa</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="text-caption">
+        <strong>No se tocó ningún token y no se debilitó ninguna prueba.</strong> Entre
+        <code class="font-mono">navy-46</code> y <code class="font-mono">navy-28</code> no hay
+        ningún primitivo intermedio, así que la salida no es «oscurecer un poco el secundario»:
+        eso sería un primitivo de color nuevo, que es decisión de diseño y se reporta. Mientras
+        tanto la demo de arriba usa el primer plano de la card, y el hallazgo queda escrito acá.
+      </p>
+    </div>
+  </section>
+
+  <!-- ============================================== 8. Contrato para Angular -->
+  <section class="flex flex-col gap-4" aria-labelledby="ca-contract" data-block="8-contrato">
+    <h2 id="ca-contract" class="text-h2">Contrato para Angular</h2>
+
+    <h3 class="text-h3">Uso típico</h3>
+    <pre
+      class="overflow-x-auto rounded-md border border-default bg-secondary p-4 font-mono text-mono text-primary"
+    ><code>{{ snippet }}</code></pre>
+
+    <h3 class="text-h3">Salidas</h3>
+    <div class="flex flex-col gap-2 rounded-md border border-warning bg-warning-surface p-4">
+      <p>
+        <strong>Ninguna.</strong> El valor viaja por
+        <code class="font-mono">ControlValueAccessor</code> —o sea por
+        <code class="font-mono">formControlName</code> o
+        <code class="font-mono">ngModel</code>— y se escucha con
+        <code class="font-mono">valueChanges</code> del control. Como en el Select, y por la misma
+        razón: acá no hay ningún <code class="font-mono">&lt;input&gt;</code> nativo cuyo
+        <code class="font-mono">change</code> haya que frenar.
+      </p>
+    </div>
+
+    <h3 class="text-h3">Accesibilidad: el teclado de un radio group</h3>
+    <div class="overflow-x-auto">
+      <table class="w-full border-collapse text-caption">
+        <caption class="mb-2 text-left text-secondary">
+          El contrato de teclado, implementado en la card y coordinado por el grupo
+        </caption>
+        <thead>
+          <tr>
+            <th scope="col" class="border-b border-default p-2 text-left text-secondary">Tecla</th>
+            <th scope="col" class="border-b border-default p-2 text-left text-secondary">Qué hace</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <th scope="row" class="border-b border-default p-2 text-left text-primary">Tab</th>
+            <td class="border-b border-default p-2 text-primary">
+              Entra al grupo <strong>una sola vez</strong>, en la card elegida — o en la primera
+              elegible si no hay ninguna. Un grupo sin nada elegido sigue siendo alcanzable, que es
+              como empieza siempre.
+            </td>
+          </tr>
+          <tr>
+            <th scope="row" class="border-b border-default p-2 text-left text-primary">↓ / →</th>
+            <td class="border-b border-default p-2 text-primary">
+              Mueve <strong>y elige</strong> la siguiente elegible. Da la vuelta al final.
+            </td>
+          </tr>
+          <tr>
+            <th scope="row" class="border-b border-default p-2 text-left text-primary">↑ / ←</th>
+            <td class="border-b border-default p-2 text-primary">Lo mismo, hacia atrás.</td>
+          </tr>
+          <tr>
+            <th scope="row" class="border-b border-default p-2 text-left text-primary">Space</th>
+            <td class="border-b border-default p-2 text-primary">
+              Elige la enfocada. También frena el scroll, que es lo último que quiere quien está
+              eligiendo.
+            </td>
+          </tr>
+          <tr>
+            <th scope="row" class="border-b border-default p-2 text-left text-primary">Enter</th>
+            <td class="border-b border-default p-2 text-primary">
+              <strong>Nada, a propósito.</strong> En un grupo de radios Enter es del formulario:
+              envía. Tragárselo acá rompería el gesto que hace rápido un formulario con teclado.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="text-caption text-secondary">
+      <strong>La selección sigue al foco</strong>, y no es una invención: en un grupo de radios las
+      flechas cambian la respuesta, no la hojean. Hojear sin elegir es el patrón de listbox, y esto
+      no lo es. Por eso también <strong>da la vuelta</strong>, al revés que el panel del Select: un
+      panel es una lista que se está recorriendo y que se termine es información; un grupo de cuatro
+      cards es un conjunto cerrado y frenar en la última sólo hace apretar la otra flecha.
+    </p>
+
+    <h3 class="text-h3">Errores comunes</h3>
+    <ul class="flex flex-col gap-2">
+      <li>
+        <strong>Atar el formulario a la card.</strong> Se ata al <em>grupo</em>. La card lleva
+        <code class="font-mono">optionValue</code> justamente para que no se confundan dos miembros
+        llamados <code class="font-mono">value</code> en el mismo árbol.
+      </li>
+      <li>
+        <strong>Poner <code class="font-mono">[disabled]="true"</code> en el grupo y esperar que
+        <code class="font-mono">form.enable()</code> lo devuelva.</strong> No lo devuelve:
+        <strong>quien deshabilita gana, y nadie re-habilita</strong>. Un control manejado por
+        formulario sencillamente no pasa ese input.
+      </li>
+      <li>
+        <strong>Esperar que una card suelta reaccione al click.</strong> Fuera de un grupo no es un
+        control: no tiene role, no tiene foco y no guarda nada.
+      </li>
+      <li>
+        <strong>Meter un botón dentro de una card seleccionable.</strong> Es un control dentro de
+        otro control: el click se lo lleva uno de los dos y el teclado queda ambiguo. Los botones
+        van en el pie de una card <em>de contenido</em>.
+      </li>
+    </ul>
+
+    <h3 class="text-h3">Bloques que no aplican</h3>
+    <p class="text-secondary">
+      Uno: <strong>tamaños</strong>, porque la card no tiene escala. Está escrito arriba en lugar de
+      borrado.
+    </p>
+  </section>
+</article>

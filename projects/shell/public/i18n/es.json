@@ -23,6 +23,15 @@
     "nav": {
       "designSystem": "Sistema de diseño",
       "home": "Inicio"
+    },
+    "toast": {
+      "region": "Notificaciones",
+      "severity": {
+        "danger": "Error",
+        "info": "Información",
+        "success": "Éxito",
+        "warning": "Advertencia"
+      }
     }
   }
 }

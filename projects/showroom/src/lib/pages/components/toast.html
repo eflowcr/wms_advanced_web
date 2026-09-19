@@ -1,0 +1,369 @@
+<!-- The showroom is Spanish only, exempt from i18n (gate 12): declared so a screen reader never reads it as English. -->
+<article class="flex flex-col gap-10" lang="es">
+  <!-- ============================================================ 1. Encabezado -->
+  <header class="flex flex-col gap-2" data-block="1-encabezado">
+    <div class="flex flex-wrap items-baseline gap-3">
+      <h1 class="text-h1">Toast</h1>
+      <code class="font-mono text-primary">ToastService</code>
+      <code class="font-mono text-primary">&lt;ewms-toast-outlet&gt;</code>
+    </div>
+    <ul class="flex flex-wrap gap-2 text-caption">
+      <li class="rounded-sm bg-secondary px-2 py-1 text-secondary">
+        Versión <span class="font-mono">{{ version }}</span>
+      </li>
+      <li class="rounded-sm bg-success-surface px-2 py-1 text-success">Construido y en verde</li>
+      <li class="rounded-sm bg-secondary px-2 py-1 text-secondary">
+        Ficha: <span class="font-mono">08-Sistema-de-Diseno/Componentes/Notificaciones.md</span>
+      </li>
+    </ul>
+  </header>
+
+  <!-- ================================================ 2. Qué resuelve / cuándo no -->
+  <section class="flex flex-col gap-4" aria-labelledby="to-purpose" data-block="2-proposito">
+    <h2 id="to-purpose" class="text-h2">Qué resuelve, y cuándo NO usarlo</h2>
+    <div class="grid grid-cols-[repeat(auto-fit,minmax(20rem,1fr))] gap-4">
+      <div class="flex flex-col gap-2 rounded-md border border-default bg-surface p-4">
+        <h3 class="text-h3">Qué resuelve</h3>
+        <p>
+          Contar <strong>algo que acaba de pasar</strong> sin interrumpir lo que la persona está
+          haciendo. Flota, se apila con los demás y se va solo. No mueve el layout y no pide nada.
+        </p>
+        <p class="text-caption text-secondary">
+          Es un <strong>servicio</strong>, no un componente que se pone en la plantilla: se llama
+          desde el código, y la salida ya está montada una vez en el layout raíz.
+        </p>
+      </div>
+      <div class="flex flex-col gap-2 rounded-md border border-danger bg-danger-surface p-4">
+        <h3 class="text-h3">Cuándo NO usarlo</h3>
+        <ul class="flex flex-col gap-2">
+          <li>
+            <strong>Si la condición sigue siendo cierta, va Banner.</strong> Un toast de «pasillo
+            bloqueado» desaparece a los tres segundos y la persona que llegó cuatro segundos tarde
+            nunca se enteró.
+          </li>
+          <li>
+            <strong>Si hay que leerlo sí o sí, no va un toast que se va solo.</strong> Se puede
+            pasar <code class="font-mono">duration: 0</code>, pero pensalo dos veces: un mensaje
+            fijo en una esquina es un Banner mal ubicado.
+          </li>
+          <li>
+            <strong>Si hay que decidir, va Dialog.</strong> Un toast no tiene botones y no los va a
+            tener: no es un lugar donde se actúa.
+          </li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================= 3. Demo principal -->
+  <section class="flex flex-col gap-4" aria-labelledby="to-demo" data-block="3-demo">
+    <h2 id="to-demo" class="text-h2">Demo principal</h2>
+    <p class="text-secondary">
+      <strong>Pulsá, y mirá la esquina inferior derecha.</strong> Estos botones llaman al
+      <code class="font-mono">ToastService</code> de verdad, y los mensajes salen por la
+      <strong>única</strong> salida del documento, la del <em>shell</em>. Esta página no monta una
+      segunda: dos regiones vivas anunciarían cada mensaje dos veces.
+    </p>
+    <div class="grid grid-cols-[repeat(auto-fit,minmax(24rem,1fr))] gap-6">
+      <ewms-demo-frame ground="canvas" label="Cola real, salida real">
+        <div class="flex flex-col gap-4" data-demo-toast>
+          <div class="flex flex-wrap gap-2">
+            @for (row of variants; track row.variant) {
+              <ewms-button
+                variant="secondary"
+                size="sm"
+                [attr.data-raise]="row.variant"
+                (click)="raise(row.variant, row.message)"
+              >
+                {{ row.name }}
+              </ewms-button>
+            }
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <ewms-button variant="ghost" size="sm" data-raise-sticky (click)="raiseSticky()">
+              Uno que no se va solo
+            </ewms-button>
+            <ewms-button variant="ghost" size="sm" data-clear (click)="clear()">
+              Vaciar la cola
+            </ewms-button>
+          </div>
+          <dl class="flex flex-col gap-1 rounded-md border border-default bg-surface p-3 text-caption">
+            <div class="flex flex-wrap gap-2">
+              <dt class="text-secondary">En la cola ahora:</dt>
+              <dd class="font-mono text-primary" data-queue-size>{{ queued().length }}</dd>
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <dt class="text-secondary">Ancho del acento, medido:</dt>
+              <dd class="font-mono text-primary" data-accent-width>{{ accentWidth() }}</dd>
+              <dd>
+                @if (accentIsFour()) {
+                  <span class="rounded-sm bg-success-surface px-1 text-success">4 px, como pide la ficha</span>
+                }
+              </dd>
+            </div>
+          </dl>
+          <p class="text-caption text-secondary">
+            <strong>Escape cierra el más reciente.</strong> Es la única forma de sacar uno a mano:
+            el toast no lleva botón de cerrar, y eso deja abierto —a propósito— el pendiente que la
+            ficha declara.
+          </p>
+        </div>
+      </ewms-demo-frame>
+      <ewms-prop-table
+        [rows]="props"
+        caption="Métodos de ToastService, y las dos entradas de <ewms-toast-outlet>"
+      />
+    </div>
+  </section>
+
+  <!-- =============================================================== 4. Variantes -->
+  <section class="flex flex-col gap-4" aria-labelledby="to-variants" data-block="4-variantes">
+    <h2 id="to-variants" class="text-h2">Variantes</h2>
+    <p class="text-secondary">
+      Las mismas cuatro del Banner, con el mismo tipo
+      (<code class="font-mono">FeedbackVariant</code>) y el mismo mapeo a familias. Una pantalla que
+      levanta un banner danger y un toast danger no puede escribirlos distinto.
+    </p>
+    <div class="overflow-x-auto">
+      <table class="w-full border-collapse text-caption">
+        <caption class="mb-2 text-left text-secondary">
+          Variante, familia de color y mensaje de ejemplo
+        </caption>
+        <thead>
+          <tr>
+            <th scope="col" class="border-b border-default p-2 text-left text-secondary">Variante</th>
+            <th scope="col" class="border-b border-default p-2 text-left text-secondary">Familia</th>
+            <th scope="col" class="border-b border-default p-2 text-left text-secondary">Mensaje</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of variants; track row.variant) {
+            <tr>
+              <th scope="row" class="border-b border-default p-2 text-left text-primary">
+                {{ row.name }}
+              </th>
+              <td class="border-b border-default p-2 font-mono text-primary">{{ row.family }}</td>
+              <td class="border-b border-default p-2 text-primary">{{ row.message }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    <div class="flex flex-col gap-2 rounded-md border border-strong bg-secondary p-4">
+      <h3 class="text-h4">
+        El acento de 4 px va en <code class="font-mono">-solid</code>, y se decidió midiendo
+      </h3>
+      <p class="text-caption">
+        La ficha dejaba abierto si esa barra usaba <code class="font-mono">-border</code> o
+        <code class="font-mono">-solid</code>. Contra la superficie sobre la que se apoya,
+        <code class="font-mono">-border</code> mide <span class="font-mono">1.45–1.62:1</span>: un
+        acento que nadie ve. <code class="font-mono">-solid</code> mide
+        <span class="font-mono">3.71–4.28:1</span>. Gana el sólido.
+      </p>
+      <p class="text-caption">
+        Es además el <strong>primer consumidor de la familia sólida</strong>, que la ficha anotaba
+        como sin uso.
+      </p>
+    </div>
+  </section>
+
+  <!-- ========================================================= 5. Matriz de estados -->
+  <section class="flex flex-col gap-4" aria-labelledby="to-matrix" data-block="5-matriz">
+    <h2 id="to-matrix" class="text-h2">Matriz de estados</h2>
+    <p class="text-secondary">
+      Las cuatro variantes contra los dos roles de token que usa cada una: la superficie de la caja
+      y el sólido del acento.
+    </p>
+    <ewms-demo-frame ground="canvas">
+      <ewms-state-matrix
+        [variants]="matrixVariants"
+        [states]="matrixStates"
+        rowHeader="Variante"
+        caption="Superficie y acento de las cuatro variantes"
+      >
+        <ng-template let-variant="variant" let-state="state">
+          <span class="inline-block" [class]="cellClasses(state.id, variant.id)"></span>
+        </ng-template>
+      </ewms-state-matrix>
+    </ewms-demo-frame>
+    <p class="text-caption text-secondary">
+      <strong>Estas celdas son muestras de token, no toasts vivos, y es la forma honesta de dibujar
+      esta grilla.</strong> Un toast vive en una única pila flotante en una esquina del viewport:
+      ocho de ellos no se pueden sostener quietos dentro de una tabla. El componente real está
+      arriba, en la demo, donde de verdad vive.
+    </p>
+    <p class="text-caption text-secondary">
+      Tampoco hay Hover, Focus ni Disabled: un toast no se pulsa, no recibe el foco y no se puede
+      deshabilitar. Su único estado propio es <em>estar</em> o <em>no estar</em>.
+    </p>
+  </section>
+
+  <!-- ================================================================ 6. Tamaños -->
+  <section class="flex flex-col gap-4" aria-labelledby="to-sizes" data-block="6-tamanos">
+    <h2 id="to-sizes" class="text-h2">Tamaños</h2>
+    <div class="flex flex-col gap-2 rounded-md border border-strong bg-secondary p-4">
+      <h3 class="text-h4">No aplica — el toast tiene un solo tamaño</h3>
+      <p>
+        No hay <code class="font-mono">size</code>. El toast crece con su mensaje hasta un ancho
+        máximo y ahí envuelve; lo único fijo son el acento de 4 px y el icono de 18.
+      </p>
+    </div>
+    <h3 class="text-h3">Lo que sí es un número: cuánto vive</h3>
+    <div class="overflow-x-auto">
+      <table class="w-full border-collapse text-caption">
+        <caption class="mb-2 text-left text-secondary">
+          El tiempo por defecto, leído del token en vivo
+        </caption>
+        <thead>
+          <tr>
+            <th scope="col" class="border-b border-default p-2 text-left text-secondary">Token</th>
+            <th scope="col" class="border-b border-default p-2 text-left text-secondary">Valor</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <th scope="row" class="border-b border-default p-2 text-left text-primary">
+              Vida de un toast
+            </th>
+            <td class="border-b border-default p-2">
+              <ewms-token-value token="--duration-toast" />
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="flex flex-col gap-2 rounded-md border border-strong bg-secondary p-4">
+      <h3 class="text-h4">Es el primer token que un componente lee desde TypeScript</h3>
+      <p class="text-caption">
+        Un color o un radio se consumen como utilidad o como <code class="font-mono">var()</code> y
+        nunca llegan al código. Un tiempo sí: es un argumento de
+        <code class="font-mono">setTimeout</code>. Así que el servicio <strong>lo lee del
+        documento</strong> en vez de copiarlo.
+      </p>
+      <p class="text-caption">
+        Y <strong>no hay número de respaldo</strong>. Si la hoja no está cargada, la lectura vuelve
+        vacía y el toast <em>no expira</em>: se queda hasta que alguien lo cierre. Un respaldo
+        escrito en el código es una segunda fuente de verdad disfrazada, que tiene razón hasta el
+        día que el token se mueve. Un mensaje que se queda de más es una molestia; uno que
+        desaparece con un tiempo que nadie declaró es un bug que nadie encuentra.
+      </p>
+    </div>
+  </section>
+
+  <!-- ==================================================== 7. Anatomía y tokens -->
+  <section class="flex flex-col gap-4" aria-labelledby="to-anatomy" data-block="7-anatomia">
+    <h2 id="to-anatomy" class="text-h2">Anatomía y tokens</h2>
+    <div class="overflow-x-auto">
+      <table class="w-full border-collapse text-caption">
+        <caption class="mb-2 text-left text-secondary">
+          Tokens que consume la pila de toasts
+        </caption>
+        <thead>
+          <tr>
+            <th scope="col" class="border-b border-default p-2 text-left text-secondary">Parte</th>
+            <th scope="col" class="border-b border-default p-2 text-left text-secondary">
+              Token, cadena y valor
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of anatomy; track row.token) {
+            <tr>
+              <th scope="row" class="border-b border-default p-2 text-left text-primary">
+                {{ row.part }}
+              </th>
+              <td class="border-b border-default p-2">
+                <ewms-token-value [token]="row.token" [swatch]="true" />
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <h3 class="text-h3">Dónde se apila, y por qué debajo de un diálogo</h3>
+    <ul class="flex flex-col gap-2">
+      <li>
+        <strong>Abajo a la derecha</strong> — y <strong>la ficha no lo dice</strong>: dice
+        «flotante» y nada más. Queda reportado como hallazgo en vez de escribirlo en la ficha por
+        cuenta propia. Mientras tanto es la esquina más lejos de lo que un operario está leyendo y
+        la que no tapa el encabezado.
+      </li>
+      <li>
+        La pila se dibuja <strong>por encima del contenido y por debajo del contenedor de overlays
+        del CDK</strong>. Un toast levantado con un diálogo abierto queda detrás de él, a propósito:
+        el diálogo es modal, y un mensaje flotando encima invita a un click que el modal existe para
+        impedir.
+      </li>
+      <li>
+        El contenedor no atrapa clicks —los toasts sí—, así que la esquina de la pantalla sigue
+        siendo usable cuando no hay nada en la cola.
+      </li>
+    </ul>
+  </section>
+
+  <!-- ============================================== 8. Contrato para Angular -->
+  <section class="flex flex-col gap-4" aria-labelledby="to-contract" data-block="8-contrato">
+    <h2 id="to-contract" class="text-h2">Contrato para Angular</h2>
+
+    <h3 class="text-h3">Uso típico</h3>
+    <pre
+      class="overflow-x-auto rounded-md border border-default bg-secondary p-4 font-mono text-mono text-primary"
+    ><code>{{ snippet }}</code></pre>
+    <p class="text-caption text-secondary">
+      El texto llega ya traducido. El sistema de diseño no habla ningún idioma (ADR 0008), y eso
+      vale igual para un servicio que para un componente.
+    </p>
+
+    <h3 class="text-h3">Accesibilidad</h3>
+    <ul class="flex flex-col gap-2">
+      <li>
+        <strong>Una sola región viva, siempre en el documento</strong>, esté vacía o no. Una región
+        que aparece junto con su primer mensaje se anuncia de forma inconsistente —varios lectores
+        de pantalla se pierden el contenido que llega en el mismo cuadro que la región—, así que la
+        región espera y lo único que cambia es su contenido.
+      </li>
+      <li>
+        <code class="font-mono">polite</code> y nunca <code class="font-mono">assertive</code>: un
+        toast cuenta algo que ya pasó. Lo que de verdad no puede esperar es un Banner con
+        <code class="font-mono">role="alert"</code>, que es el otro componente.
+      </li>
+      <li>
+        Cada icono lleva la severidad como nombre accesible, por las mismas palabras que el
+        consumidor tradujo al montar la salida. El color no es la única señal.
+      </li>
+      <li>
+        <strong>Escape escucha en el documento</strong>, porque un toast nunca tiene el foco: no es
+        una parada de tabulación y no debe robarle el foco a lo que el operario está haciendo. Un
+        <code class="font-mono">Escape</code> que otro ya manejó —el de un diálogo, el del Select—
+        se deja pasar.
+      </li>
+    </ul>
+
+    <h3 class="text-h3">Errores comunes</h3>
+    <ul class="flex flex-col gap-2">
+      <li>
+        <strong>Montar una segunda salida.</strong> No hay guarda en el código que lo impida: la
+        regla se cumple por <em>dónde</em> está escrita, una línea en el layout del shell. Dos
+        salidas son dos regiones vivas y cada mensaje anunciado dos veces.
+      </li>
+      <li>
+        <strong>Poner un botón de acción adentro.</strong> No existe y no está previsto. Un
+        «deshacer» dentro de algo que se va solo a los tres segundos es una carrera contra el reloj.
+      </li>
+      <li>
+        <strong>Esperar un botón de cerrar.</strong> Tampoco hay: la ficha lo declara pendiente y
+        este encargo no lo resuelve. Escape cierra el más reciente.
+      </li>
+      <li>
+        <strong>Usarlo para un error que hay que arreglar.</strong> Va Banner: se queda.
+      </li>
+    </ul>
+
+    <h3 class="text-h3">Bloques que no aplican</h3>
+    <p class="text-secondary">
+      Uno: <strong>tamaños</strong>, porque el toast tiene uno solo. Está escrito arriba en lugar de
+      borrado.
+    </p>
+  </section>
+</article>

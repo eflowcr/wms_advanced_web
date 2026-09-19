@@ -1,0 +1,44 @@
+<!--
+  ONE element for both uses, with the interactive attributes bound to null when
+  the card is a plain container. Two templates behind an `@if` would mean two
+  `<ng-content>` blocks with the same selector, and only one of them would ever
+  receive the projected content.
+
+  `role`, `tabindex` and `aria-checked` are all absent -- not empty, absent --
+  outside a group: a container with `role="radio"` and no radiogroup around it
+  is invalid markup, and axe says so.
+-->
+<div
+  #box
+  [class]="classes()"
+  [attr.role]="inGroup() ? 'radio' : null"
+  [attr.tabindex]="tabIndex()"
+  [attr.aria-checked]="inGroup() ? selected() : null"
+  [attr.aria-disabled]="inGroup() && isDisabled() ? 'true' : null"
+  (click)="onClick()"
+  (keydown)="onKeydown($event)"
+>
+  <ng-content select="[ewmsCardHeader]" />
+
+  <!--
+    The body is the default slot, so a selectable card is written with its
+    content straight inside and a content card names only the parts that are
+    not the body.
+  -->
+  <div class="flex min-w-0 flex-col gap-2">
+    <ng-content />
+  </div>
+
+  <ng-content select="[ewmsCardFooter]" />
+
+  @if (inGroup() && selected()) {
+    <!--
+      The third cue, after the border and the fill. Decorative in the
+      accessibility sense: `aria-checked` on the box already says the same
+      thing to a screen reader, and saying it twice is noise.
+    -->
+    <span class="text-(color:--color-bg-primary)" aria-hidden="true">
+      <ewms-icon name="check" size="sm" />
+    </span>
+  }
+</div>

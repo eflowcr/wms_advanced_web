@@ -3,13 +3,16 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { expectNoAxeViolations } from '@ewms/testing';
 import { ShowroomLayout } from '../layout/showroom-layout';
+import { ShowroomBanner } from './components/banner';
 import { ShowroomButton } from './components/button';
+import { ShowroomCard } from './components/card';
 import { ShowroomCheckbox } from './components/checkbox';
 import { ShowroomIconButton } from './components/icon-button';
 import { ShowroomInput } from './components/input';
 import { ShowroomRadio } from './components/radio';
 import { ShowroomSelect } from './components/select';
 import { ShowroomText } from './components/text';
+import { ShowroomToast } from './components/toast';
 import { ShowroomToggle } from './components/toggle';
 import { ShowroomTooltip } from './components/tooltip';
 import { ShowroomBrand } from './foundations/brand';
@@ -425,6 +428,9 @@ const SHEETS: readonly { name: string; component: Type<unknown>; heading: string
   { name: 'ShowroomCheckbox', component: ShowroomCheckbox, heading: 'Checkbox' },
   { name: 'ShowroomRadio', component: ShowroomRadio, heading: 'Radio' },
   { name: 'ShowroomToggle', component: ShowroomToggle, heading: 'Toggle' },
+  { name: 'ShowroomBanner', component: ShowroomBanner, heading: 'Banner' },
+  { name: 'ShowroomToast', component: ShowroomToast, heading: 'Toast' },
+  { name: 'ShowroomCard', component: ShowroomCard, heading: 'Card' },
 ];
 
 describe.each(SHEETS)('$name', ({ component, heading }) => {
@@ -906,6 +912,195 @@ describe('ShowroomToggle', () => {
     const { element } = await render(ShowroomToggle);
     expect(element.querySelector('[data-block="8-contrato"]')?.textContent).toContain(
       'Quien deshabilita gana, y nadie re-habilita',
+    );
+  });
+});
+
+/**
+ * The three sheets of DS-3 lote A.
+ *
+ * Same division of labour as the eight above: structure and behaviour here,
+ * anything with a pixel in it in e2e/showroom.e2e.ts.
+ */
+describe('ShowroomBanner', () => {
+  it('renders the four variants through the real component', async () => {
+    const { element } = await render(ShowroomBanner);
+    expect(element.querySelectorAll('[data-icon-sample] ewms-banner').length).toBe(4);
+  });
+
+  it('pairs each variant with its role, and Info with status', async () => {
+    const { element } = await render(ShowroomBanner);
+    // The banner's own box, not the icon inside it: the icon is role="img".
+    const roles = [...element.querySelectorAll('[data-icon-sample] ewms-banner > div')].map((box) =>
+      box.getAttribute('role'),
+    );
+    expect(roles).toEqual(['status', 'alert', 'alert', 'status']);
+  });
+
+  it('shows that (dismiss) does NOT take the banner off the screen', async () => {
+    const { fixture, element } = await render(ShowroomBanner);
+    const close = element.querySelector<HTMLButtonElement>('[data-demo-banner] button');
+
+    close!.click();
+    await fixture.whenStable();
+
+    expect(element.querySelector('[data-dismiss-count]')?.textContent).toBe('1');
+    expect(element.querySelector('[data-demo-banner] ewms-banner')).not.toBeNull();
+  });
+
+  it('records the measurement that closed the sheet: the icon is -text', async () => {
+    const { element } = await render(ShowroomBanner);
+    const anatomy = element.querySelector('[data-block="7-anatomia"]')?.textContent ?? '';
+    expect(anatomy).toContain('5.58:1');
+    expect(anatomy).toContain('3.71:1');
+  });
+
+  it('writes down that Info is neutral and never blue', async () => {
+    const { element } = await render(ShowroomBanner);
+    expect(element.querySelector('[data-block="4-variantes"]')?.textContent).toContain(
+      'Info se llama Info y se pinta neutral',
+    );
+  });
+
+  it('falls back to Info for an id no variant carries', async () => {
+    const { fixture } = await render(ShowroomBanner);
+    const page = fixture.componentInstance as unknown as {
+      descriptionFor(stateId: string, id: string): string;
+      isDismissible(stateId: string): boolean;
+      variantFor(id: string): string;
+    };
+    expect(page.descriptionFor('title-only', 'danger')).toBe('');
+    expect(page.descriptionFor('full', 'danger')).not.toBe('');
+    expect(page.isDismissible('dismissible')).toBe(true);
+    expect(page.isDismissible('full')).toBe(false);
+    expect(page.variantFor('no-such-variant')).toBe('info');
+  });
+});
+
+describe('ShowroomToast', () => {
+  it('drives the real queue: the counter follows what the buttons raise', async () => {
+    const { fixture, element } = await render(ShowroomToast);
+    const size = () => element.querySelector('[data-queue-size]')?.textContent;
+
+    expect(size()).toBe('0');
+
+    element.querySelector<HTMLButtonElement>('[data-raise="success"] button')!.click();
+    await fixture.whenStable();
+    expect(size()).toBe('1');
+
+    element.querySelector<HTMLButtonElement>('[data-raise-sticky] button')!.click();
+    await fixture.whenStable();
+    expect(size()).toBe('2');
+
+    element.querySelector<HTMLButtonElement>('[data-clear] button')!.click();
+    await fixture.whenStable();
+    expect(size()).toBe('0');
+  });
+
+  it('mounts NO outlet of its own: the shell already has the only one', async () => {
+    const { element } = await render(ShowroomToast);
+    expect(element.querySelector('ewms-toast-outlet')).toBeNull();
+    expect(element.querySelector('[aria-live]')).toBeNull();
+  });
+
+  it('paints the matrix cells from literal token classes, never assembled ones', async () => {
+    const { fixture } = await render(ShowroomToast);
+    const page = fixture.componentInstance as unknown as {
+      cellClasses(stateId: string, variantId: string): string;
+    };
+    expect(page.cellClasses('accent', 'info')).toContain('bg-neutral-solid');
+    expect(page.cellClasses('family', 'danger')).toContain('bg-danger-surface');
+    expect(page.cellClasses('family', 'no-such-variant')).toBe('');
+  });
+
+  it('records the measurement that put the accent in -solid', async () => {
+    const { element } = await render(ShowroomToast);
+    const variants = element.querySelector('[data-block="4-variantes"]')?.textContent ?? '';
+    expect(variants).toContain('1.45');
+    expect(variants).toContain('3.71');
+  });
+
+  it('says out loud that there is no fallback number for the duration', async () => {
+    const { element } = await render(ShowroomToast);
+    expect(element.querySelector('[data-block="6-tamanos"]')?.textContent).toContain(
+      'no hay número de respaldo',
+    );
+  });
+});
+
+describe('ShowroomCard', () => {
+  it('renders the warehouse picker as one radiogroup of four radios', async () => {
+    const { element } = await render(ShowroomCard);
+    expect(element.querySelector('[data-demo-warehouses] [role="radiogroup"]')).not.toBeNull();
+    expect(element.querySelectorAll('[data-demo-warehouses] [role="radio"]').length).toBe(4);
+  });
+
+  it('is ONE tab stop, and counts it off the DOM instead of promising it', async () => {
+    const { element } = await render(ShowroomCard);
+    const stops = element.querySelectorAll('[data-demo-warehouses] [role="radio"][tabindex="0"]');
+    expect(stops.length).toBe(1);
+    expect(element.querySelector('[data-tab-stops]')?.textContent).toBe('1');
+    expect(element.querySelector('[data-cards-count]')?.textContent).toBe('4');
+  });
+
+  it('writes the chosen warehouse back to the form', async () => {
+    const { fixture, element } = await render(ShowroomCard);
+    const radios = [
+      ...element.querySelectorAll<HTMLElement>('[data-demo-warehouses] [role="radio"]'),
+    ];
+
+    radios[0]!.click();
+    await fixture.whenStable();
+
+    expect(element.querySelector('[data-demo-value]')?.textContent).toBe('norte');
+  });
+
+  it('keeps the unavailable warehouse out of the tab order and out of the choice', async () => {
+    const { fixture, element } = await render(ShowroomCard);
+    const last = element.querySelectorAll<HTMLElement>(
+      '[data-demo-warehouses] [role="radio"]',
+    )[3]!;
+
+    expect(last.getAttribute('tabindex')).toBeNull();
+    last.click();
+    await fixture.whenStable();
+    expect(last.getAttribute('aria-checked')).toBe('false');
+  });
+
+  it('forces hover only on the option row, with the component own token', async () => {
+    const { fixture } = await render(ShowroomCard);
+    const page = fixture.componentInstance as unknown as {
+      forced(variantId: string, stateId: string): string;
+      isOption(variantId: string): boolean;
+      matrixValue(stateId: string): unknown;
+      matrixDisabled(stateId: string): boolean;
+    };
+    expect(page.forced('option', 'hover')).toContain('--color-border-strong');
+    expect(page.forced('content', 'hover')).toBe('');
+    expect(page.forced('option', 'default')).toBe('');
+    expect(page.isOption('option')).toBe(true);
+    expect(page.isOption('content')).toBe(false);
+    expect(page.matrixValue('selected')).toBe('central');
+    expect(page.matrixValue('default')).toBeNull();
+    expect(page.matrixDisabled('disabled')).toBe(true);
+    expect(page.matrixDisabled('default')).toBe(false);
+  });
+
+  it('says so when the form holds a warehouse no card carries', async () => {
+    const { fixture } = await render(ShowroomCard);
+    const page = fixture.componentInstance as unknown as {
+      form: { controls: { almacen: { setValue(value: unknown): void } } };
+      chosenLabel(): string;
+    };
+    page.form.controls.almacen.setValue('una-que-no-existe');
+    await fixture.whenStable();
+    expect(page.chosenLabel()).toBe('(ninguno)');
+  });
+
+  it('writes down the disabled rule', async () => {
+    const { element } = await render(ShowroomCard);
+    expect(element.querySelector('[data-block="8-contrato"]')?.textContent).toContain(
+      'quien deshabilita gana, y nadie re-habilita',
     );
   });
 });

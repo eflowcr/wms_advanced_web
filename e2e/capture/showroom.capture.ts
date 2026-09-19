@@ -25,6 +25,9 @@ const ROUTES = [
   { name: '13-components-checkbox', url: '/design-system/components/checkbox' },
   { name: '14-components-radio', url: '/design-system/components/radio' },
   { name: '15-components-toggle', url: '/design-system/components/toggle' },
+  { name: '16-components-banner', url: '/design-system/components/banner' },
+  { name: '17-components-toast', url: '/design-system/components/toast' },
+  { name: '18-components-card', url: '/design-system/components/card' },
 ] as const;
 
 /**
