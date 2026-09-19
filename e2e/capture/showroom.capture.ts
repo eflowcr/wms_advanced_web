@@ -31,6 +31,7 @@ const ROUTES = [
   { name: '19-components-dialog', url: '/design-system/components/dialog' },
   { name: '20-components-search-select', url: '/design-system/components/search-select' },
   { name: '21-components-table', url: '/design-system/components/table' },
+  { name: '22-components-pagination', url: '/design-system/components/pagination' },
 ] as const;
 
 /**
@@ -271,5 +272,81 @@ test.describe('showroom capture rig', () => {
     await page.waitForTimeout(200);
     await page.screenshot({ path: path.join(OUT, '29-input-password-shown.png') });
     report.push(render('input page, password revealed', await measure(page)));
+  });
+
+  /**
+   * The lote D states, none of which a freshly loaded page shows: a panel has
+   * to be unfolded, a menu has to be opened, children have to be asked for and
+   * five thousand rows have to be built.
+   */
+  test('captures the DS-3 lote D states', async ({ page }) => {
+    const TABLE_PAGE = '/design-system/components/table';
+    const DETALLE = '[data-demo-detalle]';
+    const PEREZOSA = '[data-demo-perezosa]';
+    const VIRTUAL = '[data-demo-virtual]';
+    const PAGINADA = '[data-demo-paginada]';
+
+    await page.goto(TABLE_PAGE);
+    await waitForMontserrat(page);
+    await page.waitForTimeout(250);
+
+    // The detail panel, unfolded.
+    await page.locator(`${DETALLE} [data-detail-toggle="0"] button`).click();
+    await page.locator(`${DETALLE} [data-detail="0"]`).scrollIntoViewIfNeeded();
+    await page.waitForTimeout(200);
+    await page.screenshot({ path: path.join(OUT, '30-table-detail-open.png') });
+    report.push(render('table page, detail panel open', await measure(page)));
+
+    // The row menu, from the kebab. It is an overlay, so no full-page shot
+    // above has ever contained it.
+    await page.locator(`${DETALLE} [data-kebab="1"] button`).click();
+    await page.waitForTimeout(250);
+    await page.screenshot({ path: path.join(OUT, '31-table-row-menu.png') });
+    await page.keyboard.press('Escape');
+
+    /*
+     * The children on their way, and the children that never arrive. The
+     * loading row lasts as long as the demo's own delay, so that shot has to
+     * be taken while it is still there.
+     */
+    const failing = page.locator(`${PEREZOSA} tr.bg-danger-surface`).first();
+    const failingRow = await failing.getAttribute('data-row');
+    const ok = page.locator(`${PEREZOSA} tr[data-row]:not(.bg-danger-surface)`).first();
+    const okRow = await ok.getAttribute('data-row');
+
+    // Two different rows: the loading shot needs one whose children arrive,
+    // and folding the failing one back up to reuse it would take its error
+    // row away with it -- which is the behaviour, not a way to take a picture.
+    await page.locator(`${PEREZOSA} [data-toggle="${okRow}"]`).click();
+    await page.locator(`${PEREZOSA} [data-loading="${okRow}"]`).scrollIntoViewIfNeeded();
+    await page.screenshot({ path: path.join(OUT, '32-table-children-loading.png') });
+
+    await page.locator(`${PEREZOSA} [data-toggle="${failingRow}"]`).click();
+    await expect(page.locator(`${PEREZOSA} [data-failed="${failingRow}"]`)).toBeVisible();
+    await page.locator(`${PEREZOSA} [data-failed="${failingRow}"]`).scrollIntoViewIfNeeded();
+    await page.screenshot({ path: path.join(OUT, '33-table-children-failed.png') });
+
+    // Five thousand rows, and a window over them.
+    await page.locator('[data-load-all]').click();
+    await expect(page.locator('[data-loaded-count]')).toContainText('5000');
+    await page.locator(VIRTUAL).scrollIntoViewIfNeeded();
+    await page.waitForTimeout(200);
+    await page.screenshot({ path: path.join(OUT, '34-table-virtual-top.png') });
+    report.push(render('table page, five thousand rows windowed', await measure(page)));
+
+    // The same table a thousand rows down: the window moved and the header is
+    // still stuck to the top of the box.
+    await page.locator(`${VIRTUAL} [data-scroll-box]`).evaluate((element) => {
+      element.scrollTop = 32 * 1000;
+    });
+    await page.waitForTimeout(250);
+    await page.screenshot({ path: path.join(OUT, '35-table-virtual-scrolled.png') });
+
+    // The paginator, on the second page.
+    await page.locator(PAGINADA).scrollIntoViewIfNeeded();
+    await page.locator(`${PAGINADA} [data-next-page] button`).click();
+    await page.waitForTimeout(200);
+    await page.screenshot({ path: path.join(OUT, '36-table-paginator.png') });
+    report.push(render('table page, paginator on page two', await measure(page)));
   });
 });

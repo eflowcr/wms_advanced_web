@@ -11,6 +11,7 @@ import { ShowroomCheckbox } from './components/checkbox';
 import { ShowroomDialog } from './components/dialog';
 import { ShowroomIconButton } from './components/icon-button';
 import { ShowroomInput } from './components/input';
+import { ShowroomPagination } from './components/pagination';
 import { ShowroomRadio } from './components/radio';
 import { ShowroomSearchSelect } from './components/search-select';
 import { ShowroomSelect } from './components/select';
@@ -406,7 +407,6 @@ describe('the pages declare Spanish', () => {
   });
 });
 
-
 /**
  * The eight sheets of DS-2 PR 4.
  *
@@ -456,6 +456,7 @@ const SHEETS: readonly { name: string; component: Type<unknown>; heading: string
     heading: 'Selector con búsqueda',
   },
   { name: 'ShowroomTable', component: ShowroomTable, heading: 'Tabla de datos' },
+  { name: 'ShowroomPagination', component: ShowroomPagination, heading: 'Paginación' },
 ];
 
 describe.each(SHEETS)('$name', ({ component, heading }) => {
@@ -1082,9 +1083,7 @@ describe('ShowroomCard', () => {
 
   it('keeps the unavailable warehouse out of the tab order and out of the choice', async () => {
     const { fixture, element } = await render(ShowroomCard);
-    const last = element.querySelectorAll<HTMLElement>(
-      '[data-demo-warehouses] [role="radio"]',
-    )[3]!;
+    const last = element.querySelectorAll<HTMLElement>('[data-demo-warehouses] [role="radio"]')[3]!;
 
     expect(last.getAttribute('tabindex')).toBeNull();
     last.click();
@@ -1510,6 +1509,148 @@ describe('ShowroomTable', () => {
     const { element } = await render(ShowroomTable);
     expect(element.querySelector('[data-block="4-variantes"]')?.textContent).toContain(
       'La tabla no formatea: pide el formato',
+    );
+  });
+});
+
+/**
+ * The lote D demos of the Tabla sheet: the detail panel, the row menu, the
+ * children that arrive late and the windowed demo's own lazy loading.
+ *
+ * They live inside the demo block rather than in a block of their own: every
+ * sheet in the catalogue carries the same eight blocks, and a sheet with a
+ * ninth is a sheet that has to be learnt separately.
+ */
+describe('ShowroomTable — composición avanzada', () => {
+  const DETALLE = '[data-demo-detalle]';
+
+  it('offers the detail panel on the headers, and the panel is projected', async () => {
+    const { fixture, element } = await render(ShowroomTable);
+
+    const toggle = element.querySelector<HTMLButtonElement>(
+      `${DETALLE} [data-detail-toggle="0"] button`,
+    );
+    expect(toggle).not.toBeNull();
+
+    toggle!.click();
+    await fixture.whenStable();
+
+    const panel = element.querySelector(`${DETALLE} [data-detail="0"]`);
+    expect(panel?.textContent).toContain('Bultos totales');
+    expect(panel?.querySelector('button')?.textContent).toContain('Descargar');
+  });
+
+  it('writes down the download instead of pretending to serve one', async () => {
+    const { fixture, element } = await render(ShowroomTable);
+    element.querySelector<HTMLButtonElement>(`${DETALLE} [data-detail-toggle="0"] button`)!.click();
+    await fixture.whenStable();
+
+    expect(element.querySelector('[data-download]')?.textContent).toContain('(ninguna)');
+    element.querySelector<HTMLButtonElement>(`${DETALLE} [data-detail] button`)!.click();
+    await fixture.whenStable();
+
+    // No hay backend, y una demo que abriera un PDF estaría enseñando uno.
+    expect(element.querySelector('[data-download]')?.textContent).toContain('EXP-');
+  });
+
+  it('opens the row menu from the kebab and reports what was chosen', async () => {
+    const { fixture, element } = await render(ShowroomTable);
+
+    element.querySelector<HTMLButtonElement>(`${DETALLE} [data-kebab="0"] button`)!.click();
+    await fixture.whenStable();
+
+    const menu = document.querySelector('[role="menu"]');
+    expect(menu).not.toBeNull();
+    expect(menu?.querySelectorAll('[role="menuitem"]').length).toBe(4);
+
+    menu!.querySelector<HTMLElement>('[data-menu-item="duplicar"]')!.click();
+    await fixture.whenStable();
+
+    expect(element.querySelector('[data-menu-choice]')?.textContent).toContain('Duplicar');
+    expect(document.querySelector('[role="menu"]')).toBeNull();
+  });
+
+  it('keeps the disabled entry visible and out of reach', async () => {
+    const { fixture, element } = await render(ShowroomTable);
+    element.querySelector<HTMLButtonElement>(`${DETALLE} [data-kebab="0"] button`)!.click();
+    await fixture.whenStable();
+
+    const entry = document.querySelector('[data-menu-item="imprimir"]');
+    expect(entry).not.toBeNull();
+    expect(entry?.getAttribute('aria-disabled')).toBe('true');
+
+    entry!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    await fixture.whenStable();
+    expect(element.querySelector('[data-menu-choice]')?.textContent).toContain('(ninguna)');
+  });
+
+  it('asks for the children only when a header is opened', async () => {
+    const { fixture, element } = await render(ShowroomTable);
+    const demo = '[data-demo-perezosa]';
+
+    // El toggle está ahí aunque los hijos no hayan llegado: devolver un
+    // Observable ES decir que hay hijos.
+    const toggle = element.querySelector<HTMLButtonElement>(`${demo} [data-toggle="0"]`);
+    expect(toggle).not.toBeNull();
+
+    toggle!.click();
+    await fixture.whenStable();
+    expect(element.querySelector(`${demo} [data-loading="0"]`)).not.toBeNull();
+  });
+
+  it('does not build five thousand rows until they are asked for', async () => {
+    const { element } = await render(ShowroomTable);
+
+    // La ficha abre con una muestra. Que al pulsar el botón lleguen las cinco
+    // mil y la ventana siga dibujando un puñado se comprueba en el navegador
+    // (e2e): aquí no hay hoja de estilos, así que no hay altura de fila, así
+    // que no hay ventana -- y cinco mil filas en jsdom son cinco mil filas.
+    expect(element.querySelector('[data-loaded-count]')?.textContent).toContain('60');
+    expect(element.querySelector<HTMLButtonElement>('[data-load-all]')?.disabled).toBe(false);
+    expect(element.querySelector('[data-load-all]')?.textContent).toContain('5000');
+  });
+
+  it('declares the deviation from the CDK viewport rather than hiding it', async () => {
+    const { element } = await render(ShowroomTable);
+    expect(element.querySelector('[data-block="3-demo"]')?.textContent).toContain(
+      'Desviación declarada',
+    );
+  });
+});
+
+describe('ShowroomPagination', () => {
+  it('moves between pages and reports the zero-based value', async () => {
+    const { fixture, element } = await render(ShowroomPagination);
+    expect(element.querySelector('[data-page-value]')?.textContent).toContain('page = 0');
+
+    element.querySelector<HTMLButtonElement>('[data-next-page] button')!.click();
+    await fixture.whenStable();
+    expect(element.querySelector('[data-page-value]')?.textContent).toContain('page = 1');
+
+    element.querySelector<HTMLButtonElement>('[data-previous-page] button')!.click();
+    await fixture.whenStable();
+    expect(element.querySelector('[data-page-value]')?.textContent).toContain('page = 0');
+  });
+
+  it('says nothing about a total the source does not know', async () => {
+    const { fixture, element } = await render(ShowroomPagination);
+    expect(element.querySelector('[data-demo-pagination]')?.textContent).toContain('filas');
+
+    element.querySelector<HTMLButtonElement>('[data-toggle-total]')!.click();
+    await fixture.whenStable();
+    expect(element.querySelector('[data-demo-pagination]')?.textContent).not.toContain('filas');
+  });
+
+  it('reads the same dictionary as the table', async () => {
+    const { element } = await render(ShowroomPagination);
+    // Los textos salen de EWMS_TABLE_MESSAGES, que el catálogo provee una vez.
+    expect(element.querySelector('[data-page-label]')?.textContent).toContain('Página 1 de 7');
+  });
+
+  it('writes down that a numbered list of pages is a declared gap', async () => {
+    const { element } = await render(ShowroomPagination);
+    expect(element.querySelector('[data-block="2-proposito"]')?.textContent).toContain(
+      'todavía no existe',
     );
   });
 });

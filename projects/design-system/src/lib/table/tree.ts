@@ -89,8 +89,19 @@ function walk<T>(
       expanded,
       setSize,
       posInSet: index + 1,
-      loading: options.loading.has(key),
-      failed: options.failed.has(key),
+      /*
+       * BOTH GATED ON `expanded`, and that is not belt and braces.
+       *
+       * The two sets outlive the gesture: a load in flight keeps its key, and
+       * a failure keeps its key until somebody retries. Read on their own they
+       * put a spinner -- or a red "could not load" row with a retry button --
+       * under a parent that is drawn collapsed, which is the state the first
+       * capture of the lazy demo caught. What the sets remember is what
+       * happened to the children; whether that is on screen is the parent's
+       * business.
+       */
+      loading: expanded && options.loading.has(key),
+      failed: expanded && options.failed.has(key),
       key,
     });
 

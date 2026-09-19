@@ -1,11 +1,11 @@
 import { Component, signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
-import { expectNoAxeViolations } from '@ewms/testing';
+import { expectNoAxeViolations, pixels } from '@ewms/testing';
 import { By } from '@angular/platform-browser';
 import { defer, Observable, of, Subject, throwError } from 'rxjs';
 import { ArrayTableSource } from './array-table-source';
 import { TableColumn } from './column';
-import { EmptyTemplate, Table } from './table';
+import { DetailTemplate, EmptyTemplate, Table } from './table';
 import type { TablePage, TableQuery, TableSource } from './table-source';
 import {
   EWMS_TABLE_FORMATTERS,
@@ -13,7 +13,7 @@ import {
   type TableFormatters,
   type TableMessages,
 } from './table.tokens';
-import type { BadgeDictionary } from './table.types';
+import type { BadgeDictionary, MenuItem } from './table.types';
 
 interface Row {
   readonly id: string;
@@ -99,7 +99,13 @@ const FORMATTERS: TableFormatters = {
       (queryChange)="lastQuery = $event"
     >
       <ewms-column key="codigo" header="Código" [sortable]="true" [filterable]="true" />
-      <ewms-column key="bultos" header="Bultos" type="number" [sortable]="true" [filterable]="true" />
+      <ewms-column
+        key="bultos"
+        header="Bultos"
+        type="number"
+        [sortable]="true"
+        [filterable]="true"
+      />
       <ewms-column key="fecha" header="Fecha" type="date" [filterable]="true" />
       <ewms-column key="estado" header="Estado" type="badge" [badges]="estados" />
 
@@ -424,7 +430,9 @@ describe('Table', () => {
     }
 
     function selectAll(): HTMLInputElement {
-      return fixture.nativeElement.querySelector('thead input[type="checkbox"]') as HTMLInputElement;
+      return fixture.nativeElement.querySelector(
+        'thead input[type="checkbox"]',
+      ) as HTMLInputElement;
     }
 
     function tick(box: HTMLInputElement): void {
@@ -639,9 +647,7 @@ describe('Table with a failing source', () => {
     await fixture.whenStable();
     fixture.detectChanges();
 
-    expect(
-      fixture.nativeElement.querySelectorAll('tbody tr:not([data-empty-row])').length,
-    ).toBe(3);
+    expect(fixture.nativeElement.querySelectorAll('tbody tr:not([data-empty-row])').length).toBe(3);
   });
 });
 
@@ -665,12 +671,7 @@ describe('Table with lazy children', () => {
 
   @Component({
     template: `
-      <ewms-table
-        [source]="source"
-        [children]="children"
-        [trackBy]="byId"
-        ariaLabel="Perezosa"
-      >
+      <ewms-table [source]="source" [children]="children" [trackBy]="byId" ariaLabel="Perezosa">
         <ewms-column key="codigo" header="Código" />
       </ewms-table>
     `,
@@ -750,9 +751,7 @@ describe('Table with lazy children', () => {
     await settle();
 
     expect(fixture.nativeElement.querySelector('[data-loading="0"]')).toBeNull();
-    expect(
-      fixture.nativeElement.querySelectorAll('tbody tr:not([data-empty-row])').length,
-    ).toBe(3);
+    expect(fixture.nativeElement.querySelectorAll('tbody tr:not([data-empty-row])').length).toBe(3);
   });
 
   it('asks only ONCE, however often the row is opened', async () => {
@@ -783,9 +782,27 @@ describe('Table with lazy children', () => {
     expect(failed?.textContent).toContain('No se pudo cargar');
     expect(fixture.nativeElement.querySelector('[data-retry="0"]')).not.toBeNull();
     // Collapsing on failure would hide the only thing saying anything is wrong.
-    expect(
-      fixture.nativeElement.querySelector('tbody tr')?.getAttribute('aria-expanded'),
-    ).toBe('true');
+    expect(fixture.nativeElement.querySelector('tbody tr')?.getAttribute('aria-expanded')).toBe(
+      'true',
+    );
+  });
+
+  it('takes the failure away when the row is folded back up', async () => {
+    toggle();
+    await settle();
+    host.pending.error(new Error('boom'));
+    await settle();
+    expect(fixture.nativeElement.querySelector('[data-failed="0"]')).not.toBeNull();
+
+    toggle();
+    await settle();
+
+    // The failure is REMEMBERED -- the retry below still works -- but a red
+    // row with a retry button hanging under a parent drawn collapsed is a
+    // state nobody asked for. What the set remembers is what happened to the
+    // children; whether it is on screen is the parent's business.
+    expect(fixture.nativeElement.querySelector('[data-failed="0"]')).toBeNull();
+    expect(fixture.nativeElement.querySelector('[data-loading="0"]')).toBeNull();
   });
 
   it('retries, and the second attempt can succeed', async () => {
@@ -804,9 +821,7 @@ describe('Table with lazy children', () => {
     await settle();
 
     expect(fixture.nativeElement.querySelector('[data-failed="0"]')).toBeNull();
-    expect(
-      fixture.nativeElement.querySelectorAll('tbody tr:not([data-empty-row])').length,
-    ).toBe(3);
+    expect(fixture.nativeElement.querySelectorAll('tbody tr:not([data-empty-row])').length).toBe(3);
   });
 });
 
@@ -903,5 +918,513 @@ describe('Table paging', () => {
     expect(table.pageCount()).toBeNull();
     table.goToPage(2);
     expect(table.pageCount()).toBeNull();
+  });
+});
+
+// ------------------------------------------------------------ master/detail
+
+const MENU: readonly MenuItem[] = [
+  { id: 'ver', label: 'Ver detalle' },
+  { id: 'imprimir', label: 'Imprimir', disabled: true },
+  { id: 'duplicar', label: 'Duplicar' },
+  { id: 'anular', label: 'Anular', tone: 'danger', separatorBefore: true },
+];
+
+@Component({
+  template: `
+    <ewms-table
+      [source]="source"
+      [trackBy]="byId"
+      [isRowMaster]="isMaster"
+      [menuItems]="menu()"
+      ariaLabel="Expediciones"
+      (rowMenu)="chosen = $event.item.id + ':' + $event.row.codigo"
+    >
+      <ewms-column key="codigo" header="Código" />
+      <ewms-column key="bultos" header="Bultos" type="number" />
+      <ewms-column key="acciones" header="Acciones" type="actions" />
+
+      <!--
+        codigoOf rather than row.codigo: ewmsDetail types the template variable
+        as unknown, because a directive used as a bare attribute has no input
+        for the compiler to infer the row type from. Reported as a gap in the
+        ergonomics rather than worked around in the library.
+      -->
+      <ng-template ewmsDetail let-row>
+        <p data-detail-body>Detalle de {{ codigoOf(row) }}</p>
+      </ng-template>
+    </ewms-table>
+  `,
+  imports: [Table, TableColumn, DetailTemplate],
+})
+class DetailHost {
+  readonly source = new ArrayTableSource<Row>(ROWS, ['codigo']);
+  readonly byId = (row: Row): unknown => row.id;
+  /** The two big expediciones have something to unfold; the small one has not. */
+  readonly isMaster = (row: Row): boolean => row.bultos > 100;
+  readonly menu = signal<readonly MenuItem[]>(MENU);
+
+  readonly codigoOf = (row: unknown): string => (row as Row).codigo;
+
+  chosen = '';
+}
+
+describe('Table master/detail', () => {
+  let fixture: ComponentFixture<DetailHost>;
+  let host: DetailHost;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [DetailHost, Table, TableColumn, DetailTemplate],
+      providers: [
+        { provide: EWMS_TABLE_MESSAGES, useValue: MESSAGES },
+        { provide: EWMS_TABLE_FORMATTERS, useValue: FORMATTERS },
+      ],
+    }).compileComponents();
+    fixture = TestBed.createComponent(DetailHost);
+    host = fixture.componentInstance;
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+  });
+
+  async function settle(): Promise<void> {
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+  }
+
+  function toggle(rowIndex: number): HTMLButtonElement | null {
+    return fixture.nativeElement.querySelector(`[data-detail-toggle="${rowIndex}"] button`);
+  }
+
+  function panels(): HTMLElement[] {
+    return [...fixture.nativeElement.querySelectorAll('[data-detail]')] as HTMLElement[];
+  }
+
+  it('offers the panel only on the rows that have one', () => {
+    expect(toggle(0)).not.toBeNull();
+    expect(toggle(1)).not.toBeNull();
+    // `isRowMaster` said no, so there is no control at all -- not a disabled
+    // one, which would promise something the row cannot do.
+    expect(toggle(2)).toBeNull();
+  });
+
+  it('unfolds one cell spanning the whole table, with the projected panel', async () => {
+    toggle(0)?.click();
+    await settle();
+
+    expect(panels().length).toBe(1);
+    const cell = panels()[0]?.querySelector('td') as HTMLTableCellElement;
+    // Three columns and no checkbox: the panel is not the columns again.
+    expect(cell.getAttribute('colspan')).toBe('3');
+    expect(cell.textContent).toContain('Detalle de EXP-0001');
+  });
+
+  it('gives the panel the row it belongs to, not the first one', async () => {
+    toggle(1)?.click();
+    await settle();
+    expect(fixture.nativeElement.querySelector('[data-detail-body]')?.textContent).toContain(
+      'EXP-0002',
+    );
+  });
+
+  it('says on the BUTTON that it is open, and what it opened', async () => {
+    const button = toggle(0) as HTMLButtonElement;
+    expect(button.getAttribute('aria-expanded')).toBe('false');
+    expect(button.getAttribute('aria-controls')).toBeNull();
+
+    button.click();
+    await settle();
+
+    // On the button, never on the `ewms-icon-button` wrapper: the wrapper has
+    // no role and is not the thing anybody presses, so state written there is
+    // state announced nowhere.
+    const opened = toggle(0) as HTMLButtonElement;
+    expect(opened.getAttribute('aria-expanded')).toBe('true');
+    const cell = panels()[0]?.querySelector('td') as HTMLElement;
+    expect(opened.getAttribute('aria-controls')).toBe(cell.id);
+  });
+
+  it('opens as many panels as somebody asks for, and folds each back alone', async () => {
+    toggle(0)?.click();
+    await settle();
+    toggle(1)?.click();
+    await settle();
+    expect(panels().length).toBe(2);
+
+    toggle(0)?.click();
+    await settle();
+    expect(panels().length).toBe(1);
+    expect(fixture.nativeElement.querySelector('[data-detail-body]')?.textContent).toContain(
+      'EXP-0002',
+    );
+  });
+
+  it('adds rows to the DOM without pretending the table grew', async () => {
+    // The panel is a row in the DOM and NOT a row of the table: counting it
+    // would make three expediciones read as four the moment somebody opened
+    // one.
+    toggle(0)?.click();
+    await settle();
+    const table = fixture.nativeElement.querySelector('table') as HTMLElement;
+    expect(table.getAttribute('aria-rowcount')).toBe('3');
+  });
+
+  it('has no axe violations with a panel open', async () => {
+    toggle(0)?.click();
+    await settle();
+    await expectNoAxeViolations(fixture.nativeElement);
+  });
+
+  // ---------------------------------------------------------- the row menu
+
+  function kebab(rowIndex: number): HTMLButtonElement | null {
+    return fixture.nativeElement.querySelector(`[data-kebab="${rowIndex}"] button`);
+  }
+
+  function menu(): HTMLElement | null {
+    return document.querySelector('[role="menu"]');
+  }
+
+  function entries(): HTMLElement[] {
+    return [...(menu()?.querySelectorAll('[role="menuitem"]') ?? [])] as HTMLElement[];
+  }
+
+  function rowOf(rowIndex: number): HTMLElement {
+    return fixture.nativeElement.querySelector(`[data-row="${rowIndex}"]`) as HTMLElement;
+  }
+
+  function press(key: string): void {
+    menu()?.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true }));
+  }
+
+  it('opens on the kebab, with the entries it was given', async () => {
+    kebab(0)?.click();
+    await settle();
+    expect(menu()).not.toBeNull();
+    expect(entries().map((entry) => entry.textContent?.trim())).toEqual([
+      'Ver detalle',
+      'Imprimir',
+      'Duplicar',
+      'Anular',
+    ]);
+  });
+
+  it('replaces the browser menu on a right click rather than adding a second', async () => {
+    const event = new MouseEvent('contextmenu', { bubbles: true, cancelable: true });
+    rowOf(1).dispatchEvent(event);
+    await settle();
+
+    expect(event.defaultPrevented).toBe(true);
+    expect(menu()).not.toBeNull();
+  });
+
+  it('offers nothing when there is nothing to offer', async () => {
+    host.menu.set([]);
+    await settle();
+    expect(kebab(0)).toBeNull();
+
+    const event = new MouseEvent('contextmenu', { bubbles: true, cancelable: true });
+    rowOf(0).dispatchEvent(event);
+    await settle();
+    // The browser's own menu is left alone: a row with no actions has no
+    // reason to take copy and paste away.
+    expect(event.defaultPrevented).toBe(false);
+    expect(menu()).toBeNull();
+  });
+
+  it('takes the focus itself, and points at the active entry', async () => {
+    kebab(0)?.click();
+    await settle();
+    await Promise.resolve();
+    expect(document.activeElement).toBe(menu());
+    expect(menu()?.getAttribute('aria-activedescendant')).toBeNull();
+
+    press('ArrowDown');
+    await settle();
+    expect(menu()?.getAttribute('aria-activedescendant')).toBe(entries()[0]?.id);
+  });
+
+  it('walks past what cannot be chosen', async () => {
+    kebab(0)?.click();
+    await settle();
+    press('ArrowDown');
+    press('ArrowDown');
+    await settle();
+    // Imprimir is disabled, so the second press lands on Duplicar.
+    expect(menu()?.getAttribute('aria-activedescendant')).toBe(entries()[2]?.id);
+
+    press('ArrowUp');
+    await settle();
+    expect(menu()?.getAttribute('aria-activedescendant')).toBe(entries()[0]?.id);
+  });
+
+  it('emits the row AND the entry, and closes', async () => {
+    kebab(1)?.click();
+    await settle();
+    press('ArrowDown');
+    await settle();
+    press('Enter');
+    await settle();
+
+    expect(host.chosen).toBe('ver:EXP-0002');
+    expect(menu()).toBeNull();
+  });
+
+  it('emits on a click, too', async () => {
+    kebab(0)?.click();
+    await settle();
+    entries()[3]?.click();
+    await settle();
+    expect(host.chosen).toBe('anular:EXP-0001');
+  });
+
+  it('emits nothing for a disabled entry, however it is pressed', async () => {
+    kebab(0)?.click();
+    await settle();
+    entries()[1]?.click();
+    await settle();
+    expect(host.chosen).toBe('');
+    // Still open: a press that does nothing must not also look like a choice.
+    expect(menu()).not.toBeNull();
+  });
+
+  it('gives the focus back to the row on Escape', async () => {
+    kebab(0)?.click();
+    await settle();
+    press('Escape');
+    await settle();
+    await Promise.resolve();
+
+    expect(menu()).toBeNull();
+    // Back to the cell, not to the top of the document: a menu that drops the
+    // focus makes the keyboard start the table over.
+    expect((document.activeElement as HTMLElement).dataset['cell']).toBe('0-0');
+  });
+
+  it('opens from the keyboard with Shift+F10 and with the menu key', async () => {
+    const cell = rowOf(0).querySelector('td') as HTMLElement;
+    cell.dispatchEvent(new KeyboardEvent('keydown', { key: 'F10', shiftKey: true, bubbles: true }));
+    await settle();
+    expect(menu()).not.toBeNull();
+
+    press('Escape');
+    await settle();
+
+    cell.dispatchEvent(new KeyboardEvent('keydown', { key: 'ContextMenu', bubbles: true }));
+    await settle();
+    expect(menu()).not.toBeNull();
+  });
+
+  it('leaves a bare F10 to the browser', async () => {
+    const cell = rowOf(0).querySelector('td') as HTMLElement;
+    const event = new KeyboardEvent('keydown', { key: 'F10', bubbles: true, cancelable: true });
+    cell.dispatchEvent(event);
+    await settle();
+    expect(menu()).toBeNull();
+    expect(event.defaultPrevented).toBe(false);
+  });
+
+  it('takes the menu with it when the table goes', async () => {
+    kebab(0)?.click();
+    await settle();
+    expect(menu()).not.toBeNull();
+
+    // The overlay lives in the body. Without a hook on destroy it would still
+    // be floating there over whatever screen came next.
+    fixture.destroy();
+    expect(menu()).toBeNull();
+  });
+
+  it('has no axe violations with the menu open', async () => {
+    kebab(0)?.click();
+    await settle();
+    await expectNoAxeViolations(document.querySelector('.cdk-overlay-container') as Element);
+  });
+});
+
+// --------------------------------------------------------- virtualisation
+
+interface Big {
+  readonly id: number;
+  readonly codigo: string;
+}
+
+function bigRows(count: number): readonly Big[] {
+  return Array.from({ length: count }, (_unused, index) => ({
+    id: index,
+    codigo: `EXP-${String(index).padStart(5, '0')}`,
+  }));
+}
+
+const HUGE = bigRows(5000);
+
+@Component({
+  template: `
+    <ewms-table
+      [source]="source()"
+      [trackBy]="byId"
+      [virtual]="true"
+      [pageSize]="5000"
+      ariaLabel="Expediciones"
+    >
+      <ewms-column key="codigo" header="Código" />
+    </ewms-table>
+  `,
+  imports: [Table, TableColumn],
+})
+class HugeHost {
+  readonly source = signal<TableSource<Big>>(new ArrayTableSource(HUGE, ['codigo']));
+  readonly byId = (row: Big): unknown => row.id;
+}
+
+/** The row height, which is the only thing windowing needs as a number. */
+const ROW_HEIGHT_TOKEN = '--row-height-md';
+
+/** What the token is stubbed to. A number, because that is what windowing is. */
+const ROW_PIXELS = 40;
+
+async function hugeFixture(rows: readonly Big[]): Promise<ComponentFixture<HugeHost>> {
+  await TestBed.configureTestingModule({
+    imports: [HugeHost, Table, TableColumn],
+    providers: [
+      { provide: EWMS_TABLE_MESSAGES, useValue: MESSAGES },
+      { provide: EWMS_TABLE_FORMATTERS, useValue: FORMATTERS },
+    ],
+  }).compileComponents();
+
+  const fixture = TestBed.createComponent(HugeHost);
+  // Before the first render: whether the window is on decides whether this is
+  // a dozen rows in the DOM or every one of them.
+  fixture.componentInstance.source.set(new ArrayTableSource(rows, ['codigo']));
+  fixture.detectChanges();
+  await fixture.whenStable();
+  fixture.detectChanges();
+  return fixture;
+}
+
+describe('Table virtualisation', () => {
+  let fixture: ComponentFixture<HugeHost>;
+
+  beforeEach(async () => {
+    // The row height comes from the stylesheet, which no unit test loads. It
+    // is declared here because WITHOUT IT THERE IS NO VIRTUALISATION -- the
+    // component refuses to invent a number -- which the block below is about.
+    document.documentElement.style.setProperty(ROW_HEIGHT_TOKEN, pixels(ROW_PIXELS));
+    fixture = await hugeFixture(HUGE);
+  });
+
+  afterEach(() => {
+    document.documentElement.style.removeProperty(ROW_HEIGHT_TOKEN);
+  });
+
+  async function settle(): Promise<void> {
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+  }
+
+  function drawn(): HTMLElement[] {
+    return [...fixture.nativeElement.querySelectorAll('[data-row]')] as HTMLElement[];
+  }
+
+  function spacerHeight(which: 'before' | 'after'): number {
+    const cell = fixture.nativeElement.querySelector(
+      `[data-spacer="${which}"] td`,
+    ) as HTMLElement | null;
+    return cell ? Number.parseInt(cell.style.height, 10) : 0;
+  }
+
+  function box(): HTMLElement {
+    return fixture.nativeElement.querySelector('[data-scroll-box]') as HTMLElement;
+  }
+
+  /**
+   * jsdom has no layout, so the box is told how tall it is and where it is.
+   *
+   * `scrollTop` is a real accessor and not a fixed value: the table WRITES to
+   * it when the keyboard walks to a row outside the window, and a read-only
+   * stub would turn that into a crash rather than a scroll.
+   */
+  let scrollTop = 0;
+
+  function scrollTo(top: number, height: number): void {
+    scrollTop = top;
+    Object.defineProperty(box(), 'clientHeight', { value: height, configurable: true });
+    Object.defineProperty(box(), 'scrollTop', {
+      configurable: true,
+      get: () => scrollTop,
+      set: (value: number) => {
+        scrollTop = value;
+      },
+    });
+    box().dispatchEvent(new Event('scroll'));
+  }
+
+  it('says how many rows there are while drawing a handful', () => {
+    // The count is the TABLE's, not the window's: a screen reader saying
+    // "row 1 of 12" in a table of five thousand is worse than saying nothing.
+    const table = fixture.nativeElement.querySelector('table') as HTMLElement;
+    expect(table.getAttribute('aria-rowcount')).toBe('5000');
+    expect(drawn().length).toBeGreaterThan(0);
+    expect(drawn().length).toBeLessThan(60);
+  });
+
+  it('holds the scrollbar at the length of the whole table', () => {
+    // Every row that is not drawn is still there as height, or the scrollbar
+    // would claim the table is a dozen rows long.
+    expect(spacerHeight('before') + drawn().length * ROW_PIXELS + spacerHeight('after')).toBe(
+      5000 * ROW_PIXELS,
+    );
+  });
+
+  it('moves the window when the box is scrolled, keeping the absolute index', async () => {
+    scrollTo(4000, 400);
+    await settle();
+
+    // Four thousand pixels is row one hundred, less six of overscan.
+    const first = drawn()[0] as HTMLElement;
+    expect(first.dataset['row']).toBe('94');
+    expect(first.getAttribute('aria-rowindex')).toBe('95');
+    expect(first.textContent).toContain('EXP-00094');
+    expect(spacerHeight('before')).toBe(94 * ROW_PIXELS);
+
+    // Ten rows in view, plus six of overscan either side.
+    expect(drawn().length).toBe(22);
+  });
+
+  it('never draws past the last row', async () => {
+    scrollTo(5000 * ROW_PIXELS, 400);
+    await settle();
+    expect(spacerHeight('after')).toBe(0);
+    expect(drawn()[drawn().length - 1]?.dataset['row']).toBe('4999');
+  });
+
+  it('scrolls a windowed row into view before the keyboard lands on it', async () => {
+    scrollTo(0, 400);
+    await settle();
+
+    const cell = drawn()[0]?.querySelector('td') as HTMLElement;
+    cell.dispatchEvent(new KeyboardEvent('keydown', { key: 'End', ctrlKey: true, bubbles: true }));
+    await settle();
+
+    // Ctrl+End goes to the last row, which is nowhere near the window. Moving
+    // the focus to a row that is not in the DOM would silently do nothing.
+    expect(drawn().some((row) => row.dataset['row'] === '4999')).toBe(true);
+  });
+});
+
+describe('Table with no row height declared', () => {
+  it('draws every row rather than inventing a height', async () => {
+    document.documentElement.style.removeProperty(ROW_HEIGHT_TOKEN);
+
+    const fixture = await hugeFixture(bigRows(20));
+
+    // `[virtual]` is on, and it still draws all twenty with no spacers: a
+    // windowed table built on a guessed forty is a table scrolled off its own
+    // rows the day the token moves.
+    expect(fixture.nativeElement.querySelectorAll('[data-row]').length).toBe(20);
+    expect(fixture.nativeElement.querySelector('[data-spacer]')).toBeNull();
   });
 });

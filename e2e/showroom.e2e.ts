@@ -31,9 +31,10 @@ const CARD = '/design-system/components/card';
 const DIALOG = '/design-system/components/dialog';
 const SEARCH_SELECT = '/design-system/components/search-select';
 const TABLE = '/design-system/components/table';
+const PAGINATION = '/design-system/components/pagination';
 
 /**
- * Every navigable route. Twenty-one since DS-3 lote C: the fifteen of DS-2 plus
+ * Every navigable route. Twenty-two since DS-3 lote D: the fifteen of DS-2 plus
  * one sheet per component built here, which is what "nothing built is
  * undocumented" looks like when it is a test rather than a promise.
  */
@@ -59,6 +60,7 @@ const PAGES = [
   { url: DIALOG, heading: 'Dialog' },
   { url: SEARCH_SELECT, heading: 'Selector con búsqueda' },
   { url: TABLE, heading: 'Tabla de datos' },
+  { url: PAGINATION, heading: 'Paginación' },
 ] as const;
 
 /** Fonts change every width measured, so nothing is measured before they land. */
@@ -1374,11 +1376,18 @@ test.describe('DS-3 lote B: selector con búsqueda', () => {
     await field.focus();
 
     /*
-     * 5 ms per key is a gun, not a person: REQ-FE-DS3-001's own checkpoint
-     * asks for exactly this simulation. The threshold is 50 ms, and a human
-     * at full speed sits around 120.
+     * No delay at all: a gun, not a person. REQ-FE-DS3-001's own checkpoint
+     * asks for exactly this simulation -- the threshold is 50 ms and a human
+     * at full speed sits around 120 -- and a real scanner emits faster than
+     * any number written here.
+     *
+     * It USED to ask for 5 ms between keys, which spends a tenth of the
+     * budget on purpose and left the rest to whatever else the machine was
+     * doing. On a loaded runner one of those gaps crossed 50 ms and the burst
+     * read as typing: one red test in a full suite, green on its own. The
+     * delay was the flake, so the delay went.
      */
-    await page.keyboard.type('SKU-88042', { delay: 5 });
+    await page.keyboard.type('SKU-88042', { delay: 0 });
     await page.keyboard.press('Enter');
 
     await expect(page.locator('[data-demo-value]')).toContainText('SKU-88042');
@@ -1580,6 +1589,53 @@ test.describe('DS-3 lote C: la tabla', () => {
     await expect(page.locator(`${DEMO} table`)).toHaveCount(1);
   });
 
+  test('EVERY LEVEL IS SET IN FROM THE ONE ABOVE IT', async ({ page }) => {
+    await page.goto(TABLE);
+    await ready(page);
+
+    await page.locator(`${DEMO} [data-toggle="0"]`).click();
+    await expect(page.locator(`${ROWS}[aria-level="2"]`).first()).toBeVisible();
+
+    const label = (level: string) =>
+      page
+        .locator(`${ROWS}[aria-level="${level}"]`)
+        .first()
+        .locator('td')
+        .nth(1)
+        .locator('.truncate');
+
+    const parent = await label('1').boundingBox();
+    const child = await label('2').boundingBox();
+
+    /*
+     * `aria-level` tells a screen reader where a row sits; the indentation is
+     * what tells everybody else, and it is one token per level. It was zero
+     * for a while: the spacer's width was `calc(level * var(--spacing) * 5)`,
+     * and `--spacing` generates Tailwind's spacing utilities without reaching
+     * the document as a custom property, so the whole calc resolved to
+     * nothing and three levels drew flush. Nothing failed -- the tree was
+     * correct, announced correctly, and looked like a flat list.
+     */
+    const parentSpacer = page
+      .locator(`${ROWS}[aria-level="1"]`)
+      .first()
+      .locator('.tree-toggle-spacer')
+      .first();
+    const childSpacer = page
+      .locator(`${ROWS}[aria-level="2"]`)
+      .first()
+      .locator('.tree-toggle-spacer')
+      .first();
+
+    expect(round((await parentSpacer.boundingBox())?.width)).toBe(0);
+    expect(round((await childSpacer.boundingBox())?.width)).toBe(20);
+
+    // And it shows: the child's text starts one indent to the right of its
+    // parent's, which is the whole visible difference between a tree and a
+    // list.
+    expect(round((child?.x ?? 0) - (parent?.x ?? 0))).toBe(20);
+  });
+
   test('walks the tree with the arrows alone', async ({ page }) => {
     await page.goto(TABLE);
     await ready(page);
@@ -1698,5 +1754,225 @@ test.describe('DS-3 lote C: la tabla', () => {
     const tinted = page.locator(`${ROWS}.bg-danger-surface`).first();
     await expect(tinted.locator('ewms-badge')).toContainText('Con incidencia');
     await expect(tinted.locator('ewms-badge svg')).toBeVisible();
+  });
+});
+
+test.describe('DS-3 lote D: detalle, menú, ventana y paginador', () => {
+  const DETALLE = '[data-demo-detalle]';
+  const VIRTUAL = '[data-demo-virtual]';
+  const PAGINADA = '[data-demo-paginada]';
+
+  test('a master row unfolds a PANEL, and the tree unfolds ROWS', async ({ page }) => {
+    await page.goto(TABLE);
+    await ready(page);
+
+    await page.locator(`${DETALLE} [data-detail-toggle="0"] button`).click();
+    const panel = page.locator(`${DETALLE} [data-detail="0"]`);
+    await expect(panel).toBeVisible();
+
+    // One cell across the whole table, with content of the consumer's own.
+    await expect(panel.locator('td')).toHaveCount(1);
+    await expect(panel).toContainText('Bultos totales');
+
+    // The table did not grow: the panel is a row in the DOM, not an
+    // expedición. Counting it would make three read as four out loud.
+    await expect(page.locator(`${DETALLE} table`)).toHaveAttribute('aria-rowcount', '12');
+  });
+
+  test('the toggle says on the BUTTON what it opened', async ({ page }) => {
+    await page.goto(TABLE);
+    await ready(page);
+
+    const button = page.locator(`${DETALLE} [data-detail-toggle="0"] button`);
+    await expect(button).toHaveAttribute('aria-expanded', 'false');
+
+    await button.click();
+    await expect(button).toHaveAttribute('aria-expanded', 'true');
+
+    const id = await page.locator(`${DETALLE} [data-detail="0"] td`).getAttribute('id');
+    await expect(button).toHaveAttribute('aria-controls', id ?? '');
+  });
+
+  test('the row menu opens from the kebab and from the right button', async ({ page }) => {
+    await page.goto(TABLE);
+    await ready(page);
+
+    await page.locator(`${DETALLE} [data-kebab="0"] button`).click();
+    await expect(page.locator('[role="menu"]')).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(page.locator('[role="menu"]')).toHaveCount(0);
+
+    // A trackpad has no right button and a phone has none either, which is why
+    // the kebab exists; everybody who does have one expects it to work.
+    await page.locator(`${DETALLE} [data-row="1"]`).click({ button: 'right' });
+    await expect(page.locator('[role="menu"]')).toBeVisible();
+  });
+
+  test('the menu opens with Shift+F10 and gives the focus back on Escape', async ({ page }) => {
+    await page.goto(TABLE);
+    await ready(page);
+
+    await page.locator(`${DETALLE} [data-cell="0-0"]`).focus();
+    await page.keyboard.press('Shift+F10');
+    const menu = page.locator('[role="menu"]');
+    await expect(menu).toBeFocused();
+
+    await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('ArrowDown');
+    // Imprimir is disabled, so the second press lands on Duplicar. Asserted
+    // through a retrying locator rather than by reading the attribute: a bare
+    // getAttribute reads whatever is there at that instant, which with
+    // zoneless change detection is the value before the press landed.
+    const active = menu.locator('[role="menuitem"].bg-ghost-hover');
+    await expect(active).toContainText('Duplicar');
+    await expect(menu).toHaveAttribute(
+      'aria-activedescendant',
+      (await active.getAttribute('id')) ?? '',
+    );
+
+    await page.keyboard.press('Escape');
+    await expect(page.locator(`${DETALLE} [data-cell="0-0"]`)).toBeFocused();
+  });
+
+  test('choosing an entry reports the row AND the entry', async ({ page }) => {
+    await page.goto(TABLE);
+    await ready(page);
+
+    await page.locator(`${DETALLE} [data-kebab="1"] button`).click();
+    await page.locator('[data-menu-item="anular"]').click();
+
+    await expect(page.locator('[data-menu-choice]')).toContainText('Anular');
+    await expect(page.locator('[data-menu-choice]')).toContainText('EXP-');
+    await expect(page.locator('[role="menu"]')).toHaveCount(0);
+  });
+
+  test('lazy children show a loading row and then a row that says it failed', async ({ page }) => {
+    await page.goto(TABLE);
+    await ready(page);
+
+    const demo = '[data-demo-perezosa]';
+    // The expedición with an incidencia is the one whose children never come.
+    const failing = page.locator(`${demo} tr.bg-danger-surface`).first();
+    const index = await failing.getAttribute('data-row');
+
+    await page.locator(`${demo} [data-toggle="${index}"]`).click();
+    await expect(page.locator(`${demo} [data-loading="${index}"]`)).toBeVisible();
+    await expect(page.locator(`${demo} [data-failed="${index}"]`)).toBeVisible();
+    await expect(page.locator(`${demo} [data-retry="${index}"]`)).toBeVisible();
+  });
+
+  test('FIVE THOUSAND ROWS, A HANDFUL IN THE DOM, and the count is still five thousand', async ({
+    page,
+  }) => {
+    await page.goto(TABLE);
+    await ready(page);
+
+    await page.locator('[data-load-all]').click();
+    await expect(page.locator('[data-loaded-count]')).toContainText('5000');
+
+    const table = page.locator(`${VIRTUAL} table`);
+    await expect(table).toHaveAttribute('aria-rowcount', '5000');
+
+    // The window: what is drawn is what fits plus the overscan, and never the
+    // five thousand. This is the whole claim of [virtual].
+    const drawn = page.locator(`${VIRTUAL} [data-row]`);
+    expect(await drawn.count()).toBeLessThan(80);
+    expect(await drawn.count()).toBeGreaterThan(0);
+
+    // The spacers hold the scrollbar at the length of the whole table.
+    await expect(page.locator(`${VIRTUAL} [data-spacer="after"]`)).toBeAttached();
+  });
+
+  test('the window moves with the scroll, and the index stays absolute', async ({ page }) => {
+    await page.goto(TABLE);
+    await ready(page);
+
+    await page.locator('[data-load-all]').click();
+    await expect(page.locator('[data-loaded-count]')).toContainText('5000');
+
+    const box = page.locator(`${VIRTUAL} [data-scroll-box]`);
+    await box.evaluate((element) => {
+      element.scrollTop = 32 * 1000;
+    });
+
+    // Row one thousand, by the sm row height, less the overscan. What matters
+    // is that the first drawn row is nowhere near zero and that its
+    // aria-rowindex is its place in the WHOLE table.
+    const first = page.locator(`${VIRTUAL} [data-row]`).first();
+    await expect(first).not.toHaveAttribute('data-row', '0');
+    const index = Number(await first.getAttribute('data-row'));
+    await expect(first).toHaveAttribute('aria-rowindex', String(index + 1));
+  });
+
+  test('the paginator appears because the source counts, and moves a page', async ({ page }) => {
+    await page.goto(TABLE);
+    await ready(page);
+
+    const paginator = page.locator(`${PAGINADA} [data-pagination]`);
+    await expect(paginator).toBeVisible();
+    await expect(paginator.locator('[data-page-label]')).toContainText('Página 1 de');
+
+    await paginator.locator('[data-previous-page] button').isDisabled();
+    await paginator.locator('[data-next-page] button').click();
+    await expect(paginator.locator('[data-page-label]')).toContainText('Página 2 de');
+
+    // Twenty-five per page, and the page really changed underneath.
+    await expect(page.locator(`${PAGINADA} [data-row]`)).toHaveCount(25);
+    await expect(page.locator(`${PAGINADA} [data-row="0"]`)).toContainText('UB-00026');
+  });
+
+  test('the paginator sheet disables the ends and drops the total on demand', async ({ page }) => {
+    await page.goto(PAGINATION);
+    await ready(page);
+
+    const demo = '[data-demo-pagination]';
+    await expect(page.locator(`${demo} [data-previous-page] button`)).toBeDisabled();
+    await expect(page.locator(`${demo} [data-next-page] button`)).toBeEnabled();
+
+    await page.locator(`${demo} [data-next-page] button`).click();
+    await expect(page.locator('[data-page-value]')).toContainText('page = 1');
+    await expect(page.locator(`${demo} [data-previous-page] button`)).toBeEnabled();
+
+    await expect(page.locator(demo)).toContainText('filas');
+    await page.locator('[data-toggle-total]').click();
+    // A source that does not count says nothing about how many there are.
+    await expect(page.locator(demo)).not.toContainText('filas');
+  });
+
+  test('a filter field IS a compact row tall, and a narrow range stacks', async ({ page }) => {
+    await page.goto(TABLE);
+    await ready(page);
+
+    const filterRow = page.locator('[data-demo-table] [data-filter-row]');
+
+    /*
+     * The filter row holds real `ewms-input`s in the Small size, and Small is
+     * the same token as the compact row: `--row-height-sm`. That is the point
+     * of the pair -- a field dropped into a cell is exactly a row tall, so
+     * nothing has to be nudged to make it fit.
+     */
+    const single = filterRow.locator('[data-filter="cliente"] input');
+    await expect(single).toBeVisible();
+    expect(round((await single.boundingBox())?.height)).toBe(32);
+
+    // A `md` column is wide enough for two boxes side by side.
+    const wideRange = filterRow.locator('[data-filter="fecha"] input');
+    await expect(wideRange).toHaveCount(2);
+    expect(round((await wideRange.nth(0).boundingBox())?.y)).toBe(
+      round((await wideRange.nth(1).boundingBox())?.y),
+    );
+
+    /*
+     * A `sm` one is not, and the two boxes STACK rather than shrink. They used
+     * to shrink: in the first capture of the big table the two markers read
+     * "D" and "H", which is a filter nobody can tell apart. The column width
+     * is a preference; legibility is not, and a taller filter row is the
+     * cheaper of the two prices.
+     */
+    const narrowRange = filterRow.locator('[data-filter="bultos"] input');
+    await expect(narrowRange).toHaveCount(2);
+    expect(round((await narrowRange.nth(1).boundingBox())?.y)).toBeGreaterThan(
+      round((await narrowRange.nth(0).boundingBox())?.y) ?? 0,
+    );
   });
 });

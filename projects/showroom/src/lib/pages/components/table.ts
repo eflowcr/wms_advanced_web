@@ -9,19 +9,33 @@ import {
 import {
   ArrayTableSource,
   Badge,
+  Button,
   DESIGN_SYSTEM_VERSION,
+  DetailTemplate,
   EmptyTemplate,
   Table,
   TableColumn,
   type RowActivateEvent,
+  type RowMenuEvent,
   type TableDensity,
   type TableQuery,
+  type TableSource,
 } from '@ewms/design-system';
 import { DemoFrame } from '../../ui/demo-frame';
 import { PropTable, type PropRow } from '../../ui/prop-table';
 import { StateMatrix, type MatrixAxis } from '../../ui/state-matrix';
 import { TokenValue } from '../../ui/token-value';
 import { ESTADOS, EXPEDICIONES, type ExpedicionRow } from './expediciones';
+import {
+  ACCIONES_FILA,
+  CABECERAS,
+  FuentePaginada,
+  hijosPerezosos,
+  generarUbicaciones,
+  UBICACIONES_MUESTRA,
+  UBICACIONES_TOTAL,
+  type UbicacionRow,
+} from './expediciones-avanzado';
 import { NOT_MEASURED } from './measure';
 
 /**
@@ -200,6 +214,8 @@ const ANATOMY = [
   selector: 'ewms-showroom-table',
   imports: [
     Badge,
+    Button,
+    DetailTemplate,
     EmptyTemplate,
     Table,
     TableColumn,
@@ -235,6 +251,50 @@ export class ShowroomTable {
 
   protected readonly porId = (row: ExpedicionRow): unknown => row.id;
 
+  // --------------------------------------------------------------- lote D
+
+  protected readonly accionesFila = ACCIONES_FILA;
+  protected readonly hijosPerezosos = hijosPerezosos;
+
+  /** Las cabeceras solas, para la demo de detalle y menú. */
+  protected readonly cabeceras = new ArrayTableSource<ExpedicionRow>(CABECERAS, [
+    'codigo',
+    'cliente',
+  ]);
+
+  /** La misma lista, con los hijos detrás de un Observable que tarda. */
+  protected readonly perezosa = new ArrayTableSource<ExpedicionRow>(CABECERAS, [
+    'codigo',
+    'cliente',
+  ]);
+
+  /**
+   * La fuente de la demo con ventana, que empieza con una muestra.
+   *
+   * Las cinco mil se cargan cuando se piden: una ficha del catálogo que
+   * construye cinco mil filas nada más abrirse es una ficha lenta para todo el
+   * mundo, se mire o no esa demo.
+   */
+  protected readonly ubicaciones = signal<TableSource<UbicacionRow>>(
+    new ArrayTableSource<UbicacionRow>(generarUbicaciones(UBICACIONES_MUESTRA), [
+      'codigo',
+      'pasillo',
+    ]),
+  );
+
+  protected readonly ubicacionesCargadas = signal(UBICACIONES_MUESTRA);
+  protected readonly ubicacionesTotal = UBICACIONES_TOTAL;
+
+  protected readonly paginada = new FuentePaginada();
+
+  protected readonly porUbicacion = (row: UbicacionRow): unknown => row.id;
+
+  /** Toda expedición tiene algo que enseñar; una línea suelta no. */
+  protected readonly esMaestra = (row: ExpedicionRow): boolean => row.nivel === 'cabecera';
+
+  protected readonly ultimaAccion = signal('(ninguna)');
+  protected readonly ultimaDescarga = signal('(ninguna)');
+
   protected readonly densidad = signal<TableDensity>('md');
   protected readonly seleccion = signal<readonly ExpedicionRow[]>([]);
   protected readonly consulta = signal<TableQuery | null>(null);
@@ -259,6 +319,45 @@ export class ShowroomTable {
 
   protected abrir(event: RowActivateEvent<ExpedicionRow>): void {
     this.ultimaActivada.set(`${event.row.codigo} (${event.row.nivel})`);
+  }
+
+  protected cargarTodas(): void {
+    this.ubicaciones.set(
+      new ArrayTableSource<UbicacionRow>(generarUbicaciones(UBICACIONES_TOTAL), [
+        'codigo',
+        'pasillo',
+      ]),
+    );
+    this.ubicacionesCargadas.set(UBICACIONES_TOTAL);
+  }
+
+  protected elegir(event: RowMenuEvent<ExpedicionRow>): void {
+    this.ultimaAccion.set(`${event.item.label} · ${event.row.codigo}`);
+  }
+
+  /**
+   * La demo no descarga nada: lo deja escrito.
+   *
+   * Un catálogo que abriera un PDF estaría enseñando un backend que no existe,
+   * y la regla del encargo es que ninguna demo tiene datos reales ni red.
+   */
+  protected descargar(row: ExpedicionRow): void {
+    this.ultimaDescarga.set(row.codigo);
+  }
+
+  /**
+   * `ewmsDetail` entrega la fila como `unknown`: una directiva usada como
+   * atributo suelto no tiene ninguna entrada de la que el compilador pueda
+   * inferir el tipo. Se reporta como hueco de ergonomía; aquí se resuelve con
+   * una conversión en un solo sitio.
+   */
+  protected comoExpedicion(row: unknown): ExpedicionRow {
+    return row as ExpedicionRow;
+  }
+
+  /** Cuántas líneas cuelgan de una cabecera, según la lista completa. */
+  protected lineasDe(row: ExpedicionRow): number {
+    return EXPEDICIONES.find((expedicion) => expedicion.id === row.id)?.hijos?.length ?? 0;
   }
 
   protected setDensidad(density: TableDensity): void {

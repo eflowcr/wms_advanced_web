@@ -1,5 +1,6 @@
 import { NgTemplateOutlet } from '@angular/common';
 import {
+  afterNextRender,
   ChangeDetectionStrategy,
   Component,
   computed,
@@ -9,22 +10,29 @@ import {
   Directive,
   ElementRef,
   inject,
+  Injector,
   input,
   output,
   signal,
   TemplateRef,
+  viewChild,
+  ViewContainerRef,
   type Signal,
 } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
+import type { OverlayRef } from '@angular/cdk/overlay';
 import { isObservable, of, type Observable } from 'rxjs';
 import { catchError, debounceTime, switchMap, tap } from 'rxjs/operators';
 import { Badge } from '../badge/badge';
 import { Checkbox } from '../checkbox/checkbox';
 import { familyTintClass } from '../feedback/feedback.types';
 import { Icon } from '../icon/icon';
+import { IconButton } from '../icon-button/icon-button';
 import { Input as TextInput } from '../input/input';
-import { readMilliseconds } from '../tokens/read-token';
+import { Pagination } from '../pagination/pagination';
+
+import { readMilliseconds, readPixels } from '../tokens/read-token';
 /** The one wait of the system for a box somebody is typing into. */
 const DELAY_SEARCH_INPUT_TOKEN = '--delay-search-input';
 import { CellTemplate, TableColumn } from './column';
@@ -59,6 +67,14 @@ import {
   type TableChildren,
   type TableDensity,
 } from './table.types';
+import {
+  createMenuOverlay,
+  menuItemClasses,
+  MENU_CLASSES,
+  MENU_SEPARATOR_CLASSES,
+  MENU_POSITIONS,
+  moveMenuIndex,
+} from './row-menu';
 import { expandableKeys, flattenTree, type FlatRow } from './tree';
 
 export type { CellContext } from './column';
@@ -127,7 +143,16 @@ const EMPTY_PAGE: TablePage<never> = { rows: [], page: 0, pageSize: 0, total: 0 
 @Component({
   selector: 'ewms-table',
   templateUrl: './table.html',
-  imports: [Badge, Checkbox, Icon, NgTemplateOutlet, ReactiveFormsModule, TextInput],
+  imports: [
+    Badge,
+    Checkbox,
+    Icon,
+    IconButton,
+    NgTemplateOutlet,
+    Pagination,
+    ReactiveFormsModule,
+    TextInput,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { class: 'block' },
 })
@@ -158,6 +183,15 @@ export class Table<T> {
 
   readonly menuItems = input<readonly MenuItem[]>([]);
 
+  /**
+   * Render only the rows in view.
+   *
+   * Recommended from about five hundred rows. It is an input and not automatic
+   * because virtualising costs a fixed row height and a scroll container, and
+   * a table of twenty rows pays that for nothing.
+   */
+  readonly virtual = input<boolean>(false);
+
   readonly selectable = input<boolean>(false);
 
   readonly quickFilter = input<boolean>(false);
@@ -182,10 +216,14 @@ export class Table<T> {
   readonly selectionChange = output<readonly T[]>();
   readonly queryChange = output<TableQuery>();
 
+  private readonly viewContainerRef = inject(ViewContainerRef);
+  private readonly menuTemplate = viewChild<TemplateRef<unknown>>('menu');
+
   protected readonly detail = contentChild(DetailTemplate);
   protected readonly empty = contentChild(EmptyTemplate);
   protected readonly columns = contentChildren(TableColumn);
 
+  private readonly injector = inject(Injector);
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly destroyRef = inject(DestroyRef);
   private readonly providedMessages = inject(EWMS_TABLE_MESSAGES);
@@ -276,7 +314,10 @@ export class Table<T> {
     if (typeof declared !== 'string') {
       return declared;
     }
-    const dictionary = this.columns().find((column) => column.key() === declared)?.badges() ?? {};
+    const dictionary =
+      this.columns()
+        .find((column) => column.key() === declared)
+        ?.badges() ?? {};
     return (row) => dictionary[String(readCell(row, declared))]?.variant ?? null;
   });
 
@@ -402,6 +443,34 @@ export class Table<T> {
         this.pageIndex.set(0);
         this.search.set(text);
       });
+
+    /*
+     * MEASURE THE BOX ONCE, IN THE READ PHASE.
+     *
+     * Without this the first window is computed against a height of zero, so a
+     * virtualised table opens showing only the overscan -- a dozen rows for a
+     * box that fits a dozen, and nothing in reserve -- until somebody scrolls.
+     * The read is in `afterNextRender` because `clientHeight` is a layout read
+     * and doing it during rendering is how a component starts thrashing.
+     */
+    afterNextRender({
+      read: () => {
+        const box = this.scrollBox()?.nativeElement;
+        if (box) {
+          this.onScrollBoxReady(box);
+        }
+      },
+    });
+
+    /*
+     * An overlay lives in the body, NOT inside this component, so destroying
+     * the table does not take the open menu with it. Navigating away with the
+     * menu open would otherwise leave it floating over the next screen.
+     */
+    this.destroyRef.onDestroy(() => {
+      this.menuOverlay?.dispose();
+      this.menuOverlay = null;
+    });
   }
 
   /**
@@ -689,6 +758,9 @@ export class Table<T> {
 
   // --------------------------------------------------------------- paging
 
+  /** The paginator is rendered only when the source counted. */
+  protected readonly showPagination = computed(() => (this.pageCount() ?? 0) > 1);
+
   protected goToPage(page: number): void {
     const pages = this.pageCount();
     if (pages === null) {
@@ -718,6 +790,8 @@ export class Table<T> {
    * three-level table without reaching for a toggle.
    */
   protected onKeydown(event: KeyboardEvent, rowIndex: number): void {
+    // The WHOLE flat list, never the window: the arrows walk the table, and
+    // what happens to be rendered is an implementation detail.
     const rows = this.rows();
     const flat = rows[rowIndex];
     if (!flat) {
@@ -783,20 +857,302 @@ export class Table<T> {
         }
         return;
 
+      case 'ContextMenu':
+      case 'F10':
+        /*
+         * THE KEYBOARD'S RIGHT CLICK.
+         *
+         * `Shift+F10` is the shortcut every desktop already has, and the
+         * dedicated menu key is the same gesture on a keyboard that has one.
+         * Without them the row menu would be a mouse-only feature -- the
+         * kebab is reachable by tab, but only after walking out of the grid
+         * -- and the actions an operator uses most would be the slowest
+         * things on the screen.
+         *
+         * A bare F10 is left alone: it belongs to the browser.
+         */
+        if (event.key === 'F10' && !event.shiftKey) {
+          return;
+        }
+        event.preventDefault();
+        this.openMenu(flat, event.currentTarget as HTMLElement);
+        return;
+
       default:
         return;
     }
   }
 
-  /** Move the roving tab stop and take the focus with it. */
+  /**
+   * Move the roving tab stop and take the focus with it.
+   *
+   * WITH A WINDOW OPEN, THE TARGET ROW MAY NOT BE IN THE DOM YET, so the box
+   * is scrolled to it first and the focus follows on the next turn. Without
+   * that, holding the down arrow through a virtualised table would lose the
+   * focus the moment it left the window -- which is the failure that makes
+   * people stop using the keyboard.
+   */
   private moveFocus(rowIndex: number, columnIndex: number): void {
     this.focusRow.set(rowIndex);
     this.focusColumn.set(columnIndex);
+
+    const px = this.rowPixels();
+    if (this.virtualised() && px !== null) {
+      const box = this.host.nativeElement.querySelector<HTMLElement>('[data-scroll-box]');
+      if (box) {
+        const top = rowIndex * px;
+        const bottom = top + px;
+        if (top < box.scrollTop) {
+          box.scrollTop = top;
+        } else if (bottom > box.scrollTop + box.clientHeight) {
+          box.scrollTop = bottom - box.clientHeight;
+        }
+        this.scrollTop.set(box.scrollTop);
+        this.viewportHeight.set(box.clientHeight);
+      }
+    }
+
     queueMicrotask(() => {
       this.host.nativeElement
         .querySelector<HTMLElement>(`[data-cell="${rowIndex}-${columnIndex}"]`)
         ?.focus();
     });
+  }
+
+  // ------------------------------------------------------------ master/detail
+
+  private readonly openDetails = signal<ReadonlySet<unknown>>(new Set());
+
+  protected isMaster(row: T): boolean {
+    return this.detail() !== undefined && (this.isRowMaster()?.(row) ?? false);
+  }
+
+  protected isDetailOpen(flat: FlatRow<T>): boolean {
+    return this.openDetails().has(flat.key);
+  }
+
+  protected detailId(flat: FlatRow<T>): string {
+    return `${this.tableId}-detail-${String(flat.key)}`;
+  }
+
+  /**
+   * Master/detail is NOT the tree, and the two are kept apart on purpose.
+   *
+   * A parent row unfolds more ROWS, in the same columns. A master row unfolds
+   * a PANEL -- one cell spanning the table, with content of its own that does
+   * not repeat the columns. Collapsing them into one gesture would mean a
+   * table where "expand" sometimes means a different thing, which is worse
+   * than two buttons.
+   */
+  protected toggleDetail(flat: FlatRow<T>): void {
+    const open = new Set(this.openDetails());
+    if (open.has(flat.key)) {
+      open.delete(flat.key);
+    } else {
+      open.add(flat.key);
+    }
+    this.openDetails.set(open);
+  }
+
+  // ------------------------------------------------------------- the menu
+
+  private menuOverlay: OverlayRef | null = null;
+
+  protected readonly menuRow = signal<FlatRow<T> | null>(null);
+  protected readonly menuIndex = signal(-1);
+  protected readonly menuClasses = MENU_CLASSES;
+  protected readonly menuSeparatorClasses = MENU_SEPARATOR_CLASSES;
+  protected readonly menuId = `${this.tableId}-menu`;
+
+  protected readonly hasMenu = computed(() => this.menuItems().length > 0);
+
+  protected menuOptionId(index: number): string {
+    return `${this.menuId}-item-${index}`;
+  }
+
+  protected menuItemClassesFor(item: MenuItem, index: number): string {
+    return menuItemClasses(item, index === this.menuIndex());
+  }
+
+  /**
+   * Open the menu for a row, anchored wherever it was asked for.
+   *
+   * TWO WAYS IN, ONE MENU: the right button and the kebab. A trackpad and a
+   * touch screen have no right click, so right-click-only would be a menu half
+   * the people cannot open -- and a kebab-only one would ignore the habit of
+   * everybody who does have a right button.
+   */
+  protected openMenu(flat: FlatRow<T>, anchor: HTMLElement): void {
+    if (!this.hasMenu()) {
+      return;
+    }
+    this.closeMenu();
+    const template = this.menuTemplate();
+    if (!template) {
+      return;
+    }
+    this.menuRow.set(flat);
+    this.menuIndex.set(-1);
+    this.menuOverlay = createMenuOverlay(
+      this.injector,
+      anchor,
+      this.viewContainerRef,
+      template,
+      MENU_POSITIONS,
+    );
+    this.menuOverlay.outsidePointerEvents().subscribe(() => this.closeMenu());
+    queueMicrotask(() => {
+      this.host.nativeElement.ownerDocument.querySelector<HTMLElement>(`#${this.menuId}`)?.focus();
+    });
+  }
+
+  protected onRowContextMenu(event: MouseEvent, flat: FlatRow<T>): void {
+    if (!this.hasMenu()) {
+      return;
+    }
+    // Replace the browser's menu, rather than adding a second one beside it.
+    event.preventDefault();
+    this.openMenu(flat, event.target as HTMLElement);
+  }
+
+  /**
+   * Close, and GIVE THE FOCUS BACK TO THE ROW.
+   *
+   * Not to the document: a menu that closes and drops the focus to the top of
+   * the page makes the keyboard start over, which is how somebody ends up
+   * using the mouse for everything.
+   */
+  protected closeMenu(): void {
+    if (!this.menuOverlay) {
+      return;
+    }
+    const row = this.menuRow();
+    this.menuOverlay.dispose();
+    this.menuOverlay = null;
+    this.menuRow.set(null);
+    this.menuIndex.set(-1);
+    if (row) {
+      const index = this.rows().findIndex((flat) => flat.key === row.key);
+      if (index >= 0) {
+        this.moveFocus(index, this.focusColumn());
+      }
+    }
+  }
+
+  protected chooseMenuItem(item: MenuItem): void {
+    const row = this.menuRow();
+    if (!row || item.disabled) {
+      return;
+    }
+    this.closeMenu();
+    this.rowMenu.emit({ row: row.row, item });
+  }
+
+  protected onMenuKeydown(event: KeyboardEvent): void {
+    const items = this.menuItems();
+    switch (event.key) {
+      case 'ArrowDown':
+        event.preventDefault();
+        this.menuIndex.set(moveMenuIndex(items, this.menuIndex(), 1));
+        return;
+      case 'ArrowUp':
+        event.preventDefault();
+        this.menuIndex.set(moveMenuIndex(items, this.menuIndex(), -1));
+        return;
+      case 'Enter':
+      case ' ': {
+        const item = items[this.menuIndex()];
+        if (item) {
+          event.preventDefault();
+          this.chooseMenuItem(item);
+        }
+        return;
+      }
+      case 'Escape':
+        event.preventDefault();
+        this.closeMenu();
+        return;
+      default:
+        return;
+    }
+  }
+
+  // ---------------------------------------------------------- virtualisation
+
+  /**
+   * The row height in pixels, which is what windowing arithmetic needs.
+   *
+   * WITH NO TOKEN DECLARED THERE IS NO VIRTUALISATION, rather than an invented
+   * forty. Same rule as every other value this library reads at runtime: no
+   * fallback number lives in TypeScript. In practice that means jsdom -- where
+   * no stylesheet is loaded -- renders the ordinary table, which is also what
+   * lets the component's spec count rows.
+   */
+  protected readonly rowPixels = computed(() =>
+    readPixels(this.density() === 'sm' ? '--row-height-sm' : '--row-height-md'),
+  );
+
+  protected readonly virtualised = computed(() => this.virtual() && this.rowPixels() !== null);
+
+  private readonly scrollTop = signal(0);
+  private readonly viewportHeight = signal(0);
+
+  /** The box the window is measured against, once the view exists. */
+  private readonly scrollBox = viewChild<ElementRef<HTMLElement>>('scrollBox');
+
+  /** Rows kept either side of the view, so a fast scroll does not show gaps. */
+  private readonly overscan = 6;
+
+  /**
+   * WHICH ROWS ARE IN THE DOM, AND HOW MUCH EMPTY SPACE STANDS EITHER SIDE.
+   *
+   *
+   * WHY THIS IS NOT `cdk-virtual-scroll-viewport`, WHICH THE COMANDA ASKED FOR
+   *
+   * The CDK's viewport positions its content wrapper with a transform and
+   * measures the wrapper itself. Wrapping a semantic `<table>` in one moves
+   * the whole table -- header included -- and the sticky header stops being
+   * sticky, because it is no longer sticky to the scrolling box. The CDK's own
+   * guidance is to virtualise a list of divs, which would mean giving up
+   * `<table>` semantics: the header/cell relationship, the row and column
+   * counts, and everything a screen reader gets from them for free. That trade
+   * is the wrong way round for a table an operator lives in.
+   *
+   * So the window is computed here, and it is short because THE TREE IS
+   * ALREADY FLAT: scroll offset over row height gives the first row, the
+   * viewport height gives how many, and two spacer rows hold the scrollbar at
+   * the right length. The flattening is what the comanda said would make
+   * virtualisation possible without tricks, and this is that sentence cashed
+   * in -- just not through the CDK.
+   *
+   * Reported as a deviation rather than done quietly.
+   */
+  protected readonly rowWindow = computed(() => {
+    const all = this.rows();
+    const px = this.rowPixels();
+    if (!this.virtualised() || px === null) {
+      return { first: 0, rows: all, before: 0, after: 0 };
+    }
+    const visible = Math.ceil(this.viewportHeight() / px) + this.overscan * 2;
+    const first = Math.max(0, Math.floor(this.scrollTop() / px) - this.overscan);
+    const last = Math.min(all.length, first + visible);
+    return {
+      first,
+      rows: all.slice(first, last),
+      before: first * px,
+      after: (all.length - last) * px,
+    };
+  });
+
+  protected onScroll(event: Event): void {
+    const element = event.target as HTMLElement;
+    this.scrollTop.set(element.scrollTop);
+    this.viewportHeight.set(element.clientHeight);
+  }
+
+  /** Measured once the container exists, so the first window is the right size. */
+  protected onScrollBoxReady(element: HTMLElement): void {
+    this.viewportHeight.set(element.clientHeight);
   }
 
   protected onRowDblclick(flat: FlatRow<T>): void {

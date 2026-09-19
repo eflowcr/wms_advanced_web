@@ -66,6 +66,20 @@ export class IconButton {
   readonly disabled = input<boolean>(false);
   readonly loading = input<boolean>(false);
 
+  /**
+   * Whether what this button opens is open, and what it opens.
+   *
+   * INPUTS RATHER THAN ATTRIBUTES ON THE TAG, because `aria-expanded` written
+   * on `<ewms-icon-button>` lands on the custom element -- which has no role
+   * and is not the thing anybody presses -- while the state belongs on the
+   * `<button>` inside. The state was announced nowhere until these existed.
+   *
+   * Not `ariaExpanded`/`ariaControls`: those are the names of native IDL
+   * members, and nothing public here is allowed to shadow one.
+   */
+  readonly expanded = input<boolean | null>(null);
+  readonly controlsId = input<string | null>(null);
+
   protected readonly baseClasses = BUTTON_BASE_CLASSES;
 
   protected readonly iconSize = computed(() => BUTTON_ICON_SIZES[this.size()]);

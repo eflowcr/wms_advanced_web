@@ -44,3 +44,27 @@ export function readMilliseconds(token: string): number | null {
   }
   return match[2] === 's' ? value * 1000 : value;
 }
+
+/**
+ * A CSS length token as a number of pixels, or `null` when it is not declared
+ * or is not in pixels.
+ *
+ * Same contract as `readMilliseconds`, and the same reason: virtualisation
+ * needs the row height as a NUMBER, because that is what the CDK's viewport
+ * takes. Everything else about a row height is a declaration and never reaches
+ * TypeScript at all.
+ *
+ * Only `px` is accepted. A row height in `rem` would be a row height that
+ * changes with the browser's font size, which is a legitimate thing to want
+ * and is not what this system does -- and silently multiplying by 16 to
+ * pretend otherwise is how a virtualised list ends up half a screen out.
+ */
+export function readPixels(token: string): number | null {
+  const raw = getComputedStyle(document.documentElement).getPropertyValue(token).trim();
+  const match = /^(\d*\.?\d+)px$/.exec(raw);
+  if (!match) {
+    return null;
+  }
+  const value = Number(match[1]);
+  return Number.isFinite(value) && value > 0 ? value : null;
+}

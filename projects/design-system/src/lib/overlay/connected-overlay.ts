@@ -100,3 +100,6 @@ export function createConnectedOverlay(
     ...config,
   });
 }
+
+/** What `createConnectedOverlay` takes: the preferred placement, then fallbacks. */
+export type ConnectedPositionList = readonly ConnectedPosition[];

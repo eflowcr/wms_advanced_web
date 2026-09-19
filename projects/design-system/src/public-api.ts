@@ -153,3 +153,11 @@ export {
   type TableDensity,
 } from './lib/table/table.types';
 export { expandableKeys, flattenTree, type FlattenOptions } from './lib/table/tree';
+export { menuItemClasses, moveMenuIndex } from './lib/table/row-menu';
+
+/*
+ * Pagination (DS-3). Its own component, not a piece of the table: a list of
+ * cards, a log and a picking queue all page, and none of them is a table. It
+ * closes the gap the catalogue had reserved since DS-2.
+ */
+export { Pagination, type PaginationMessages } from './lib/pagination/pagination';

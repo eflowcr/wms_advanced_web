@@ -356,6 +356,21 @@
   --col-width-md: var(--size-160);
   --col-width-lg: var(--size-240);
 
+  /* Sangria de un nivel del arbol. Un token propio y no el `--spacing` de
+   * Tailwind: ese genera las utilidades de espaciado y no llega al documento
+   * como propiedad personalizada, asi que `calc(1 * var(--spacing) * 5)`
+   * dentro de un `style` resolvia a 0 y el arbol se dibujaba sin sangrar
+   * ningun nivel. Lo encontro la captura de los hijos perezosos, donde una
+   * linea y su cabecera empezaban en la misma x. */
+  --tree-indent: var(--size-20);
+
+  /* Ancho minimo de cada caja de un filtro de rango. Una columna `sm` mide 96
+   * px, y dos cajas dentro de ella se quedan en unos 34: en la primera captura
+   * de la tabla grande los marcadores «Desde» y «Hasta» se leian «D» y «H». Con
+   * un minimo las dos cajas se apilan en una columna estrecha en vez de
+   * encogerse: el ancho de columna es una preferencia, la legibilidad no. */
+  --col-filter-min-width: var(--size-56);
+
   /* ---------------------------------------------------------------- tiempos
    * Cuanto vive un toast en pantalla antes de irse solo. La ficha de
    * Notificaciones fija 3000 ms; el consumidor puede pasar otro numero por

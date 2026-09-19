@@ -10,10 +10,7 @@ interface Node {
 const TREE: readonly Node[] = [
   {
     id: 'a',
-    hijos: [
-      { id: 'a1', hijos: [{ id: 'a1x' }, { id: 'a1y' }] },
-      { id: 'a2' },
-    ],
+    hijos: [{ id: 'a1', hijos: [{ id: 'a1x' }, { id: 'a1y' }] }, { id: 'a2' }],
   },
   { id: 'b' },
   { id: 'c', lazy: true },
@@ -92,14 +89,27 @@ describe('flattenTree', () => {
     expect(flat.find((row) => row.row.id === 'c')?.expanded).toBe(true);
   });
 
-  it('carries the loading and failed flags of the rows that have them', () => {
+  it('carries the loading and failed flags of the EXPANDED rows that have them', () => {
     const flat = flattenTree(
       TREE,
-      options(['c'], { loading: new Set(['c']), failed: new Set(['b']) }),
+      options(['a', 'c'], { loading: new Set(['c']), failed: new Set(['a']) }),
     );
     expect(flat.find((row) => row.row.id === 'c')?.loading).toBe(true);
-    expect(flat.find((row) => row.row.id === 'b')?.failed).toBe(true);
-    expect(flat.find((row) => row.row.id === 'a')?.loading).toBe(false);
+    expect(flat.find((row) => row.row.id === 'a')?.failed).toBe(true);
+    expect(flat.find((row) => row.row.id === 'b')?.loading).toBe(false);
+  });
+
+  it('WITHHOLDS THEM FROM A ROW THAT IS FOLDED UP', () => {
+    // The two sets outlive the gesture: a load in flight keeps its key and a
+    // failure keeps its key until somebody retries. Read on their own they put
+    // a spinner, or a red row with a retry button, under a parent drawn
+    // collapsed -- which is what the first capture of the lazy demo caught.
+    const flat = flattenTree(
+      TREE,
+      options([], { loading: new Set(['c']), failed: new Set(['a']) }),
+    );
+    expect(flat.find((row) => row.row.id === 'c')?.loading).toBe(false);
+    expect(flat.find((row) => row.row.id === 'a')?.failed).toBe(false);
   });
 
   it('never marks a leaf as expanded, however the set is written', () => {

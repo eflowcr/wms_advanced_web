@@ -107,8 +107,7 @@ const COMPONENTS: readonly CatalogEntry[] = [
     selector: 'ewms-text',
     route: `${SHOWROOM_BASE}/components/text`,
     status: 'ready',
-    note:
-      'Las siete variantes semánticas, y por qué el nivel visual no se separa del nivel del documento.',
+    note: 'Las siete variantes semánticas, y por qué el nivel visual no se separa del nivel del documento.',
   },
   {
     id: 'icon-button',
@@ -116,8 +115,7 @@ const COMPONENTS: readonly CatalogEntry[] = [
     selector: 'ewms-icon-button',
     route: `${SHOWROOM_BASE}/components/icon-button`,
     status: 'ready',
-    note:
-      'Cuadrado en los tres tamaños, con label y tooltip obligatorios en el tipo.',
+    note: 'Cuadrado en los tres tamaños, con label y tooltip obligatorios en el tipo.',
   },
   {
     id: 'tooltip',
@@ -125,8 +123,7 @@ const COMPONENTS: readonly CatalogEntry[] = [
     selector: 'ewmsTooltip',
     route: `${SHOWROOM_BASE}/components/tooltip`,
     status: 'ready',
-    note:
-      'Directiva, no componente. Las tres reglas de la 1.4.13 y la trampa del nombre disabled.',
+    note: 'Directiva, no componente. Las tres reglas de la 1.4.13 y la trampa del nombre disabled.',
   },
   {
     id: 'input',
@@ -134,8 +131,7 @@ const COMPONENTS: readonly CatalogEntry[] = [
     selector: 'ewms-input',
     route: `${SHOWROOM_BASE}/components/input`,
     status: 'ready',
-    note:
-      'Cinco tipos, ControlValueAccessor, y la altura compartida con el Botón del mismo tamaño.',
+    note: 'Cinco tipos, ControlValueAccessor, y la altura compartida con el Botón del mismo tamaño.',
   },
   {
     id: 'checkbox',
@@ -143,8 +139,7 @@ const COMPONENTS: readonly CatalogEntry[] = [
     selector: 'ewms-checkbox',
     route: `${SHOWROOM_BASE}/components/checkbox`,
     status: 'ready',
-    note:
-      'Caja de 18×18 con tercer estado indeterminado, para el «seleccionar todos».',
+    note: 'Caja de 18×18 con tercer estado indeterminado, para el «seleccionar todos».',
   },
   {
     id: 'radio',
@@ -152,8 +147,7 @@ const COMPONENTS: readonly CatalogEntry[] = [
     selector: 'ewms-radio',
     route: `${SHOWROOM_BASE}/components/radio`,
     status: 'ready',
-    note:
-      'La misma caja que el Checkbox, agrupada por name nativo y sin tercer estado.',
+    note: 'La misma caja que el Checkbox, agrupada por name nativo y sin tercer estado.',
   },
   {
     id: 'toggle',
@@ -161,8 +155,7 @@ const COMPONENTS: readonly CatalogEntry[] = [
     selector: 'ewms-toggle',
     route: `${SHOWROOM_BASE}/components/toggle`,
     status: 'ready',
-    note:
-      'Pista de 44×24 con pulgar de 20. Aplica al tocar: si hay un Guardar al lado, va Checkbox.',
+    note: 'Pista de 44×24 con pulgar de 20. Aplica al tocar: si hay un Guardar al lado, va Checkbox.',
   },
   {
     id: 'select',
@@ -170,8 +163,7 @@ const COMPONENTS: readonly CatalogEntry[] = [
     selector: 'ewms-select',
     route: `${SHOWROOM_BASE}/components/select`,
     status: 'ready',
-    note:
-      'Panel en overlay del CDK, con el teclado y el volteo que jsdom no podía probar.',
+    note: 'Panel en overlay del CDK, con el teclado y el volteo que jsdom no podía probar.',
   },
   {
     id: 'search-select',
@@ -179,8 +171,7 @@ const COMPONENTS: readonly CatalogEntry[] = [
     selector: 'ewms-search-select',
     route: `${SHOWROOM_BASE}/components/search-select`,
     status: 'ready',
-    note:
-      'Se escribe y filtra; un código escaneado se resuelve sin abrir el panel. No reemplaza al Select.',
+    note: 'Se escribe y filtra; un código escaneado se resuelve sin abrir el panel. No reemplaza al Select.',
   },
   {
     id: 'table',
@@ -188,8 +179,15 @@ const COMPONENTS: readonly CatalogEntry[] = [
     selector: 'ewms-table',
     route: `${SHOWROOM_BASE}/components/table`,
     status: 'ready',
-    note:
-      'Columnas declaradas, árbol aplanado, filtros por tipo y el teclado de un treegrid.',
+    note: 'Columnas declaradas, árbol aplanado, filtros por tipo y el teclado de un treegrid.',
+  },
+  {
+    id: 'pagination',
+    name: 'Paginación',
+    selector: 'ewms-pagination',
+    route: `${SHOWROOM_BASE}/components/pagination`,
+    status: 'ready',
+    note: 'Anterior, siguiente y dónde estás. Componente propio: la tabla es sólo su primer consumidor.',
   },
   {
     id: 'badge',
@@ -213,8 +211,7 @@ const COMPONENTS: readonly CatalogEntry[] = [
     selector: 'ewms-card',
     route: `${SHOWROOM_BASE}/components/card`,
     status: 'ready',
-    note:
-      'Dos usos bajo un nombre: opción dentro de un grupo, contenedor fuera de él. Lo decide el inyector.',
+    note: 'Dos usos bajo un nombre: opción dentro de un grupo, contenedor fuera de él. Lo decide el inyector.',
   },
   {
     id: 'banner',
@@ -222,8 +219,7 @@ const COMPONENTS: readonly CatalogEntry[] = [
     selector: 'ewms-banner',
     route: `${SHOWROOM_BASE}/components/banner`,
     status: 'ready',
-    note:
-      'Mensaje en el flujo, cuatro severidades. Info se llama Info y se pinta neutral.',
+    note: 'Mensaje en el flujo, cuatro severidades. Info se llama Info y se pinta neutral.',
   },
   {
     id: 'toast',
@@ -252,14 +248,6 @@ const COMPONENTS: readonly CatalogEntry[] = [
   {
     id: 'date-picker',
     name: 'Date picker',
-    selector: null,
-    route: null,
-    status: 'gap',
-    note: 'Hueco reservado, sin ficha.',
-  },
-  {
-    id: 'pagination',
-    name: 'Paginación',
     selector: null,
     route: null,
     status: 'gap',
