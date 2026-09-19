@@ -1,0 +1,44 @@
+<!--
+  The clickable area is the whole box, not the glyph: the icon sits centred
+  inside a square button, so even the smallest glyph is clicked anywhere in the
+  full box around it.
+
+  `describes` is bound, not written as an attribute. `describes="false"` would
+  pass the string "false", which is truthy, and the tooltip would connect
+  itself with aria-describedby and be announced on top of the aria-label.
+
+  `[disabled]` is the plain native binding, and it stays unambiguous because
+  the tooltip directive calls its own switch `tooltipDisabled`. Were it called
+  `disabled`, Angular would resolve this binding to the directive instead and
+  the native attribute would never be written -- a button that looks disabled
+  and is still clickable. The prefix on that input is what keeps this line
+  meaning what it reads.
+-->
+<button
+  type="button"
+  [class]="baseClasses + ' ' + boxClass() + ' ' + variantClasses()"
+  [attr.aria-label]="label()"
+  [ewmsTooltip]="tooltip()"
+  [describes]="false"
+  [disabled]="disabled()"
+  [attr.aria-disabled]="ariaDisabled()"
+  [attr.aria-expanded]="expanded()"
+  [attr.aria-controls]="controlsId()"
+  [attr.aria-busy]="loading() ? 'true' : null"
+  (click)="onButtonClick($event)"
+  (keydown)="onButtonKeydown($event)"
+>
+  <span class="inline-flex items-center justify-center" [class.invisible]="loading()">
+    <ewms-icon [name]="icon()" [size]="iconSize()" aria-hidden="true" />
+  </span>
+
+  @if (loading()) {
+    <span
+      class="absolute inset-0 flex items-center justify-center pointer-events-none"
+      [style.color]="spinnerColor()"
+      aria-hidden="true"
+    >
+      <ewms-icon name="spinner" [size]="iconSize()" aria-hidden="true" />
+    </span>
+  }
+</button>

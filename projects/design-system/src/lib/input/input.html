@@ -1,0 +1,119 @@
+<!--
+  The <label> is a real one, tied to the control by for/id, and it is always
+  rendered. A placeholder is not a substitute: it vanishes on the first
+  keystroke and several screen readers never announce it.
+
+  The asterisk is aria-hidden. `required` is already on the native control, so
+  a screen reader says "required" on its own; the glyph would say it twice, and
+  say it as the word "asterisk".
+-->
+<label
+  [for]="fieldId"
+  [class]="hideLabel() ? 'sr-only' : 'block text-caption text-secondary mb-1'"
+>
+  {{ label() }}
+  @if (required()) {
+    <span aria-hidden="true">*</span>
+  }
+</label>
+
+<div class="relative block">
+  @if (hasPrefixIcon()) {
+    <!--
+      Decorative: no `label`, so it renders aria-hidden and out of the tab
+      order. The field is already named by its <label>, and an icon that
+      announced "search" as well would just name it twice.
+
+      The colour is set here, on the container. The icon inherits it through
+      currentColor and never carries a colour of its own (ADR 0011).
+    -->
+    <span
+      class="absolute top-1/2 -translate-y-1/2 flex items-center pointer-events-none text-secondary"
+      [class]="prefixIconOffsetClass()"
+    >
+      <ewms-icon name="search" [size]="iconSize" />
+    </span>
+  }
+
+  @if (isTextarea()) {
+    <textarea
+      [id]="fieldId"
+      rows="3"
+      [class]="controlClasses()"
+      [style.borderColor]="borderColor()"
+      [style.fontSize]="fontSize()"
+      [attr.placeholder]="placeholder() || null"
+      [value]="controlValue()"
+      [disabled]="isNativeDisabled()"
+      [readOnly]="isReadonly()"
+      [required]="required()"
+      [attr.aria-invalid]="isInvalid() ? 'true' : null"
+      [attr.aria-describedby]="describedBy()"
+      (input)="onInput($event)"
+      (focus)="onFocus()"
+      (blur)="onBlur()"
+    ></textarea>
+  } @else {
+    <!--
+      `readOnly` is the DOM property, not the `readonly` attribute: the
+      attribute is present-or-absent, so binding `false` to it would still mark
+      the field read-only. It is also why read-only is NOT built out of
+      `disabled` -- a read-only field keeps its focus, its tab stop and its
+      text selection, and a disabled one loses all three.
+    -->
+    <input
+      [id]="fieldId"
+      [type]="nativeType()"
+      [class]="controlClasses()"
+      [style.borderColor]="borderColor()"
+      [style.fontSize]="fontSize()"
+      [attr.placeholder]="placeholder() || null"
+      [value]="controlValue()"
+      [disabled]="isNativeDisabled()"
+      [readOnly]="isReadonly()"
+      [required]="required()"
+      [attr.aria-invalid]="isInvalid() ? 'true' : null"
+      [attr.aria-describedby]="describedBy()"
+      (input)="onInput($event)"
+      (focus)="onFocus()"
+      (blur)="onBlur()"
+    />
+  }
+
+  @if (hasSuffix()) {
+    <!--
+      The exception to the .field-icon rule: this one is pressed, so it is an
+      `ewms-icon-button` and carries a required, translated name. `size="sm"`
+      is the smallest square that exists (32 px) and is what the right padding
+      of the field is reserved for.
+    -->
+    <span class="absolute top-1/2 -translate-y-1/2 right-1 flex items-center">
+      @if (hasPasswordToggle()) {
+        <ewms-icon-button
+          [icon]="passwordToggleIcon()"
+          [label]="passwordToggleLabel()"
+          [tooltip]="passwordToggleLabel()"
+          size="sm"
+          (click)="togglePasswordVisibility()"
+        />
+      } @else {
+        <ewms-icon-button
+          icon="x"
+          [label]="clearLabel()"
+          [tooltip]="clearLabel()"
+          size="sm"
+          (click)="clear()"
+        />
+      }
+    </span>
+  }
+</div>
+
+<!--
+  The hint is a DESCRIPTION, wired with aria-describedby. It is never part of
+  the accessible name: the name is the label, and a field named "SKU Formato
+  ABC-123" is a field nobody can ask for by name.
+-->
+@if (hint()) {
+  <p [id]="hintId" class="mt-1 text-caption" [class]="hintClasses()">{{ hint() }}</p>
+}

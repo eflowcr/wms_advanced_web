@@ -193,8 +193,7 @@ module.exports = tseslint.config(
           // which no-restricted-globals cannot see because they are property
           // accesses rather than bare global references.
           selector: 'MemberExpression[property.name=/^(localStorage|sessionStorage)$/]',
-          message:
-            'Web storage must never hold auth tokens. Use the token store from @ewms/core.',
+          message: 'Web storage must never hold auth tokens. Use the token store from @ewms/core.',
         },
         {
           // `styles: [...]` or `styles: '...'`, only as a direct key of the
@@ -297,6 +296,21 @@ module.exports = tseslint.config(
     ['@ewms/design-system', '@ewms/showroom', '@ewms/testing', ...DOMAINS],
     ['@ewms/shared', '@ewms/api-client'],
   ),
+
+  /*
+   * THE ONE DEEP IMPORT ALLOWED INTO projects/ is not configured here: it is a
+   * single disable comment on the import in e2e/click-budget.e2e.ts, with its
+   * reason written beside it. It is noted here so that somebody reading the
+   * boundaries knows the exception exists rather than finding it by surprise.
+   *
+   * The short version: the end-to-end test has to read the four click budgets
+   * from the same file the screen reads them from (REQ-FE-DS4-003 HG-02), and
+   * the @ewms/* alias cannot carry them -- importing a public-api barrel from a
+   * Playwright test loads the whole Angular library into Node and fails before
+   * a test runs. The budgets are four plain numbers in a file with no imports.
+   * What keeps that file the only source of them is a separate gate,
+   * tools/ci/check-click-budget.mjs.
+   */
 
   // ------------------------------------------------------------- HTML templates
   {

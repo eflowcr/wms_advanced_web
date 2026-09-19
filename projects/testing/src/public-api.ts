@@ -5,4 +5,5 @@
  * shipped to production may import from it.
  */
 export { expectNoAxeViolations } from './lib/a11y';
+export { pixels } from './lib/css-length';
 export { provideI18nTesting } from './lib/i18n';

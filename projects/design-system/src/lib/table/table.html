@@ -1,0 +1,495 @@
+<!--
+  A REAL `<table>`, not a grid of divs.
+
+  Everything a WMS table needs from semantics -- a header that stays attached
+  to its column, a cell that knows which row and which column it is in, a
+  screen reader that can say "Estado, fila 4 de 12" -- is what a table element
+  already is. Rebuilding it out of divs means rebuilding all of it out of ARIA,
+  and the version built out of ARIA is the one that is wrong.
+
+  `role` is bound because it is not a choice: with children there is a tree and
+  the role is `treegrid`; without them it is a `grid`.
+-->
+@if (quickFilter()) {
+  <div class="mb-3 max-w-120" data-quick-filter>
+    <ewms-input
+      type="search"
+      size="sm"
+      [label]="text().search"
+      [hideLabel]="true"
+      [placeholder]="text().search"
+      [formControl]="searchControl"
+    />
+  </div>
+}
+
+<!--
+  The scroll box. With a window open it also scrolls VERTICALLY and has a
+  height, which is what gives the windowing something to measure; without one
+  it is the ordinary horizontal scroller a wide table needs.
+-->
+<div
+  class="overflow-x-auto rounded-md border border-default"
+  [class]="virtualised() ? 'max-h-120 overflow-y-auto' : ''"
+  #scrollBox
+  data-scroll-box
+  (scroll)="onScroll($event)"
+>
+  <table
+    [id]="tableId"
+    [class]="tableClasses"
+    [attr.role]="isTree() ? 'treegrid' : 'grid'"
+    [attr.aria-label]="ariaLabel()"
+    [attr.aria-rowcount]="page().total ?? rows().length"
+    [attr.aria-colcount]="columnCount()"
+  >
+    <!--
+      Sticky, so the headers stay put while the rows scroll under them. This is
+      also the reason the windowing is done here rather than with the CDK's
+      viewport: a transform on a wrapper around the whole table takes the
+      header with it, and then `sticky` has nothing to be sticky to.
+    -->
+    <thead class="sticky top-0 z-10">
+      <tr role="row">
+        @if (selectable()) {
+          <th
+            scope="col"
+            role="columnheader"
+            [class]="headerCellClasses"
+            [style.width]="'var(--col-width-sm)'"
+          >
+            <!--
+              THE HEADER BOX SELECTS WHAT IS ON SCREEN, not everything the
+              source holds. A "select all" that reached rows nobody has seen is
+              how somebody deletes four hundred records meaning to delete
+              twenty. Indeterminate says exactly that: some of these.
+            -->
+            <ewms-checkbox
+              [checked]="allSelected()"
+              [indeterminate]="someSelected()"
+              [ariaLabel]="text().selectAll"
+              (checkedChange)="toggleAll()"
+            />
+          </th>
+        }
+
+        @for (column of columns(); track column.key()) {
+          <th
+            scope="col"
+            role="columnheader"
+            [class]="headerCellClasses"
+            [style.width]="columnWidth(column)"
+            [attr.aria-sort]="ariaSort(column)"
+          >
+            @if (column.sortable()) {
+              <!--
+                A button, so the keyboard reaches it and the browser says it is
+                pressable. Three states: ascending, descending, and NONE -- the
+                third press is what lets somebody get back to the order the
+                source returned, which is usually the meaningful one.
+              -->
+              <button
+                type="button"
+                class="flex w-full cursor-pointer items-center gap-1 rounded-sm py-2 outline-none focus-visible:shadow-(--focus-ring-shadow)"
+                [class]="headerClassesFor(column)"
+                [attr.data-sort]="column.key()"
+                (click)="toggleSort(column)"
+              >
+                <span class="truncate">{{ column.header() }}</span>
+                @if (sortDirection(column) === 'asc') {
+                  <ewms-icon name="chevron-up" size="sm" [label]="text().sortedAscending" />
+                } @else if (sortDirection(column) === 'desc') {
+                  <ewms-icon name="chevron-down" size="sm" [label]="text().sortedDescending" />
+                } @else {
+                  <ewms-icon name="arrows-sort" size="sm" aria-hidden="true" />
+                }
+              </button>
+            } @else {
+              <span class="flex items-center py-2" [class]="headerClassesFor(column)">
+                <span class="truncate">{{ column.header() }}</span>
+              </span>
+            }
+          </th>
+        }
+      </tr>
+
+      @if (anyFilterable()) {
+        <!--
+          THE FILTER ROW'S SHAPE COMES FROM THE COLUMN'S TYPE, and the consumer
+          configures nothing. A range written into a text box is a filter that
+          cannot compare: every source would have to parse "100-900", and they
+          would each parse it differently.
+
+          An empty box means UNBOUNDED, never zero. "Up to 50" is a max with no
+          min, and reading the empty box as 0 would silently drop every
+          negative row.
+        -->
+        <tr role="row" data-filter-row>
+          @if (selectable()) {
+            <td [class]="headerCellClasses"></td>
+          }
+          @for (column of columns(); track column.key()) {
+            <!--
+              `<td>` INSIDE `<thead>`, AND NOT `<th>`. A filter box is not a
+              column header: the header is the row above, and a second `<th>`
+              would give every column two names -- or, for a column with no
+              filter, an empty one, which is what axe reports as an empty table
+              header. A `td` in a thead is valid and says what this is: a row of
+              controls that happens to sit with the headings.
+            -->
+            <td [class]="headerCellClasses" class="pb-2">
+              @if (column.filterable()) {
+                @switch (column.type()) {
+                  @case ('number') {
+                    <span class="flex flex-wrap gap-1" [attr.data-filter]="column.key()">
+                      <ewms-input
+                        class="flex-1 min-w-(--col-filter-min-width)"
+                        type="number"
+                        size="sm"
+                        [label]="text().filterFrom"
+                        [hideLabel]="true"
+                        [placeholder]="text().filterFrom"
+                        [formControl]="filterControl(column, 'min')"
+                      />
+                      <ewms-input
+                        class="flex-1 min-w-(--col-filter-min-width)"
+                        type="number"
+                        size="sm"
+                        [label]="text().filterTo"
+                        [hideLabel]="true"
+                        [placeholder]="text().filterTo"
+                        [formControl]="filterControl(column, 'max')"
+                      />
+                    </span>
+                  }
+                  @case ('date') {
+                    <span class="flex flex-wrap gap-1" [attr.data-filter]="column.key()">
+                      <ewms-input
+                        class="flex-1 min-w-(--col-filter-min-width)"
+                        size="sm"
+                        [label]="text().filterFrom"
+                        [hideLabel]="true"
+                        [placeholder]="text().filterFrom"
+                        [formControl]="filterControl(column, 'from')"
+                      />
+                      <ewms-input
+                        class="flex-1 min-w-(--col-filter-min-width)"
+                        size="sm"
+                        [label]="text().filterTo"
+                        [hideLabel]="true"
+                        [placeholder]="text().filterTo"
+                        [formControl]="filterControl(column, 'to')"
+                      />
+                    </span>
+                  }
+                  @default {
+                    <span class="block" [attr.data-filter]="column.key()">
+                      <ewms-input
+                        type="search"
+                        size="sm"
+                        [label]="column.header() || column.key()"
+                        [hideLabel]="true"
+                        [placeholder]="text().filterPlaceholder"
+                        [formControl]="filterControl(column, 'text')"
+                      />
+                    </span>
+                  }
+                }
+              }
+            </td>
+          }
+        </tr>
+      }
+    </thead>
+
+    <tbody>
+      @if (rowWindow().before > 0) {
+        <!--
+          The rows above the window, as height and nothing else. It is what
+          keeps the scrollbar the length of the WHOLE table rather than of the
+          handful of rows that happen to be drawn.
+        -->
+        <tr aria-hidden="true" data-spacer="before">
+          <td [attr.colspan]="columnCount()" [style.height.px]="rowWindow().before"></td>
+        </tr>
+      }
+
+      @for (flat of rowWindow().rows; track flat.key; let windowIndex = $index) {
+        <!-- The ABSOLUTE index: the keyboard walks the table, not the window. -->
+        @let rowIndex = rowWindow().first + windowIndex;
+        <!--
+          ONE LOOP FOR THE WHOLE TREE. `flattenTree()` already turned the roots
+          and the set of expanded keys into this list, so a third-level row is
+          the same `<tr>` as a root with a bigger `aria-level` and more
+          indentation. There is no nested table and no recursive template.
+        -->
+        <tr
+          role="row"
+          [class]="rowClassesFor(flat)"
+          [style.height]="rowHeight()"
+          [attr.data-row]="rowIndex"
+          [attr.aria-rowindex]="rowIndex + 1"
+          [attr.aria-level]="isTree() ? flat.level + 1 : null"
+          [attr.aria-setsize]="isTree() ? flat.setSize : null"
+          [attr.aria-posinset]="isTree() ? flat.posInSet : null"
+          [attr.aria-expanded]="flat.hasChildren ? flat.expanded : null"
+          [attr.aria-selected]="selectable() ? isSelected(flat) : null"
+          [class.is-child]="flat.level > 0"
+          (dblclick)="onRowDblclick(flat)"
+          (contextmenu)="onRowContextMenu($event, flat)"
+        >
+          @if (selectable()) {
+            <td
+              role="gridcell"
+              [class]="cellClasses"
+              [attr.data-cell]="rowIndex + '-0'"
+              [attr.tabindex]="isFocused(rowIndex, 0) ? 0 : -1"
+              (focus)="onCellFocus(rowIndex, 0)"
+              (keydown)="onKeydown($event, rowIndex)"
+            >
+              <ewms-checkbox
+                [checked]="isSelected(flat)"
+                [ariaLabel]="text().selectRow"
+                (checkedChange)="toggleRow(flat)"
+              />
+            </td>
+          }
+
+          @for (column of columns(); track column.key(); let columnIndex = $index) {
+            <td
+              role="gridcell"
+              [class]="cellClassesFor(column)"
+              [attr.data-cell]="rowIndex + '-' + (selectable() ? columnIndex + 1 : columnIndex)"
+              [attr.tabindex]="
+                isFocused(rowIndex, selectable() ? columnIndex + 1 : columnIndex) ? 0 : -1
+              "
+              (focus)="onCellFocus(rowIndex, selectable() ? columnIndex + 1 : columnIndex)"
+              (keydown)="onKeydown($event, rowIndex)"
+            >
+              <span class="flex items-center gap-1">
+                @if ($first && isTree()) {
+                  <!--
+                    THE TOGGLE LIVES INSIDE THE FIRST DATA COLUMN, next to the
+                    text, and never in a column of its own -- the vocabulary
+                    this system already fixed. The indentation is the level's,
+                    and a row with no children gets a spacer of the same width
+                    so every row's text starts at the same place.
+                  -->
+                  <span
+                    class="tree-toggle-spacer inline-block shrink-0"
+                    [style.width]="'calc(' + flat.level + ' * var(--tree-indent))'"
+                  ></span>
+                  @if (flat.hasChildren) {
+                    <button
+                      type="button"
+                      class="tree-toggle inline-flex shrink-0 cursor-pointer rounded-sm outline-none focus-visible:shadow-(--focus-ring-shadow)"
+                      [attr.aria-label]="flat.expanded ? text().collapse : text().expand"
+                      [attr.data-toggle]="rowIndex"
+                      (click)="toggleExpanded(flat)"
+                    >
+                      <ewms-icon
+                        [name]="flat.expanded ? 'chevron-down' : 'chevron-right'"
+                        size="sm"
+                      />
+                    </button>
+                  } @else {
+                    <span class="tree-toggle-spacer inline-block size-icon-sm shrink-0"></span>
+                  }
+                }
+
+                @if (cellTemplateOf(column); as template) {
+                  <ng-container
+                    [ngTemplateOutlet]="template.template"
+                    [ngTemplateOutletContext]="{ $implicit: flat.row, value: flat.row }"
+                  />
+                } @else if (column.type() === 'badge') {
+                  @if (badgeFor(column, flat.row); as badge) {
+                    <ewms-badge [variant]="badge.variant" [label]="badge.label" />
+                  }
+                } @else if (column.type() === 'actions') {
+                  <span class="flex w-full items-center justify-end gap-1">
+                    @if (isMaster(flat.row)) {
+                      <!--
+                        The detail toggle is NOT the tree toggle, and it is a
+                        separate control on purpose: one unfolds more rows in
+                        the same columns, the other unfolds a panel. One button
+                        that sometimes did either would be a button nobody can
+                        predict.
+                      -->
+                      <ewms-icon-button
+                        [icon]="isDetailOpen(flat) ? 'chevron-up' : 'chevron-down'"
+                        size="sm"
+                        [label]="isDetailOpen(flat) ? text().collapse : text().expand"
+                        [tooltip]="isDetailOpen(flat) ? text().collapse : text().expand"
+                        [attr.data-detail-toggle]="rowIndex"
+                        [expanded]="isDetailOpen(flat)"
+                        [controlsId]="isDetailOpen(flat) ? detailId(flat) : null"
+                        (click)="toggleDetail(flat)"
+                      />
+                    }
+                    @if (hasMenu()) {
+                      <ewms-icon-button
+                        icon="more"
+                        size="sm"
+                        [label]="text().rowMenu"
+                        [tooltip]="text().rowMenu"
+                        [attr.data-kebab]="rowIndex"
+                        (click)="openMenu(flat, $any($event).currentTarget)"
+                      />
+                    }
+                  </span>
+                } @else {
+                  <span class="truncate">{{ display(column, flat.row) }}</span>
+                }
+              </span>
+            </td>
+          }
+        </tr>
+        @if (isDetailOpen(flat)) {
+          <!--
+            ONE CELL SPANNING THE TABLE, and content of the consumer's own.
+            A detail panel that repeated the columns would be the tree with
+            extra steps; what it is for is everything the columns left out.
+          -->
+          <tr role="row" [attr.data-detail]="rowIndex">
+            <td
+              role="gridcell"
+              [id]="detailId(flat)"
+              [attr.colspan]="columnCount()"
+              [class]="cellClasses"
+              class="bg-secondary p-4"
+            >
+              @if (detail(); as template) {
+                <ng-container
+                  [ngTemplateOutlet]="template.template"
+                  [ngTemplateOutletContext]="{ $implicit: flat.row }"
+                />
+              }
+            </td>
+          </tr>
+        }
+
+        @if (flat.loading) {
+          <!--
+            A row of its own rather than a spinner inside the parent: the
+            parent's cells hold its data, and a spinner in them would replace
+            information somebody is reading with the news that something else
+            is loading.
+
+            `aria-busy` on the row is what tells a screen reader to wait
+            instead of announcing an empty branch.
+          -->
+          <tr role="row" aria-busy="true" [attr.data-loading]="rowIndex">
+            <td role="gridcell" [attr.colspan]="columnCount()" [class]="cellClasses">
+              <span class="flex items-center gap-2 text-caption text-secondary">
+                <ewms-icon name="spinner" size="sm" />
+                {{ text().loadingChildren }}
+              </span>
+            </td>
+          </tr>
+        }
+
+        @if (flat.failed) {
+          <!--
+            The failure is IN LINE, where the children would have been, and it
+            keeps the parent expanded. Collapsing it on failure would hide the
+            only thing that says anything went wrong.
+          -->
+          <tr role="row" [attr.data-failed]="rowIndex">
+            <td role="gridcell" [attr.colspan]="columnCount()" [class]="cellClasses">
+              <span class="flex items-center gap-2 text-caption text-danger">
+                <ewms-icon name="circle-x" size="sm" />
+                {{ text().childrenFailed }}
+                <button
+                  type="button"
+                  class="cursor-pointer rounded-sm px-2 py-1 outline-none focus-visible:shadow-(--focus-ring-shadow) text-(color:--color-bg-primary) hover:text-(color:--color-bg-primary-hover)"
+                  [attr.data-retry]="rowIndex"
+                  (click)="retryChildren(flat)"
+                >
+                  {{ text().retry }}
+                </button>
+              </span>
+            </td>
+          </tr>
+        }
+      }
+
+      @if (rowWindow().after > 0) {
+        <tr aria-hidden="true" data-spacer="after">
+          <td [attr.colspan]="columnCount()" [style.height.px]="rowWindow().after"></td>
+        </tr>
+      }
+
+      @if (rows().length === 0) {
+        <tr role="row" data-empty-row>
+          <td role="gridcell" [attr.colspan]="columnCount()" class="p-8 text-center">
+            <!--
+              The empty state is PROJECTED: what to say when a warehouse has no
+              pending expediciones is a sentence only the screen knows, and a
+              default here would be a language.
+            -->
+            @if (empty(); as template) {
+              <ng-container [ngTemplateOutlet]="template.template" />
+            }
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>
+
+@if (showPagination()) {
+  <div class="mt-3" data-pagination>
+    <ewms-pagination
+      [page]="page().page"
+      [pageCount]="pageCount() ?? 1"
+      [total]="page().total"
+      [messages]="text()"
+      (pageChange)="goToPage($event)"
+    />
+  </div>
+}
+
+<!--
+  THE MENU, in the shared overlay and with the shared movement.
+
+  `role="menu"` on a list whose items are `menuitem`, the focus on the menu
+  itself and `aria-activedescendant` pointing at the active entry -- the same
+  shape the Select's panel uses, for the same reason: the focus has exactly one
+  place to be, and Escape has exactly one thing to give it back to.
+
+  A disabled entry stays visible and stays out of the walk: it is information,
+  and stopping on it would make the arrows feel broken on the rows where it
+  happens to be unavailable.
+-->
+<ng-template #menu>
+  <ul
+    [id]="menuId"
+    role="menu"
+    tabindex="-1"
+    [class]="menuClasses"
+    [attr.aria-label]="text().rowMenu"
+    [attr.aria-activedescendant]="menuIndex() >= 0 ? menuOptionId(menuIndex()) : null"
+    (keydown)="onMenuKeydown($event)"
+  >
+    @for (item of menuItems(); track item.id; let itemIndex = $index) {
+      @if (item.separatorBefore) {
+        <li [class]="menuSeparatorClasses" role="separator"></li>
+      }
+      <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -->
+      <li
+        [id]="menuOptionId(itemIndex)"
+        role="menuitem"
+        [class]="menuItemClassesFor(item, itemIndex)"
+        [attr.aria-disabled]="item.disabled ? 'true' : null"
+        [attr.data-menu-item]="item.id"
+        (click)="chooseMenuItem(item)"
+      >
+        @if (item.icon) {
+          <ewms-icon [name]="item.icon" size="sm" />
+        }
+        <span class="truncate">{{ item.label }}</span>
+      </li>
+    }
+  </ul>
+</ng-template>

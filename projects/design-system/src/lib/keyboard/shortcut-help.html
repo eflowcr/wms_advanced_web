@@ -1,0 +1,87 @@
+<!--
+  No role here: the CDK's container around this template already carries
+  role="dialog", aria-modal and the focus trap. A second dialog role nested
+  inside the first is two dialogs to a screen reader.
+
+  The `@if` is not defensive padding. The words arrive from whichever root
+  layout mounted the engine, and "nothing mounted" is a state that really
+  exists -- a page rendered alone in a test bed. Rendering an empty dialog then
+  is better than rendering one full of undefined.
+-->
+@if (messages(); as words) {
+  <div
+    class="flex w-full max-w-120 flex-col gap-4 rounded-dialog border border-default border-solid bg-surface p-6 shadow-dialog"
+  >
+    <h2 [id]="titleId" class="text-h3 text-primary">{{ words.title }}</h2>
+    <p class="text-p text-secondary">{{ words.intro }}</p>
+
+    <!--
+      A real table, because this IS one: two columns whose rows are pairs. A
+      grid of divs would read to a screen reader as a run of unrelated text,
+      and the header cells are what tell somebody which side is the key.
+    -->
+    <table class="w-full border-collapse text-left">
+      <thead>
+        <tr>
+          <th scope="col" class="border-b border-default pb-2 text-caption text-secondary">
+            {{ words.actionColumn }}
+          </th>
+          <th scope="col" class="border-b border-default pb-2 text-caption text-secondary">
+            {{ words.keyColumn }}
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (row of rows(); track row.action) {
+          <tr>
+            <th scope="row" class="border-b border-default py-2 pr-4 text-p text-primary">
+              {{ row.description }}
+            </th>
+            <td class="border-b border-default py-2">
+              <!--
+                One <kbd> per key of the chord, which is what the element is
+                for: `Alt+N` inside a single <kbd> is one key called "Alt+N".
+                The `+` between them is aria-hidden -- it is punctuation
+                holding two keys apart, not something to read out.
+              -->
+              <span class="inline-flex items-center gap-1">
+                @for (key of row.chord; track $index) {
+                  @if (!$first) {
+                    <span class="text-caption text-secondary" aria-hidden="true">+</span>
+                  }
+                  <kbd
+                    class="rounded-sm border border-default bg-secondary px-2 py-1 font-mono text-caption text-primary"
+                    >{{ key }}</kbd
+                  >
+                }
+              </span>
+              @if (row.singleKey && !singleKeyShortcuts()) {
+                <span class="ml-2 text-caption text-secondary">{{ words.singleKeyOff }}</span>
+              }
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+
+    @if (hasSingleKey()) {
+      <!--
+        WCAG 2.2 2.1.4. The switch sits WITH the list rather than in a settings
+        screen nobody opens, because the moment somebody wants it off is the
+        moment they have just discovered one of them fired at them.
+      -->
+      <div class="flex flex-col gap-1 rounded-md border border-default bg-secondary p-3">
+        <ewms-toggle
+          [checked]="singleKeyShortcuts()"
+          [label]="words.singleKeyLabel"
+          (checkedChange)="toggleSingleKey($event)"
+        />
+        <p class="text-caption text-secondary">{{ words.singleKeyHint }}</p>
+      </div>
+    }
+
+    <div class="flex justify-end">
+      <ewms-button variant="secondary" (click)="close()">{{ words.close }}</ewms-button>
+    </div>
+  </div>
+}

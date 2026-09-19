@@ -5,6 +5,37 @@
       "es": "Español"
     }
   },
+  "ds": {
+    "searchSelect": {
+      "error": "No se pudo consultar el catálogo.",
+      "more": "Ver más resultados",
+      "noResults": "Sin resultados para «{{ query }}»",
+      "results": "{count, plural, =0 {Sin resultados} one {# resultado} other {# resultados}}",
+      "resultsOf": "{{ count }} de {{ total }} resultados",
+      "retry": "Reintentar",
+      "searching": "Buscando…"
+    },
+    "table": {
+      "childrenFailed": "No se pudieron cargar las líneas.",
+      "collapse": "Contraer la fila",
+      "expand": "Expandir la fila",
+      "filterFrom": "Desde",
+      "filterPlaceholder": "Filtrar",
+      "filterTo": "Hasta",
+      "loadingChildren": "Cargando las líneas…",
+      "nextPage": "Página siguiente",
+      "pageOf": "Página {{ page }} de {{ pages }}",
+      "previousPage": "Página anterior",
+      "retry": "Reintentar",
+      "rowMenu": "Acciones de la fila",
+      "rowsTotal": "{total, plural, =0 {Sin filas} one {# fila} other {# filas}}",
+      "search": "Buscar en la tabla",
+      "selectAll": "Seleccionar todas las filas visibles",
+      "selectRow": "Seleccionar la fila",
+      "sortedAscending": "Orden ascendente",
+      "sortedDescending": "Orden descendente"
+    }
+  },
   "shell": {
     "home": {
       "intro": "Scaffold de la fase DS-0. Las pantallas del producto llegan más adelante.",
@@ -23,6 +54,32 @@
     "nav": {
       "designSystem": "Sistema de diseño",
       "home": "Inicio"
+    },
+    "shortcuts": {
+      "actionColumn": "Acción",
+      "actions": {
+        "cancel": "Cancelar lo que esté en curso, o cerrar lo que esté abierto",
+        "create": "Crear un registro nuevo",
+        "help": "Abrir esta lista",
+        "save": "Guardar el formulario activo",
+        "search": "Llevar el foco al campo de búsqueda"
+      },
+      "close": "Cerrar",
+      "intro": "Funcionan en toda la aplicación. Dentro de un campo de texto no se disparan, salvo Esc.",
+      "keyColumn": "Tecla",
+      "singleKeyHint": "Los atajos de una sola tecla pueden dispararse solos con entrada por voz o con un pulsador. Apagarlos no afecta a los que llevan Alt o Ctrl. La preferencia dura lo que dure esta pestaña.",
+      "singleKeyLabel": "Atajos de una sola tecla",
+      "singleKeyOff": "(apagado)",
+      "title": "Atajos de teclado"
+    },
+    "toast": {
+      "region": "Notificaciones",
+      "severity": {
+        "danger": "Error",
+        "info": "Información",
+        "success": "Éxito",
+        "warning": "Advertencia"
+      }
     }
   }
 }

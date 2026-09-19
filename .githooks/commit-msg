@@ -1,0 +1,30 @@
+#!/bin/sh
+# PLN-WMS-003 Â§7 exige que todo commit con asistencia de un agente de IA se
+# identifique como tal en sus metadatos. Este repo lo cumple con un trailer
+# propio y neutral: queda la trazabilidad, sin marca comercial en la historia.
+#
+# El hook NO detecta asistencia por si solo: normaliza lo que la herramienta
+# haya dejado. Un agente que no emita nada debe anadir `Assisted-By:` el mismo.
+
+msg="$1"
+tmp="$msg.hook"
+
+PATRON='^(Co-Authored-By:[[:space:]]*.*(laude|nthropic|opilot|ursor|emini)|Claude-Session:|Assisted-By:)'
+
+if grep -q -E "$PATRON" "$msg" || grep -q -F 'Generated with [Claude Code]' "$msg"; then
+  asistido=1
+else
+  asistido=0
+fi
+
+# Fuera toda linea de autoria de herramienta
+grep -v -E "$PATRON" "$msg" > "$tmp" || true
+grep -v -F 'Generated with [Claude Code]' "$tmp" > "$msg" || true
+rm -f "$tmp"
+
+if [ "$asistido" = "1" ]; then
+  # Recorta lineas en blanco del final y anexa el trailer unico
+  awk '{l[NR]=$0} END{n=NR; while(n>0 && l[n] ~ /^[[:space:]]*$/) n--; for(i=1;i<=n;i++) print l[i]}' "$msg" > "$tmp"
+  printf '\nAssisted-By: agente-ia\n' >> "$tmp"
+  mv "$tmp" "$msg"
+fi

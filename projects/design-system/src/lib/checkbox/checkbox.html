@@ -1,0 +1,46 @@
+<!--
+  The <label> WRAPS the control, so there is no for/id pair to keep in sync and
+  the whole row -- box, gap and text -- is the hit target. That is also why
+  cursor-pointer sits on the row: the text is part of the control, not
+  decoration beside it.
+
+  No aria-disabled next to the native `disabled`: the native attribute already
+  carries the state, and both would announce it twice (same rule as the
+  Button).
+-->
+<label [class]="rowClasses()">
+  <span class="relative inline-flex">
+    <input
+      #box
+      type="checkbox"
+      [class]="boxClasses()"
+      [style.borderWidth]="borderWidth"
+      [checked]="controlValue()"
+      [disabled]="isDisabled()"
+      [attr.aria-checked]="ariaChecked()"
+      [attr.aria-label]="ariaLabel() || null"
+      (change)="onNativeChange($event)"
+      (blur)="onBlur()"
+    />
+
+    <!--
+      The glyph is a SIBLING laid over the box, not a child of it: an <input>
+      cannot have children. pointer-events-none keeps every click on the input
+      underneath, so the box never has two things competing for the same pixel.
+
+      Both glyphs are aria-hidden decoration. What the state IS comes from
+      aria-checked, which says `mixed` where the picture only says "blue".
+    -->
+    <span [class]="glyphClasses">
+      @if (indeterminate()) {
+        <ewms-icon name="minus" size="sm" />
+      } @else if (controlValue()) {
+        <ewms-icon name="check" size="sm" />
+      }
+    </span>
+  </span>
+
+  @if (label()) {
+    <span>{{ label() }}</span>
+  }
+</label>

@@ -1,0 +1,29 @@
+<span class="inline-flex flex-wrap items-center gap-2 font-mono text-caption">
+  @if (showSwatch()) {
+    <span
+      class="inline-block size-5 shrink-0 rounded-sm border border-strong"
+      [style.backgroundColor]="swatchColour()"
+      data-swatch
+      aria-hidden="true"
+    ></span>
+  }
+
+  <code class="text-primary">{{ token() }}</code>
+
+  @if (chain(); as resolved) {
+    @if (resolved.status === 'missing') {
+      @if (pending()) {
+        <span class="text-secondary">(pendiente) sin declarar en tokens.css</span>
+      } @else {
+        <span class="rounded-sm bg-danger-surface px-1 text-danger">falta en tokens.css</span>
+      }
+    } @else {
+      @for (parent of parents(); track parent.name) {
+        <span class="text-secondary" aria-hidden="true">&rarr;</span>
+        <code class="text-secondary">{{ parent.name }}</code>
+      }
+      <span class="text-secondary" aria-hidden="true">=</span>
+      <span class="text-primary">{{ resolved.value }}</span>
+    }
+  }
+</span>

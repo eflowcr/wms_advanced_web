@@ -1,0 +1,9 @@
+<!--
+  The group is the radiogroup, and its name is the label the consumer passed.
+  There is no visible heading here on purpose: a card selector is usually under
+  a field label the page already drew, and a second one inside the box would be
+  read twice.
+-->
+<div role="radiogroup" [attr.aria-label]="label()" class="flex flex-wrap gap-4">
+  <ng-content />
+</div>

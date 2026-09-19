@@ -1,0 +1,372 @@
+<!-- The showroom is Spanish only, exempt from i18n (gate 12): declared so a screen reader never reads it as English. -->
+<article class="flex flex-col gap-10" lang="es">
+  <!-- ============================================================ 1. Encabezado -->
+  <header class="flex flex-col gap-2" data-block="1-encabezado">
+    <div class="flex flex-wrap items-baseline gap-3">
+      <h1 class="text-h1">Toggle</h1>
+      <code class="font-mono text-primary">&lt;ewms-toggle&gt;</code>
+    </div>
+    <ul class="flex flex-wrap gap-2 text-caption">
+      <li class="rounded-sm bg-secondary px-2 py-1 text-secondary">
+        Versión <span class="font-mono">{{ version }}</span>
+      </li>
+      <li class="rounded-sm bg-success-surface px-2 py-1 text-success">Construido y en verde</li>
+      <li class="rounded-sm bg-secondary px-2 py-1 text-secondary">
+        Ficha: <span class="font-mono">08-Sistema-de-Diseno/Componentes/Toggle.md</span>
+      </li>
+    </ul>
+  </header>
+
+  <!-- ================================================ 2. Qué resuelve / cuándo no -->
+  <section class="flex flex-col gap-4" aria-labelledby="tg-purpose" data-block="2-proposito">
+    <h2 id="tg-purpose" class="text-h2">Qué resuelve, y cuándo NO usarlo</h2>
+    <div class="grid grid-cols-[repeat(auto-fit,minmax(20rem,1fr))] gap-4">
+      <div class="flex flex-col gap-2 rounded-md border border-default bg-surface p-4">
+        <h3 class="text-h3">Qué resuelve</h3>
+        <p>
+          Un interruptor: encendido o apagado, <strong>aplicado en el momento en que se toca</strong>.
+          No hay botón Guardar, porque no queda nada que guardar.
+        </p>
+        <p class="text-caption text-secondary">
+          Por debajo sigue siendo un
+          <code class="font-mono">&lt;input type="checkbox"&gt;</code>, porque lo único que había
+          que cambiar era el rol: el teclado, el foco y la parada de tabulación ya estaban bien.
+        </p>
+      </div>
+      <div class="flex flex-col gap-2 rounded-md border border-danger bg-danger-surface p-4">
+        <h3 class="text-h3">Cuándo NO usarlo</h3>
+        <ul class="flex flex-col gap-2">
+          <li>
+            <strong>Si hay un «Guardar» al lado, va Checkbox.</strong> Esa es la regla entera, y es
+            la confusión más común de esta librería. Si tu demo tiene un botón Guardar junto a un
+            toggle, la demo está mal.
+          </li>
+          <li>
+            <strong>Si la acción es destructiva o cara</strong>, tampoco: aplicar al tocar sin
+            confirmación no es lo que querés para «Dar de baja el almacén».
+          </li>
+          <li>
+            <strong>Si son tres estados</strong> —sí, no, heredado— no es un interruptor. Eso es un
+            Select o un grupo de Radios.
+          </li>
+        </ul>
+      </div>
+    </div>
+    <div class="flex flex-col gap-2 rounded-md border border-strong bg-secondary p-4">
+      <h3 class="text-h4">Toggle o Checkbox — la diferencia no es cómo se ven</h3>
+      <div class="grid grid-cols-[repeat(auto-fit,minmax(18rem,1fr))] gap-4">
+        <div class="flex flex-col gap-1">
+          <h4 class="text-h4">Toggle</h4>
+          <p class="text-caption">
+            <strong>Acción inmediata.</strong> Tiene efecto en el momento en que se toca.
+          </p>
+        </div>
+        <div class="flex flex-col gap-1">
+          <h4 class="text-h4">Checkbox</h4>
+          <p class="text-caption">
+            <strong>Una selección dentro de un formulario</strong>, confirmada después por otra cosa.
+          </p>
+        </div>
+      </div>
+      <p class="text-caption">
+        Equivocarse no es cosmético: un toggle dentro de un formulario deja una configuración
+        <em>ya aplicada</em> mientras un botón Guardar sugiere que no lo está; un checkbox usado para
+        una configuración inmediata <strong>descarta el cambio en silencio</strong> cuando alguien se
+        va de la pantalla sin enviar.
+      </p>
+    </div>
+  </section>
+
+  <!-- ========================================================= 3. Demo principal -->
+  <section class="flex flex-col gap-4" aria-labelledby="tg-demo" data-block="3-demo">
+    <h2 id="tg-demo" class="text-h2">Demo principal</h2>
+    <p class="text-secondary">
+      Un panel de preferencias. <strong>No hay botón Guardar en ninguna parte</strong>, y esa
+      ausencia es deliberada: el contador de abajo sube en el mismo instante en que tocás un switch.
+    </p>
+    <div class="grid grid-cols-[repeat(auto-fit,minmax(24rem,1fr))] gap-6">
+      <ewms-demo-frame ground="canvas" label="Preferencias: cada fila se aplica al tocarla">
+        <div class="flex flex-col gap-3" data-demo-preferences>
+          <ul class="flex flex-col gap-3">
+            @for (row of preferences(); track row.id) {
+              <li class="flex flex-col gap-1">
+                <ewms-toggle
+                  [label]="row.label"
+                  [checked]="row.on"
+                  (checkedChange)="flip(row.id, $event)"
+                />
+                <span class="text-caption text-secondary">{{ row.applied }}</span>
+              </li>
+            }
+          </ul>
+          <p
+            class="rounded-md border border-default bg-surface p-3 text-caption text-primary"
+            role="status"
+            aria-live="polite"
+          >
+            Cambios aplicados: <span class="font-mono">{{ applied() }}</span>
+          </p>
+        </div>
+      </ewms-demo-frame>
+      <ewms-prop-table [rows]="props" caption="Propiedades de <ewms-toggle>" />
+    </div>
+    <p class="text-caption text-secondary">
+      <strong>La fila entera es el área clickeable</strong>, no la pista de 44×24: el
+      <code class="font-mono">&lt;label&gt;</code> envuelve el control. En una tablet, dentro de un
+      almacén y con guantes puestos, ésa es la diferencia entre un control que funciona y uno que no
+      — y es donde este control se usa de verdad.
+    </p>
+  </section>
+
+  <!-- =============================================================== 4. Variantes -->
+  <section class="flex flex-col gap-4" aria-labelledby="tg-variants" data-block="4-variantes">
+    <h2 id="tg-variants" class="text-h2">Variantes</h2>
+    <div class="flex flex-col gap-2 rounded-md border border-strong bg-secondary p-4">
+      <h3 class="text-h4">No aplica</h3>
+      <p>
+        No hay <code class="font-mono">variant</code>. Un interruptor tiene dos posiciones y ninguna
+        jerarquía de énfasis: no existe «el toggle primario».
+      </p>
+      <p class="text-caption">
+        Lo que sí hay son <strong>dos valores</strong>, Off y On, y son el eje de la matriz.
+      </p>
+    </div>
+  </section>
+
+  <!-- ========================================================= 5. Matriz de estados -->
+  <section class="flex flex-col gap-4" aria-labelledby="tg-matrix" data-block="5-matriz">
+    <h2 id="tg-matrix" class="text-h2">Matriz de estados</h2>
+    <p class="text-secondary">
+      Ocho celdas: dos valores por cuatro estados. <strong>Disabled es una entrada real</strong>;
+      Hover y Focus se fuerzan con el token que aplicaría la propia regla del componente.
+    </p>
+    <ewms-demo-frame ground="canvas">
+      <ewms-state-matrix
+        [variants]="values"
+        [states]="states"
+        rowHeader="Valor"
+        caption="Dos valores por cuatro estados"
+      >
+        <ng-template let-variant="variant" let-state="state">
+          <span [class]="forced(variant.id, state.id)">
+            <ewms-toggle
+              [ariaLabel]="variant.label + ', ' + state.label"
+              [checked]="isOn(variant.id)"
+              [disabled]="state.id === 'disabled'"
+            />
+          </span>
+        </ng-template>
+      </ewms-state-matrix>
+    </ewms-demo-frame>
+    <p class="text-caption text-secondary">
+      El hover <strong>depende de la fila, no de la columna</strong>: apagado va hacia un gris de
+      borde más oscuro, encendido hacia el azul de acción más oscuro. Son dos tokens distintos, y por
+      eso la utilidad forzada se elige por valor y no por estado.
+    </p>
+    <p class="text-caption text-secondary">
+      Deshabilitado va primero y no tiene hover: un interruptor que no se puede accionar no debe
+      encenderse bajo el puntero.
+    </p>
+  </section>
+
+  <!-- ================================================================ 6. Tamaños -->
+  <section class="flex flex-col gap-4" aria-labelledby="tg-sizes" data-block="6-tamanos">
+    <h2 id="tg-sizes" class="text-h2">Tamaños</h2>
+    <div class="flex flex-col gap-2 rounded-md border border-strong bg-secondary p-4">
+      <h3 class="text-h4">Uno solo — 44×24, con pulgar de 20</h3>
+      <p>
+        No usa la escala 32 / 40 / 48, igual que el Checkbox y el Radio. La aritmética es
+        <strong>2 + 20 + 2 = 24</strong>: el pulgar va embutido 2 px arriba y 2 px a la izquierda, y
+        20 px de recorrido lo dejan a los mismos 2 px del otro extremo.
+      </p>
+    </div>
+    <ewms-demo-frame ground="surface">
+      <div class="flex flex-wrap items-center gap-6" data-measure-track>
+        <ewms-toggle label="La pista medida" [checked]="true" />
+        <dl class="flex flex-col gap-1 text-caption">
+          <div class="flex flex-wrap gap-2">
+            <dt class="text-secondary">Pista renderizada:</dt>
+            <dd class="font-mono text-primary">{{ measure().track }}</dd>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <dt class="text-secondary">Pulgar renderizado:</dt>
+            <dd class="font-mono text-primary">{{ measure().thumb }}</dd>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <dt class="text-secondary">¿Coincide con la ficha?</dt>
+            <dd>
+              @if (measure().matchesSpec) {
+                <span class="rounded-sm bg-success-surface px-1 text-success">
+                  44 × 24 con pulgar de 20
+                </span>
+              } @else {
+                <span class="rounded-sm bg-danger-surface px-1 text-danger">no coincide</span>
+              }
+            </dd>
+          </div>
+        </dl>
+      </div>
+    </ewms-demo-frame>
+    <p class="text-caption text-secondary">
+      Medido sobre el control renderizado, no transcrito: la ficha dice 44×24 y 20, y ésa es
+      justamente la clase de número que se rompe sin que nadie lo note.
+    </p>
+  </section>
+
+  <!-- ==================================================== 7. Anatomía y tokens -->
+  <section class="flex flex-col gap-4" aria-labelledby="tg-anatomy" data-block="7-anatomia">
+    <h2 id="tg-anatomy" class="text-h2">Anatomía y tokens</h2>
+    <p class="text-secondary">
+      La pista <strong>es</strong> el <code class="font-mono">&lt;input&gt;</code>, con
+      <code class="font-mono">appearance-none</code>; el pulgar es un hermano superpuesto con
+      <code class="font-mono">pointer-events-none</code>, porque un
+      <code class="font-mono">&lt;input&gt;</code> no puede tener hijos y todo evento de puntero le
+      pertenece al control de abajo.
+    </p>
+    <div class="overflow-x-auto">
+      <table class="w-full border-collapse text-caption">
+        <caption class="mb-2 text-left text-secondary">
+          Tokens que consume &lt;ewms-toggle&gt;
+        </caption>
+        <thead>
+          <tr>
+            <th scope="col" class="border-b border-default p-2 text-left text-secondary">Parte</th>
+            <th scope="col" class="border-b border-default p-2 text-left text-secondary">
+              Token, cadena y valor
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of anatomy; track row.token) {
+            <tr>
+              <th scope="row" class="border-b border-default p-2 text-left text-primary">
+                {{ row.part }}
+              </th>
+              <td class="border-b border-default p-2">
+                <ewms-token-value [token]="row.token" [swatch]="true" />
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    <div class="flex flex-col gap-2 rounded-md border border-warning bg-warning-surface p-4">
+      <h3 class="text-h4">El pulgar no se desliza — cambia de lado de golpe</h3>
+      <p class="text-caption">
+        Y es a propósito. Esta librería <strong>no tiene un token de duración</strong>, y el tema
+        borra el de Tailwind, así que una utilidad de animación acá compilaría, aplicaría un cero
+        literal y se vería exactamente igual que esto <em>aparentando</em> lo contrario. Agregar el
+        deslizamiento empieza por agregar un token, no por agregar una clase.
+      </p>
+    </div>
+  </section>
+
+  <!-- ============================================== 8. Contrato para Angular -->
+  <section class="flex flex-col gap-4" aria-labelledby="tg-contract" data-block="8-contrato">
+    <h2 id="tg-contract" class="text-h2">Contrato para Angular</h2>
+
+    <h3 class="text-h3">Entradas</h3>
+    <p class="text-secondary">
+      Las cuatro de la tabla del bloque 3. Ninguna requerida en el tipo, pero uno de
+      <code class="font-mono">label</code> o <code class="font-mono">ariaLabel</code> lo es en la
+      práctica: sin ninguno, el interruptor no tiene nombre accesible.
+    </p>
+
+    <h3 class="text-h3">Salidas</h3>
+    <div class="flex flex-col gap-2 rounded-md border border-warning bg-warning-surface p-4">
+      <p>
+        <code class="font-mono">(checkedChange)</code>, el mismo nombre que el Checkbox.
+        <strong>NO <code class="font-mono">(change)</code></strong>: es un nombre de evento nativo y
+        burbujea, así que una salida con ese nombre entrega el booleano de este componente
+        <em>y</em> el <code class="font-mono">Event</code> crudo en un solo binding.
+      </p>
+      <p class="text-caption">
+        El componente además llama <code class="font-mono">stopPropagation()</code> sobre el
+        <code class="font-mono">change</code> nativo: el
+        <code class="font-mono">&lt;input&gt;</code> de adentro es detalle de implementación y sus
+        eventos no son parte de la API.
+      </p>
+    </div>
+
+    <h3 class="text-h3">Uso típico</h3>
+    <pre
+      class="overflow-x-auto rounded-md border border-default bg-secondary p-4 font-mono text-mono text-primary"
+    ><code>{{ snippet }}</code></pre>
+
+    <h3 class="text-h3">La regla del disabled</h3>
+    <div class="flex flex-col gap-2 rounded-md border border-strong bg-secondary p-4">
+      <p>
+        <code class="font-mono">isDisabled = disabled() || disabledByForm()</code>.
+        <strong>Quien deshabilita gana, y nadie re-habilita.</strong>
+      </p>
+      <p class="text-caption">
+        La entrada <code class="font-mono">disabled</code> y el
+        <code class="font-mono">setDisabledState</code> que llama Angular cuando el
+        <code class="font-mono">FormControl</code> está deshabilitado no se fusionan: se combinan con
+        OR. Dejar que el formulario pisara la entrada haría que
+        <code class="font-mono">[disabled]="true"</code> se volviera operable en cuanto el formulario
+        habilitara el control, que es lo contrario de lo que dice la plantilla. Deshabilitar es una
+        propiedad de seguridad: la respuesta restrictiva es el default correcto y la permisiva es la
+        que hay que argumentar.
+      </p>
+      <p class="text-caption">
+        Para que lo maneje el formulario, <strong>no pases la entrada</strong>. Idéntico en el
+        Checkbox, el Radio, el Input y el Select: está en
+        <code class="font-mono">FormControlBase</code>, escrito una sola vez.
+      </p>
+    </div>
+
+    <h3 class="text-h3">Accesibilidad</h3>
+    <ul class="flex flex-col gap-2">
+      <li>
+        <code class="font-mono">role="switch"</code>, <strong>nunca</strong>&ngsp;<code class="font-mono">role="checkbox"</code>, por más que se le parezca. Un checkbox se
+        anuncia «marcado / no marcado» —el vocabulario de una selección— y un switch «encendido /
+        apagado», que es lo que este control hace de verdad.
+      </li>
+      <li>
+        <code class="font-mono">aria-checked</code> sincronizado con el estado: el estado nunca
+        depende del color.
+      </li>
+      <li>
+        El elemento de abajo sigue siendo un
+        <code class="font-mono">&lt;input type="checkbox"&gt;</code>, así que la barra espaciadora lo
+        acciona, entra en el orden de tabulación y recibe el anillo de foco sobre el elemento que de
+        verdad tiene el foco. Lo único que hubo que cambiar fue el rol.
+      </li>
+      <li>
+        Sin <code class="font-mono">aria-disabled</code> al lado del
+        <code class="font-mono">disabled</code> nativo: se anunciaría dos veces.
+      </li>
+    </ul>
+
+    <h3 class="text-h3">Errores comunes</h3>
+    <ul class="flex flex-col gap-2">
+      <li>
+        <strong>Ponerle un botón Guardar al lado.</strong> Si el cambio necesita confirmarse, el
+        control era un Checkbox.
+      </li>
+      <li>
+        <strong>Escuchar <code class="font-mono">(change)</code>.</strong> Es
+        <code class="font-mono">(checkedChange)</code>; el nativo está frenado adentro.
+      </li>
+      <li>
+        <strong>Usar <code class="font-mono">role="checkbox"</code> porque «es un checkbox por
+        dentro».</strong> Lo es por dentro justamente para no tener que reimplementar nada; lo que se
+        anuncia es otra cosa.
+      </li>
+      <li>
+        <strong>Esperar que el pulgar se deslice.</strong> No se desliza, y agregarlo empieza por un
+        token de duración.
+      </li>
+      <li>
+        <strong>Poner <code class="font-mono">[disabled]="true"</code> y esperar que
+        <code class="font-mono">form.enable()</code> lo devuelva.</strong> No lo devuelve.
+      </li>
+    </ul>
+
+    <h3 class="text-h3">Bloques que no aplican</h3>
+    <p class="text-secondary">
+      Uno: <strong>variantes</strong>. Está escrito arriba en lugar de borrado.
+    </p>
+  </section>
+</article>

@@ -5,6 +5,37 @@
       "es": "Español"
     }
   },
+  "ds": {
+    "searchSelect": {
+      "error": "The catalogue could not be reached.",
+      "more": "Show more results",
+      "noResults": "No results for “{{ query }}”",
+      "results": "{count, plural, =0 {No results} one {# result} other {# results}}",
+      "resultsOf": "{{ count }} of {{ total }} results",
+      "retry": "Retry",
+      "searching": "Searching…"
+    },
+    "table": {
+      "childrenFailed": "The lines could not be loaded.",
+      "collapse": "Collapse the row",
+      "expand": "Expand the row",
+      "filterFrom": "From",
+      "filterPlaceholder": "Filter",
+      "filterTo": "To",
+      "loadingChildren": "Loading the lines…",
+      "nextPage": "Next page",
+      "pageOf": "Page {{ page }} of {{ pages }}",
+      "previousPage": "Previous page",
+      "retry": "Retry",
+      "rowMenu": "Row actions",
+      "rowsTotal": "{total, plural, =0 {No rows} one {# row} other {# rows}}",
+      "search": "Search the table",
+      "selectAll": "Select every visible row",
+      "selectRow": "Select the row",
+      "sortedAscending": "Ascending order",
+      "sortedDescending": "Descending order"
+    }
+  },
   "shell": {
     "home": {
       "intro": "DS-0 phase scaffold. The product screens arrive later.",
@@ -23,6 +54,32 @@
     "nav": {
       "designSystem": "Design system",
       "home": "Home"
+    },
+    "shortcuts": {
+      "actionColumn": "Action",
+      "actions": {
+        "cancel": "Cancel what is in progress, or close what is open",
+        "create": "Create a new record",
+        "help": "Open this list",
+        "save": "Save the active form",
+        "search": "Move the focus to the search field"
+      },
+      "close": "Close",
+      "intro": "They work across the application. Inside a text field none of them fires, except Esc.",
+      "keyColumn": "Key",
+      "singleKeyHint": "Single-key shortcuts can fire on their own with speech input or a switch device. Turning them off does not affect the ones that use Alt or Ctrl. The preference lasts as long as this tab.",
+      "singleKeyLabel": "Single-key shortcuts",
+      "singleKeyOff": "(off)",
+      "title": "Keyboard shortcuts"
+    },
+    "toast": {
+      "region": "Notifications",
+      "severity": {
+        "danger": "Error",
+        "info": "Information",
+        "success": "Success",
+        "warning": "Warning"
+      }
     }
   }
 }

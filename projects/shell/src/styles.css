@@ -13,6 +13,21 @@
 @import '../../design-system/src/styles/tokens.css';
 
 /*
+ * CDK overlay positioning. The only line in this PR outside
+ * projects/design-system/, and it is here because it has to be: the CDK
+ * appends `.cdk-overlay-container` to the end of <body> and positions the
+ * panes inside it absolutely. Without `position: fixed` on that container the
+ * coordinates the position strategy computes are measured against the wrong
+ * box and the panel lands at the bottom of the document instead of next to
+ * its trigger. The Tooltip (PR 1) shipped without it; the Select needs it too.
+ *
+ * The prebuilt sheet carries no colour, spacing or typography of its own, so
+ * gate 10 has nothing to object to: it is layout plumbing for a container this
+ * application never styles.
+ */
+@import '@angular/cdk/overlay-prebuilt.css';
+
+/*
  * The icon sources are geometry and semantic names, never class names. Left
  * in the scan, an icon called `filter` emits Tailwind's `.filter` utility.
  */
@@ -78,6 +93,13 @@
   --radius-md: var(--radius-md);
   --radius-lg: var(--radius-lg);
   --radius-full: var(--radius-full);
+  /* The Modal's own geometry. It is not `lg` with another name: the elevation
+   * and radius scales stop at the modal, and this is the level past them. */
+  --radius-dialog: var(--radius-dialog);
+
+  /* Blur. One value, the Modal's backdrop, so `backdrop-blur-dialog` is the
+   * only blur utility the system emits. */
+  --blur-dialog: var(--backdrop-blur);
 
   /* Icons: size-icon-md sets width and height, stroke-icon-md the stroke
    * width. Always used in pairs; the stroke compensation is in tokens.css. */
@@ -94,6 +116,7 @@
   --shadow-sm: var(--shadow-sm);
   --shadow-md: var(--shadow-md);
   --shadow-lg: var(--shadow-lg);
+  --shadow-dialog: var(--shadow-dialog);
 
   /* Backgrounds -> bg-* */
   --background-color-canvas: var(--color-canvas);

@@ -86,7 +86,7 @@
         "test": {
           "builder": "@angular/build:unit-test",
           "options": {
-            "runnerConfig": "vitest.config.ts",
+            "runnerConfig": "vitest.shell.config.ts",
             "coverage": true,
             "buildTarget": "shell:build:development"
           }
@@ -115,7 +115,7 @@
           "builder": "@angular/build:unit-test",
           "options": {
             "tsConfig": "projects/design-system/tsconfig.spec.json",
-            "runnerConfig": "vitest.config.ts",
+            "runnerConfig": "vitest.design-system.config.ts",
             "coverage": true
           }
         }
@@ -143,7 +143,7 @@
           "builder": "@angular/build:unit-test",
           "options": {
             "tsConfig": "projects/showroom/tsconfig.spec.json",
-            "runnerConfig": "vitest.config.ts",
+            "runnerConfig": "vitest.showroom.config.ts",
             "coverage": true
           }
         }
@@ -171,7 +171,7 @@
           "builder": "@angular/build:unit-test",
           "options": {
             "tsConfig": "projects/core/tsconfig.spec.json",
-            "runnerConfig": "vitest.config.ts",
+            "runnerConfig": "vitest.core.config.ts",
             "coverage": true
           }
         }

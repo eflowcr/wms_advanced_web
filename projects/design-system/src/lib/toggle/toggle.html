@@ -1,0 +1,30 @@
+<!--
+  The <label> wraps the input, so the hit target is the whole row and not just
+  the 44x24 track. That is the requirement from the ficha, and on a tablet in a
+  warehouse it is the difference between a control that works with gloves on
+  and one that does not.
+
+  The thumb is a sibling laid over the track with pointer-events-none: an
+  <input> cannot have children, and every pointer event belongs to the input
+  underneath.
+-->
+<label [class]="rowClasses()">
+  <span class="relative inline-flex">
+    <input
+      type="checkbox"
+      role="switch"
+      [class]="trackClasses()"
+      [checked]="controlValue()"
+      [disabled]="isDisabled()"
+      [attr.aria-checked]="controlValue() ? 'true' : 'false'"
+      [attr.aria-label]="ariaLabel() || null"
+      (change)="onNativeChange($event)"
+      (blur)="onBlur()"
+    />
+    <span [class]="thumbClasses()" aria-hidden="true"></span>
+  </span>
+
+  @if (label()) {
+    <span>{{ label() }}</span>
+  }
+</label>
