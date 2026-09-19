@@ -53,11 +53,7 @@ class ControlledSource implements SearchSource<Article> {
   }
 
   /** Answer a call. `index` counts from the end: 0 is the most recent. */
-  resolve(
-    items: readonly Article[],
-    extra: Partial<SearchPage<Article>> = {},
-    fromEnd = 0,
-  ): void {
+  resolve(items: readonly Article[], extra: Partial<SearchPage<Article>> = {}, fromEnd = 0): void {
     const subject = this.pending[this.pending.length - 1 - fromEnd];
     subject?.next({
       items,
@@ -650,9 +646,9 @@ describe('SearchSelect', () => {
       source.fail();
       await settle();
 
-      expect(
-        (fixture.nativeElement.querySelector('p.mt-1') as HTMLElement).className,
-      ).toContain('text-danger');
+      expect((fixture.nativeElement.querySelector('p.mt-1') as HTMLElement).className).toContain(
+        'text-danger',
+      );
     });
 
     it('PACQ-06.3: no axe violations, with the panel up', async () => {

@@ -37,11 +37,11 @@ import {
   moveActiveIndex,
 } from '../listbox/listbox.types';
 import { createConnectedOverlay, PANEL_POSITIONS } from '../overlay/connected-overlay';
+import { ScanDetector } from '../keyboard/scan-detector';
 import { readMilliseconds } from '../tokens/read-token';
 import {
   DELAY_SEARCH_INPUT_TOKEN,
   EWMS_SEARCH_SELECT_MESSAGES,
-  SCAN_MIN_KEYSTROKES,
   SCAN_THRESHOLD_TOKEN,
   SEARCH_MORE_CLASSES,
   SEARCH_NOTE_CLASSES,
@@ -205,9 +205,18 @@ export class SearchSelect<T> extends FormControlBase<T | null> implements OnDest
 
   // ---------------------------------------------------------- scan detection
 
-  /** When the previous keystroke arrived, and how many arrived fast in a row. */
-  private lastKeystroke = 0;
-  private burstLength = 0;
+  /**
+   * THE SHARED DETECTOR, AND NOT A SECOND IMPLEMENTATION.
+   *
+   * This field measured the gaps itself until DS-4, when the global shortcut
+   * engine needed exactly the same measurement. Two answers to "is this a
+   * gun?" is the one duplication this system cannot carry: they drift, and the
+   * half that drifts fires a shortcut in the middle of a scan. The measurement
+   * moved to `keyboard/scan-detector.ts`, which is pure and tested on its own
+   * with simulated times; this component owns an INSTANCE of it, because two
+   * fields on one screen are two independent runs.
+   */
+  private readonly detector = new ScanDetector();
 
   /**
    * A scan already searched for this text, so the delayed query behind it is
@@ -515,8 +524,8 @@ export class SearchSelect<T> extends FormControlBase<T | null> implements OnDest
       return;
     }
 
-    const isScan = event.key === 'Enter' && this.burstLength >= SCAN_MIN_KEYSTROKES;
-    this.trackKeystroke(event);
+    const isScan =
+      this.detector.accept(event, readMilliseconds(SCAN_THRESHOLD_TOKEN)).kind === 'scan';
 
     switch (event.key) {
       case 'ArrowDown':
@@ -571,48 +580,6 @@ export class SearchSelect<T> extends FormControlBase<T | null> implements OnDest
       default:
         return;
     }
-  }
-
-  /**
-   * A run of keystrokes counts as a burst while every gap stays under the
-   * threshold. One slow gap resets it -- which is what makes a person typing
-   * fast and then pausing not look like a gun.
-   *
-   *
-   * ONLY PRINTABLE KEYS COUNT, AND THAT IS NOT AN OPTIMISATION.
-   *
-   * A gun sends the characters of a code and then Enter. It never sends an
-   * arrow, an Escape or a Tab. Counting those made a keyboard user walking the
-   * list fast -- or simply HOLDING the down arrow, which repeats every 30 ms or
-   * so -- arrive at Enter with a burst behind them, and their Enter was read as
-   * a scan instead of as "choose this row".
-   *
-   * Found by the end-to-end walk of this page, where four key presses in a row
-   * take no time at all. A person can do the same thing with one finger.
-   */
-  private trackKeystroke(event: KeyboardEvent): void {
-    if (event.key === 'Enter') {
-      this.burstLength = 0;
-      return;
-    }
-    // `key` is one character exactly when the key produced one. Everything
-    // else -- ArrowDown, Escape, Tab, Shift -- breaks the run.
-    if (event.key.length !== 1) {
-      this.burstLength = 0;
-      this.lastKeystroke = 0;
-      return;
-    }
-    const threshold = readMilliseconds(SCAN_THRESHOLD_TOKEN);
-    const now = Date.now();
-    const gap = now - this.lastKeystroke;
-    this.lastKeystroke = now;
-    if (threshold === null) {
-      // No threshold declared, so nothing can be classified as a scan. The
-      // field still works; it just never resolves one without the panel.
-      this.burstLength = 0;
-      return;
-    }
-    this.burstLength = gap <= threshold ? this.burstLength + 1 : 1;
   }
 
   // ---------------------------------------------------------------- choosing

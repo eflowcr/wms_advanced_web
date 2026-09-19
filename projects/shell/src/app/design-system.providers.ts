@@ -1,14 +1,19 @@
 import { inject, type Provider } from '@angular/core';
 import {
   EWMS_SEARCH_SELECT_MESSAGES,
+  EWMS_SHORTCUT_HELP_MESSAGES,
+  EWMS_SHORTCUT_MAP,
   EWMS_TABLE_FORMATTERS,
   EWMS_TABLE_MESSAGES,
+  parseTableDate,
   type SearchSelectMessages,
+  type ShortcutHelpMessages,
   type TableFormatters,
   type TableMessages,
 } from '@ewms/design-system';
 import { TranslocoService } from '@jsverse/transloco';
 import { TranslocoLocaleService } from '@jsverse/transloco-locale';
+import { SHORTCUT_MAP } from './shortcuts.map';
 
 /**
  * WHERE THE DESIGN SYSTEM'S TEXTS AND FORMATS ACTUALLY COME FROM.
@@ -39,6 +44,21 @@ export function provideEwmsDesignSystem(): Provider[] {
     {
       provide: EWMS_SEARCH_SELECT_MESSAGES,
       useFactory: searchSelectMessages,
+    },
+    /*
+     * The map is a plain value and the words are a factory, which is the whole
+     * split DS-4 is built on: the KEYS are the same in every language and the
+     * WORDS are not. The showroom provides its own pair for the same two
+     * tokens, which is how a demo page can register `create` without importing
+     * anything of the shell's.
+     */
+    {
+      provide: EWMS_SHORTCUT_MAP,
+      useValue: SHORTCUT_MAP,
+    },
+    {
+      provide: EWMS_SHORTCUT_HELP_MESSAGES,
+      useFactory: shortcutHelpMessages,
     },
   ];
 }
@@ -144,6 +164,70 @@ function searchSelectMessages(): SearchSelectMessages {
   };
 }
 
+/**
+ * The help dialog's words. The LIST of shortcuts is not here and must not be:
+ * the dialog reads `SHORTCUT_MAP` for the keys, and what this provides is one
+ * label per action. Adding a shortcut adds a line to the map and a label here;
+ * the dialog changes by itself (RFE-07).
+ *
+ * Getters, for the same reason the table's are: `translate()` reads the active
+ * language at the moment it is called, and a dialog built once with flat
+ * strings would stay in whichever language loaded first.
+ */
+function shortcutHelpMessages(): ShortcutHelpMessages {
+  const transloco = inject(TranslocoService);
+  return {
+    get title() {
+      return transloco.translate('shell.shortcuts.title');
+    },
+    get intro() {
+      return transloco.translate('shell.shortcuts.intro');
+    },
+    get actionColumn() {
+      return transloco.translate('shell.shortcuts.actionColumn');
+    },
+    get keyColumn() {
+      return transloco.translate('shell.shortcuts.keyColumn');
+    },
+    get close() {
+      return transloco.translate('shell.shortcuts.close');
+    },
+    get singleKeyLabel() {
+      return transloco.translate('shell.shortcuts.singleKeyLabel');
+    },
+    get singleKeyHint() {
+      return transloco.translate('shell.shortcuts.singleKeyHint');
+    },
+    get singleKeyOff() {
+      return transloco.translate('shell.shortcuts.singleKeyOff');
+    },
+    /*
+     * One getter per action, keys written out, NOT built from the action name.
+     * Same rule as the table's chrome and the same reason: the extractor reads
+     * the source rather than running it, and a key assembled at runtime is a
+     * key gate 12 reports as unused while a real missing one hides in the
+     * noise.
+     */
+    actions: {
+      get search() {
+        return transloco.translate('shell.shortcuts.actions.search');
+      },
+      get create() {
+        return transloco.translate('shell.shortcuts.actions.create');
+      },
+      get save() {
+        return transloco.translate('shell.shortcuts.actions.save');
+      },
+      get cancel() {
+        return transloco.translate('shell.shortcuts.actions.cancel');
+      },
+      get help() {
+        return transloco.translate('shell.shortcuts.actions.help');
+      },
+    },
+  };
+}
+
 function tableFormatters(): TableFormatters {
   const locale = inject(TranslocoLocaleService);
   return {
@@ -154,13 +238,19 @@ function tableFormatters(): TableFormatters {
      * to have a gap or a value in a shape nobody expected. Printing the raw
      * text is information; printing "Invalid Date" is the table blaming the
      * data in English.
+     *
+     * THE PARSE IS `parseTableDate` AND NOT `new Date(...)`, and that is a
+     * correctness fix rather than tidiness: `new Date('2026-03-15')` is UTC
+     * midnight, so localising it printed the 14th everywhere west of UTC. The
+     * showroom's implementation of this same token had the identical bug, which
+     * is why the parse now lives in one place.
      */
     date: (value) => {
       if (value === null || value === undefined || value === '') {
         return '';
       }
-      const parsed = new Date(String(value));
-      return Number.isNaN(parsed.getTime()) ? String(value) : locale.localizeDate(parsed);
+      const parsed = parseTableDate(value);
+      return parsed === null ? String(value) : locale.localizeDate(parsed);
     },
     number: (value) => {
       if (value === null || value === undefined || value === '') {

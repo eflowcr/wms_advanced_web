@@ -137,6 +137,7 @@ export {
 export {
   EWMS_TABLE_FORMATTERS,
   EWMS_TABLE_MESSAGES,
+  parseTableDate,
   type TableFormatters,
   type TableMessages,
 } from './lib/table/table.tokens';
@@ -161,3 +162,45 @@ export { menuItemClasses, moveMenuIndex } from './lib/table/row-menu';
  * closes the gap the catalogue had reserved since DS-2.
  */
 export { Pagination, type PaginationMessages } from './lib/pagination/pagination';
+
+/*
+ * Keyboard (DS-4, REQ-FE-DS4-001).
+ *
+ * THE ENGINE LIVES HERE AND NOT IN `core/`, which is v1.1 of the REQ and a
+ * decision rather than a drift. Two things forced it. The help dialog is user
+ * interface and needs `DialogService`, which `core/` may not import; and the
+ * showroom, where the example screen lives, may not import `core/` at all --
+ * so an engine in `core/` meant the list of shortcuts written twice, which
+ * RFE-07 forbids in as many words. Putting it here also let the scanner burst
+ * detection that `ewms-search-select` already had become the only one.
+ *
+ * `EWMS_SHORTCUT_MAP` and `EWMS_SHORTCUT_HELP_MESSAGES` are injection tokens
+ * the library defines and does not implement, exactly like the table's. Each
+ * application provides its own map, so each application has ONE file that
+ * names keys -- which is what RFE-01 asks for.
+ *
+ * `ScanDetector` is exported because it is the answer to "is this a barcode
+ * gun?" and nothing else may grow a second one.
+ */
+export {
+  KeyboardShortcuts,
+  type ShortcutEvent,
+  type ShortcutOutcome,
+  type Unregister,
+} from './lib/keyboard/keyboard-shortcuts';
+export { ShortcutsHost } from './lib/keyboard/shortcuts-host';
+export {
+  ScanDetector,
+  SCAN_MIN_KEYSTROKES,
+  SCAN_THRESHOLD_TOKEN,
+  type ScanVerdict,
+} from './lib/keyboard/scan-detector';
+export {
+  EWMS_SHORTCUT_HELP_MESSAGES,
+  EWMS_SHORTCUT_MAP,
+  isSingleCharacter,
+  type ShortcutAction,
+  type ShortcutBinding,
+  type ShortcutHelpMessages,
+  type ShortcutMap,
+} from './lib/keyboard/shortcuts.types';

@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { RouterLink, RouterOutlet } from '@angular/router';
-import { ToastOutlet } from '@ewms/design-system';
+import { ShortcutsHost, ToastOutlet } from '@ewms/design-system';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { provideEwmsDesignSystem } from '../design-system.providers';
 import { LanguageSwitcher } from './language-switcher';
@@ -13,9 +13,14 @@ import { LanguageSwitcher } from './language-switcher';
  * `App` because this is the component every routed page renders inside, and
  * the outlet has to outlive a route change: a toast raised by a save that
  * navigates away has to survive the navigation it triggered.
+ *
+ * And the application's ONE keyboard listener, `ewmsShortcutsHost`, for the
+ * same reason and one more: the comanda's step 4 says the shortcuts are built
+ * *"in the base navigation component, not as something each screen implements
+ * separately"*, and this is that component (REQ-FE-DS4-001 RFE-03).
  */
 @Component({
-  imports: [LanguageSwitcher, RouterLink, RouterOutlet, ToastOutlet, TranslocoPipe],
+  imports: [LanguageSwitcher, RouterLink, RouterOutlet, ShortcutsHost, ToastOutlet, TranslocoPipe],
   selector: 'app-main-layout',
   templateUrl: './main-layout.html',
   /*

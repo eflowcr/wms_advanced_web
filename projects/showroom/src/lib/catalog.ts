@@ -257,6 +257,22 @@ const COMPONENTS: readonly CatalogEntry[] = [
 
 const PATTERNS: readonly CatalogEntry[] = [
   {
+    id: 'pattern-keyboard',
+    name: 'Atajos de teclado',
+    selector: 'KeyboardShortcuts',
+    route: `${SHOWROOM_BASE}/patterns/keyboard`,
+    status: 'ready',
+    note: 'Registro por acción, un solo listener, y la ráfaga de escáner que no dispara nada.',
+  },
+  {
+    id: 'pattern-search-create-edit',
+    name: 'Buscar, crear, editar',
+    selector: null,
+    route: `${SHOWROOM_BASE}/patterns/search-create-edit`,
+    status: 'ready',
+    note: 'La pantalla de ejemplo: el presupuesto de clics, medido en vivo sobre componentes que ya existían.',
+  },
+  {
     id: 'pattern-form',
     name: 'Formulario',
     selector: null,

@@ -55,6 +55,23 @@
       "designSystem": "Sistema de diseño",
       "home": "Inicio"
     },
+    "shortcuts": {
+      "actionColumn": "Acción",
+      "actions": {
+        "cancel": "Cancelar lo que esté en curso, o cerrar lo que esté abierto",
+        "create": "Crear un registro nuevo",
+        "help": "Abrir esta lista",
+        "save": "Guardar el formulario activo",
+        "search": "Llevar el foco al campo de búsqueda"
+      },
+      "close": "Cerrar",
+      "intro": "Funcionan en toda la aplicación. Dentro de un campo de texto no se disparan, salvo Esc.",
+      "keyColumn": "Tecla",
+      "singleKeyHint": "Los atajos de una sola tecla pueden dispararse solos con entrada por voz o con un pulsador. Apagarlos no afecta a los que llevan Alt o Ctrl. La preferencia dura lo que dure esta pestaña.",
+      "singleKeyLabel": "Atajos de una sola tecla",
+      "singleKeyOff": "(apagado)",
+      "title": "Atajos de teclado"
+    },
     "toast": {
       "region": "Notificaciones",
       "severity": {

@@ -81,6 +81,22 @@ export function projectRunner(thresholds: CoverageThresholds, alsoExclude: strin
   return defineConfig({
     test: {
       setupFiles: ['./vitest-setup.ts'],
+      /*
+       * THE TIMEZONE IS PINNED, AND WEST OF UTC ON PURPOSE.
+       *
+       * `new Date('2026-03-15')` is parsed as UTC midnight, so anything that
+       * formats it in local time is a day early everywhere west of UTC -- and
+       * exactly right in UTC. A suite that runs in UTC therefore cannot see
+       * that class of bug at all, which is how one shipped in the table's date
+       * formatter and was only found by looking at a screen in Costa Rica.
+       *
+       * Pinning it here makes every run agree, whatever machine it is on, and
+       * makes the offset non-zero so the bug has somewhere to show. It is set
+       * as an environment variable rather than in a setup file because Node
+       * caches the zone at startup: `process.env.TZ = ...` from inside a test
+       * has no effect (verified on Node 24).
+       */
+      env: { TZ: 'America/Costa_Rica' },
       coverage: {
         provider: 'v8',
         reporter: ['text-summary', 'lcov'],

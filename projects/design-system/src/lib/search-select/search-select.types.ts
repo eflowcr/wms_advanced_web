@@ -24,17 +24,19 @@ export type SearchStatus =
 /** The tokens the component reads at runtime. See lib/tokens/read-token.ts. */
 export const DELAY_SEARCH_INPUT_TOKEN = '--delay-search-input';
 export const TIMEOUT_SEARCH_TOKEN = '--timeout-search';
-export const SCAN_THRESHOLD_TOKEN = '--threshold-scan-keystroke';
 
-/**
- * How many keystrokes in a row have to arrive under the threshold before a
- * run counts as a scan.
+/*
+ * THE SCAN THRESHOLD IS NOT DECLARED HERE ANY MORE.
  *
- * Two is not enough: two fast keys happen when somebody types "SK" with both
- * hands. A barcode is never two characters, so asking for four costs a real
- * scan nothing and keeps a fast typist from being mistaken for a gun.
+ * It lived in this file while this component was the only thing that measured
+ * a barcode burst. DS-4 gave the global shortcut engine the same problem, and
+ * a second copy of the threshold's name -- or of how many fast keystrokes make
+ * a run -- is the drift that ends with a shortcut firing mid-scan. Both now
+ * read `keyboard/scan-detector.ts`, which owns the measurement and is tested
+ * on its own with simulated times. Re-exported so this module's importers are
+ * not asked to know where it moved.
  */
-export const SCAN_MIN_KEYSTROKES = 4;
+export { SCAN_MIN_KEYSTROKES, SCAN_THRESHOLD_TOKEN } from '../keyboard/scan-detector';
 
 /**
  * The rows that are not results: the spinner, the empty note, the "load more".
@@ -43,7 +45,8 @@ export const SCAN_MIN_KEYSTROKES = 4;
  * replaces the other, and they are `text-secondary` because none of them is
  * content -- they are the list talking about itself.
  */
-export const SEARCH_NOTE_CLASSES = 'flex items-center gap-2 px-3 py-1.5 text-caption text-secondary';
+export const SEARCH_NOTE_CLASSES =
+  'flex items-center gap-2 px-3 py-1.5 text-caption text-secondary';
 
 /**
  * The "load more" row.

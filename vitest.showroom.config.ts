@@ -27,6 +27,15 @@ import { projectRunner } from './vitest.shared';
  * against the design system's own thresholds, which is where that number
  * means something. What this run now measures is the showroom, and the bar it
  * has to clear went UP rather than down.
+ *
+ * Re-measured 2026-09-19 (DS-4): 99.42 / 93.25 / 98.52 / 99.24. Three of the
+ * four went up. BRANCHES WENT DOWN, from 94.06 to 93.25, and the reason is
+ * worth writing rather than rounding away: the two pattern pages are the first
+ * in the catalogue that DO things -- a form that is new or existing, a scan
+ * that matches or does not, a source that answers or refuses -- and every one
+ * of those is a branch a sheet that only renders never had. The threshold is
+ * unchanged at 93 and still passes; it is not raised to the new floor, because
+ * a threshold set to whatever was last measured stops being a decision.
  */
 export default projectRunner(
   {

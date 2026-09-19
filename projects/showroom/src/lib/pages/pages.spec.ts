@@ -20,6 +20,9 @@ import { ShowroomText } from './components/text';
 import { ShowroomToast } from './components/toast';
 import { ShowroomToggle } from './components/toggle';
 import { ShowroomTooltip } from './components/tooltip';
+import { FLOW_BUDGETS } from './patterns/click-budget';
+import { ShowroomKeyboard } from './patterns/keyboard';
+import { ShowroomSearchCreateEdit } from './patterns/search-create-edit';
 import { ShowroomBrand } from './foundations/brand';
 import { ShowroomColors } from './foundations/colors';
 import { ShowroomSpacing } from './foundations/spacing';
@@ -459,7 +462,24 @@ const SHEETS: readonly { name: string; component: Type<unknown>; heading: string
   { name: 'ShowroomPagination', component: ShowroomPagination, heading: 'Paginación' },
 ];
 
-describe.each(SHEETS)('$name', ({ component, heading }) => {
+/**
+ * The pattern pages (DS-4). NOT component sheets -- a pattern is a
+ * composition, and what it documents is a flow rather than an element -- but
+ * they carry the SAME EIGHT BLOCKS, and that is the point: the catalogue is
+ * read in series, and a page with a shape of its own is a page you have to
+ * learn separately. The two blocks that genuinely do not apply say so out
+ * loud instead of being dropped, exactly like the Pagination's.
+ */
+const PATTERNS: readonly { name: string; component: Type<unknown>; heading: string }[] = [
+  { name: 'ShowroomKeyboard', component: ShowroomKeyboard, heading: 'Atajos de teclado' },
+  {
+    name: 'ShowroomSearchCreateEdit',
+    component: ShowroomSearchCreateEdit,
+    heading: 'Buscar, crear, editar',
+  },
+];
+
+describe.each([...SHEETS, ...PATTERNS])('$name', ({ component, heading }) => {
   it('carries the eight blocks, in order', async () => {
     const { element } = await render(component);
     const blocks = [...element.querySelectorAll('[data-block]')].map((el) =>
@@ -481,10 +501,24 @@ describe.each(SHEETS)('$name', ({ component, heading }) => {
     expect(element.querySelector('[lang="es"]')).not.toBeNull();
   });
 
+  /*
+   * A LONGER TIMEOUT THAN THE DEFAULT, AND IT IS NOT A DEFECT BEING HIDDEN.
+   *
+   * What is under test is whether axe finds a violation, never how long axe
+   * takes. Some of these pages render half a dozen tables -- one of them
+   * virtualising five thousand rows -- and auditing all of that inside jsdom
+   * sits close enough to the default five seconds that the Table's page failed
+   * intermittently on a loaded machine, with a timeout and no violation. A
+   * limit a run can cross for reasons that have nothing to do with the
+   * assertion is a limit that teaches people to re-run the build.
+   *
+   * Twenty seconds is far above anything measured here and still far below a
+   * hang: an axe run that genuinely never returns still fails.
+   */
   it('has no accessibility violations', async () => {
     const { element } = await render(component);
     await expectNoAxeViolations(element);
-  });
+  }, 20_000);
 });
 
 describe('ShowroomText', () => {
@@ -1652,5 +1686,105 @@ describe('ShowroomPagination', () => {
     expect(element.querySelector('[data-block="2-proposito"]')?.textContent).toContain(
       'todavía no existe',
     );
+  });
+});
+
+/**
+ * The two pattern pages of DS-4, beyond the eight blocks the loop above
+ * already checks.
+ *
+ * What is asserted here is what a DOM alone can answer: that the page reads
+ * its numbers from the one place that owns them, and that it does not write
+ * them down a second time. The COUNTS themselves -- how many clicks a flow
+ * really costs -- need a browser with a pointer, and live in
+ * e2e/click-budget.e2e.ts.
+ */
+describe('ShowroomSearchCreateEdit', () => {
+  it('shows the four budgets, and shows the numbers the constants hold', async () => {
+    const { element } = await render(ShowroomSearchCreateEdit);
+    const shown = [...element.querySelectorAll('[data-budget]')].map((row) => ({
+      id: row.getAttribute('data-budget'),
+      max: Number(row.querySelector('[data-budget-max]')?.textContent?.trim()),
+    }));
+
+    expect(shown).toEqual(FLOW_BUDGETS.map((budget) => ({ id: budget.id, max: budget.max })));
+  });
+
+  /*
+   * HG-02 -- "the numbers are not written twice" -- IS NOT CHECKED HERE.
+   *
+   * It is a claim about the SOURCE, and a jsdom spec can only see what a page
+   * rendered: a template with a 2 typed into it renders exactly like one that
+   * read the 2 from the constant. So the scan lives with the other source
+   * gates, in tools/ci/check-click-budget.mjs, which `npm test` runs. What
+   * this file asserts is the half a DOM can answer -- that what is on screen
+   * equals what the constants hold, which is the test above.
+   */
+
+  it('gives Nuevo a visible button and not only a shortcut (WCAG 2.1.1)', async () => {
+    const { element } = await render(ShowroomSearchCreateEdit);
+    expect(element.querySelector('[data-new-button] button')).not.toBeNull();
+  });
+
+  it('will not offer to edit when nothing is chosen', async () => {
+    const { element } = await render(ShowroomSearchCreateEdit);
+    const edit = element.querySelector<HTMLButtonElement>('[data-edit-button] button');
+    /*
+     * The NATIVE attribute, not `aria-disabled`. `ewms-button` binds
+     * `[disabled]` to the real property and reserves `aria-disabled` for
+     * Loading, where the control must stay focusable -- so asserting the ARIA
+     * one here passed vacuously against `null` until it was checked.
+     */
+    expect(edit?.disabled).toBe(true);
+  });
+
+  it('says out loud that favourites are deferred, with the dependency named', async () => {
+    const { element } = await render(ShowroomSearchCreateEdit);
+    const contract = element.querySelector('[data-block="8-contrato"]')?.textContent ?? '';
+    expect(contract).toContain('REQ-FE-DS4-002');
+    expect(contract).toContain('PLN-WMS-005');
+  });
+
+  it('does not count its own scaffolding as part of a flow', async () => {
+    const { element } = await render(ShowroomSearchCreateEdit);
+    // The reset and the break-the-source switch are marked, so that using the
+    // demo never costs the demo's own budget.
+    expect(element.querySelectorAll('[data-not-a-flow-click]').length).toBe(2);
+  });
+});
+
+describe('ShowroomKeyboard', () => {
+  it('names every outcome the engine can reach, and none it cannot', async () => {
+    const { element } = await render(ShowroomKeyboard);
+    const rows = [...element.querySelectorAll('[data-block="5-matriz"] tbody th')].map((cell) =>
+      cell.textContent?.trim(),
+    );
+
+    // Nine, because `handle` has nine ways out. A page listing eight would be
+    // a page hiding the branch somebody most needs explained.
+    expect(rows).toEqual([
+      'already-handled',
+      'burst',
+      'scan',
+      'key',
+      'in-text-field',
+      'single-key-off',
+      'unregistered',
+      'deferred',
+      'shortcut',
+    ]);
+  });
+
+  it('says so when no root layout has mounted the engine', async () => {
+    /*
+     * A page rendered on its own in a test bed has no root layout above it, so
+     * there is no map to dispatch against. The page SAYS that rather than
+     * drawing an empty table that looks like a broken map.
+     */
+    const { element } = await render(ShowroomKeyboard);
+    expect(element.querySelector('[data-demo-keyboard]')?.textContent).toContain(
+      'Ningún layout raíz montó el motor',
+    );
+    expect(element.querySelectorAll('[data-demo-bindings] tr').length).toBe(0);
   });
 });

@@ -32,11 +32,17 @@ const DIALOG = '/design-system/components/dialog';
 const SEARCH_SELECT = '/design-system/components/search-select';
 const TABLE = '/design-system/components/table';
 const PAGINATION = '/design-system/components/pagination';
+const KEYBOARD = '/design-system/patterns/keyboard';
+const SEARCH_CREATE_EDIT = '/design-system/patterns/search-create-edit';
 
 /**
- * Every navigable route. Twenty-two since DS-3 lote D: the fifteen of DS-2 plus
- * one sheet per component built here, which is what "nothing built is
- * undocumented" looks like when it is a test rather than a promise.
+ * Every navigable route. Twenty-four since DS-4: the twenty-two of DS-3 plus
+ * the two pattern pages, which is what "nothing built is undocumented" looks
+ * like when it is a test rather than a promise.
+ *
+ * Adding a route here is what subjects it to the four checks below that every
+ * page owes: its heading renders, it does not scroll sideways at 1440 or 1280,
+ * axe finds nothing, and Tab reaches every control exactly once.
  */
 const PAGES = [
   { url: '/design-system', heading: 'Showroom del sistema de diseño' },
@@ -61,6 +67,8 @@ const PAGES = [
   { url: SEARCH_SELECT, heading: 'Selector con búsqueda' },
   { url: TABLE, heading: 'Tabla de datos' },
   { url: PAGINATION, heading: 'Paginación' },
+  { url: KEYBOARD, heading: 'Atajos de teclado' },
+  { url: SEARCH_CREATE_EDIT, heading: 'Buscar, crear, editar' },
 ] as const;
 
 /** Fonts change every width measured, so nothing is measured before they land. */

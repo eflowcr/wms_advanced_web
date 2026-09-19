@@ -55,6 +55,23 @@
       "designSystem": "Design system",
       "home": "Home"
     },
+    "shortcuts": {
+      "actionColumn": "Action",
+      "actions": {
+        "cancel": "Cancel what is in progress, or close what is open",
+        "create": "Create a new record",
+        "help": "Open this list",
+        "save": "Save the active form",
+        "search": "Move the focus to the search field"
+      },
+      "close": "Close",
+      "intro": "They work across the application. Inside a text field none of them fires, except Esc.",
+      "keyColumn": "Key",
+      "singleKeyHint": "Single-key shortcuts can fire on their own with speech input or a switch device. Turning them off does not affect the ones that use Alt or Ctrl. The preference lasts as long as this tab.",
+      "singleKeyLabel": "Single-key shortcuts",
+      "singleKeyOff": "(off)",
+      "title": "Keyboard shortcuts"
+    },
     "toast": {
       "region": "Notifications",
       "severity": {

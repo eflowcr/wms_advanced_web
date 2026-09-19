@@ -1,0 +1,510 @@
+<!-- The showroom is Spanish only, exempt from i18n (gate 12): declared so a screen reader never reads it as English. -->
+<article class="flex flex-col gap-10" lang="es">
+  <!-- ============================================================ 1. Encabezado -->
+  <header class="flex flex-col gap-2" data-block="1-encabezado">
+    <div class="flex flex-wrap items-baseline gap-3">
+      <h1 class="text-h1">Buscar, crear, editar</h1>
+      <code class="font-mono text-primary">patterns/search-create-edit</code>
+    </div>
+    <ul class="flex flex-wrap gap-2 text-caption">
+      <li class="rounded-sm bg-secondary px-2 py-1 text-secondary">
+        Versión <span class="font-mono">{{ version }}</span>
+      </li>
+      <li class="rounded-sm bg-success-surface px-2 py-1 text-success">Construido y en verde</li>
+      <li class="rounded-sm bg-secondary px-2 py-1 text-secondary">
+        Ficha:
+        <span class="font-mono"
+          >08-Sistema-de-Diseno/Componentes/Patron-Buscar-Crear-Editar.md</span
+        >
+      </li>
+      <li class="rounded-sm bg-secondary px-2 py-1 text-secondary">
+        REQ: <span class="font-mono">REQ-FE-DS4-003</span>
+      </li>
+    </ul>
+  </header>
+
+  <!-- ================================================ 2. Qué resuelve / cuándo no -->
+  <section class="flex flex-col gap-4" aria-labelledby="sce-purpose" data-block="2-proposito">
+    <h2 id="sce-purpose" class="text-h2">Qué resuelve, y cuándo NO usarlo</h2>
+    <div class="grid grid-cols-[repeat(auto-fit,minmax(20rem,1fr))] gap-4">
+      <div class="flex flex-col gap-2 rounded-md border border-default bg-surface p-4">
+        <h3 class="text-h3">Qué resuelve</h3>
+        <p>
+          Es <strong>la pantalla de ejemplo</strong>: las tres operaciones que un operario repite
+          todo el día —buscar, crear, editar— dentro de un presupuesto de clics acordado, y medido
+          acá mismo.
+        </p>
+        <p class="text-caption text-secondary">
+          <strong>Acá no se construyó nada nuevo.</strong> Todo lo que se ve ya existía: el selector
+          con búsqueda y la tabla de DS-3, el diálogo, el toast y el banner, y el motor de atajos de
+          DS-4. Esa es la afirmación que la página viene a hacer — que el presupuesto se cumple
+          <em>componiendo</em> el sistema, no resolviéndolo otra vez en cada pantalla.
+        </p>
+      </div>
+      <div class="flex flex-col gap-2 rounded-md border border-danger bg-danger-surface p-4">
+        <h3 class="text-h3">Cuándo NO usarlo</h3>
+        <ul class="flex flex-col gap-2">
+          <li>
+            <strong
+              >Si el flujo no es buscar, crear o editar, el presupuesto no está fijado.</strong
+            >
+            Aprobar, imprimir una etiqueta o transferir tendrán el suyo cuando existan las pantallas
+            que los tengan; inventarles un número acá sería inventarlo.
+          </li>
+          <li>
+            <strong>No se aplica a las fichas del catálogo.</strong> Las otras 23 páginas son
+            documentación, no flujos de trabajo: contar clics en ellas mediría la lectura.
+          </li>
+          <li>
+            <strong>No mide tiempo ni pulsaciones.</strong> Solo clics, que es lo que la comanda
+            pide. El tiempo depende del hardware del piso de bodega, que todavía no se conoce.
+          </li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================= 3. Demo principal -->
+  <section class="flex flex-col gap-4" aria-labelledby="sce-demo" data-block="3-demo">
+    <h2 id="sce-demo" class="text-h2">Demo principal</h2>
+
+    <!--
+      RFE-04: the screen measures ITSELF. The budgets come from
+      click-budget.ts, which is the same file the end-to-end test imports, so
+      the number advertised here and the number asserted there cannot drift.
+    -->
+    <div
+      class="flex flex-col gap-3 rounded-md border border-strong bg-secondary p-4"
+      data-budget-panel
+    >
+      <div class="flex flex-wrap items-baseline justify-between gap-3">
+        <h3 class="text-h3">El estándar, y lo que llevás gastado</h3>
+        <p class="text-caption text-secondary">
+          Los máximos salen de <code class="font-mono">click-budget.ts</code>, que es el mismo
+          archivo que lee la prueba. El estándar en sí vive en
+          <span class="font-mono">REQ-FE-DS4-003 §2.2</span>.
+        </p>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="w-full border-collapse text-caption">
+          <caption class="mb-2 text-left text-secondary">
+            Presupuesto por flujo, y desde dónde se cuenta
+          </caption>
+          <thead>
+            <tr>
+              <th scope="col" class="border-b border-default p-2 text-left text-secondary">
+                Flujo
+              </th>
+              <th scope="col" class="border-b border-default p-2 text-left text-secondary">
+                Máximo
+              </th>
+              <th scope="col" class="border-b border-default p-2 text-left text-secondary">
+                Desde dónde
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (budget of budgets; track budget.id) {
+              <tr [attr.data-budget]="budget.id">
+                <th
+                  scope="row"
+                  class="border-b border-default p-2 text-left text-caption text-primary"
+                >
+                  {{ budget.name }}
+                </th>
+                <td class="border-b border-default p-2 font-mono text-primary" data-budget-max>
+                  {{ budget.max }}
+                </td>
+                <td class="border-b border-default p-2 text-secondary">{{ budget.from }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-4">
+        <p class="flex items-baseline gap-2">
+          <span class="text-caption text-secondary">Clics reales contados:</span>
+          <!--
+            A live region: the number is the whole point of the panel, and the
+            person who most needs to be told it went up is the one who cannot
+            see it change.
+          -->
+          <strong
+            class="font-mono text-h2 text-primary"
+            role="status"
+            aria-live="polite"
+            data-click-count
+          >
+            {{ clicks() }}
+          </strong>
+        </p>
+        <button
+          type="button"
+          class="h-10 rounded-md border border-default bg-surface px-3 text-p text-primary outline-none hover:bg-ghost-hover focus-visible:shadow-(--focus-ring-shadow)"
+          data-not-a-flow-click
+          data-reset-clicks
+          (click)="resetCounter()"
+        >
+          Poner el contador a cero
+        </button>
+        <p class="text-caption text-secondary">
+          Cuenta lo que §2.1 llama un clic: una pulsación sobre un control que
+          <strong>avanza el flujo</strong> —abrir un panel incluido—. El teclado no suma, y por eso
+          un flujo hecho enteramente con teclado cuesta <strong>cero</strong>. Este botón no cuenta:
+          poner el contador a cero no es parte de ningún flujo.
+        </p>
+      </div>
+    </div>
+
+    <ewms-demo-frame
+      ground="surface"
+      label="La pantalla. El registro de atajos es el de la aplicación entera"
+    >
+      <div class="flex flex-col gap-4" #flow data-flow>
+        @if (failing()) {
+          <!--
+            A Banner and not a Toast: the source being down stays true until
+            somebody fixes it, and a message that leaves after three seconds is
+            the wrong shape for a condition. The Toast's own sheet says so.
+          -->
+          <ewms-banner
+            variant="danger"
+            severityLabel="Error"
+            title="No se pudo consultar el catálogo de expediciones."
+            description="La fuente de la demo está devolviendo un error a propósito. La tabla sigue mostrando lo que ya tenía."
+          />
+        }
+
+        <div class="flex flex-wrap items-end gap-3">
+          <div class="min-w-80 flex-1" #searchHost data-search-host>
+            <ewms-search-select
+              label="Buscar una expedición"
+              placeholder="Escaneá el código, o escribí tres letras"
+              hint="Probá «andes», «EXP-2026-04», o pegá un código entero terminado en Enter."
+              [source]="source"
+              [display]="display"
+              [ngModel]="chosen()"
+              (ngModelChange)="onChosen($event)"
+              name="expedicion"
+            />
+          </div>
+
+          <!--
+            WCAG 2.1.1: nothing exists only behind a shortcut. Alt+N is the
+            accelerator; this button is the way.
+          -->
+          <ewms-button variant="primary" data-new-button (click)="openForm(null)">
+            Nuevo
+          </ewms-button>
+
+          <ewms-button
+            variant="secondary"
+            data-edit-button
+            [disabled]="chosen() === null"
+            (click)="editChosen()"
+          >
+            Editar la elegida
+          </ewms-button>
+        </div>
+
+        <dl class="grid grid-cols-[repeat(auto-fit,minmax(14rem,1fr))] gap-3">
+          <div class="rounded-md border border-default bg-canvas p-3">
+            <dt class="text-caption text-secondary">Expedición elegida</dt>
+            <dd class="text-p text-primary" data-chosen>{{ chosenLabel() }}</dd>
+          </div>
+          <div class="rounded-md border border-default bg-canvas p-3">
+            <dt class="text-caption text-secondary">Última guardada</dt>
+            <dd class="font-mono text-p text-primary" data-last-saved>{{ lastSaved() ?? '—' }}</dd>
+          </div>
+        </dl>
+
+        <ewms-table
+          [source]="table()"
+          rowState="estado"
+          [trackBy]="porId"
+          [quickFilter]="true"
+          ariaLabel="Expediciones"
+          (rowActivate)="onRowActivate($event)"
+        >
+          <ewms-column
+            key="codigo"
+            header="Código"
+            width="md"
+            [sortable]="true"
+            [filterable]="true"
+          />
+          <ewms-column key="cliente" header="Cliente" width="fill" [filterable]="true" />
+          <ewms-column key="fecha" header="Fecha" type="date" width="md" [sortable]="true" />
+          <ewms-column key="bultos" header="Bultos" type="number" width="sm" [sortable]="true" />
+          <ewms-column key="estado" header="Estado" type="badge" width="md" [badges]="estados" />
+        </ewms-table>
+
+        <div class="flex flex-wrap items-center gap-3">
+          <button
+            type="button"
+            class="h-10 rounded-md border border-default bg-surface px-3 text-p text-primary outline-none hover:bg-ghost-hover focus-visible:shadow-(--focus-ring-shadow)"
+            data-not-a-flow-click
+            data-toggle-failure
+            (click)="toggleFailure()"
+          >
+            {{ failing() ? 'Que la fuente vuelva a responder' : 'Hacer que la fuente falle' }}
+          </button>
+          <p class="text-caption text-secondary">
+            Tampoco cuenta: romper la fuente a propósito es parte de la demostración, no del flujo
+            de nadie.
+          </p>
+        </div>
+      </div>
+    </ewms-demo-frame>
+  </section>
+
+  <!-- =============================================================== 4. Variantes -->
+  <section class="flex flex-col gap-4" aria-labelledby="sce-variants" data-block="4-variantes">
+    <h2 id="sce-variants" class="text-h2">Variantes</h2>
+    <p class="text-secondary">
+      No son variantes visuales: son <strong>los dos caminos de cada flujo</strong>, con el ratón y
+      solo con el teclado. El segundo es el que el estándar premia, y el que el operario con guantes
+      usa de verdad.
+    </p>
+    <div class="overflow-x-auto">
+      <table class="w-full border-collapse text-caption">
+        <caption class="mb-2 text-left text-secondary">
+          El camino más corto de cada flujo, contado según §2.1
+        </caption>
+        <thead>
+          <tr>
+            <th scope="col" class="border-b border-default p-2 text-left text-secondary">Flujo</th>
+            <th scope="col" class="border-b border-default p-2 text-left text-secondary">
+              Con ratón
+            </th>
+            <th scope="col" class="border-b border-default p-2 text-left text-secondary">
+              Solo teclado
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <th scope="row" class="border-b border-default p-2 text-left text-caption text-primary">
+              Buscar
+            </th>
+            <td class="border-b border-default p-2">
+              Clic en el campo <strong>(1)</strong>, escribir, clic en el resultado
+              <strong>(2)</strong>. Máximo {{ budgetFor('search') }}.
+            </td>
+            <td class="border-b border-default p-2">
+              <kbd class="font-mono">/</kbd>, escribir, <kbd class="font-mono">↓</kbd>
+              <kbd class="font-mono">Enter</kbd>. <strong>Cero.</strong>
+            </td>
+          </tr>
+          <tr>
+            <th scope="row" class="border-b border-default p-2 text-left text-caption text-primary">
+              Crear
+            </th>
+            <td class="border-b border-default p-2">
+              Clic en «Nuevo» <strong>(1)</strong>, llenar, clic en «Guardar» <strong>(2)</strong>.
+              Máximo {{ budgetFor('create') }}.
+            </td>
+            <td class="border-b border-default p-2">
+              <kbd class="font-mono">Alt</kbd> + <kbd class="font-mono">N</kbd>,
+              <kbd class="font-mono">Tab</kbd> por los campos, <kbd class="font-mono">Ctrl</kbd> +
+              <kbd class="font-mono">S</kbd>.
+              <strong>Cero.</strong>
+            </td>
+          </tr>
+          <tr>
+            <th scope="row" class="border-b border-default p-2 text-left text-caption text-primary">
+              Editar
+            </th>
+            <td class="border-b border-default p-2">
+              Clic en el campo <strong>(1)</strong>, clic en el resultado <strong>(2)</strong>, clic
+              en «Editar la elegida» <strong>(3)</strong>. Máximo {{ budgetFor('edit') }}. Doble
+              clic sobre una fila de la tabla son <strong>2</strong>, y también entra.
+            </td>
+            <td class="border-b border-default p-2">
+              <kbd class="font-mono">/</kbd>, escribir, <kbd class="font-mono">Enter</kbd>,
+              <kbd class="font-mono">Tab</kbd>, <kbd class="font-mono">Enter</kbd>.
+              <strong>Cero.</strong>
+            </td>
+          </tr>
+          <tr>
+            <th scope="row" class="border-b border-default p-2 text-left text-caption text-primary">
+              Cancelar
+            </th>
+            <td class="border-b border-default p-2">
+              Clic en «Cancelar» <strong>(1)</strong>. Máximo {{ budgetFor('cancel') }}, y sin
+              preguntar si estás seguro.
+            </td>
+            <td class="border-b border-default p-2">
+              <kbd class="font-mono">Esc</kbd>. <strong>Cero</strong>, y el foco vuelve.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ==================================================== 5. Matriz de estados -->
+  <section class="flex flex-col gap-4" aria-labelledby="sce-matrix" data-block="5-matriz">
+    <h2 id="sce-matrix" class="text-h2">Matriz de estados</h2>
+    <p class="text-secondary">
+      Los estados de esta pantalla no son suyos: son los de los componentes que la forman. Lo que sí
+      es suyo es <strong>qué hace con cada uno</strong>.
+    </p>
+    <div class="overflow-x-auto">
+      <table class="w-full border-collapse text-caption">
+        <caption class="mb-2 text-left text-secondary">
+          Qué pasa, quién lo dice, y por qué con esa forma de mensaje
+        </caption>
+        <thead>
+          <tr>
+            <th scope="col" class="border-b border-default p-2 text-left text-secondary">
+              Situación
+            </th>
+            <th scope="col" class="border-b border-default p-2 text-left text-secondary">
+              Cómo se dice
+            </th>
+            <th scope="col" class="border-b border-default p-2 text-left text-secondary">
+              Por qué
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <th scope="row" class="border-b border-default p-2 text-left text-caption text-primary">
+              Se guardó
+            </th>
+            <td class="border-b border-default p-2">Toast success</td>
+            <td class="border-b border-default p-2">
+              Acaba de pasar y ya terminó. No hay nada que decidir ni nada que siga siendo cierto.
+            </td>
+          </tr>
+          <tr>
+            <th scope="row" class="border-b border-default p-2 text-left text-caption text-primary">
+              La fuente falla
+            </th>
+            <td class="border-b border-default p-2">Banner danger, en el flujo</td>
+            <td class="border-b border-default p-2">
+              Sigue siendo cierto hasta que alguien lo arregle. Un toast desaparecería y quien llegó
+              cuatro segundos tarde nunca se enteró.
+            </td>
+          </tr>
+          <tr>
+            <th scope="row" class="border-b border-default p-2 text-left text-caption text-primary">
+              Un código escaneado no existe
+            </th>
+            <td class="border-b border-default p-2">Toast warning</td>
+            <td class="border-b border-default p-2">
+              Es un evento puntual —ese disparo— y no una condición. El siguiente escaneo lo
+              reemplaza.
+            </td>
+          </tr>
+          <tr>
+            <th scope="row" class="border-b border-default p-2 text-left text-caption text-primary">
+              Se canceló
+            </th>
+            <td class="border-b border-default p-2">Nada</td>
+            <td class="border-b border-default p-2">
+              Un aviso de «cambiaste de opinión» es una notificación sobre la ausencia de un evento.
+            </td>
+          </tr>
+          <tr>
+            <th scope="row" class="border-b border-default p-2 text-left text-caption text-primary">
+              Nada elegido
+            </th>
+            <td class="border-b border-default p-2">«Editar la elegida» deshabilitado</td>
+            <td class="border-b border-default p-2">
+              Un botón que abre un formulario vacío cuando creías estar editando es peor que uno que
+              no se puede pulsar.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ============================================================= 6. Tamaños -->
+  <section class="flex flex-col gap-4" aria-labelledby="sce-sizes" data-block="6-tamanos">
+    <h2 id="sce-sizes" class="text-h2">Tamaños</h2>
+    <div class="flex flex-col gap-2 rounded-md border border-strong bg-secondary p-4">
+      <h3 class="text-h4">No aplica — un patrón no tiene tamaños</h3>
+      <p>
+        Cada componente trae el suyo y todos usan la misma escala de control, que es lo que hace que
+        el campo de búsqueda y el botón «Nuevo» de al lado midan igual de alto sin que nadie lo haya
+        escrito acá.
+      </p>
+    </div>
+  </section>
+
+  <!-- ===================================================== 7. Anatomía y tokens -->
+  <section class="flex flex-col gap-4" aria-labelledby="sce-anatomy" data-block="7-anatomia">
+    <h2 id="sce-anatomy" class="text-h2">Anatomía y tokens</h2>
+    <div class="flex flex-col gap-2 rounded-md border border-default bg-surface p-4">
+      <h3 class="text-h4">Ningún token propio, y eso es el resultado</h3>
+      <p class="text-caption">
+        Esta pantalla no declara ni un solo token. Los colores, las alturas, los radios y el anillo
+        de foco vienen enteros de los componentes que compone —cada uno con su ficha, su matriz de
+        estados y su contraste ya medido—. Un patrón que necesitara tokens propios sería un patrón
+        que está rehaciendo un componente con otro nombre.
+      </p>
+      <p class="text-caption">
+        Lo único que el patrón aporta es <strong>una constante por flujo</strong>, en
+        <code class="font-mono">click-budget.ts</code>, y esa constante no es una decisión del
+        código: es una copia de lo que decidió <span class="font-mono">REQ-FE-DS4-003 §2.2</span>,
+        con el archivo apuntando al documento como dueño.
+      </p>
+    </div>
+  </section>
+
+  <!-- ============================================== 8. Contrato para Angular -->
+  <section class="flex flex-col gap-4" aria-labelledby="sce-contract" data-block="8-contrato">
+    <h2 id="sce-contract" class="text-h2">Contrato para Angular</h2>
+
+    <h3 class="text-h3">Lo que una pantalla nueva hereda sin escribir nada</h3>
+    <ul class="flex flex-col gap-2">
+      <li class="rounded-md border border-default bg-surface p-3">
+        <strong>La búsqueda se alcanza desde cualquier parte.</strong> La pantalla registra la
+        acción <code class="font-mono">search</code>; qué tecla la dispara no es asunto suyo.
+      </li>
+      <li class="rounded-md border border-default bg-surface p-3">
+        <strong>Crear cuesta un atajo y un botón.</strong> Los dos, siempre: WCAG 2.1.1 no admite
+        una acción que solo exista detrás de una combinación de teclas.
+      </li>
+      <li class="rounded-md border border-default bg-surface p-3">
+        <strong
+          >El formulario se lleva <code class="font-mono">save</code> mientras está abierto</strong
+        >
+        y lo devuelve al cerrarse, porque un registro dura lo que dura su inyector. La pantalla de
+        atrás no se entera, y no tiene que coordinarse con nadie.
+      </li>
+      <li class="rounded-md border border-default bg-surface p-3">
+        <strong
+          ><code class="font-mono">Escape</code> cancela en cero clics y sin preguntar.</strong
+        >
+        Lo cierra el diálogo del CDK, que además marca el evento como atendido —y el motor no
+        responde nada ya atendido—, así que la pantalla de atrás no cancela también.
+      </li>
+      <li class="rounded-md border border-default bg-surface p-3">
+        <strong>Un escaneo elige sin abrir el panel</strong> y la tabla lleva el foco a la fila. Es
+        el caso de uso principal de un WMS, y está acá y no solo en la ficha del selector porque acá
+        es donde se puede ver que no dispara ningún atajo por el camino.
+      </li>
+    </ul>
+
+    <div class="flex flex-col gap-2 rounded-md border border-warning bg-warning-surface p-4">
+      <h3 class="text-h4">Lo que falta para que esto sea una pantalla de verdad</h3>
+      <p class="text-caption">
+        <strong>Favoritos</strong> (REQ-FE-DS4-002) está especificado y su construcción
+        <strong>diferida hasta el Security Core del backend</strong> (PLN-WMS-005, Sprint 1):
+        guardar un favorito por usuario necesita dónde guardarlo. Con él, llegar a un registro
+        frecuente costaría <strong>1 clic</strong> en vez de 2 — es el único de los cuatro
+        presupuestos que favoritos mejoraría, y está declarado, no disimulado.
+      </p>
+      <p class="text-caption">
+        <strong>La navegación principal</strong> es el App Shell (DS-5) y todavía no existe, así que
+        «desde cualquier pantalla de la aplicación» se demuestra hoy dentro de esta.
+      </p>
+    </div>
+  </section>
+</article>

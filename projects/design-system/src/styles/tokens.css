@@ -295,8 +295,28 @@
   --color-focus-ring-on-dark: var(--blue-63);
   /* Anillo de foco de 3px con separacion de 2px respecto del control */
   --focus-ring-shadow: 0 0 0 2px var(--color-surface), 0 0 0 5px var(--color-focus-ring);
-  /* Siempre acompanado de una barra de acento: el tinte solo es fragil. */
-  --color-row-selected: var(--blue-93);
+  /* Siempre acompanado de una barra de acento: el tinte solo es fragil.
+   *
+   * blue-96 desde DS-4, medido en navegador (decision del equipo, 19/09; ver
+   * Fundamentos de Marca). Era blue-93, donde text-secondary quedaba en
+   * 4.35:1 y no llegaba al 4.5:1 de WCAG 1.4.3 -- un hallazgo que axe encontro
+   * sobre la ficha de la Card en DS-3. Sobre blue-96: text-primary 16.50:1,
+   * text-secondary 4.74:1.
+   *
+   * LO QUE ESTE CAMBIO NO ARREGLA, Y NINGUN PELDANO PUEDE: texto en
+   * --color-bg-primary sobre la fila queda en 4.39:1 (era 4.03:1). blue-48
+   * sobre blanco PURO mide 4.86:1, asi que para llevarlo a 4.5:1 hace falta un
+   * fondo de luminancia >= 0.9217, y ahi la fila contrasta 1.08:1 contra la
+   * superficie: invisible. El azul es un color de relleno, no de texto. Dentro
+   * de una fila van ewms-icon-button (3:1 por WCAG 1.4.11), no botones ghost
+   * con texto. Registrado en la ficha del Selector con busqueda.
+   *
+   * Coincide con --color-ghost-hover, a proposito y con el costo anotado: la
+   * separacion contra --color-surface baja de 1.21:1 a 1.11:1. La seleccion
+   * nunca fue solo color -- lleva checkbox marcado, aria-selected y barra de
+   * acento -- pero un matiz nuevo en la rampa habria sido peor y no habria
+   * arreglado el azul. */
+  --color-row-selected: var(--blue-96);
   --color-overlay: var(--navy-7-a50);
 
   /* ------------------------------------------------------------- elevacion
