@@ -28,6 +28,8 @@ const ROUTES = [
   { name: '16-components-banner', url: '/design-system/components/banner' },
   { name: '17-components-toast', url: '/design-system/components/toast' },
   { name: '18-components-card', url: '/design-system/components/card' },
+  { name: '19-components-dialog', url: '/design-system/components/dialog' },
+  { name: '20-components-search-select', url: '/design-system/components/search-select' },
 ] as const;
 
 /**

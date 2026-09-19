@@ -93,6 +93,13 @@
   --radius-md: var(--radius-md);
   --radius-lg: var(--radius-lg);
   --radius-full: var(--radius-full);
+  /* The Modal's own geometry. It is not `lg` with another name: the elevation
+   * and radius scales stop at the modal, and this is the level past them. */
+  --radius-dialog: var(--radius-dialog);
+
+  /* Blur. One value, the Modal's backdrop, so `backdrop-blur-dialog` is the
+   * only blur utility the system emits. */
+  --blur-dialog: var(--backdrop-blur);
 
   /* Icons: size-icon-md sets width and height, stroke-icon-md the stroke
    * width. Always used in pairs; the stroke compensation is in tokens.css. */
@@ -109,6 +116,7 @@
   --shadow-sm: var(--shadow-sm);
   --shadow-md: var(--shadow-md);
   --shadow-lg: var(--shadow-lg);
+  --shadow-dialog: var(--shadow-dialog);
 
   /* Backgrounds -> bg-* */
   --background-color-canvas: var(--color-canvas);

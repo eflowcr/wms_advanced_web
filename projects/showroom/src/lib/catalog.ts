@@ -174,6 +174,15 @@ const COMPONENTS: readonly CatalogEntry[] = [
       'Panel en overlay del CDK, con el teclado y el volteo que jsdom no podía probar.',
   },
   {
+    id: 'search-select',
+    name: 'Selector con búsqueda',
+    selector: 'ewms-search-select',
+    route: `${SHOWROOM_BASE}/components/search-select`,
+    status: 'ready',
+    note:
+      'Se escribe y filtra; un código escaneado se resuelve sin abrir el panel. No reemplaza al Select.',
+  },
+  {
     id: 'table',
     name: 'Tabla de datos',
     selector: null,
@@ -184,10 +193,10 @@ const COMPONENTS: readonly CatalogEntry[] = [
   {
     id: 'modal',
     name: 'Modal / Dialog',
-    selector: null,
-    route: null,
-    status: 'documented',
-    note: 'Con ficha en el vault, sin construir.',
+    selector: 'DialogService',
+    route: `${SHOWROOM_BASE}/components/dialog`,
+    status: 'ready',
+    note: 'Confirmación como promesa y formulario como componente, sobre el dialog del CDK.',
   },
   {
     id: 'cards',

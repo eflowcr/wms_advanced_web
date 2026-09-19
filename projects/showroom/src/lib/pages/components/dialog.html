@@ -1,0 +1,357 @@
+<!-- The showroom is Spanish only, exempt from i18n (gate 12): declared so a screen reader never reads it as English. -->
+<article class="flex flex-col gap-10" lang="es">
+  <!-- ============================================================ 1. Encabezado -->
+  <header class="flex flex-col gap-2" data-block="1-encabezado">
+    <div class="flex flex-wrap items-baseline gap-3">
+      <h1 class="text-h1">Dialog</h1>
+      <code class="font-mono text-primary">DialogService</code>
+    </div>
+    <ul class="flex flex-wrap gap-2 text-caption">
+      <li class="rounded-sm bg-secondary px-2 py-1 text-secondary">
+        Versión <span class="font-mono">{{ version }}</span>
+      </li>
+      <li class="rounded-sm bg-success-surface px-2 py-1 text-success">Construido y en verde</li>
+      <li class="rounded-sm bg-secondary px-2 py-1 text-secondary">
+        Ficha: <span class="font-mono">08-Sistema-de-Diseno/Componentes/Modal.md</span>
+      </li>
+    </ul>
+  </header>
+
+  <!-- ================================================ 2. Qué resuelve / cuándo no -->
+  <section class="flex flex-col gap-4" aria-labelledby="di-purpose" data-block="2-proposito">
+    <h2 id="di-purpose" class="text-h2">Qué resuelve, y cuándo NO usarlo</h2>
+    <div class="grid grid-cols-[repeat(auto-fit,minmax(20rem,1fr))] gap-4">
+      <div class="flex flex-col gap-2 rounded-md border border-default bg-surface p-4">
+        <h3 class="text-h3">Qué resuelve</h3>
+        <p>
+          <strong>Detener lo que está pasando y pedir una decisión.</strong> Dos formas: una
+          confirmación, que es una pregunta con dos respuestas y vuelve como
+          <code class="font-mono">Promise&lt;boolean&gt;</code>; y un formulario, que es un
+          componente del consumidor.
+        </p>
+        <p class="text-caption text-secondary">
+          Sobre <code class="font-mono">&#64;angular/cdk/dialog</code>. La trampa de foco, el
+          <code class="font-mono">role</code>, dejar el resto del documento inerte y devolver el
+          foco al cerrar son del CDK y <strong>no se reconstruyen acá</strong>.
+        </p>
+      </div>
+      <div class="flex flex-col gap-2 rounded-md border border-danger bg-danger-surface p-4">
+        <h3 class="text-h3">Cuándo NO usarlo</h3>
+        <ul class="flex flex-col gap-2">
+          <li>
+            <strong>Si no hay nada que decidir, va Toast o Banner.</strong> Un modal para decir
+            «guardado» obliga a cerrar algo por una noticia.
+          </li>
+          <li>
+            <strong>Si el formulario es largo, va una pantalla.</strong> Un modal con scroll propio
+            dentro de una página con scroll son dos scrolls y ningún sitio donde volver.
+          </li>
+          <li>
+            <strong>Si la acción es reversible, quizá no haga falta.</strong> Un deshacer suele ser
+            mejor que una confirmación: no interrumpe a quien acierta.
+          </li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================= 3. Demo principal -->
+  <section class="flex flex-col gap-4" aria-labelledby="di-demo" data-block="3-demo">
+    <h2 id="di-demo" class="text-h2">Demo principal</h2>
+    <p class="text-secondary">
+      <strong>Abrilos.</strong> No hay ninguna foto de un diálogo en esta página: un diálogo es una
+      trampa de foco, un backdrop y una promesa, y nada de eso se ve en una imagen quieta.
+    </p>
+    <div class="grid grid-cols-[repeat(auto-fit,minmax(24rem,1fr))] gap-6">
+      <ewms-demo-frame ground="canvas" label="Confirmaciones reales, con su respuesta">
+        <div class="flex flex-col gap-4" data-demo-dialog>
+          <div class="flex flex-wrap gap-2">
+            @for (row of tones; track row.tone) {
+              <ewms-button
+                variant="secondary"
+                size="sm"
+                [attr.data-open]="row.tone"
+                (click)="ask(row.tone)"
+              >
+                {{ row.name }}
+              </ewms-button>
+            }
+          </div>
+          <dl class="flex flex-col gap-1 rounded-md border border-default bg-surface p-3 text-caption">
+            <div class="flex flex-wrap gap-2">
+              <dt class="text-secondary">Lo que devolvió la promesa:</dt>
+              <dd class="font-mono text-primary" data-last-answer>{{ lastAnswer() }}</dd>
+            </div>
+          </dl>
+          <p class="text-caption text-secondary">
+            Probá las cuatro salidas: el botón de confirmar, Cancelar,
+            <kbd class="font-mono">Escape</kbd> y un click en el backdrop. Tres de ellas responden
+            <code class="font-mono">false</code>; una sola responde
+            <code class="font-mono">true</code>.
+          </p>
+        </div>
+      </ewms-demo-frame>
+      <ewms-prop-table [rows]="props" caption="API de DialogService" />
+    </div>
+  </section>
+
+  <!-- =============================================================== 4. Variantes -->
+  <section class="flex flex-col gap-4" aria-labelledby="di-variants" data-block="4-variantes">
+    <h2 id="di-variants" class="text-h2">Variantes</h2>
+    <p class="text-secondary">
+      Tres tonos, y el tono decide tres cosas a la vez: el halo, la variante del botón que confirma
+      y si el backdrop cierra.
+    </p>
+
+    <div class="flex flex-col gap-2 rounded-md border border-strong bg-secondary p-4">
+      <h3 class="text-h4">La zona de icono es una forma con halo, y no lleva glifo</h3>
+      <p class="text-caption">
+        <strong>Es una excepción documentada en la ficha, no una pieza que falte.</strong> El
+        tratamiento se validó con el usuario el 27/08 y la ficha lleva un aviso explícito: cuando
+        exista la librería de iconos, <em>no</em> se «arregla» metiéndole un triángulo. Cambiarlo
+        requiere una decisión.
+      </p>
+      <p class="text-caption">
+        <strong>Info se pinta neutral, no azul.</strong> El registro de Figma de este componente lo
+        tenía azul; quedó superado por la regla de marca —el azul significa «se hace clic»— y la
+        propia ficha lo corrige en su cabecera.
+      </p>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="w-full border-collapse text-caption">
+        <caption class="mb-2 text-left text-secondary">
+          Qué decide el tono
+        </caption>
+        <thead>
+          <tr>
+            <th scope="col" class="border-b border-default p-2 text-left text-secondary">Tono</th>
+            <th scope="col" class="border-b border-default p-2 text-left text-secondary">Familia</th>
+            <th scope="col" class="border-b border-default p-2 text-left text-secondary">Confirmar</th>
+            <th scope="col" class="border-b border-default p-2 text-left text-secondary">Backdrop</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of tones; track row.tone) {
+            <tr>
+              <th scope="row" class="border-b border-default p-2 text-left text-primary">{{ row.name }}</th>
+              <td class="border-b border-default p-2 font-mono text-primary">{{ row.family }}</td>
+              <td class="border-b border-default p-2 text-primary">{{ row.confirmVariant }}</td>
+              <td class="border-b border-default p-2 text-primary">{{ row.backdrop }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <div class="flex flex-col gap-2 rounded-md border border-warning bg-warning-surface p-4">
+      <h3 class="text-h4">El backdrop no cierra un diálogo destructivo</h3>
+      <p class="text-caption">
+        <strong>Fricción deliberada, de la ficha.</strong> Un click perdido es el gesto más barato
+        que hay, y todo el sentido del diálogo es que la respuesta destructiva cueste más que la
+        segura.
+      </p>
+      <p class="text-caption">
+        <strong>Escape sí cierra los tres, siempre</strong>, y no es la misma pregunta: Escape es
+        una tecla deliberada, es la salida documentada de un modal, y WCAG 2.1.2 trata de no
+        atrapar el teclado. Un diálogo que se tragara Escape sería una trampa de teclado disfrazada
+        de fricción.
+      </p>
+      <p class="text-caption">
+        Implementarlo pedía separar las dos cosas: el interruptor del CDK
+        (<code class="font-mono">disableClose</code>) gobierna Escape <em>y</em> el backdrop a la
+        vez. Está en <code class="font-mono">true</code> siempre, y el servicio contesta los dos
+        eventos por su cuenta.
+      </p>
+    </div>
+  </section>
+
+  <!-- ========================================================= 5. Matriz de estados -->
+  <section class="flex flex-col gap-4" aria-labelledby="di-matrix" data-block="5-matriz">
+    <h2 id="di-matrix" class="text-h2">Matriz de estados</h2>
+    <p class="text-secondary">
+      Los tres tonos contra lo que cada uno decide. La primera columna dibuja la zona de icono de
+      verdad, con sus tokens; las otras dos son hechos.
+    </p>
+    <ewms-demo-frame ground="surface">
+      <ewms-state-matrix
+        [variants]="matrixVariants"
+        [states]="matrixStates"
+        rowHeader="Tono"
+        caption="Los tres tonos y lo que cada uno decide"
+      >
+        <ng-template let-variant="variant" let-state="state">
+          @if (isHalo(state.id)) {
+            <span
+              class="inline-block rounded-full border border-solid"
+              [class]="haloClasses(variant.id)"
+              [style.width]="'var(--size-dialog-icon)'"
+              [style.height]="'var(--size-dialog-icon)'"
+              [attr.data-halo]="variant.id"
+            ></span>
+          } @else {
+            <span class="text-caption text-primary">{{ fact(variant.id, state.id) }}</span>
+          }
+        </ng-template>
+      </ewms-state-matrix>
+    </ewms-demo-frame>
+    <p class="text-caption text-secondary">
+      <strong>No hay tres diálogos abiertos lado a lado, y no se puede haberlos:</strong> son
+      modales, y dos modales a la vez no son dos modales. Lo que sí se puede dibujar quieto es la
+      zona de icono, y está dibujada con los mismos tokens que usa el componente — no con una
+      copia.
+    </p>
+    <p class="text-caption text-secondary">
+      Tampoco hay Hover, Focus ni Disabled. El diálogo no es un control: lo que se pulsa son sus
+      botones, que tienen su propia ficha y su propia matriz.
+    </p>
+  </section>
+
+  <!-- ================================================================ 6. Tamaños -->
+  <section class="flex flex-col gap-4" aria-labelledby="di-sizes" data-block="6-tamanos">
+    <h2 id="di-sizes" class="text-h2">Tamaños</h2>
+    <div class="flex flex-col gap-2 rounded-md border border-strong bg-secondary p-4">
+      <h3 class="text-h4">No aplica — hay un solo ancho, y la ficha lo tiene pendiente</h3>
+      <p>
+        La caja tiene un ancho máximo y crece con su contenido hasta ahí. La ficha declara como
+        pendiente <em>«si existe una variante de tamaño lg para formularios más largos»</em>, y este
+        encargo no la resuelve: sin un formulario real que la necesite, un tamaño más sería una
+        variante que nadie usa.
+      </p>
+    </div>
+  </section>
+
+  <!-- ==================================================== 7. Anatomía y tokens -->
+  <section class="flex flex-col gap-4" aria-labelledby="di-anatomy" data-block="7-anatomia">
+    <h2 id="di-anatomy" class="text-h2">Anatomía y tokens</h2>
+    <p class="text-secondary">
+      El Dialog es el <strong>único componente con geometría y elevación propias</strong>: la escala
+      de radios y la de sombras llegan hasta el modal y ahí se detienen.
+    </p>
+    <div class="overflow-x-auto">
+      <table class="w-full border-collapse text-caption">
+        <caption class="mb-2 text-left text-secondary">
+          Tokens que consume el Dialog
+        </caption>
+        <thead>
+          <tr>
+            <th scope="col" class="border-b border-default p-2 text-left text-secondary">Parte</th>
+            <th scope="col" class="border-b border-default p-2 text-left text-secondary">
+              Token, cadena y valor
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of anatomy; track row.token) {
+            <tr>
+              <th scope="row" class="border-b border-default p-2 text-left text-primary">
+                {{ row.part }}
+              </th>
+              <td class="border-b border-default p-2">
+                <ewms-token-value [token]="row.token" [swatch]="true" />
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <div class="flex flex-col gap-2 rounded-md border border-strong bg-secondary p-4">
+      <h3 class="text-h4">Los tres tokens nuevos son alias, y el halo es una desviación reportada</h3>
+      <ul class="flex flex-col gap-2 text-caption">
+        <li>
+          <code class="font-mono">--radius-dialog</code> sale de la escala de longitudes (los
+          20 px que pide la ficha) y
+          <code class="font-mono">--shadow-dialog</code> de los mismos
+          <span class="font-mono">navy-7-a*</span> que el resto de la escala: sigue teñida con la
+          marca, no con gris.
+        </li>
+        <li>
+          <code class="font-mono">--backdrop-blur</code> es el único valor de desenfoque del
+          sistema, así que <code class="font-mono">backdrop-blur-dialog</code> es la única utilidad
+          de blur que se emite.
+        </li>
+        <li>
+          <strong>El halo no copia la opacidad que pide la ficha.</strong> La ficha describe el
+          color del glifo al 35 %; un color con alfa sería un <em>primitivo de color nuevo</em>, y
+          eso es decisión de diseño: se reporta, no se inventa. El halo usa el
+          <code class="font-mono">-border</code> de la familia, que ya es ese mismo color aclarado y
+          está medido. <strong>Queda reportado.</strong>
+        </li>
+        <li>
+          Es una sombra compuesta de semánticos, igual que
+          <code class="font-mono">--focus-ring-shadow</code>, y por la misma razón: lo que define el
+          efecto son dos tokens y una geometría, no un color nuevo.
+        </li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ============================================== 8. Contrato para Angular -->
+  <section class="flex flex-col gap-4" aria-labelledby="di-contract" data-block="8-contrato">
+    <h2 id="di-contract" class="text-h2">Contrato para Angular</h2>
+
+    <h3 class="text-h3">Uso típico</h3>
+    <pre
+      class="overflow-x-auto rounded-md border border-default bg-secondary p-4 font-mono text-mono text-primary"
+    ><code>{{ snippet }}</code></pre>
+
+    <h3 class="text-h3">Accesibilidad — las dos preguntas que la ficha dejaba abiertas</h3>
+    <div class="grid grid-cols-[repeat(auto-fit,minmax(20rem,1fr))] gap-4">
+      <div class="flex flex-col gap-2 rounded-md border border-success bg-success-surface p-4">
+        <h4 class="text-h4">El diálogo dice cómo se llama</h4>
+        <p class="text-caption">
+          <code class="font-mono">aria-labelledby</code> apunta al título y
+          <code class="font-mono">aria-describedby</code> al cuerpo. Los dos ids los acuña el
+          <em>servicio</em> antes de abrir, porque la configuración del CDK se arma antes de que
+          exista el componente — generarlos adentro habría obligado a meter mano en un método
+          interno del CDK.
+        </p>
+        <p class="text-caption">
+          La prueba no comprueba que los atributos estén: comprueba que
+          <strong>resuelven a elementos que existen</strong> y que dicen el título y el cuerpo.
+        </p>
+      </div>
+      <div class="flex flex-col gap-2 rounded-md border border-success bg-success-surface p-4">
+        <h4 class="text-h4">El foco vuelve siempre a quien abrió</h4>
+        <p class="text-caption">
+          La ficha pedía confirmar que el foco vuelve igual con Escape que con el botón.
+          <strong>Vuelve en las cuatro salidas</strong>, y no porque esté programado acá: es
+          <code class="font-mono">restoreFocus</code> del CDK, que lo hace para todas. Está probado
+          con Escape, que era el caso dudoso.
+        </p>
+        <p class="text-caption">
+          Al abrir, el foco cae en <strong>Cancelar</strong>: va primero en el DOM a propósito, para
+          que el teclado aterrice en la respuesta segura.
+        </p>
+      </div>
+    </div>
+
+    <h3 class="text-h3">Errores comunes</h3>
+    <ul class="flex flex-col gap-2">
+      <li>
+        <strong>Reconstruir la trampa de foco.</strong> Ya está. Cada pieza que parece trivial —qué
+        pasa si quien abrió el diálogo ya no existe al cerrarlo, qué pasa si adentro no hay nada
+        enfocable— es un caso borde que una versión a mano resuelve mal.
+      </li>
+      <li>
+        <strong>Esperar que el backdrop cierre un Danger.</strong> No cierra, y es a propósito.
+      </li>
+      <li>
+        <strong>Usar el componente de confirmación directamente.</strong> No se exporta: se llama
+        <code class="font-mono">confirm()</code>. Una segunda forma de levantar una confirmación es
+        cómo dos confirmaciones de la misma aplicación terminan distintas.
+      </li>
+      <li>
+        <strong>Abrir un diálogo para avisar algo.</strong> Va Toast. Un modal cobra un click por
+        una noticia.
+      </li>
+    </ul>
+
+    <h3 class="text-h3">Bloques que no aplican</h3>
+    <p class="text-secondary">
+      Uno: <strong>tamaños</strong>, porque hay un solo ancho y la variante grande sigue pendiente
+      en la ficha. Está escrito arriba en lugar de borrado.
+    </p>
+  </section>
+</article>

@@ -54,3 +54,37 @@ export { ToastOutlet, type Toast } from './lib/toast/toast-outlet';
  */
 export { Card } from './lib/card/card';
 export { CardGroup } from './lib/card/card-group';
+
+/*
+ * Dialog (DS-3). Over @angular/cdk/dialog: the focus trap, the role, the
+ * inert background and the focus restoration are the CDK's, and are not
+ * rebuilt here. What this library adds is the two shapes a dialog takes.
+ *
+ * The confirmation component itself is NOT exported: a consumer calls
+ * `confirm()` and gets a promise. A second way to raise a confirmation is how
+ * two confirmations in one application end up looking different.
+ */
+export { DialogService, type OpenDialogOptions } from './lib/dialog/dialog.service';
+export { type ConfirmOptions, type DialogTone } from './lib/dialog/dialog.types';
+
+/*
+ * Search select (DS-3, REQ-FE-DS3-001).
+ *
+ * `SearchSource<T>` is the data contract the backend will be asked for, not a
+ * wrapper over an endpoint that exists. The component knows nothing about
+ * HTTP; moving from a demo source to a real one changes an implementation of
+ * that interface and nothing else.
+ *
+ * No in-memory implementation ships from here. A demo source is demo code and
+ * lives with the demo; the library would carry it into every production bundle
+ * for the sake of one page.
+ */
+export {
+  SearchSelect,
+  type SearchDisplay,
+  type SearchPage,
+  type SearchSelectMessages,
+  type SearchSource,
+  type SearchStatus,
+} from './lib/search-select/search-select';
+export { SEARCH_PAGE_SIZE } from './lib/search-select/search-source';

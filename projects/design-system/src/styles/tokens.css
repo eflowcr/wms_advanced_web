@@ -132,6 +132,8 @@
   --size-20: 20px;
   --size-24: 24px;
   --size-32: 32px;
+  --size-48: 48px;
+  --size-56: 56px;
   --size-pill: 9999px;
 
   /* Pesos. Montserrat es variable 100–900: el @font-face declara el rango */
@@ -151,10 +153,16 @@
   --stroke-2: 2;
   --stroke-2-25: 2.25;
 
+  /* Desenfoque. Un solo valor, el del backdrop del Dialog (DS-3, lote B). */
+  --blur-8: 8px;
+
   /* Duraciones: ms-<milisegundos>. Primera capa de tiempo del sistema,
    * agregada en DS-3 (Toast). Un tiempo es un valor de diseno como un color:
    * cuanto dura un mensaje en pantalla se decide una vez y en un solo lugar. */
+  --ms-50: 50ms;
+  --ms-300: 300ms;
   --ms-3000: 3000ms;
+  --ms-5000: 5000ms;
 
   /* Familias tipograficas. 'Montserrat' es la cara auto-hospedada en
    * projects/shell/public/fonts (ver @font-face en styles.css). */
@@ -277,6 +285,41 @@
   --shadow-md: 0 4px 8px var(--navy-7-a08), 0 1px 2px var(--navy-7-a06);
   --shadow-lg: 0 12px 24px var(--navy-7-a10), 0 2px 4px var(--navy-7-a06);
 
+  /* --------------------------------------------------------------- dialogo
+   * El Modal es el unico componente con una geometria y una elevacion
+   * propias, y la ficha las fija: radio de 20 px, sombra difusa en varias
+   * capas, backdrop con desenfoque. Los tres son ALIAS de cosas que ya
+   * existen -- no hay un color ni una longitud nueva acá.
+   *
+   * `--shadow-dialog` no es `--shadow-lg` con otro nombre: la escala de
+   * elevacion llega hasta el modal y ahi se detiene, y este es el unico nivel
+   * que pide una tercera capa y un radio de difusion mayor. Sale de los mismos
+   * `navy-7-a*`, asi que sigue tenida con la marca. */
+  --radius-dialog: var(--size-20);
+  --shadow-dialog:
+    0 24px 48px var(--navy-7-a10), 0 8px 16px var(--navy-7-a08),
+    0 2px 4px var(--navy-7-a06);
+  --backdrop-blur: var(--blur-8);
+
+  /* El halo de la zona de icono del Dialog, por tono.
+   *
+   * ES UNA SOMBRA COMPUESTA DE SEMANTICOS, como --focus-ring-shadow, y por la
+   * misma razon: lo que define el efecto son dos tokens y una geometria, no un
+   * color nuevo.
+   *
+   * La ficha pide el color del glifo al 35 % de opacidad. Un color con alfa
+   * seria un primitivo de color nuevo, que es decision de diseno y se reporta,
+   * no se inventa -- asi que el halo usa el `-border` de la familia, que ya es
+   * ese mismo color aclarado y esta medido. Queda reportado como desviacion.
+   *
+   * No hay halo `info` porque no hay familia info: lo informativo es neutral. */
+  --shadow-halo-danger: 0 0 var(--size-48) var(--size-6) var(--color-danger-border);
+  --shadow-halo-warning: 0 0 var(--size-48) var(--size-6) var(--color-warning-border);
+  --shadow-halo-neutral: 0 0 var(--size-48) var(--size-6) var(--color-neutral-border);
+
+  /* El circulo de la zona de icono. 56x56, de la ficha (v1.1, 27/08). */
+  --size-dialog-icon: var(--size-56);
+
   /* ---------------------------------------------------------------- tiempos
    * Cuanto vive un toast en pantalla antes de irse solo. La ficha de
    * Notificaciones fija 3000 ms; el consumidor puede pasar otro numero por
@@ -288,6 +331,26 @@
    * no inventa un numero -- deja el toast fijo hasta que alguien lo cierre.
    * Ver lib/tokens/read-token.ts. */
   --duration-toast: var(--ms-3000);
+
+  /* Lo que el selector con busqueda espera entre la ultima tecla y la
+   * consulta (REQ-FE-DS3-001, RFE-01), y cuanto tolera que tarde la fuente
+   * antes de tratarla como error de servicio (RFE-02). */
+  --delay-search-input: var(--ms-300);
+  --timeout-search: var(--ms-5000);
+
+  /* EL UMBRAL DE RAFAGA DE ESCANER, Y SU NOMBRE NO ES CASUAL.
+   *
+   * Lo declara REQ-FE-DS4-001 RFE-06, que es el documento DUENO del umbral:
+   * `--threshold-scan-keystroke`, 50 ms por tecla como valor inicial
+   * propuesto -- un humano rapidisimo sostiene unos 120 ms entre teclas y un
+   * lector industrial ronda los 5-20; el margen correcto lo dice el hardware,
+   * y calibrarlo es un pendiente de ese requerimiento.
+   *
+   * La comanda de DS-3 pedia llamarlo `--scanner-burst-ms` "para que DS-4 lo
+   * consuma y no lo redefina". El objetivo es ese; el nombre que lo cumple es
+   * este, porque es el que DS-4 ya tiene escrito. Reportado como discrepancia
+   * entre los dos documentos. */
+  --threshold-scan-keystroke: var(--ms-50);
 
   /* ------------------------------------------------------------- espaciado
    * Base 4px. Tailwind deriva la escala entera de este unico multiplicador. */

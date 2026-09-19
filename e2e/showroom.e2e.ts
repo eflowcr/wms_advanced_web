@@ -28,9 +28,11 @@ const TOGGLE = '/design-system/components/toggle';
 const BANNER = '/design-system/components/banner';
 const TOAST = '/design-system/components/toast';
 const CARD = '/design-system/components/card';
+const DIALOG = '/design-system/components/dialog';
+const SEARCH_SELECT = '/design-system/components/search-select';
 
 /**
- * Every navigable route. Eighteen since DS-3 lote A: the fifteen of DS-2 plus
+ * Every navigable route. Twenty since DS-3 lote B: the fifteen of DS-2 plus
  * one sheet per component built here, which is what "nothing built is
  * undocumented" looks like when it is a test rather than a promise.
  */
@@ -53,6 +55,8 @@ const PAGES = [
   { url: BANNER, heading: 'Banner' },
   { url: TOAST, heading: 'Toast' },
   { url: CARD, heading: 'Card' },
+  { url: DIALOG, heading: 'Dialog' },
+  { url: SEARCH_SELECT, heading: 'Selector con búsqueda' },
 ] as const;
 
 /** Fonts change every width measured, so nothing is measured before they land. */
@@ -1236,5 +1240,267 @@ test.describe('DS-3 lote A: notificaciones y card', () => {
     // The fill and the border are different colours, and there is a glyph.
     expect(marks.background).not.toBe(marks.border);
     expect(marks.check).toBeGreaterThan(0);
+  });
+});
+
+/**
+ * DS-3 LOTE B — the dialog and the search select, in a browser.
+ *
+ * Both of these are mostly behaviour that jsdom can only approximate: a focus
+ * trap, a backdrop, a scan arriving faster than a person can type. The unit
+ * specs cover the logic; what is here is the part that needed a real browser
+ * and a real keyboard.
+ */
+test.describe('DS-3 lote B: dialog', () => {
+  test('opens, traps the focus, and gives it back to whoever opened it', async ({ page }) => {
+    await page.goto(DIALOG);
+    await ready(page);
+
+    const opener = page.locator('[data-open="info"] button');
+    await opener.focus();
+    await opener.press('Enter');
+
+    const dialog = page.locator('[role="dialog"]');
+    await expect(dialog).toBeVisible();
+
+    // The focus lands on Cancel: it is first in the DOM so the keyboard
+    // arrives at the safe answer.
+    await expect(dialog.getByRole('button', { name: 'Cancelar' })).toBeFocused();
+
+    // It really is a trap: tabbing round the two buttons never leaves.
+    await page.keyboard.press('Tab');
+    await expect(dialog.getByRole('button', { name: 'Publicar' })).toBeFocused();
+    await page.keyboard.press('Tab');
+    await expect(dialog.getByRole('button', { name: 'Cancelar' })).toBeFocused();
+
+    await page.keyboard.press('Escape');
+    await expect(dialog).toHaveCount(0);
+    await expect(opener).toBeFocused();
+  });
+
+  test('names and describes itself with its own title and body', async ({ page }) => {
+    await page.goto(DIALOG);
+    await ready(page);
+    await page.locator('[data-open="danger"] button').click();
+
+    const dialog = page.locator('[role="dialog"]');
+    await expect(dialog).toBeVisible();
+
+    const labelledBy = await dialog.getAttribute('aria-labelledby');
+    const describedBy = await dialog.getAttribute('aria-describedby');
+    expect(labelledBy).toBeTruthy();
+    expect(describedBy).toBeTruthy();
+
+    await expect(page.locator(`#${labelledBy}`)).toContainText('Eliminar la expedición');
+    await expect(page.locator(`#${describedBy}`)).toContainText('34 bultos');
+    await expect(dialog).toHaveAttribute('aria-modal', 'true');
+  });
+
+  test('the backdrop does not close a destructive dialog, and does close an informative one', async ({
+    page,
+  }) => {
+    await page.goto(DIALOG);
+    await ready(page);
+
+    await page.locator('[data-open="danger"] button').click();
+    const dialog = page.locator('[role="dialog"]');
+    await expect(dialog).toBeVisible();
+
+    await page.locator('.cdk-overlay-backdrop').click({ position: { x: 5, y: 5 } });
+    await expect(dialog).toBeVisible();
+
+    await page.keyboard.press('Escape');
+    await expect(dialog).toHaveCount(0);
+
+    await page.locator('[data-open="info"] button').click();
+    await expect(dialog).toBeVisible();
+    await page.locator('.cdk-overlay-backdrop').click({ position: { x: 5, y: 5 } });
+    await expect(dialog).toHaveCount(0);
+    await expect(page.locator('[data-last-answer]')).toContainText('no confirmado');
+  });
+
+  test('the icon zone is 56 px of shape with no glyph in it', async ({ page }) => {
+    await page.goto(DIALOG);
+    await ready(page);
+
+    for (const tone of ['danger', 'warning', 'info'] as const) {
+      const halo = page.locator(`[data-halo="${tone}"]`);
+      const box = await halo.boundingBox();
+      expect(round(box?.width), `${tone} halo width`).toBe(56);
+      expect(round(box?.height), `${tone} halo height`).toBe(56);
+      // The documented exception: a shape, and nothing inside it.
+      await expect(halo.locator('svg')).toHaveCount(0);
+    }
+  });
+
+  test('the backdrop is blurred navy, from the tokens', async ({ page }) => {
+    await page.goto(DIALOG);
+    await ready(page);
+    await page.locator('[data-open="info"] button').click();
+    await expect(page.locator('[role="dialog"]')).toBeVisible();
+
+    const backdrop = await page.locator('.cdk-overlay-backdrop').evaluate((element) => {
+      const style = getComputedStyle(element);
+      return { background: style.backgroundColor, filter: style.backdropFilter };
+    });
+
+    // Navy at 50 %, not black: the overlay tints the scene with the brand.
+    expect(backdrop.background).toBe('rgba(1, 15, 66, 0.5)');
+    expect(backdrop.filter).toContain('blur');
+  });
+});
+
+test.describe('DS-3 lote B: selector con búsqueda', () => {
+  const FIELD = '[data-demo-search] input[role="combobox"]';
+
+  test('filters as you type, with nothing opened first', async ({ page }) => {
+    await page.goto(SEARCH_SELECT);
+    await ready(page);
+
+    await expect(page.locator('[role="listbox"]')).toHaveCount(0);
+
+    await page.locator(FIELD).fill('caja');
+    await expect(page.locator('[role="listbox"]')).toBeVisible();
+    await expect(page.locator('[role="listbox"] [role="option"]').first()).toBeVisible();
+  });
+
+  test('a scan resolves without the panel ever opening', async ({ page }) => {
+    await page.goto(SEARCH_SELECT);
+    await ready(page);
+
+    const field = page.locator(FIELD);
+    await field.focus();
+
+    /*
+     * 5 ms per key is a gun, not a person: REQ-FE-DS3-001's own checkpoint
+     * asks for exactly this simulation. The threshold is 50 ms, and a human
+     * at full speed sits around 120.
+     */
+    await page.keyboard.type('SKU-88042', { delay: 5 });
+    await page.keyboard.press('Enter');
+
+    await expect(page.locator('[data-demo-value]')).toContainText('SKU-88042');
+    // Zero clicks, and the panel never came up.
+    await expect(page.locator('[role="listbox"]')).toHaveCount(0);
+  });
+
+  test('typing the same code at human speed opens the panel instead', async ({ page }) => {
+    await page.goto(SEARCH_SELECT);
+    await ready(page);
+
+    const field = page.locator(FIELD);
+    await field.focus();
+    await page.keyboard.type('SKU-88042', { delay: 150 });
+
+    await expect(page.locator('[role="listbox"]')).toBeVisible();
+    await expect(page.locator('[data-demo-value]')).toHaveText('(ninguno)');
+  });
+
+  test('the error is in the flow, and one Tab from the field reaches its retry', async ({
+    page,
+  }) => {
+    await page.goto(SEARCH_SELECT);
+    await ready(page);
+
+    await page.locator('[data-behaviour="failing"] button').click();
+    await page.locator(FIELD).fill('caja');
+
+    const alert = page.locator('[data-demo-search] [role="alert"]');
+    await expect(alert).toBeVisible();
+    await expect(alert).toContainText('No se pudo consultar');
+
+    // Where "no results" would have been, there is nothing: the two states are
+    // different and they are not in the same place.
+    await expect(page.locator('[role="listbox"]')).toHaveCount(0);
+
+    await page.locator(FIELD).focus();
+    await page.keyboard.press('Tab');
+    await expect(alert.getByRole('button', { name: 'Reintentar' })).toBeFocused();
+  });
+
+  test('a source slower than the timeout is an error, not an empty warehouse', async ({ page }) => {
+    await page.goto(SEARCH_SELECT);
+    await ready(page);
+
+    await page.locator('[data-behaviour="slow"] button').click();
+    await page.locator(FIELD).fill('caja');
+
+    const alert = page.locator('[data-demo-search] [role="alert"]');
+    await expect(alert).toBeVisible({ timeout: 8000 });
+    await expect(page.locator('[data-demo-search]')).not.toContainText('Sin resultados');
+  });
+
+  test('pages: the next page is appended, and changing the text starts over', async ({ page }) => {
+    await page.goto(SEARCH_SELECT);
+    await ready(page);
+
+    await page.locator(FIELD).fill('SKU');
+    const options = page.locator('[role="listbox"] [role="option"]');
+    // Twenty results plus the "load more" row.
+    await expect(options).toHaveCount(21);
+
+    await options.last().click();
+    await expect(options).toHaveCount(41);
+
+    await page.locator(FIELD).fill('SKU-88042');
+    await expect(options).toHaveCount(1);
+  });
+
+  test('works when the source declines to count', async ({ page }) => {
+    await page.goto(SEARCH_SELECT);
+    await ready(page);
+
+    await page.locator('[data-toggle-counts] button').click();
+    await expect(page.locator('[data-counts-value]')).toContainText('total: null');
+
+    await page.locator(FIELD).fill('SKU');
+    await expect(page.locator('[role="listbox"] [role="option"]')).toHaveCount(21);
+    // The live region says what it can, without a total.
+    await expect(page.locator('[data-demo-search] [role="status"]')).toContainText('20 resultados');
+  });
+
+  test('the arrows walk the list and Escape gives nothing away', async ({ page }) => {
+    await page.goto(SEARCH_SELECT);
+    await ready(page);
+
+    const field = page.locator(FIELD);
+    await field.fill('caja');
+    /*
+     * The panel opens when the QUERY STARTS, not when it answers -- that is
+     * RFE-01, and it is why there is a searching state at all. So waiting for
+     * the panel is not enough: the arrows have nothing to move over until a
+     * row exists.
+     */
+    await expect(page.locator('[role="listbox"] [role="option"]').first()).toBeVisible();
+
+    await page.keyboard.press('ArrowDown');
+    await expect(field).toHaveAttribute('aria-activedescendant', /-option-0$/);
+    await page.keyboard.press('ArrowDown');
+    await expect(field).toHaveAttribute('aria-activedescendant', /-option-1$/);
+
+    await page.keyboard.press('Escape');
+    await expect(page.locator('[role="listbox"]')).toHaveCount(0);
+    await expect(page.locator('[data-demo-value]')).toHaveText('(ninguno)');
+    await expect(field).toBeFocused();
+
+    // And Enter on an active row chooses the record, not the text.
+    await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('Enter');
+    await expect(page.locator('[data-demo-value]')).toContainText('SKU-');
+  });
+
+  test('the three sizes are the system scale: 32 / 40 / 48', async ({ page }) => {
+    await page.goto(SEARCH_SELECT);
+    await ready(page);
+
+    for (const [size, expected] of [
+      ['sm', 32],
+      ['md', 40],
+      ['lg', 48],
+    ] as const) {
+      const box = await page.locator(`[data-size-sample="${size}"] input`).boundingBox();
+      expect(round(box?.height), `search select ${size}`).toBe(expected);
+    }
   });
 });

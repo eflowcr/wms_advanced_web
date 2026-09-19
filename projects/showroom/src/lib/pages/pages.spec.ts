@@ -7,9 +7,11 @@ import { ShowroomBanner } from './components/banner';
 import { ShowroomButton } from './components/button';
 import { ShowroomCard } from './components/card';
 import { ShowroomCheckbox } from './components/checkbox';
+import { ShowroomDialog } from './components/dialog';
 import { ShowroomIconButton } from './components/icon-button';
 import { ShowroomInput } from './components/input';
 import { ShowroomRadio } from './components/radio';
+import { ShowroomSearchSelect } from './components/search-select';
 import { ShowroomSelect } from './components/select';
 import { ShowroomText } from './components/text';
 import { ShowroomToast } from './components/toast';
@@ -431,6 +433,12 @@ const SHEETS: readonly { name: string; component: Type<unknown>; heading: string
   { name: 'ShowroomBanner', component: ShowroomBanner, heading: 'Banner' },
   { name: 'ShowroomToast', component: ShowroomToast, heading: 'Toast' },
   { name: 'ShowroomCard', component: ShowroomCard, heading: 'Card' },
+  { name: 'ShowroomDialog', component: ShowroomDialog, heading: 'Dialog' },
+  {
+    name: 'ShowroomSearchSelect',
+    component: ShowroomSearchSelect,
+    heading: 'Selector con búsqueda',
+  },
 ];
 
 describe.each(SHEETS)('$name', ({ component, heading }) => {
@@ -1102,5 +1110,244 @@ describe('ShowroomCard', () => {
     expect(element.querySelector('[data-block="8-contrato"]')?.textContent).toContain(
       'quien deshabilita gana, y nadie re-habilita',
     );
+  });
+});
+
+/**
+ * The two sheets of DS-3 lote B.
+ *
+ * Both pages drive machinery that lives outside their own tree -- the dialog
+ * renders in the CDK's overlay container, the search panel in another -- so
+ * these tests clean the container up after themselves. A leftover overlay is
+ * the sort of thing that makes the NEXT test fail for no visible reason.
+ */
+function clearOverlays(): void {
+  for (const container of document.querySelectorAll('.cdk-overlay-container')) {
+    container.remove();
+  }
+}
+
+describe('ShowroomDialog', () => {
+  afterEach(clearOverlays);
+
+  it('opens a real dialog and reports what the promise answered', async () => {
+    const { fixture, element } = await render(ShowroomDialog);
+    document.body.appendChild(element);
+
+    element.querySelector<HTMLButtonElement>('[data-open="danger"] button')!.click();
+    await fixture.whenStable();
+
+    const dialog = document.querySelector('cdk-dialog-container');
+    expect(dialog).not.toBeNull();
+    expect(dialog?.textContent).toContain('Eliminar la expedición');
+
+    // Cancel: three of the four ways out answer false.
+    document.querySelectorAll<HTMLButtonElement>('cdk-dialog-container button')[0]!.click();
+    await fixture.whenStable();
+
+    expect(element.querySelector('[data-last-answer]')?.textContent).toContain('no confirmado');
+    element.remove();
+  });
+
+  it('answers true only through the confirm button', async () => {
+    const { fixture, element } = await render(ShowroomDialog);
+    document.body.appendChild(element);
+
+    element.querySelector<HTMLButtonElement>('[data-open="info"] button')!.click();
+    await fixture.whenStable();
+
+    document.querySelectorAll<HTMLButtonElement>('cdk-dialog-container button')[1]!.click();
+    await fixture.whenStable();
+
+    expect(element.querySelector('[data-last-answer]')?.textContent).toContain('confirmado (true)');
+    element.remove();
+  });
+
+  it('draws the three halos with the component own tokens, and none of them blue', async () => {
+    const { element } = await render(ShowroomDialog);
+    const halos = [...element.querySelectorAll<HTMLElement>('[data-halo]')];
+    expect(halos.length).toBe(3);
+    expect(halos[0]?.className).toContain('shadow-(--shadow-halo-danger)');
+    expect(halos[2]?.className).toContain('bg-neutral-surface');
+    for (const halo of halos) {
+      expect(halo.className).not.toContain('primary');
+      // The exception the sheet documents: a shape, with nothing inside it.
+      expect(halo.querySelector('svg')).toBeNull();
+    }
+  });
+
+  it('writes down that the backdrop does not close a destructive dialog', async () => {
+    const { element } = await render(ShowroomDialog);
+    expect(element.querySelector('[data-block="4-variantes"]')?.textContent).toContain(
+      'El backdrop no cierra un diálogo destructivo',
+    );
+  });
+
+  it('reports the halo deviation instead of inventing an alpha colour', async () => {
+    const { element } = await render(ShowroomDialog);
+    expect(element.querySelector('[data-block="7-anatomia"]')?.textContent).toContain(
+      'primitivo de color nuevo',
+    );
+  });
+
+  it('falls back to Info for a tone no row carries, and says nothing for an unknown state', async () => {
+    const { fixture } = await render(ShowroomDialog);
+    const page = fixture.componentInstance as unknown as {
+      rowFor(tone: string): { name: string };
+      fact(tone: string, stateId: string): string;
+      isHalo(stateId: string): boolean;
+      haloClasses(tone: string): string;
+    };
+    expect(page.rowFor('no-such-tone').name).toBe('Info');
+    expect(page.fact('danger', 'confirm')).toBe('Danger');
+    expect(page.fact('danger', 'backdrop')).toBe('No cierra');
+    expect(page.fact('danger', 'halo')).toBe('');
+    expect(page.isHalo('halo')).toBe(true);
+    expect(page.isHalo('confirm')).toBe(false);
+    expect(page.haloClasses('no-such-tone')).toBe('');
+  });
+});
+
+describe('ShowroomSearchSelect', () => {
+  afterEach(clearOverlays);
+
+  it('renders the real component inside a reactive form', async () => {
+    const { element } = await render(ShowroomSearchSelect);
+    expect(element.querySelector('[data-demo-search] ewms-search-select')).not.toBeNull();
+    expect(element.querySelector('[data-demo-search] input[role="combobox"]')).not.toBeNull();
+  });
+
+  it('starts with nothing chosen and nothing asked of the source', async () => {
+    const { element } = await render(ShowroomSearchSelect);
+    expect(element.querySelector('[data-demo-value]')?.textContent).toBe('(ninguno)');
+    expect(element.querySelector('[data-queries]')).toBeNull();
+  });
+
+  it('the buttons really change how the source behaves', async () => {
+    const { fixture, element } = await render(ShowroomSearchSelect);
+    const behaviour = () => element.querySelector('[data-behaviour-value]')?.textContent;
+
+    expect(behaviour()).toBe('normal');
+
+    element.querySelector<HTMLButtonElement>('[data-behaviour="failing"] button')!.click();
+    await fixture.whenStable();
+    expect(behaviour()).toBe('failing');
+
+    element.querySelector<HTMLButtonElement>('[data-behaviour="slow"] button')!.click();
+    await fixture.whenStable();
+    expect(behaviour()).toBe('slow');
+  });
+
+  it('can make the source stop counting, because total null is legitimate', async () => {
+    const { fixture, element } = await render(ShowroomSearchSelect);
+    const counts = () => element.querySelector('[data-counts-value]')?.textContent;
+
+    expect(counts()).toContain('total: número');
+
+    element.querySelector<HTMLButtonElement>('[data-toggle-counts] button')!.click();
+    await fixture.whenStable();
+    expect(counts()).toContain('total: null');
+  });
+
+  it('records what the source was asked, and can clear the record', async () => {
+    const { fixture } = await render(ShowroomSearchSelect);
+    const page = fixture.componentInstance as unknown as {
+      source(): { search(query: string, page: number): { subscribe(): void } };
+      clearQueries(): void;
+      queries(): readonly string[];
+    };
+
+    page.source().search('caja', 0).subscribe();
+    await fixture.whenStable();
+    expect(page.queries()[0]).toContain('«caja»');
+
+    page.clearQueries();
+    expect(page.queries().length).toBe(0);
+  });
+
+  it('shows a catalogue that is the same on every load', async () => {
+    const { element } = await render(ShowroomSearchSelect);
+    // Seeded, so the count is a fact about the page and not about luck.
+    expect(element.querySelector('[data-block="3-demo"]')?.textContent).toContain('340 artículos');
+  });
+
+  it('reports the MSW deviation rather than pretending the demo uses it', async () => {
+    const { element } = await render(ShowroomSearchSelect);
+    expect(element.querySelector('[data-block="3-demo"]')?.textContent).toContain(
+      'catálogo es sintético',
+    );
+  });
+
+  it('reports the token-name discrepancy between the comanda and DS-4', async () => {
+    const { element } = await render(ShowroomSearchSelect);
+    const anatomy = element.querySelector('[data-block="7-anatomia"]')?.textContent ?? '';
+    expect(anatomy).toContain('--threshold-scan-keystroke');
+    expect(anatomy).toContain('discrepancia');
+  });
+
+  it('writes down that nothing is duplicated against the Select (HG-04)', async () => {
+    const { element } = await render(ShowroomSearchSelect);
+    expect(element.querySelector('[data-block="7-anatomia"]')?.textContent).toContain(
+      'Nada duplicado respecto de',
+    );
+  });
+
+  it('goes back to normal, and clears the record, from the page itself', async () => {
+    const { fixture, element } = await render(ShowroomSearchSelect);
+
+    element.querySelector<HTMLButtonElement>('[data-behaviour="failing"] button')!.click();
+    await fixture.whenStable();
+    element.querySelector<HTMLButtonElement>('[data-behaviour="normal"] button')!.click();
+    await fixture.whenStable();
+    expect(element.querySelector('[data-behaviour-value]')?.textContent).toBe('normal');
+
+    element.querySelector<HTMLButtonElement>('[data-clear-queries] button')!.click();
+    await fixture.whenStable();
+    expect(element.querySelector('[data-queries]')).toBeNull();
+  });
+
+  it('carries the four messages and the two display functions, already in Spanish', async () => {
+    const { fixture } = await render(ShowroomSearchSelect);
+    const page = fixture.componentInstance as unknown as {
+      messages: {
+        searching: string;
+        noResults(query: string): string;
+        error: string;
+        retry: string;
+        more: string;
+        results(count: number, total: number | null): string;
+      };
+      display: {
+        label(article: { code: string; name: string }): string;
+        code(article: { code: string }): string;
+      };
+    };
+
+    expect(page.messages.searching).toBe('Buscando…');
+    expect(page.messages.noResults('caja')).toContain('caja');
+    expect(page.messages.error).toContain('catálogo');
+    expect(page.messages.retry).toBe('Reintentar');
+    expect(page.messages.more).toContain('más resultados');
+
+    // The total may be null, and the message is where that shows.
+    expect(page.messages.results(3, 340)).toBe('3 de 340 resultados');
+    expect(page.messages.results(3, null)).toBe('3 resultados');
+
+    const article = { code: 'SKU-88000', name: 'Caja plegable 60x40' };
+    expect(page.display.label(article)).toBe('SKU-88000 · Caja plegable 60x40');
+    expect(page.display.code(article)).toBe('SKU-88000');
+  });
+
+  it('fills the state matrix from one table of facts', async () => {
+    const { fixture } = await render(ShowroomSearchSelect);
+    const page = fixture.componentInstance as unknown as {
+      fact(variantId: string, stateId: string): string;
+      chosenLabel(): string;
+    };
+    expect(page.fact('error', 'where')).toContain('bajo el campo');
+    expect(page.fact('empty', 'value')).toContain('Intacto');
+    expect(page.fact('no-such-state', 'where')).toBe('');
+    expect(page.fact('error', 'no-such-column')).toBe('');
+    expect(page.chosenLabel()).toBe('(ninguno)');
   });
 });

@@ -1,0 +1,153 @@
+<!--
+  An `<input>`, not a button with a panel. That is the whole difference from
+  `ewms-select` and it is RFE-01: the field is editable from the first moment,
+  and nobody has to open anything before they can type.
+
+  It IS a labelable element, so the label is joined with for/id rather than
+  with aria-labelledby -- the opposite of the Select, where the trigger is a
+  <button> and could not be labelled that way.
+-->
+<label [id]="labelId" [attr.for]="fieldId" class="block text-caption text-secondary mb-1">
+  {{ label() }}
+</label>
+
+<div class="relative">
+  <input
+    #field
+    type="text"
+    role="combobox"
+    autocomplete="off"
+    [id]="fieldId"
+    [class]="fieldClasses()"
+    [style.borderColor]="borderColor()"
+    [style.fontSize]="fontSize()"
+    [disabled]="isDisabled()"
+    [placeholder]="placeholder()"
+    [value]="text()"
+    [attr.aria-expanded]="isOpen()"
+    aria-haspopup="listbox"
+    aria-autocomplete="list"
+    [attr.aria-controls]="controlsId()"
+    [attr.aria-activedescendant]="activeOptionId()"
+    [attr.aria-invalid]="effectiveState() === 'error' ? 'true' : null"
+    [attr.aria-describedby]="describedBy()"
+    (input)="onInput($event)"
+    (keydown)="onKeydown($event)"
+    (focus)="onFocus()"
+    (blur)="onBlur()"
+  />
+</div>
+
+<!--
+  THE LIVE REGION (RFE-08). The focus never leaves the field, so nothing about
+  the list reaches a screen reader on its own: this is how it learns that a
+  search started, finished, found nothing, or failed.
+
+  `polite` because it speaks on every keystroke's worth of results, and
+  `assertive` there would talk over the person typing. It is always in the
+  document -- empty when there is nothing to say -- for the same reason the
+  toast outlet's region is: a region that appears together with its first
+  message is announced inconsistently.
+-->
+<p [id]="statusId" class="sr-only" role="status" aria-live="polite">{{ announcement() }}</p>
+
+@if (hint()) {
+  <p [id]="hintId" class="mt-1 text-caption" [class]="hintClasses()">{{ hint() }}</p>
+}
+
+<!--
+  THE ERROR IS RENDERED HERE, IN THE FLOW, AND NOT IN THE PANEL.
+
+  PACQ-03.2 asks for a retry reachable with Tab and activated with Enter. The
+  panel lives in a CDK overlay appended to the end of <body>, so a Tab from the
+  field would walk past it into the rest of the page -- a retry in there is
+  reachable in theory and unreachable in practice. In the flow, one Tab from
+  the field lands on it.
+
+  It also keeps the two states apart in the strongest possible way: "no
+  results" is a statement about the list and lives where the list is; an error
+  is a condition of the field, needs an action, and lives with the field. The
+  REQ is emphatic that confusing the two makes an outage look like an empty
+  warehouse.
+-->
+@if (status() === 'error') {
+  <div
+    [id]="errorId"
+    role="alert"
+    class="mt-1 flex items-center gap-2 rounded-md border border-danger bg-danger-surface p-2 text-caption text-danger"
+  >
+    <ewms-icon name="circle-x" size="sm" />
+    <span class="flex-1">{{ messages().error }}</span>
+    <button
+      type="button"
+      class="rounded-sm px-2 py-1 cursor-pointer outline-none focus-visible:shadow-(--focus-ring-shadow) text-(color:--color-bg-primary) hover:text-(color:--color-bg-primary-hover)"
+      (click)="retry()"
+    >
+      {{ messages().retry }}
+    </button>
+  </div>
+}
+
+<!--
+  The panel. Nothing inside it is focusable and nothing carries a key handler:
+  the focus stays on the field and `aria-activedescendant` points at the active
+  row, which is the ARIA Authoring Practices combobox pattern and the same one
+  `ewms-select` uses.
+
+  That is why two accessibility rules are switched off on the rows below, and
+  the reasoning is the Select's, unchanged: both rules assume a widget where
+  every interactive element handles its own keyboard and takes its own focus.
+  Satisfying them literally would put every result into the tab order, which is
+  the thing aria-activedescendant exists to avoid.
+-->
+<ng-template #panel>
+  <ul [id]="listboxId" role="listbox" [class]="panelClasses" [attr.aria-labelledby]="labelId">
+    @for (item of items(); track $index) {
+      <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -->
+      <li
+        [id]="optionId($index)"
+        role="option"
+        [class]="optionClasses($index)"
+        [style.fontSize]="fontSize()"
+        [attr.aria-selected]="false"
+        (mousedown)="onOptionMousedown($event)"
+        (click)="choose(item)"
+        (mouseenter)="onOptionEnter($index)"
+      >
+        <span class="truncate">{{ labelOf(item) }}</span>
+      </li>
+    }
+
+    @if (status() === 'searching') {
+      <li [class]="noteClasses" aria-hidden="true">
+        <ewms-icon name="spinner" size="sm" />
+        <span>{{ messages().searching }}</span>
+      </li>
+    }
+
+    @if (status() === 'empty') {
+      <!--
+        RFE-03: the message repeats the text that was searched. Without it the
+        panel says "nothing" and the person has to look back at the field to
+        find out what "nothing" was about.
+      -->
+      <li [class]="noteClasses" aria-hidden="true">{{ messages().noResults(searchedText()) }}</li>
+    }
+
+    @if (hasMore()) {
+      <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -->
+      <li
+        [id]="optionId(items().length)"
+        role="option"
+        [class]="moreClasses"
+        [class.bg-ghost-hover]="activeIndex() === items().length"
+        [attr.aria-selected]="false"
+        (mousedown)="onOptionMousedown($event)"
+        (click)="loadMore()"
+        (mouseenter)="onOptionEnter(items().length)"
+      >
+        {{ messages().more }}
+      </li>
+    }
+  </ul>
+</ng-template>

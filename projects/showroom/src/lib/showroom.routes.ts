@@ -88,6 +88,15 @@ export const showroomRoutes: Routes = [
         loadComponent: async () => (await import('./pages/components/card')).ShowroomCard,
       },
       {
+        path: 'components/dialog',
+        loadComponent: async () => (await import('./pages/components/dialog')).ShowroomDialog,
+      },
+      {
+        path: 'components/search-select',
+        loadComponent: async () =>
+          (await import('./pages/components/search-select')).ShowroomSearchSelect,
+      },
+      {
         /*
          * PERMANENT redirect, not a leftover. The iconography page lived at
          * /design-system/iconografia while the routes were still in Spanish,

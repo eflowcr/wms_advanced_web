@@ -27,6 +27,7 @@ import {
 } from '../field/field.types';
 import { FormControlBase, provideValueAccessor } from '../forms/control-value-accessor';
 import { Icon } from '../icon/icon';
+import { moveActiveIndex } from '../listbox/listbox.types';
 import { createConnectedOverlay, PANEL_POSITIONS } from '../overlay/connected-overlay';
 import {
   SELECT_PANEL_CLASSES,
@@ -322,18 +323,17 @@ export class Select extends FormControlBase<unknown> implements OnDestroy {
   }
 
   /**
-   * Move the active row, stopping at the ends rather than wrapping. Wrapping
-   * turns "hold the down arrow" into an endless loop with no signal that the
-   * list has finished.
+   * Move the active row. The rule -- stop at the ends, do not wrap -- lives in
+   * `listbox/`, shared with `ewms-search-select`: REQ-FE-DS3-001 HG-04 forbids
+   * a second keyboard implementation beside this one, and "does the list wrap"
+   * is exactly the kind of thing two copies would answer differently.
    */
   private moveActive(delta: number): void {
     const count = this.options().length;
     if (count === 0) {
       return;
     }
-    const from = this.activeIndex();
-    const next = from < 0 ? (delta > 0 ? 0 : count - 1) : from + delta;
-    this.activeIndex.set(Math.min(count - 1, Math.max(0, next)));
+    this.activeIndex.set(moveActiveIndex(this.activeIndex(), delta, count));
   }
 
   private selectActive(): void {
