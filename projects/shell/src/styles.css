@@ -13,6 +13,21 @@
 @import '../../design-system/src/styles/tokens.css';
 
 /*
+ * CDK overlay positioning. The only line in this PR outside
+ * projects/design-system/, and it is here because it has to be: the CDK
+ * appends `.cdk-overlay-container` to the end of <body> and positions the
+ * panes inside it absolutely. Without `position: fixed` on that container the
+ * coordinates the position strategy computes are measured against the wrong
+ * box and the panel lands at the bottom of the document instead of next to
+ * its trigger. The Tooltip (PR 1) shipped without it; the Select needs it too.
+ *
+ * The prebuilt sheet carries no colour, spacing or typography of its own, so
+ * gate 10 has nothing to object to: it is layout plumbing for a container this
+ * application never styles.
+ */
+@import '@angular/cdk/overlay-prebuilt.css';
+
+/*
  * The icon sources are geometry and semantic names, never class names. Left
  * in the scan, an icon called `filter` emits Tailwind's `.filter` utility.
  */

@@ -1,0 +1,228 @@
+<!-- The showroom is Spanish only, exempt from i18n (gate 12): declared so a screen reader never reads it as English. -->
+<article class="flex flex-col gap-10" lang="es">
+  <header class="flex flex-col gap-2">
+    <h1 class="text-h1">Marca</h1>
+    <p class="text-secondary">
+      Marca <strong>para quien construye</strong>: qué archivo usar cuando hace falta poner el logo
+      en una pantalla, y cómo. Los archivos que se ven acá son los que están en el repositorio, no
+      capturas.
+    </p>
+  </header>
+
+  <section class="flex flex-col gap-4" aria-labelledby="brand-main">
+    <h2 id="brand-main" class="text-h2">El logo principal</h2>
+    <p class="text-secondary">
+      El lockup de eWMS: la «e» circular en azul, «WMS» en navy y el tagline debajo.
+    </p>
+    <ewms-demo-frame ground="surface">
+      <img [src]="lockup" alt="Lockup de eWMS" class="h-20 w-auto" data-measure="brand-lockup" />
+    </ewms-demo-frame>
+    <ul class="flex flex-col gap-1">
+      <li><ewms-token-value token="--color-brand-navy" [swatch]="true" /></li>
+      <li><ewms-token-value token="--color-brand-blue" [swatch]="true" /></li>
+    </ul>
+    <p class="text-caption text-secondary">
+      Son los dos valores que llevan dentro los SVG de color. Leídos en vivo de
+      <code class="font-mono">tokens.css</code>: si alguno se moviera, esta línea lo diría y el
+      archivo no, que es exactamente el riesgo que hay que tener a la vista.
+    </p>
+  </section>
+
+  <section class="flex flex-col gap-4" aria-labelledby="brand-shapes">
+    <h2 id="brand-shapes" class="text-h2">Las tres formas</h2>
+    <ul class="grid grid-cols-[repeat(auto-fit,minmax(20rem,1fr))] gap-4">
+      @for (shape of shapes; track shape.id) {
+        <li class="flex flex-col gap-2" [attr.data-shape]="shape.id">
+          <ewms-demo-frame ground="surface" [label]="shape.name">
+            <div class="flex h-24 items-center">
+              <img [src]="shape.file" [alt]="shape.alt" [class]="shape.height + ' w-auto'" />
+            </div>
+          </ewms-demo-frame>
+          <p class="text-caption text-secondary">{{ shape.use }}</p>
+        </li>
+      }
+    </ul>
+  </section>
+
+  <section class="flex flex-col gap-4" aria-labelledby="brand-grounds">
+    <h2 id="brand-grounds" class="text-h2">Color y mono, sobre los dos fondos</h2>
+    <p class="text-secondary">
+      El archivo mono usa <code class="font-mono">currentColor</code>: no trae color propio, hereda
+      el del contenedor. Por eso el <em>mismo</em> archivo sirve sobre el canvas y sobre el rail
+      navy. Ésa es la razón de que exista la versión mono, y es lo que hay que ver funcionando.
+    </p>
+    <div class="grid grid-cols-[repeat(auto-fit,minmax(20rem,1fr))] gap-4">
+      <ewms-demo-frame ground="canvas" label="Mono heredando text-primary">
+        <span
+          class="block h-12 w-full"
+          role="img"
+          aria-label="Lockup de eWMS en mono sobre canvas"
+          [style]="mono(lockupMono)"
+          data-measure="brand-mono-canvas"
+        ></span>
+      </ewms-demo-frame>
+      <ewms-demo-frame ground="navy" label="Mono heredando text-on-dark">
+        <span
+          class="block h-12 w-full"
+          role="img"
+          aria-label="Lockup de eWMS en mono sobre navy"
+          [style]="mono(lockupMono)"
+          data-measure="brand-mono-navy"
+        ></span>
+      </ewms-demo-frame>
+      <ewms-demo-frame ground="canvas" label="Color sobre canvas">
+        <img [src]="lockup" alt="Lockup de eWMS a color sobre canvas" class="h-12 w-auto" />
+      </ewms-demo-frame>
+    </div>
+  </section>
+
+  <section class="flex flex-col gap-4" aria-labelledby="brand-space">
+    <h2 id="brand-space" class="text-h2">
+      Tamaño mínimo y área de resguardo
+      <span class="text-h4 text-secondary">(pendiente de confirmar con marca)</span>
+    </h2>
+    <p class="text-secondary">
+      Ninguna hoja de marca fija estos dos valores todavía. Lo que se dibuja abajo es la regla de
+      trabajo que usa la aplicación, escrita acá para que sea visible y se pueda corregir, no para
+      darla por cerrada.
+    </p>
+    <div class="grid grid-cols-[repeat(auto-fit,minmax(20rem,1fr))] gap-4">
+      <ewms-demo-frame ground="surface" label="Tamaño mínimo del isotipo">
+        <div class="flex items-end gap-6">
+          <div class="flex flex-col items-center gap-2">
+            <span
+              class="block size-icon-xl"
+              role="img"
+              aria-label="Isotipo de eWMS al tamaño mínimo"
+              [style]="mono(isotipoMono)"
+              data-measure="brand-min-size"
+            ></span>
+            <span class="text-caption text-secondary">mínimo</span>
+          </div>
+          <div class="flex flex-col items-center gap-2">
+            <span
+              class="block size-16"
+              role="img"
+              aria-label="Isotipo de eWMS a tamaño cómodo"
+              [style]="mono(isotipoMono)"
+            ></span>
+            <span class="text-caption text-secondary">cómodo</span>
+          </div>
+        </div>
+        <p class="mt-4 text-caption text-secondary">
+          El mínimo es <ewms-token-value token="--size-icon-xl" />, el icono más grande del sistema:
+          por debajo de eso el trazo de la «e» se cierra y el isotipo se lee como un punto.
+        </p>
+      </ewms-demo-frame>
+
+      <ewms-demo-frame ground="surface" label="Área de resguardo">
+        <div class="inline-block bg-secondary p-4" data-measure="brand-clearspace">
+          <img [src]="lockup" alt="Lockup de eWMS con su área de resguardo" class="h-10 w-auto" />
+        </div>
+        <p class="mt-4 text-caption text-secondary">
+          El tinte marca el resguardo: cuatro pasos de la escala base
+          (<ewms-token-value token="--spacing-base" />) en los cuatro lados. Nada entra ahí: ni
+          texto, ni borde, ni otro logo.
+        </p>
+      </ewms-demo-frame>
+    </div>
+  </section>
+
+  <section class="flex flex-col gap-4" aria-labelledby="brand-misuse">
+    <h2 id="brand-misuse" class="text-h2">Usos incorrectos</h2>
+    <ul class="grid grid-cols-[repeat(auto-fit,minmax(18rem,1fr))] gap-4">
+      <li class="flex flex-col gap-2">
+        <ewms-demo-frame ground="surface">
+          <img
+            [src]="lockup"
+            alt="Ejemplo incorrecto: el lockup de eWMS deformado"
+            class="h-16 w-40"
+          />
+        </ewms-demo-frame>
+        <p class="text-caption">
+          <span class="text-danger" aria-hidden="true">✗</span>
+          <span class="sr-only">Incorrecto: </span>
+          Deformarlo. La proporción es parte del dibujo; se escala por un solo lado y el otro
+          sigue.
+        </p>
+      </li>
+      <li class="flex flex-col gap-2">
+        <ewms-demo-frame ground="surface">
+          <span
+            class="block h-16 w-full text-warning"
+            role="img"
+            aria-label="Ejemplo incorrecto: el lockup de eWMS recoloreado"
+            [style]="mono(lockupMono)"
+          ></span>
+        </ewms-demo-frame>
+        <p class="text-caption">
+          <span class="text-danger" aria-hidden="true">✗</span>
+          <span class="sr-only">Incorrecto: </span>
+          Recolorearlo. El mono hereda color para adaptarse al fondo, no para teñir la marca.
+        </p>
+      </li>
+      <li class="flex flex-col gap-2">
+        <ewms-demo-frame ground="navy">
+          <img
+            [src]="lockup"
+            alt="Ejemplo incorrecto: el lockup a color sobre navy"
+            class="h-16 w-auto"
+          />
+        </ewms-demo-frame>
+        <p class="text-caption">
+          <span class="text-danger" aria-hidden="true">✗</span>
+          <span class="sr-only">Incorrecto: </span>
+          El de color sobre navy. El wordmark es navy: desaparece. Sobre oscuro va el mono.
+        </p>
+      </li>
+      <li class="flex flex-col gap-2">
+        <div class="rounded-md border border-default bg-surface">
+          <img
+            [src]="lockup"
+            alt="Ejemplo incorrecto: el lockup pegado al borde"
+            class="h-16 w-auto"
+          />
+        </div>
+        <p class="text-caption">
+          <span class="text-danger" aria-hidden="true">✗</span>
+          <span class="sr-only">Incorrecto: </span>
+          Pegado contra un borde. Sin resguardo la marca se lee como parte del marco.
+        </p>
+      </li>
+    </ul>
+  </section>
+
+  <section class="flex flex-col gap-4" aria-labelledby="brand-eprac">
+    <h2 id="brand-eprac" class="text-h2">ePRAC, la empresa</h2>
+    <p class="text-secondary">
+      eWMS es el producto; ePRAC es la empresa. En la aplicación real aparece en el rail y en el
+      bloque de credenciales del App Shell. Todavía no hay SVG: lo que hay son PNG, redimensionados
+      para web al entrar al repositorio.
+    </p>
+    <ul class="grid grid-cols-[repeat(auto-fit,minmax(18rem,1fr))] gap-4">
+      @for (logo of eprac; track logo.id) {
+        <li class="flex flex-col gap-2" [attr.data-eprac]="logo.id">
+          <ewms-demo-frame [ground]="logo.ground" [label]="logo.name">
+            <img [src]="logo.file" [alt]="logo.alt" class="h-12 w-auto" />
+          </ewms-demo-frame>
+          <p class="text-caption text-secondary">{{ logo.use }}</p>
+        </li>
+      }
+    </ul>
+    <p class="text-caption text-secondary">
+      No van a <code class="font-mono">THIRD-PARTY-NOTICES.md</code>: no son material de terceros,
+      son la marca de la empresa.
+    </p>
+  </section>
+
+  <aside class="flex flex-col gap-2 rounded-md border border-strong bg-secondary p-4">
+    <h2 class="text-h4">La excepción de eFLOW no es precedente</h2>
+    <p>
+      eFLOW es un producto hermano y <strong>no aplica a esta aplicación</strong>. Su maestro usa
+      negro puro en el wordmark, mientras ePRAC, eWMS y eDTS usan navy. Está documentado como
+      excepción de marca y se respeta tal cual, pero <strong>no habilita usar negro acá</strong>: el
+      color de marca de eWMS es el navy, y el negro no entra por esta puerta. eDTS y eFLOW no se
+      exhiben en este catálogo.
+    </p>
+  </aside>
+</article>

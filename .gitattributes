@@ -1,3 +1,21 @@
+# LF en todo el repositorio, sin depender de la maquina.
+#
+# Sin esta linea el fin de linea lo decide la config de cada quien. En Git para
+# Windows, `core.autocrlf=true` viene puesto de fabrica en el gitconfig del
+# sistema (C:/Program Files/Git/etc/gitconfig), y normaliza al comparar: un
+# archivo reescrito entero a CRLF le aparece LIMPIO a quien tiene esa config y
+# MODIFICADO a quien no. Dos personas mirando el mismo working tree ven cosas
+# distintas, y eso ya paso en este PR.
+#
+# `text=auto` marca como texto todo lo que git detecte como texto (los binarios
+# quedan afuera solos), y `eol=lf` fija LF en el working tree ademas del index.
+# A partir de aca la config local de cada maquina no cambia nada.
+#
+# Las reglas de abajo quedan igual: son las que un CI compara byte a byte y se
+# dejan escritas aunque esta linea ya las cubra, para que borrarla no las
+# arrastre sin que nadie se entere.
+* text=auto eol=lf
+
 # Files compared byte for byte by a CI gate must not change on checkout.
 # With core.autocrlf=true (the Windows default) git would rewrite them to CRLF
 # and tools/ci/check-icons.mjs would report them out of sync.

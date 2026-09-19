@@ -1,0 +1,431 @@
+<!-- The showroom is Spanish only, exempt from i18n (gate 12): declared so a screen reader never reads it as English. -->
+<article class="flex flex-col gap-10" lang="es">
+  <!-- ============================================================ 1. Encabezado -->
+  <header class="flex flex-col gap-2" data-block="1-encabezado">
+    <div class="flex flex-wrap items-baseline gap-3">
+      <h1 class="text-h1">Tooltip</h1>
+      <code class="font-mono text-primary">[ewmsTooltip]</code>
+    </div>
+    <ul class="flex flex-wrap gap-2 text-caption">
+      <li class="rounded-sm bg-secondary px-2 py-1 text-secondary">
+        Versión <span class="font-mono">{{ version }}</span>
+      </li>
+      <li class="rounded-sm bg-success-surface px-2 py-1 text-success">Construido y en verde</li>
+      <li class="rounded-sm bg-warning-surface px-2 py-1 text-warning">
+        Es una <strong>directiva</strong>, no un componente
+      </li>
+      <li class="rounded-sm bg-secondary px-2 py-1 text-secondary">
+        Ficha: <span class="font-mono">08-Sistema-de-Diseno/Componentes/Tooltip.md</span>
+      </li>
+    </ul>
+  </header>
+
+  <!-- ================================================ 2. Qué resuelve / cuándo no -->
+  <section class="flex flex-col gap-4" aria-labelledby="tt-purpose" data-block="2-proposito">
+    <h2 id="tt-purpose" class="text-h2">Qué resuelve, y cuándo NO usarlo</h2>
+    <div class="grid grid-cols-[repeat(auto-fit,minmax(20rem,1fr))] gap-4">
+      <div class="flex flex-col gap-2 rounded-md border border-default bg-surface p-4">
+        <h3 class="text-h3">Qué resuelve</h3>
+        <p>
+          Texto corto que aparece junto a un control al <strong>apuntarlo o enfocarlo</strong>. Se
+          pone <em>sobre</em> un elemento que ya existe: no envuelve nada, no tiene plantilla, y el
+          panel se construye como nodo del DOM dentro de un overlay del CDK.
+        </p>
+        <p class="text-caption text-secondary">
+          Entró al sistema porque el Icon Button lo exige. El alcance es deliberado: lo mínimo que
+          ese consumidor necesita, bien hecho.
+        </p>
+      </div>
+      <div class="flex flex-col gap-2 rounded-md border border-danger bg-danger-surface p-4">
+        <h3 class="text-h3">Cuándo NO usarlo</h3>
+        <ul class="flex flex-col gap-2">
+          <li>
+            <strong>No es el nombre accesible de nada.</strong> Un tooltip
+            <em>describe</em>; no <em>nombra</em>. Quien navega con teclado puede no verlo nunca y
+            en pantalla táctil el hover no existe: un control cuyo único nombre es su tooltip
+            <strong>no tiene nombre</strong>.
+          </li>
+          <li>
+            <strong>No es contenedor de texto largo</strong>, y menos de contenido interactivo: un
+            link o un botón adentro es inalcanzable con teclado.
+          </li>
+          <li>
+            <strong>No reemplaza la ayuda de un campo.</strong> Eso es el
+            <code class="font-mono">hint</code> del Input, que es visible siempre.
+          </li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================= 3. Demo principal -->
+  <section class="flex flex-col gap-4" aria-labelledby="tt-demo" data-block="3-demo">
+    <h2 id="tt-demo" class="text-h2">Demo principal</h2>
+    <div class="grid grid-cols-[repeat(auto-fit,minmax(24rem,1fr))] gap-6">
+      <ewms-demo-frame ground="canvas" label="La directiva sobre tres anfitriones distintos">
+        <div class="flex flex-col gap-5">
+          <!--
+            Case 1: the duplicated name. `describes` stays false (the default),
+            so the panel is aria-hidden and the screen reader says the name
+            once. This is the Icon Button's case, applied from inside.
+          -->
+          <div class="flex flex-wrap items-center gap-3">
+            <span data-demo-tooltip>
+              <ewms-icon-button icon="trash" label="Eliminar" tooltip="Eliminar" />
+            </span>
+            <span class="min-w-64 flex-1 text-caption text-secondary">
+              <strong>El nombre repetido.</strong>&ngsp;<code class="font-mono">label</code> y
+              <code class="font-mono">tooltip</code> dicen lo mismo, así que el panel va
+              <code class="font-mono">aria-hidden</code> y el lector de pantalla lo anuncia una sola
+              vez. Pasale el foco con Tab: aparece igual.
+            </span>
+          </div>
+
+          <!--
+            Case 2: the descriptive one. `describes` is bound to true, so the
+            panel takes role="tooltip" and is connected with aria-describedby.
+          -->
+          <div class="flex flex-wrap items-center gap-3">
+            <span
+              class="rounded-sm border border-strong bg-surface px-2 py-1 text-primary"
+              tabindex="0"
+              ewmsTooltip="Calculado sobre los últimos 30 días"
+              [describes]="true"
+              data-demo-describes
+            >
+              Rotación
+            </span>
+            <span class="min-w-64 flex-1 text-caption text-secondary">
+              <strong>El descriptivo.</strong> El texto AGREGA información que el nombre no da, así
+              que se conecta con <code class="font-mono">aria-describedby</code> y se anuncia como
+              descripción. Sobre un elemento cualquiera el selector va prefijado:
+              <code class="font-mono">[ewmsTooltip]</code>.
+            </span>
+          </div>
+
+          <!--
+            Case 3: tooltipDisabled, driven from the page. The switch is an
+            ordinary button of the design system, so nothing here reimplements
+            a control to demonstrate a directive.
+          -->
+          <div class="flex flex-wrap items-center gap-3">
+            <!--
+              The switch goes on a host the directive is applied to DIRECTLY.
+              It cannot go on `<ewms-icon-button>`: that component applies the
+              directive inside its own template, so `tooltipDisabled` written
+              on its element would not reach anything -- which is what the
+              compiler says, and is worth knowing.
+            -->
+            <span data-demo-suppressed>
+              <ewms-button
+                variant="secondary"
+                size="sm"
+                ewmsTooltip="Exporta las 1.482 filas visibles, no la tabla entera"
+                [describes]="true"
+                [tooltipDisabled]="suppressed()"
+              >
+                Descargar
+              </ewms-button>
+            </span>
+            <span class="shrink-0">
+              <ewms-button variant="secondary" size="sm" (click)="toggleSuppressed()">
+                @if (suppressed()) {
+                  Reactivar el tooltip
+                } @else {
+                  Suprimir el tooltip
+                }
+              </ewms-button>
+            </span>
+            <span class="min-w-64 flex-1 text-caption text-secondary" role="status" aria-live="polite">
+              <code class="font-mono">tooltipDisabled</code> =
+              <span class="font-mono">{{ suppressed() }}</span>. Lo que se apaga es la
+              <strong>descripción</strong>; el nombre del botón —su propio texto— sigue estando. Un
+              interruptor que pudiera dejar un control sin nombre no sería un interruptor de
+              tooltip.
+            </span>
+          </div>
+        </div>
+      </ewms-demo-frame>
+      <ewms-prop-table [rows]="props" caption="Entradas de la directiva [ewmsTooltip]" />
+    </div>
+  </section>
+
+  <!-- =============================================================== 4. Variantes -->
+  <section class="flex flex-col gap-4" aria-labelledby="tt-variants" data-block="4-variantes">
+    <h2 id="tt-variants" class="text-h2">Variantes</h2>
+    <p class="text-secondary">
+      No hay variantes de estilo: hay <strong>cuatro colocaciones</strong>. Cada una declara la
+      preferida, y el CDK recorre una lista de dos —la pedida y su opuesta— quedándose con la
+      primera que entra. Eso es el volteo automático, y no es un adorno: un tooltip cortado por el
+      borde de la ventana es un tooltip inútil.
+    </p>
+    <ewms-demo-frame ground="canvas">
+      <ul class="flex flex-wrap gap-8">
+        @for (sample of positions; track sample.position) {
+          <li
+            class="flex flex-col items-start gap-2"
+            [attr.data-variant]="sample.position"
+            [attr.data-position-sample]="sample.position"
+          >
+            <ewms-button
+              variant="secondary"
+              size="sm"
+              [ewmsTooltip]="'Posición ' + sample.position"
+              [position]="sample.position"
+            >
+              {{ sample.label }}
+            </ewms-button>
+            <span class="text-caption text-secondary">{{ sample.hint }}</span>
+          </li>
+        }
+      </ul>
+    </ewms-demo-frame>
+    <p class="text-caption text-secondary">
+      <strong>No hay separación entre el control y el panel.</strong> Un hueco sería espacio muerto
+      que el puntero tiene que cruzar, y la 1.4.13 exige que el tooltip siga abierto mientras el
+      puntero viaja hacia él.
+    </p>
+  </section>
+
+  <!-- ========================================================= 5. Matriz de estados -->
+  <section class="flex flex-col gap-4" aria-labelledby="tt-matrix" data-block="5-matriz">
+    <h2 id="tt-matrix" class="text-h2">Matriz de estados</h2>
+    <div class="flex flex-col gap-2 rounded-md border border-strong bg-secondary p-4">
+      <h3 class="text-h4">No aplica — y la razón es interesante</h3>
+      <p>
+        Un tooltip tiene dos estados, cerrado y abierto, y <strong>sólo puede haber uno abierto en
+        toda la página</strong>: abrir uno cierra el anterior, por un registro a nivel de módulo que
+        los botones de una toolbar comparten sin conocerse entre sí.
+      </p>
+      <p class="text-caption">
+        Una grilla de celdas «abiertas» sería, entonces, una grilla de celdas donde todas menos una
+        estarían mintiendo. Lo que sí se puede renderizar de verdad es el
+        <strong>comportamiento</strong>, y eso es la tabla de abajo.
+      </p>
+    </div>
+
+    <h3 class="text-h3">Las tres reglas de la WCAG 2.2 §1.4.13, y cómo probarlas acá</h3>
+    <div class="overflow-x-auto">
+      <table class="w-full border-collapse text-caption">
+        <caption class="mb-2 text-left text-secondary">
+          Contenido al apuntar o enfocar — requisito, no mejora
+        </caption>
+        <thead>
+          <tr>
+            <th scope="col" class="border-b border-default p-2 text-left text-secondary">Regla</th>
+            <th scope="col" class="border-b border-default p-2 text-left text-secondary">
+              Qué significa acá
+            </th>
+            <th scope="col" class="border-b border-default p-2 text-left text-secondary">
+              Cómo comprobarlo en esta página
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <th scope="row" class="border-b border-default p-2 text-left text-primary">
+              Descartable
+            </th>
+            <td class="border-b border-default p-2 text-primary">
+              <code class="font-mono">Escape</code> lo cierra sin mover el foco ni el puntero.
+            </td>
+            <td class="border-b border-default p-2 text-primary">
+              Abrí cualquiera de arriba y pulsá <code class="font-mono">Escape</code>: desaparece y
+              el foco se queda donde estaba.
+            </td>
+          </tr>
+          <tr>
+            <th scope="row" class="border-b border-default p-2 text-left text-primary">
+              Apuntable
+            </th>
+            <td class="border-b border-default p-2 text-primary">
+              El puntero puede entrar al panel sin que se cierre.
+            </td>
+            <td class="border-b border-default p-2 text-primary">
+              Apuntá un control, movete despacio hasta el panel y quedate ahí: no se va.
+            </td>
+          </tr>
+          <tr>
+            <th scope="row" class="border-b border-default p-2 text-left text-primary">
+              Persistente
+            </th>
+            <td class="border-b border-default p-2 text-primary">
+              Queda visible hasta que el puntero salga, el foco se vaya o se pulse
+              <code class="font-mono">Escape</code>. <strong>Nunca se cierra solo por tiempo.</strong>
+            </td>
+            <td class="border-b border-default p-2 text-primary">
+              Dejalo abierto y esperá. Sigue ahí.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="text-caption text-secondary">
+      Hay dos temporizadores y <strong>ninguno de los dos es un cierre automático</strong>. Uno es
+      el retardo de aparición, que existe para que barrer el mouse por una toolbar no dispare cinco
+      tooltips de paso. El otro es el margen que el puntero tiene para viajar del control al panel
+      —lo que la regla «apuntable» exige—, y entrar al panel lo cancela.
+    </p>
+    <p class="text-caption text-secondary">
+      Al foco de teclado <strong>no hay retardo</strong>: navegar con Tab es deliberado, no se pasa
+      por al lado de un control sin querer.
+    </p>
+  </section>
+
+  <!-- ================================================================ 6. Tamaños -->
+  <section class="flex flex-col gap-4" aria-labelledby="tt-sizes" data-block="6-tamanos">
+    <h2 id="tt-sizes" class="text-h2">Tamaños</h2>
+    <div class="flex flex-col gap-2 rounded-md border border-strong bg-secondary p-4">
+      <h3 class="text-h4">No aplica</h3>
+      <p>
+        No hay escala Small/Medium/Large: el panel se ajusta a su texto, con un ancho máximo para
+        que una frase larga corte en varias líneas en vez de cruzar la pantalla.
+      </p>
+      <p class="text-caption">
+        Ese tope es también el recordatorio de lo que este componente no es: si el texto no entra
+        cómodo, no era un tooltip.
+      </p>
+    </div>
+  </section>
+
+  <!-- ==================================================== 7. Anatomía y tokens -->
+  <section class="flex flex-col gap-4" aria-labelledby="tt-anatomy" data-block="7-anatomia">
+    <h2 id="tt-anatomy" class="text-h2">Anatomía y tokens</h2>
+    <p class="text-secondary">
+      El panel es un <code class="font-mono">&lt;div&gt;</code> construido a mano, con una cadena de
+      clases única: no tiene plantilla de Angular, así que todo lo que lo pinta está en esa cadena y
+      sale de estos tokens.
+    </p>
+    <div class="overflow-x-auto">
+      <table class="w-full border-collapse text-caption">
+        <caption class="mb-2 text-left text-secondary">
+          Tokens que consume [ewmsTooltip]
+        </caption>
+        <thead>
+          <tr>
+            <th scope="col" class="border-b border-default p-2 text-left text-secondary">Parte</th>
+            <th scope="col" class="border-b border-default p-2 text-left text-secondary">
+              Token, cadena y valor
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of anatomy; track row.token) {
+            <tr>
+              <th scope="row" class="border-b border-default p-2 text-left text-primary">
+                {{ row.part }}
+              </th>
+              <td class="border-b border-default p-2">
+                <ewms-token-value [token]="row.token" [swatch]="true" />
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    <p class="text-caption text-secondary">
+      El texto se escribe con <code class="font-mono">textContent</code>, nunca
+      <code class="font-mono">innerHTML</code>: un tooltip no puede llevar marcado, ni por descuido
+      ni por un valor que venga de datos.
+    </p>
+  </section>
+
+  <!-- ============================================== 8. Contrato para Angular -->
+  <section class="flex flex-col gap-4" aria-labelledby="tt-contract" data-block="8-contrato">
+    <h2 id="tt-contract" class="text-h2">Contrato para Angular</h2>
+
+    <h3 class="text-h3">Entradas</h3>
+    <p class="text-secondary">
+      Las cuatro de la tabla del bloque 3. <strong>Dos formas de escribirlas, y el nombre cambia a
+      propósito:</strong> dentro de un componente del sistema la entrada se llama
+      <code class="font-mono">tooltip</code>, a secas, porque el selector del componente ya lleva el
+      prefijo; sobre cualquier otro elemento la directiva usa
+      <code class="font-mono">[ewmsTooltip]</code>, porque un
+      <code class="font-mono">[tooltip]</code> suelto es un selector de atributo global demasiado
+      genérico y chocaría con cualquier otra librería.
+    </p>
+
+    <h3 class="text-h3">Salidas</h3>
+    <p class="text-secondary">
+      <strong>Ninguna.</strong> La directiva abre y cierra su propio panel; no hay nada que el
+      consumidor tenga que saber.
+    </p>
+
+    <h3 class="text-h3">Uso típico</h3>
+    <pre
+      class="overflow-x-auto rounded-md border border-default bg-secondary p-4 font-mono text-mono text-primary"
+    ><code>{{ snippet }}</code></pre>
+
+    <h3 class="text-h3">Accesibilidad</h3>
+    <ul class="flex flex-col gap-2">
+      <li>
+        <strong>Aparece al hover Y al foco de teclado.</strong> Sólo-hover dejaría fuera a quien usa
+        teclado, y el Icon Button sería inservible para esa persona. Se escucha
+        <code class="font-mono">focusin</code>/<code class="font-mono">focusout</code> —los que
+        burbujean— para que también funcione sobre un contenedor cuyo elemento enfocable es
+        descendiente.
+      </li>
+      <li>
+        <strong>El nombre duplicado.</strong> Si el texto es igual al nombre accesible del control,
+        el panel va <code class="font-mono">aria-hidden</code>: el nombre ya lo dice el
+        <code class="font-mono">aria-label</code>, y conectarlo con
+        <code class="font-mono">aria-describedby</code> lo haría anunciar dos veces. Si agrega
+        información, se conecta y toma <code class="font-mono">role="tooltip"</code>. La directiva
+        <strong>no adivina</strong>: lo declara quien la usa, con
+        <code class="font-mono">describes</code>.
+      </li>
+      <li>
+        <code class="font-mono">Escape</code> se escucha en el
+        <strong>documento</strong>, no en el anfitrión: un tooltip abierto por hover tiene el foco en
+        cualquier otro lado, y ahí un listener local no vería la tecla nunca.
+      </li>
+      <li>
+        <code class="font-mono">aria-describedby</code> se escribe al abrir y se
+        <strong>borra al cerrar</strong>: apuntar a un id que ya no está en el documento es un valor
+        inválido, y un atributo inválido es peor que uno ausente.
+      </li>
+    </ul>
+
+    <h3 class="text-h3">Errores comunes</h3>
+    <ul class="flex flex-col gap-2">
+      <li>
+        <strong>Escribir <code class="font-mono">ewmsTooltip</code> como nombre de la entrada dentro
+        de un componente del sistema.</strong> Ahí se llama <code class="font-mono">tooltip</code>.
+        El prefijo es del selector de la directiva, para cuando se aplica a un elemento cualquiera.
+      </li>
+      <li>
+        <strong>Suponer que existe un <code class="font-mono">disabled</code>.</strong> No existe, y
+        el nombre de lo que sí existe —<code class="font-mono">tooltipDisabled</code>— es
+        estructural. Esta directiva se aplica <em>sobre controles</em>, y
+        <code class="font-mono">disabled</code> es propiedad de todo control nativo: una entrada con
+        ese nombre se come el <code class="font-mono">[disabled]</code> de su propio anfitrión.
+        Angular resuelve el binding a la directiva, el atributo nativo <strong>nunca se
+        escribe</strong>, y el resultado es un botón que se ve deshabilitado y sigue siendo
+        clickeable. Falla en silencio, justo en el atributo donde fallar en silencio es lo peor.
+      </li>
+      <li>
+        <strong>Creer que eso lo encontró una revisión.</strong> Lo encontraron
+        <strong>dos pruebas del Icon Button que fallaron</strong>. La primera salida fue escribir
+        <code class="font-mono">[attr.disabled]</code> en el consumidor, pero eso deja la trampa
+        viva para cada componente del sistema que ponga un tooltip sobre un control nativo.
+        Renombrar la entrada la cierra de raíz. Hay prueba de regresión, y se verificó que
+        <strong>muerde</strong>: reintroduciendo la colisión, la prueba falla.
+      </li>
+      <li>
+        <strong>Meter un link o un botón adentro.</strong> No hay forma de llegar ahí con el
+        teclado: el foco está en el anfitrión y el panel no es enfocable.
+      </li>
+      <li>
+        <strong>Esperar que aparezca en una tablet.</strong> Hoy no aparece: no hay hover ni foco que
+        lo dispare. Es aceptable <em>porque nunca es la única fuente de la información</em> — y ese
+        «porque» es lo que hay que preservar.
+      </li>
+    </ul>
+
+    <h3 class="text-h3">Bloques que no aplican</h3>
+    <p class="text-secondary">
+      Dos, escritos arriba en lugar de borrados: <strong>matriz de estados</strong> (sólo puede haber
+      un tooltip abierto por página) y <strong>tamaños</strong> (el panel se ajusta a su texto).
+    </p>
+  </section>
+</article>

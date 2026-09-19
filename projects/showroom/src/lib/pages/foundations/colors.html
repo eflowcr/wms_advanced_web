@@ -1,0 +1,193 @@
+<!-- The showroom is Spanish only, exempt from i18n (gate 12): declared so a screen reader never reads it as English. -->
+<article class="flex flex-col gap-10" lang="es">
+  <header class="flex flex-col gap-2">
+    <h1 class="text-h1">Color</h1>
+    <p class="text-secondary">
+      Dos capas. Abajo los <strong>primitivos</strong>: los valores crudos, nombrados por lo que son.
+      Arriba los <strong>semánticos</strong>: nombrados por su rol, aliasando un primitivo. Ningún
+      componente toca la capa de abajo — re-marcar es cambiar a qué primitivo apunta un semántico,
+      sin tocar un solo componente.
+    </p>
+    <p class="text-caption text-secondary">
+      Todo lo que se ve acá se lee en vivo de <code class="font-mono">tokens.css</code>. Los
+      primitivos ni siquiera están escritos en esta página: se descubren recorriendo la hoja de
+      estilos, así que un tono nuevo aparece solo.
+    </p>
+  </header>
+
+  <section class="flex flex-col gap-4" aria-labelledby="colors-primitives">
+    <h2 id="colors-primitives" class="text-h2">Capa 1 — primitivos</h2>
+    <p class="text-secondary">
+      El tono es la luminosidad CIE L* del valor, redondeada: 0 es negro, 100 es blanco. No es una
+      escala inventada, sale del valor, y por eso el contraste se lee de un vistazo.
+    </p>
+    @for (ramp of ramps(); track ramp.family) {
+      <div class="flex flex-col gap-2" [attr.data-ramp]="ramp.family">
+        <h3 class="text-h3">{{ ramp.family }} <span class="text-secondary text-caption">({{ ramp.names.length }})</span></h3>
+        <ul class="flex flex-wrap gap-2">
+          @for (name of ramp.names; track name) {
+            <li class="flex w-40 flex-col gap-1">
+              <span
+                class="block h-10 rounded-sm border border-default"
+                [style]="swatch(name)"
+                aria-hidden="true"
+              ></span>
+              <ewms-token-value [token]="name" />
+            </li>
+          }
+        </ul>
+      </div>
+    }
+    @if (translucent().length) {
+      <div class="flex flex-col gap-2">
+        <h3 class="text-h3">navy translúcido <span class="text-secondary text-caption">({{ translucent().length }})</span></h3>
+        <p class="text-caption text-secondary">
+          Sombras y overlay. Navy y no negro: una sombra teñida con el color de la marca se integra,
+          una gris se ve sucia. Van sobre un tablero para que se vea la transparencia.
+        </p>
+        <ul class="flex flex-wrap gap-2">
+          @for (name of translucent(); track name) {
+            <li class="flex w-40 flex-col gap-1">
+              <span class="block rounded-sm border border-default bg-surface" aria-hidden="true">
+                <span class="block h-10 rounded-sm" [style]="swatch(name)"></span>
+              </span>
+              <ewms-token-value [token]="name" />
+            </li>
+          }
+        </ul>
+      </div>
+    }
+  </section>
+
+  <section class="flex flex-col gap-4" aria-labelledby="colors-semantic">
+    <h2 id="colors-semantic" class="text-h2">Capa 2 — semánticos</h2>
+    <p class="text-secondary">
+      Cada fila muestra <strong>a qué primitivo apunta</strong>. Esa flecha es el concepto entero.
+    </p>
+    @for (role of roles; track role.id) {
+      <div class="flex flex-col gap-2" [attr.data-role]="role.id">
+        <h3 class="text-h3">{{ role.title }}</h3>
+        <p class="text-caption text-secondary">{{ role.note }}</p>
+        <ul class="flex flex-col gap-1">
+          @for (token of role.tokens; track token) {
+            <li><ewms-token-value [token]="token" [swatch]="true" /></li>
+          }
+        </ul>
+      </div>
+    }
+  </section>
+
+  <section class="flex flex-col gap-4" aria-labelledby="colors-contrast">
+    <h2 id="colors-contrast" class="text-h2">Contraste, calculado acá</h2>
+    <p class="text-secondary">
+      Ningún número de esta tabla está transcrito. La página lee los dos tokens, los convierte a
+      canal y calcula la razón WCAG en el navegador. Si alguien mueve un token y rompe un contraste,
+      la tabla lo delata sola — que es todo el punto de calcularlo en vez de escribirlo.
+    </p>
+    <p class="text-caption text-secondary">
+      Mínimos: {{ 4.5 }}:1 para texto (1.4.3) y {{ 3 }}:1 para bordes y componentes (1.4.11).
+      <strong>Exento</strong> no es un «falla» más suave: un control deshabilitado está exento por
+      norma, y un divisor decorativo no es un control.
+    </p>
+    <div class="overflow-x-auto">
+      <table class="w-full border-collapse text-caption">
+        <caption class="mb-2 text-left text-secondary">
+          Pares verificados ({{ contrasts().length }})
+        </caption>
+        <thead>
+          <tr>
+            <th scope="col" class="border-b border-default p-2 text-left text-secondary">Muestra</th>
+            <th scope="col" class="border-b border-default p-2 text-left text-secondary">Primer plano</th>
+            <th scope="col" class="border-b border-default p-2 text-left text-secondary">Sobre</th>
+            <th scope="col" class="border-b border-default p-2 text-left text-secondary">Razón</th>
+            <th scope="col" class="border-b border-default p-2 text-left text-secondary">Mín.</th>
+            <th scope="col" class="border-b border-default p-2 text-left text-secondary">Veredicto</th>
+            <th scope="col" class="border-b border-default p-2 text-left text-secondary">Nota</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of contrasts(); track row.foreground + row.background) {
+            <tr [attr.data-contrast]="row.foreground + ' on ' + row.background">
+              <td class="border-b border-default p-2">
+                <span
+                  class="flex size-8 items-center justify-center rounded-sm border border-default"
+                  [style]="swatch(row.background)"
+                  aria-hidden="true"
+                >
+                  <span class="block size-4 rounded-full" [style]="swatch(row.foreground)"></span>
+                </span>
+              </td>
+              <th scope="row" class="border-b border-default p-2 text-left">
+                <code class="font-mono text-primary">{{ row.foreground }}</code>
+              </th>
+              <td class="border-b border-default p-2">
+                <code class="font-mono text-secondary">{{ row.background }}</code>
+              </td>
+              <td class="border-b border-default p-2 font-mono text-primary">{{ row.ratio }}</td>
+              <td class="border-b border-default p-2 font-mono text-secondary">{{ row.minimum }}:1</td>
+              <td class="border-b border-default p-2">
+                <span class="rounded-sm px-2 py-1" [class]="verdictClasses(row.verdict)">
+                  {{ verdictLabel(row.verdict) }}
+                </span>
+              </td>
+              <td class="border-b border-default p-2 text-secondary">{{ row.note }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="flex flex-col gap-4" aria-labelledby="colors-rules">
+    <h2 id="colors-rules" class="text-h2">Las dos reglas que no se negocian</h2>
+    <div class="grid grid-cols-[repeat(auto-fit,minmax(20rem,1fr))] gap-4">
+      <div class="flex flex-col gap-2 rounded-md border border-default bg-surface p-4">
+        <h3 class="text-h3">El azul significa «se hace clic»</h3>
+        <p>
+          El azul de marca queda reservado <strong>en exclusiva para acción</strong>. Nada
+          informativo, decorativo o de estado usa azul. Es una regla fuerte, barata de sostener, y
+          hace la interfaz legible sin pensarla.
+        </p>
+        <ewms-demo-frame ground="canvas" label="Acción y no-acción, uno al lado del otro">
+          <div class="flex flex-wrap items-center gap-4">
+            <span class="rounded-control px-4 py-2 text-on-primary bg-primary">Acción</span>
+            <span class="rounded-control border border-neutral bg-neutral-surface px-4 py-2 text-neutral">
+              Informativo
+            </span>
+          </div>
+        </ewms-demo-frame>
+      </div>
+      <div class="flex flex-col gap-2 rounded-md border border-default bg-surface p-4">
+        <h3 class="text-h3">No existe familia <code class="font-mono">info</code></h3>
+        <p>
+          Lo informativo usa <code class="font-mono">neutral</code>. El azul informativo natural
+          quedaba a 1.76:1 del azul de acción: indistinguibles en la práctica. Con neutral nunca
+          compiten.
+        </p>
+        <p class="text-caption text-secondary">
+          Por la misma razón <code class="font-mono">Badge/Neutral</code> se arma con
+          <code class="font-mono">surface</code> + <code class="font-mono">text</code> y no con
+          <code class="font-mono">solid</code> + blanco: el solid llega a 4.19:1, por debajo de AA.
+          Es además lo natural para un badge «sin estado».
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <aside class="flex flex-col gap-2 rounded-md border border-strong bg-secondary p-4">
+    <h2 class="text-h4">
+      <code class="font-mono">--color-brand-blue</code> no tiene utilidad, y es a propósito
+    </h2>
+    <p>
+      Está en <code class="font-mono">tokens.css</code> sin utilidad en el tema de Tailwind, con su
+      razón escrita al lado: su único uso previsto (los iconos de KPI del Dashboard) choca con la
+      regla de arriba, y la decisión está diferida hasta que se construyan esos KPI.
+      <strong>No borrarlo por parecer muerto.</strong>
+    </p>
+    <p class="text-caption text-secondary">
+      El valor de acción que sí consumen los componentes es
+      <code class="font-mono">--color-bg-primary</code>, que hoy apunta al mismo primitivo. Dos
+      nombres distintos porque significan cosas distintas.
+    </p>
+  </aside>
+</article>

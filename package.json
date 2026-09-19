@@ -18,6 +18,7 @@
     "icons:build": "node tools/icons/build-icons.mjs",
     "vault:check-tokens": "node tools/vault/check-token-names.mjs",
     "e2e": "playwright test",
+    "showroom:capture": "playwright test --config playwright.capture.config.ts",
     "audit:ci": "npm audit --audit-level=high"
   },
   "private": true,

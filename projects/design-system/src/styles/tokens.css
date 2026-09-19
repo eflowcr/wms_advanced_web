@@ -119,12 +119,14 @@
   --green-96: #ebf5f1;
 
   /* Longitudes: size-<px> */
+  --size-1-5: 1.5px;
   --size-4: 4px;
   --size-6: 6px;
   --size-8: 8px;
   --size-12: 12px;
   --size-13: 13px;
   --size-14: 14px;
+  --size-15: 15px;
   --size-16: 16px;
   --size-18: 18px;
   --size-20: 20px;
@@ -257,6 +259,8 @@
   --color-focus-ring: var(--blue-48);
   /* Sobre el rail navy: el azul de marca queda en 3.76:1, este en 6.37:1. */
   --color-focus-ring-on-dark: var(--blue-63);
+  /* Anillo de foco de 3px con separacion de 2px respecto del control */
+  --focus-ring-shadow: 0 0 0 2px var(--color-surface), 0 0 0 5px var(--color-focus-ring);
   /* Siempre acompanado de una barra de acento: el tinte solo es fragil. */
   --color-row-selected: var(--blue-93);
   --color-overlay: var(--navy-7-a50);
@@ -279,6 +283,15 @@
   --radius-md: var(--size-8);
   --radius-lg: var(--size-12);
   --radius-full: var(--size-pill);
+
+  /* ------------------------------------------------------- grosor de borde
+   * El borde de Checkbox y Radio es 1.5px y no 1px: a 18x18 un borde de 1px
+   * se pierde, y a 2px la caja se ve pesada al lado del Input. Es el unico
+   * grosor de borde del sistema que no sale de la escala entera de Tailwind,
+   * asi que necesita token propio -- sin el, el componente escribiria
+   * `border-[1.5px]`, que es un valor crudo y lo rechaza la compuerta 10.
+   * Agregado en DS-2 (Checkbox/Radio). */
+  --border-width-selection: var(--size-1-5);
 
   /* ------------------------------------------------------------ tipografia */
   --font-family-sans: var(--typeface-montserrat);
@@ -317,6 +330,24 @@
   /* Text/Mono — codigos, SKUs, lotes, IDs.
    * Peso e interlineado (pendiente): no definidos. */
   --text-mono-size: var(--size-13);
+
+  /* Tipografia de controles (Boton, Input, Select).
+   * Los tres tamanos salen de la ficha del Boton (Small 13px / Medium 14px /
+   * Large 15px). */
+  --text-control-sm-size: var(--size-13);
+  --text-control-md-size: var(--size-14);
+  --text-control-lg-size: var(--size-15);
+  /* SIN CONFIRMAR: la ficha del Boton no fija peso tipografico. El 500 lo
+   * eligio quien implemento el componente, no sale de ninguna especificacion.
+   * Queda anotado hasta que diseno lo confirme o lo cambie; no se toca por
+   * cuenta propia porque cambiarlo mueve los cuatro controles a la vez. */
+  --text-control-weight: var(--weight-medium);
+  /* Peso de la opcion elegida dentro del panel del Select. La ficha pide
+   * "negrita" y el tema de Tailwind no tiene utilidades de peso (--*: initial
+   * las borra), asi que el componente lo lee como var(). Semantico y no
+   * --weight-semibold directo: un primitivo fuera de tokens.css lo rechaza la
+   * compuerta 10. Agregado en DS-2 (Select). */
+  --text-control-selected-weight: var(--weight-semibold);
 
   /* ------------------------------------------------------------- iconos
    * Set: Tabler outline, grid 24x24, trazo 2 (ADR 0011).

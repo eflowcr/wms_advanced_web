@@ -1,0 +1,6 @@
+@if (label()) {
+  <p class="mb-2 text-caption text-secondary">{{ label() }}</p>
+}
+<div class="rounded-md border p-6" [class]="groundClasses()">
+  <ng-content />
+</div>
