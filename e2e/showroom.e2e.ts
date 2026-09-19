@@ -410,9 +410,7 @@ test.describe('the fixed geometry of the system', () => {
  * out.
  */
 test.describe('the component sheets measure what they claim', () => {
-  test('the icon button is square at the three sizes, over the 2.5.8 minimum', async ({
-    page,
-  }) => {
+  test('the icon button is square at the three sizes, over the 2.5.8 minimum', async ({ page }) => {
     await page.goto(ICON_BUTTON);
     await ready(page);
 
@@ -486,9 +484,7 @@ test.describe('the component sheets measure what they claim', () => {
     await ready(page);
 
     const track = await page.locator('[data-measure-track] input').boundingBox();
-    const thumb = await page
-      .locator('[data-measure-track] span[aria-hidden="true"]')
-      .boundingBox();
+    const thumb = await page.locator('[data-measure-track] span[aria-hidden="true"]').boundingBox();
     expect(round(track?.width)).toBe(44);
     expect(round(track?.height)).toBe(24);
     expect(round(thumb?.width)).toBe(20);
@@ -555,4 +551,562 @@ test.describe('accessibility', () => {
       expect(results.violations).toEqual([]);
     });
   }
+});
+
+/**
+ * THE KEYBOARD WALK -- the exit criterion of DS-2 and step 3 of the comanda.
+ *
+ * The comanda's "listo cuando" is being able to go through the catalogue end
+ * to end with Tab, Enter and the arrow keys. Until now that was a claim
+ * nobody had checked: axe covers contrast and semantics and says nothing
+ * about whether the tab order reaches everything, or reaches something twice.
+ *
+ * WHY THE EXPECTED SET IS READ OFF THE DOM AND NOT WRITTEN DOWN HERE.
+ * A hand-written list of controls per page goes stale the first time a page
+ * gains a button, and goes stale silently -- the test keeps passing while the
+ * thing it was written to protect stops being true. So each page is asked
+ * what interactive elements it is showing, every one of them is stamped, and
+ * the walk has to visit exactly that set: nothing missing, nothing twice, and
+ * nothing focused that was not in it.
+ */
+
+/** A tab stop, as observed. `kbd` is the stamp put on the element beforehand. */
+interface TabStop {
+  readonly kbd: string | null;
+  readonly tag: string;
+  readonly label: string;
+  /** The design system's focus ring is a box-shadow; the shell's chrome is unstyled. */
+  readonly boxShadow: string;
+  readonly outlineStyle: string;
+  readonly outlineWidth: string;
+  /** False only for the shell's provisional header, which DS-5 replaces. */
+  readonly inShowroom: boolean;
+}
+
+interface Stamped {
+  /** Stamps of every visible, enabled, focusable element on the page. */
+  readonly expected: readonly string[];
+  /** Human-readable, so a failure says WHICH control went missing. */
+  readonly labels: Readonly<Record<string, string>>;
+  /** Stamps of the disabled controls, which must never appear in the walk. */
+  readonly disabled: readonly string[];
+  /**
+   * The radios of a group that are NOT its tab stop.
+   *
+   * A radio group is ONE stop, not one per option: Tab enters the group at
+   * the checked radio (or the first, when none is checked) and the arrows
+   * move within it. That is native behaviour and it is the behaviour the
+   * comanda asks for -- "flechas mueven un grupo de radios". So these must be
+   * absent from the walk for the same reason a disabled control must: their
+   * presence would mean the group is broken into separate stops.
+   */
+  readonly roving: readonly string[];
+}
+
+/**
+ * A walk cannot run for ever. Forty-odd stops is a full page (sixteen in the
+ * sidebar plus the content); three hundred means the cycle never closed,
+ * which is itself the failure worth reporting.
+ */
+const MAX_TABS = 300;
+
+/**
+ * How many tabs stand between the top of the DOCUMENT and the catalogue
+ * search, and how many stand between the top of the SHOWROOM and it.
+ *
+ * The rule exists so that the sidebar cannot become a wall of thirty links in
+ * front of the search. It is not: the search sits above the catalogue links,
+ * so from the showroom's own first stop it is the second one, and that is the
+ * number the showroom controls.
+ *
+ * The document number is five, and the three extra stops are the shell's
+ * PROVISIONAL header -- `Home`, `Design system` and the language switcher.
+ * Replacing that header is the App Shell, DS-5, which this work explicitly
+ * does not build. So the number is asserted as measured rather than as
+ * wished: it cannot get worse without this failing, and the gap between five
+ * and the three the comanda asks for is reported, not papered over.
+ */
+const TABS_TO_SEARCH_IN_DOCUMENT = 5;
+const TABS_TO_SEARCH_IN_SHOWROOM = 2;
+
+/**
+ * Stamp every focusable element with `data-kbd`, and hand back what the walk
+ * is expected to visit.
+ *
+ * "Visible" is measured, not assumed: a box with no area, `display:none`,
+ * `visibility:hidden`, or an `aria-hidden` / `inert` ancestor is not
+ * something a keyboard user can reach, so it is not something the walk owes a
+ * stop.
+ */
+async function stampFocusable(page: Page): Promise<Stamped> {
+  return page.evaluate(() => {
+    const SELECTOR = [
+      'a[href]',
+      'area[href]',
+      'button',
+      'input',
+      'select',
+      'textarea',
+      'summary',
+      '[tabindex]',
+      '[contenteditable=""]',
+      '[contenteditable="true"]',
+    ].join(',');
+
+    const visible = (el: Element): boolean => {
+      if (el.closest('[aria-hidden="true"], [inert]')) {
+        return false;
+      }
+      const style = getComputedStyle(el);
+      if (style.display === 'none' || style.visibility === 'hidden') {
+        return false;
+      }
+      const rect = el.getBoundingClientRect();
+      return rect.width > 0 && rect.height > 0;
+    };
+
+    const name = (el: Element): string => {
+      const text = (el.textContent ?? '').replace(/\s+/g, ' ').trim().slice(0, 40);
+      const aria = el.getAttribute('aria-label') ?? '';
+      const id = el.id ? '#' + el.id : '';
+      return (el.tagName.toLowerCase() + id + ' ' + (aria || text)).trim();
+    };
+
+    /**
+     * Which radio of each group is the group's tab stop: the checked one, or
+     * the first when none is checked. Grouping is by form + name, which is
+     * exactly how the browser groups them.
+     */
+    const radioTabStop = new Map<string, HTMLInputElement>();
+    for (const el of Array.from(document.querySelectorAll('input[type="radio"]'))) {
+      const radio = el as HTMLInputElement;
+      if (radio.disabled || !radio.name) {
+        continue;
+      }
+      const key = `${radio.form ? radio.form.id || 'form' : 'document'}::${radio.name}`;
+      const held = radioTabStop.get(key);
+      if (held === undefined || (radio.checked && !held.checked)) {
+        radioTabStop.set(key, radio);
+      }
+    }
+    const isTabStopRadio = (el: Element): boolean =>
+      Array.from(radioTabStop.values()).includes(el as HTMLInputElement);
+
+    const expected: string[] = [];
+    const disabled: string[] = [];
+    const roving: string[] = [];
+    const labels: Record<string, string> = {};
+    let n = 0;
+
+    /** Elements the browser puts in the tab order all by themselves. */
+    const NATIVELY_FOCUSABLE = ['a', 'area', 'button', 'input', 'select', 'textarea', 'summary'];
+
+    for (const el of Array.from(document.querySelectorAll(SELECTOR))) {
+      const tabindex = el.getAttribute('tabindex');
+      /*
+       * A negative tabindex on a <div> is a programmatic focus target and a
+       * perfectly ordinary thing. On a BUTTON, an INPUT or a link it is the
+       * bug this whole walk exists to find: the control is still visible,
+       * still enabled, still looks operable -- and the keyboard cannot reach
+       * it. So it is skipped only for the elements that were not in the tab
+       * order to begin with.
+       */
+      if (
+        tabindex !== null &&
+        Number(tabindex) < 0 &&
+        !NATIVELY_FOCUSABLE.includes(el.tagName.toLowerCase())
+      ) {
+        continue;
+      }
+      if (el instanceof HTMLInputElement && el.type === 'hidden') {
+        continue;
+      }
+      if (!visible(el)) {
+        continue;
+      }
+
+      const stamp = String(n++);
+      el.setAttribute('data-kbd', stamp);
+      labels[stamp] = name(el);
+
+      /*
+       * `disabled` the ATTRIBUTE, not aria-disabled. The Button in its
+       * Loading state carries aria-disabled precisely so that it KEEPS its
+       * focus (see the note in button.ts), so it stays in the tab order and
+       * the walk owes it a stop. A natively disabled control does not.
+       */
+      const isDisabled =
+        (el as HTMLButtonElement | HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement)
+          .disabled === true;
+      if (isDisabled) {
+        disabled.push(stamp);
+      } else if (
+        el instanceof HTMLInputElement &&
+        el.type === 'radio' &&
+        el.name &&
+        !isTabStopRadio(el)
+      ) {
+        roving.push(stamp);
+      } else {
+        expected.push(stamp);
+      }
+    }
+
+    return { expected, labels, disabled, roving };
+  });
+}
+
+/** Where the focus is right now, with everything the assertions need about it. */
+async function readFocus(page: Page): Promise<TabStop> {
+  return page.evaluate(() => {
+    const el = document.activeElement;
+    if (!el || el === document.body || el === document.documentElement) {
+      return {
+        kbd: null,
+        tag: 'BODY',
+        label: 'body',
+        boxShadow: 'none',
+        outlineStyle: 'none',
+        outlineWidth: '0px',
+        inShowroom: false,
+      };
+    }
+    const style = getComputedStyle(el);
+    const text = (el.textContent ?? '').replace(/\s+/g, ' ').trim().slice(0, 40);
+    const id = el.id ? '#' + el.id : '';
+    return {
+      kbd: el.getAttribute('data-kbd'),
+      tag: el.tagName,
+      label: (el.tagName.toLowerCase() + id + ' ' + (el.getAttribute('aria-label') ?? text)).trim(),
+      boxShadow: style.boxShadow,
+      outlineStyle: style.outlineStyle,
+      outlineWidth: style.outlineWidth,
+      inShowroom: !el.closest('.app-layout__header'),
+    };
+  });
+}
+
+/**
+ * Tab from the top of the document until the focus comes back round, and
+ * report every stop on the way.
+ */
+async function walkTabCycle(page: Page): Promise<readonly TabStop[]> {
+  await page.evaluate(() => {
+    (document.activeElement as HTMLElement | null)?.blur();
+    // Start from the very top of the document, so the first Tab lands on the
+    // first focusable element and not wherever a previous action left off.
+    document.body.setAttribute('tabindex', '-1');
+    document.body.focus();
+    document.body.removeAttribute('tabindex');
+  });
+
+  const stops: TabStop[] = [];
+  for (let i = 0; i < MAX_TABS; i++) {
+    await page.keyboard.press('Tab');
+    const stop = await readFocus(page);
+    const first = stops[0];
+    // The cycle closed: either the focus fell back to the document, or it
+    // came round to where it started.
+    if (stop.tag === 'BODY' || (first !== undefined && stop.kbd === first.kbd)) {
+      break;
+    }
+    stops.push(stop);
+  }
+  return stops;
+}
+
+/** Duplicated stamps in the order they were revisited. */
+function duplicates(visited: readonly (string | null)[]): readonly string[] {
+  const seen = new Set<string>();
+  const twice: string[] = [];
+  for (const kbd of visited) {
+    if (kbd === null) {
+      continue;
+    }
+    if (seen.has(kbd)) {
+      twice.push(kbd);
+    }
+    seen.add(kbd);
+  }
+  return twice;
+}
+
+test.describe('keyboard only', () => {
+  for (const { url, heading } of PAGES) {
+    test(`${url}: the tab order reaches every control, once`, async ({ page }) => {
+      await page.goto(url);
+      await expect(page.getByRole('heading', { level: 1, name: heading })).toBeVisible();
+      await ready(page);
+
+      const { expected, labels, disabled, roving } = await stampFocusable(page);
+      const stops = await walkTabCycle(page);
+
+      expect(stops.length, `${url}: the tab cycle never closed`).toBeLessThan(MAX_TABS);
+
+      const visited = stops.map((stop) => stop.kbd);
+
+      // Nothing outside the stamped set: a stop with no stamp is an element
+      // that was not there when the page was measured.
+      expect(
+        stops.filter((stop) => stop.kbd === null).map((stop) => stop.label),
+        `${url}: focus landed on an unstamped element`,
+      ).toEqual([]);
+
+      // Every visible control is reachable.
+      expect(
+        expected.filter((kbd) => !visited.includes(kbd)).map((kbd) => labels[kbd]),
+        `${url}: never reached by Tab`,
+      ).toEqual([]);
+
+      // None of them twice in one cycle.
+      expect(
+        duplicates(visited).map((kbd) => labels[kbd]),
+        `${url}: focused twice in one cycle`,
+      ).toEqual([]);
+
+      // A disabled control is not a tab stop.
+      expect(
+        disabled.filter((kbd) => visited.includes(kbd)).map((kbd) => labels[kbd]),
+        `${url}: disabled control in the tab order`,
+      ).toEqual([]);
+
+      // Neither is a radio that is not its group's entry point: a group is one
+      // stop, and the arrows do the rest.
+      expect(
+        roving.filter((kbd) => visited.includes(kbd)).map((kbd) => labels[kbd]),
+        `${url}: a radio group was split into several tab stops`,
+      ).toEqual([]);
+
+      /*
+       * WCAG 2.4.7: every stop has to SHOW that it has the focus.
+       *
+       * BOX-SHADOW **OR** OUTLINE, and the difference is deliberate rather
+       * than a loophole. The system's ring is a box-shadow
+       * (--focus-ring-shadow) and that is what almost everything uses, but
+       * the icon grid in /foundations/icons uses `outline-2 outline-focus` on
+       * its seventy tiles -- an outline is drawn outside the box and does not
+       * bleed over the neighbouring tile the way a 3px shadow would. That is
+       * a token-driven indicator and a correct one; demanding a box-shadow
+       * there would break a working grid to satisfy the letter of a rule
+       * whose point is that the focus must be VISIBLE.
+       *
+       * What this does still catch is the case with no indicator at all, and
+       * it caught one: a focusable <span> on the tooltip page that had no
+       * focus styling of its own.
+       */
+      expect(
+        stops
+          .filter((stop) => {
+            const shadow = stop.boxShadow !== 'none' && stop.boxShadow !== '';
+            const outline =
+              stop.outlineStyle !== 'none' && parseFloat(stop.outlineWidth || '0') > 0;
+            return !shadow && !outline;
+          })
+          .map((stop) => stop.label),
+        `${url}: focused with no visible focus indicator`,
+      ).toEqual([]);
+
+      /*
+       * And the indicator has to be OURS.
+       *
+       * `outline-style: auto` is the browser's own ring, which every focusable
+       * element gets for free. It is visible, so the assertion above lets it
+       * pass -- but a catalogue whose job is to be the one place the system
+       * looks like itself cannot have a control falling back to the browser
+       * default. A token ring is a box-shadow, or an explicit outline
+       * (`solid`, from `outline-2 outline-focus`); never `auto`.
+       *
+       * The shell's provisional header is exempt: it is unstyled on purpose
+       * and DS-5 replaces it, which is out of scope here.
+       */
+      expect(
+        stops
+          .filter(
+            (stop) =>
+              stop.inShowroom &&
+              (stop.boxShadow === 'none' || stop.boxShadow === '') &&
+              stop.outlineStyle === 'auto',
+          )
+          .map((stop) => stop.label),
+        `${url}: showroom control falling back to the browser's own focus ring`,
+      ).toEqual([]);
+    });
+  }
+
+  /**
+   * The sidebar must not be a wall you tab through to reach the search. The
+   * search sits ABOVE the catalogue links for exactly this reason, so the
+   * only stops before it are the shell's provisional header.
+   */
+  test('the sidebar is not a wall in front of the catalogue search', async ({ page }) => {
+    await page.goto('/design-system');
+    await expect(page.getByRole('heading', { level: 1 }).first()).toBeVisible();
+    await ready(page);
+
+    await stampFocusable(page);
+    const stops = await walkTabCycle(page);
+    const chain = stops.map((stop) => stop.label).join(' -> ');
+    const index = stops.findIndex((stop) => stop.label.includes('#showroom-search'));
+
+    expect(index, `the search was never reached by Tab. Order: ${chain}`).toBeGreaterThanOrEqual(0);
+
+    // From the top of the document, shell header included.
+    expect(
+      index + 1,
+      `tabs to the search: ${stops
+        .slice(0, index + 1)
+        .map((stop) => stop.label)
+        .join(' -> ')}`,
+    ).toBeLessThanOrEqual(TABS_TO_SEARCH_IN_DOCUMENT);
+
+    // From the showroom's own first stop -- the part the showroom owns, and
+    // the part the rule is actually about.
+    const firstInShowroom = stops.findIndex((stop) => stop.inShowroom);
+    expect(firstInShowroom, `no showroom stop at all. Order: ${chain}`).toBeGreaterThanOrEqual(0);
+    expect(
+      index - firstInShowroom + 1,
+      `tabs from the first showroom stop to the search, within: ${chain}`,
+    ).toBeLessThanOrEqual(TABS_TO_SEARCH_IN_SHOWROOM);
+
+    // And the catalogue links really are behind it, which is what makes the
+    // number above stay small as the catalogue grows.
+    const firstCatalogueLink = stops.findIndex(
+      (stop) =>
+        stop.label.startsWith('a ') && stop.inShowroom && !stop.label.includes('Sistema de diseño'),
+    );
+    expect(firstCatalogueLink, `no catalogue link found. Order: ${chain}`).toBeGreaterThan(index);
+  });
+
+  test('Space ticks a checkbox, and the header reads the group back', async ({ page }) => {
+    await page.goto(CHECKBOX);
+    await ready(page);
+
+    const rows = page.locator('[data-demo-checklist] li input[type="checkbox"]');
+    const first = rows.first();
+    await first.focus();
+    await expect(first).not.toBeChecked();
+
+    await page.keyboard.press('Space');
+    await expect(first).toBeChecked();
+    // The "select all" box above is driven by the group, so a keyboard tick
+    // has to move it to mixed exactly as a click would.
+    await expect(page.locator('[data-demo-checklist] [role="status"]')).toContainText(
+      'indeterminado true',
+    );
+
+    await page.keyboard.press('Space');
+    await expect(first).not.toBeChecked();
+  });
+
+  test('the arrows move a radio group, and Tab treats it as one stop', async ({ page }) => {
+    await page.goto(RADIO);
+    await ready(page);
+
+    const radios = page.locator('[data-demo-group] input[type="radio"]');
+    const value = page.locator('[data-demo-value]');
+    const before = await value.textContent();
+
+    await radios.first().focus();
+    await page.keyboard.press('ArrowDown');
+
+    await expect(radios.nth(1)).toBeChecked();
+    await expect(radios.nth(1)).toBeFocused();
+    await expect(value).not.toHaveText(before ?? '');
+
+    await page.keyboard.press('ArrowUp');
+    await expect(radios.first()).toBeChecked();
+    await expect(radios.first()).toBeFocused();
+  });
+
+  test('Space flips a toggle and the change applies on the spot', async ({ page }) => {
+    await page.goto(TOGGLE);
+    await ready(page);
+
+    const first = page.locator('[data-demo-preferences] input[role="switch"]').first();
+    const applied = page.locator('[data-demo-preferences] [role="status"]');
+    const before = Number((await applied.textContent())?.match(/\d+/)?.[0] ?? 0);
+
+    await first.focus();
+    const wasOn = await first.isChecked();
+    await page.keyboard.press('Space');
+
+    await expect(first).toBeChecked({ checked: !wasOn });
+    await expect(applied).toContainText(String(before + 1));
+  });
+
+  test('the select opens, walks and chooses without a mouse, and Escape gives the focus back', async ({
+    page,
+  }) => {
+    await page.goto(SELECT);
+    await ready(page);
+
+    const trigger = page.locator('[data-demo-select] button').first();
+    const panel = page.locator('[role="listbox"]');
+    const value = page.locator('[data-demo-value]');
+
+    // Enter opens it.
+    await trigger.focus();
+    await page.keyboard.press('Enter');
+    await expect(panel).toBeVisible();
+
+    // Escape closes WITHOUT choosing, and the focus never left the trigger --
+    // which is the point of the aria-activedescendant pattern in select.ts.
+    const untouched = await value.textContent();
+    await page.keyboard.press('Escape');
+    await expect(panel).toHaveCount(0);
+    await expect(trigger).toBeFocused();
+    await expect(value).toHaveText(untouched ?? '');
+
+    // Space opens it too: the trigger is a <button>, so the native activation
+    // key works without a handler of its own.
+    await page.keyboard.press('Space');
+    await expect(panel).toBeVisible();
+
+    // The arrows move the ACTIVE row, and the focus still does not move.
+    await page.keyboard.press('ArrowDown');
+    await expect(trigger).toBeFocused();
+    const active = await trigger.getAttribute('aria-activedescendant');
+    expect(active, 'the arrows must mark an active option').not.toBeNull();
+
+    await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('Enter');
+    await expect(panel).toHaveCount(0);
+    await expect(trigger).toBeFocused();
+    await expect(value).not.toHaveText(untouched ?? '');
+  });
+
+  test('Escape dismisses a tooltip opened by focus, and the focus stays put', async ({ page }) => {
+    await page.goto(TOOLTIP);
+    await ready(page);
+
+    const host = page.locator('[data-demo-tooltip] button');
+    await host.focus();
+    const panel = page.locator('[id^="ewms-tooltip-"]');
+    await expect(panel).toBeVisible();
+
+    await page.keyboard.press('Escape');
+    await expect(panel).toHaveCount(0);
+    await expect(host).toBeFocused();
+  });
+
+  test('Enter on a button activates it, and the busy button refuses the second press', async ({
+    page,
+  }) => {
+    await page.goto(BUTTON);
+    await ready(page);
+
+    const submit = page.locator('[data-demo-submit] button');
+    const counter = page.locator('[role="status"]', { hasText: 'Envíos registrados' });
+
+    await submit.focus();
+    await page.keyboard.press('Enter');
+    await expect(submit).toHaveAttribute('aria-busy', 'true');
+    await expect(counter).toHaveText('Envíos registrados: 1');
+
+    // Still focused, so a keyboard user is not dumped back to the top of the
+    // document mid-submit -- and a second Enter changes nothing.
+    await expect(submit).toBeFocused();
+    await page.keyboard.press('Enter');
+    await expect(counter).toHaveText('Envíos registrados: 1');
+  });
 });
