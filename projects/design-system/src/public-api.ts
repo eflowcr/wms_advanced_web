@@ -87,4 +87,69 @@ export {
   type SearchSource,
   type SearchStatus,
 } from './lib/search-select/search-select';
+export { EWMS_SEARCH_SELECT_MESSAGES } from './lib/search-select/search-select.types';
 export { SEARCH_PAGE_SIZE } from './lib/search-select/search-source';
+
+/*
+ * Badge (DS-3). Born inside the Table and deliberately not living there: a
+ * detail header, a card and a list row all need to say "con incidencia" the
+ * same way.
+ */
+export { Badge } from './lib/badge/badge';
+export { type SemanticFamily } from './lib/feedback/feedback.types';
+
+/*
+ * Table (DS-3).
+ *
+ * `TableSource<T>` is the contract the backend will be asked for, like
+ * `SearchSource<T>`. `ArrayTableSource` ships because a screen whose data
+ * already fits in memory would otherwise write the same filtering and paging
+ * again, slightly differently.
+ *
+ * The texts and the formatters are INJECTION TOKENS the library defines and
+ * does not implement: the shell provides them once from core/i18n, the
+ * showroom provides its own. Nothing here imports a translation library, which
+ * is what ADR 0008 protects.
+ */
+export {
+  Table,
+  CellTemplate,
+  DetailTemplate,
+  EmptyTemplate,
+  TableColumn,
+  type CellContext,
+  type FlatRow,
+} from './lib/table/table';
+export { ArrayTableSource, matchesFilter, sortRows } from './lib/table/array-table-source';
+export {
+  emptyQuery,
+  isDateRange,
+  isNumberRange,
+  readCell,
+  type DateRange,
+  type NumberRange,
+  type TableFilterValue,
+  type TablePage,
+  type TableQuery,
+  type TableSort,
+  type TableSource,
+} from './lib/table/table-source';
+export {
+  EWMS_TABLE_FORMATTERS,
+  EWMS_TABLE_MESSAGES,
+  type TableFormatters,
+  type TableMessages,
+} from './lib/table/table.tokens';
+export {
+  type BadgeDescriptor,
+  type BadgeDictionary,
+  type MenuItem,
+  type RowActivateEvent,
+  type RowMenuEvent,
+  type RowState,
+  type TableChildren,
+  type TableColumnType,
+  type TableColumnWidth,
+  type TableDensity,
+} from './lib/table/table.types';
+export { expandableKeys, flattenTree, type FlattenOptions } from './lib/table/tree';

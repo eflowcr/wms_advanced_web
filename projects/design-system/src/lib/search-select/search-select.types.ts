@@ -1,3 +1,5 @@
+import { InjectionToken } from '@angular/core';
+
 /**
  * The four states a person can see, from RFE-03 of REQ-FE-DS3-001, plus the
  * two that are not states of the search at all.
@@ -54,3 +56,34 @@ export const SEARCH_NOTE_CLASSES = 'flex items-center gap-2 px-3 py-1.5 text-cap
 export const SEARCH_MORE_CLASSES =
   'flex w-full items-center justify-center gap-2 px-3 py-1.5 cursor-pointer text-caption ' +
   'text-(color:--color-bg-primary)';
+
+/**
+ * The words the search select can put on screen, already translated.
+ *
+ * PROVIDED ONCE, NOT PASSED PER INSTANCE. It started as a required input and
+ * moved here in DS-3 lote C, when the Table needed the same thing and having
+ * two answers in one library would have been the worse outcome. The rule and
+ * where its line falls are written in the Nomenclatura note.
+ */
+export interface SearchSelectMessages {
+  /** While a query is in flight. */
+  readonly searching: string;
+  /** Nothing matched. Receives the text searched, which RFE-03 requires shown. */
+  readonly noResults: (query: string) => string;
+  /** The source failed or ran out of time. */
+  readonly error: string;
+  /** The label of the retry action. */
+  readonly retry: string;
+  /** The label of the "load more" row. */
+  readonly more: string;
+  /**
+   * Announced when results land. Receives how many are on screen and the total
+   * the source reported, WHICH MAY BE NULL: RFE-02 makes `null` a legitimate
+   * answer, and the message is where that shows.
+   */
+  readonly results: (count: number, total: number | null) => string;
+}
+
+export const EWMS_SEARCH_SELECT_MESSAGES = new InjectionToken<SearchSelectMessages>(
+  'EWMS_SEARCH_SELECT_MESSAGES',
+);

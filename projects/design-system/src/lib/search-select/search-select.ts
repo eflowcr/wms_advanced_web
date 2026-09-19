@@ -40,17 +40,19 @@ import { createConnectedOverlay, PANEL_POSITIONS } from '../overlay/connected-ov
 import { readMilliseconds } from '../tokens/read-token';
 import {
   DELAY_SEARCH_INPUT_TOKEN,
+  EWMS_SEARCH_SELECT_MESSAGES,
   SCAN_MIN_KEYSTROKES,
   SCAN_THRESHOLD_TOKEN,
   SEARCH_MORE_CLASSES,
   SEARCH_NOTE_CLASSES,
   TIMEOUT_SEARCH_TOKEN,
+  type SearchSelectMessages,
   type SearchStatus,
 } from './search-select.types';
 import type { SearchDisplay, SearchSource } from './search-source';
 
 export type { SearchDisplay, SearchPage, SearchSource } from './search-source';
-export type { SearchStatus } from './search-select.types';
+export type { SearchSelectMessages, SearchStatus } from './search-select.types';
 
 let nextSearchSelectId = 0;
 
@@ -130,14 +132,34 @@ export class SearchSelect<T> extends FormControlBase<T | null> implements OnDest
   readonly error = input<boolean>(false);
 
   /**
-   * The words for the states the component can show. They arrive already
-   * translated -- the design system speaks no language (ADR 0008) -- and there
-   * is no default, because a default would be a language.
+   * The words for the states the component can show, ALREADY PROVIDED.
    *
-   * `noResults` receives the text that was searched, so the message can repeat
-   * it as RFE-03 requires.
+   * They come from `EWMS_SEARCH_SELECT_MESSAGES`, which the shell fills once
+   * from `core/i18n`; this input overrides that dictionary for one instance.
+   * It was a required input until DS-3 lote C, when the Table needed the same
+   * thing: two answers to "how do the texts arrive" in one library is worse
+   * than either answer.
+   *
+   * The design system still speaks no language and still imports no i18n
+   * library (ADR 0008). It asks for an interface; whoever implements it is
+   * above.
    */
-  readonly messages = input.required<SearchSelectMessages>();
+  readonly messages = input<Partial<SearchSelectMessages> | null>(null);
+
+  private readonly providedMessages = inject(EWMS_SEARCH_SELECT_MESSAGES);
+
+  /**
+   * The provided dictionary, with this instance's overrides on top.
+   *
+   * Called `words` and not `text`, because `text` is already taken by the
+   * signal that holds WHAT SOMEBODY TYPED -- and two members one letter apart
+   * meaning opposite things is how a template ends up rendering the search box
+   * with the word "Buscando…" in it.
+   */
+  protected readonly words = computed<SearchSelectMessages>(() => ({
+    ...this.providedMessages,
+    ...(this.messages() ?? {}),
+  }));
 
   private readonly injector = inject(Injector);
   private readonly viewContainerRef = inject(ViewContainerRef);
@@ -335,7 +357,7 @@ export class SearchSelect<T> extends FormControlBase<T | null> implements OnDest
    * list changed without the focus moving, because the focus never moves.
    */
   protected readonly announcement = computed(() => {
-    const messages = this.messages();
+    const messages = this.words();
     switch (this.status()) {
       case 'searching':
         return messages.searching;
@@ -666,26 +688,6 @@ export class SearchSelect<T> extends FormControlBase<T | null> implements OnDest
       this.open();
     }
   }
-}
-
-/** Every string the component can put on screen, already translated. */
-export interface SearchSelectMessages {
-  /** While a query is in flight. */
-  readonly searching: string;
-  /** Nothing matched. Receives the text searched, which RFE-03 requires shown. */
-  readonly noResults: (query: string) => string;
-  /** The source failed or ran out of time. */
-  readonly error: string;
-  /** The label of the retry action. */
-  readonly retry: string;
-  /** The label of the "load more" row. */
-  readonly more: string;
-  /**
-   * Announced when results land. Receives how many are on screen and the
-   * total the source reported, WHICH MAY BE NULL: RFE-02 makes `null` a
-   * legitimate answer, and the message is where that shows.
-   */
-  readonly results: (count: number, total: number | null) => string;
 }
 
 /**

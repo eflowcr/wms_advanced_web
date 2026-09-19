@@ -67,6 +67,23 @@ export class Input extends FormControlBase<string> {
    */
   readonly label = input.required<string>();
 
+  /**
+   * Keeps the name for assistive technology and takes it off the screen.
+   *
+   * ADDED FOR THE TABLE'S FILTER ROW, which is the case that justifies it: six
+   * filter boxes under six headers cannot each carry a visible label without
+   * doubling the height of the header, and the header above each box already
+   * says what it filters -- to a sighted reader. To a screen reader it says
+   * nothing, because a `<th>` two rows up is not a label.
+   *
+   * So the label is still rendered, still tied by for/id, and still read; it
+   * is just not painted. What this is NOT is a licence to drop labels: the
+   * name is required either way, and a field with `hideLabel` and no
+   * `placeholder` is a box with no visible clue, which is the thing the
+   * always-visible label exists to prevent.
+   */
+  readonly hideLabel = input<boolean>(false);
+
   readonly placeholder = input<string>('');
 
   /** Help text under the field. Turns danger-coloured in `error`. */

@@ -83,11 +83,26 @@
   --navy-97: #f6f7f8;
   --navy-100: #ffffff;
 
+  /* Translucidos: <matiz>-a<alfa>.
+   *
+   * UN ALFA DE UN PRIMITIVO QUE YA EXISTE SE AGREGA LIBREMENTE; UN MATIZ NUEVO
+   * NO. Decision del usuario (2026-09-19). El precedente son los cuatro navy de
+   * abajo, que estan desde DS-1: un alfa no inventa un color, lo deja ver lo
+   * que tiene detras. Un matiz nuevo si es una decision de marca, y se reporta.
+   * La regla esta escrita en Fundamentos de Marca. */
+
   /* navy translucido — sombras y overlay. Navy, no negro: tine con la marca */
   --navy-7-a06: rgb(1 15 66 / 0.06);
   --navy-7-a08: rgb(1 15 66 / 0.08);
   --navy-7-a10: rgb(1 15 66 / 0.1);
   --navy-7-a50: rgb(1 15 66 / 0.5);
+
+  /* El halo del Dialog, al 35 % del `-solid` de cada familia, que es lo que
+   * pide la ficha del Modal (v1.1, 27/08). No hay `info`: lo informativo es
+   * neutral, asi que el halo informativo es el del navy. */
+  --red-48-a35: rgb(217 45 32 / 0.35);
+  --orange-49-a35: rgb(189 89 3 / 0.35);
+  --navy-52-a35: rgb(115 123 151 / 0.35);
 
   /* blue — el azul de marca y sus derivados */
   --blue-35: #3149aa;
@@ -132,8 +147,14 @@
   --size-20: 20px;
   --size-24: 24px;
   --size-32: 32px;
+  --size-40: 40px;
   --size-48: 48px;
   --size-56: 56px;
+  /* Anchos de columna de la Tabla. Mas grandes que el resto de la escala
+   * porque miden una columna, no un control (DS-3, lote C). */
+  --size-96: 96px;
+  --size-160: 160px;
+  --size-240: 240px;
   --size-pill: 9999px;
 
   /* Pesos. Montserrat es variable 100–900: el @font-face declara el rango */
@@ -303,22 +324,37 @@
 
   /* El halo de la zona de icono del Dialog, por tono.
    *
-   * ES UNA SOMBRA COMPUESTA DE SEMANTICOS, como --focus-ring-shadow, y por la
-   * misma razon: lo que define el efecto son dos tokens y una geometria, no un
-   * color nuevo.
-   *
-   * La ficha pide el color del glifo al 35 % de opacidad. Un color con alfa
-   * seria un primitivo de color nuevo, que es decision de diseno y se reporta,
-   * no se inventa -- asi que el halo usa el `-border` de la familia, que ya es
-   * ese mismo color aclarado y esta medido. Queda reportado como desviacion.
+   * 0 0 48 6 al 35 % del `-solid` de la familia: la geometria y la opacidad que
+   * la ficha del Modal fija desde su v1.1. DS-3 lote B lo habia aproximado con
+   * el `-border` porque un color con alfa parecia un primitivo nuevo; la
+   * decision del usuario (2026-09-19) es que no lo es, y el halo pasa a ser
+   * exactamente lo que la ficha pide.
    *
    * No hay halo `info` porque no hay familia info: lo informativo es neutral. */
-  --shadow-halo-danger: 0 0 var(--size-48) var(--size-6) var(--color-danger-border);
-  --shadow-halo-warning: 0 0 var(--size-48) var(--size-6) var(--color-warning-border);
-  --shadow-halo-neutral: 0 0 var(--size-48) var(--size-6) var(--color-neutral-border);
+  --shadow-halo-danger: 0 0 var(--size-48) var(--size-6) var(--red-48-a35);
+  --shadow-halo-warning: 0 0 var(--size-48) var(--size-6) var(--orange-49-a35);
+  --shadow-halo-neutral: 0 0 var(--size-48) var(--size-6) var(--navy-52-a35);
 
   /* El circulo de la zona de icono. 56x56, de la ficha (v1.1, 27/08). */
   --size-dialog-icon: var(--size-56);
+
+  /* ----------------------------------------------------------------- tabla
+   * Alto de fila por densidad.
+   *
+   * `--row-height-md` ES EXACTAMENTE LA ALTURA DEL CONTROL `md`, y no por
+   * casualidad: una celda tiene que poder contener un `ewms-input` sin que la
+   * fila crezca. El E2E lo afirma midiendo los dos.
+   *
+   * `sm` es la altura del control `sm`, por la misma razon. */
+  --row-height-md: var(--size-40);
+  --row-height-sm: var(--size-32);
+
+  /* Anchos de columna. El consumidor elige un nombre, no escribe CSS: una
+   * cadena de ancho en la plantilla es un valor crudo y la compuerta 10 la
+   * rechaza. `fill` no es un token: es `flex: 1`. */
+  --col-width-sm: var(--size-96);
+  --col-width-md: var(--size-160);
+  --col-width-lg: var(--size-240);
 
   /* ---------------------------------------------------------------- tiempos
    * Cuanto vive un toast en pantalla antes de irse solo. La ficha de

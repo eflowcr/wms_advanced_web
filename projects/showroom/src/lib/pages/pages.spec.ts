@@ -3,6 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { expectNoAxeViolations } from '@ewms/testing';
 import { ShowroomLayout } from '../layout/showroom-layout';
+import { provideShowroomDesignSystem } from '../showroom.providers';
 import { ShowroomBanner } from './components/banner';
 import { ShowroomButton } from './components/button';
 import { ShowroomCard } from './components/card';
@@ -13,6 +14,7 @@ import { ShowroomInput } from './components/input';
 import { ShowroomRadio } from './components/radio';
 import { ShowroomSearchSelect } from './components/search-select';
 import { ShowroomSelect } from './components/select';
+import { ShowroomTable } from './components/table';
 import { ShowroomText } from './components/text';
 import { ShowroomToast } from './components/toast';
 import { ShowroomToggle } from './components/toggle';
@@ -36,7 +38,13 @@ import { ShowroomHome } from './showroom-home';
 async function render<T>(component: Type<T>) {
   await TestBed.configureTestingModule({
     imports: [component],
-    providers: [provideRouter([])],
+    /*
+     * The same providers the route installs. A page rendered without them is
+     * not the page the catalogue serves -- and the design system's texts are
+     * PROVIDED, not passed, so leaving them out would fail at injection rather
+     * than at an assertion.
+     */
+    providers: [provideRouter([]), provideShowroomDesignSystem()],
   }).compileComponents();
   const fixture = TestBed.createComponent(component);
   await fixture.whenStable();
@@ -109,8 +117,16 @@ describe('ShowroomHome', () => {
     const { element } = await render(ShowroomHome);
     expect(element.querySelectorAll('[data-entry]').length).toBeGreaterThan(20);
     expect(element.querySelector('[data-entry="button"] a')).not.toBeNull();
-    expect(element.querySelector('[data-entry="table"] a')).toBeNull();
-    expect(element.querySelector('[data-entry="table"]')?.textContent).toContain('(pendiente)');
+    /*
+     * `navigation` and not `table`: the table stopped being a gap in DS-3 lote
+     * C, and this assertion is about a gap still being VISIBLE rather than
+     * about which one it is. Navigation is DS-5's.
+     */
+    expect(element.querySelector('[data-entry="navigation"] a')).toBeNull();
+    expect(element.querySelector('[data-entry="navigation"]')?.textContent).toContain(
+      '(pendiente)',
+    );
+    expect(element.querySelector('[data-entry="table"] a')).not.toBeNull();
   });
 
   it('records that the App Shell is deliberately not exhibited', async () => {
@@ -439,6 +455,7 @@ const SHEETS: readonly { name: string; component: Type<unknown>; heading: string
     component: ShowroomSearchSelect,
     heading: 'Selector con búsqueda',
   },
+  { name: 'ShowroomTable', component: ShowroomTable, heading: 'Tabla de datos' },
 ];
 
 describe.each(SHEETS)('$name', ({ component, heading }) => {
@@ -1349,5 +1366,150 @@ describe('ShowroomSearchSelect', () => {
     expect(page.fact('no-such-state', 'where')).toBe('');
     expect(page.fact('error', 'no-such-column')).toBe('');
     expect(page.chosenLabel()).toBe('(ninguno)');
+  });
+});
+
+/**
+ * The table's sheet.
+ *
+ * The one assertion that matters most is the line count: the API was designed
+ * against it, and the page reads it off the DOM so it cannot drift from the
+ * snippet it describes.
+ */
+describe('ShowroomTable', () => {
+  it('renders the real table, with three levels available', async () => {
+    const { element } = await render(ShowroomTable);
+    const grid = element.querySelector('[data-demo-table] table');
+    expect(grid?.getAttribute('role')).toBe('treegrid');
+    expect(element.querySelectorAll('[data-demo-table] tbody tr').length).toBe(12);
+  });
+
+  it('COUNTS THE CONSUMER TEMPLATE OFF THE DOM, and it is under the ceiling', async () => {
+    const { element } = await render(ShowroomTable);
+    const printed = element.querySelector('[data-template-lines]')?.textContent ?? '';
+    const lines = Number(printed);
+
+    expect(Number.isFinite(lines)).toBe(true);
+    // The comanda's ceiling. If this ever fails, the API is what needs fixing.
+    expect(lines).toBeLessThanOrEqual(40);
+
+    // And the number really is the snippet's, not a number somebody typed.
+    const snippet = element.querySelector('[data-consumer-template]')?.textContent ?? '';
+    expect(snippet.trimEnd().split('\n').length).toBe(lines);
+  });
+
+  it('shows the whole component behind it, and it is two lines', async () => {
+    const { element } = await render(ShowroomTable);
+    expect(element.querySelector('[data-component-lines]')?.textContent).toBe('2');
+  });
+
+  it('the snippet is what the page actually renders', async () => {
+    const { element } = await render(ShowroomTable);
+    const snippet = element.querySelector('[data-consumer-template]')?.textContent ?? '';
+    // Not a paraphrase: every column of the demo is in the snippet.
+    for (const key of ['codigo', 'cliente', 'fecha', 'bultos', 'estado']) {
+      expect(snippet).toContain(`key="${key}"`);
+    }
+    expect(snippet).toContain('children="hijos"');
+    expect(snippet).toContain('rowState="estado"');
+  });
+
+  it('expands a header into its lines, in the same table', async () => {
+    const { fixture, element } = await render(ShowroomTable);
+    const before = element.querySelectorAll('[data-demo-table] tbody tr').length;
+
+    element.querySelector<HTMLButtonElement>('[data-demo-table] [data-toggle="0"]')!.click();
+    await fixture.whenStable();
+
+    expect(element.querySelectorAll('[data-demo-table] tbody tr').length).toBeGreaterThan(before);
+    expect(element.querySelectorAll('[data-demo-table] table').length).toBe(1);
+  });
+
+  it('changes density for real', async () => {
+    const { fixture, element } = await render(ShowroomTable);
+    expect(element.querySelector('[data-density-value]')?.textContent).toBe('md');
+
+    element.querySelector<HTMLButtonElement>('[data-density="sm"]')!.click();
+    await fixture.whenStable();
+
+    expect(element.querySelector('[data-density-value]')?.textContent).toBe('sm');
+    const row = element.querySelector<HTMLElement>('[data-demo-table] tbody tr');
+    expect(row?.style.height).toBe('var(--row-height-sm)');
+  });
+
+  it('reports what the last query asked for', async () => {
+    const { fixture, element } = await render(ShowroomTable);
+    const search = element.querySelector<HTMLInputElement>(
+      '[data-demo-table] [data-quick-filter] input',
+    )!;
+    search.value = 'Andes';
+    search.dispatchEvent(new Event('input'));
+    await fixture.whenStable();
+
+    expect(element.querySelector('[data-query]')?.textContent).toContain('«Andes»');
+  });
+
+  it('activates a row with a double click, and says which', async () => {
+    const { fixture, element } = await render(ShowroomTable);
+    element
+      .querySelector('[data-demo-table] tbody tr')!
+      .dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
+    await fixture.whenStable();
+
+    expect(element.querySelector('[data-activated]')?.textContent).toContain('cabecera');
+  });
+
+  it('paints the four tints and the four badges from one dictionary', async () => {
+    const { element } = await render(ShowroomTable);
+    const tints = [...element.querySelectorAll('[data-tint]')].map((tint) =>
+      tint.getAttribute('data-tint'),
+    );
+    expect(tints).toEqual(['neutral', 'warning', 'success', 'danger']);
+    expect(element.querySelectorAll('[data-block="5-matriz"] ewms-badge').length).toBe(4);
+  });
+
+  it('falls back to nothing for a variant no state carries', async () => {
+    const { fixture } = await render(ShowroomTable);
+    const page = fixture.componentInstance as unknown as {
+      tintFor(variant: string): string;
+      labelFor(variant: string): string;
+      isBadge(stateId: string): boolean;
+      consultaResumen(): string;
+    };
+    expect(page.tintFor('no-such-state')).toBe('');
+    expect(page.labelFor('no-such-state')).toBe('');
+    expect(page.isBadge('badge')).toBe(true);
+    expect(page.isBadge('tint')).toBe(false);
+    expect(page.consultaResumen()).toContain('sin búsqueda');
+  });
+
+  it('reports the selection, and sorts by clicking a header', async () => {
+    const { fixture, element } = await render(ShowroomTable);
+
+    const box = element.querySelector<HTMLInputElement>('[data-demo-table] tbody input')!;
+    box.checked = true;
+    box.dispatchEvent(new Event('change'));
+    await fixture.whenStable();
+    expect(element.querySelector('[data-selection-count]')?.textContent).toBe('1');
+
+    element.querySelector<HTMLButtonElement>('[data-demo-table] [data-sort="bultos"]')!.click();
+    await fixture.whenStable();
+    expect(element.querySelector('[data-query]')?.textContent).toContain('bultos asc');
+  });
+
+  it('goes back to the medium density', async () => {
+    const { fixture, element } = await render(ShowroomTable);
+    element.querySelector<HTMLButtonElement>('[data-density="sm"]')!.click();
+    await fixture.whenStable();
+    element.querySelector<HTMLButtonElement>('[data-density="md"]')!.click();
+    await fixture.whenStable();
+    expect(element.querySelector('[data-density-value]')?.textContent).toBe('md');
+  });
+
+  it('writes down that the table does not format, it asks for the format', async () => {
+    const { element } = await render(ShowroomTable);
+    expect(element.querySelector('[data-block="4-variantes"]')?.textContent).toContain(
+      'La tabla no formatea: pide el formato',
+    );
   });
 });

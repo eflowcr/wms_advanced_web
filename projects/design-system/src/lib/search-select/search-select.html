@@ -77,13 +77,13 @@
     class="mt-1 flex items-center gap-2 rounded-md border border-danger bg-danger-surface p-2 text-caption text-danger"
   >
     <ewms-icon name="circle-x" size="sm" />
-    <span class="flex-1">{{ messages().error }}</span>
+    <span class="flex-1">{{ words().error }}</span>
     <button
       type="button"
       class="rounded-sm px-2 py-1 cursor-pointer outline-none focus-visible:shadow-(--focus-ring-shadow) text-(color:--color-bg-primary) hover:text-(color:--color-bg-primary-hover)"
       (click)="retry()"
     >
-      {{ messages().retry }}
+      {{ words().retry }}
     </button>
   </div>
 }
@@ -121,7 +121,7 @@
     @if (status() === 'searching') {
       <li [class]="noteClasses" aria-hidden="true">
         <ewms-icon name="spinner" size="sm" />
-        <span>{{ messages().searching }}</span>
+        <span>{{ words().searching }}</span>
       </li>
     }
 
@@ -131,7 +131,7 @@
         panel says "nothing" and the person has to look back at the field to
         find out what "nothing" was about.
       -->
-      <li [class]="noteClasses" aria-hidden="true">{{ messages().noResults(searchedText()) }}</li>
+      <li [class]="noteClasses" aria-hidden="true">{{ words().noResults(searchedText()) }}</li>
     }
 
     @if (hasMore()) {
@@ -146,7 +146,7 @@
         (click)="loadMore()"
         (mouseenter)="onOptionEnter(items().length)"
       >
-        {{ messages().more }}
+        {{ words().more }}
       </li>
     }
   </ul>

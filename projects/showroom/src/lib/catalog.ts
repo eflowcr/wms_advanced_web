@@ -185,10 +185,19 @@ const COMPONENTS: readonly CatalogEntry[] = [
   {
     id: 'table',
     name: 'Tabla de datos',
-    selector: null,
-    route: null,
-    status: 'documented',
-    note: 'Con ficha en el vault, sin construir.',
+    selector: 'ewms-table',
+    route: `${SHOWROOM_BASE}/components/table`,
+    status: 'ready',
+    note:
+      'Columnas declaradas, árbol aplanado, filtros por tipo y el teclado de un treegrid.',
+  },
+  {
+    id: 'badge',
+    name: 'Badge',
+    selector: 'ewms-badge',
+    route: `${SHOWROOM_BASE}/components/table`,
+    status: 'ready',
+    note: 'Icono y texto, siempre los dos. Nació en la Tabla y se usa fuera de ella.',
   },
   {
     id: 'modal',

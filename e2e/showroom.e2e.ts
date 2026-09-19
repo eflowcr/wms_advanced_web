@@ -30,9 +30,10 @@ const TOAST = '/design-system/components/toast';
 const CARD = '/design-system/components/card';
 const DIALOG = '/design-system/components/dialog';
 const SEARCH_SELECT = '/design-system/components/search-select';
+const TABLE = '/design-system/components/table';
 
 /**
- * Every navigable route. Twenty since DS-3 lote B: the fifteen of DS-2 plus
+ * Every navigable route. Twenty-one since DS-3 lote C: the fifteen of DS-2 plus
  * one sheet per component built here, which is what "nothing built is
  * undocumented" looks like when it is a test rather than a promise.
  */
@@ -57,6 +58,7 @@ const PAGES = [
   { url: CARD, heading: 'Card' },
   { url: DIALOG, heading: 'Dialog' },
   { url: SEARCH_SELECT, heading: 'Selector con búsqueda' },
+  { url: TABLE, heading: 'Tabla de datos' },
 ] as const;
 
 /** Fonts change every width measured, so nothing is measured before they land. */
@@ -1502,5 +1504,199 @@ test.describe('DS-3 lote B: selector con búsqueda', () => {
       const box = await page.locator(`[data-size-sample="${size}"] input`).boundingBox();
       expect(round(box?.height), `search select ${size}`).toBe(expected);
     }
+  });
+});
+
+/**
+ * DS-3 LOTE C — the table, in a browser.
+ *
+ * The unit spec covers the logic; what needed a browser is the geometry, the
+ * real keyboard, and the claim the whole API was designed against: how many
+ * lines the consumer writes.
+ */
+test.describe('DS-3 lote C: la tabla', () => {
+  const DEMO = '[data-demo-table]';
+  const ROWS = `${DEMO} tbody tr:not([data-empty-row])`;
+
+  test('THE CONSUMER TEMPLATE IS UNDER THE CEILING, and the count is the snippet own', async ({
+    page,
+  }) => {
+    await page.goto(TABLE);
+    await ready(page);
+
+    const printed = Number(await page.locator('[data-template-lines]').innerText());
+    const snippet = await page.locator('[data-consumer-template]').innerText();
+
+    expect(printed).toBe(snippet.trimEnd().split('\n').length);
+    // The comanda's ceiling for the expediciones demo. If this fails, the API
+    // is what needs fixing, not the page.
+    expect(printed).toBeLessThanOrEqual(40);
+    await expect(page.locator('[data-component-lines]')).toHaveText('2');
+  });
+
+  test('a row is exactly as tall as an input of the same size', async ({ page }) => {
+    await page.goto(TABLE);
+    await ready(page);
+
+    const row = await page.locator(ROWS).first().boundingBox();
+    // The Input page's Medium field, measured on its own sheet: the two are
+    // the same token, and a cell has to be able to hold one without growing.
+    await page.goto(INPUT);
+    await ready(page);
+    const input = await page.locator('[data-pair="md"] input').boundingBox();
+
+    expect(round(row?.height)).toBe(40);
+    expect(round(input?.height)).toBe(40);
+  });
+
+  test('the compact density really is the other token', async ({ page }) => {
+    await page.goto(TABLE);
+    await ready(page);
+
+    await page.locator('[data-density="sm"]').click();
+    await expect(page.locator('[data-density-value]')).toHaveText('sm');
+
+    const row = await page.locator(ROWS).first().boundingBox();
+    expect(round(row?.height)).toBe(32);
+  });
+
+  test('expands three levels into ONE table', async ({ page }) => {
+    await page.goto(TABLE);
+    await ready(page);
+
+    await expect(page.locator(ROWS)).toHaveCount(12);
+    await expect(page.locator(`${ROWS}[aria-level="2"]`)).toHaveCount(0);
+
+    await page.locator(`${DEMO} [data-toggle="0"]`).click();
+    // Retrying assertions throughout: a bare `count()` reads whatever is there
+    // at that instant, which is how the badge assertion below went red once.
+    await expect(page.locator(`${ROWS}[aria-level="2"]`).first()).toBeVisible();
+
+    // The first line of that header, opened in turn.
+    await page.locator(`${DEMO} [data-toggle="1"]`).click();
+    await expect(page.locator(`${ROWS}[aria-level="3"]`).first()).toBeVisible();
+
+    // Three levels, and still one table: no nesting anywhere.
+    await expect(page.locator(`${DEMO} table`)).toHaveCount(1);
+  });
+
+  test('walks the tree with the arrows alone', async ({ page }) => {
+    await page.goto(TABLE);
+    await ready(page);
+
+    // One Tab stop for the whole table: focus the first cell directly and
+    // drive from there, which is what a keyboard user gets after one Tab.
+    await page.locator(`${DEMO} [data-cell="0-0"]`).focus();
+
+    await page.keyboard.press('ArrowRight');
+    await expect(page.locator(`${ROWS}[aria-level="2"]`).first()).toBeVisible();
+
+    await page.keyboard.press('ArrowDown');
+    await expect(page.locator(`${DEMO} [data-cell="1-0"]`)).toBeFocused();
+
+    await page.keyboard.press('ArrowLeft');
+    // First cell of a child row: up to the parent rather than sideways.
+    await expect(page.locator(`${DEMO} [data-cell="0-0"]`)).toBeFocused();
+
+    await page.keyboard.press('ArrowLeft');
+    await expect(page.locator(`${ROWS}[aria-level="2"]`)).toHaveCount(0);
+  });
+
+  test('Space ticks a row and Enter activates it, with no mouse', async ({ page }) => {
+    await page.goto(TABLE);
+    await ready(page);
+
+    await page.locator(`${DEMO} [data-cell="1-0"]`).focus();
+    await page.keyboard.press(' ');
+    await expect(page.locator('[data-selection-count]')).toHaveText('1');
+
+    await page.keyboard.press('Enter');
+    await expect(page.locator('[data-activated]')).toContainText('cabecera');
+  });
+
+  test('sorts by the raw number, not by the formatted text', async ({ page }) => {
+    await page.goto(TABLE);
+    await ready(page);
+
+    await page.locator(`${DEMO} [data-sort="bultos"]`).click();
+    await expect(page.locator('[data-query]')).toContainText('bultos asc');
+
+    const values = await page
+      .locator(`${ROWS} td:nth-child(5)`)
+      .evaluateAll((cells) =>
+        cells.map((cell) => Number((cell.textContent ?? '').replace(/\D/g, ''))),
+      );
+
+    // Ascending as NUMBERS. The cells show a grouped, localised string, and
+    // sorting by that text is what puts 1.200 before 900.
+    expect(values).toEqual([...values].sort((a, b) => a - b));
+  });
+
+  test('filters a number range with two boxes, and an empty box is unbounded', async ({ page }) => {
+    await page.goto(TABLE);
+    await ready(page);
+
+    const boxes = page.locator(`${DEMO} [data-filter="bultos"] input`);
+    await expect(boxes).toHaveCount(2);
+
+    await boxes.nth(0).fill('100');
+    await expect(page.locator('[data-query]')).toContainText('bultos');
+    const withMin = await page.locator(ROWS).count();
+    expect(withMin).toBeLessThan(12);
+
+    await boxes.nth(0).fill('');
+    await expect(page.locator(ROWS)).toHaveCount(12);
+  });
+
+  test('the quick filter narrows the table, and the empty state is the projected one', async ({
+    page,
+  }) => {
+    await page.goto(TABLE);
+    await ready(page);
+
+    const search = page.locator(`${DEMO} [data-quick-filter] input`);
+    await search.fill('EXP-2026-0400');
+    await expect(page.locator(ROWS)).toHaveCount(1);
+
+    await search.fill('no-existe-nada');
+    await expect(page.locator(ROWS)).toHaveCount(0);
+    await expect(page.locator(`${DEMO} [data-empty-row]`)).toContainText(
+      'Ninguna expedición coincide',
+    );
+  });
+
+  test('selects every visible row from the header, and says so as mixed in between', async ({
+    page,
+  }) => {
+    await page.goto(TABLE);
+    await ready(page);
+
+    await page.locator(`${DEMO} tbody input[type="checkbox"]`).first().check();
+    await expect(page.locator('[data-selection-count]')).toHaveText('1');
+    await expect(page.locator(`${DEMO} thead input[type="checkbox"]`)).toHaveAttribute(
+      'aria-checked',
+      'mixed',
+    );
+
+    await page.locator(`${DEMO} thead input[type="checkbox"]`).check();
+    await expect(page.locator('[data-selection-count]')).toHaveText('12');
+  });
+
+  test('a coloured row also says its state in words', async ({ page }) => {
+    await page.goto(TABLE);
+    await ready(page);
+
+    /*
+     * `toHaveCount` and not `count()`: the first retries until the table has
+     * rendered and the second reads whatever is there at that instant, which
+     * on a lazily routed page is nothing. It cost a red test to remember.
+     */
+    await expect(page.locator(`${DEMO} ewms-badge`)).toHaveCount(12);
+
+    // Every tinted row carries a badge with an icon and a label: the colour is
+    // never the only signal (WCAG 1.4.1).
+    const tinted = page.locator(`${ROWS}.bg-danger-surface`).first();
+    await expect(tinted.locator('ewms-badge')).toContainText('Con incidencia');
+    await expect(tinted.locator('ewms-badge svg')).toBeVisible();
   });
 });

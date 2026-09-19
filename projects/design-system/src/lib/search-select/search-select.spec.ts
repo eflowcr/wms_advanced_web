@@ -7,6 +7,7 @@ import { map } from 'rxjs/operators';
 import { SearchSelect, type SearchSelectMessages } from './search-select';
 import {
   DELAY_SEARCH_INPUT_TOKEN,
+  EWMS_SEARCH_SELECT_MESSAGES,
   SCAN_THRESHOLD_TOKEN,
   TIMEOUT_SEARCH_TOKEN,
 } from './search-select.types';
@@ -103,7 +104,6 @@ class SlowSource implements SearchSource<Article> {
     <ewms-search-select
       [source]="source()"
       [display]="display"
-      [messages]="messages"
       [formControl]="control"
       label="Artículo"
       placeholder="Código o descripción"
@@ -118,7 +118,6 @@ class TestHost {
     label: (item: Article) => `${item.code} — ${item.name}`,
     code: (item: Article) => item.code,
   };
-  readonly messages = MESSAGES;
   readonly control = new FormControl<Article | null>(null);
   readonly hint = signal('');
 }
@@ -136,6 +135,10 @@ describe('SearchSelect', () => {
 
     await TestBed.configureTestingModule({
       imports: [TestHost, SearchSelect, ReactiveFormsModule],
+      // The words are PROVIDED, not passed: that is the library's one pattern
+      // for a dictionary of texts, and a spec that passed them by input would
+      // no longer be testing the component as it is used.
+      providers: [{ provide: EWMS_SEARCH_SELECT_MESSAGES, useValue: MESSAGES }],
     }).compileComponents();
     fixture = TestBed.createComponent(TestHost);
     host = fixture.componentInstance;

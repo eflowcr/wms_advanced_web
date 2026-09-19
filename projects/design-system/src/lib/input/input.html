@@ -7,7 +7,10 @@
   a screen reader says "required" on its own; the glyph would say it twice, and
   say it as the word "asterisk".
 -->
-<label [for]="fieldId" class="block text-caption text-secondary mb-1">
+<label
+  [for]="fieldId"
+  [class]="hideLabel() ? 'sr-only' : 'block text-caption text-secondary mb-1'"
+>
   {{ label() }}
   @if (required()) {
     <span aria-hidden="true">*</span>

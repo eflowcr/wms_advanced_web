@@ -97,6 +97,10 @@ export const showroomRoutes: Routes = [
           (await import('./pages/components/search-select')).ShowroomSearchSelect,
       },
       {
+        path: 'components/table',
+        loadComponent: async () => (await import('./pages/components/table')).ShowroomTable,
+      },
+      {
         /*
          * PERMANENT redirect, not a leftover. The iconography page lived at
          * /design-system/iconografia while the routes were still in Spanish,

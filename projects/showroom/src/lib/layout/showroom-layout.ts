@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, signal } from '@angular/c
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { DESIGN_SYSTEM_VERSION } from '@ewms/design-system';
 import { countEntries, filterCatalog, STATUS_LABELS } from '../catalog';
+import { provideShowroomDesignSystem } from '../showroom.providers';
 
 /**
  * The frame every showroom page renders inside: a fixed sidebar, a search box
@@ -23,6 +24,21 @@ import { countEntries, filterCatalog, STATUS_LABELS } from '../catalog';
   templateUrl: './showroom-layout.html',
   imports: [RouterLink, RouterLinkActive, RouterOutlet],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  /*
+   * THE CATALOGUE'S OWN DICTIONARIES, ON THE COMPONENT AND NOT ON THE ROUTE.
+   *
+   * The shell provides its own on `MainLayout`, which this layout renders
+   * inside. A component's providers live in the ELEMENT injector, and that
+   * chain is walked before any environment injector -- so route-level
+   * providers here lost to MainLayout's, and every showroom page quietly
+   * showed the shell's strings in whatever language the application was in.
+   * The table's row checkboxes reading "Select the row" in a Spanish-only
+   * catalogue is how it was noticed.
+   *
+   * On the component they are nearer than MainLayout's and win, which is what
+   * "the catalogue speaks for itself" has to mean.
+   */
+  providers: [provideShowroomDesignSystem()],
 })
 export class ShowroomLayout {
   /** Compile-time, from the library's package.json. Never typed in by hand. */
