@@ -255,8 +255,15 @@ export { Favorites } from './lib/favorites/favorites';
 export { FavoriteToggle } from './lib/favorites/favorite-toggle';
 export { FavoritesNav, FAVORITES_SHOWN } from './lib/favorites/favorites-nav';
 export { InMemoryFavoritesStore } from './lib/favorites/in-memory-favorites-store';
+/*
+ * `EWMS_FAVORITE_LABELS` (REQ-FE-DS4-002 v1.3): what a route is CALLED, asked
+ * when the block is drawn and never stored. The store is provided once per
+ * application; this is words, and each application provides its own.
+ */
 export {
+  EWMS_FAVORITE_LABELS,
   EWMS_FAVORITES_STORE,
   type Favorite,
+  type FavoriteLabelResolver,
   type FavoritesStore,
 } from './lib/favorites/favorites.types';

@@ -36,7 +36,7 @@ import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { BRAND_NAME } from '../brand';
 import { provideEwmsDesignSystem } from '../design-system.providers';
 import { LanguageSwitcher } from './language-switcher';
-import { MENU, MENU_DESTINATIONS, type MenuEntry } from './menu';
+import { MENU, MENU_DESTINATIONS, menuEntryFor, routeMatches, type MenuEntry } from './menu';
 import { MAX_OPEN_TABS, TabsService } from './tabs.service';
 
 /**
@@ -156,13 +156,7 @@ export class MainLayout {
   });
 
   /** Which menu entry is the page showing. */
-  protected readonly activeId = computed(() => {
-    const url = this.url();
-    const match = MENU_DESTINATIONS.filter((entry) => this.matches(url, entry.route)).sort(
-      (a, b) => (b.route?.length ?? 0) - (a.route?.length ?? 0),
-    )[0];
-    return match?.id ?? null;
-  });
+  protected readonly activeId = computed(() => menuEntryFor(this.url())?.id ?? null);
 
   protected readonly tabs = computed<readonly Tab[]>(() => this.tabsService.tabs());
   protected readonly activeTabId = computed(() => this.tabsService.activeRoute());
@@ -192,17 +186,19 @@ export class MainLayout {
     return trail;
   });
 
-  /** What THIS page is, as a favourite: the route showing and its menu name. */
-  protected readonly pageFavorite = computed<Favorite>(() => {
+  /**
+   * What THIS page is, as a favourite: THE ROUTE, and nothing else. The star
+   * takes it as it is; what the route is called is resolved by the block when
+   * it draws (`EWMS_FAVORITE_LABELS`), so it is never handed over from here.
+   */
+  protected readonly pageRoute = computed(() => this.url().split('?')[0] ?? '/');
+
+  /** What the page showing is called: for its tab and for the announcement. */
+  private readonly pageTitle = computed(() => {
     this.activeLang();
     const active = this.activeId();
     const item = MENU_DESTINATIONS.find((entry) => entry.id === active);
-    const route = this.url().split('?')[0] ?? '/';
-    const label = item === undefined ? this.brandName : this.transloco.translate(item.labelKey);
-    // Built in two shapes rather than with `icon: undefined`, which
-    // `exactOptionalPropertyTypes` rejects -- and rightly: "absent" and
-    // "present and undefined" are different things to a store.
-    return item === undefined ? { route, label } : { route, label, icon: item.icon };
+    return item === undefined ? this.brandName : this.transloco.translate(item.labelKey);
   });
 
   constructor() {
@@ -215,7 +211,7 @@ export class MainLayout {
      */
     effect(() => {
       const url = this.url();
-      const favorite = this.pageFavorite();
+      const title = this.pageTitle();
 
       /*
        * `untracked`, AND IT IS LOAD-BEARING RATHER THAN TIDY.
@@ -232,7 +228,7 @@ export class MainLayout {
        * `untracked` is how that distinction is written down.
        */
       untracked(() => {
-        const opened = this.tabsService.activate(url, favorite.label, url !== '/');
+        const opened = this.tabsService.activate(url, title, url !== '/');
         if (!opened) {
           this.toasts.show(
             'warning',
@@ -240,11 +236,11 @@ export class MainLayout {
           );
         } else {
           // Keep an already-open tab's label in step with the language.
-          this.tabsService.relabel(url, favorite.label);
+          this.tabsService.relabel(url, title);
         }
 
         this.focusPage();
-        this.routeAnnouncement.set(favorite.label);
+        this.routeAnnouncement.set(title);
       });
     });
 
@@ -264,7 +260,7 @@ export class MainLayout {
       this.activeLang();
       untracked(() => {
         for (const tab of this.tabsService.tabs()) {
-          const item = MENU_DESTINATIONS.find((entry) => this.matches(tab.route, entry.route));
+          const item = MENU_DESTINATIONS.find((entry) => routeMatches(tab.route, entry.route));
           if (item !== undefined) {
             this.tabsService.relabel(tab.route, this.transloco.translate(item.labelKey));
           }
@@ -389,17 +385,6 @@ export class MainLayout {
       }
       target.focus();
     });
-  }
-
-  /** `/articulos` matches `/articulos` and `/articulos/7`, never `/articulos-x`. */
-  private matches(url: string, route: string | undefined): boolean {
-    if (route === undefined) {
-      return false;
-    }
-    if (route === '/') {
-      return url === '/' || url.startsWith('/?');
-    }
-    return url === route || url.startsWith(`${route}/`) || url.startsWith(`${route}?`);
   }
 
   private toNavItem(entry: MenuEntry): NavItem {

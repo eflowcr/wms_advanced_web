@@ -1,6 +1,13 @@
-import { provideZonelessChangeDetection, type Type } from '@angular/core';
+import { provideZonelessChangeDetection, signal, type Type } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
+import {
+  EWMS_FAVORITE_LABELS,
+  EWMS_FAVORITES_STORE,
+  Favorites,
+  InMemoryFavoritesStore,
+  type FavoriteLabelResolver,
+} from '@ewms/design-system';
 import { expectNoAxeViolations } from '@ewms/testing';
 import { ShowroomLayout } from '../layout/showroom-layout';
 import { provideShowroomDesignSystem } from '../showroom.providers';
@@ -40,6 +47,18 @@ import { ShowroomHome } from './showroom-home';
  * markup is accessible -- and the measured facts live in e2e/showroom.e2e.ts,
  * where there is a browser to measure in.
  */
+/**
+ * THE FAVOURITES' STORE, PROVIDED BY THE TEST AND NOT BY THE CATALOGUE.
+ *
+ * In the application the showroom renders inside the shell and reads the
+ * shell's one list by injection. A unit test has no shell, so the test stands
+ * in for it HERE -- in the `TestBed`, never in `showroom.providers.ts`. Putting
+ * it back in production code to make a test pass is how a page got two lists.
+ */
+function provideApplicationFavorites() {
+  return [{ provide: EWMS_FAVORITES_STORE, useClass: InMemoryFavoritesStore }, Favorites];
+}
+
 async function render<T>(component: Type<T>) {
   await TestBed.configureTestingModule({
     imports: [component],
@@ -49,7 +68,7 @@ async function render<T>(component: Type<T>) {
      * PROVIDED, not passed, so leaving them out would fail at injection rather
      * than at an assertion.
      */
-    providers: [provideRouter([]), provideShowroomDesignSystem()],
+    providers: [provideRouter([]), provideShowroomDesignSystem(), provideApplicationFavorites()],
   }).compileComponents();
   const fixture = TestBed.createComponent(component);
   await fixture.whenStable();
@@ -113,22 +132,110 @@ describe('ShowroomLayout', () => {
     expect(element.querySelector('[lang="es"]')).not.toBeNull();
   });
 
-  it('the star NAMES the page you are on, read from the catalogue', async () => {
-    /*
-     * The label a favourite carries is the one the sidebar shows, not a slug
-     * taken from the URL: that is what makes the block in the navigation read
-     * like the catalogue rather than like a list of paths.
-     */
+  /** Mark a route in the application's list, the way the header's star does. */
+  async function mark(
+    fixture: { detectChanges(): void; whenStable(): Promise<unknown> },
+    route: string,
+  ) {
+    await TestBed.inject(Favorites).toggle(route);
+    fixture.detectChanges();
+    await fixture.whenStable();
+  }
+
+  it('a catalogue page is NAMED from the catalogue, not from its path', async () => {
+    // The store holds the route and nothing else (REQ-FE-DS4-002 v1.3); the
+    // name is resolved when the block draws, and for a catalogue page that is
+    // the entry's name -- so the block reads like the list underneath it.
+    const { fixture, element } = await render(ShowroomLayout);
+
+    await mark(fixture, '/design-system/components/button');
+
+    expect(element.querySelector('[data-favorites-nav] [data-favorite]')?.textContent?.trim()).toBe(
+      'Botón',
+    );
+  });
+
+  it('a screen of the APPLICATION is named by the application, one level up', async () => {
+    // One list means the sidebar also shows what was marked in the shell. The
+    // catalogue does not know what «/catalogos/articulos» is called, and asks
+    // the resolver above its own rather than showing a bare path.
+    const application: FavoriteLabelResolver = {
+      labelFor: (route) => signal(route === '/catalogos/articulos' ? 'Artículos' : '').asReadonly(),
+      iconFor: () => 'package',
+    };
     await TestBed.configureTestingModule({
       imports: [ShowroomLayout],
-      /*
-       * A route that MATCHES, so the URL the layout reads is a real one. The
-       * component is irrelevant -- what is under test is that the star reads
-       * the catalogue and not the path.
-       */
       providers: [
-        provideRouter([{ path: 'design-system/components/button', children: [] }]),
+        provideRouter([]),
+        provideApplicationFavorites(),
+        { provide: EWMS_FAVORITE_LABELS, useValue: application },
+      ],
+    }).compileComponents();
+    const fixture = TestBed.createComponent(ShowroomLayout);
+    await fixture.whenStable();
+    const element = fixture.nativeElement as HTMLElement;
+
+    await mark(fixture, '/catalogos/articulos');
+    await mark(fixture, '/design-system/components/button');
+
+    const rows = [...element.querySelectorAll('[data-favorites-nav] [data-favorite]')];
+    expect(rows.map((row) => row.textContent?.trim())).toEqual(['Artículos', 'Botón']);
+  });
+
+  it('ONE STAR PER PAGE, AND IT IS NOT THIS ONE: the layout carries the block only', async () => {
+    // The star is the application's, in the header above this layout. A second
+    // one here was a second `aria-pressed` for the same route over the same
+    // list -- which is what two stores looked like from the outside.
+    const { element } = await render(ShowroomLayout);
+
+    expect(element.querySelector('[data-favorite-toggle]')).toBeNull();
+    expect(element.querySelector('[aria-pressed]')).toBeNull();
+    expect(element.querySelector('[data-favorites-nav]')).not.toBeNull();
+  });
+
+  it('THE CATALOGUE PROVIDES WORDS AND NO STATE: no store, no `Favorites`', () => {
+    // The guard on the defect. A dictionary may be provided twice; the list
+    // may not, and the day somebody adds it back here a catalogue page has two
+    // lists again.
+    const provided = provideShowroomDesignSystem().map((provider) =>
+      typeof provider === 'object' && 'provide' in provider ? provider.provide : provider,
+    );
+
+    expect(provided).not.toContain(EWMS_FAVORITES_STORE);
+    expect(provided).not.toContain(Favorites);
+    expect(provided).toContain(EWMS_FAVORITE_LABELS);
+  });
+
+  it('marking fills the block in the sidebar, and choosing it navigates', async () => {
+    const { fixture, element } = await render(ShowroomLayout);
+    expect(element.querySelector('[data-favorites-empty]')).not.toBeNull();
+
+    await mark(fixture, '/design-system/components/button');
+
+    const entry = element.querySelector<HTMLButtonElement>('[data-favorites-nav] [data-favorite]');
+    expect(entry).not.toBeNull();
+    expect(element.querySelector('[data-favorites-empty]')).toBeNull();
+
+    // The block does not navigate: it emits, and the catalogue navigates.
+    const navigate = vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
+    entry!.click();
+    expect(navigate).toHaveBeenCalledWith('/design-system/components/button');
+  });
+
+  it('the block marks the page you are on, and follows you when you move', async () => {
+    // `aria-current` comes from the URL the layout reads off the router, not
+    // from the star: the star is not in this layout any more.
+    await TestBed.configureTestingModule({
+      imports: [ShowroomLayout],
+      providers: [
+        // Routes that MATCH, so the URL the layout reads is a real one. The
+        // components are irrelevant -- what is under test is the block.
+        provideRouter([
+          { path: 'design-system/components/button', children: [] },
+          { path: 'design-system/components/card', children: [] },
+        ]),
         provideShowroomDesignSystem(),
+        provideApplicationFavorites(),
       ],
     }).compileComponents();
     const router = TestBed.inject(Router);
@@ -137,50 +244,19 @@ describe('ShowroomLayout', () => {
     const fixture = TestBed.createComponent(ShowroomLayout);
     await fixture.whenStable();
     const element = fixture.nativeElement as HTMLElement;
+    await mark(fixture, '/design-system/components/button');
 
-    element.querySelector<HTMLButtonElement>('[data-favorite-toggle] button')!.click();
-    for (let turn = 0; turn < 4; turn += 1) {
-      await Promise.resolve();
-    }
-    fixture.detectChanges();
+    const row = () => element.querySelector('[data-favorite="/design-system/components/button"]');
+    expect(row()?.getAttribute('aria-current')).toBe('page');
+
+    // A query string is not part of what a page IS.
+    await router.navigateByUrl('/design-system/components/button?estado=cargando');
     await fixture.whenStable();
+    expect(row()?.getAttribute('aria-current')).toBe('page');
 
-    expect(element.querySelector('[data-favorites-nav] [data-favorite]')?.textContent?.trim()).toBe(
-      'Botón',
-    );
-  });
-
-  it('THE STAR IS IN THE CHROME, so every page has one without writing it', async () => {
-    // The comanda asks for the toggle in the header of every showroom page so
-    // it reads as a PATTERN rather than one page's button. Twenty-five copies
-    // would have been twenty-five chances to write it differently.
-    const { element } = await render(ShowroomLayout);
-
-    expect(element.querySelector('[data-favorite-toggle]')).not.toBeNull();
-    expect(element.querySelector('[data-favorites-nav]')).not.toBeNull();
-  });
-
-  it('marking fills the block in the sidebar, and choosing it navigates', async () => {
-    const { fixture, element } = await render(ShowroomLayout);
-    const star = element.querySelector<HTMLButtonElement>('[data-favorite-toggle] button')!;
-
-    expect(element.querySelector('[data-favorites-empty]')).not.toBeNull();
-
-    star.click();
-    for (let turn = 0; turn < 4; turn += 1) {
-      await Promise.resolve();
-    }
-    fixture.detectChanges();
+    await router.navigateByUrl('/design-system/components/card');
     await fixture.whenStable();
-
-    const entry = element.querySelector<HTMLButtonElement>('[data-favorites-nav] [data-favorite]');
-    expect(entry).not.toBeNull();
-    expect(element.querySelector('[data-favorites-empty]')).toBeNull();
-
-    // The block does not navigate: it emits, and the catalogue navigates.
-    entry!.click();
-    await fixture.whenStable();
-    expect(star.getAttribute('aria-pressed')).toBe('true');
+    expect(row()?.getAttribute('aria-current')).toBeNull();
   });
 
   it('owns no second main landmark: the shell already renders one', async () => {
@@ -1812,9 +1888,9 @@ describe('ShowroomNavigation', () => {
 
     // The document strip only. The page also renders a `section` strip below,
     // which is a different control demonstrating a different mode.
-    const documentTabs = [
-      ...element.querySelectorAll('[data-block="3-demo"] [data-tab]'),
-    ].map((tab) => tab.textContent?.trim());
+    const documentTabs = [...element.querySelectorAll('[data-block="3-demo"] [data-tab]')].map(
+      (tab) => tab.textContent?.trim(),
+    );
 
     expect(documentTabs).toEqual(['Dashboard']);
     expect(element.querySelector('[data-tab-close="dashboard"]')).toBeNull();

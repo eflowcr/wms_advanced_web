@@ -144,6 +144,31 @@ export const MENU_DESTINATIONS: readonly MenuEntry[] = MENU.flatMap((entry) =>
   entry.children === undefined ? [entry] : entry.children,
 ).filter((entry) => entry.route !== undefined);
 
+/** `/articulos` matches `/articulos` and `/articulos/7`, never `/articulos-x`. */
+export function routeMatches(url: string, route: string | undefined): boolean {
+  if (route === undefined) {
+    return false;
+  }
+  if (route === '/') {
+    return url === '/' || url.startsWith('/?');
+  }
+  return url === route || url.startsWith(`${route}/`) || url.startsWith(`${route}?`);
+}
+
+/**
+ * Which destination a URL belongs to: the LONGEST route that matches it.
+ *
+ * Here and not in `MainLayout` since the favourites' label resolver asks the
+ * same question about routes that are not the one showing, and two copies of
+ * "which menu entry is this" is how a tab and a favourite end up with
+ * different names for the same screen.
+ */
+export function menuEntryFor(url: string): MenuEntry | undefined {
+  return MENU_DESTINATIONS.filter((entry) => routeMatches(url, entry.route)).sort(
+    (a, b) => (b.route?.length ?? 0) - (a.route?.length ?? 0),
+  )[0];
+}
+
 /**
  * The entries that have no screen yet.
  *

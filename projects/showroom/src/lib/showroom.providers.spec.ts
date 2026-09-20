@@ -1,4 +1,11 @@
-import { SEARCH_SELECT_MESSAGES, TABLE_FORMATTERS, TABLE_MESSAGES } from './showroom.providers';
+import { Injector, signal } from '@angular/core';
+import { EWMS_FAVORITE_LABELS, type FavoriteLabelResolver } from '@ewms/design-system';
+import {
+  provideShowroomDesignSystem,
+  SEARCH_SELECT_MESSAGES,
+  TABLE_FORMATTERS,
+  TABLE_MESSAGES,
+} from './showroom.providers';
 
 /**
  * The catalogue's own dictionaries.
@@ -61,5 +68,49 @@ describe('the showroom dictionaries', () => {
     it('repeats the text that was searched', () => {
       expect(SEARCH_SELECT_MESSAGES.noResults('caja')).toContain('caja');
     });
+  });
+});
+
+/**
+ * What a favourite is called in the catalogue's sidebar (REQ-FE-DS4-002 v1.3).
+ *
+ * Two injectors, because that is the shape in the application: the shell's
+ * resolver above, the catalogue's below it, asking upwards for what it does not
+ * know.
+ */
+describe("the showroom's favourite labels", () => {
+  const BUTTON = '/design-system/components/button';
+
+  function resolverUnder(parent?: FavoriteLabelResolver): FavoriteLabelResolver {
+    const above = Injector.create({
+      providers: parent === undefined ? [] : [{ provide: EWMS_FAVORITE_LABELS, useValue: parent }],
+    });
+    return Injector.create({ providers: provideShowroomDesignSystem(), parent: above }).get(
+      EWMS_FAVORITE_LABELS,
+    );
+  }
+
+  const application: FavoriteLabelResolver = {
+    labelFor: (route) => signal(route === '/catalogos/articulos' ? 'Artículos' : '').asReadonly(),
+    iconFor: (route) => (route === '/catalogos/articulos' ? 'package' : null),
+  };
+
+  it('names a catalogue page by its entry, whatever is above', () => {
+    expect(resolverUnder().labelFor(BUTTON)()).toBe('Botón');
+    expect(resolverUnder(application).labelFor(BUTTON)()).toBe('Botón');
+    // The catalogue has no icons of its own: the block draws its neutral one.
+    expect(resolverUnder(application).iconFor(BUTTON)).toBeNull();
+  });
+
+  it("asks the application for a screen that is not the catalogue's", () => {
+    const labels = resolverUnder(application);
+    expect(labels.labelFor('/catalogos/articulos')()).toBe('Artículos');
+    expect(labels.iconFor('/catalogos/articulos')).toBe('package');
+  });
+
+  it('alone, an unknown route resolves to nothing -- and the block shows the route', () => {
+    const labels = resolverUnder();
+    expect(labels.labelFor('/no-existe')()).toBe('');
+    expect(labels.iconFor('/no-existe')).toBeNull();
   });
 });

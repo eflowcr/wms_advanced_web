@@ -1,14 +1,6 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  inject,
-  input,
-  signal,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
 import { IconButton } from '../icon-button/icon-button';
 import { Favorites } from './favorites';
-import type { Favorite } from './favorites.types';
 
 /**
  * THE STAR (REQ-FE-DS4-002 RFE-03). One control, in the header of every screen
@@ -67,8 +59,8 @@ import type { Favorite } from './favorites.types';
   host: { class: 'inline-flex items-center', 'data-favorite-toggle': '' },
 })
 export class FavoriteToggle {
-  /** What this screen is, as a favourite: route, label, and an icon. */
-  readonly favorite = input.required<Favorite>();
+  /** Which screen this is. The route IS the favourite; its name is never stored. */
+  readonly route = input.required<string>();
 
   /** Both already translated. They differ, and that is the requirement. */
   readonly addLabel = input.required<string>();
@@ -85,14 +77,14 @@ export class FavoriteToggle {
   protected readonly announcement = signal('');
 
   protected readonly marked = computed(() =>
-    this.favorites.list().some((current) => current.route === this.favorite().route),
+    this.favorites.list().some((current) => current.route === this.route()),
   );
 
   protected onToggle(): void {
     // Read BEFORE the write: after it, `marked()` is the new state and the
     // message would describe what just stopped being true.
     const wasMarked = this.marked();
-    void this.favorites.toggle(this.favorite()).then(() => {
+    void this.favorites.toggle(this.route()).then(() => {
       this.announcement.set(wasMarked ? this.removedMessage() : this.addedMessage());
     });
   }
