@@ -4,24 +4,40 @@ name: CI
 # If a rule is too strict, the rule changes deliberately -- it is never demoted
 # to a warning to get a branch green.
 #
-# FOUR REQUIRED CHECKS, AND THEIR NAMES ARE A CONTRACT.
+# FOUR JOBS, AND THEIR NAMES ARE DICTATED BY THE BRANCH RULE.
 #
-#   verify     types, lint, tokens, icons, i18n, shortcuts, clicks, unit tests
-#              with coverage and axe, production build with budgets, npm audit
-#   smoke      the Playwright floor
-#   showroom   the catalogue's suite -- ALWAYS REPORTS, runs only when needed
-#   secrets    Gitleaks, history and working tree
+#   Types, lint, tests, budgets   types, lint, tokens, icons, i18n, shortcuts,
+#                                 clicks, unit tests with coverage and axe,
+#                                 production build with budgets, npm audit
+#   Playwright smoke              the end-to-end floor
+#   Playwright showroom           the catalogue's suite -- ALWAYS REPORTS,
+#                                 runs only when needed
+#   Gitleaks                      secrets, history and working tree
 #
-# The branch rule on `development` requires checks BY NAME, letter for letter,
-# and GitHub takes the name from a job's `name:`. A required check whose name
-# no job reports does not fail: it waits forever, and the pull request is
-# blocked with nothing red to look at. That already happened once (3dab2a3).
+# THE NAME IS THE CONTRACT, AND WE ARE NOT THE ONES WHO HOLD IT. The ruleset
+# «Protect» requires checks BY NAME, letter for letter, and GitHub takes the
+# name from a job's `name:`. A required check whose name no job reports does
+# not fail: it WAITS FOREVER, and the pull request is blocked with nothing red
+# to look at. It happened in DS-5 (3dab2a3) and again on the DS-5 closing PR.
 #
-# So the four names are lowercase, carry no number, and never change. The
-# FOURTEEN RULES they enforce are numbered in the vault (Integracion
-# Continua.md), where a number can be cited; not here, where renumbering a rule
-# used to mean renaming a check. `tools/ci/e2e-levels.test.mjs` asserts the
-# four names and the absence of numbers, so this comment is not the only guard.
+# The ruleset lives in GitHub, not in this repository, and editing it needs
+# admin rights that this team does not have (verified 2026-09-20: `push`, no
+# `admin`, no `maintain`). So the three names it already knows are FIXED
+# INPUTS, copied here exactly:
+#
+#     Types, lint, tests, budgets · Playwright smoke · Gitleaks
+#
+# Do not "improve" them. Renaming one does not rename the requirement; it
+# orphans it. `Playwright showroom` is the only free name -- the ruleset does
+# not ask for it yet -- and it follows the same style so the family reads as
+# one set the day somebody with admin rights can add it.
+#
+# What the DS-5 closing DID fix, and keeps: no job or step carries a «Gate N»
+# any more. The FOURTEEN RULES are numbered in the vault (Integracion
+# Continua.md), where a number can be cited, rather than here, where
+# renumbering a rule used to mean renaming a check.
+# `tools/ci/e2e-levels.test.mjs` asserts the names and the absence of numbers,
+# so this comment is not the only guard.
 
 on:
   push:
@@ -49,7 +65,8 @@ env:
 jobs:
   # ---------------------------------------------------------------------- verify
   verify:
-    name: verify
+    # Required by the ruleset under EXACTLY this name. See the header.
+    name: Types, lint, tests, budgets
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -151,14 +168,19 @@ jobs:
   #             request it runs only when something it documents changed; on a
   #             push to development or main it always runs. Three shards.
   #
-  # THE END-TO-END RULE IS STILL BLOCKING. The job called `showroom` below
-  # always runs and fails when the sharded suite ran and was not green, so
-  # there is one required check whose name never disappears from a pull
-  # request -- which a job with an `if:` cannot promise, because a skipped
-  # required check is not the same thing to GitHub as a passing one.
+  # `smoke` and `showroom` above are the PLAYWRIGHT PROJECT names, in
+  # playwright.config.ts. The jobs that run them are named for the ruleset.
+  #
+  # THE END-TO-END RULE IS STILL BLOCKING. The job named `Playwright showroom`
+  # below always runs and fails when the sharded suite ran and was not green,
+  # so there is one check whose name never disappears from a pull request --
+  # which a job with an `if:` cannot promise, because a skipped required check
+  # is not the same thing to GitHub as a passing one. The ruleset does not
+  # require it yet; when it can, this job is the one to add.
 
   smoke:
-    name: smoke
+    # Required by the ruleset under EXACTLY this name. See the header.
+    name: Playwright smoke
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -190,7 +212,7 @@ jobs:
 
   # Not a required check: it answers a question for the three jobs below it.
   showroom-changes:
-    name: showroom (what changed)
+    name: Playwright showroom (what changed)
     runs-on: ubuntu-latest
     outputs:
       showroom: ${{ steps.filter.outputs.showroom }}
@@ -229,11 +251,12 @@ jobs:
             echo "showroom=false" >> "$GITHUB_OUTPUT"
           fi
 
-  # Not required individually: `showroom (1/3)`... report to the job called
-  # `showroom`, which is the one the branch rule asks for. Requiring a shard by
-  # name would block every pull request on which the suite did not have to run.
+  # Not required individually: `Playwright showroom (1/3)`... report to the job
+  # called `Playwright showroom`, which is the one a branch rule would ask for.
+  # Requiring a shard by name would block every pull request on which the suite
+  # did not have to run.
   showroom-shards:
-    name: showroom (${{ matrix.shard }}/3)
+    name: Playwright showroom (${{ matrix.shard }}/3)
     needs: showroom-changes
     if: needs.showroom-changes.outputs.showroom == 'true'
     runs-on: ubuntu-latest
@@ -273,7 +296,7 @@ jobs:
           retention-days: 7
 
   showroom-report:
-    name: showroom (report)
+    name: Playwright showroom (report)
     needs: [showroom-changes, showroom-shards]
     if: ${{ !cancelled() && needs.showroom-changes.outputs.showroom == 'true' }}
     runs-on: ubuntu-latest
@@ -307,13 +330,16 @@ jobs:
           retention-days: 7
 
   showroom:
-    name: showroom
+    # THE ONE NAME THAT IS OURS TO CHOOSE: the ruleset does not ask for this
+    # check yet, because adding it needs admin rights this team does not have.
+    # It is shaped like a required check anyway -- one name, always reported --
+    # so the day somebody can add it, nothing here has to change.
+    name: Playwright showroom
     needs: [showroom-changes, showroom-shards]
-    # ALWAYS, and that is the whole point: this is the check branch protection
+    # ALWAYS, and that is the whole point: this is the shape branch protection
     # requires. When the suite did not have to run it passes and says so; when
     # it ran and was not green it fails. An `if:` on the sharded job alone
-    # would make the required check vanish from the pull request instead of
-    # passing it.
+    # would make the check vanish from the pull request instead of passing it.
     if: ${{ always() }}
     runs-on: ubuntu-latest
     steps:
@@ -338,7 +364,8 @@ jobs:
 
   # --------------------------------------------------------------------- secrets
   secrets:
-    name: secrets
+    # Required by the ruleset under EXACTLY this name. See the header.
+    name: Gitleaks
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
