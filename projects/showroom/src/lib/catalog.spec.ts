@@ -62,8 +62,17 @@ describe('the catalogue', () => {
 
     it('matches by name, ignoring case', () => {
       const sections = filterCatalog('TOGGLE');
-      expect(countEntries(sections)).toBe(1);
-      expect(sections[0]?.entries[0]?.name).toBe('Toggle');
+
+      /*
+       * TWO SINCE DS-5, AND THAT IS THE SEARCH WORKING RATHER THAN FAILING:
+       * «Toggle» matches by NAME and «Favoritos» matches by SELECTOR
+       * (`ewms-favorite-toggle`). Narrowing the query to keep the number at
+       * one would be testing a coincidence instead of the behaviour.
+       */
+      expect(sections.flatMap((section) => section.entries).map((entry) => entry.id)).toEqual([
+        'toggle',
+        'favorites',
+      ]);
     });
 
     it('matches by selector, which is what you type in a template', () => {

@@ -1,10 +1,13 @@
 import { inject, type Provider } from '@angular/core';
 import {
+  EWMS_FAVORITES_STORE,
   EWMS_SEARCH_SELECT_MESSAGES,
   EWMS_SHORTCUT_HELP_MESSAGES,
   EWMS_SHORTCUT_MAP,
   EWMS_TABLE_FORMATTERS,
   EWMS_TABLE_MESSAGES,
+  Favorites,
+  InMemoryFavoritesStore,
   parseTableDate,
   type SearchSelectMessages,
   type ShortcutHelpMessages,
@@ -56,6 +59,24 @@ export function provideEwmsDesignSystem(): Provider[] {
       provide: EWMS_SHORTCUT_MAP,
       useValue: SHORTCUT_MAP,
     },
+    /*
+     * FAVOURITES, IN MEMORY (REQ-FE-DS4-002 v1.2, decisión del usuario
+     * 2026-09-19).
+     *
+     * THE LINE THAT CHANGES WHEN THE BACKEND EXISTS IS THIS ONE, and nothing
+     * else: `InMemoryFavoritesStore` becomes a class that speaks to the
+     * Security Core's preferences endpoint (the contract is written in §12 of
+     * the REQ), and the star, the navigation block and `Favorites` are not
+     * touched. That is what RFE-02 bought.
+     *
+     * Until then they live as long as the tab does. No browser storage, no
+     * ESLint exception -- which was the whole difficulty of the decision.
+     */
+    {
+      provide: EWMS_FAVORITES_STORE,
+      useClass: InMemoryFavoritesStore,
+    },
+    Favorites,
     {
       provide: EWMS_SHORTCUT_HELP_MESSAGES,
       useFactory: shortcutHelpMessages,

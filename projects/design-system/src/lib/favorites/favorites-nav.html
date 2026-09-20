@@ -1,0 +1,71 @@
+<!--
+  A named <nav> of its own, and not part of the tree's <nav>.
+
+  Two reasons. A screen reader's landmark list should say "Favoritos" and
+  "Menú principal" separately, because they are two different ways to get
+  somewhere; and the tree's roving-tabindex keyboard walks the MENU, so a
+  favourite folded into it would be a row the arrows visit and the shell never
+  put there.
+-->
+<nav
+  class="border-b px-2 py-3"
+  [class]="tone().text + ' ' + tone().border"
+  data-favorites-nav
+  [attr.aria-label]="label()"
+>
+  @if (expanded()) {
+    <h2 class="px-2 pb-2 text-caption uppercase">{{ label() }}</h2>
+  }
+
+  @if (shown().length === 0) {
+    <!--
+      THE EMPTY STATE IS NOT A BLANK SPACE. It is the only place that says how
+      to fill the block, and a block that disappeared would say the feature
+      does not exist. Collapsed, there is no room for a sentence, so a star
+      stands in for it and carries the words as its accessible name.
+    -->
+    @if (expanded()) {
+      <p class="px-2 text-caption" data-favorites-empty>{{ emptyLabel() }}</p>
+    } @else {
+      <!--
+        NOT FOCUSABLE, AND NOT A TOOLTIP. A `tabindex="0"` on a non-control to
+        hang a tooltip off is precisely the defect the keyboard walk of DS-2
+        found on the Tooltip's own page: it puts a stop in the Tab order that
+        does nothing. The icon carries `label`, so it is `role="img"` with an
+        accessible name and a screen reader still hears why the block is empty.
+      -->
+      <div class="flex justify-center py-2" data-favorites-empty>
+        <ewms-icon name="star" size="lg" [label]="emptyLabel()" />
+      </div>
+    }
+  } @else {
+    <!--
+      `aria-label` only when collapsed, the same rule as the rail's: a tooltip
+      describes and does not name, and a row with no visible text and no label
+      is a button nobody can identify.
+    -->
+    <ul class="list-none">
+      @for (favorite of shown(); track favorite.route) {
+        <li>
+          <button
+            type="button"
+            class="flex w-full items-center gap-3 rounded-sm py-2 text-left text-p outline-none focus-visible:shadow-(--focus-ring-shadow) aria-[current=page]:bg-primary aria-[current=page]:text-h4 aria-[current=page]:text-on-primary"
+            [class]="(expanded() ? 'px-2' : 'justify-center px-1') + ' ' + tone().hover"
+            [attr.data-favorite]="favorite.route"
+            [attr.aria-label]="expanded() ? null : favorite.label"
+            [attr.aria-current]="activeRoute() === favorite.route ? 'page' : null"
+            [ewmsTooltip]="favorite.label"
+            [tooltipDisabled]="expanded()"
+            position="right"
+            (click)="onSelect(favorite)"
+          >
+            <ewms-icon [name]="favorite.icon ?? 'star'" size="lg" />
+            @if (expanded()) {
+              <span class="min-w-0 flex-1 truncate">{{ favorite.label }}</span>
+            }
+          </button>
+        </li>
+      }
+    </ul>
+  }
+</nav>

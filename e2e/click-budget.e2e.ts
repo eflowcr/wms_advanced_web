@@ -21,6 +21,7 @@ import {
   CANCEL_MAX_CLICKS,
   CREATE_MAX_CLICKS,
   EDIT_MAX_CLICKS,
+  OPEN_FAVORITE_MAX_CLICKS,
   SEARCH_MAX_CLICKS,
 } from '../projects/showroom/src/lib/pages/patterns/click-budget';
 
@@ -229,6 +230,44 @@ test.describe('the same flows on the keyboard cost nothing', () => {
     expect(await pageCount(page)).toBe(0);
   });
 
+  test('creating: Alt+N, type, and ENTER -- the limitation DS-5 closed', async ({ page }) => {
+    /*
+     * DS-4 reported this against the Button and could not fix it there: every
+     * `ewms-button` rendered `type="button"`, so this form had no submit
+     * button, and a form with several fields and no submit button is not sent
+     * by `Enter` either. Saving was the click or Ctrl+S; `Enter` in a field --
+     * what everybody actually does -- did nothing.
+     *
+     * DS-5 added `type` with `'button'` as the default, so nothing that
+     * existed changed, and this form asked for `submit`. Still zero clicks.
+     */
+    await open(page);
+    const clicks = clicker();
+
+    await page.keyboard.press('Alt+n');
+    await expect(page.locator('[data-expedicion-form]')).toBeVisible();
+    /*
+     * AT A PERSON'S PACE, AND THE DELAY IS THE TEST AS MUCH AS THE ENTER IS.
+     *
+     * Typed at full speed the code is a BURST, and a burst closed by Enter is
+     * a scan (RFE-05) -- so the engine cancels that Enter and the form is not
+     * submitted. That is the protection working, not a defect: it is the same
+     * rule that stops a barcode from firing a shortcut in the middle of
+     * receiving. 60 ms a character is above the threshold and below anything a
+     * person notices; a real typist is nearer 120.
+     *
+     * It is worth knowing, because `Enter` in a form is a NEW interaction as
+     * of DS-5: the trade-off RFE-05 accepted now has a second place where it
+     * shows.
+     */
+    await page.keyboard.type('EXP-2026-0902', { delay: 60 });
+    await page.keyboard.press('Enter');
+
+    await expect(page.locator('[data-last-saved]')).toHaveText('EXP-2026-0902');
+    expect(clicks.total(), 'guardar con Enter no puede costar ningún clic').toBe(0);
+    expect(await pageCount(page)).toBe(0);
+  });
+
   test('cancelling: Escape, one gesture, and the focus comes back', async ({ page }) => {
     await open(page);
     const opener = page.locator('[data-new-button] button');
@@ -248,6 +287,64 @@ test.describe('the same flows on the keyboard cost nothing', () => {
     await expect(opener).toBeFocused();
     expect(clicks.total()).toBe(0);
     expect(await pageCount(page)).toBe(0);
+  });
+});
+
+/**
+ * THE FLOW FAVOURITES EXIST FOR (DS-5, REQ-FE-DS4-002 + REQ-FE-DS4-003 §2.2).
+ *
+ * It is the only one of the budgets that is NOT about this screen: the star is
+ * in the App Shell's header and the block is in its rail, so the flow crosses
+ * the whole application rather than one page. That is the point -- "from
+ * anywhere" is a claim about the navigation, and it could not be made at all
+ * until the navigation existed.
+ */
+test.describe('opening a favourite', () => {
+  test(`costs at most ${OPEN_FAVORITE_MAX_CLICKS} click, from another screen`, async ({ page }) => {
+    await open(page);
+
+    /*
+     * THE SHELL'S STAR, NOT THE CATALOGUE'S, AND THERE ARE BOTH.
+     *
+     * A showroom page renders inside the App Shell, so two favourite toggles
+     * are on screen: the application's, in the header, and the catalogue's own
+     * in its chrome -- backed by a different store, which is precisely what
+     * RFE-02's interface buys and what the showroom exists to demonstrate.
+     * What is under test here is the APPLICATION's flow, so every locator is
+     * scoped to the shell.
+     */
+    await page.locator('[data-app-header] [data-favorite-toggle] button').click();
+    await expect(page.locator('ewms-nav-rail [data-favorite]')).toHaveCount(1);
+
+    /*
+     * Somewhere else, WITHIN the application. `page.goto` would be a full
+     * reload, and the list lives in memory until the Security Core exists --
+     * which is its own assertion, in `e2e/smoke.e2e.ts`, and not this one's.
+     */
+    await page.locator('[data-nav-item="dashboard"]').click();
+    await expect(page).toHaveURL(/\/$/);
+
+    const clicks = clicker();
+    await clicks.click(page.locator('ewms-nav-rail [data-favorite]').first());
+
+    await expect(page).toHaveURL(new RegExp(`${SCREEN}$`));
+    expect(clicks.total(), `abrir un favorito costó ${clicks.total()} clics`).toBeLessThanOrEqual(
+      OPEN_FAVORITE_MAX_CLICKS,
+    );
+  });
+
+  test('and ZERO with the keyboard, like every other flow', async ({ page }) => {
+    await open(page);
+    await page.locator('[data-app-header] [data-favorite-toggle] button').click();
+    await expect(page.locator('ewms-nav-rail [data-favorite]')).toHaveCount(1);
+    await page.locator('[data-nav-item="dashboard"]').click();
+    await expect(page).toHaveURL(/\/$/);
+
+    const clicks = clicker();
+    await page.locator('ewms-nav-rail [data-favorite]').first().press('Enter');
+
+    await expect(page).toHaveURL(new RegExp(`${SCREEN}$`));
+    expect(clicks.total()).toBe(0);
   });
 });
 

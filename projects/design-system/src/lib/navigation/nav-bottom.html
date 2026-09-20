@@ -1,0 +1,122 @@
+<!--
+  The sheet is written BEFORE the bar in the DOM and drawn above it on screen.
+
+  The order matters for the keyboard: once the sheet is open the focus is
+  trapped inside it, and when it closes the focus goes back to the control that
+  opened it. Nothing here depends on the visual order, which is what `fixed`
+  positioning decides.
+-->
+@if (open()) {
+  <!--
+    A REAL `<button>`, not a `<div>` with a click handler.
+
+    An element that answers a click has to be focusable, or a keyboard user has
+    a control they can see and cannot reach. `tabindex="-1"` with `aria-hidden`
+    is the honest shape for THIS one: it is a duplicate of the close control
+    inside the sheet and of Escape, so it must not be a second stop in the Tab
+    order, and a reader should not announce it at all.
+  -->
+  <button
+    type="button"
+    class="fixed inset-0 z-10 bg-overlay"
+    data-nav-bottom-backdrop
+    tabindex="-1"
+    aria-hidden="true"
+    (click)="close()"
+  ></button>
+
+  <div
+    #sheet
+    class="fixed inset-x-0 bottom-(--nav-bottom-height) z-10 max-h-[70vh] overflow-y-auto bg-brand-navy text-on-dark"
+    data-nav-bottom-sheet
+  >
+    <!--
+      The favourites block on a narrow screen. On the rail it is pinned above
+      the tree; here it is the first thing in the sheet, which is the same
+      promise -- a fixed place in the navigation -- at a width where nothing
+      can be pinned.
+    -->
+    <ng-content select="[navBottomTop]" />
+
+    <nav class="p-2" [attr.aria-label]="moreLabel()">
+      <ul class="list-none">
+        @for (item of items(); track item.id) {
+          <li>
+            @if (isGroup(item)) {
+              <p class="px-4 pb-1 pt-3 text-caption uppercase text-on-dark">{{ item.label }}</p>
+              <ul class="list-none">
+                @for (child of item.children; track child.id) {
+                  <li>
+                    <button
+                      type="button"
+                      class="flex w-full items-center gap-3 rounded-sm py-3 pl-8 pr-4 text-left text-p outline-none hover:bg-primary-hover focus-visible:shadow-(--focus-ring-shadow) aria-[current=page]:bg-primary aria-[current=page]:text-h4 aria-[current=page]:text-on-primary"
+                      [attr.data-nav-sheet-item]="child.id"
+                      [attr.aria-current]="activeId() === child.id ? 'page' : null"
+                      (click)="onSheetSelect(child)"
+                    >
+                      <ewms-icon [name]="child.icon" size="lg" />
+                      <span class="min-w-0 flex-1 truncate">{{ child.label }}</span>
+                    </button>
+                  </li>
+                }
+              </ul>
+            } @else {
+              <button
+                type="button"
+                class="flex w-full items-center gap-3 rounded-sm px-4 py-3 text-left text-p outline-none hover:bg-primary-hover focus-visible:shadow-(--focus-ring-shadow) aria-[current=page]:bg-primary aria-[current=page]:text-h4 aria-[current=page]:text-on-primary"
+                [attr.data-nav-sheet-item]="item.id"
+                [attr.aria-current]="activeId() === item.id ? 'page' : null"
+                (click)="onSheetSelect(item)"
+              >
+                <ewms-icon [name]="item.icon" size="lg" />
+                <span class="min-w-0 flex-1 truncate">{{ item.label }}</span>
+              </button>
+            }
+          </li>
+        }
+      </ul>
+
+      <button
+        type="button"
+        class="mt-2 flex w-full items-center justify-center gap-2 rounded-sm px-4 py-3 text-p outline-none hover:bg-primary-hover focus-visible:shadow-(--focus-ring-shadow)"
+        data-nav-bottom-close
+        (click)="close()"
+      >
+        <ewms-icon name="x" size="lg" />
+        <span>{{ closeLabel() }}</span>
+      </button>
+    </nav>
+  </div>
+}
+
+<nav
+  class="fixed inset-x-0 bottom-0 z-10 flex h-(--nav-bottom-height) items-stretch border-t border-strong bg-brand-navy text-on-dark"
+  data-nav-bottom
+  [attr.aria-label]="label()"
+>
+  @for (item of barItems(); track item.id) {
+    <button
+      type="button"
+      class="flex flex-1 flex-col items-center justify-center gap-1 outline-none hover:bg-primary-hover focus-visible:shadow-(--focus-ring-shadow) aria-[current=page]:bg-primary aria-[current=page]:text-h4 aria-[current=page]:text-on-primary"
+      [attr.data-nav-bottom-item]="item.id"
+      [attr.aria-current]="activeId() === item.id ? 'page' : null"
+      (click)="onBarSelect(item)"
+    >
+      <ewms-icon [name]="item.icon" size="lg" />
+      <span class="max-w-full truncate px-1 text-caption">{{ item.label }}</span>
+    </button>
+  }
+
+  @if (hasMore()) {
+    <button
+      type="button"
+      class="flex flex-1 flex-col items-center justify-center gap-1 outline-none hover:bg-primary-hover focus-visible:shadow-(--focus-ring-shadow)"
+      data-nav-bottom-more
+      [attr.aria-expanded]="open()"
+      (click)="onOpen($event)"
+    >
+      <ewms-icon name="more" size="lg" />
+      <span class="max-w-full truncate px-1 text-caption">{{ moreLabel() }}</span>
+    </button>
+  }
+</nav>

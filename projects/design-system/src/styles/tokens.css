@@ -150,6 +150,15 @@
   --size-40: 40px;
   --size-48: 48px;
   --size-56: 56px;
+  /* Geometria del App Shell (DS-5). 64 el header y la barra inferior, 72 el
+   * rail colapsado, 232 el panel expandido: los tres salen de la hoja de
+   * Figma del App Shell y no de la escala de controles, porque miden un
+   * marco y no un control. */
+  --size-64: 64px;
+  --size-72: 72px;
+  --size-232: 232px;
+  /* El unico ancho de viewport del sistema. Ver --breakpoint-nav-bottom. */
+  --size-768: 768px;
   /* Anchos de columna de la Tabla. Mas grandes que el resto de la escala
    * porque miden una columna, no un control (DS-3, lote C). */
   --size-96: 96px;
@@ -357,6 +366,42 @@
 
   /* El circulo de la zona de icono. 56x56, de la ficha (v1.1, 27/08). */
   --size-dialog-icon: var(--size-56);
+
+  /* -------------------------------------------------------------- app shell
+   * La geometria del marco (DS-5), de la hoja de Figma del App Shell.
+   *
+   * SON TOKENS Y NO NUMEROS EN LA PLANTILLA por la misma razon que los anchos
+   * de columna de la Tabla: una plantilla con `h-[64px]` es un valor crudo y
+   * la compuerta 10 la rechaza, y ademas el dia que el header cambie de alto
+   * hay que encontrar todos los sitios que lo suponian. El rail, el panel y
+   * el contenido se posicionan contra estos tres nombres. */
+  --shell-header-height: var(--size-64);
+  --nav-rail-width: var(--size-72);
+  --nav-panel-width: var(--size-232);
+
+  /* Alto de la barra de navegacion inferior en pantalla angosta.
+   *
+   * El mismo 64 del header, y no por simetria decorativa: es lo que deja un
+   * objetivo tactil comodo por encima del minimo de 24x24 de WCAG 2.2 2.5.8
+   * con la etiqueta debajo del icono. */
+  --nav-bottom-height: var(--size-64);
+
+  /* EL UNICO PUNTO DE CORTE DEL SISTEMA, Y ES UN TOKEN.
+   *
+   * Por debajo de 768 px la navegacion deja de ser un rail lateral y pasa a
+   * ser la barra inferior (decision del usuario, 2026-09-19; ver la ficha de
+   * Navegacion). Por encima, el rail.
+   *
+   * Vive aca y no como un `md:` de Tailwind porque el @theme de este
+   * repositorio borra el tema por defecto, breakpoints incluidos (ADR 0009):
+   * un punto de corte es una decision de diseno como el alto del header, y
+   * las decisiones de diseno viven en este archivo. styles.css lo mapea a la
+   * variante `nav-bottom:` para que las utilidades existan. */
+  --breakpoint-nav-bottom: var(--size-768);
+
+  /* Alto de una pestana de documento. La altura de control `md`, para que una
+   * pestana y un boton del mismo tamano midan igual en la misma barra. */
+  --tab-height: var(--size-40);
 
   /* ----------------------------------------------------------------- tabla
    * Alto de fila por densidad.

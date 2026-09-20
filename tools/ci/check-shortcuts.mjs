@@ -71,6 +71,12 @@ export const KEY_EXEMPT = [
   'projects/design-system/src/lib/button/',
   'projects/design-system/src/lib/icon-button/',
   'projects/design-system/src/lib/overlay/',
+  // DS-5: the bottom navigation's sheet closes on Escape and the rail walks
+  // itself with the arrows. Same category as the dialog and the select --
+  // a component answering its OWN keys, specified in its own sheet, and
+  // running before the engine sees the event. Turning the global `cancel`
+  // binding off must not stop a panel from closing.
+  'projects/design-system/src/lib/navigation/',
   // The catalogue TALKS about keys -- it is documentation, and a sheet that
   // could not print the key it documents would be useless.
   'projects/showroom/src/lib/pages/',

@@ -76,6 +76,21 @@ jobs:
       - name: Gate 12 - i18n (keys in sync, same keys per language, no hardcoded text)
         run: npm run lint:i18n
 
+      # Gate 13 -- the shortcut map (REQ-FE-DS4-001 RFE-01). Every key is named
+      # in a map file and nowhere else, and exactly one global keyboard
+      # listener exists. Built in DS-4 and, until DS-5, never wired here: the
+      # script existed, `npm run lint:shortcuts` ran it, and nothing in CI
+      # called it. A gate that only runs when somebody remembers is not a gate.
+      - name: Gate 13 - Shortcut map (one map, one listener)
+        run: npm run lint:shortcuts
+
+      # Gate 14 -- the click budget (REQ-FE-DS4-003 HG-02). The four numbers
+      # are declared once, and both the screen and the end-to-end test import
+      # them rather than restating them. Same history as gate 13: written in
+      # DS-4, wired in DS-5.
+      - name: Gate 14 - Click budget (declared once, imported twice)
+        run: npm run lint:click-budget
+
       # Gate 3 + Gate 5 -- unit tests, coverage thresholds, and the axe-core
       # accessibility harness all run in this one Vitest suite.
       - name: Gate 3 + 5 - Vitest, coverage thresholds, axe-core
@@ -89,9 +104,73 @@ jobs:
       - name: Gate 6 - npm audit
         run: npm run audit:ci
 
-  # ------------------------------------------------------------------------ gate 4
-  e2e:
-    name: Playwright smoke
+  # ----------------------------------------------------------------- gate 4a/4b
+  #
+  # THE SUITE RUNS IN LEVELS, AND THE NUMBER THAT FORCED IT IS 183 x 1 WORKER.
+  #
+  # Until DS-5 this was ONE job running every end-to-end test with a single
+  # Playwright worker. That is 183 tests in a queue on a two-core runner, and
+  # the direction of travel was the problem rather than the minutes: every
+  # domain of DS-6 adds screens, every screen adds tests, and all of them would
+  # have joined the same queue.
+  #
+  #   smoke     the application boots, every route answers, the three patterns
+  #             still work on the keyboard. EVERY pull request and every push,
+  #             no exceptions, under two minutes.
+  #
+  #   showroom  the catalogue's own documentation -- the component sheets, the
+  #             icon table, the dictionaries, the click budget. On a pull
+  #             request it runs only when something it documents changed; on a
+  #             push to development or main it always runs. Three shards.
+  #
+  # GATE 4 IS STILL BLOCKING. `e2e-showroom-gate` below always runs and fails
+  # when the sharded suite ran and was not green, so there is one required
+  # check whose name never disappears from a pull request -- which a job with
+  # an `if:` cannot promise, because a skipped required check is not the same
+  # thing to GitHub as a passing one.
+
+  changes:
+    name: What changed
+    runs-on: ubuntu-latest
+    outputs:
+      showroom: ${{ steps.filter.outputs.showroom }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          # The base of the pull request has to be in the history to diff it.
+          fetch-depth: 0
+
+      # Plain git, and no third-party action. A path filter is four lines of
+      # shell; a marketplace action for it would be one more dependency inside
+      # the pipeline's own security perimeter (PLN-WMS-003 section 8), bought
+      # for nothing.
+      - name: Decide whether the showroom suite has to run
+        id: filter
+        env:
+          EVENT: ${{ github.event_name }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          if [ "$EVENT" != "pull_request" ]; then
+            echo "Push to a long-lived branch: the showroom suite always runs."
+            echo "showroom=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          CHANGED=$(git diff --name-only "$BASE_SHA" HEAD)
+          echo "Changed files:"
+          echo "$CHANGED"
+          # What the showroom suite actually defends: the library, the
+          # catalogue, the shell's layout (which its axe and keyboard walks
+          # cross on every page), the specs themselves, and the Playwright
+          # configuration.
+          if printf '%s\n' "$CHANGED" | grep -Eq '^(projects/design-system/|projects/showroom/|projects/shell/src/app/layout/|e2e/|playwright[^/]*\.ts$)'; then
+            echo "showroom=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "Nothing the showroom documents changed."
+            echo "showroom=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  e2e-smoke:
+    name: Gate 4a - Playwright smoke
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -108,17 +187,118 @@ jobs:
       - name: Install Playwright browser
         run: npx playwright install chromium --with-deps
 
-      # Gate 4 -- boots the real app and checks the routes answer.
-      - name: Gate 4 - Playwright smoke test
-        run: npm run e2e
+      # Gate 4a -- boots the real app, walks every route, and runs one flow per
+      # pattern on the keyboard alone.
+      - name: Gate 4a - Playwright smoke test
+        run: npm run e2e:smoke
 
       - name: Upload Playwright report
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-report
+          name: playwright-report-smoke
           path: playwright-report/
           retention-days: 7
+
+  e2e-showroom:
+    name: Gate 4b - Playwright showroom (shard ${{ matrix.shard }}/3)
+    needs: changes
+    if: needs.changes.outputs.showroom == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      # One shard failing must not cancel the other two: the point of a merged
+      # report is seeing every failure in one place, not the first one.
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3]
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up Node
+        uses: actions/setup-node@v5
+        with:
+          node-version-file: .node-version
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browser
+        run: npx playwright install chromium --with-deps
+
+      # `blob` and not `html`: a shard's own html report is a third of the
+      # truth. The blobs are merged below into one report that reads like one
+      # run.
+      - name: Gate 4b - Playwright showroom suite
+        run: npx playwright test --project=showroom --shard=${{ matrix.shard }}/3 --reporter=blob
+
+      - name: Upload blob report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: blob-report-${{ matrix.shard }}
+          path: blob-report/
+          retention-days: 7
+
+  e2e-showroom-report:
+    name: Playwright showroom report
+    needs: [changes, e2e-showroom]
+    if: ${{ !cancelled() && needs.changes.outputs.showroom == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up Node
+        uses: actions/setup-node@v5
+        with:
+          node-version-file: .node-version
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Download the shards' blob reports
+        uses: actions/download-artifact@v4
+        with:
+          pattern: blob-report-*
+          path: all-blob-reports
+          merge-multiple: true
+
+      - name: Merge into one report
+        run: npx playwright merge-reports --reporter html ./all-blob-reports
+
+      - name: Upload the merged report
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-showroom
+          path: playwright-report/
+          retention-days: 7
+
+  e2e-showroom-gate:
+    name: Gate 4b - Playwright showroom
+    needs: [changes, e2e-showroom]
+    # ALWAYS, and that is the whole point: this is the check branch protection
+    # requires. When the suite did not have to run it passes and says so; when
+    # it ran and was not green it fails. An `if:` on the sharded job alone
+    # would make the required check vanish from the pull request instead of
+    # passing it.
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: The showroom suite must be green whenever it ran
+        env:
+          NEEDED: ${{ needs.changes.outputs.showroom }}
+          RESULT: ${{ needs.e2e-showroom.result }}
+        run: |
+          if [ "$NEEDED" != "true" ]; then
+            echo "Nothing the showroom documents changed: the suite did not run."
+            exit 0
+          fi
+          if [ "$RESULT" != "success" ]; then
+            echo "::error::The showroom suite is not green ($RESULT)."
+            exit 1
+          fi
+          echo "The showroom suite is green."
 
   # ------------------------------------------------------------------------ gate 7
   secrets:

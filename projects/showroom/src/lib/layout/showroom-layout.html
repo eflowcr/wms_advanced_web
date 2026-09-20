@@ -23,6 +23,29 @@
       </p>
     </div>
 
+    <!--
+      THE FAVOURITES BLOCK, AT THE TOP OF THE SIDEBAR (REQ-FE-DS4-002 RFE-04).
+
+      The same component the App Shell pins above its rail, on its `surface`
+      ground. Not a copy: RFE-04 asks for one block in a fixed place in the
+      navigation, and a second one written for the catalogue is how "one
+      pattern" becomes two.
+    -->
+    <ewms-favorites-nav
+      ground="surface"
+      label="Favoritos del catálogo"
+      emptyLabel="Marcá una página con ★"
+      [activeRoute]="activeRoute()"
+      (favoriteSelect)="onFavorite($event)"
+    />
+    <p class="text-caption text-secondary">
+      Los del <strong>catálogo</strong>, no los de la aplicación: el App Shell tiene su propia
+      estrella arriba y su propio bloque en el rail. Son las mismas piezas con
+      <strong>otro almacén</strong> detrás de la misma interfaz, que es exactamente lo que
+      <span class="font-mono">EWMS_FAVORITES_STORE</span> existe para permitir — y la demostración
+      de que mudarlos al backend cuesta una clase.
+    </p>
+
     <div class="flex flex-col gap-2">
       <label class="text-caption text-secondary" for="showroom-search">
         Buscar por nombre o selector
@@ -92,7 +115,27 @@
     dogfooding rather than a rig: what the demo exercises is the path a product
     screen will use.
   -->
-  <div class="min-w-0 p-8">
+  <div class="flex min-w-0 flex-col gap-4 p-8">
+    <!--
+      THE STAR, ON EVERY PAGE, AND WRITTEN ONCE.
+
+      The comanda asks for the toggle in the header of every showroom page so
+      that it reads as a PATTERN and not as one page's button. Twenty-five
+      copies of the same tag would have been twenty-five chances to write it
+      differently; here it is one, above the outlet, and it names whatever page
+      is showing.
+    -->
+    <div class="flex items-center justify-end gap-2 border-b border-default pb-3">
+      <span class="text-caption text-secondary">{{ pageFavorite().label }}</span>
+      <ewms-favorite-toggle
+        [favorite]="pageFavorite()"
+        addLabel="Agregar a favoritos"
+        removeLabel="Quitar de favoritos"
+        addedMessage="Agregado a favoritos"
+        removedMessage="Quitado de favoritos"
+      />
+    </div>
+
     <router-outlet />
   </div>
 </div>

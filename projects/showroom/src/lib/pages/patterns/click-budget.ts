@@ -54,8 +54,22 @@ export const EDIT_MAX_CLICKS = 3;
  */
 export const CANCEL_MAX_CLICKS = 1;
 
-/** The four flows the standard covers, for the page and the test to walk. */
-export type FlowId = 'search' | 'create' | 'edit' | 'cancel';
+/**
+ * OPENING A FAVOURITE, FROM ANYWHERE IN THE APPLICATION.
+ *
+ * One, and it is the number favourites exist for. Finding a screen costs two
+ * -- the search field and the result -- and a screen somebody opens forty
+ * times a day should not cost two forty times. The block sits in a fixed place
+ * in the navigation (REQ-FE-DS4-002 RFE-04), so the entry is on screen already
+ * and pressing it IS the navigation.
+ *
+ * Added in DS-5, when favourites were built. REQ-FE-DS4-003 §2.2 owns the
+ * figure, as it owns the other four.
+ */
+export const OPEN_FAVORITE_MAX_CLICKS = 1;
+
+/** The flows the standard covers, for the page and the test to walk. */
+export type FlowId = 'search' | 'create' | 'edit' | 'cancel' | 'favorite';
 
 export interface FlowBudget {
   readonly id: FlowId;
@@ -90,5 +104,11 @@ export const FLOW_BUDGETS: readonly FlowBudget[] = [
     name: 'Cancelar lo que sea',
     max: CANCEL_MAX_CLICKS,
     from: 'Siempre. Con Escape, cero',
+  },
+  {
+    id: 'favorite',
+    name: 'Abrir un favorito',
+    max: OPEN_FAVORITE_MAX_CLICKS,
+    from: 'Desde cualquier pantalla, en el bloque fijo del rail',
   },
 ];

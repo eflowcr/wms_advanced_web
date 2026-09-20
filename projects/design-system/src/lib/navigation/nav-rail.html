@@ -1,0 +1,142 @@
+<!--
+  A named <nav>, a projected head, the tree, and a projected foot.
+
+  THE WIDTH IS A TOKEN AND THE SWITCH IS A CLASS, not two components. The rail
+  and the panel are the same tree at two widths (App Shell sheet), and two
+  components would be two keyboards to keep in step.
+
+  THE MARKUP IS A REAL `ul`/`li` TREE CARRYING TREE ROLES, both halves on
+  purpose. The lists are what the document structure actually is -- a nested
+  list of destinations -- and `role="tree"` is what tells a screen reader that
+  the arrows work here and Tab does not. A roving tabindex on a plain list is
+  the usual trap: one Tab stop, and nothing announcing why the other fifteen
+  destinations were skipped.
+-->
+<nav
+  class="flex h-full flex-col bg-brand-navy text-on-dark"
+  [class]="expanded() ? 'w-(--nav-panel-width)' : 'w-(--nav-rail-width)'"
+  [attr.aria-label]="label()"
+>
+  <!--
+    The favourites block goes here (REQ-FE-DS4-002 RFE-04). The rail does not
+    know that: it knows there is a slot above the tree, and the consumer knows
+    what belongs in it.
+  -->
+  <div class="shrink-0">
+    <ng-content select="[navRailTop]" />
+  </div>
+
+  <ul
+    class="min-h-0 flex-1 list-none overflow-y-auto overflow-x-hidden py-2"
+    role="tree"
+    [id]="treeId"
+    [attr.aria-label]="label()"
+  >
+    @for (item of items(); track item.id) {
+      <li role="none">
+        <ng-container
+          [ngTemplateOutlet]="row"
+          [ngTemplateOutletContext]="{ $implicit: item, child: false }"
+        />
+
+        @if (isGroup(item) && isOpen(item)) {
+          <ul class="list-none" role="group">
+            @for (child of item.children; track child.id) {
+              <li role="none">
+                <ng-container
+                  [ngTemplateOutlet]="row"
+                  [ngTemplateOutletContext]="{ $implicit: child, child: true }"
+                />
+              </li>
+            }
+          </ul>
+        }
+      </li>
+    }
+  </ul>
+
+  <!--
+    Credentials and the customer's logo (App Shell sheet). The rail does not
+    know what a credential is; it knows there is a foot.
+  -->
+  <div class="shrink-0 border-t border-strong">
+    <ng-content select="[navRailFooter]" />
+  </div>
+
+  <!--
+    The width control lives INSIDE the rail and not in the header, because the
+    width is the rail's own state: `expanded` is an input, the change is an
+    output, and the consumer decides whether to remember it.
+  -->
+  <div class="flex shrink-0 p-2" [class.justify-center]="!expanded()">
+    <button
+      type="button"
+      class="flex items-center justify-center rounded-sm p-2 outline-none hover:bg-primary-hover focus-visible:shadow-(--focus-ring-shadow)"
+      data-nav-rail-toggle
+      [attr.aria-label]="toggleLabel()"
+      [attr.aria-expanded]="expanded()"
+      [attr.aria-controls]="treeId"
+      (click)="onToggleWidth()"
+    >
+      <ewms-icon [name]="expanded() ? 'sidebar-collapse' : 'sidebar-expand'" size="lg" />
+    </button>
+  </div>
+</nav>
+
+<!--
+  ONE ROW, WRITTEN ONCE. A group and a destination differ in what they do, not
+  in how they look, and two copies of this markup would drift in a fortnight.
+
+  A TOOLTIP IS NOT AN ACCESSIBLE NAME, which is why `aria-label` is here AND is
+  conditional. Collapsed, the row has no visible text at all: the tooltip
+  serves a sighted person and `aria-label` serves everybody else. Expanded, the
+  label IS the visible text, and a second copy in an attribute would be an
+  override with nothing to override -- and the two would drift the day one of
+  them was translated and the other was not.
+
+  Found by collapsing the rail and looking: sixteen buttons with no accessible
+  name at all (WCAG 4.1.2), and invisible to axe because nothing had rendered
+  the collapsed state.
+-->
+<ng-template #row let-item let-child="child">
+  <button
+    type="button"
+    role="treeitem"
+    class="flex w-full items-center gap-3 rounded-sm py-2 pr-2 text-left text-p outline-none hover:bg-primary-hover focus-visible:shadow-(--focus-ring-shadow) aria-[current=page]:bg-primary aria-[current=page]:text-h4 aria-[current=page]:text-on-primary"
+    [class]="expanded() ? (child ? 'pl-10' : 'pl-4') : 'justify-center pl-2'"
+    [attr.data-nav-item]="item.id"
+    [attr.aria-label]="expanded() ? null : item.label"
+    [tabindex]="focusTarget() === item.id ? 0 : -1"
+    [attr.aria-current]="activeId() === item.id && !isGroup(item) ? 'page' : null"
+    [attr.aria-selected]="activeId() === item.id"
+    [attr.aria-expanded]="isGroup(item) ? isOpen(item) : null"
+    [attr.aria-level]="child ? 2 : 1"
+    [ewmsTooltip]="item.label"
+    [tooltipDisabled]="expanded()"
+    position="right"
+    (click)="onActivate(item)"
+    (keydown)="onKeydown($event, item)"
+  >
+    <ewms-icon [name]="item.icon" size="lg" />
+
+    @if (expanded()) {
+      <span class="min-w-0 flex-1 truncate">{{ item.label }}</span>
+
+      @if (item.badge !== undefined) {
+        <!--
+          The number is drawn; the word that makes it mean something is the
+          consumer's, who folds it into `label`. The design system speaks no
+          language (ADR 0008), and a bare count with no word is what a badge
+          is everywhere else in this system too.
+        -->
+        <span class="rounded-full bg-primary px-2 text-caption text-on-primary">
+          {{ item.badge }}
+        </span>
+      }
+
+      @if (isGroup(item)) {
+        <ewms-icon [name]="isOpen(item) ? 'chevron-up' : 'chevron-down'" size="sm" />
+      }
+    }
+  </button>
+</ng-template>

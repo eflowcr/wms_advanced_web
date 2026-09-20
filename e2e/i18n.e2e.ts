@@ -27,7 +27,8 @@ test.describe('i18n with a Spanish browser', () => {
     });
     page.on('pageerror', (error) => consoleErrors.push(error.message));
     await page.goto('/');
-    await expect(page.getByRole('link', { name: 'Inicio' })).toBeVisible();
+    await expect(page.getByRole('treeitem', { name: 'Dashboard' })).toBeVisible();
+    await expect(page.getByRole('navigation', { name: 'Menú principal' })).toBeVisible();
   });
 
   test.afterEach(() => {
@@ -47,8 +48,8 @@ test.describe('i18n with a Spanish browser', () => {
 
     await switchTo(page, 'Idioma', 'en');
 
-    await expect(page.getByRole('link', { name: 'Home' })).toBeVisible();
-    await expect(page.getByRole('link', { name: 'Design system' })).toBeVisible();
+    await expect(page.getByRole('navigation', { name: 'Main menu' })).toBeVisible();
+    await expect(page.getByRole('treeitem', { name: 'Design system' })).toBeVisible();
     await expect(page.getByText('No packages')).toBeVisible();
     await expect(page.getByText('1,250 packages')).toBeVisible();
     // Same document: the flag set before switching is still there.
@@ -68,13 +69,13 @@ test.describe('i18n with a Spanish browser', () => {
 
   test('the choice survives a reload', async ({ page }) => {
     await switchTo(page, 'Idioma', 'en');
-    await expect(page.getByRole('link', { name: 'Home' })).toBeVisible();
+    await expect(page.getByRole('navigation', { name: 'Main menu' })).toBeVisible();
     // Also proves storageState exposes the key, so the "not saved" test below is not vacuous.
     expect(JSON.stringify(await page.context().storageState())).toContain('"ewms.lang"');
 
     await page.reload();
 
-    await expect(page.getByRole('link', { name: 'Home' })).toBeVisible();
+    await expect(page.getByRole('navigation', { name: 'Main menu' })).toBeVisible();
     await expect(page.locator('html')).toHaveAttribute('lang', 'en');
     await expect(page.getByLabel('Language', { exact: true })).toHaveValue('en');
   });
@@ -116,7 +117,7 @@ test.describe('i18n with an English browser', () => {
   }) => {
     await page.goto('/');
 
-    await expect(page.getByRole('link', { name: 'Home' })).toBeVisible();
+    await expect(page.getByRole('navigation', { name: 'Main menu' })).toBeVisible();
     await expect(page.locator('html')).toHaveAttribute('lang', 'en');
     // The whole storage state of the context, serialized: the key must not be in it.
     expect(JSON.stringify(await page.context().storageState())).not.toContain('ewms.lang');

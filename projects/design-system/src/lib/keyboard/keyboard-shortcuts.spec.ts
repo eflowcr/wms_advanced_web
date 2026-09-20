@@ -347,6 +347,45 @@ describe('KeyboardShortcuts', () => {
 
       expect(fired).toEqual([]);
     });
+
+    /**
+     * THE REGRESSION OF DS-5, and it is worth naming what it cost.
+     *
+     * A code scanned into an `ewms-search-select` is resolved by that field's
+     * own detector, which calls `preventDefault` on the closing Enter. The
+     * engine used to return at the check above WITHOUT telling its own
+     * detector anything -- so its run stayed open, four or more characters
+     * long, and the next bare Enter anywhere on the page closed it as a scan
+     * and was cancelled.
+     *
+     * What that looked like to a person: a focused button that Enter would not
+     * press. WCAG 2.1.1, on every screen with a search field, and invisible to
+     * a mouse. It was found by walking buscar -> crear -> editar on the
+     * keyboard alone in `e2e/smoke.e2e.ts`.
+     */
+    it('a key somebody else answered still closes the open run', () => {
+      listen('cancel');
+
+      // A fast run, exactly as a gun emits it, none of it prevented.
+      for (const char of 'ABCD') {
+        press(char, { cancelable: true });
+      }
+
+      // The closing Enter, consumed by the field that resolved the scan.
+      const consumed = new KeyboardEvent('keydown', {
+        key: 'Enter',
+        bubbles: true,
+        cancelable: true,
+      });
+      consumed.preventDefault();
+      document.body.dispatchEvent(consumed);
+
+      // The next Enter is an ordinary Enter: the run closed with the one above.
+      const later = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true });
+      document.body.dispatchEvent(later);
+
+      expect(later.defaultPrevented).toBe(false);
+    });
   });
 
   describe('RFE-07 -- the help dialog', () => {

@@ -37,6 +37,18 @@
     }
   },
   "shell": {
+    "breadcrumbs": {
+      "expand": "Show {{ hidden }} hidden levels",
+      "label": "Page path"
+    },
+    "favorites": {
+      "add": "Add to favourites",
+      "added": "Added to favourites",
+      "empty": "Mark a screen with ★",
+      "remove": "Remove from favourites",
+      "removed": "Removed from favourites",
+      "title": "Favourites"
+    },
     "home": {
       "intro": "DS-0 phase scaffold. The product screens arrive later.",
       "samples": {
@@ -51,9 +63,38 @@
       "label": "Language",
       "unavailable": "The selected language could not be loaded. The interface stays in English; please try again later."
     },
-    "nav": {
+    "menu": {
+      "articles": "Articles",
+      "carriers": "Carriers",
+      "catalogs": "Catalogues",
+      "clients": "Customers",
+      "dashboard": "Dashboard",
       "designSystem": "Design system",
-      "home": "Home"
+      "home": "Home",
+      "locations": "Locations",
+      "lots": "Lots",
+      "params": "Parameters",
+      "profiles": "Profiles",
+      "rates": "Rates",
+      "serials": "Serial numbers",
+      "settings": "Settings",
+      "suppliers": "Suppliers",
+      "units": "Units",
+      "users": "Users",
+      "warehouses": "Warehouses"
+    },
+    "nav": {
+      "closeMenu": "Close the menu",
+      "mainMenu": "Main menu",
+      "more": "More",
+      "toggleMenu": "Collapse or expand the menu"
+    },
+    "search": {
+      "label": "Search the application",
+      "placeholder": "Search…"
+    },
+    "session": {
+      "signOut": "Sign out"
     },
     "shortcuts": {
       "actionColumn": "Action",
@@ -72,6 +113,13 @@
       "singleKeyOff": "(off)",
       "title": "Keyboard shortcuts"
     },
+    "skipToContent": "Skip to content",
+    "tabs": {
+      "label": "Open documents",
+      "limit": "No more than {{ max }} tabs can be open at once. Close one to open another.",
+      "scrollBack": "Show the previous tabs",
+      "scrollForward": "Show the next tabs"
+    },
     "toast": {
       "region": "Notifications",
       "severity": {
@@ -80,6 +128,10 @@
         "success": "Success",
         "warning": "Warning"
       }
+    },
+    "underConstruction": {
+      "body": "The navigation is already the final one. The screen arrives with its domain; until then this page exists so the menu never leads somewhere broken.",
+      "title": "This screen is not built yet"
     }
   }
 }

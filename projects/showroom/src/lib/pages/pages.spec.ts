@@ -1,6 +1,6 @@
 import { provideZonelessChangeDetection, type Type } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 import { expectNoAxeViolations } from '@ewms/testing';
 import { ShowroomLayout } from '../layout/showroom-layout';
 import { provideShowroomDesignSystem } from '../showroom.providers';
@@ -11,6 +11,7 @@ import { ShowroomCheckbox } from './components/checkbox';
 import { ShowroomDialog } from './components/dialog';
 import { ShowroomIconButton } from './components/icon-button';
 import { ShowroomInput } from './components/input';
+import { ShowroomNavigation } from './components/navigation';
 import { ShowroomPagination } from './components/pagination';
 import { ShowroomRadio } from './components/radio';
 import { ShowroomSearchSelect } from './components/search-select';
@@ -80,10 +81,12 @@ describe('ShowroomLayout', () => {
     const search = element.querySelector<HTMLInputElement>('#showroom-search');
     const count = () => element.querySelectorAll('[data-sidebar] nav li').length;
 
+    // Two since DS-5: «Toggle» by name and «Favoritos» by its selector,
+    // `ewms-favorite-toggle`. The search matching both is the point of it.
     search!.value = 'toggle';
     search!.dispatchEvent(new Event('input'));
     await fixture.whenStable();
-    expect(count()).toBe(1);
+    expect(count()).toBe(2);
 
     search!.value = 'ewms-input';
     search!.dispatchEvent(new Event('input'));
@@ -110,6 +113,76 @@ describe('ShowroomLayout', () => {
     expect(element.querySelector('[lang="es"]')).not.toBeNull();
   });
 
+  it('the star NAMES the page you are on, read from the catalogue', async () => {
+    /*
+     * The label a favourite carries is the one the sidebar shows, not a slug
+     * taken from the URL: that is what makes the block in the navigation read
+     * like the catalogue rather than like a list of paths.
+     */
+    await TestBed.configureTestingModule({
+      imports: [ShowroomLayout],
+      /*
+       * A route that MATCHES, so the URL the layout reads is a real one. The
+       * component is irrelevant -- what is under test is that the star reads
+       * the catalogue and not the path.
+       */
+      providers: [
+        provideRouter([{ path: 'design-system/components/button', children: [] }]),
+        provideShowroomDesignSystem(),
+      ],
+    }).compileComponents();
+    const router = TestBed.inject(Router);
+    await router.navigateByUrl('/design-system/components/button');
+
+    const fixture = TestBed.createComponent(ShowroomLayout);
+    await fixture.whenStable();
+    const element = fixture.nativeElement as HTMLElement;
+
+    element.querySelector<HTMLButtonElement>('[data-favorite-toggle] button')!.click();
+    for (let turn = 0; turn < 4; turn += 1) {
+      await Promise.resolve();
+    }
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(element.querySelector('[data-favorites-nav] [data-favorite]')?.textContent?.trim()).toBe(
+      'Botón',
+    );
+  });
+
+  it('THE STAR IS IN THE CHROME, so every page has one without writing it', async () => {
+    // The comanda asks for the toggle in the header of every showroom page so
+    // it reads as a PATTERN rather than one page's button. Twenty-five copies
+    // would have been twenty-five chances to write it differently.
+    const { element } = await render(ShowroomLayout);
+
+    expect(element.querySelector('[data-favorite-toggle]')).not.toBeNull();
+    expect(element.querySelector('[data-favorites-nav]')).not.toBeNull();
+  });
+
+  it('marking fills the block in the sidebar, and choosing it navigates', async () => {
+    const { fixture, element } = await render(ShowroomLayout);
+    const star = element.querySelector<HTMLButtonElement>('[data-favorite-toggle] button')!;
+
+    expect(element.querySelector('[data-favorites-empty]')).not.toBeNull();
+
+    star.click();
+    for (let turn = 0; turn < 4; turn += 1) {
+      await Promise.resolve();
+    }
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const entry = element.querySelector<HTMLButtonElement>('[data-favorites-nav] [data-favorite]');
+    expect(entry).not.toBeNull();
+    expect(element.querySelector('[data-favorites-empty]')).toBeNull();
+
+    // The block does not navigate: it emits, and the catalogue navigates.
+    entry!.click();
+    await fixture.whenStable();
+    expect(star.getAttribute('aria-pressed')).toBe('true');
+  });
+
   it('owns no second main landmark: the shell already renders one', async () => {
     const { element } = await render(ShowroomLayout);
     expect(element.querySelector('main')).toBeNull();
@@ -122,14 +195,16 @@ describe('ShowroomHome', () => {
     expect(element.querySelectorAll('[data-entry]').length).toBeGreaterThan(20);
     expect(element.querySelector('[data-entry="button"] a')).not.toBeNull();
     /*
-     * `navigation` and not `table`: the table stopped being a gap in DS-3 lote
-     * C, and this assertion is about a gap still being VISIBLE rather than
-     * about which one it is. Navigation is DS-5's.
+     * `split-button` and not `navigation`: navigation stopped being a gap in
+     * DS-5, as the table did in DS-3 lote C. The assertion is about a gap
+     * still being VISIBLE rather than about which one it is -- a gap you can
+     * see is information, and one you cannot is something everyone forgets.
      */
-    expect(element.querySelector('[data-entry="navigation"] a')).toBeNull();
-    expect(element.querySelector('[data-entry="navigation"]')?.textContent).toContain(
+    expect(element.querySelector('[data-entry="split-button"] a')).toBeNull();
+    expect(element.querySelector('[data-entry="split-button"]')?.textContent).toContain(
       '(pendiente)',
     );
+    expect(element.querySelector('[data-entry="navigation"] a')).not.toBeNull();
     expect(element.querySelector('[data-entry="table"] a')).not.toBeNull();
   });
 
@@ -460,6 +535,7 @@ const SHEETS: readonly { name: string; component: Type<unknown>; heading: string
   },
   { name: 'ShowroomTable', component: ShowroomTable, heading: 'Tabla de datos' },
   { name: 'ShowroomPagination', component: ShowroomPagination, heading: 'Paginación' },
+  { name: 'ShowroomNavigation', component: ShowroomNavigation, heading: 'Navegación' },
 ];
 
 /**
@@ -1649,6 +1725,161 @@ describe('ShowroomTable — composición avanzada', () => {
     expect(element.querySelector('[data-block="3-demo"]')?.textContent).toContain(
       'Desviación declarada',
     );
+  });
+});
+
+describe('ShowroomNavigation', () => {
+  /**
+   * THE ONE CLAIM THIS PAGE MAKES: the three pieces are presentational and the
+   * state lives OUTSIDE them, in whoever composes. Every assertion below is
+   * that claim from a different side -- choose in the rail and the tabs and
+   * the crumbs move; choose a tab and the rail moves; close a tab and the
+   * neighbour takes over.
+   *
+   * There is no router in this page, and that is also the demonstration: a
+   * piece that imported one could not be shown here at all.
+   */
+  function rail(element: HTMLElement, id: string): HTMLButtonElement {
+    return element.querySelector(`[data-nav-item="${id}"]`) as HTMLButtonElement;
+  }
+
+  function tab(element: HTMLElement, id: string): HTMLButtonElement {
+    return element.querySelector(`[data-tab="${id}"]`) as HTMLButtonElement;
+  }
+
+  it('choosing in the rail moves the crumbs AND opens a tab', async () => {
+    const { fixture, element } = await render(ShowroomNavigation);
+
+    rail(element, 'catalogs').click();
+    await fixture.whenStable();
+    rail(element, 'clients').click();
+    await fixture.whenStable();
+
+    expect(element.querySelector('[data-demo-active]')?.textContent?.trim()).toBe('clients');
+    expect(tab(element, 'clients')).not.toBeNull();
+    expect(element.querySelector('ewms-breadcrumbs')?.textContent).toContain('Catálogos');
+  });
+
+  it('a group opens instead of navigating', async () => {
+    const { fixture, element } = await render(ShowroomNavigation);
+    const before = element.querySelector('[data-demo-active]')?.textContent?.trim();
+
+    rail(element, 'catalogs').click();
+    await fixture.whenStable();
+
+    expect(element.querySelector('[data-demo-active]')?.textContent?.trim()).toBe(before);
+    expect(rail(element, 'catalogs').getAttribute('aria-expanded')).toBe('true');
+  });
+
+  it('choosing a TAB moves the rail: one state, two controls', async () => {
+    const { fixture, element } = await render(ShowroomNavigation);
+
+    tab(element, 'dashboard').click();
+    await fixture.whenStable();
+
+    expect(element.querySelector('[data-demo-active]')?.textContent?.trim()).toBe('dashboard');
+    expect(rail(element, 'dashboard').getAttribute('aria-current')).toBe('page');
+  });
+
+  it('closing the active tab hands over to the NEIGHBOUR', async () => {
+    const { fixture, element } = await render(ShowroomNavigation);
+
+    element.querySelector<HTMLElement>('[data-tab-close="articles"]')!.click();
+    await fixture.whenStable();
+
+    expect(tab(element, 'articles')).toBeNull();
+    expect(element.querySelector('[data-demo-active]')?.textContent?.trim()).toBe('dashboard');
+  });
+
+  it('closing a tab that is NOT active leaves the selection alone', async () => {
+    const { fixture, element } = await render(ShowroomNavigation);
+
+    rail(element, 'dashboard').click();
+    await fixture.whenStable();
+    element.querySelector<HTMLElement>('[data-tab-close="articles"]')!.click();
+    await fixture.whenStable();
+
+    expect(element.querySelector('[data-demo-active]')?.textContent?.trim()).toBe('dashboard');
+  });
+
+  it('closing every closable tab leaves the one that says it cannot be closed', async () => {
+    // `closable: false` is the exception and it is written down, so this is
+    // the end of the close chain on this page: Dashboard stays.
+    const { fixture, element } = await render(ShowroomNavigation);
+
+    element.querySelector<HTMLElement>('[data-tab-close="articles"]')!.click();
+    await fixture.whenStable();
+
+    // The document strip only. The page also renders a `section` strip below,
+    // which is a different control demonstrating a different mode.
+    const documentTabs = [
+      ...element.querySelectorAll('[data-block="3-demo"] [data-tab]'),
+    ].map((tab) => tab.textContent?.trim());
+
+    expect(documentTabs).toEqual(['Dashboard']);
+    expect(element.querySelector('[data-tab-close="dashboard"]')).toBeNull();
+  });
+
+  it('the rail asks for the other width and the page grants it', async () => {
+    const { fixture, element } = await render(ShowroomNavigation);
+    expect(rail(element, 'dashboard').textContent?.trim()).toBe('Dashboard');
+
+    element.querySelector<HTMLButtonElement>('[data-nav-rail-toggle]')!.click();
+    await fixture.whenStable();
+
+    // Collapsed: the labels go, the destinations stay.
+    expect(rail(element, 'dashboard')).not.toBeNull();
+    expect(rail(element, 'dashboard').textContent?.trim()).toBe('');
+  });
+
+  it('a crumb reports itself and the page says which: a miga does not navigate', async () => {
+    const { fixture, element } = await render(ShowroomNavigation);
+
+    element.querySelector<HTMLButtonElement>('[data-crumb="Catálogos"]')!.click();
+    await fixture.whenStable();
+
+    expect(element.textContent).toContain('Última miga elegida');
+  });
+
+  it('the deep trail is folded, and the fold is a button that says how much it hides', async () => {
+    const { element } = await render(ShowroomNavigation);
+    const fold = element.querySelector('[data-crumb-fold]');
+
+    expect(fold).not.toBeNull();
+    expect(fold?.getAttribute('aria-label')).toContain('niveles ocultos');
+  });
+
+  it('shows the bottom bar with its cost written down, not hidden', async () => {
+    const { element } = await render(ShowroomNavigation);
+
+    expect(element.querySelector('[data-nav-bottom]')).not.toBeNull();
+    expect(element.textContent).toContain('dos toques');
+  });
+
+  it('THE COST OF THE BOTTOM BAR, WALKED: «Más» and then the destination', async () => {
+    const { fixture, element } = await render(ShowroomNavigation);
+
+    element.querySelector<HTMLButtonElement>('[data-nav-bottom-more]')!.click();
+    await fixture.whenStable();
+    element.querySelector<HTMLButtonElement>('[data-nav-sheet-item="clients"]')!.click();
+    await fixture.whenStable();
+
+    // Two taps for a second-level screen, against one on the rail. The page
+    // says so in words; this is the same claim as a test.
+    expect(element.querySelector('[data-demo-active]')?.textContent?.trim()).toBe('clients');
+  });
+
+  it('the section tabs move on their own, without touching the document strip', async () => {
+    const { fixture, element } = await render(ShowroomNavigation);
+    const before = element.querySelector('[data-demo-active]')?.textContent?.trim();
+
+    element.querySelector<HTMLButtonElement>('[data-tab="history"]')!.click();
+    await fixture.whenStable();
+
+    expect(element.querySelector('[data-tab="history"]')?.getAttribute('aria-selected')).toBe(
+      'true',
+    );
+    expect(element.querySelector('[data-demo-active]')?.textContent?.trim()).toBe(before);
   });
 });
 

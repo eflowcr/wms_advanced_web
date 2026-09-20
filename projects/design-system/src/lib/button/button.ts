@@ -44,6 +44,28 @@ export class Button {
   readonly disabled = input<boolean>(false);
   readonly loading = input<boolean>(false);
 
+  /**
+   * WHETHER THIS BUTTON SUBMITS THE FORM IT IS IN. Default `'button'`, which
+   * means nothing that exists changes.
+   *
+   * The Button rendered `type="button"` unconditionally until DS-5, and that
+   * was deliberate: a button that submits without anybody asking is a whole
+   * class of defect this system does not have. It also had a cost, found by
+   * building the example screen of DS-4 and written down as a pending decision
+   * on the Button's own sheet: A FORM WITH NO SUBMIT BUTTON IS NOT SENT BY
+   * `Enter` EITHER. The browser's implicit submission needs a submit button to
+   * exist, so every multi-field form in this system could only be saved by
+   * clicking or by Ctrl+S -- and `Enter` in a field, which is what everybody
+   * does, did nothing at all.
+   *
+   * So submitting stays something somebody writes on purpose; it is now
+   * possible to write it. `type="submit"` inside a `<form>` gives back the
+   * browser's own behaviour, `Enter` included, and the anti-double-submit
+   * pattern is unchanged: `loading` blocks the second press exactly as it
+   * blocks the second click.
+   */
+  readonly type = input<'button' | 'submit'>('button');
+
   protected readonly contentId = `ewms-btn-content-${++nextButtonId}`;
 
   protected readonly baseClasses = BUTTON_BASE_CLASSES;

@@ -112,6 +112,36 @@
   --stroke-width-icon-lg: var(--stroke-icon-lg);
   --stroke-width-icon-xl: var(--stroke-icon-xl);
 
+  /*
+   * NO `--breakpoint-*` HERE, AND IT IS NOT AN OVERSIGHT -- IT IS A TRAP THAT
+   * WAS WALKED INTO AND BACKED OUT OF (DS-5).
+   *
+   * `--*: initial` deleted Tailwind's breakpoints with the rest of its theme.
+   * The system does have one point of change -- below `--breakpoint-nav-bottom`
+   * the navigation is a bottom bar, above it a rail -- and the obvious move
+   * was to map that token here so `nav-bottom:` variants would exist.
+   *
+   * It compiles, and it never matches. Tailwind emits
+   * `@media (width >= var(--breakpoint-nav-bottom))`, and a CSS custom
+   * property is not substituted inside a media feature: the query is invalid
+   * and silently false at every width. Nothing fails; the layout simply never
+   * changes. Giving Tailwind a literal instead would put a raw pixel value in
+   * this file, which gate 10 rejects -- correctly.
+   *
+   * So the breakpoint stays a token in tokens.css and is read from TypeScript
+   * with `readPixels`, exactly as `--duration-toast` and
+   * `--threshold-scan-keystroke` already are, and `matchMedia` does the rest.
+   * See lib/navigation/viewport.ts. `tools/ci/no-var-breakpoints.test.mjs`
+   * keeps this file from growing one back.
+   */
+
+  /* App shell geometry -> h-(--shell-header-height), w-(--nav-rail-width). */
+  --shell-header-height: var(--shell-header-height);
+  --nav-rail-width: var(--nav-rail-width);
+  --nav-panel-width: var(--nav-panel-width);
+  --nav-bottom-height: var(--nav-bottom-height);
+  --tab-height: var(--tab-height);
+
   /* Elevation */
   --shadow-sm: var(--shadow-sm);
   --shadow-md: var(--shadow-md);

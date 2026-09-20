@@ -1,10 +1,13 @@
 import type { Provider } from '@angular/core';
 import {
+  EWMS_FAVORITES_STORE,
   EWMS_SEARCH_SELECT_MESSAGES,
   EWMS_SHORTCUT_HELP_MESSAGES,
   EWMS_SHORTCUT_MAP,
   EWMS_TABLE_FORMATTERS,
   EWMS_TABLE_MESSAGES,
+  Favorites,
+  InMemoryFavoritesStore,
   parseTableDate,
   type SearchSelectMessages,
   type ShortcutHelpMessages,
@@ -31,6 +34,21 @@ export function provideShowroomDesignSystem(): Provider[] {
     { provide: EWMS_SEARCH_SELECT_MESSAGES, useValue: SEARCH_SELECT_MESSAGES },
     { provide: EWMS_SHORTCUT_MAP, useValue: SHOWROOM_SHORTCUT_MAP },
     { provide: EWMS_SHORTCUT_HELP_MESSAGES, useValue: SHORTCUT_HELP_MESSAGES },
+
+    /*
+     * FAVOURITES, IN MEMORY, PROVIDED BY THE CATALOGUE ITSELF.
+     *
+     * The same class the shell provides, and that is the demonstration rather
+     * than a shortcut: two applications, one store interface, one
+     * implementation swapped in one line. When the Security Core exists, the
+     * shell provides a different class here and neither the star, the block,
+     * nor this file changes shape.
+     *
+     * The catalogue's own list is ITS list: it lives in this tab and dies with
+     * it, which is the accepted cost written in REQ-FE-DS4-002 v1.2.
+     */
+    { provide: EWMS_FAVORITES_STORE, useClass: InMemoryFavoritesStore },
+    Favorites,
   ];
 }
 
