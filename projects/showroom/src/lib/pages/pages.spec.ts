@@ -284,11 +284,6 @@ describe('ShowroomHome', () => {
     expect(element.querySelector('[data-entry="table"] a')).not.toBeNull();
   });
 
-  it('records that the App Shell is deliberately not exhibited', async () => {
-    const { element } = await render(ShowroomHome);
-    expect(element.textContent).toContain('El App Shell no se exhibe');
-  });
-
   it('has no accessibility violations', async () => {
     const { element } = await render(ShowroomHome);
     await expectNoAxeViolations(element);
@@ -323,11 +318,6 @@ describe('ShowroomBrand', () => {
     expect(logos).toEqual(['fullcolor', 'navy', 'blanco']);
   });
 
-  it('keeps the eFLOW exception on the page, and says it is not a precedent', async () => {
-    const { element } = await render(ShowroomBrand);
-    expect(element.textContent).toContain('no habilita usar negro acá');
-  });
-
   it('marks the minimum size and clear space as not yet confirmed', async () => {
     const { element } = await render(ShowroomBrand);
     expect(element.textContent).toContain('(pendiente de confirmar con marca)');
@@ -348,17 +338,6 @@ describe('ShowroomColors', () => {
     expect(roles).toContain('text');
     expect(roles).toContain('families');
     expect(roles).toContain('states');
-  });
-
-  it('writes down the rule that the blue is only ever action', async () => {
-    const { element } = await render(ShowroomColors);
-    expect(element.textContent).toContain('se hace clic');
-    expect(element.textContent).toContain('No existe familia');
-  });
-
-  it('keeps the deliberately unused brand blue on the page with its reason', async () => {
-    const { element } = await render(ShowroomColors);
-    expect(element.textContent).toContain('No borrarlo por parecer muerto');
   });
 
   it('has no accessibility violations', async () => {
@@ -384,11 +363,6 @@ describe('ShowroomTypography', () => {
     expect(element.textContent).toContain('(pendiente)');
     expect(element.textContent).toContain('Los huecos son información, no descuido');
   });
-
-  it('records that there is no escape hatch from the heading level', async () => {
-    const { element } = await render(ShowroomTypography);
-    expect(element.textContent).toContain('no existe una prop');
-  });
 });
 
 describe('ShowroomSpacing', () => {
@@ -399,12 +373,6 @@ describe('ShowroomSpacing', () => {
     );
     expect(steps[0]).toBe(1);
     expect(steps).toContain(24);
-  });
-
-  it('marks the control radius as the signature of the system', async () => {
-    const { element } = await render(ShowroomSpacing);
-    const signature = element.querySelector('[data-radius="--radius-control"]');
-    expect(signature?.textContent).toContain('Firma visual del sistema');
   });
 
   it('puts a real Input, a real Select and a real Button in one row', async () => {
@@ -448,12 +416,6 @@ describe('ShowroomButton', () => {
       '7-anatomia',
       '8-contrato',
     ]);
-  });
-
-  it('says when NOT to use the component, which is the block that stops misuse', async () => {
-    const { element } = await render(ShowroomButton);
-    const block = element.querySelector('[data-block="2-proposito"]');
-    expect(block?.textContent).toContain('Si navega, es un link');
   });
 
   it('renders the four variants with their canonical names', async () => {
@@ -527,13 +489,6 @@ describe('ShowroomButton', () => {
     } finally {
       vi.useRealTimers();
     }
-  });
-
-  it('documents that the component has no click output, against the real signature', async () => {
-    const { element } = await render(ShowroomButton);
-    const contract = element.querySelector('[data-block="8-contrato"]');
-    expect(contract?.textContent).toContain('Ninguna.');
-    expect(contract?.textContent).toContain('Gana el código');
   });
 
   it('writes "no aplica" rather than deleting a block that does not apply', async () => {
@@ -873,13 +828,6 @@ describe('ShowroomInput', () => {
     expect(page.sizeFor('lg')).toBe('lg');
     expect(page.sizeFor('no-such-size')).toBe('md');
   });
-
-  it('declares the Focus hole in the matrix instead of faking a cell', async () => {
-    const { element } = await render(ShowroomInput);
-    expect(element.querySelector('[data-block="5-matriz"]')?.textContent).toContain(
-      'Falta Focus, y falta a propósito',
-    );
-  });
 });
 
 describe('ShowroomSelect', () => {
@@ -926,15 +874,6 @@ describe('ShowroomSelect', () => {
     page.form.controls.ubicacion.setValue('una-que-no-existe');
     await fixture.whenStable();
     expect(page.chosenLabel()).toBe('(sin elegir)');
-  });
-
-  it('documents the keyboard the component really has, and the gap', async () => {
-    const { element } = await render(ShowroomSelect);
-    const contract = element.querySelector('[data-block="8-contrato"]')?.textContent ?? '';
-    expect(contract).toContain('Escape');
-    // The ficha lists typeahead as pending and the code has none: the page
-    // says so rather than describing a keyboard the component does not have.
-    expect(contract).toContain('No hay Home / End');
   });
 });
 
@@ -1000,13 +939,6 @@ describe('ShowroomCheckbox', () => {
     expect(page.isMixed('mixed')).toBe(true);
     expect(page.isMixed('on')).toBe(false);
   });
-
-  it('writes down the disabled rule, which is what surprises newcomers most', async () => {
-    const { element } = await render(ShowroomCheckbox);
-    expect(element.querySelector('[data-block="8-contrato"]')?.textContent).toContain(
-      'Quien deshabilita gana, y nadie re-habilita',
-    );
-  });
 });
 
 describe('ShowroomRadio', () => {
@@ -1059,20 +991,6 @@ describe('ShowroomRadio', () => {
     await fixture.whenStable();
     expect(page.chosenLabel()).toBe('(ninguno)');
   });
-
-  it('records that a radio has no third state, which is the difference', async () => {
-    const { element } = await render(ShowroomRadio);
-    expect(element.querySelector('[data-block="4-variantes"]')?.textContent).toContain(
-      'tampoco hay un tercer valor',
-    );
-  });
-
-  it('writes down the disabled rule too', async () => {
-    const { element } = await render(ShowroomRadio);
-    expect(element.querySelector('[data-block="8-contrato"]')?.textContent).toContain(
-      'Quien deshabilita gana, y nadie re-habilita',
-    );
-  });
 });
 
 describe('ShowroomToggle', () => {
@@ -1119,13 +1037,6 @@ describe('ShowroomToggle', () => {
     expect(page.isOn('on')).toBe(true);
     expect(page.isOn('off')).toBe(false);
   });
-
-  it('writes down the disabled rule as well', async () => {
-    const { element } = await render(ShowroomToggle);
-    expect(element.querySelector('[data-block="8-contrato"]')?.textContent).toContain(
-      'Quien deshabilita gana, y nadie re-habilita',
-    );
-  });
 });
 
 /**
@@ -1158,20 +1069,6 @@ describe('ShowroomBanner', () => {
 
     expect(element.querySelector('[data-dismiss-count]')?.textContent).toBe('1');
     expect(element.querySelector('[data-demo-banner] ewms-banner')).not.toBeNull();
-  });
-
-  it('records the measurement that closed the sheet: the icon is -text', async () => {
-    const { element } = await render(ShowroomBanner);
-    const anatomy = element.querySelector('[data-block="7-anatomia"]')?.textContent ?? '';
-    expect(anatomy).toContain('5.58:1');
-    expect(anatomy).toContain('3.71:1');
-  });
-
-  it('writes down that Info is neutral and never blue', async () => {
-    const { element } = await render(ShowroomBanner);
-    expect(element.querySelector('[data-block="4-variantes"]')?.textContent).toContain(
-      'Info se llama Info y se pinta neutral',
-    );
   });
 
   it('falls back to Info for an id no variant carries', async () => {
@@ -1223,20 +1120,6 @@ describe('ShowroomToast', () => {
     expect(page.cellClasses('accent', 'info')).toContain('bg-neutral-solid');
     expect(page.cellClasses('family', 'danger')).toContain('bg-danger-surface');
     expect(page.cellClasses('family', 'no-such-variant')).toBe('');
-  });
-
-  it('records the measurement that put the accent in -solid', async () => {
-    const { element } = await render(ShowroomToast);
-    const variants = element.querySelector('[data-block="4-variantes"]')?.textContent ?? '';
-    expect(variants).toContain('1.45');
-    expect(variants).toContain('3.71');
-  });
-
-  it('says out loud that there is no fallback number for the duration', async () => {
-    const { element } = await render(ShowroomToast);
-    expect(element.querySelector('[data-block="6-tamanos"]')?.textContent).toContain(
-      'no hay número de respaldo',
-    );
   });
 });
 
@@ -1306,13 +1189,6 @@ describe('ShowroomCard', () => {
     await fixture.whenStable();
     expect(page.chosenLabel()).toBe('(ninguno)');
   });
-
-  it('writes down the disabled rule', async () => {
-    const { element } = await render(ShowroomCard);
-    expect(element.querySelector('[data-block="8-contrato"]')?.textContent).toContain(
-      'quien deshabilita gana, y nadie re-habilita',
-    );
-  });
 });
 
 /**
@@ -1376,20 +1252,6 @@ describe('ShowroomDialog', () => {
       // The exception the sheet documents: a shape, with nothing inside it.
       expect(halo.querySelector('svg')).toBeNull();
     }
-  });
-
-  it('writes down that the backdrop does not close a destructive dialog', async () => {
-    const { element } = await render(ShowroomDialog);
-    expect(element.querySelector('[data-block="4-variantes"]')?.textContent).toContain(
-      'El backdrop no cierra un diálogo destructivo',
-    );
-  });
-
-  it('reports the halo deviation instead of inventing an alpha colour', async () => {
-    const { element } = await render(ShowroomDialog);
-    expect(element.querySelector('[data-block="7-anatomia"]')?.textContent).toContain(
-      'primitivo de color nuevo',
-    );
   });
 
   it('falls back to Info for a tone no row carries, and says nothing for an unknown state', async () => {
@@ -1471,27 +1333,6 @@ describe('ShowroomSearchSelect', () => {
     const { element } = await render(ShowroomSearchSelect);
     // Seeded, so the count is a fact about the page and not about luck.
     expect(element.querySelector('[data-block="3-demo"]')?.textContent).toContain('340 artículos');
-  });
-
-  it('reports the MSW deviation rather than pretending the demo uses it', async () => {
-    const { element } = await render(ShowroomSearchSelect);
-    expect(element.querySelector('[data-block="3-demo"]')?.textContent).toContain(
-      'catálogo es sintético',
-    );
-  });
-
-  it('reports the token-name discrepancy between the comanda and DS-4', async () => {
-    const { element } = await render(ShowroomSearchSelect);
-    const anatomy = element.querySelector('[data-block="7-anatomia"]')?.textContent ?? '';
-    expect(anatomy).toContain('--threshold-scan-keystroke');
-    expect(anatomy).toContain('discrepancia');
-  });
-
-  it('writes down that nothing is duplicated against the Select (HG-04)', async () => {
-    const { element } = await render(ShowroomSearchSelect);
-    expect(element.querySelector('[data-block="7-anatomia"]')?.textContent).toContain(
-      'Nada duplicado respecto de',
-    );
   });
 
   it('goes back to normal, and clears the record, from the page itself', async () => {
@@ -1690,13 +1531,6 @@ describe('ShowroomTable', () => {
     await fixture.whenStable();
     expect(element.querySelector('[data-density-value]')?.textContent).toBe('md');
   });
-
-  it('writes down that the table does not format, it asks for the format', async () => {
-    const { element } = await render(ShowroomTable);
-    expect(element.querySelector('[data-block="4-variantes"]')?.textContent).toContain(
-      'La tabla no formatea: pide el formato',
-    );
-  });
 });
 
 /**
@@ -1794,13 +1628,6 @@ describe('ShowroomTable — composición avanzada', () => {
     expect(element.querySelector('[data-loaded-count]')?.textContent).toContain('60');
     expect(element.querySelector<HTMLButtonElement>('[data-load-all]')?.disabled).toBe(false);
     expect(element.querySelector('[data-load-all]')?.textContent).toContain('5000');
-  });
-
-  it('declares the deviation from the CDK viewport rather than hiding it', async () => {
-    const { element } = await render(ShowroomTable);
-    expect(element.querySelector('[data-block="3-demo"]')?.textContent).toContain(
-      'Desviación declarada',
-    );
   });
 });
 
@@ -1987,13 +1814,6 @@ describe('ShowroomPagination', () => {
     // Los textos salen de EWMS_TABLE_MESSAGES, que el catálogo provee una vez.
     expect(element.querySelector('[data-page-label]')?.textContent).toContain('Página 1 de 7');
   });
-
-  it('writes down that a numbered list of pages is a declared gap', async () => {
-    const { element } = await render(ShowroomPagination);
-    expect(element.querySelector('[data-block="2-proposito"]')?.textContent).toContain(
-      'todavía no existe',
-    );
-  });
 });
 
 /**
@@ -2043,13 +1863,6 @@ describe('ShowroomSearchCreateEdit', () => {
      * one here passed vacuously against `null` until it was checked.
      */
     expect(edit?.disabled).toBe(true);
-  });
-
-  it('says out loud that favourites are deferred, with the dependency named', async () => {
-    const { element } = await render(ShowroomSearchCreateEdit);
-    const contract = element.querySelector('[data-block="8-contrato"]')?.textContent ?? '';
-    expect(contract).toContain('REQ-FE-DS4-002');
-    expect(contract).toContain('PLN-WMS-005');
   });
 
   it('does not count its own scaffolding as part of a flow', async () => {

@@ -399,22 +399,16 @@ test.describe('a panel that does not fit flips instead of falling off', () => {
  * The geometry nobody had measured. Every number here is a claim tokens.css or
  * a component sheet makes; a failure means the claim and the code disagree,
  * and that is a defect either way.
+ *
+ * WHAT THIS BLOCK NO LONGER MEASURES, AND WHERE IT MOVED. The three control
+ * heights and the 18x18 selection box and the 44x24 track were each measured
+ * twice: once here, off the spacing sheet, and once off the component's own
+ * sheet below. The sheet keeps the measurement, because it also reads the
+ * verdict the page derives from it; the copy is gone. What is left here is
+ * the one claim no single sheet can make -- that three DIFFERENT controls
+ * line up.
  */
 test.describe('the fixed geometry of the system', () => {
-  test('the three control heights are 32, 40 and 48', async ({ page }) => {
-    await page.goto(BUTTON);
-    await ready(page);
-
-    for (const [size, expected] of [
-      ['sm', 32],
-      ['md', 40],
-      ['lg', 48],
-    ] as const) {
-      const box = await page.locator(`[data-size-sample="${size}"] button`).boundingBox();
-      expect(round(box?.height), `button ${size}`).toBe(expected);
-    }
-  });
-
   test('a field and a button of the same size share the same box', async ({ page }) => {
     await page.goto(SPACING);
     await ready(page);
@@ -429,50 +423,6 @@ test.describe('the fixed geometry of the system', () => {
     // The rule the mixed row exists to protect: they line up optically.
     expect(round(input?.y)).toBe(round(button?.y));
     expect(round(select?.y)).toBe(round(button?.y));
-  });
-
-  test('the selection box is 18x18 with a 1.5 border', async ({ page }) => {
-    await page.goto(SPACING);
-    await ready(page);
-
-    for (const control of ['checkbox', 'radio']) {
-      const box = await page.locator(`[data-measure="${control}-row"] input`).boundingBox();
-      expect(round(box?.width), `${control} width`).toBe(18);
-      expect(round(box?.height), `${control} height`).toBe(18);
-
-      /*
-       * The DECLARATION is asserted, not the used value.
-       *
-       * Chromium floors a sub-pixel border: a literal `border-width: 1.5px`
-       * also reports `1px` from getComputedStyle, at every device pixel ratio.
-       * Asserting the used value would therefore be asserting a browser
-       * rounding rule and would fail the day it changed, while saying nothing
-       * about whether the token reached the control. What the component owes
-       * is the token; what the browser does with it is the browser's.
-       *
-       * The consequence -- that `--border-width-selection` does not actually
-       * paint 1.5px in Chromium -- is written up in the DS-2 PR 3 report.
-       */
-      const declared = await page
-        .locator(`[data-measure="${control}-row"] input`)
-        .evaluate((el) => ({
-          inline: (el as HTMLElement).style.borderWidth,
-          token: getComputedStyle(el).getPropertyValue('--border-width-selection').trim(),
-        }));
-      expect(declared.inline, `${control} border declaration`).toBe(
-        'var(--border-width-selection)',
-      );
-      expect(declared.token, `${control} border token`).toBe('1.5px');
-    }
-  });
-
-  test('the toggle track is 44x24 and the thumb 20', async ({ page }) => {
-    await page.goto(SPACING);
-    await ready(page);
-
-    const track = await page.locator('[data-measure="toggle-row"] input').boundingBox();
-    expect(round(track?.width), 'track width').toBe(44);
-    expect(round(track?.height), 'track height').toBe(24);
   });
 });
 
@@ -549,7 +499,28 @@ test.describe('the component sheets measure what they claim', () => {
       const box = await page.locator('[data-measure-box] input').boundingBox();
       expect(round(box?.width), `${url} width`).toBe(18);
       expect(round(box?.height), `${url} height`).toBe(18);
-      // The page prints the DECLARATION, for the reason set out above.
+
+      /*
+       * THE DECLARATION IS ASSERTED, NOT THE USED VALUE.
+       *
+       * Chromium floors a sub-pixel border: a literal `border-width: 1.5px`
+       * also reports `1px` from getComputedStyle, at every device pixel
+       * ratio. Asserting the used value would be asserting a browser
+       * rounding rule -- it would fail the day that rule changed and would
+       * say nothing about whether the token reached the control. What the
+       * component owes is the token; what the browser does with it is the
+       * browser's.
+       *
+       * The consequence -- that `--border-width-selection` does not actually
+       * paint 1.5px in Chromium -- is written up in the DS-2 PR 3 report.
+       */
+      const declared = await page.locator('[data-measure-box] input').evaluate((el) => ({
+        inline: (el as HTMLElement).style.borderWidth,
+        token: getComputedStyle(el).getPropertyValue('--border-width-selection').trim(),
+      }));
+      expect(declared.inline, `${url} border declaration`).toBe('var(--border-width-selection)');
+      expect(declared.token, `${url} border token`).toBe('1.5px');
+      // And the page prints that same declaration, for the same reason.
       await expect(page.getByText('var(--border-width-selection)')).toBeVisible();
     }
   });
@@ -1312,26 +1283,10 @@ test.describe('keyboard only', () => {
     await expect(host).toBeFocused();
   });
 
-  test('Enter on a button activates it, and the busy button refuses the second press', async ({
-    page,
-  }) => {
-    await page.goto(BUTTON);
-    await ready(page);
-
-    const submit = page.locator('[data-demo-submit] button');
-    const counter = page.locator('[role="status"]', { hasText: 'Envíos registrados' });
-
-    await submit.focus();
-    await page.keyboard.press('Enter');
-    await expect(submit).toHaveAttribute('aria-busy', 'true');
-    await expect(counter).toHaveText('Envíos registrados: 1');
-
-    // Still focused, so a keyboard user is not dumped back to the top of the
-    // document mid-submit -- and a second Enter changes nothing.
-    await expect(submit).toBeFocused();
-    await page.keyboard.press('Enter');
-    await expect(counter).toHaveText('Envíos registrados: 1');
-  });
+  // Enter on a button, and the busy button refusing the second press, is
+  // asserted where the Loading state is measured -- `the loading button keeps
+  // its name, its focus and refuses a second click`, which does the same walk
+  // and also checks aria-disabled and the accessible name.
 });
 
 /**
