@@ -468,6 +468,7 @@ export class Table<T> {
      * menu open would otherwise leave it floating over the next screen.
      */
     this.destroyRef.onDestroy(() => {
+      this.releaseMenuGesture();
       this.menuOverlay?.dispose();
       this.menuOverlay = null;
     });
@@ -958,6 +959,39 @@ export class Table<T> {
 
   private menuOverlay: OverlayRef | null = null;
 
+  /**
+   * Whether a NEW pointer gesture has begun since the menu opened.
+   *
+   * A right click is not one event but a burst, and the browsers disagree on
+   * its order. Chromium on X11 -- which is what CI runs -- delivers
+   * `contextmenu` on the press and `auxclick` on the release; Chromium on
+   * Windows delivers `auxclick` first and `contextmenu` last. CDK's
+   * outside-pointer stream listens to `click`, `auxclick` AND `contextmenu`
+   * on the body, so on X11 the `auxclick` of the very click that opened the
+   * menu reaches an overlay that already exists, counts as a click outside
+   * it, and closes what it just opened. On Windows nothing follows the
+   * `contextmenu`, which is why the menu works on a developer machine and
+   * not on CI.
+   *
+   * A new gesture always begins with a `pointerdown`. Until one arrives, a
+   * pointer event is still the tail of the click that opened the menu and is
+   * not a reason to close it.
+   */
+  private menuGestureEnded = false;
+
+  private readonly onMenuPointerDown = (): void => {
+    this.menuGestureEnded = true;
+  };
+
+  /** Stop listening for the gesture that is allowed to close the menu. */
+  private releaseMenuGesture(): void {
+    this.host.nativeElement.ownerDocument.removeEventListener(
+      'pointerdown',
+      this.onMenuPointerDown,
+      true,
+    );
+  }
+
   protected readonly menuRow = signal<FlatRow<T> | null>(null);
   protected readonly menuIndex = signal(-1);
   protected readonly menuClasses = MENU_CLASSES;
@@ -1000,7 +1034,17 @@ export class Table<T> {
       template,
       MENU_POSITIONS,
     );
-    this.menuOverlay.outsidePointerEvents().subscribe(() => this.closeMenu());
+    this.menuGestureEnded = false;
+    this.host.nativeElement.ownerDocument.addEventListener(
+      'pointerdown',
+      this.onMenuPointerDown,
+      true,
+    );
+    this.menuOverlay.outsidePointerEvents().subscribe(() => {
+      if (this.menuGestureEnded) {
+        this.closeMenu();
+      }
+    });
     queueMicrotask(() => {
       this.host.nativeElement.ownerDocument.querySelector<HTMLElement>(`#${this.menuId}`)?.focus();
     });
@@ -1026,6 +1070,7 @@ export class Table<T> {
     if (!this.menuOverlay) {
       return;
     }
+    this.releaseMenuGesture();
     const row = this.menuRow();
     this.menuOverlay.dispose();
     this.menuOverlay = null;

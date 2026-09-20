@@ -1120,6 +1120,43 @@ describe('Table master/detail', () => {
     expect(menu()).not.toBeNull();
   });
 
+  it('survives the auxclick that follows its own right click', async () => {
+    /*
+     * A right click is a burst of events, and the browsers do not agree on
+     * its order: Chromium on X11 -- which is what CI runs -- sends
+     * `contextmenu` on the press and `auxclick` on the release, while on
+     * Windows `auxclick` comes first and `contextmenu` last. CDK's
+     * outside-pointer stream listens to both on the body, so on X11 the
+     * `auxclick` of the very same click reaches a menu that already exists
+     * and counts as a click outside it.
+     *
+     * This is the X11 order, replayed by hand. It cost nine red tests on the
+     * first CI run of the suite and nothing at all on a developer machine.
+     */
+    rowOf(1).dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true }));
+    await settle();
+    expect(menu()).not.toBeNull();
+
+    rowOf(1).dispatchEvent(
+      new MouseEvent('auxclick', { bubbles: true, cancelable: true, button: 2 }),
+    );
+    await settle();
+    expect(menu(), 'the menu closed itself on the tail of its own click').not.toBeNull();
+  });
+
+  it('still closes on a pointer gesture that is not the one that opened it', async () => {
+    // The guard above must not turn into "never closes". A press outside is a
+    // new gesture, and a new gesture closes the menu.
+    kebab(0)?.click();
+    await settle();
+    expect(menu()).not.toBeNull();
+
+    document.body.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true }));
+    document.body.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    await settle();
+    expect(menu()).toBeNull();
+  });
+
   it('offers nothing when there is nothing to offer', async () => {
     host.menu.set([]);
     await settle();
