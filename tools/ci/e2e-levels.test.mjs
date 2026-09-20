@@ -136,9 +136,44 @@ test('the showroom verdict always reports, so it can be required one day', async
 
   // The one name that is ours: the ruleset does not ask for it yet.
   assert.match(block, /^ {4}name: Playwright showroom\r?$/m);
-  // A job with a conditional `if:` is SKIPPED when it is false, and a skipped
-  // required check is not a passing one to GitHub.
-  assert.match(block, /^ {4}if: \$\{\{ always\(\) \}\}$/m);
+
+  /*
+   * IT REPORTS BECAUSE IT ALWAYS RUNS, which is stronger than the `always()`
+   * this test used to demand. `always()` was needed while the job read three
+   * sharded jobs through `needs:`; a job that depends on nothing and carries
+   * no `if:` of its own cannot be skipped at all, and a skipped required
+   * check is not a passing one to GitHub.
+   *
+   * The path filter lives in a STEP now, so the steps below it skip and the
+   * job still reports.
+   */
+  assert.doesNotMatch(block, /^ {4}needs:/m, 'el veredicto del showroom no depende de otro job');
+  assert.doesNotMatch(block, /^ {4}if:/m, 'un job con `if:` se SALTA, y un check saltado no pasa');
+});
+
+test('the showroom suite runs on one machine, and the measurement is why', async () => {
+  // WHAT THE WORKFLOW DOES, NOT WHAT IT SAYS: the comment right below this
+  // job names `merge-reports` to explain why it is gone, and a raw match on
+  // the file would read that explanation as the thing it forbids.
+  const workflow = (await readFile(WORKFLOW, 'utf8'))
+    .split(/\r?\n/)
+    .filter((line) => !/^\s*#/.test(line))
+    .join('\n');
+
+  /*
+   * Measured 2026-09-20 at four workers: the whole project in one run takes
+   * 2 min 18 s, and the same tests split three ways take 3 min 38 s of
+   * machine time -- 58% more work for 48 s of wall clock, which CI then
+   * spends twice over installing Node, the dependencies and the browser on
+   * two extra runners (~40 s each).
+   */
+  assert.doesNotMatch(
+    workflow,
+    /--shard=/,
+    'el sharding se midio y no paga: ver Integracion Continua.md',
+  );
+  assert.doesNotMatch(workflow, /merge-reports/, 'una sola corrida escribe un solo reporte');
+  assert.doesNotMatch(workflow, /^ {2}showroom-/m, 'un veredicto, un job');
 });
 
 test('no name in the workflow carries a rule number', async () => {
