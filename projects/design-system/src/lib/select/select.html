@@ -1,0 +1,82 @@
+<!--
+  A <button> is not a labelable element, so the visible label is joined to the
+  trigger with aria-labelledby instead of for/id. The trigger's own text is
+  then the VALUE, which is what the combobox pattern expects: the name says
+  what the control is for, the content says what is currently in it.
+-->
+<span [id]="labelId" class="block text-caption text-secondary mb-1">{{ label() }}</span>
+
+<button
+  #trigger
+  type="button"
+  role="combobox"
+  [id]="triggerId"
+  [class]="triggerClasses()"
+  [style.borderColor]="borderColor()"
+  [style.fontSize]="fontSize()"
+  [disabled]="isDisabled()"
+  [attr.aria-labelledby]="labelId"
+  [attr.aria-expanded]="isOpen()"
+  aria-haspopup="listbox"
+  [attr.aria-controls]="controlsId()"
+  [attr.aria-activedescendant]="activeOptionId()"
+  [attr.aria-invalid]="error() ? 'true' : null"
+  [attr.aria-describedby]="describedBy()"
+  (click)="toggle()"
+  (keydown)="onTriggerKeydown($event)"
+  (blur)="onTriggerBlur()"
+>
+  <span class="truncate" [class]="triggerTextClasses()">{{ triggerText() }}</span>
+
+  <!--
+    Decorative: the button already says what it is and what it holds. The
+    chevron is `sm` (16 px) at every field size, the same rule as the Input's
+    prefix icon -- see FIELD_ICON_SIZE and the chevron note in the PR report.
+  -->
+  <ewms-icon name="chevron-down" [size]="iconSize" />
+</button>
+
+@if (hint()) {
+  <p [id]="hintId" class="mt-1 text-caption" [class]="hintClasses()">{{ hint() }}</p>
+}
+
+<!--
+  The panel, rendered into a CDK overlay. Nothing inside it is focusable: the
+  focus stays on the trigger and `aria-activedescendant` points at the active
+  row, which is the ARIA Authoring Practices pattern for a select-only
+  combobox.
+
+  That is why the rows carry no key handler and no tab stop of their own, and
+  why two accessibility rules are switched off for them below. Both rules
+  assume a widget where every interactive element handles its own keyboard and
+  takes its own focus; this one deliberately does the opposite, and neither
+  rule can see the keyboard contract (down, up, Enter, Escape) from here,
+  because it is implemented once, on the trigger. Satisfying them literally --
+  a key handler and a tabindex on every row -- would add a second,
+  contradictory keyboard path and put every option into the tab order, which
+  is the thing aria-activedescendant exists to avoid.
+-->
+<ng-template #panel>
+  <ul [id]="listboxId" role="listbox" [class]="panelClasses" [attr.aria-labelledby]="labelId">
+    @for (option of options(); track $index) {
+      <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -->
+      <li
+        [id]="optionId($index)"
+        role="option"
+        [class]="optionClasses($index)"
+        [style.fontSize]="fontSize()"
+        [style.fontWeight]="$index === selectedIndex() ? selectedWeight : null"
+        [attr.aria-selected]="$index === selectedIndex()"
+        (mousedown)="onOptionMousedown($event)"
+        (click)="choose(option)"
+        (mouseenter)="onOptionEnter($index)"
+      >
+        <span class="truncate">{{ option.label }}</span>
+
+        @if ($index === selectedIndex()) {
+          <ewms-icon name="check" [size]="iconSize" />
+        }
+      </li>
+    }
+  </ul>
+</ng-template>

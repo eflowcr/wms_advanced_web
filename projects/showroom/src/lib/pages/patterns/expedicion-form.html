@@ -1,0 +1,83 @@
+<!--
+  No role here: the CDK container around this template carries role="dialog",
+  aria-modal and the focus trap.
+
+  A <form> and not a <div> because it IS one: a named group of fields with one
+  commit. `ngSubmit` is wired for the browsers and the cases that submit
+  implicitly.
+
+  BUT THE KEYBOARD PATH IS Ctrl+S, NOT Enter, AND THAT IS A LIMITATION WORTH
+  NAMING: `ewms-button` renders `type="button"` unconditionally -- deliberately,
+  so that no button in this system ever submits a form by accident -- so this
+  form has no submit button, and a form with several fields and no submit
+  button does not submit on Enter either. Saving is therefore the click below
+  or the shortcut, and both go to the same method. Reported against the Button
+  rather than worked around with a bare <button>, which would have been a
+  second kind of button on one screen.
+-->
+<form
+  class="flex w-full max-w-120 flex-col gap-4 rounded-dialog border border-default border-solid bg-surface p-6 shadow-dialog"
+  data-expedicion-form
+  (ngSubmit)="save()"
+>
+  <h2 [id]="titleId" class="text-h3 text-primary">
+    {{ isNew ? 'Nueva expedición' : 'Editar la expedición' }}
+  </h2>
+
+  <ewms-input
+    label="Código"
+    placeholder="EXP-2026-0000"
+    hint="El código que llevará la etiqueta."
+    [ngModel]="codigo()"
+    (ngModelChange)="codigo.set($event)"
+    name="codigo"
+    data-form-codigo
+  />
+
+  <ewms-input
+    label="Cliente"
+    placeholder="Distribuidora Andes"
+    [ngModel]="cliente()"
+    (ngModelChange)="cliente.set($event)"
+    name="cliente"
+    data-form-cliente
+  />
+
+  <ewms-select
+    label="Estado"
+    [options]="estados"
+    [ngModel]="estado()"
+    (ngModelChange)="estado.set($event)"
+    name="estado"
+    data-form-estado
+  />
+
+  <!--
+    A Toggle and not a Checkbox, on the rule the Toggle's own sheet states: it
+    applies the moment you flip it. There is a Guardar beside it, which argues
+    for a Checkbox -- but "urgente" changes nothing until the form is saved
+    either way, and the switch is what reads as a property of the shipment
+    rather than as an instruction to the form.
+  -->
+  <ewms-toggle
+    label="Urgente"
+    [checked]="urgente()"
+    (checkedChange)="urgente.set($event)"
+    data-form-urgente
+  />
+
+  <p class="text-caption text-secondary">
+    <kbd class="font-mono">Ctrl</kbd> + <kbd class="font-mono">S</kbd> guarda sin soltar el teclado
+    —desde cualquier campo, que es justo donde está el foco cuando se quiere guardar—.
+    <kbd class="font-mono">Esc</kbd> cancela, en un solo gesto y sin preguntar.
+  </p>
+
+  <!--
+    Cancel first in the DOM, like the confirmation dialog: the CDK focuses the
+    first tabbable element, and that has to be the safe answer.
+  -->
+  <div class="flex w-full justify-end gap-2">
+    <ewms-button variant="secondary" data-form-cancel (click)="cancel()"> Cancelar </ewms-button>
+    <ewms-button variant="primary" data-form-save (click)="save()">Guardar</ewms-button>
+  </div>
+</form>

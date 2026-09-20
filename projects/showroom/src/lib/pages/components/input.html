@@ -1,0 +1,408 @@
+<!-- The showroom is Spanish only, exempt from i18n (gate 12): declared so a screen reader never reads it as English. -->
+<article class="flex flex-col gap-10" lang="es">
+  <!-- ============================================================ 1. Encabezado -->
+  <header class="flex flex-col gap-2" data-block="1-encabezado">
+    <div class="flex flex-wrap items-baseline gap-3">
+      <h1 class="text-h1">Input</h1>
+      <code class="font-mono text-primary">&lt;ewms-input&gt;</code>
+    </div>
+    <ul class="flex flex-wrap gap-2 text-caption">
+      <li class="rounded-sm bg-secondary px-2 py-1 text-secondary">
+        Versión <span class="font-mono">{{ version }}</span>
+      </li>
+      <li class="rounded-sm bg-success-surface px-2 py-1 text-success">Construido y en verde</li>
+      <li class="rounded-sm bg-secondary px-2 py-1 text-secondary">
+        Ficha: <span class="font-mono">08-Sistema-de-Diseno/Componentes/Input.md</span>
+      </li>
+    </ul>
+  </header>
+
+  <!-- ================================================ 2. Qué resuelve / cuándo no -->
+  <section class="flex flex-col gap-4" aria-labelledby="in-purpose" data-block="2-proposito">
+    <h2 id="in-purpose" class="text-h2">Qué resuelve, y cuándo NO usarlo</h2>
+    <div class="grid grid-cols-[repeat(auto-fit,minmax(20rem,1fr))] gap-4">
+      <div class="flex flex-col gap-2 rounded-md border border-default bg-surface p-4">
+        <h3 class="text-h3">Qué resuelve</h3>
+        <p>
+          Campo de texto de una o varias líneas. Comparte su caja con
+          <code class="font-mono">&lt;ewms-select&gt;</code> —mismas alturas, misma escala
+          tipográfica, mismo radio, mismos colores de borde y mismo anillo de foco— así que una fila
+          de formulario con un input, un select y un botón se alinea sin que nadie mida.
+        </p>
+        <p class="text-caption text-secondary">
+          El borde y el anillo van sobre el <strong>control nativo</strong>, no sobre un envoltorio:
+          el icono prefijo y el botón sufijo se superponen encima, y el texto se aparta con padding.
+          Envolverlo en una caja con borde movería el anillo a algo que no tiene el foco.
+        </p>
+      </div>
+      <div class="flex flex-col gap-2 rounded-md border border-danger bg-danger-surface p-4">
+        <h3 class="text-h3">Cuándo NO usarlo</h3>
+        <ul class="flex flex-col gap-2">
+          <li>
+            <strong>No valida nada.</strong>&ngsp;<code class="font-mono">state="error"</code> es una
+            <em>foto</em>. Quien decide si un valor está mal es el formulario padre — y eso es lo que
+            mantiene al componente fuera de las convenciones de validación de cada proyecto.
+          </li>
+          <li>
+            <strong>Si la opción sale de una lista cerrada, va Select.</strong> Un input con
+            autocompletado inventado encima no es este componente.
+          </li>
+          <li>
+            <strong>El placeholder no es el label.</strong> Si estás por poner sólo placeholder, lo
+            que falta es el label — y acá es requerido, así que no compila.
+          </li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================= 3. Demo principal -->
+  <section class="flex flex-col gap-4" aria-labelledby="in-demo" data-block="3-demo">
+    <h2 id="in-demo" class="text-h2">Demo principal</h2>
+    <p class="text-secondary">
+      Dentro de un <strong>formulario reactivo de verdad</strong>. El componente es un
+      <code class="font-mono">ControlValueAccessor</code>: lo que debe demostrarse es que
+      <code class="font-mono">formControlName</code> le llega, que tipear actualiza el control y que
+      salir del campo lo marca como tocado. Un input suelto no prueba ninguna de las tres.
+    </p>
+    <div class="grid grid-cols-[repeat(auto-fit,minmax(24rem,1fr))] gap-6">
+      <ewms-demo-frame ground="canvas" label="Un formulario real, con su valor en vivo">
+        <form [formGroup]="form" class="flex flex-col gap-4" data-demo-form>
+          <span data-focus-canvas>
+            <ewms-input
+              formControlName="sku"
+              label="SKU del artículo"
+              placeholder="ABC-12345-X"
+              hint="Formato ABC-00000-X. Enfocame con Tab para ver el anillo."
+              [required]="true"
+              (fieldFocus)="onFocus()"
+              (fieldBlur)="onBlur()"
+            />
+          </span>
+
+          <ewms-input
+            formControlName="clave"
+            type="password"
+            label="Clave de operario"
+            showPasswordLabel="Mostrar la clave"
+            hidePasswordLabel="Ocultar la clave"
+            hint="El botón del ojo sólo aparece porque se le pasaron sus dos textos."
+          />
+
+          <ewms-input
+            formControlName="busqueda"
+            type="search"
+            label="Buscar ubicación"
+            placeholder="Pasillo, estante o bulto"
+            clearLabel="Limpiar la búsqueda"
+            hint="La × aparece recién cuando hay algo que limpiar."
+          />
+
+          <dl class="flex flex-col gap-1 rounded-md border border-default bg-surface p-3 text-caption">
+            <div class="flex flex-wrap gap-2">
+              <dt class="text-secondary">Valor del control <code class="font-mono">sku</code>:</dt>
+              <dd class="font-mono text-primary" data-demo-value>{{ skuValue() }}</dd>
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <dt class="text-secondary">¿Tocado?</dt>
+              <dd class="font-mono text-primary">{{ touched() }}</dd>
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <dt class="text-secondary">
+                <code class="font-mono">(fieldFocus)</code> /
+                <code class="font-mono">(fieldBlur)</code>:
+              </dt>
+              <dd class="font-mono text-primary">{{ focusCount() }} / {{ blurCount() }}</dd>
+            </div>
+          </dl>
+        </form>
+      </ewms-demo-frame>
+      <ewms-prop-table [rows]="props" caption="Propiedades de <ewms-input>" />
+    </div>
+    <p class="text-caption text-secondary">
+      El valor de arriba sale del <code class="font-mono">FormControl</code>, no de una copia local:
+      si el componente dejara de notificar al formulario, ese renglón se quedaría quieto mientras la
+      caja se llena de letras. <code class="font-mono">onTouched</code> se emite
+      <strong>sólo en blur</strong>, nunca al cambiar el valor: un campo en el que alguien está
+      escribiendo todavía no está «tocado», y marcarlo antes haría aparecer los mensajes de
+      validación a media tecla.
+    </p>
+  </section>
+
+  <!-- =============================================================== 4. Variantes -->
+  <section class="flex flex-col gap-4" aria-labelledby="in-variants" data-block="4-variantes">
+    <h2 id="in-variants" class="text-h2">Variantes</h2>
+    <p class="text-secondary">
+      Cinco tipos. No son variantes de estilo —el sistema no tiene un «input secundario»— sino de
+      <strong>qué se escribe adentro</strong>, y cada uno cambia algo real: la alineación, un icono,
+      un botón, o el elemento entero.
+    </p>
+    <ewms-demo-frame ground="canvas">
+      <ul class="flex flex-col gap-5">
+        @for (sample of types; track sample.type) {
+          <li class="flex flex-col gap-1" [attr.data-variant]="sample.type">
+            <ewms-input
+              [type]="sample.type"
+              [label]="'Tipo ' + sample.label"
+              placeholder="Escribí algo"
+              showPasswordLabel="Mostrar el contenido"
+              hidePasswordLabel="Ocultar el contenido"
+              clearLabel="Limpiar el campo"
+            />
+            <span class="text-caption text-secondary">{{ sample.note }}</span>
+          </li>
+        }
+      </ul>
+    </ewms-demo-frame>
+    <p class="text-caption text-secondary">
+      Los iconos decorativos —la lupa de <code class="font-mono">search</code>— son
+      <code class="font-mono">&lt;ewms-icon&gt;</code> a <code class="font-mono">sm</code> (16 px) en
+      los tres tamaños, sin <code class="font-mono">label</code>: el campo ya tiene nombre por su
+      <code class="font-mono">&lt;label&gt;</code>. El ojo y la × son otra cosa: se
+      <em>pulsan</em>, así que son <code class="font-mono">&lt;ewms-icon-button&gt;</code> y ahí el
+      nombre accesible es obligatorio.
+    </p>
+  </section>
+
+  <!-- ========================================================= 5. Matriz de estados -->
+  <section class="flex flex-col gap-4" aria-labelledby="in-matrix" data-block="5-matriz">
+    <h2 id="in-matrix" class="text-h2">Matriz de estados</h2>
+    <p class="text-secondary">
+      Los cuatro estados contra los tres tamaños. <strong>Los doce son entradas reales</strong>: no
+      hay ninguna celda pintada con una clase, así que lo que se ve es el componente y no una
+      imitación.
+    </p>
+    <ewms-demo-frame ground="canvas">
+      <ewms-state-matrix
+        [variants]="states"
+        [states]="sizes"
+        rowHeader="Estado"
+        caption="Cuatro estados por tres tamaños, todos con entradas reales"
+      >
+        <ng-template let-variant="variant" let-state="state">
+          <ewms-input
+            [label]="variant.label + ' ' + state.label"
+            [state]="stateFor(variant.id)"
+            [size]="sizeFor(state.id)"
+            placeholder="Valor"
+          />
+        </ng-template>
+      </ewms-state-matrix>
+    </ewms-demo-frame>
+    <p class="text-caption text-secondary">
+      <strong>Falta Focus, y falta a propósito.</strong> El color del borde se aplica como estilo en
+      línea, atado a la señal de foco del propio componente; una clase envolvente no puede ganarle,
+      así que una celda «Focus» forzada mostraría el anillo con el borde equivocado. Es mentir más
+      prolijo. El foco de verdad está arriba, en el campo que se alcanza con Tab.
+    </p>
+    <div class="flex flex-col gap-2 rounded-md border border-strong bg-secondary p-4">
+      <h3 class="text-h4">Error gana sobre Focus</h3>
+      <p class="text-caption">
+        Un campo en error que recibe el foco <strong>conserva el borde de peligro</strong> y recibe
+        el anillo de foco normal encima. El sistema tiene exactamente un color de foco, en todas
+        partes; un segundo color haría que el anillo significara dos cosas distintas.
+      </p>
+    </div>
+    <div class="flex flex-col gap-2 rounded-md border border-strong bg-secondary p-4">
+      <h3 class="text-h4">Disabled y Read-only comparten el fondo y nada más</h3>
+      <p class="text-caption">
+        El texto de sólo lectura es contenido real que alguien puede necesitar leer y copiar: se
+        queda con el color primario y con el cursor normal, y sólo el fondo gris dice «acá no se
+        edita». Pintarlo de <code class="font-mono">text-disabled</code> haría que un valor
+        <em>inmodificable</em> se viera como uno <em>no disponible</em>, y las dos cosas significan
+        lo contrario para quien lee la pantalla.
+      </p>
+    </div>
+  </section>
+
+  <!-- ================================================================ 6. Tamaños -->
+  <section class="flex flex-col gap-4" aria-labelledby="in-sizes" data-block="6-tamanos">
+    <h2 id="in-sizes" class="text-h2">Tamaños</h2>
+    <p class="text-secondary">
+      Tres, y son <strong>los mismos del Botón</strong>. No es una coincidencia que se documenta: es
+      una regla, y las dos alturas de abajo están medidas y comparadas para demostrarlo.
+    </p>
+    <ewms-demo-frame ground="canvas">
+      <ul class="flex flex-col gap-6">
+        @for (sample of measured(); track sample.size) {
+          <li class="flex flex-col gap-2">
+            <div class="flex flex-wrap items-end gap-3" [attr.data-pair]="sample.size">
+              <span class="min-w-64 flex-1">
+                <ewms-input
+                  [size]="sample.size"
+                  [label]="'Ubicación, tamaño ' + sample.label"
+                  placeholder="A-04-17"
+                />
+              </span>
+              <ewms-button variant="primary" [size]="sample.size">Guardar</ewms-button>
+            </div>
+            <span class="text-caption text-secondary">
+              {{ sample.label }} · input <span class="font-mono">{{ sample.input }}</span> · botón
+              <span class="font-mono">{{ sample.button }}</span>
+              @if (sample.aligned) {
+                · <span class="rounded-sm bg-success-surface px-1 text-success">coinciden</span>
+              } @else {
+                · <span class="rounded-sm bg-danger-surface px-1 text-danger">NO coinciden</span>
+              }
+            </span>
+          </li>
+        }
+      </ul>
+    </ewms-demo-frame>
+    <p class="text-caption text-secondary">
+      El <strong>padding horizontal sí difiere</strong> —10 / 12 / 14 en el campo contra 12 / 16 / 20
+      en el botón— y también a propósito: el del botón separa su texto del borde, el del campo separa
+      el cursor del borde, y un campo suele ser mucho más ancho que su contenido. Copiar el del botón
+      metería el texto de cada campo un tercio de centímetro más adentro de lo que pide el diseño.
+    </p>
+  </section>
+
+  <!-- ==================================================== 7. Anatomía y tokens -->
+  <section class="flex flex-col gap-4" aria-labelledby="in-anatomy" data-block="7-anatomia">
+    <h2 id="in-anatomy" class="text-h2">Anatomía y tokens</h2>
+    <p class="text-secondary">
+      Qué token controla cada parte, leído en vivo. Las alturas y la escala tipográfica
+      <strong>no están redefinidas</strong> para el campo: son las del Botón, importadas. Hay una
+      sola copia de la escala de controles en todo el sistema.
+    </p>
+    <div class="overflow-x-auto">
+      <table class="w-full border-collapse text-caption">
+        <caption class="mb-2 text-left text-secondary">
+          Tokens que consume &lt;ewms-input&gt;
+        </caption>
+        <thead>
+          <tr>
+            <th scope="col" class="border-b border-default p-2 text-left text-secondary">Parte</th>
+            <th scope="col" class="border-b border-default p-2 text-left text-secondary">
+              Token, cadena y valor
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of anatomy; track row.token) {
+            <tr>
+              <th scope="row" class="border-b border-default p-2 text-left text-primary">
+                {{ row.part }}
+              </th>
+              <td class="border-b border-default p-2">
+                <ewms-token-value [token]="row.token" [swatch]="true" />
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ============================================== 8. Contrato para Angular -->
+  <section class="flex flex-col gap-4" aria-labelledby="in-contract" data-block="8-contrato">
+    <h2 id="in-contract" class="text-h2">Contrato para Angular</h2>
+
+    <h3 class="text-h3">Entradas</h3>
+    <p class="text-secondary">
+      Las de la tabla del bloque 3. <code class="font-mono">label</code> es la única requerida en el
+      tipo. <code class="font-mono">disabled</code> viene de
+      <code class="font-mono">FormControlBase</code> y se combina con el del formulario — ver abajo.
+    </p>
+
+    <h3 class="text-h3">Salidas</h3>
+    <div class="flex flex-col gap-2 rounded-md border border-warning bg-warning-surface p-4">
+      <p>
+        <code class="font-mono">(fieldFocus)</code> y <code class="font-mono">(fieldBlur)</code>, y
+        <strong>el prefijo es estructural</strong>. Una salida llamada como el evento nativo choca
+        con él: el <code class="font-mono">&lt;input&gt;</code> interno emite
+        <code class="font-mono">focus</code> y <code class="font-mono">blur</code> que burbujean y
+        caen en el mismo binding del consumidor, que en vez del <code class="font-mono">void</code>
+        del componente recibe un <code class="font-mono">FocusEvent</code>. La regla
+        <code class="font-mono">no-output-native</code> de ESLint lo marca sola.
+      </p>
+      <p class="text-caption">
+        La ficha del vault pedía <code class="font-mono">(focus)</code> y
+        <code class="font-mono">(blur)</code>: se escribieron antes de que la colisión se conociera,
+        y ya quedó corregida en la ficha. Es la misma familia de error que el
+        <code class="font-mono">disabled</code> del Tooltip — <strong>un miembro de la API pública no
+        se llama como algo que el elemento nativo ya emite o expone</strong>.
+      </p>
+      <p class="text-caption">
+        Hay una segunda razón, más pequeña: la compuerta 10 lee todo literal de cadena de un
+        <code class="font-mono">.ts</code> como posible nombre de clase, y uno de los dos nombres
+        nativos es además una utilidad de Tailwind por defecto, así que enlazarlo desde una plantilla
+        en línea rompía el build.
+      </p>
+    </div>
+
+    <h3 class="text-h3">Los tres textos de los botones sufijo</h3>
+    <p class="text-secondary">
+      <code class="font-mono">showPasswordLabel</code>,
+      <code class="font-mono">hidePasswordLabel</code> y
+      <code class="font-mono">clearLabel</code> existen porque el sufijo es un
+      <code class="font-mono">&lt;ewms-icon-button&gt;</code>, que exige un nombre accesible
+      <strong>traducido</strong>, y el sistema de diseño no habla ningún idioma para inventarlo. Las
+      alternativas eran un botón sin nombre —falla axe, inusable por voz— o una entrada obligatoria
+      en cada campo de texto que nunca va a tener contraseña.
+    </p>
+    <p class="text-caption text-secondary">
+      Si no se pasan, <strong>el botón no se renderiza</strong>: ausente es mejor que presente y sin
+      nombre. Es también la razón por la que esta página los escribe en español a la vista — para que
+      el showroom no sea el único lugar donde se lean.
+    </p>
+
+    <h3 class="text-h3">Uso típico</h3>
+    <pre
+      class="overflow-x-auto rounded-md border border-default bg-secondary p-4 font-mono text-mono text-primary"
+    ><code>{{ snippet }}</code></pre>
+
+    <h3 class="text-h3">Accesibilidad</h3>
+    <ul class="flex flex-col gap-2">
+      <li>
+        <code class="font-mono">&lt;label for&gt;</code> real, siempre renderizado. El asterisco de
+        <code class="font-mono">required</code> va <code class="font-mono">aria-hidden</code>: el
+        atributo nativo ya hace que el lector diga «requerido», y el glifo lo diría dos veces — y
+        como la palabra «asterisco».
+      </li>
+      <li>
+        El <code class="font-mono">hint</code> es una <strong>descripción</strong>, conectada con
+        <code class="font-mono">aria-describedby</code>, y nunca parte del nombre: un campo llamado
+        «SKU Formato ABC-123» es un campo que nadie puede pedir por su nombre.
+      </li>
+      <li>
+        <code class="font-mono">readOnly</code> se escribe como propiedad del DOM, no como atributo:
+        el atributo es presencia-o-ausencia, así que enlazarle <code class="font-mono">false</code>
+        igual dejaría el campo de sólo lectura. Es también por qué sólo-lectura
+        <strong>no</strong> se construye con <code class="font-mono">disabled</code>: un campo de
+        sólo lectura conserva el foco, su parada de tabulación y la selección de texto, y uno
+        deshabilitado pierde las tres.
+      </li>
+    </ul>
+
+    <h3 class="text-h3">Errores comunes</h3>
+    <ul class="flex flex-col gap-2">
+      <li>
+        <strong>Escuchar <code class="font-mono">(focus)</code> o
+        <code class="font-mono">(blur)</code>.</strong> Te llega el evento nativo, no el del
+        componente. Son <code class="font-mono">(fieldFocus)</code> y
+        <code class="font-mono">(fieldBlur)</code>.
+      </li>
+      <li>
+        <strong>Esperar que <code class="font-mono">state="error"</code> valide.</strong> No valida.
+        Es el formulario el que decide y lo dice a través de esa entrada.
+      </li>
+      <li>
+        <strong>Poner <code class="font-mono">[disabled]="true"</code> y después
+        <code class="font-mono">form.enable()</code>.</strong> No se re-habilita:
+        <code class="font-mono">isDisabled = disabled() || disabledByForm()</code>. Quien
+        deshabilita gana, y nadie re-habilita. Para que lo maneje el formulario, no pases la entrada.
+      </li>
+      <li>
+        <strong>Usar el placeholder como nombre.</strong> Desaparece al primer carácter, y varios
+        lectores de pantalla no lo anuncian nunca.
+      </li>
+    </ul>
+
+    <h3 class="text-h3">Bloques que no aplican</h3>
+    <p class="text-secondary">
+      Ninguno. La matriz tiene un hueco declarado —Focus— y está explicado en su bloque en lugar de
+      disimulado.
+    </p>
+  </section>
+</article>

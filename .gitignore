@@ -39,6 +39,15 @@ testem.log
 /typings
 __screenshots__/
 
+# Claude Code
+# La configuracion local del agente es de la maquina, no del proyecto: rutas y
+# permisos que valen solo aca. Hasta ahora quedaba fuera por el gitignore
+# global del usuario (~/.config/git/ignore), que es por maquina; anotada aca
+# la regla vale para cualquiera que clone el repo.
+# Un `.claude/settings.json` compartido por el equipo SI se versiona, por eso
+# se ignora el archivo y no la carpeta entera.
+.claude/settings.local.json
+
 # System files
 .DS_Store
 Thumbs.db
@@ -56,3 +65,9 @@ Thumbs.db
 /*.ps1
 limpieza-ewms.ps1
 commit-unico.ps1
+
+# Salida del arnes visual del showroom (npm run showroom:capture).
+# Son capturas y mediciones para mirar mientras se construye una pagina, no
+# lineas base: versionarlas convertiria cada cambio visual deliberado en una
+# revision de diff binario. Ver playwright.capture.config.ts.
+/showroom-captures

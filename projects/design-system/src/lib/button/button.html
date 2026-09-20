@@ -1,0 +1,36 @@
+<button
+  type="button"
+  [class]="baseClasses + ' ' + heightClass() + ' ' + paddingClass() + ' ' + variantClasses()"
+  [style.fontSize]="fontSize()"
+  [style.fontWeight]="'var(--text-control-weight)'"
+  [disabled]="disabled()"
+  [attr.aria-disabled]="ariaDisabled()"
+  [attr.aria-busy]="loading() ? 'true' : null"
+  [attr.aria-labelledby]="contentId"
+  (click)="onButtonClick($event)"
+  (keydown)="onButtonKeydown($event)"
+>
+  <span
+    [id]="contentId"
+    class="inline-flex items-center justify-center gap-2"
+    [class.invisible]="loading()"
+  >
+    @if (hasLeftIcon()) {
+      <ewms-icon [name]="icon()!" [size]="iconSize()" aria-hidden="true" />
+    }
+    <ng-content />
+    @if (hasRightIcon()) {
+      <ewms-icon [name]="icon()!" [size]="iconSize()" aria-hidden="true" />
+    }
+  </span>
+
+  @if (loading()) {
+    <span
+      class="absolute inset-0 flex items-center justify-center pointer-events-none"
+      [style.color]="spinnerColor()"
+      aria-hidden="true"
+    >
+      <ewms-icon name="spinner" [size]="iconSize()" aria-hidden="true" />
+    </span>
+  }
+</button>

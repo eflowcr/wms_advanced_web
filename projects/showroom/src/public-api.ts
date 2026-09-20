@@ -8,3 +8,5 @@
  * route tree the shell mounts at /design-system. Component galleries land in DS-2.
  */
 export { showroomRoutes } from './lib/showroom.routes';
+
+export { provideShowroomDesignSystem } from './lib/showroom.providers';

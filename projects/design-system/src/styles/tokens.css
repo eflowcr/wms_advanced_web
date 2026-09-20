@@ -83,11 +83,26 @@
   --navy-97: #f6f7f8;
   --navy-100: #ffffff;
 
+  /* Translucidos: <matiz>-a<alfa>.
+   *
+   * UN ALFA DE UN PRIMITIVO QUE YA EXISTE SE AGREGA LIBREMENTE; UN MATIZ NUEVO
+   * NO. Decision del usuario (2026-09-19). El precedente son los cuatro navy de
+   * abajo, que estan desde DS-1: un alfa no inventa un color, lo deja ver lo
+   * que tiene detras. Un matiz nuevo si es una decision de marca, y se reporta.
+   * La regla esta escrita en Fundamentos de Marca. */
+
   /* navy translucido — sombras y overlay. Navy, no negro: tine con la marca */
   --navy-7-a06: rgb(1 15 66 / 0.06);
   --navy-7-a08: rgb(1 15 66 / 0.08);
   --navy-7-a10: rgb(1 15 66 / 0.1);
   --navy-7-a50: rgb(1 15 66 / 0.5);
+
+  /* El halo del Dialog, al 35 % del `-solid` de cada familia, que es lo que
+   * pide la ficha del Modal (v1.1, 27/08). No hay `info`: lo informativo es
+   * neutral, asi que el halo informativo es el del navy. */
+  --red-48-a35: rgb(217 45 32 / 0.35);
+  --orange-49-a35: rgb(189 89 3 / 0.35);
+  --navy-52-a35: rgb(115 123 151 / 0.35);
 
   /* blue — el azul de marca y sus derivados */
   --blue-35: #3149aa;
@@ -119,17 +134,27 @@
   --green-96: #ebf5f1;
 
   /* Longitudes: size-<px> */
+  --size-1-5: 1.5px;
   --size-4: 4px;
   --size-6: 6px;
   --size-8: 8px;
   --size-12: 12px;
   --size-13: 13px;
   --size-14: 14px;
+  --size-15: 15px;
   --size-16: 16px;
   --size-18: 18px;
   --size-20: 20px;
   --size-24: 24px;
   --size-32: 32px;
+  --size-40: 40px;
+  --size-48: 48px;
+  --size-56: 56px;
+  /* Anchos de columna de la Tabla. Mas grandes que el resto de la escala
+   * porque miden una columna, no un control (DS-3, lote C). */
+  --size-96: 96px;
+  --size-160: 160px;
+  --size-240: 240px;
   --size-pill: 9999px;
 
   /* Pesos. Montserrat es variable 100–900: el @font-face declara el rango */
@@ -148,6 +173,17 @@
   --stroke-1-75: 1.75;
   --stroke-2: 2;
   --stroke-2-25: 2.25;
+
+  /* Desenfoque. Un solo valor, el del backdrop del Dialog (DS-3, lote B). */
+  --blur-8: 8px;
+
+  /* Duraciones: ms-<milisegundos>. Primera capa de tiempo del sistema,
+   * agregada en DS-3 (Toast). Un tiempo es un valor de diseno como un color:
+   * cuanto dura un mensaje en pantalla se decide una vez y en un solo lugar. */
+  --ms-50: 50ms;
+  --ms-300: 300ms;
+  --ms-3000: 3000ms;
+  --ms-5000: 5000ms;
 
   /* Familias tipograficas. 'Montserrat' es la cara auto-hospedada en
    * projects/shell/public/fonts (ver @font-face en styles.css). */
@@ -257,8 +293,30 @@
   --color-focus-ring: var(--blue-48);
   /* Sobre el rail navy: el azul de marca queda en 3.76:1, este en 6.37:1. */
   --color-focus-ring-on-dark: var(--blue-63);
-  /* Siempre acompanado de una barra de acento: el tinte solo es fragil. */
-  --color-row-selected: var(--blue-93);
+  /* Anillo de foco de 3px con separacion de 2px respecto del control */
+  --focus-ring-shadow: 0 0 0 2px var(--color-surface), 0 0 0 5px var(--color-focus-ring);
+  /* Siempre acompanado de una barra de acento: el tinte solo es fragil.
+   *
+   * blue-96 desde DS-4, medido en navegador (decision del equipo, 19/09; ver
+   * Fundamentos de Marca). Era blue-93, donde text-secondary quedaba en
+   * 4.35:1 y no llegaba al 4.5:1 de WCAG 1.4.3 -- un hallazgo que axe encontro
+   * sobre la ficha de la Card en DS-3. Sobre blue-96: text-primary 16.50:1,
+   * text-secondary 4.74:1.
+   *
+   * LO QUE ESTE CAMBIO NO ARREGLA, Y NINGUN PELDANO PUEDE: texto en
+   * --color-bg-primary sobre la fila queda en 4.39:1 (era 4.03:1). blue-48
+   * sobre blanco PURO mide 4.86:1, asi que para llevarlo a 4.5:1 hace falta un
+   * fondo de luminancia >= 0.9217, y ahi la fila contrasta 1.08:1 contra la
+   * superficie: invisible. El azul es un color de relleno, no de texto. Dentro
+   * de una fila van ewms-icon-button (3:1 por WCAG 1.4.11), no botones ghost
+   * con texto. Registrado en la ficha del Selector con busqueda.
+   *
+   * Coincide con --color-ghost-hover, a proposito y con el costo anotado: la
+   * separacion contra --color-surface baja de 1.21:1 a 1.11:1. La seleccion
+   * nunca fue solo color -- lleva checkbox marcado, aria-selected y barra de
+   * acento -- pero un matiz nuevo en la rampa habria sido peor y no habria
+   * arreglado el azul. */
+  --color-row-selected: var(--blue-96);
   --color-overlay: var(--navy-7-a50);
 
   /* ------------------------------------------------------------- elevacion
@@ -267,6 +325,103 @@
   --shadow-sm: 0 1px 2px var(--navy-7-a06);
   --shadow-md: 0 4px 8px var(--navy-7-a08), 0 1px 2px var(--navy-7-a06);
   --shadow-lg: 0 12px 24px var(--navy-7-a10), 0 2px 4px var(--navy-7-a06);
+
+  /* --------------------------------------------------------------- dialogo
+   * El Modal es el unico componente con una geometria y una elevacion
+   * propias, y la ficha las fija: radio de 20 px, sombra difusa en varias
+   * capas, backdrop con desenfoque. Los tres son ALIAS de cosas que ya
+   * existen -- no hay un color ni una longitud nueva acá.
+   *
+   * `--shadow-dialog` no es `--shadow-lg` con otro nombre: la escala de
+   * elevacion llega hasta el modal y ahi se detiene, y este es el unico nivel
+   * que pide una tercera capa y un radio de difusion mayor. Sale de los mismos
+   * `navy-7-a*`, asi que sigue tenida con la marca. */
+  --radius-dialog: var(--size-20);
+  --shadow-dialog:
+    0 24px 48px var(--navy-7-a10), 0 8px 16px var(--navy-7-a08),
+    0 2px 4px var(--navy-7-a06);
+  --backdrop-blur: var(--blur-8);
+
+  /* El halo de la zona de icono del Dialog, por tono.
+   *
+   * 0 0 48 6 al 35 % del `-solid` de la familia: la geometria y la opacidad que
+   * la ficha del Modal fija desde su v1.1. DS-3 lote B lo habia aproximado con
+   * el `-border` porque un color con alfa parecia un primitivo nuevo; la
+   * decision del usuario (2026-09-19) es que no lo es, y el halo pasa a ser
+   * exactamente lo que la ficha pide.
+   *
+   * No hay halo `info` porque no hay familia info: lo informativo es neutral. */
+  --shadow-halo-danger: 0 0 var(--size-48) var(--size-6) var(--red-48-a35);
+  --shadow-halo-warning: 0 0 var(--size-48) var(--size-6) var(--orange-49-a35);
+  --shadow-halo-neutral: 0 0 var(--size-48) var(--size-6) var(--navy-52-a35);
+
+  /* El circulo de la zona de icono. 56x56, de la ficha (v1.1, 27/08). */
+  --size-dialog-icon: var(--size-56);
+
+  /* ----------------------------------------------------------------- tabla
+   * Alto de fila por densidad.
+   *
+   * `--row-height-md` ES EXACTAMENTE LA ALTURA DEL CONTROL `md`, y no por
+   * casualidad: una celda tiene que poder contener un `ewms-input` sin que la
+   * fila crezca. El E2E lo afirma midiendo los dos.
+   *
+   * `sm` es la altura del control `sm`, por la misma razon. */
+  --row-height-md: var(--size-40);
+  --row-height-sm: var(--size-32);
+
+  /* Anchos de columna. El consumidor elige un nombre, no escribe CSS: una
+   * cadena de ancho en la plantilla es un valor crudo y la compuerta 10 la
+   * rechaza. `fill` no es un token: es `flex: 1`. */
+  --col-width-sm: var(--size-96);
+  --col-width-md: var(--size-160);
+  --col-width-lg: var(--size-240);
+
+  /* Sangria de un nivel del arbol. Un token propio y no el `--spacing` de
+   * Tailwind: ese genera las utilidades de espaciado y no llega al documento
+   * como propiedad personalizada, asi que `calc(1 * var(--spacing) * 5)`
+   * dentro de un `style` resolvia a 0 y el arbol se dibujaba sin sangrar
+   * ningun nivel. Lo encontro la captura de los hijos perezosos, donde una
+   * linea y su cabecera empezaban en la misma x. */
+  --tree-indent: var(--size-20);
+
+  /* Ancho minimo de cada caja de un filtro de rango. Una columna `sm` mide 96
+   * px, y dos cajas dentro de ella se quedan en unos 34: en la primera captura
+   * de la tabla grande los marcadores «Desde» y «Hasta» se leian «D» y «H». Con
+   * un minimo las dos cajas se apilan en una columna estrecha en vez de
+   * encogerse: el ancho de columna es una preferencia, la legibilidad no. */
+  --col-filter-min-width: var(--size-56);
+
+  /* ---------------------------------------------------------------- tiempos
+   * Cuanto vive un toast en pantalla antes de irse solo. La ficha de
+   * Notificaciones fija 3000 ms; el consumidor puede pasar otro numero por
+   * llamada, pero el valor por defecto es de diseno y vive aca.
+   *
+   * ES EL PRIMER TOKEN QUE UN COMPONENTE LEE DESDE TYPESCRIPT, y eso tiene
+   * una consecuencia: `ToastService` lo lee del documento con
+   * getComputedStyle, no lo copia. Si esta hoja no esta cargada, el servicio
+   * no inventa un numero -- deja el toast fijo hasta que alguien lo cierre.
+   * Ver lib/tokens/read-token.ts. */
+  --duration-toast: var(--ms-3000);
+
+  /* Lo que el selector con busqueda espera entre la ultima tecla y la
+   * consulta (REQ-FE-DS3-001, RFE-01), y cuanto tolera que tarde la fuente
+   * antes de tratarla como error de servicio (RFE-02). */
+  --delay-search-input: var(--ms-300);
+  --timeout-search: var(--ms-5000);
+
+  /* EL UMBRAL DE RAFAGA DE ESCANER, Y SU NOMBRE NO ES CASUAL.
+   *
+   * Lo declara REQ-FE-DS4-001 RFE-06, que es el documento DUENO del umbral:
+   * `--threshold-scan-keystroke`, 50 ms por tecla como valor inicial
+   * propuesto -- un humano rapidisimo sostiene unos 120 ms entre teclas y un
+   * lector industrial ronda los 5-20; el margen correcto lo dice el hardware,
+   * y calibrarlo es un pendiente de ese requerimiento.
+   *
+   * La comanda de DS-3 pedia llamarlo `--scanner-burst-ms` "para que DS-4 lo
+   * consuma y no lo redefina". El objetivo es ese; el nombre que lo cumple es
+   * este, porque es el que DS-4 ya tiene escrito. Reportado como discrepancia
+   * entre los dos documentos. */
+  --threshold-scan-keystroke: var(--ms-50);
 
   /* ------------------------------------------------------------- espaciado
    * Base 4px. Tailwind deriva la escala entera de este unico multiplicador. */
@@ -279,6 +434,15 @@
   --radius-md: var(--size-8);
   --radius-lg: var(--size-12);
   --radius-full: var(--size-pill);
+
+  /* ------------------------------------------------------- grosor de borde
+   * El borde de Checkbox y Radio es 1.5px y no 1px: a 18x18 un borde de 1px
+   * se pierde, y a 2px la caja se ve pesada al lado del Input. Es el unico
+   * grosor de borde del sistema que no sale de la escala entera de Tailwind,
+   * asi que necesita token propio -- sin el, el componente escribiria
+   * `border-[1.5px]`, que es un valor crudo y lo rechaza la compuerta 10.
+   * Agregado en DS-2 (Checkbox/Radio). */
+  --border-width-selection: var(--size-1-5);
 
   /* ------------------------------------------------------------ tipografia */
   --font-family-sans: var(--typeface-montserrat);
@@ -317,6 +481,24 @@
   /* Text/Mono — codigos, SKUs, lotes, IDs.
    * Peso e interlineado (pendiente): no definidos. */
   --text-mono-size: var(--size-13);
+
+  /* Tipografia de controles (Boton, Input, Select).
+   * Los tres tamanos salen de la ficha del Boton (Small 13px / Medium 14px /
+   * Large 15px). */
+  --text-control-sm-size: var(--size-13);
+  --text-control-md-size: var(--size-14);
+  --text-control-lg-size: var(--size-15);
+  /* SIN CONFIRMAR: la ficha del Boton no fija peso tipografico. El 500 lo
+   * eligio quien implemento el componente, no sale de ninguna especificacion.
+   * Queda anotado hasta que diseno lo confirme o lo cambie; no se toca por
+   * cuenta propia porque cambiarlo mueve los cuatro controles a la vez. */
+  --text-control-weight: var(--weight-medium);
+  /* Peso de la opcion elegida dentro del panel del Select. La ficha pide
+   * "negrita" y el tema de Tailwind no tiene utilidades de peso (--*: initial
+   * las borra), asi que el componente lo lee como var(). Semantico y no
+   * --weight-semibold directo: un primitivo fuera de tokens.css lo rechaza la
+   * compuerta 10. Agregado en DS-2 (Select). */
+  --text-control-selected-weight: var(--weight-semibold);
 
   /* ------------------------------------------------------------- iconos
    * Set: Tabler outline, grid 24x24, trazo 2 (ADR 0011).

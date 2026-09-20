@@ -1,0 +1,98 @@
+<!-- The showroom is Spanish only, exempt from i18n (gate 12): declared so a screen reader never reads it as English. -->
+<div class="grid grid-cols-[17rem_minmax(0,1fr)] items-start bg-canvas" lang="es">
+  <!--
+    A <div>, not an <aside>, and the content region is a <div> and not a
+    <main>: the shell already renders a <main> around this whole tree, and a
+    second one inside it is a duplicate landmark. The one landmark the
+    showroom does own is the <nav> below, which is what the sidebar actually
+    is. Everything else here is layout.
+  -->
+  <div
+    class="sticky top-0 flex h-screen flex-col gap-4 overflow-y-auto border-r border-default bg-surface p-4"
+    data-sidebar
+  >
+    <div class="flex flex-col gap-1">
+      <a
+        class="text-h3 text-primary rounded-sm outline-none focus-visible:shadow-(--focus-ring-shadow)"
+        routerLink="/design-system"
+      >
+        Sistema de diseño
+      </a>
+      <p class="text-caption text-secondary">
+        <span class="font-mono">&#64;ewms/design-system</span> v{{ version }}
+      </p>
+    </div>
+
+    <div class="flex flex-col gap-2">
+      <label class="text-caption text-secondary" for="showroom-search">
+        Buscar por nombre o selector
+      </label>
+      <input
+        id="showroom-search"
+        type="search"
+        class="h-10 rounded-control border border-strong bg-surface px-3 text-p text-primary outline-none focus-visible:shadow-(--focus-ring-shadow)"
+        placeholder="boton, ewms-input..."
+        [value]="query()"
+        (input)="onSearch($event)"
+      />
+      @if (filtering()) {
+        <p class="text-caption text-secondary" role="status">
+          {{ matches() }} resultado(s)
+        </p>
+      }
+    </div>
+
+    <nav class="flex flex-col gap-5" aria-label="Páginas del catálogo">
+      @for (section of sections(); track section.id) {
+        <div class="flex flex-col gap-1">
+          <h2 class="text-h4 text-secondary uppercase">{{ section.title }}</h2>
+          <ul class="flex flex-col">
+            @for (entry of section.entries; track entry.id) {
+              <li>
+                @if (entry.route) {
+                  <a
+                    class="block rounded-sm px-2 py-1 text-p text-primary outline-none hover:bg-ghost-hover focus-visible:shadow-(--focus-ring-shadow) aria-[current=page]:bg-row-selected"
+                    [routerLink]="entry.route"
+                    routerLinkActive
+                    ariaCurrentWhenActive="page"
+                    [routerLinkActiveOptions]="{ exact: true }"
+                  >
+                    {{ entry.name }}
+                  </a>
+                } @else {
+                  <span
+                    class="block px-2 py-1 text-p text-secondary"
+                    [attr.title]="entry.note"
+                  >
+                    {{ entry.name }} {{ statusLabels[entry.status] }}
+                  </span>
+                }
+              </li>
+            }
+          </ul>
+        </div>
+      }
+      @if (matches() === 0) {
+        <p class="text-p text-secondary">Nada coincide con la búsqueda.</p>
+      }
+    </nav>
+  </div>
+
+  <!--
+    NO `<ewms-toast-outlet>` HERE, AND THAT IS THE POINT.
+
+    The showroom is mounted inside the shell's MainLayout (app.routes.ts), and
+    MainLayout already carries the application's one outlet. A second one on
+    this page would put two aria-live regions in the same document and have a
+    screen reader announce every message twice -- exactly the failure the
+    single-region rule exists to prevent.
+
+    The toast demo on /components/toast therefore raises its messages into the
+    SHELL's outlet, with the shell's translated severity words. That is real
+    dogfooding rather than a rig: what the demo exercises is the path a product
+    screen will use.
+  -->
+  <div class="min-w-0 p-8">
+    <router-outlet />
+  </div>
+</div>

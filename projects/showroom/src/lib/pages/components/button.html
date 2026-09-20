@@ -1,0 +1,331 @@
+<!-- The showroom is Spanish only, exempt from i18n (gate 12): declared so a screen reader never reads it as English. -->
+<article class="flex flex-col gap-10" lang="es">
+  <!-- ============================================================ 1. Encabezado -->
+  <header class="flex flex-col gap-2" data-block="1-encabezado">
+    <div class="flex flex-wrap items-baseline gap-3">
+      <h1 class="text-h1">Botón</h1>
+      <code class="font-mono text-primary">&lt;ewms-button&gt;</code>
+    </div>
+    <ul class="flex flex-wrap gap-2 text-caption">
+      <li class="rounded-sm bg-secondary px-2 py-1 text-secondary">
+        Versión <span class="font-mono">{{ version }}</span>
+      </li>
+      <li class="rounded-sm bg-success-surface px-2 py-1 text-success">Construido y en verde</li>
+      <li class="rounded-sm bg-secondary px-2 py-1 text-secondary">
+        Ficha: <span class="font-mono">08-Sistema-de-Diseno/Componentes/Boton.md</span>
+      </li>
+    </ul>
+  </header>
+
+  <!-- ================================================ 2. Qué resuelve / cuándo no -->
+  <section class="flex flex-col gap-4" aria-labelledby="btn-purpose" data-block="2-proposito">
+    <h2 id="btn-purpose" class="text-h2">Qué resuelve, y cuándo NO usarlo</h2>
+    <div class="grid grid-cols-[repeat(auto-fit,minmax(20rem,1fr))] gap-4">
+      <div class="flex flex-col gap-2 rounded-md border border-default bg-surface p-4">
+        <h3 class="text-h3">Qué resuelve</h3>
+        <p>
+          Dispara una <strong>acción</strong> en la pantalla actual: guardar, confirmar, filtrar,
+          eliminar. El énfasis lo da la variante, no el tamaño ni el color elegido a mano.
+        </p>
+        <p class="text-caption text-secondary">
+          Trae además el patrón anti-doble-envío, que es la razón por la que un operario no crea dos
+          recepciones por hacer doble clic.
+        </p>
+      </div>
+      <div class="flex flex-col gap-2 rounded-md border border-danger bg-danger-surface p-4">
+        <h3 class="text-h3">Cuándo NO usarlo</h3>
+        <ul class="flex flex-col gap-2">
+          <li>
+            <strong>Si navega, es un link.</strong> Un botón que lleva a otra URL rompe abrir en
+            pestaña nueva, copiar el enlace y el botón «atrás». Si el resultado es una dirección,
+            va un <code class="font-mono">&lt;a&gt;</code>.
+          </li>
+          <li>
+            <strong>Si no lleva texto, no es este componente</strong>: es
+            <code class="font-mono">&lt;ewms-icon-button&gt;</code>, que exige
+            <code class="font-mono">label</code> y <code class="font-mono">tooltip</code> en el
+            tipo — un botón sin nombre accesible no compila.
+          </li>
+          <li>
+            <strong>Si hay más de una Primary en la vista</strong>, ninguna es la principal. Las
+            demás son Secondary.
+          </li>
+        </ul>
+      </div>
+    </div>
+    <ewms-demo-frame ground="canvas" label="La alternativa, al lado: sin texto va Icon Button">
+      <!--
+        `shrink-0` on the controls and `flex-1` on the prose: without it the
+        flex row squeezed the button until its label wrapped onto two lines,
+        which is the one thing a size demo must never do.
+      -->
+      <div class="flex flex-wrap items-center gap-4">
+        <span class="shrink-0">
+          <ewms-button variant="secondary">Con texto</ewms-button>
+        </span>
+        <span data-demo-tooltip class="shrink-0">
+          <ewms-icon-button icon="trash" label="Eliminar" tooltip="Eliminar" variant="ghost" />
+        </span>
+        <span data-demo-iconbutton-loading class="shrink-0">
+          <ewms-icon-button
+            icon="trash"
+            label="Eliminando"
+            tooltip="Eliminando"
+            variant="ghost"
+            [loading]="true"
+          />
+        </span>
+        <span class="min-w-64 flex-1 text-caption text-secondary">
+          El Icon Button lleva tooltip obligatorio: pasale el foco con Tab y aparece. El segundo está
+          en Loading, y mide exactamente lo mismo que el primero — el mismo patrón que el Botón, en
+          un control que además es cuadrado.
+        </span>
+      </div>
+    </ewms-demo-frame>
+  </section>
+
+  <!-- ========================================================= 3. Demo principal -->
+  <section class="flex flex-col gap-4" aria-labelledby="btn-demo" data-block="3-demo">
+    <h2 id="btn-demo" class="text-h2">Demo principal</h2>
+    <div class="grid grid-cols-[repeat(auto-fit,minmax(24rem,1fr))] gap-6">
+      <ewms-demo-frame ground="canvas" label="Sobre fondo de aplicación, a tamaño real">
+        <div class="flex flex-col items-start gap-4">
+          <ewms-button variant="primary" size="md" icon="check">Guardar cambios</ewms-button>
+          <span data-focus-canvas>
+            <ewms-button variant="secondary" size="md">Enfocame con Tab</ewms-button>
+          </span>
+        </div>
+      </ewms-demo-frame>
+      <ewms-prop-table [rows]="props" caption="Propiedades de <ewms-button>" />
+    </div>
+
+    <ewms-demo-frame ground="surface" label="El mismo control sobre superficie blanca">
+      <span data-focus-surface>
+        <ewms-button variant="secondary" size="md">Enfocame con Tab</ewms-button>
+      </span>
+    </ewms-demo-frame>
+    <p class="text-caption text-secondary">
+      Los dos de arriba están para mirar el anillo de foco sobre los dos fondos: el anillo lleva una
+      separación de 2 px pintada con <code class="font-mono">--color-surface</code>, que sobre una
+      tarjeta blanca es invisible y sobre el canvas gris no tiene por qué serlo.
+    </p>
+  </section>
+
+  <!-- =============================================================== 4. Variantes -->
+  <section class="flex flex-col gap-4" aria-labelledby="btn-variants" data-block="4-variantes">
+    <h2 id="btn-variants" class="text-h2">Variantes</h2>
+    <ewms-demo-frame ground="canvas">
+      <ul class="flex flex-col gap-4">
+        @for (variant of variants; track variant.id) {
+          <li class="flex flex-wrap items-center gap-4" [attr.data-variant]="variant.id">
+            <span class="w-28 shrink-0 text-caption text-secondary">{{ variant.label }}</span>
+            <ewms-button [variant]="variantFor(variant.id)" size="md">Guardar</ewms-button>
+            <ewms-button [variant]="variantFor(variant.id)" size="md" icon="download">
+              Con icono
+            </ewms-button>
+          </li>
+        }
+      </ul>
+    </ewms-demo-frame>
+    <p class="text-caption text-secondary">
+      Los nombres son canónicos: <strong>Danger</strong>, nunca «Destructive» ni «Delete». Y no
+      existe la variante «custom» — un componente con ese nombre termina siendo el basurero de todo
+      lo que no encajó en otro lado.
+    </p>
+    <p class="text-caption text-secondary">
+      El <strong>Ghost oscurece su texto en hover</strong>: pasa de
+      <code class="font-mono">--color-bg-primary</code> a
+      <code class="font-mono">--color-bg-primary-hover</code>, el mismo gesto con el que el Primary
+      oscurece su fondo. No es una excepción: el azul de marca sobre
+      <code class="font-mono">--color-ghost-hover</code> mide 4.38:1 y la 1.4.3 pide 4.5:1; el tono
+      de hover mide 5.65:1.
+    </p>
+  </section>
+
+  <!-- ========================================================= 5. Matriz de estados -->
+  <section class="flex flex-col gap-4" aria-labelledby="btn-matrix" data-block="5-matriz">
+    <h2 id="btn-matrix" class="text-h2">Matriz de estados</h2>
+    <p class="text-secondary">
+      Renderizada de verdad, no capturas. <strong>Disabled</strong> y <strong>Loading</strong> son
+      entradas reales del componente. <strong>Hover</strong> y <strong>Focus</strong> no se pueden
+      dejar quietos, así que cada celda recibe el mismo token que aplicaría su propia regla.
+    </p>
+    <ewms-demo-frame ground="canvas">
+      <ewms-state-matrix
+        [variants]="variants"
+        [states]="states"
+        caption="Cuatro variantes por cinco estados"
+      >
+        <ng-template let-variant="variant" let-state="state">
+          <span [class]="forced(variant.id, state.id)">
+            <ewms-button
+              [variant]="variantFor(variant.id)"
+              size="md"
+              [disabled]="state.id === 'disabled'"
+              [loading]="state.id === 'loading'"
+            >
+              Guardar
+            </ewms-button>
+          </span>
+        </ng-template>
+      </ewms-state-matrix>
+    </ewms-demo-frame>
+
+    <h3 class="text-h3">El patrón anti-doble-envío</h3>
+    <p class="text-secondary">
+      Un click entra en Loading y vuelve solo. Mientras carga, el contenido se oculta con
+      <code class="font-mono">visibility</code> y no con <code class="font-mono">display</code>, así
+      que <strong>la caja no cambia de tamaño</strong> y nada de al lado se mueve. El contador es la
+      prueba: por más veces que lo pulses mientras gira, sube una sola vez.
+    </p>
+    <ewms-demo-frame ground="canvas">
+      <div class="flex flex-wrap items-center gap-4">
+        <!--
+          (click) on the component element, because <ewms-button> declares no
+          output of its own: the native click bubbles out of the inner
+          <button>, and the component stops it before it gets here whenever it
+          is disabled or loading. That is the contract block 8 describes, and
+          this demo is the thing that proves it.
+        -->
+        <span data-demo-submit>
+          <ewms-button
+            variant="primary"
+            size="md"
+            icon="check"
+            [loading]="submitting()"
+            (click)="submit()"
+            >Confirmar recepción</ewms-button
+          >
+        </span>
+        <span class="text-caption text-secondary" role="status" aria-live="polite">
+          Envíos registrados: {{ submitCount() }}
+        </span>
+      </div>
+    </ewms-demo-frame>
+    <p class="text-caption text-secondary">
+      Mientras carga el botón conserva el foco: se deshabilita con
+      <code class="font-mono">aria-disabled</code> y no con el atributo nativo, porque el nativo lo
+      saca del orden de tabulación justo cuando acaba de recibir Enter y el foco caería al
+      <code class="font-mono">&lt;body&gt;</code>.
+    </p>
+  </section>
+
+  <!-- ================================================================ 6. Tamaños -->
+  <section class="flex flex-col gap-4" aria-labelledby="btn-sizes" data-block="6-tamanos">
+    <h2 id="btn-sizes" class="text-h2">Tamaños</h2>
+    <ewms-demo-frame ground="canvas">
+      <ul class="flex flex-wrap items-end gap-8">
+        @for (sample of sizes(); track sample.size) {
+          <li class="flex flex-col items-start gap-2" [attr.data-size-sample]="sample.size">
+            <ewms-button variant="primary" [size]="sample.size" icon="check">Guardar</ewms-button>
+            <span class="text-caption text-secondary">
+              {{ sample.label }} · <span class="font-mono">{{ sample.height }}</span>
+            </span>
+          </li>
+        }
+      </ul>
+    </ewms-demo-frame>
+    <p class="text-caption text-secondary">
+      Las alturas de arriba están <strong>medidas sobre el botón renderizado</strong>, no escritas
+      en la página: el bloque existe para demostrar 32/40/48, y un número transcrito no demuestra
+      nada. El icono baja a <code class="font-mono">sm</code> en Small y se queda en
+      <code class="font-mono">md</code> en Medium y Large, para que no desequilibre una barra de
+      herramientas.
+    </p>
+  </section>
+
+  <!-- ==================================================== 7. Anatomía y tokens -->
+  <section class="flex flex-col gap-4" aria-labelledby="btn-anatomy" data-block="7-anatomia">
+    <h2 id="btn-anatomy" class="text-h2">Anatomía y tokens</h2>
+    <p class="text-secondary">
+      Qué token controla cada parte, leído en vivo. Es el bloque que conecta el componente con
+      <code class="font-mono">tokens.css</code>: si un valor de acá no coincide con lo que se ve
+      arriba, uno de los dos está mal.
+    </p>
+    <div class="overflow-x-auto">
+      <table class="w-full border-collapse text-caption">
+        <caption class="mb-2 text-left text-secondary">
+          Tokens que consume &lt;ewms-button&gt;
+        </caption>
+        <thead>
+          <tr>
+            <th scope="col" class="border-b border-default p-2 text-left text-secondary">Parte</th>
+            <th scope="col" class="border-b border-default p-2 text-left text-secondary">Token, cadena y valor</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of anatomy; track row.token) {
+            <tr>
+              <th scope="row" class="border-b border-default p-2 text-left text-primary">
+                {{ row.part }}
+              </th>
+              <td class="border-b border-default p-2">
+                <ewms-token-value [token]="row.token" [swatch]="true" />
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ============================================== 8. Contrato para Angular -->
+  <section class="flex flex-col gap-4" aria-labelledby="btn-contract" data-block="8-contrato">
+    <h2 id="btn-contract" class="text-h2">Contrato para Angular</h2>
+
+    <h3 class="text-h3">Entradas</h3>
+    <p class="text-secondary">
+      Las siete de la tabla del bloque 3, todas <code class="font-mono">input()</code> de señales.
+    </p>
+
+    <h3 class="text-h3">Salidas</h3>
+    <div class="flex flex-col gap-2 rounded-md border border-warning bg-warning-surface p-4">
+      <p>
+        <strong>Ninguna.</strong>&ngsp;<code class="font-mono">&lt;ewms-button&gt;</code> no declara
+        ningún <code class="font-mono">output()</code>. Se escucha el
+        <code class="font-mono">(click)</code> nativo, que burbujea desde el
+        <code class="font-mono">&lt;button&gt;</code> interno; cuando el control está
+        <code class="font-mono">disabled</code> o <code class="font-mono">loading</code>, el
+        componente detiene el evento antes de que salga.
+      </p>
+      <p class="text-caption">
+        La ficha del vault todavía declara
+        <code class="font-mono">(click): EventEmitter&lt;MouseEvent&gt;</code>. <strong>Gana el
+        código</strong> y la ficha es lo que hay que corregir: un
+        <code class="font-mono">output</code> llamado <code class="font-mono">click</code> se
+        superpone al evento nativo del mismo nombre y deja dos caminos para una sola cosa.
+      </p>
+    </div>
+
+    <h3 class="text-h3">Uso típico</h3>
+    <pre
+      class="overflow-x-auto rounded-md border border-default bg-secondary p-4 font-mono text-mono text-primary"
+    ><code>{{ snippet }}</code></pre>
+    <p class="text-caption text-secondary">
+      El texto llega traducido desde el consumidor: el sistema de diseño no habla ningún idioma. El
+      icono se pasa por nombre del catálogo cerrado, no como <code class="font-mono">string</code>.
+    </p>
+
+    <h3 class="text-h3">Accesibilidad</h3>
+    <ul class="flex flex-col gap-2">
+      <li>
+        Anillo de foco visible en las cuatro variantes, con
+        <code class="font-mono">:focus-visible</code>: aparece con el teclado y no con el ratón.
+        Nunca <code class="font-mono">outline: none</code> sin reemplazo.
+      </li>
+      <li>
+        En Loading: <code class="font-mono">aria-busy="true"</code>,
+        <code class="font-mono">aria-disabled="true"</code>, y el nombre accesible se mantiene por
+        <code class="font-mono">aria-labelledby</code> aunque el contenido esté oculto — el cálculo
+        del nombre sigue la referencia aunque el nodo no se vea.
+      </li>
+      <li>El icono de un botón con texto es decorativo y no entra en el nombre.</li>
+    </ul>
+
+    <h3 class="text-h3">Bloques que no aplican</h3>
+    <p class="text-secondary">
+      Ninguno: los ocho aplican a este componente. La sección se deja escrita igual, porque en otras
+      fichas sí va a haber huecos y el hueco visible es información.
+    </p>
+  </section>
+</article>

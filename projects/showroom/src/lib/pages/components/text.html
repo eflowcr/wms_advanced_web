@@ -1,0 +1,366 @@
+<!-- The showroom is Spanish only, exempt from i18n (gate 12): declared so a screen reader never reads it as English. -->
+<article class="flex flex-col gap-10" lang="es">
+  <!-- ============================================================ 1. Encabezado -->
+  <header class="flex flex-col gap-2" data-block="1-encabezado">
+    <div class="flex flex-wrap items-baseline gap-3">
+      <h1 class="text-h1">Texto</h1>
+      <code class="font-mono text-primary">&lt;ewms-text&gt;</code>
+    </div>
+    <ul class="flex flex-wrap gap-2 text-caption">
+      <li class="rounded-sm bg-secondary px-2 py-1 text-secondary">
+        Versión <span class="font-mono">{{ version }}</span>
+      </li>
+      <li class="rounded-sm bg-success-surface px-2 py-1 text-success">Construido y en verde</li>
+      <li class="rounded-sm bg-secondary px-2 py-1 text-secondary">
+        Ficha: <span class="font-mono">08-Sistema-de-Diseno/Componentes/Tipografia.md</span>
+      </li>
+    </ul>
+  </header>
+
+  <!-- ================================================ 2. Qué resuelve / cuándo no -->
+  <section class="flex flex-col gap-4" aria-labelledby="text-purpose" data-block="2-proposito">
+    <h2 id="text-purpose" class="text-h2">Qué resuelve, y cuándo NO usarlo</h2>
+    <div class="grid grid-cols-[repeat(auto-fit,minmax(20rem,1fr))] gap-4">
+      <div class="flex flex-col gap-2 rounded-md border border-default bg-surface p-4">
+        <h3 class="text-h3">Qué resuelve</h3>
+        <p>
+          Es el <strong>único camino legítimo</strong> para poner texto con estilo del sistema. Una
+          variante fija <strong>las tres cosas a la vez</strong> —tamaño, peso e interlineado— y
+          además decide qué elemento se renderiza.
+        </p>
+        <p>
+          Existe para que la <strong>jerarquía visual y la estructura del documento no se puedan
+          separar</strong>: <code class="font-mono">variant="h2"</code> se ve como un H2
+          <em>y es</em> un <code class="font-mono">&lt;h2&gt;</code>. Siempre. Una pantalla que
+          escribe <code class="font-mono">&lt;h2 class="…"&gt;</code> a mano se saltó el sistema, y
+          nada la obliga a que el nivel coincida con lo que se ve.
+        </p>
+        <p class="text-caption text-secondary">
+          El corolario incómodo es la funcionalidad: quien navega con lector de pantalla salta de
+          encabezado en encabezado. Un esquema mentido es una pantalla que no se puede recorrer.
+        </p>
+      </div>
+      <div class="flex flex-col gap-2 rounded-md border border-danger bg-danger-surface p-4">
+        <h3 class="text-h3">Cuándo NO usarlo</h3>
+        <ul class="flex flex-col gap-2">
+          <li>
+            <strong>No existe <code class="font-mono">as</code>.</strong> No hay forma de verse como
+            un nivel y ser otro. Se evaluó y se descartó: un escape que se usa siempre deja de ser
+            un escape, y termina rompiendo el esquema con una prop que aparenta que se pensó.
+          </li>
+          <li>
+            <strong>Si el nivel que corresponde no se ve como querés, casi seguro no era un
+            encabezado.</strong> El caso que motivó el <code class="font-mono">as</code> —el título
+            de una card de KPI, «RECEPCIONES PENDIENTES» sobre un número grande— es una
+            <em>etiqueta</em>, y le toca <code class="font-mono">caption</code>.
+          </li>
+          <li>
+            <strong>Para ver la escala, esta no es la página.</strong> Los tamaños al natural están
+            en Fundamentos / Tipografía. Acá se documenta el componente.
+          </li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================= 3. Demo principal -->
+  <section class="flex flex-col gap-4" aria-labelledby="text-demo" data-block="3-demo">
+    <h2 id="text-demo" class="text-h2">Demo principal</h2>
+    <div class="grid grid-cols-[repeat(auto-fit,minmax(24rem,1fr))] gap-6">
+      <ewms-demo-frame ground="canvas" label="Un bloque real, con su jerarquía completa">
+        <div class="flex flex-col gap-3" data-demo-text>
+          <ewms-text variant="h2">Recepción REC-2026-0481</ewms-text>
+          <ewms-text variant="caption">Actualizado hace 3 minutos</ewms-text>
+          <ewms-text variant="p">
+            El operario confirma la cantidad recibida antes de cerrar la recepción. Hasta entonces
+            la orden sigue abierta y admite correcciones.
+          </ewms-text>
+          <ewms-text variant="h3">Bultos</ewms-text>
+          <ewms-text variant="p">
+            Tres bultos declarados, dos verificados. El tercero quedó en cuarentena.
+          </ewms-text>
+          <ewms-text variant="h4">Ubicación</ewms-text>
+          <ewms-text variant="mono">A-04-17-B</ewms-text>
+        </div>
+      </ewms-demo-frame>
+      <ewms-prop-table [rows]="props" caption="Propiedades de <ewms-text>" />
+    </div>
+    <p class="text-caption text-secondary">
+      Ese bloque es exactamente lo que ve un lector de pantalla al listar encabezados:
+      <span class="font-mono">h2 → h3 → h4</span>, sin saltos, porque no hay manera de escribirlo de
+      otro modo.
+    </p>
+  </section>
+
+  <!-- =============================================================== 4. Variantes -->
+  <section class="flex flex-col gap-4" aria-labelledby="text-variants" data-block="4-variantes">
+    <h2 id="text-variants" class="text-h2">Variantes</h2>
+    <p class="text-secondary">
+      Siete, y son <strong>semánticas</strong>: nombran para qué sirve el texto, no cuán grande es.
+      Cuatro renderizan encabezados, una renderiza un párrafo y dos renderizan
+      <code class="font-mono">&lt;span&gt;</code> —
+      <code class="font-mono">caption</code> y <code class="font-mono">mono</code> no son
+      encabezados y no deben aparecer en el esquema del documento.
+    </p>
+    <ewms-demo-frame ground="canvas">
+      <ul class="flex flex-col gap-4">
+        @for (variant of variants; track variant.id) {
+          <li class="flex flex-wrap items-baseline gap-4" [attr.data-variant]="variant.id">
+            <code class="w-24 shrink-0 font-mono text-caption text-secondary">{{
+              variant.label
+            }}</code>
+            <span class="min-w-64 flex-1" [attr.data-variant-sample]="variant.id">
+              <ewms-text [variant]="variantFor(variant.id)">{{ sampleFor(variant.id) }}</ewms-text>
+            </span>
+          </li>
+        }
+      </ul>
+    </ewms-demo-frame>
+    <p class="text-caption text-secondary">
+      La mayúscula de <code class="font-mono">h4</code> la aplica el componente con
+      <code class="font-mono">text-transform</code>, nunca el texto del diccionario: un lector de
+      pantalla deletrea una palabra escrita en mayúsculas, y un texto ya capitalizado no se puede
+      volver a capitalizar según el idioma.
+    </p>
+  </section>
+
+  <!-- ========================================================= 5. Matriz de estados -->
+  <section class="flex flex-col gap-4" aria-labelledby="text-matrix" data-block="5-matriz">
+    <h2 id="text-matrix" class="text-h2">Matriz de estados</h2>
+    <div class="flex flex-col gap-2 rounded-md border border-strong bg-secondary p-4">
+      <h3 class="text-h4">La matriz de estados no aplica — y se deja escrita igual</h3>
+      <p>
+        <code class="font-mono">&lt;ewms-text&gt;</code>&ngsp;<strong>no tiene estados</strong>: no hay
+        hover, ni foco, ni deshabilitado. Es un primitivo que renderiza un elemento y se detiene
+        ahí.
+      </p>
+      <p class="text-caption">
+        Lo que sí varía —y es lo único que este componente existe para acoplar— es el par
+        <strong>elemento del documento</strong> contra <strong>aspecto</strong>. Esa es la grilla de
+        abajo: leer una fila de izquierda a derecha es el argumento del componente entero.
+      </p>
+    </div>
+    <ewms-demo-frame ground="canvas">
+      <ewms-state-matrix
+        [variants]="variants"
+        [states]="axes"
+        caption="Siete variantes: qué elemento producen y cómo se ven"
+      >
+        <ng-template let-variant="variant" let-state="state">
+          @if (state.id === 'element') {
+            <code class="font-mono text-primary">{{ tagFor(variant.id) }}</code>
+          } @else {
+            <ewms-text [variant]="variantFor(variant.id)">{{ sampleFor(variant.id) }}</ewms-text>
+          }
+        </ng-template>
+      </ewms-state-matrix>
+    </ewms-demo-frame>
+    <p class="text-caption text-secondary">
+      La columna del medio <strong>no está escrita</strong>: es el
+      <code class="font-mono">tagName</code> que el navegador reportó para cada muestra del bloque de
+      variantes, el mismo que se lista en Anatomía. Si alguien agregara un
+      <code class="font-mono">as</code>, esta columna dejaría de coincidir con la de la izquierda —
+      que es la única manera de que una grilla demuestre un acoplamiento en vez de afirmarlo.
+    </p>
+  </section>
+
+  <!-- ================================================================ 6. Tamaños -->
+  <section class="flex flex-col gap-4" aria-labelledby="text-sizes" data-block="6-tamanos">
+    <h2 id="text-sizes" class="text-h2">Tamaños</h2>
+    <div class="flex flex-col gap-2 rounded-md border border-strong bg-secondary p-4">
+      <h3 class="text-h4">No aplica</h3>
+      <p>
+        No existe <code class="font-mono">size</code>. El tamaño <strong>es</strong> la variante: no
+        se combinan por separado, y ese es justamente el acoplamiento del que vive el componente. Un
+        <code class="font-mono">size</code> encima de <code class="font-mono">variant</code> sería el
+        <code class="font-mono">as</code> por la puerta de atrás.
+      </p>
+      <p class="text-caption">
+        La escala completa, a tamaño real y con su contexto de uso, está en
+        <strong>Fundamentos / Tipografía</strong>.
+      </p>
+    </div>
+  </section>
+
+  <!-- ==================================================== 7. Anatomía y tokens -->
+  <section class="flex flex-col gap-4" aria-labelledby="text-anatomy" data-block="7-anatomia">
+    <h2 id="text-anatomy" class="text-h2">Anatomía y tokens</h2>
+
+    <h3 class="text-h3">El elemento, medido</h3>
+    <p class="text-secondary">
+      Leído del DOM de esta misma página, no transcrito. Si alguien agregara un
+      <code class="font-mono">as</code>, esta tabla sería lo primero en dejar de coincidir con la de
+      arriba.
+    </p>
+    <div class="overflow-x-auto">
+      <table class="w-full border-collapse text-caption">
+        <caption class="mb-2 text-left text-secondary">
+          Elemento renderizado y tamaño calculado, por variante
+        </caption>
+        <thead>
+          <tr>
+            <th scope="col" class="border-b border-default p-2 text-left text-secondary">
+              Variante
+            </th>
+            <th scope="col" class="border-b border-default p-2 text-left text-secondary">
+              Elemento renderizado
+            </th>
+            <th scope="col" class="border-b border-default p-2 text-left text-secondary">
+              Tamaño calculado
+            </th>
+            <th scope="col" class="border-b border-default p-2 text-left text-secondary">
+              ¿Entra al esquema?
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of rendered(); track row.variant) {
+            <tr>
+              <th scope="row" class="border-b border-default p-2 text-left">
+                <code class="font-mono text-primary">{{ row.variant }}</code>
+              </th>
+              <td class="border-b border-default p-2">
+                <code class="font-mono text-primary">{{ row.tag }}</code>
+              </td>
+              <td class="border-b border-default p-2">
+                <span class="font-mono text-primary">{{ row.fontSize }}</span>
+              </td>
+              <td class="border-b border-default p-2 text-primary">
+                @if (isHeading(row.variant)) {
+                  Sí, es un encabezado
+                } @else {
+                  No
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <h3 class="text-h3">Los tokens de cada variante</h3>
+    <p class="text-secondary">
+      Tamaño, peso e interlineado, leídos en vivo. Cuatro siguen
+      <strong>sin decidir</strong> en <code class="font-mono">tokens.css</code> y salen marcados como
+      tales: un hueco visible es información, un número inventado no.
+    </p>
+    <div class="overflow-x-auto">
+      <table class="w-full border-collapse text-caption">
+        <caption class="mb-2 text-left text-secondary">
+          Tokens que consume &lt;ewms-text&gt;
+        </caption>
+        <thead>
+          <tr>
+            <th scope="col" class="border-b border-default p-2 text-left text-secondary">
+              Variante
+            </th>
+            <th scope="col" class="border-b border-default p-2 text-left text-secondary">
+              Token, cadena y valor
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of tokens; track row.variant) {
+            <tr>
+              <th scope="row" class="border-b border-default p-2 text-left align-top">
+                <code class="font-mono text-primary">{{ row.variant }}</code>
+              </th>
+              <td class="border-b border-default p-2">
+                <ul class="flex flex-col gap-1">
+                  <li><ewms-token-value [token]="row.size" /></li>
+                  <li>
+                    <ewms-token-value [token]="row.weight" [pending]="isPending(row, row.weight)" />
+                  </li>
+                  <li>
+                    <ewms-token-value
+                      [token]="row.lineHeight"
+                      [pending]="isPending(row, row.lineHeight)"
+                    />
+                  </li>
+                </ul>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    <p class="text-caption text-secondary">
+      La cara es <strong>Montserrat</strong> auto-hospedada, variable 100–900. No se carga de un CDN:
+      la CSP sólo permite <code class="font-mono">font-src 'self'</code>, y además evita filtrar las
+      IP de quienes usan la aplicación.
+    </p>
+  </section>
+
+  <!-- ============================================== 8. Contrato para Angular -->
+  <section class="flex flex-col gap-4" aria-labelledby="text-contract" data-block="8-contrato">
+    <h2 id="text-contract" class="text-h2">Contrato para Angular</h2>
+
+    <h3 class="text-h3">Entradas</h3>
+    <p class="text-secondary">
+      Una sola, <code class="font-mono">variant</code>, y es
+      <code class="font-mono">input.required()</code>. Sin default a propósito: elegir el nivel es la
+      decisión que este componente obliga a tomar, y un valor por omisión la escondería.
+    </p>
+
+    <h3 class="text-h3">Salidas</h3>
+    <p class="text-secondary">
+      <strong>Ninguna.</strong> Es un primitivo de presentación: no hay nada que emitir.
+    </p>
+
+    <h3 class="text-h3">Uso típico</h3>
+    <pre
+      class="overflow-x-auto rounded-md border border-default bg-secondary p-4 font-mono text-mono text-primary"
+    ><code>{{ snippet }}</code></pre>
+
+    <h3 class="text-h3">Accesibilidad</h3>
+    <ul class="flex flex-col gap-2">
+      <li>
+        El elemento renderizado <strong>es</strong> el nivel semántico. No se agrega
+        <code class="font-mono">role</code> encima: un <code class="font-mono">&lt;h3&gt;</code> ya
+        es un encabezado de nivel 3, y ponerle el rol sólo agrega una segunda fuente de verdad.
+      </li>
+      <li>
+        <code class="font-mono">caption</code> y <code class="font-mono">mono</code> renderizan
+        <code class="font-mono">&lt;span&gt;</code>: no son encabezados y no aparecen en el esquema.
+      </li>
+      <li>
+        La regla <code class="font-mono">heading-order</code> de axe corre <strong>sin filtro de
+        tags</strong> en el arnés, así que un nivel saltado revienta la compuerta 5. Donde muerde de
+        verdad es a nivel de <em>página</em>: un componente aislado casi no tiene con qué comparar,
+        y por eso el E2E recorre el showroom entero.
+      </li>
+      <li>
+        Lo que ninguna herramienta ve: si el esquema de una pantalla nueva
+        <em>tiene sentido</em>. El acoplamiento evita que alguien mienta a propósito; no sustituye
+        mirarlo.
+      </li>
+    </ul>
+
+    <h3 class="text-h3">Errores comunes</h3>
+    <ul class="flex flex-col gap-2">
+      <li>
+        <strong>Usar <code class="font-mono">h4</code> como «título chico».</strong> Si lo que
+        necesitás es una etiqueta encima de un dato, es <code class="font-mono">caption</code>. El
+        <code class="font-mono">h4</code> entra al esquema del documento y un lector de pantalla lo
+        va a listar como encabezado.
+      </li>
+      <li>
+        <strong>Escribir el texto ya en mayúsculas para el
+        <code class="font-mono">h4</code>.</strong> Las pone el CSS. El nodo de texto conserva su
+        capitalización original, que es lo que hace que el lector lo lea como palabra y no letra por
+        letra.
+      </li>
+      <li>
+        <strong>Poner <code class="font-mono">&lt;h2 class="text-h2"&gt;</code> a mano</strong>
+        porque «es lo mismo». No lo es: ahí nada obliga a que el nivel coincida con el aspecto, y el
+        día que alguien cambie el tamaño la estructura se queda como estaba.
+      </li>
+    </ul>
+
+    <h3 class="text-h3">Bloques que no aplican</h3>
+    <p class="text-secondary">
+      Dos, y están escritos arriba en lugar de borrados: <strong>matriz de estados</strong> (el
+      componente no tiene estados) y <strong>tamaños</strong> (el tamaño es la variante).
+    </p>
+  </section>
+</article>

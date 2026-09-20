@@ -1,0 +1,181 @@
+<!-- The showroom is Spanish only, exempt from i18n (gate 12): declared so a screen reader never reads it as English. -->
+<article class="flex flex-col gap-10" lang="es">
+  <header class="flex flex-col gap-2">
+    <h1 class="text-h1">Espaciado, radios y elevación</h1>
+    <p class="text-secondary">
+      Toda la escala de espaciado sale de <strong>un solo multiplicador</strong>. No hay una lista de
+      valores: hay una base, y Tailwind deriva el resto. Cambiar la base mueve la aplicación entera
+      y no rompe ninguna proporción.
+    </p>
+  </header>
+
+  <section class="flex flex-col gap-4" aria-labelledby="spacing-scale">
+    <h2 id="spacing-scale" class="text-h2">La base, y lo que sale de ella</h2>
+    <p><ewms-token-value token="--spacing-base" /></p>
+    <p class="text-secondary">
+      Una utilidad <code class="font-mono">p-4</code> son cuatro veces esa base, y
+      <code class="font-mono">gap-2</code> son dos. Las barras de abajo están dibujadas con esas
+      mismas utilidades: lo que se ve es la escala real, no una ilustración de la escala.
+    </p>
+    <ewms-demo-frame ground="surface">
+      <ul class="flex flex-col gap-2">
+        @for (step of steps; track step.steps) {
+          <li class="flex items-center gap-4" [attr.data-spacing-step]="step.steps">
+            <span class="w-24 shrink-0 font-mono text-caption text-secondary">
+              {{ step.utility }}
+            </span>
+            <span
+              class="h-4 rounded-sm bg-primary"
+              [class]="step.utility"
+              [attr.data-measure]="'spacing-' + step.steps"
+              aria-hidden="true"
+            ></span>
+            <span class="text-caption text-secondary">
+              {{ step.steps }} × base
+            </span>
+          </li>
+        }
+      </ul>
+    </ewms-demo-frame>
+  </section>
+
+  <section class="flex flex-col gap-4" aria-labelledby="spacing-radii">
+    <h2 id="spacing-radii" class="text-h2">Los cinco radios</h2>
+    <ul class="grid grid-cols-[repeat(auto-fit,minmax(16rem,1fr))] gap-4">
+      @for (radius of radii; track radius.token) {
+        <li class="flex flex-col gap-2" [attr.data-radius]="radius.token">
+          <span
+            class="flex h-24 items-center justify-center border border-strong bg-secondary text-caption text-secondary"
+            [class]="radius.utility"
+            [attr.data-measure]="radius.token"
+          >
+            {{ radius.utility }}
+          </span>
+          <ewms-token-value [token]="radius.token" />
+          <p class="text-caption text-secondary">{{ radius.use }}</p>
+          @if (radius.signature) {
+            <p class="rounded-sm bg-row-selected p-2 text-caption text-primary">
+              Firma visual del sistema. Es el radio que comparten Botón, Input y Select, y por eso un
+              control con otro radio se nota inmediatamente fuera de lugar.
+            </p>
+          }
+        </li>
+      }
+    </ul>
+  </section>
+
+  <section class="flex flex-col gap-4" aria-labelledby="spacing-heights">
+    <h2 id="spacing-heights" class="text-h2">Las tres alturas de control</h2>
+    <p class="text-secondary">
+      Botón, Input y Select comparten las tres alturas <strong>por regla</strong>, no por
+      coincidencia: un formulario mezcla los tres en la misma fila y tienen que alinear.
+    </p>
+    <ewms-demo-frame ground="surface">
+      <ul class="flex flex-col gap-4">
+        @for (height of heights; track height.size) {
+          <li class="flex items-center gap-4" [attr.data-control-height]="height.size">
+            <span class="w-24 shrink-0 text-caption text-secondary">{{ height.label }}</span>
+            <span
+              class="block w-40 rounded-control bg-primary-disabled"
+              [class]="height.utility"
+              [attr.data-measure]="'height-' + height.size"
+              aria-hidden="true"
+            ></span>
+            <span class="font-mono text-caption text-secondary">
+              {{ height.utility }} · {{ height.padding }}
+            </span>
+          </li>
+        }
+      </ul>
+    </ewms-demo-frame>
+
+    <h3 class="text-h3">La fila mixta</h3>
+    <p class="text-secondary">
+      Un Input, un Select y un Botón <strong>reales</strong>, los tres en Medium. Es la comprobación
+      de la regla: las cajas miden lo mismo, pero el relleno horizontal no es el mismo en los tres
+      (10/12/14 en los campos contra 12/16/20 en el botón), así que lo que hay que mirar es si el
+      texto cae a la misma altura óptica.
+    </p>
+    <ewms-demo-frame ground="surface">
+      <div class="flex flex-wrap items-end gap-4" data-measure="mixed-row">
+        <span class="w-56" data-measure="mixed-input">
+          <ewms-input label="Código de bulto" size="md" placeholder="SKU-48812-A" />
+        </span>
+        <span class="w-56" data-demo-select data-measure="mixed-select">
+          <ewms-select label="Ubicación" size="md" [options]="options" placeholder="Elegir…" />
+        </span>
+        <span data-measure="mixed-button">
+          <ewms-button variant="primary" size="md">Confirmar</ewms-button>
+        </span>
+      </div>
+    </ewms-demo-frame>
+    <p class="text-caption text-secondary">
+      El Select se abre acá: es un panel del overlay del CDK, y hasta esta página nunca se había
+      renderizado uno.
+    </p>
+  </section>
+
+  <section class="flex flex-col gap-4" aria-labelledby="spacing-fixed">
+    <h2 id="spacing-fixed" class="text-h2">Las geometrías que no escalan</h2>
+    <p class="text-secondary">
+      Tres medidas del sistema que <strong>no salen</strong> de la escala de control. Están acá, y no
+      en la ficha de cada componente, porque son hechos de geometría del sistema igual que las
+      alturas de arriba — y porque hasta ahora nadie las había medido en un navegador.
+    </p>
+    <ewms-demo-frame ground="surface">
+      <ul class="flex flex-wrap items-start gap-10">
+        <li class="flex flex-col gap-2" data-fixed="selection">
+          <span data-measure="checkbox-row">
+            <ewms-checkbox label="Seleccionar fila" [checked]="true" />
+          </span>
+          <span data-measure="radio-row">
+            <ewms-radio name="demo-geometria" value="a" label="Una opción" />
+          </span>
+          <p class="max-w-64 text-caption text-secondary">
+            Caja de 18×18, una sola talla. Un checkbox no se dimensiona para alinear con un botón: se
+            dimensiona para sentarse al lado de una línea de texto.
+          </p>
+          <ewms-token-value token="--border-width-selection" />
+          <p class="max-w-64 text-caption text-secondary">
+            El borde es 1,5 y no 1: a 18×18 un borde de 1 se pierde, y a 2 la caja se ve pesada al
+            lado del Input. Es el único grosor de borde del sistema fuera de la escala entera.
+          </p>
+        </li>
+        <li class="flex flex-col gap-2" data-fixed="toggle">
+          <span data-measure="toggle-row">
+            <ewms-toggle label="Recepción automática" [checked]="true" />
+          </span>
+          <p class="max-w-64 text-caption text-secondary">
+            Track de 44×24 con el thumb de 20 separado 2 de cada extremo: 2 + 20 + 2 es justo el alto
+            del track, y 20 de recorrido lo deja a la misma distancia del otro lado.
+          </p>
+        </li>
+      </ul>
+    </ewms-demo-frame>
+  </section>
+
+  <section class="flex flex-col gap-4" aria-labelledby="spacing-elevation">
+    <h2 id="spacing-elevation" class="text-h2">Los tres niveles de elevación</h2>
+    <p class="text-secondary">
+      Derivados del navy con alfa, no de gris ni de negro: una sombra teñida con el color de la
+      marca se integra, una gris se ve sucia. No hay un nivel superior a estos tres.
+    </p>
+    <ewms-demo-frame ground="canvas" label="Sobre el canvas, que es donde viven">
+      <ul class="flex flex-wrap gap-6">
+        @for (elevation of elevations; track elevation.token) {
+          <li class="flex w-64 flex-col gap-2">
+            <span
+              class="flex h-24 items-center justify-center rounded-md bg-surface text-caption text-secondary"
+              [class]="elevation.utility"
+              [attr.data-measure]="elevation.token"
+            >
+              {{ elevation.utility }}
+            </span>
+            <ewms-token-value [token]="elevation.token" />
+            <p class="text-caption text-secondary">{{ elevation.use }}</p>
+          </li>
+        }
+      </ul>
+    </ewms-demo-frame>
+  </section>
+</article>

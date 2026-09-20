@@ -1,0 +1,12 @@
+<!--
+  The icon is decorative here, unlike the Banner's: the label right next to it
+  says the same thing in words, and an `aria-label` on the icon would make a
+  screen reader read the severity twice.
+-->
+<span
+  class="inline-flex max-w-full items-center gap-1 rounded-full border border-solid px-2 py-0.5 text-caption"
+  [class]="boxClasses()"
+>
+  <ewms-icon [name]="iconName()" size="sm" aria-hidden="true" />
+  <span class="truncate">{{ label() }}</span>
+</span>

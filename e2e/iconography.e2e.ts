@@ -13,9 +13,9 @@ const EXPECTED = {
   xl: { width: 24, strokeWidth: 1.75 },
 } as const;
 
-test.describe('/design-system/iconografia', () => {
+test.describe('/design-system/foundations/icons', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/design-system/iconografia');
+    await page.goto('/design-system/foundations/icons');
     await expect(page.getByRole('heading', { level: 1, name: 'Iconografía' })).toBeVisible();
   });
 

@@ -1,0 +1,386 @@
+<!-- The showroom is Spanish only, exempt from i18n (gate 12): declared so a screen reader never reads it as English. -->
+<article class="flex flex-col gap-10" lang="es">
+  <!-- ============================================================ 1. Encabezado -->
+  <header class="flex flex-col gap-2" data-block="1-encabezado">
+    <div class="flex flex-wrap items-baseline gap-3">
+      <h1 class="text-h1">Icon Button</h1>
+      <code class="font-mono text-primary">&lt;ewms-icon-button&gt;</code>
+    </div>
+    <ul class="flex flex-wrap gap-2 text-caption">
+      <li class="rounded-sm bg-secondary px-2 py-1 text-secondary">
+        Versión <span class="font-mono">{{ version }}</span>
+      </li>
+      <li class="rounded-sm bg-success-surface px-2 py-1 text-success">Construido y en verde</li>
+      <li class="rounded-sm bg-secondary px-2 py-1 text-secondary">
+        Ficha: <span class="font-mono">08-Sistema-de-Diseno/Componentes/Icon-Button.md</span>
+      </li>
+    </ul>
+  </header>
+
+  <!-- ================================================ 2. Qué resuelve / cuándo no -->
+  <section class="flex flex-col gap-4" aria-labelledby="ib-purpose" data-block="2-proposito">
+    <h2 id="ib-purpose" class="text-h2">Qué resuelve, y cuándo NO usarlo</h2>
+    <div class="grid grid-cols-[repeat(auto-fit,minmax(20rem,1fr))] gap-4">
+      <div class="flex flex-col gap-2 rounded-md border border-default bg-surface p-4">
+        <h3 class="text-h3">Qué resuelve</h3>
+        <p>
+          Un botón cuyo <strong>único contenido visible es un icono</strong>. Para filas de tabla,
+          barras de herramientas densas y cualquier lugar donde el texto no cabe.
+        </p>
+        <p>
+          <strong>No es una variante del Botón, y la razón es de tipos.</strong> En un componente
+          único <code class="font-mono">label</code> tendría que ser opcional —sería redundante
+          cuando hay texto— y entonces nada impide escribir
+          <code class="font-mono">&lt;ewms-button icon="trash" /&gt;</code>: compila, y no tiene
+          nombre accesible. Siendo dos componentes, <code class="font-mono">label</code> es
+          requerido en el tipo y <strong>ese botón no compila</strong>.
+        </p>
+        <p class="text-caption text-secondary">
+          Hay una segunda razón, geométrica: un botón de texto Medium mide 40 px de alto con 16 px de
+          padding horizontal; quitarle el texto deja una caja de ~50 px con un icono de 18 px
+          flotando. El Icon Button es <strong>cuadrado</strong>. Son dos reglas de tamaño distintas.
+        </p>
+      </div>
+      <div class="flex flex-col gap-2 rounded-md border border-danger bg-danger-surface p-4">
+        <h3 class="text-h3">Cuándo NO usarlo</h3>
+        <ul class="flex flex-col gap-2">
+          <li>
+            <strong>Si hay lugar para texto, va texto.</strong> Un icono solo siempre es más
+            ambiguo que una palabra. Este componente es para cuando la palabra no entra, no para
+            cuando queda más prolijo.
+          </li>
+          <li>
+            <strong>Si navega, es un link</strong>, igual que con el Botón. Un botón que lleva a
+            otra URL rompe abrir en pestaña nueva, copiar el enlace y el botón «atrás».
+          </li>
+          <li>
+            <strong>Si esperabas que el tooltip fuera el nombre</strong>, no lo es. El tooltip
+            describe para quien ve; el nombre lo da <code class="font-mono">aria-label</code>, para
+            todos. Van los dos.
+          </li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================= 3. Demo principal -->
+  <section class="flex flex-col gap-4" aria-labelledby="ib-demo" data-block="3-demo">
+    <h2 id="ib-demo" class="text-h2">Demo principal</h2>
+    <div class="grid grid-cols-[repeat(auto-fit,minmax(24rem,1fr))] gap-6">
+      <ewms-demo-frame ground="canvas" label="El caso real: una fila de tabla, sin texto visible">
+        <div class="flex flex-col gap-4">
+          <!--
+            A row like the one this control was built for: no visible text, a
+            translated `label` for whoever cannot see it and a `tooltip` for
+            whoever can. Focus it with Tab and the tooltip appears too -- that
+            is 1.4.13, not a nicety.
+          -->
+          <div
+            class="flex flex-wrap items-center gap-3 rounded-md border border-default bg-surface p-3"
+            data-demo-row
+          >
+            <span class="min-w-48 flex-1 font-mono text-caption text-primary">
+              SKU-04871-B · A-04-17
+            </span>
+            <span data-demo-tooltip>
+              <ewms-icon-button icon="edit" label="Editar artículo" tooltip="Editar artículo" />
+            </span>
+            <span>
+              <ewms-icon-button icon="download" label="Descargar etiqueta" tooltip="Descargar etiqueta" />
+            </span>
+            <span>
+              <ewms-icon-button
+                icon="trash"
+                label="Eliminar artículo"
+                tooltip="Eliminar artículo (no se puede deshacer)"
+                variant="danger"
+              />
+            </span>
+          </div>
+          <p class="text-caption text-secondary">
+            El tercero es el caso que justifica que <code class="font-mono">tooltip</code> no se
+            genere solo: <span class="font-mono">label</span> dice «Eliminar artículo» y
+            <span class="font-mono">tooltip</span> agrega «(no se puede deshacer)». Derivarlo
+            cerraría exactamente este caso.
+          </p>
+        </div>
+      </ewms-demo-frame>
+      <ewms-prop-table [rows]="props" caption="Propiedades de <ewms-icon-button>" />
+    </div>
+
+    <ewms-demo-frame ground="surface" label="Loading: la caja no cambia de tamaño">
+      <div class="flex flex-wrap items-center gap-4">
+        <span data-demo-idle>
+          <ewms-icon-button icon="refresh" label="Sincronizar" tooltip="Sincronizar" />
+        </span>
+        <span data-demo-loading>
+          <ewms-icon-button
+            icon="refresh"
+            label="Sincronizando"
+            tooltip="Sincronizando"
+            [loading]="true"
+          />
+        </span>
+        <span class="min-w-64 flex-1 text-caption text-secondary">
+          Los dos miden exactamente lo mismo: el contenido se oculta con
+          <code class="font-mono">visibility</code> y no con
+          <code class="font-mono">display</code>, así que nada de al lado se mueve. En un control
+          cuadrado eso se nota más que en uno de texto.
+        </span>
+      </div>
+    </ewms-demo-frame>
+  </section>
+
+  <!-- =============================================================== 4. Variantes -->
+  <section class="flex flex-col gap-4" aria-labelledby="ib-variants" data-block="4-variantes">
+    <h2 id="ib-variants" class="text-h2">Variantes</h2>
+    <p class="text-secondary">
+      Las mismas cuatro del Botón, con <strong>Ghost por defecto</strong> — no Primary. Este control
+      vive en filas y toolbars, donde el énfasis correcto es el más bajo; un Primary por defecto
+      llenaría cada fila de una tabla de cajas azules y arruinaría la jerarquía de la pantalla.
+    </p>
+    <ewms-demo-frame ground="canvas">
+      <ul class="flex flex-col gap-4">
+        @for (variant of variants; track variant.id) {
+          <li class="flex flex-wrap items-center gap-4" [attr.data-variant]="variant.id">
+            <span class="w-40 shrink-0 text-caption text-secondary">{{ variant.label }}</span>
+            <ewms-icon-button
+              icon="trash"
+              label="Eliminar"
+              tooltip="Eliminar"
+              [variant]="variantFor(variant.id)"
+            />
+            <ewms-icon-button
+              icon="trash"
+              label="Eliminar, deshabilitado"
+              tooltip="Eliminar"
+              [variant]="variantFor(variant.id)"
+              [disabled]="true"
+            />
+          </li>
+        }
+      </ul>
+    </ewms-demo-frame>
+    <p class="text-caption text-secondary">
+      Los estados son <strong>idénticos</strong> a los del Botón —misma tabla, mismos tokens— y no
+      se redefinen acá: los dos componentes comparten la implementación en
+      <code class="font-mono">button.types.ts</code>. Dos APIs públicas, un solo estilo.
+    </p>
+  </section>
+
+  <!-- ========================================================= 5. Matriz de estados -->
+  <section class="flex flex-col gap-4" aria-labelledby="ib-matrix" data-block="5-matriz">
+    <h2 id="ib-matrix" class="text-h2">Matriz de estados</h2>
+    <p class="text-secondary">
+      Renderizada de verdad. <strong>Disabled</strong> y <strong>Loading</strong> son entradas
+      reales del componente; <strong>Hover</strong> y <strong>Focus</strong> no se pueden dejar
+      quietos, así que cada celda recibe el mismo token que aplicaría su propia regla.
+    </p>
+    <ewms-demo-frame ground="canvas">
+      <ewms-state-matrix
+        [variants]="variants"
+        [states]="states"
+        caption="Cuatro variantes por cinco estados, en tamaño Medium"
+      >
+        <ng-template let-variant="variant" let-state="state">
+          <span [class]="forced(variant.id, state.id)">
+            <ewms-icon-button
+              icon="trash"
+              label="Eliminar"
+              tooltip="Eliminar"
+              [variant]="variantFor(variant.id)"
+              [disabled]="state.id === 'disabled'"
+              [loading]="state.id === 'loading'"
+            />
+          </span>
+        </ng-template>
+      </ewms-state-matrix>
+    </ewms-demo-frame>
+    <p class="text-caption text-secondary">
+      <strong>Disabled se pasa como atributo, no se pinta con una clase.</strong> Forzarlo por CSS
+      dejaría a axe mirando un control habilitado con la paleta de deshabilitado, y el 1.38:1 del
+      texto deshabilitado —que la WCAG exime justamente por estar deshabilitado— se reportaría como
+      un fallo de contraste que el componente no tiene.
+    </p>
+  </section>
+
+  <!-- ================================================================ 6. Tamaños -->
+  <section class="flex flex-col gap-4" aria-labelledby="ib-sizes" data-block="6-tamanos">
+    <h2 id="ib-sizes" class="text-h2">Tamaños</h2>
+    <p class="text-secondary">
+      Tres, y <strong>cuadrados</strong>: las mismas alturas de control del sistema, usadas también
+      como ancho.
+    </p>
+    <ewms-demo-frame ground="canvas">
+      <ul class="flex flex-wrap items-end gap-8">
+        @for (sample of sizes(); track sample.size) {
+          <li class="flex flex-col items-start gap-2" [attr.data-size-sample]="sample.size">
+            <ewms-icon-button
+              icon="trash"
+              [label]="'Eliminar, tamaño ' + sample.label"
+              tooltip="Eliminar"
+              variant="secondary"
+              [size]="sample.size"
+            />
+            <span class="text-caption text-secondary">
+              {{ sample.label }} · <span class="font-mono">{{ sample.box }}</span>
+            </span>
+            <span class="text-caption">
+              @if (sample.clearsTarget) {
+                <span class="rounded-sm bg-success-surface px-1 text-success">
+                  supera {{ minimumTarget }}×{{ minimumTarget }}
+                </span>
+              } @else {
+                <span class="rounded-sm bg-danger-surface px-1 text-danger">
+                  por debajo de {{ minimumTarget }}×{{ minimumTarget }}
+                </span>
+              }
+            </span>
+          </li>
+        }
+      </ul>
+    </ewms-demo-frame>
+    <p class="text-caption text-secondary">
+      Las medidas de arriba están <strong>leídas de la caja renderizada</strong>, y la comparación
+      contra el mínimo de <strong>WCAG 2.2 §2.5.8</strong> (Target Size, nivel AA) se calcula con
+      ellas: las tres lo superan, Small incluido. Un número transcrito acá no demostraría ni que la
+      caja es cuadrada ni que el criterio se cumple.
+    </p>
+    <p class="text-caption text-secondary">
+      El <strong>icono usa el mapeo del Botón</strong> —<code class="font-mono">sm</code> (16 px) en
+      Small, <code class="font-mono">md</code> (18 px) en Medium y Large— y no uno propio más grande,
+      aunque sea el único contenido: los dos conviven en la misma barra de herramientas, y dos
+      iconos de tamaño distinto uno al lado del otro se leen como un error.
+    </p>
+  </section>
+
+  <!-- ==================================================== 7. Anatomía y tokens -->
+  <section class="flex flex-col gap-4" aria-labelledby="ib-anatomy" data-block="7-anatomia">
+    <h2 id="ib-anatomy" class="text-h2">Anatomía y tokens</h2>
+    <p class="text-secondary">
+      Qué token controla cada parte, leído en vivo. Es la misma lista que la del Botón menos la
+      tipografía, que acá no existe: no hay texto que pintar.
+    </p>
+    <div class="overflow-x-auto">
+      <table class="w-full border-collapse text-caption">
+        <caption class="mb-2 text-left text-secondary">
+          Tokens que consume &lt;ewms-icon-button&gt;
+        </caption>
+        <thead>
+          <tr>
+            <th scope="col" class="border-b border-default p-2 text-left text-secondary">Parte</th>
+            <th scope="col" class="border-b border-default p-2 text-left text-secondary">
+              Token, cadena y valor
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of anatomy; track row.token) {
+            <tr>
+              <th scope="row" class="border-b border-default p-2 text-left text-primary">
+                {{ row.part }}
+              </th>
+              <td class="border-b border-default p-2">
+                <ewms-token-value [token]="row.token" [swatch]="true" />
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    <p class="text-caption text-secondary">
+      El área clickeable es <strong>la caja completa</strong>, no el glifo: 16 px de icono con 8 px
+      de aire alrededor se clickea en toda la caja de 32 px.
+    </p>
+  </section>
+
+  <!-- ============================================== 8. Contrato para Angular -->
+  <section class="flex flex-col gap-4" aria-labelledby="ib-contract" data-block="8-contrato">
+    <h2 id="ib-contract" class="text-h2">Contrato para Angular</h2>
+
+    <h3 class="text-h3">Entradas</h3>
+    <p class="text-secondary">
+      Las siete de la tabla del bloque 3. <strong>Tres son
+      <code class="font-mono">input.required()</code></strong>:
+      <code class="font-mono">icon</code>, <code class="font-mono">label</code> y
+      <code class="font-mono">tooltip</code>. Requerido significa requerido en el tipo, no un input
+      opcional con valor por defecto — un default vaciaría la garantía.
+    </p>
+
+    <h3 class="text-h3">Salidas</h3>
+    <div class="flex flex-col gap-2 rounded-md border border-warning bg-warning-surface p-4">
+      <p>
+        <strong>Ninguna.</strong> Igual que el Botón, se escucha el
+        <code class="font-mono">(click)</code> nativo, que burbujea desde el
+        <code class="font-mono">&lt;button&gt;</code> interno; cuando el control está
+        <code class="font-mono">disabled</code> o <code class="font-mono">loading</code> el
+        componente detiene el evento antes de que salga.
+      </p>
+      <p class="text-caption">
+        La ficha del vault declara <code class="font-mono">(click): EventEmitter&lt;MouseEvent&gt;</code>.
+        <strong>Gana el código</strong>: un <code class="font-mono">output</code> llamado
+        <code class="font-mono">click</code> se superpone al evento nativo del mismo nombre y deja
+        dos caminos para una sola cosa.
+      </p>
+    </div>
+
+    <h3 class="text-h3">Uso típico</h3>
+    <pre
+      class="overflow-x-auto rounded-md border border-default bg-secondary p-4 font-mono text-mono text-primary"
+    ><code>{{ snippet }}</code></pre>
+
+    <h3 class="text-h3">Accesibilidad</h3>
+    <ul class="flex flex-col gap-2">
+      <li>
+        <code class="font-mono">aria-label</code> con el texto de
+        <code class="font-mono">label</code>. El icono interno va
+        <code class="font-mono">aria-hidden</code>: es decoración, el nombre lo da el label.
+      </li>
+      <li>
+        <strong>El tooltip no es el nombre accesible.</strong> Son dos cosas para dos públicos: el
+        tooltip aparece al hover y al foco —quien navega con teclado puede no verlo, y en pantalla
+        táctil el hover no existe—; el <code class="font-mono">aria-label</code> funciona para
+        todos, siempre. Por eso van los dos.
+      </li>
+      <li>
+        Y por eso mismo el panel del tooltip va <code class="font-mono">aria-hidden</code> cuando
+        repite el nombre: la directiva se aplica con
+        <code class="font-mono">[describes]="false"</code>, para que el lector de pantalla lo
+        anuncie <strong>una sola vez</strong>.
+      </li>
+      <li>
+        En Loading conserva el foco: se deshabilita con
+        <code class="font-mono">aria-disabled</code> y no con el atributo nativo, por la misma razón
+        documentada en el Botón.
+      </li>
+      <li>Anillo de foco visible con <code class="font-mono">:focus-visible</code>, en las cuatro variantes.</li>
+    </ul>
+
+    <h3 class="text-h3">Errores comunes</h3>
+    <ul class="flex flex-col gap-2">
+      <li>
+        <strong>Un icon button sin <code class="font-mono">label</code> es un botón mudo.</strong>
+        En una fila de tabla con tres de ellos, quien usa lector de pantalla oye «botón, botón,
+        botón». Acá no compila — es un error de build, no un acuerdo humano.
+      </li>
+      <li>
+        <strong>Poner <code class="font-mono">variant="primary"</code> en una tabla.</strong> El
+        default es Ghost por diseño; si cada fila pide énfasis, ninguna lo tiene.
+      </li>
+      <li>
+        <strong>Escribir <code class="font-mono">[ewmsTooltip]</code> encima del componente.</strong>
+        El componente ya aplica la directiva por dentro. La entrada se llama
+        <code class="font-mono">tooltip</code>, a secas: el selector ya lleva el prefijo.
+      </li>
+      <li>
+        <strong>Suponer que el icono escala con el tamaño.</strong> No lo hace en Large: se queda en
+        <code class="font-mono">md</code>, a propósito.
+      </li>
+    </ul>
+
+    <h3 class="text-h3">Bloques que no aplican</h3>
+    <p class="text-secondary">
+      Ninguno: los ocho aplican a este componente.
+    </p>
+  </section>
+</article>

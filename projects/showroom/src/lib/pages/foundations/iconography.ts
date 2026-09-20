@@ -1,5 +1,4 @@
 import {
-  afterNextRender,
   ChangeDetectionStrategy,
   Component,
   DestroyRef,
@@ -8,12 +7,8 @@ import {
   signal,
 } from '@angular/core';
 import { Icon, ICON_CATEGORIES, type IconName, type IconSize } from '@ewms/design-system';
-
-interface SizeSample {
-  readonly size: IconSize;
-  readonly width: string;
-  readonly stroke: string;
-}
+import { DemoFrame } from '../../ui/demo-frame';
+import { TokenValue } from '../../ui/token-value';
 
 const SIZES: readonly IconSize[] = ['sm', 'md', 'lg', 'xl'];
 
@@ -32,14 +27,19 @@ const TOP_BAR: readonly IconName[] = [
 ];
 
 /**
- * /design-system/iconografia -- the closed icon catalogue (ADR 0011).
+ * /design-system/foundations/icons -- the closed icon catalogue (ADR 0011).
  *
- * Token values are read live from the CSS custom properties, never written
- * here: if tokens.css changes, this page follows (Showroom spec, 5.3).
+ * Moved here from /design-system/iconografia when the routes went to English;
+ * the old path stays as a permanent redirect (showroom.routes.ts).
+ *
+ * The page is otherwise unchanged by design. What did change: the live token
+ * reading it used to do by hand now goes through <ewms-token-value>, and the
+ * two grounds through <ewms-demo-frame>. This page is where that pattern came
+ * from -- it was extracted into the widget rather than reinvented there.
  */
 @Component({
   selector: 'ewms-showroom-iconography',
-  imports: [Icon],
+  imports: [Icon, DemoFrame, TokenValue],
   templateUrl: './iconography.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -52,31 +52,13 @@ export class ShowroomIconography {
   ] as const;
   protected readonly total = ICON_CATEGORIES.domain.length + ICON_CATEGORIES.interface.length;
   protected readonly topBar = TOP_BAR;
+  protected readonly sizes = SIZES;
 
-  protected readonly sizes = signal<readonly SizeSample[]>(
-    SIZES.map((size) => ({ size, width: '…', stroke: '…' })),
-  );
   protected readonly copied = signal<IconName | null>(null);
   private copiedTimer: ReturnType<typeof setTimeout> | undefined;
 
   constructor() {
     inject(DestroyRef).onDestroy(() => clearTimeout(this.copiedTimer));
-
-    afterNextRender(() => {
-      const view = this.document.defaultView;
-      if (!view) {
-        return;
-      }
-      const root = view.getComputedStyle(this.document.documentElement);
-      const read = (property: string) => root.getPropertyValue(property).trim() || '—';
-      this.sizes.set(
-        SIZES.map((size) => ({
-          size,
-          width: read(`--size-icon-${size}`),
-          stroke: read(`--stroke-icon-${size}`),
-        })),
-      );
-    });
   }
 
   protected async copy(name: IconName): Promise<void> {

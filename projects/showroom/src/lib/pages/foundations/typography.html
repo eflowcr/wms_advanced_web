@@ -1,0 +1,110 @@
+<!-- The showroom is Spanish only, exempt from i18n (gate 12): declared so a screen reader never reads it as English. -->
+<article class="flex flex-col gap-10" lang="es">
+  <header class="flex flex-col gap-2">
+    <h1 class="text-h1">Tipografía</h1>
+    <p class="text-secondary">
+      Una sola familia de interfaz: <strong>Montserrat</strong>, variable 100–900, auto-hospedada.
+      No se carga desde un CDN — la CSP sólo permite <code class="font-mono">font-src 'self'</code>.
+      La familia mono es de apoyo, para códigos y SKU.
+    </p>
+  </header>
+
+  <section class="flex flex-col gap-4" aria-labelledby="type-families">
+    <h2 id="type-families" class="text-h2">Las dos familias</h2>
+    <ul class="flex flex-col gap-2">
+      <li><ewms-token-value token="--font-family-sans" /></li>
+      <li><ewms-token-value token="--font-family-mono" /></li>
+    </ul>
+    <p class="text-caption text-secondary">
+      La familia mono es todavía la pila del sistema: JetBrains Mono entra con su primer consumidor
+      real, la Tabla. Hasta entonces el token existe y apunta a la pila, que es lo honesto — no se
+      declara una cara que no se está sirviendo.
+    </p>
+    <ewms-demo-frame ground="surface" label="El rango variable está declarado (100–900)">
+      <p class="flex flex-wrap gap-6" data-measure="type-weights">
+        <span [style.fontWeight]="'var(--text-p-weight)'">Regular, el del cuerpo</span>
+        <span [style.fontWeight]="'var(--text-control-weight)'">Medium, el de los controles</span>
+        <span [style.fontWeight]="'var(--text-h3-weight)'">Semibold, el de H2–H4</span>
+        <span [style.fontWeight]="'var(--text-h1-weight)'">Bold, el de H1</span>
+      </p>
+    </ewms-demo-frame>
+    <p class="text-caption text-secondary">
+      Los cuatro salen de los tokens de la escala, no de los primitivos de peso: un primitivo fuera
+      de <code class="font-mono">tokens.css</code> lo rechaza la compuerta 10, y además el peso que
+      importa acá es «el que usa el cuerpo», no «400».
+    </p>
+    <p class="text-caption text-secondary">
+      Si los cuatro se vieran iguales y finos, el <code class="font-mono">font-weight: 100 900</code>
+      del <code class="font-mono">&#64;font-face</code> se perdió: sin el rango el navegador trata la
+      cara como un peso único y renderiza todo en el valor por defecto del eje, que es Thin.
+    </p>
+  </section>
+
+  <section class="flex flex-col gap-6" aria-labelledby="type-scale">
+    <h2 id="type-scale" class="text-h2">La escala, al tamaño real</h2>
+    @for (step of scale; track step.variant) {
+      <div
+        class="flex flex-col gap-2 border-b border-default pb-4"
+        [attr.data-scale-step]="step.variant"
+      >
+        <div class="flex flex-wrap items-baseline gap-3">
+          <span class="w-20 shrink-0 text-caption text-secondary">{{ step.label }}</span>
+          <span [attr.data-measure]="'type-' + step.variant">
+            <ewms-text [variant]="step.variant">{{ step.sample }}</ewms-text>
+          </span>
+        </div>
+        <p class="text-caption text-secondary">{{ step.use }}</p>
+        <ul class="flex flex-col gap-1">
+          <li><ewms-token-value [token]="step.size" /></li>
+          <li>
+            <ewms-token-value [token]="step.weight" [pending]="isPending(step, step.weight)" />
+          </li>
+          <li>
+            <ewms-token-value
+              [token]="step.lineHeight"
+              [pending]="isPending(step, step.lineHeight)"
+            />
+          </li>
+        </ul>
+      </div>
+    }
+  </section>
+
+  <aside class="flex flex-col gap-2 rounded-md border border-strong bg-secondary p-4">
+    <h2 class="text-h4">Los huecos son información, no descuido</h2>
+    <p>
+      Cuatro valores siguen sin decidir en <code class="font-mono">tokens.css</code>: el interlineado
+      de H4, el de Caption, y el peso y el interlineado de Mono. Arriba salen marcados
+      <strong>(pendiente)</strong> en vez de rellenarse con un número inventado o de borrarse la
+      fila. Mientras tanto el navegador aplica su valor normal, que es exactamente lo que se está
+      viendo.
+    </p>
+  </aside>
+
+  <section class="flex flex-col gap-4" aria-labelledby="type-rule">
+    <h2 id="type-rule" class="text-h2">La regla del componente</h2>
+    <div class="flex flex-col gap-2 rounded-md border border-default bg-surface p-4">
+      <h3 class="text-h3">
+        <code class="font-mono">variant="h3"</code> renderiza un <code class="font-mono">&lt;h3&gt;</code>. Siempre.
+      </h3>
+      <p>
+        El nivel visual y el semántico van <strong>acoplados</strong>, y
+        <strong>no existe una prop <code class="font-mono">as</code></strong> ni una
+        <code class="font-mono">level</code> para separarlos.
+      </p>
+      <p class="text-caption text-secondary">
+        Por qué: una escotilla de escape que permita «se ve como H1 pero es un
+        <code class="font-mono">&lt;div&gt;</code>» se usa la primera vez por una razón legítima de
+        maquetado y a partir de ahí el árbol de encabezados de la aplicación deja de significar
+        nada. Si hace falta un tamaño que no corresponde al nivel, lo que está mal es la jerarquía
+        de la pantalla, no el componente.
+      </p>
+      <p class="text-caption text-secondary">
+        Consecuencia visible en esta misma página: los ejemplos de arriba son encabezados de verdad,
+        con lo que el documento tiene más de un <code class="font-mono">&lt;h1&gt;</code>. Es el
+        precio de exhibir la escala con el componente real en vez de con una copia de sus estilos, y
+        se paga a propósito.
+      </p>
+    </div>
+  </section>
+</article>

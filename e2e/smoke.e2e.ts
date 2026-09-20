@@ -9,5 +9,5 @@ test('the shell boots and renders the home page', async ({ page }) => {
 test('the showroom route responds at /design-system', async ({ page }) => {
   await page.goto('/design-system');
 
-  await expect(page.getByRole('heading', { name: /sistema de diseno/i })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /sistema de dise(n|ñ)o/i })).toBeVisible();
 });

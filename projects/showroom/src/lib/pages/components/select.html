@@ -1,0 +1,444 @@
+<!-- The showroom is Spanish only, exempt from i18n (gate 12): declared so a screen reader never reads it as English. -->
+<article class="flex flex-col gap-10" lang="es">
+  <!-- ============================================================ 1. Encabezado -->
+  <header class="flex flex-col gap-2" data-block="1-encabezado">
+    <div class="flex flex-wrap items-baseline gap-3">
+      <h1 class="text-h1">Select / Dropdown</h1>
+      <code class="font-mono text-primary">&lt;ewms-select&gt;</code>
+    </div>
+    <ul class="flex flex-wrap gap-2 text-caption">
+      <li class="rounded-sm bg-secondary px-2 py-1 text-secondary">
+        Versión <span class="font-mono">{{ version }}</span>
+      </li>
+      <li class="rounded-sm bg-success-surface px-2 py-1 text-success">Construido y en verde</li>
+      <li class="rounded-sm bg-secondary px-2 py-1 text-secondary">
+        Ficha: <span class="font-mono">08-Sistema-de-Diseno/Componentes/Select-Dropdown.md</span>
+      </li>
+    </ul>
+  </header>
+
+  <!-- ================================================ 2. Qué resuelve / cuándo no -->
+  <section class="flex flex-col gap-4" aria-labelledby="se-purpose" data-block="2-proposito">
+    <h2 id="se-purpose" class="text-h2">Qué resuelve, y cuándo NO usarlo</h2>
+    <div class="grid grid-cols-[repeat(auto-fit,minmax(20rem,1fr))] gap-4">
+      <div class="flex flex-col gap-2 rounded-md border border-default bg-surface p-4">
+        <h3 class="text-h3">Qué resuelve</h3>
+        <p>
+          Elección <strong>única</strong> sobre una lista cerrada, con panel flotante. El trigger
+          cerrado es la misma caja que <code class="font-mono">&lt;ewms-input&gt;</code> —mismas
+          alturas, padding, escala tipográfica, radio y colores de borde— porque un select casi
+          siempre está en una fila con un input y un botón, y los tres tienen que alinearse.
+        </p>
+        <p class="text-caption text-secondary">
+          El panel se posiciona con un overlay del <strong>CDK de Angular</strong>, con volteo
+          automático cuando no entra abajo.
+        </p>
+      </div>
+      <div class="flex flex-col gap-2 rounded-md border border-danger bg-danger-surface p-4">
+        <h3 class="text-h3">Cuándo NO usarlo</h3>
+        <ul class="flex flex-col gap-2">
+          <li>
+            <strong>Si son dos o tres opciones visibles de un vistazo, va Radio.</strong> Esconder
+            tres opciones detrás de un click es trabajo de más para quien completa el formulario.
+          </li>
+          <li>
+            <strong>Si el valor se puede escribir libre, va Input.</strong> Este componente no tiene
+            typeahead ni filtrado — está declarado pendiente en la ficha, y no está construido.
+          </li>
+          <li>
+            <strong>Si hay que elegir varias, todavía no existe.</strong> El multi-select con chips
+            está en la ficha como pendiente.
+          </li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================= 3. Demo principal -->
+  <section class="flex flex-col gap-4" aria-labelledby="se-demo" data-block="3-demo">
+    <h2 id="se-demo" class="text-h2">Demo principal</h2>
+    <p class="text-secondary">
+      <strong>Abrilo.</strong> Una captura de un select cerrado es una captura de un input con un
+      chevron: todo lo que este componente es —la fila activa, la seleccionada, el teclado, el
+      volteo— sólo existe con el panel arriba.
+    </p>
+    <div class="grid grid-cols-[repeat(auto-fit,minmax(24rem,1fr))] gap-6">
+      <ewms-demo-frame ground="canvas" label="Dentro de un formulario reactivo de verdad">
+        <form [formGroup]="form" class="flex flex-col gap-4" data-demo-select>
+          <ewms-select
+            formControlName="ubicacion"
+            label="Ubicación de destino"
+            placeholder="Elegí una ubicación"
+            hint="Abrilo con click, o con la flecha abajo desde el teclado."
+            [options]="options"
+          />
+          <dl class="flex flex-col gap-1 rounded-md border border-default bg-surface p-3 text-caption">
+            <div class="flex flex-wrap gap-2">
+              <dt class="text-secondary">Valor del control:</dt>
+              <dd class="font-mono text-primary" data-demo-value>{{ chosen() }}</dd>
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <dt class="text-secondary">Etiqueta correspondiente:</dt>
+              <dd class="text-primary">{{ chosenLabel() }}</dd>
+            </div>
+          </dl>
+        </form>
+      </ewms-demo-frame>
+      <ewms-prop-table [rows]="props" caption="Propiedades de <ewms-select>" />
+    </div>
+    <p class="text-caption text-secondary">
+      Lo que sube al formulario es el <code class="font-mono">value</code> de la opción, no su
+      <code class="font-mono">label</code>. <code class="font-mono">value</code> es
+      <code class="font-mono">unknown</code> a propósito: un id, un código, un miembro de un enum o un
+      objeto entero son todos legítimos, y estrecharlo obligaría a cada consumidor a un cast.
+    </p>
+  </section>
+
+  <!-- =============================================================== 4. Variantes -->
+  <section class="flex flex-col gap-4" aria-labelledby="se-variants" data-block="4-variantes">
+    <h2 id="se-variants" class="text-h2">Variantes</h2>
+    <div class="flex flex-col gap-2 rounded-md border border-strong bg-secondary p-4">
+      <h3 class="text-h4">No aplica — un solo tipo de select</h3>
+      <p>
+        No hay <code class="font-mono">variant</code>, y la ficha lo dice explícitamente. Un select
+        no tiene jerarquía de énfasis: no existe «el select primario de la pantalla».
+      </p>
+      <p class="text-caption">
+        Lo que sí varía es el <strong>panel</strong>, y ahí hay dos cosas distintas que suelen
+        confundirse. Van abajo.
+      </p>
+    </div>
+
+    <h3 class="text-h3">Seleccionada y activa son independientes</h3>
+    <div class="grid grid-cols-[repeat(auto-fit,minmax(18rem,1fr))] gap-4">
+      <div class="flex flex-col gap-2 rounded-md border border-default bg-surface p-4">
+        <h4 class="text-h4">Seleccionada</h4>
+        <p class="text-caption">
+          «Este es el valor actual»: texto en azul de acción, semibold, y un check a la derecha.
+          Sobrevive a cerrar el panel.
+        </p>
+      </div>
+      <div class="flex flex-col gap-2 rounded-md border border-default bg-surface p-4">
+        <h4 class="text-h4">Activa</h4>
+        <p class="text-caption">
+          «Acá está el teclado»: el mismo fondo <code class="font-mono">ghost-hover</code> que
+          produce el mouse, para que una lista recorrida con flechas se vea igual que una recorrida
+          con el puntero. Desaparece al cerrar.
+        </p>
+      </div>
+    </div>
+    <p class="text-caption text-secondary">
+      Una fila suele ser las dos cosas a la vez —al abrir, la activa arranca en la seleccionada— y por
+      eso se confunden. Son dos, y se pintan distinto.
+    </p>
+  </section>
+
+  <!-- ========================================================= 5. Matriz de estados -->
+  <section class="flex flex-col gap-4" aria-labelledby="se-matrix" data-block="5-matriz">
+    <h2 id="se-matrix" class="text-h2">Matriz de estados</h2>
+    <p class="text-secondary">
+      Los estados del <strong>trigger cerrado</strong>, contra los tres tamaños. Los doce son
+      entradas reales: ninguna celda está pintada con una clase.
+    </p>
+    <ewms-demo-frame ground="canvas">
+      <ewms-state-matrix
+        [variants]="states"
+        [states]="sizes"
+        rowHeader="Estado"
+        caption="Cuatro estados del trigger por tres tamaños"
+      >
+        <ng-template let-variant="variant" let-state="state">
+          <ewms-select
+            [label]="variant.label + ' ' + state.label"
+            [options]="options"
+            [size]="sizeFor(state.id)"
+            [value]="valueFor(variant.id)"
+            [error]="isError(variant.id)"
+            [disabled]="isDisabled(variant.id)"
+            placeholder="Elegí"
+          />
+        </ng-template>
+      </ewms-state-matrix>
+    </ewms-demo-frame>
+    <p class="text-caption text-secondary">
+      <strong>Faltan Focus y Open, y faltan por razones distintas.</strong> Focus, por lo mismo que
+      en el Input: el color del borde es un estilo en línea atado a una señal del componente, y una
+      clase envolvente no puede ganarle. Open, porque <em>no se puede</em>: el panel vive en un
+      overlay del CDK fuera de la tabla, y sólo hay uno.
+    </p>
+    <p class="text-caption text-secondary">
+      Open recibe además <strong>el mismo tratamiento visual que Focus</strong>, y eso no cuesta
+      nada: mientras el panel está arriba, el foco no se movió del trigger.
+    </p>
+  </section>
+
+  <!-- ================================================================ 6. Tamaños -->
+  <section class="flex flex-col gap-4" aria-labelledby="se-sizes" data-block="6-tamanos">
+    <h2 id="se-sizes" class="text-h2">Tamaños</h2>
+    <p class="text-secondary">
+      Tres alturas, <strong>un solo tamaño de chevron</strong>. Las dos cosas están medidas abajo.
+    </p>
+    <ewms-demo-frame ground="canvas">
+      <ul class="flex flex-col gap-5">
+        @for (sample of chevrons(); track sample.size) {
+          <li class="flex flex-col gap-2">
+            <span class="block max-w-96" [attr.data-chevron-sample]="sample.size">
+              <ewms-select
+                [label]="'Ubicación, tamaño ' + sample.label"
+                [options]="options"
+                [size]="sample.size"
+                value="central"
+              />
+            </span>
+            <span class="text-caption text-secondary">
+              {{ sample.label }} · trigger <span class="font-mono">{{ sample.trigger }}</span> ·
+              chevron <span class="font-mono">{{ sample.chevron }}</span>
+              @if (sample.sameChevron) {
+                · <span class="rounded-sm bg-success-surface px-1 text-success">16 px, como los otros dos</span>
+              } @else {
+                · <span class="rounded-sm bg-danger-surface px-1 text-danger">no son 16 px</span>
+              }
+            </span>
+          </li>
+        }
+      </ul>
+    </ewms-demo-frame>
+    <div class="flex flex-col gap-2 rounded-md border border-strong bg-secondary p-4">
+      <h3 class="text-h4">Por qué el chevron no crece</h3>
+      <p class="text-caption">
+        La ficha pedía 14 / 16 / 18 px, y <strong>el 14 no existe</strong>: la escala de iconos del
+        sistema es <code class="font-mono">sm</code> 16 / <code class="font-mono">md</code> 18 /
+        <code class="font-mono">lg</code> 20 / <code class="font-mono">xl</code> 24. Se fijó
+        <code class="font-mono">sm</code> en los tres, igual que el icono prefijo del Input.
+      </p>
+      <p class="text-caption">
+        La razón es la regla que la propia ficha declara: <em>«Select siempre usa la misma escala que
+        Input, para poder alinear filas de formulario mixtas»</em>. Escalar el chevron a 18 px en
+        Large rompería esa alineación justo en la fila que la regla existe para proteger.
+      </p>
+    </div>
+  </section>
+
+  <!-- ==================================================== 7. Anatomía y tokens -->
+  <section class="flex flex-col gap-4" aria-labelledby="se-anatomy" data-block="7-anatomia">
+    <h2 id="se-anatomy" class="text-h2">Anatomía y tokens</h2>
+    <p class="text-secondary">
+      Qué token controla cada parte, leído en vivo. Las alturas, el padding y la escala tipográfica
+      son las del Input —importadas, no copiadas— y el Input las toma a su vez del Botón.
+    </p>
+    <div class="overflow-x-auto">
+      <table class="w-full border-collapse text-caption">
+        <caption class="mb-2 text-left text-secondary">
+          Tokens que consume &lt;ewms-select&gt;
+        </caption>
+        <thead>
+          <tr>
+            <th scope="col" class="border-b border-default p-2 text-left text-secondary">Parte</th>
+            <th scope="col" class="border-b border-default p-2 text-left text-secondary">
+              Token, cadena y valor
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of anatomy; track row.token) {
+            <tr>
+              <th scope="row" class="border-b border-default p-2 text-left text-primary">
+                {{ row.part }}
+              </th>
+              <td class="border-b border-default p-2">
+                <ewms-token-value [token]="row.token" [swatch]="true" />
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <h3 class="text-h3">El panel: ancho y volteo</h3>
+    <ul class="flex flex-col gap-2">
+      <li>
+        <strong>El panel mide lo mismo que el trigger</strong>, y el ancho se lee al abrir, no se
+        guarda: el trigger cambia de ancho con el layout que lo rodea.
+      </li>
+      <li>
+        La lista además lleva <code class="font-mono">w-full</code>, y es estructural: la hoja
+        prebuilt del CDK hace de <code class="font-mono">.cdk-overlay-pane</code> un contenedor
+        flex, y un ítem flex se dimensiona por su contenido. Sin eso la lista salía más angosta que
+        el campo al que pertenece — que es exactamente lo que mostró el primer render de este código
+        en un navegador.
+      </li>
+      <li>
+        <strong>Voltea hacia arriba cuando no entra abajo.</strong> La lista de posiciones tiene dos
+        entradas y el CDK se queda con la primera que entra. Está probado en el E2E, cerca del borde
+        inferior.
+      </li>
+      <li>
+        Una lista larga hace scroll dentro del panel; eso <strong>no</strong> es un límite a cuántas
+        opciones se pueden pasar, cosa que la ficha prohíbe. El scroll virtual para listas de más de
+        cien está en la ficha y deliberadamente no está construido: es una optimización sin
+        consumidor todavía.
+      </li>
+    </ul>
+  </section>
+
+  <!-- ============================================== 8. Contrato para Angular -->
+  <section class="flex flex-col gap-4" aria-labelledby="se-contract" data-block="8-contrato">
+    <h2 id="se-contract" class="text-h2">Contrato para Angular</h2>
+
+    <h3 class="text-h3">Entradas</h3>
+    <p class="text-secondary">
+      Las ocho de la tabla del bloque 3. <code class="font-mono">label</code> es la única requerida
+      en el tipo.
+    </p>
+
+    <h3 class="text-h3">Salidas</h3>
+    <div class="flex flex-col gap-2 rounded-md border border-warning bg-warning-surface p-4">
+      <p>
+        <strong>Ninguna.</strong>&ngsp;<code class="font-mono">&lt;ewms-select&gt;</code> no declara
+        ningún <code class="font-mono">output()</code>: el valor viaja por
+        <code class="font-mono">ControlValueAccessor</code>, es decir por
+        <code class="font-mono">formControlName</code> o <code class="font-mono">ngModel</code>, y se
+        escucha con <code class="font-mono">valueChanges</code> del control.
+      </p>
+      <p class="text-caption">
+        Y <strong>no hay <code class="font-mono">(change)</code> nativo que se escape</strong>: acá
+        no hay <code class="font-mono">&lt;select&gt;</code> del navegador. El trigger es un
+        <code class="font-mono">&lt;button&gt;</code> y el panel una
+        <code class="font-mono">&lt;ul role="listbox"&gt;</code>, así que el evento que sí burbujea
+        —y que en el Checkbox, el Radio y el Toggle hay que frenar— acá directamente no existe.
+      </p>
+      <p class="text-caption">
+        Los otros tres controles de selección sí publican un output
+        (<code class="font-mono">(checkedChange)</code>, <code class="font-mono">(valueChange)</code>)
+        <em>además</em> del formulario, porque tienen un <code class="font-mono">&lt;input&gt;</code>
+        nativo adentro cuyo <code class="font-mono">change</code> hay que detener. El Select no tiene
+        de qué defenderse.
+      </p>
+    </div>
+
+    <h3 class="text-h3">Uso típico</h3>
+    <pre
+      class="overflow-x-auto rounded-md border border-default bg-secondary p-4 font-mono text-mono text-primary"
+    ><code>{{ snippet }}</code></pre>
+
+    <h3 class="text-h3">Accesibilidad: el teclado, y qué anuncia cada parte</h3>
+    <div class="overflow-x-auto">
+      <table class="w-full border-collapse text-caption">
+        <caption class="mb-2 text-left text-secondary">
+          El contrato de teclado, implementado una sola vez y sobre el trigger
+        </caption>
+        <thead>
+          <tr>
+            <th scope="col" class="border-b border-default p-2 text-left text-secondary">Tecla</th>
+            <th scope="col" class="border-b border-default p-2 text-left text-secondary">Cerrado</th>
+            <th scope="col" class="border-b border-default p-2 text-left text-secondary">Abierto</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <th scope="row" class="border-b border-default p-2 text-left text-primary">↓ / ↑</th>
+            <td class="border-b border-default p-2 text-primary">Abre el panel.</td>
+            <td class="border-b border-default p-2 text-primary">
+              Mueve la fila activa. <strong>No da la vuelta</strong> en los extremos: dar la vuelta
+              convierte «mantener la flecha» en un bucle sin señal de que la lista terminó.
+            </td>
+          </tr>
+          <tr>
+            <th scope="row" class="border-b border-default p-2 text-left text-primary">Enter</th>
+            <td class="border-b border-default p-2 text-primary">— (el click del botón abre)</td>
+            <td class="border-b border-default p-2 text-primary">
+              Elige la fila activa y cierra.
+            </td>
+          </tr>
+          <tr>
+            <th scope="row" class="border-b border-default p-2 text-left text-primary">Escape</th>
+            <td class="border-b border-default p-2 text-primary">—</td>
+            <td class="border-b border-default p-2 text-primary">
+              Cierra <strong>sin tocar el valor</strong>. Es descarte, y nada más.
+            </td>
+          </tr>
+          <tr>
+            <th scope="row" class="border-b border-default p-2 text-left text-primary">Tab</th>
+            <td class="border-b border-default p-2 text-primary">Sale del control.</td>
+            <td class="border-b border-default p-2 text-primary">
+              Cierra sin elegir: el foco va camino a otro lado.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="flex flex-col gap-2 rounded-md border border-warning bg-warning-surface p-4">
+      <h4 class="text-h4">Lo que NO hay, y la ficha lo declara pendiente</h4>
+      <p class="text-caption">
+        <strong>No hay Home / End</strong> y <strong>no hay tipeo para buscar</strong>. El typeahead
+        está escrito como pendiente en la ficha —«búsqueda / typeahead dentro del panel (filtrar
+        opciones al escribir)»— y Home/End nunca estuvo en el contrato. Se documenta el hueco en vez
+        de describir un teclado que el componente no tiene.
+      </p>
+    </div>
+    <ul class="flex flex-col gap-2">
+      <li>
+        <strong>El foco nunca sale del trigger.</strong> El panel no es enfocable y nada dentro de él
+        lo es; las flechas mueven una fila <em>activa</em> y
+        <code class="font-mono">aria-activedescendant</code> le dice a la tecnología asistiva cuál
+        es. Es el patrón de las ARIA Authoring Practices para un combobox de sólo selección, y hace
+        que «el foco vuelve al trigger al cerrar» sea cierto <em>por construcción</em> y no por una
+        llamada a <code class="font-mono">focus()</code> que hay que acordarse de disparar en las
+        cuatro salidas.
+      </li>
+      <li>
+        Qué anuncia cada parte: el trigger es <code class="font-mono">role="combobox"</code> con
+        <code class="font-mono">aria-haspopup="listbox"</code>; su <em>nombre</em> es el label
+        visible (por <code class="font-mono">aria-labelledby</code>) y su <em>contenido</em> es el
+        valor elegido. El panel es <code class="font-mono">role="listbox"</code> y cada fila
+        <code class="font-mono">role="option"</code> con
+        <code class="font-mono">aria-selected</code>.
+      </li>
+      <li>
+        <code class="font-mono">aria-controls</code> existe <strong>sólo mientras el panel está en
+        el documento</strong>: apuntar a un id que no existe es un valor inválido, y un atributo
+        inválido es peor que uno ausente.
+      </li>
+      <li>
+        Un click sobre una opción llama <code class="font-mono">preventDefault()</code> en
+        <code class="font-mono">mousedown</code>, porque el foco se mueve ahí, antes del click. Eso
+        es lo que mantiene <code class="font-mono">aria-activedescendant</code> con sentido.
+      </li>
+    </ul>
+
+    <h3 class="text-h3">Errores comunes</h3>
+    <ul class="flex flex-col gap-2">
+      <li>
+        <strong>Buscar un <code class="font-mono">(change)</code>.</strong> No existe, y tampoco hay
+        uno nativo escapándose: no hay <code class="font-mono">&lt;select&gt;</code> del navegador
+        acá. El valor se escucha por el formulario.
+      </li>
+      <li>
+        <strong>Esperar que <code class="font-mono">Escape</code> revierta.</strong> No revierte:
+        <em>descarta</em>. El valor que el panel estaba mostrando se queda exactamente como estaba,
+        porque cerrar no pasa ni cerca del commit.
+      </li>
+      <li>
+        <strong>Ponerle un tope de opciones.</strong> La plantilla las renderiza todas; el
+        <code class="font-mono">max-h</code> del panel es scroll, no un límite.
+      </li>
+      <li>
+        <strong>Pasar el <code class="font-mono">label</code> como
+        <code class="font-mono">value</code>.</strong> Lo que sube al formulario es
+        <code class="font-mono">value</code>; el label es sólo lo que se lee.
+      </li>
+      <li>
+        <strong>Poner <code class="font-mono">[disabled]="true"</code> y esperar que
+        <code class="font-mono">form.enable()</code> lo devuelva.</strong> No lo devuelve:
+        <code class="font-mono">isDisabled = disabled() || disabledByForm()</code>. Quien deshabilita
+        gana, y nadie re-habilita.
+      </li>
+    </ul>
+
+    <h3 class="text-h3">Bloques que no aplican</h3>
+    <p class="text-secondary">
+      Uno: <strong>variantes</strong>, porque hay un solo tipo de select. Está escrito arriba en
+      lugar de borrado.
+    </p>
+  </section>
+</article>

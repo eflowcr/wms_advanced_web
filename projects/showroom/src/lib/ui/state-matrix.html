@@ -1,0 +1,44 @@
+<!--
+  A table wider than its column scrolls sideways, and a region that scrolls
+  must be reachable by keyboard: WCAG 2.1.1, axe scrollable-region-focusable.
+  Chromium hands a scroller a tab stop by itself, which is the browser
+  patching the page; the stop is declared here so it is ours, carries the
+  focus ring, and does not depend on a browser feature.
+-->
+<div
+  class="overflow-x-auto outline-none focus-visible:shadow-(--focus-ring-shadow)"
+  tabindex="0"
+>
+  <table class="w-full border-collapse text-caption">
+    <caption class="mb-2 text-left text-secondary">{{ caption() }}</caption>
+    <thead>
+      <tr>
+        <th scope="col" class="border-b border-default p-2 text-left text-secondary">
+          {{ rowHeader() }}
+        </th>
+        @for (state of states(); track state.id) {
+          <th scope="col" class="border-b border-default p-2 text-left text-secondary">
+            {{ state.label }}
+          </th>
+        }
+      </tr>
+    </thead>
+    <tbody>
+      @for (variant of variants(); track variant.id) {
+        <tr>
+          <th scope="row" class="border-b border-default p-2 text-left text-primary">
+            {{ variant.label }}
+          </th>
+          @for (state of states(); track state.id) {
+            <td class="border-b border-default p-2 align-middle">
+              <ng-container
+                [ngTemplateOutlet]="cell()"
+                [ngTemplateOutletContext]="{ variant, state }"
+              />
+            </td>
+          }
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>

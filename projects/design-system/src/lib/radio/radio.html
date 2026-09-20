@@ -1,0 +1,36 @@
+<!--
+  Same construction as the checkbox: the <label> wraps the native control, so
+  the whole row is the hit target and the text is the accessible name with no
+  for/id pair to maintain.
+
+  The dot is a plain <span>, not an icon. It is a filled circle with no
+  geometry to it, so an <ewms-icon> would be an SVG document to draw eight
+  pixels.
+-->
+<label [class]="rowClasses()">
+  <span class="relative inline-flex">
+    <input
+      type="radio"
+      [class]="boxClasses()"
+      [style.borderWidth]="borderWidth"
+      [name]="name()"
+      [checked]="isChecked()"
+      [disabled]="isDisabled()"
+      [attr.aria-checked]="isChecked() ? 'true' : 'false'"
+      [attr.aria-label]="ariaLabel() || null"
+      (change)="onNativeChange($event)"
+      (blur)="onBlur()"
+    />
+
+    @if (isChecked()) {
+      <span [class]="glyphClasses">
+        <!-- 8x8, centred. `size-2` is two 4 px steps. -->
+        <span class="size-2 rounded-full bg-(--color-text-on-primary)"></span>
+      </span>
+    }
+  </span>
+
+  @if (label()) {
+    <span>{{ label() }}</span>
+  }
+</label>
