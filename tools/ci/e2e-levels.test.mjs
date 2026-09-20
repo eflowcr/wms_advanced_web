@@ -139,3 +139,12 @@ test('no name in the workflow carries a rule number', async () => {
 
   assert.deepEqual(numbered, []);
 });
+
+test('the workflow limits the GITHUB_TOKEN to reading, once, for every job', async () => {
+  // CodeQL (actions/missing-workflow-permissions) reports every job of a
+  // workflow that does not say. Declared at the top, so a job added later is
+  // covered without anybody remembering to.
+  const workflow = await readFile(WORKFLOW, 'utf8');
+
+  assert.match(workflow, /^permissions:\r?\n {2}contents: read\r?$/m);
+});

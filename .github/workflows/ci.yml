@@ -29,6 +29,15 @@ on:
   pull_request:
     branches: [main, development]
 
+# LEAST PRIVILEGE, DECLARED ONCE FOR EVERY JOB. Without this block the
+# GITHUB_TOKEN takes the repository's default, which may be read-write. No job
+# here writes to the repository: they check out, run, and upload artifacts --
+# and artifacts go through the runner's own token, not this one. A job that
+# one day needs more asks for it in a `permissions:` of its own, where the
+# exception is visible. Same block as codeql.yml.
+permissions:
+  contents: read
+
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
