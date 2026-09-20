@@ -170,7 +170,12 @@ jobs:
           fi
 
   e2e-smoke:
-    name: Gate 4a - Playwright smoke
+    # The NAME is the contract: `development` requires a check called exactly
+    # "Playwright smoke", so renaming this job to say which gate it is would
+    # leave the required check waiting for a report that never comes, and the
+    # PR blocked with nothing red to look at. The gate number lives in the
+    # step below, where the log shows it.
+    name: Playwright smoke
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
