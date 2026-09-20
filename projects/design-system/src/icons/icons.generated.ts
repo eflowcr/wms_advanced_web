@@ -336,6 +336,9 @@ const DATA = {
   spinner: [
     { type: 'path', d: 'M12 3a9 9 0 1 0 9 9' },
   ],
+  star: [
+    { type: 'path', d: 'M12 17.75l-6.172 3.245l1.179 -6.873l-5 -4.867l6.9 -1l3.086 -6.253l3.086 6.253l6.9 1l-5 4.867l1.179 6.873l-6.158 -3.245' },
+  ],
   sun: [
     { type: 'path', d: 'M8 12a4 4 0 1 0 8 0a4 4 0 1 0 -8 0' },
     { type: 'path', d: 'M3 12h1m8 -9v1m8 8h1m-9 8v1m-6.4 -15.4l.7 .7m12.1 -.7l-.7 .7m0 11.4l.7 .7m-12.1 -.7l-.7 .7' },
@@ -462,6 +465,7 @@ export const ICON_CATEGORIES: Readonly<Record<IconCategory, readonly IconName[]>
     'sidebar-collapse',
     'sidebar-expand',
     'spinner',
+    'star',
     'sun',
     'trash',
     'upload',

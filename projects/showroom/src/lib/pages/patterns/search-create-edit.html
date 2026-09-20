@@ -492,18 +492,42 @@
       </li>
     </ul>
 
-    <div class="flex flex-col gap-2 rounded-md border border-warning bg-warning-surface p-4">
-      <h3 class="text-h4">Lo que falta para que esto sea una pantalla de verdad</h3>
+    <div class="flex flex-col gap-2 rounded-md border border-success bg-success-surface p-4">
+      <h3 class="text-h4">Lo que DS-5 cerró de esta pantalla</h3>
       <p class="text-caption">
-        <strong>Favoritos</strong> (REQ-FE-DS4-002) está especificado y su construcción
-        <strong>diferida hasta el Security Core del backend</strong> (PLN-WMS-005, Sprint 1):
-        guardar un favorito por usuario necesita dónde guardarlo. Con él, llegar a un registro
-        frecuente costaría <strong>1 clic</strong> en vez de 2 — es el único de los cuatro
-        presupuestos que favoritos mejoraría, y está declarado, no disimulado.
+        <strong>Favoritos está construido</strong> (REQ-FE-DS4-002 v1.2). La estrella está en la
+        cabecera del App Shell, el bloque en un lugar fijo del rail, y el quinto flujo —
+        <strong>abrir un favorito, 1 clic</strong> — entró en la tabla de arriba y en la prueba que
+        cuenta. Es el único de los presupuestos que favoritos mejoraba, y ahora está medido en vez
+        de prometido.
       </p>
       <p class="text-caption">
-        <strong>La navegación principal</strong> es el App Shell (DS-5) y todavía no existe, así que
-        «desde cualquier pantalla de la aplicación» se demuestra hoy dentro de esta.
+        <strong>La navegación principal existe.</strong> «Desde cualquier pantalla de la
+        aplicación» ya no se demuestra dentro de esta: el rail y la barra inferior son de verdad, y
+        el flujo del favorito empieza en otra pantalla y termina en esta.
+      </p>
+      <p class="text-caption">
+        <strong>Y <kbd class="font-mono">Enter</kbd> guarda el formulario</strong>, que era el
+        pendiente que esta pantalla reportó contra el Botón en DS-4.
+        <code class="font-mono">type="submit"</code> llegó con
+        <code class="font-mono">'button'</code> por defecto, así que nada de lo que existía cambió.
+      </p>
+    </div>
+
+    <div class="flex flex-col gap-2 rounded-md border border-warning bg-warning-surface p-4">
+      <h3 class="text-h4">Lo que sigue sin estar</h3>
+      <p class="text-caption">
+        <strong>Los favoritos se pierden al recargar.</strong> Viven en memoria: no hay
+        almacenamiento del navegador en esta aplicación y no se abrió ninguna excepción para
+        ellos. Guardar un favorito por usuario necesita un usuario, y eso es el
+        <strong>Security Core del backend</strong> (PLN-WMS-005, Sprint 1). La limitación tiene una
+        prueba que la afirma: el día que alguien conecte el backend, esa prueba falla y obliga a
+        reescribir esto.
+      </p>
+      <p class="text-caption">
+        <strong>Las pantallas de dominio</strong> tampoco: las trece entradas de menú que no tienen
+        pantalla llevan a «En construcción», que es una página con título y encabezado, nunca un
+        404. Llegan en DS-6.
       </p>
     </div>
   </section>

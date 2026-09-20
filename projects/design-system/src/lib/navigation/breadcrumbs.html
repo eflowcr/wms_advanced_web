@@ -1,0 +1,52 @@
+<!--
+  A named <nav> around an <ol>. The chevrons are decorative and say so:
+  `aria-hidden` on each, because "chevron right" read out between every step
+  is noise, and the list already carries the order.
+-->
+<nav class="min-w-0" [attr.aria-label]="label()">
+  <ol class="flex min-w-0 list-none flex-wrap items-center gap-2">
+    @for (crumb of visible(); track $index) {
+      <li class="flex min-w-0 items-center gap-2">
+        @if (isLast(crumb)) {
+          <!--
+            The page you are on: current, and NOT a link. A link to here is a
+            link that does nothing, and it is announced as a destination.
+          -->
+          <span class="truncate text-h4 text-primary" aria-current="page">
+            {{ crumb.label }}
+          </span>
+        } @else {
+          <button
+            type="button"
+            class="truncate rounded-sm text-p text-secondary underline-offset-2 outline-none hover:text-primary hover:underline focus-visible:shadow-(--focus-ring-shadow)"
+            [attr.data-crumb]="crumb.label"
+            (click)="onSelect(crumb)"
+          >
+            {{ crumb.label }}
+          </button>
+
+          <ewms-icon name="chevron-right" size="sm" aria-hidden="true" />
+        }
+
+        @if (showsFoldAfter(crumb)) {
+          <!--
+            THE FOLD IS A BUTTON, NOT AN ELLIPSIS DRAWN ON THE PAGE.
+            Three dots that cannot be pressed tell somebody their path was
+            shortened and give them no way to see it again.
+          -->
+          <button
+            type="button"
+            class="rounded-sm px-1 text-p text-secondary outline-none hover:text-primary focus-visible:shadow-(--focus-ring-shadow)"
+            data-crumb-fold
+            [attr.aria-label]="expandLabel()(hidden())"
+            (click)="onExpand()"
+          >
+            &hellip;
+          </button>
+
+          <ewms-icon name="chevron-right" size="sm" aria-hidden="true" />
+        }
+      </li>
+    }
+  </ol>
+</nav>

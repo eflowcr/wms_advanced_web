@@ -71,6 +71,7 @@
     "help-circle": "help-circle",
     "controls": "adjustments-horizontal",
     "sidebar-collapse": "layout-sidebar-left-collapse",
-    "sidebar-expand": "layout-sidebar-left-expand"
+    "sidebar-expand": "layout-sidebar-left-expand",
+    "star": "star"
   }
 }

@@ -1,24 +1,297 @@
 <!--
-  THE ONE KEYBOARD LISTENER OF THE APPLICATION, and the sibling of the toast
-  outlet below in every way that matters: written once, on the component every
-  routed page renders inside, so that no screen has to remember to.
+  THE APP SHELL.
+
+  THE ONE KEYBOARD LISTENER OF THE APPLICATION is still the attribute on this
+  div, and the toast outlet at the bottom is still the only one. Neither was
+  duplicated when the provisional header was replaced -- `lint:shortcuts`
+  checks the first, and there is exactly one `<ewms-toast-outlet>` in the
+  repository.
 
   The attribute carries no inputs. What the engine dispatches comes from
   `EWMS_SHORTCUT_MAP`, provided by this component alongside the rest of the
   design system's tokens; a screen says what it does with an action and never
   with which key.
 -->
-<div class="app-layout" ewmsShortcutsHost>
-  <header class="app-layout__header">
-    <nav>
-      <a routerLink="/">{{ 'shell.nav.home' | transloco }}</a>
-      <a routerLink="/design-system">{{ 'shell.nav.designSystem' | transloco }}</a>
-    </nav>
+<div class="flex min-h-screen flex-col bg-canvas" ewmsShortcutsHost>
+  <!--
+    FIRST IN THE DOM, AND THAT IS THE WHOLE POINT (WCAG 2.4.1).
+
+    With a menu of sixteen destinations, a keyboard user without a skip link
+    pays the entire navigation before reaching the content, on every screen.
+    Visible only when focused, which is what `sr-only focus:not-sr-only` does.
+  -->
+  <a
+    class="sr-only rounded-sm bg-primary px-4 py-2 text-p text-on-primary focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-10"
+    href="#main"
+    data-skip-link
+    (click)="onSkip($event)"
+  >
+    {{ 'shell.skipToContent' | transloco }}
+  </a>
+
+  <!-- ================================== header, --shell-header-height tall -->
+  <header
+    class="flex h-(--shell-header-height) shrink-0 items-center gap-2 border-b border-default bg-surface px-3"
+    data-app-header
+  >
+    <!--
+      THE HAMBURGER ONLY EXISTS WHERE THE RAIL DOES. Below the breakpoint the
+      navigation is the bottom bar, and a control that collapses a rail that is
+      not on screen is a control that does nothing.
+    -->
+    @if (viewport.isWide()) {
+      <ewms-icon-button
+        icon="menu"
+        variant="ghost"
+        data-rail-toggle
+        [label]="'shell.nav.toggleMenu' | transloco"
+        [tooltip]="'shell.nav.toggleMenu' | transloco"
+        [expanded]="railExpanded()"
+        (click)="onRailExpandedChange(!railExpanded())"
+      />
+    }
+
+    <!--
+      THE WORDMARK WHERE IT FITS, THE ISOTYPE WHERE IT DOES NOT.
+
+      At 375 px the wordmark measures 145 px of a 375 px row that also has to
+      carry the star, the language, the way out and the avatar: the header
+      scrolled sideways, which is the one thing chrome must never do. Truncating
+      it to «eWMS Advan…» would be a brand rendered wrong; the isotype is the
+      answer the brand sheet already has for exactly this, and it is already in
+      `public/brand/`.
+
+      `[alt]` is bound and not written: a brand name is not translated, so it is
+      not a dictionary key (brand.ts) -- and gate 12 rejects a literal there.
+    -->
+    @if (viewport.isWide()) {
+      <span class="shrink-0 text-h3 text-primary">{{ brandName }}</span>
+    } @else {
+      <img class="h-8 w-auto shrink-0" src="/brand/ewms-isotipo.svg" [alt]="brandName" />
+    }
+
+    <!--
+      THE DESTINATION OF `/`.
+
+      A plain `<input>` and not `ewms-search-select`: there is nothing to
+      search yet -- no backend, no domains -- and a search box wired to nothing
+      that LOOKS like the real one is worse than one that plainly is not. What
+      it has to be today is a real field that the shortcut can land in, which
+      is what closes half the "five tabs to the search" gap.
+    -->
+    <!--
+      THE SEARCH FIELD IS A WIDE-SCREEN CONTROL, and dropping it below the
+      breakpoint is a decision rather than a compromise on space.
+
+      At 375 px the header has to carry the brand, the star, the language, the
+      way out and the avatar. A field as well overflows the row, and a header
+      that scrolls sideways is the one piece of chrome that must never do it.
+      What is lost is a field with nothing behind it yet -- there is no backend
+      and no domain to search -- and what `/` buys, which is a keyboard
+      affordance on a device that has no keyboard.
+
+      The day there IS something to search, the narrow layout gets a search
+      that opens over the page rather than sitting in the row. That is a screen
+      to design, not a width to squeeze.
+    -->
+    @if (viewport.isWide()) {
+      <div class="min-w-0 flex-1">
+        <label class="sr-only" for="shell-search">{{ 'shell.search.label' | transloco }}</label>
+        <input
+          #headerSearch
+          id="shell-search"
+          type="search"
+          class="h-10 w-full max-w-96 rounded-control border border-strong bg-surface px-3 text-p text-primary outline-none focus-visible:shadow-(--focus-ring-shadow)"
+          data-shell-search
+          [placeholder]="'shell.search.placeholder' | transloco"
+        />
+      </div>
+    } @else {
+      <span class="flex-1"></span>
+    }
+
+    <!-- The star of whatever page is showing. One tag, every screen. -->
+    <ewms-favorite-toggle
+      [favorite]="pageFavorite()"
+      [addLabel]="'shell.favorites.add' | transloco"
+      [removeLabel]="'shell.favorites.remove' | transloco"
+      [addedMessage]="'shell.favorites.added' | transloco"
+      [removedMessage]="'shell.favorites.removed' | transloco"
+    />
+
     <app-language-switcher />
+
+    <ewms-icon-button
+      icon="logout"
+      variant="ghost"
+      data-shell-logout
+      [label]="'shell.session.signOut' | transloco"
+      [tooltip]="'shell.session.signOut' | transloco"
+    />
+
+    <!--
+      The avatar. `aria-hidden` on the circle and the name beside it in the
+      accessible name of nothing: it is decoration over data that is already
+      written in the rail's foot. A second announcement of the same user is
+      noise.
+    -->
+    <span
+      class="flex size-10 shrink-0 items-center justify-center rounded-full bg-secondary text-h4 text-primary"
+      data-shell-avatar
+      [attr.title]="session.user().name"
+      aria-hidden="true"
+    >
+      {{ session.user().initials }}
+    </span>
   </header>
-  <main class="app-layout__content">
-    <router-outlet />
-  </main>
+
+  <!-- =========================================== rail + content + tabs -->
+  <div class="flex min-h-0 flex-1">
+    @if (viewport.isWide()) {
+      <ewms-nav-rail
+        class="shrink-0"
+        [items]="navItems()"
+        [label]="'shell.nav.mainMenu' | transloco"
+        [toggleLabel]="'shell.nav.toggleMenu' | transloco"
+        [activeId]="activeId()"
+        [expanded]="railExpanded()"
+        (itemSelect)="onNavItemSelect($event)"
+        (expandedChange)="onRailExpandedChange($event)"
+      >
+        <!--
+          THE FIXED PLACE IN THE NAVIGATION (REQ-FE-DS4-002 RFE-04). The rail
+          does not know what is in this slot; the shell does.
+        -->
+        <ewms-favorites-nav
+          navRailTop
+          ground="navy"
+          [label]="'shell.favorites.title' | transloco"
+          [emptyLabel]="'shell.favorites.empty' | transloco"
+          [expanded]="railExpanded()"
+          [activeRoute]="pageFavorite().route"
+          (favoriteSelect)="onFavoriteSelect($event)"
+        />
+
+        <!--
+          CREDENTIALS ARE DATA, NOT TEXT. «ePrac / 0001 - CEDI_ePRAC» comes from
+          `SessionContext`, which is the seat of the Security Core: when it
+          exists, this block fills from it and nothing here changes.
+        -->
+        <div navRailFooter class="flex flex-col gap-2 px-4 py-3">
+          @if (railExpanded()) {
+            <p class="text-caption" data-shell-credentials>
+              {{ session.company().code }} / {{ session.warehouse().code }} -
+              {{ session.warehouse().name }}
+            </p>
+            <img
+              class="h-6 w-auto self-start"
+              src="/brand/eprac/eprac-blanco.png"
+              [alt]="session.company().name"
+            />
+          } @else {
+            <p class="text-center text-caption" data-shell-credentials>
+              {{ session.warehouse().code }}
+            </p>
+          }
+        </div>
+      </ewms-nav-rail>
+    }
+
+    <div class="flex min-w-0 flex-1 flex-col gap-3 p-4" [class.pb-20]="!viewport.isWide()">
+      <!--
+        The open documents. The strip is empty until something is open.
+
+        WRAPPED IN A NAMED `<nav>`, and axe is the one who asked: the strip sat
+        outside every landmark, so a screen-reader user jumping by landmark
+        went from the header straight past it into the content. It IS
+        navigation -- it is how you move between the documents you have open --
+        so the landmark is the honest fix rather than a wrapper to silence a
+        rule. The `<nav>` names the REGION and the `tablist` inside names the
+        WIDGET; they say the same words because they are about the same thing.
+      -->
+      @if (tabs().length > 0) {
+        <nav [attr.aria-label]="'shell.tabs.label' | transloco">
+          <ewms-tabs
+            [tabs]="tabs()"
+            mode="document"
+            [label]="'shell.tabs.label' | transloco"
+            [activeId]="activeTabId()"
+            [scrollBackLabel]="'shell.tabs.scrollBack' | transloco"
+            [scrollForwardLabel]="'shell.tabs.scrollForward' | transloco"
+            (tabSelect)="onTabSelect($event)"
+            (tabClose)="onTabClose($event)"
+          />
+        </nav>
+      }
+
+      @if (crumbs().length > 1) {
+        <ewms-breadcrumbs
+          [items]="crumbs()"
+          [label]="'shell.breadcrumbs.label' | transloco"
+          [expandLabel]="expandCrumbsLabel"
+          (crumbSelect)="onCrumbSelect($event)"
+        />
+      }
+
+      <!--
+        `tabindex="-1"` so the skip link and the route change can put the focus
+        HERE when a page has no `h1`. Without it the focus goes nowhere and the
+        skip link moves the scroll and nothing else.
+
+        THE HEADING'S FOCUS RING IS THE SYSTEM'S, and it is styled from here
+        rather than on twenty-five headings. The focus lands on an `h1` after
+        EVERY navigation, so the browser's own outline -- whatever colour the
+        operating system happens to make it -- would be the most frequently
+        seen focus indicator in the application and the only one not from
+        tokens. `:focus` and not `:focus-visible`, deliberately: this focus is
+        always programmatic, and `:focus-visible` would hide the very case the
+        rule exists for.
+      -->
+      <main
+        #main
+        id="main"
+        class="min-w-0 flex-1 [&_h1:focus]:rounded-sm [&_h1:focus]:shadow-(--focus-ring-shadow) [&_h1:focus]:outline-none"
+        tabindex="-1"
+      >
+        <router-outlet />
+      </main>
+    </div>
+  </div>
+
+  @if (!viewport.isWide()) {
+    <!--
+      THE BOTTOM BAR (decisión del usuario, 2026-09-19). Its cost is written in
+      the component and in the sheet: the twelve second-level destinations are
+      two taps away instead of one.
+    -->
+    <ewms-nav-bottom
+      [items]="navItems()"
+      [label]="'shell.nav.mainMenu' | transloco"
+      [moreLabel]="'shell.nav.more' | transloco"
+      [closeLabel]="'shell.nav.closeMenu' | transloco"
+      [activeId]="activeId()"
+      (itemSelect)="onNavItemSelect($event)"
+    >
+      <ewms-favorites-nav
+        navBottomTop
+        ground="navy"
+        [label]="'shell.favorites.title' | transloco"
+        [emptyLabel]="'shell.favorites.empty' | transloco"
+        [activeRoute]="pageFavorite().route"
+        (favoriteSelect)="onFavoriteSelect($event)"
+      />
+    </ewms-nav-bottom>
+  }
+
+  <!--
+    THE ROUTE CHANGE, SAID OUT LOUD.
+
+    A browser announces a page change because the document was replaced. A
+    single-page application replaces nothing, so without this a screen-reader
+    user presses a menu item and hears silence. The focus moving to the `h1` is
+    the other half; this is what covers the moment before it lands.
+  -->
+  <p class="sr-only" role="status" data-route-announce>{{ routeAnnouncement() }}</p>
 
   <!--
     THE ONE TOAST OUTLET OF THE APPLICATION. There is no second one anywhere,
@@ -34,7 +307,7 @@
       success: 'shell.toast.severity.success' | transloco,
       warning: 'shell.toast.severity.warning' | transloco,
       danger: 'shell.toast.severity.danger' | transloco,
-      info: 'shell.toast.severity.info' | transloco
+      info: 'shell.toast.severity.info' | transloco,
     }"
     [regionLabel]="'shell.toast.region' | transloco"
   />

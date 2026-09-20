@@ -80,6 +80,20 @@ export class IconButton {
   readonly expanded = input<boolean | null>(null);
   readonly controlsId = input<string | null>(null);
 
+  /**
+   * Whether this button is a TWO-STATE button, and which state it is in.
+   *
+   * Added in DS-5 for `ewms-favorite-toggle`, and an input rather than an
+   * attribute on the tag for exactly the reason `expanded` is: `aria-pressed`
+   * written on `<ewms-icon-button>` lands on the custom element, which has no
+   * role and is not what anybody presses.
+   *
+   * `null` by default, so an ordinary icon button carries no `aria-pressed`
+   * at all. A button that always announces "not pressed" is a button a screen
+   * reader describes as a toggle when it is not one.
+   */
+  readonly pressed = input<boolean | null>(null);
+
   protected readonly baseClasses = BUTTON_BASE_CLASSES;
 
   protected readonly iconSize = computed(() => BUTTON_ICON_SIZES[this.size()]);

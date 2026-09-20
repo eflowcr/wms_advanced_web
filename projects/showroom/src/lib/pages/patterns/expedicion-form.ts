@@ -1,5 +1,12 @@
 import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  ElementRef,
+  inject,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import {
   Button,
@@ -70,8 +77,22 @@ export class ExpedicionForm {
   protected readonly estado = signal<string>(this.initial.estado);
   protected readonly urgente = signal(this.initial.urgente);
 
+  /** The `<form>` itself, so Ctrl+S can submit it rather than click something. */
+  private readonly form = viewChild<ElementRef<HTMLFormElement>>('form');
+
   constructor() {
-    this.shortcuts.register('save', () => this.save());
+    /*
+     * `requestSubmit()` AND NOT `save()`, since DS-5.
+     *
+     * Ctrl+S used to call the method directly, because there was no submit
+     * button to press. Now that there is one, going through the FORM is what
+     * keeps the three gestures on one path: `Enter` in a field, the button,
+     * and the shortcut all raise one `submit` event, and anything that is ever
+     * added to submission -- validation, a guard, a confirm -- applies to all
+     * three at once. `requestSubmit()` and not `click()` for the same reason:
+     * clicking a button is a way to submit, not the submission itself.
+     */
+    this.shortcuts.register('save', () => this.form()?.nativeElement.requestSubmit());
   }
 
   protected save(): void {

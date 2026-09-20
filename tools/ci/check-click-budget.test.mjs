@@ -90,8 +90,14 @@ describe('the repository itself', () => {
     assert.match(stdout, /read them rather than restating them/);
   });
 
-  it('the file it trusts really holds the four numbers', async () => {
+  it('the file it trusts really holds the numbers', async () => {
     // Otherwise the scan passes because it found nothing to look for.
+    //
+    // FIVE SINCE DS-5. «Abrir un favorito · 1» joined the four of DS-4 the day
+    // favourites were built, and it is the one budget that is not about a
+    // single screen: the star is in the App Shell's header and the block is in
+    // its rail, so the flow crosses the application. REQ-FE-DS4-003 §2.2 owns
+    // the figure, as it owns the other four.
     const source = await readFile(path.join(ROOT, BUDGET_FILE), 'utf8');
     const declared = [...source.matchAll(/export const (\w+_MAX_CLICKS) = (\d+);/g)].map(
       ([, name]) => name,
@@ -101,13 +107,19 @@ describe('the repository itself', () => {
       'CANCEL_MAX_CLICKS',
       'CREATE_MAX_CLICKS',
       'EDIT_MAX_CLICKS',
+      'OPEN_FAVORITE_MAX_CLICKS',
       'SEARCH_MAX_CLICKS',
     ]);
   });
 
   it('the end-to-end test imports them rather than typing them in', async () => {
     const source = await readFile(path.join(ROOT, BUDGET_TEST), 'utf8');
-    for (const name of ['SEARCH_MAX_CLICKS', 'CREATE_MAX_CLICKS', 'EDIT_MAX_CLICKS']) {
+    for (const name of [
+      'SEARCH_MAX_CLICKS',
+      'CREATE_MAX_CLICKS',
+      'EDIT_MAX_CLICKS',
+      'OPEN_FAVORITE_MAX_CLICKS',
+    ]) {
       assert.ok(source.includes(name), `${BUDGET_TEST} never uses ${name}`);
     }
   });

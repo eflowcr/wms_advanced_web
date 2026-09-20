@@ -299,12 +299,40 @@
 
     <h3 class="text-h3">Uso típico</h3>
     <pre
-      class="overflow-x-auto rounded-md border border-default bg-secondary p-4 font-mono text-mono text-primary"
+      class="overflow-x-auto rounded-md border border-default bg-secondary p-4 font-mono text-mono text-primary outline-none focus-visible:shadow-(--focus-ring-shadow)"
+      tabindex="0"
     ><code>{{ snippet }}</code></pre>
     <p class="text-caption text-secondary">
       El texto llega traducido desde el consumidor: el sistema de diseño no habla ningún idioma. El
       icono se pasa por nombre del catálogo cerrado, no como <code class="font-mono">string</code>.
     </p>
+
+    <h3 class="text-h3">Enviar un formulario (DS-5)</h3>
+    <div class="flex flex-col gap-2 rounded-md border border-strong bg-secondary p-4">
+      <p class="text-caption">
+        <code class="font-mono">type</code> vale <code class="font-mono">'button'</code> por
+        defecto, y eso <strong>no cambia</strong>: un botón sólo envía si alguien lo escribió a
+        propósito. Lo que se cerró en DS-5 es el costo que esa regla tenía y que apareció
+        construyendo la pantalla de ejemplo de DS-4 —
+        <strong
+          >un formulario de varios campos sin botón de envío tampoco se envía con
+          <kbd class="font-mono">Enter</kbd></strong
+        >, porque el envío implícito del navegador necesita que exista un botón de envío. Guardar
+        era el clic o <kbd class="font-mono">Ctrl</kbd>+<kbd class="font-mono">S</kbd>, y
+        <kbd class="font-mono">Enter</kbd> dentro de un campo, que es lo que hace todo el mundo, no
+        hacía nada.
+      </p>
+      <p class="text-caption">
+        Con <code class="font-mono">type="submit"</code> hay <strong>un solo camino</strong> y tres
+        maneras de entrar en él: <kbd class="font-mono">Enter</kbd> en cualquier campo, el botón, y
+        el atajo — que llama a <code class="font-mono">requestSubmit()</code> y no a
+        <code class="font-mono">click()</code>, porque pulsar un botón es una forma de enviar y no
+        el envío. Los tres levantan un <code class="font-mono">submit</code>, así que lo que se
+        agregue al envío mañana —una validación, un guard, una confirmación— les aplica a los tres.
+        El patrón anti-doble-envío no cambia: <code class="font-mono">loading</code> bloquea el
+        segundo.
+      </p>
+    </div>
 
     <h3 class="text-h3">Accesibilidad</h3>
     <ul class="flex flex-col gap-2">

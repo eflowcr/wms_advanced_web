@@ -236,8 +236,29 @@ export class KeyboardShortcuts {
      * Somebody nearer the event already answered it -- the dialog closing on
      * Escape is the case that exists today. Answering it again would cancel
      * the screen behind the dialog as well as closing the dialog.
+     *
+     * THE DETECTOR IS STILL FED, AND SKIPPING IT WAS A DEFECT (found in DS-5
+     * by walking buscar -> crear -> editar on the keyboard alone).
+     *
+     * A key somebody else consumed is still a key that HAPPENED. When a code
+     * is scanned into an `ewms-search-select`, the field's own detector
+     * resolves the scan and calls `preventDefault` on the closing Enter -- so
+     * the engine returned here and its own run was never closed. The run then
+     * sat open, four or more characters long, until the NEXT bare Enter
+     * anywhere on the page, which the engine read as a scan closing and
+     * cancelled: a focused button that could not be activated with Enter,
+     * which is a WCAG 2.1.1 failure on every screen that has a search field.
+     *
+     * The verdict is discarded on purpose -- nothing may act on a handled key.
+     * What the call buys is the bookkeeping: the Enter closes the run, an
+     * arrow breaks it, a character extends it, exactly as if the engine had
+     * been the one to answer.
      */
     if (event.defaultPrevented) {
+      this.detector.accept(event, readMilliseconds(SCAN_THRESHOLD_TOKEN));
+      // A key arriving cancels a single character still waiting, and a handled
+      // key is a key arriving. Same rule, no exception for who answered it.
+      this.cancelPending();
       this.classify(event, null, 'already-handled');
       return;
     }

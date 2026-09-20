@@ -6,16 +6,21 @@
   commit. `ngSubmit` is wired for the browsers and the cases that submit
   implicitly.
 
-  BUT THE KEYBOARD PATH IS Ctrl+S, NOT Enter, AND THAT IS A LIMITATION WORTH
-  NAMING: `ewms-button` renders `type="button"` unconditionally -- deliberately,
-  so that no button in this system ever submits a form by accident -- so this
-  form has no submit button, and a form with several fields and no submit
-  button does not submit on Enter either. Saving is therefore the click below
-  or the shortcut, and both go to the same method. Reported against the Button
-  rather than worked around with a bare <button>, which would have been a
-  second kind of button on one screen.
+  AND SINCE DS-5 `Enter` SAVES IT, which is the limitation this form reported
+  in DS-4 and the Button closed. The pending note on the Button's sheet read:
+  `ewms-button` rendered `type="button"` unconditionally -- deliberately, so
+  that nothing in this system submits by accident -- so this form had no submit
+  button, and a form with several fields and no submit button is not sent by
+  `Enter` either. Saving was the click or Ctrl+S, and `Enter` in a field, which
+  is what everybody does, did nothing.
+
+  Now there is ONE path and three ways into it: `Enter` in any field and the
+  «Guardar» button both go through the browser's own submission, and Ctrl+S
+  calls `requestSubmit()` rather than clicking anything. Three gestures, one
+  `ngSubmit`, one method -- which is what makes them impossible to drift.
 -->
 <form
+  #form
   class="flex w-full max-w-120 flex-col gap-4 rounded-dialog border border-default border-solid bg-surface p-6 shadow-dialog"
   data-expedicion-form
   (ngSubmit)="save()"
@@ -78,6 +83,12 @@
   -->
   <div class="flex w-full justify-end gap-2">
     <ewms-button variant="secondary" data-form-cancel (click)="cancel()"> Cancelar </ewms-button>
-    <ewms-button variant="primary" data-form-save (click)="save()">Guardar</ewms-button>
+    <!--
+      NO `(click)` HANDLER, AND THAT IS THE POINT. The button submits the form
+      and the form saves. A click handler beside `ngSubmit` would be a second
+      way to save, and the day one of them grew a validation step the other
+      would not have it.
+    -->
+    <ewms-button variant="primary" type="submit" data-form-save>Guardar</ewms-button>
   </div>
 </form>

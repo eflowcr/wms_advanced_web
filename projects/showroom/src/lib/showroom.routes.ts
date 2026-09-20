@@ -101,6 +101,11 @@ export const showroomRoutes: Routes = [
         loadComponent: async () => (await import('./pages/components/table')).ShowroomTable,
       },
       {
+        path: 'components/navigation',
+        loadComponent: async () =>
+          (await import('./pages/components/navigation')).ShowroomNavigation,
+      },
+      {
         path: 'components/pagination',
         loadComponent: async () =>
           (await import('./pages/components/pagination')).ShowroomPagination,

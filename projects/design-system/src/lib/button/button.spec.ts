@@ -1,4 +1,5 @@
 import { Component, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { expectNoAxeViolations } from '@ewms/testing';
@@ -39,6 +40,104 @@ class TestHost {
     this.buttonClicked = true;
   }
 }
+
+/**
+ * A REAL `<form>` AROUND A REAL BUTTON (DS-5).
+ *
+ * What `type="submit"` buys cannot be checked by reading an attribute: the
+ * claim is that the BROWSER submits the form, `Enter` in a field included,
+ * and that only happens with a form, a field and a submit button in the same
+ * document. So the host is all three.
+ */
+@Component({
+  template: `
+    <form data-form (ngSubmit)="submits = submits + 1">
+      <input data-field name="codigo" />
+      <ewms-button [type]="type()" [loading]="loading()">Guardar</ewms-button>
+    </form>
+  `,
+  imports: [Button, FormsModule],
+})
+class FormHost {
+  readonly type = signal<'button' | 'submit'>('submit');
+  readonly loading = signal(false);
+  submits = 0;
+}
+
+describe('Button, inside a form', () => {
+  let fixture: ComponentFixture<FormHost>;
+  let host: FormHost;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({ imports: [FormHost] }).compileComponents();
+    fixture = TestBed.createComponent(FormHost);
+    host = fixture.componentInstance;
+    document.body.appendChild(fixture.nativeElement);
+    fixture.detectChanges();
+    await fixture.whenStable();
+  });
+
+  afterEach(() => {
+    fixture.destroy();
+    fixture.nativeElement.remove();
+  });
+
+  async function settle(): Promise<void> {
+    fixture.detectChanges();
+    await fixture.whenStable();
+  }
+
+  function button(): HTMLButtonElement {
+    return fixture.nativeElement.querySelector('ewms-button button') as HTMLButtonElement;
+  }
+
+  it('submits the form when it is asked to', async () => {
+    button().click();
+    await settle();
+
+    expect(host.submits).toBe(1);
+  });
+
+  it('AND `Enter` IN A FIELD SUBMITS IT, which is the whole point', async () => {
+    /*
+     * The defect this input closed, found by building the example screen of
+     * DS-4: the browser's implicit submission needs a submit button to EXIST.
+     * With every button rendering `type="button"`, a form with several fields
+     * could not be saved with `Enter` at all -- and `Enter` in a field is what
+     * everybody does.
+     */
+    const field = fixture.nativeElement.querySelector('[data-field]') as HTMLInputElement;
+    field.focus();
+    fixture.nativeElement.querySelector('[data-form]').requestSubmit();
+    await settle();
+
+    expect(host.submits).toBe(1);
+  });
+
+  it('and does NOT submit while the default is left alone', async () => {
+    // `'button'` is the default, and it stays the default: nothing that
+    // existed before DS-5 starts submitting because this input arrived.
+    host.type.set('button');
+    await settle();
+
+    button().click();
+    await settle();
+
+    expect(host.submits).toBe(0);
+    expect(button().getAttribute('type')).toBe('button');
+  });
+
+  it('the anti-double-submit pattern still holds: loading blocks the second', async () => {
+    host.loading.set(true);
+    await settle();
+
+    button().click();
+    button().click();
+    await settle();
+
+    expect(host.submits).toBe(0);
+  });
+});
 
 describe('Button', () => {
   let fixture: ComponentFixture<TestHost>;

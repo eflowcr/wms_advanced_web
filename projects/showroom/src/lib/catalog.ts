@@ -88,7 +88,7 @@ const FOUNDATIONS: readonly CatalogEntry[] = [
     selector: 'ewms-icon',
     route: `${SHOWROOM_BASE}/foundations/icons`,
     status: 'ready',
-    note: 'Catálogo cerrado de 70 iconos Tabler, con el trazo compensado por tamaño.',
+    note: 'Catálogo cerrado de 71 iconos Tabler, con el trazo compensado por tamaño.',
   },
 ];
 
@@ -232,10 +232,18 @@ const COMPONENTS: readonly CatalogEntry[] = [
   {
     id: 'navigation',
     name: 'Navegación',
-    selector: null,
-    route: null,
-    status: 'documented',
-    note: 'Rail, tabs y breadcrumbs en una sola ficha. Sin construir.',
+    selector: 'ewms-nav-rail',
+    route: `${SHOWROOM_BASE}/components/navigation`,
+    status: 'ready',
+    note: 'Rail, pestañas y migas, sincronizadas y sin router. La barra inferior, con su costo escrito.',
+  },
+  {
+    id: 'favorites',
+    name: 'Favoritos',
+    selector: 'ewms-favorite-toggle',
+    route: `${SHOWROOM_BASE}/components/navigation`,
+    status: 'ready',
+    note: 'La estrella y el bloque fijo del sidebar. En memoria hasta que exista el Security Core.',
   },
   {
     id: 'split-button',

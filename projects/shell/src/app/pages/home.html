@@ -1,4 +1,8 @@
-<h1>{{ brandName }}</h1>
+<!--
+  `tabindex="-1"` and the marker: the App Shell moves the focus HERE on every
+  route change, because a browser does not do it in a single-page application.
+-->
+<h1 class="text-h1" tabindex="-1" data-page-heading>{{ brandName }}</h1>
 <p>{{ 'shell.home.intro' | transloco }}</p>
 
 <!-- PROVISIONAL: one working example of each i18n case until real screens exist (i18n.md). -->

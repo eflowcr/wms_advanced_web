@@ -1,0 +1,102 @@
+<!--
+  ONE STRIP, TWO SKINS.
+
+  The ARIA is identical in both modes, because the control is identical in
+  both: a `tablist` whose `tab`s say which one is selected. What changes is
+  paint, and paint is a class.
+-->
+<div
+  class="flex min-w-0 items-end gap-1"
+  [class.border-b]="!isDocument()"
+  [class.border-default]="!isDocument()"
+>
+  @if (showArrows()) {
+    <ewms-icon-button
+      icon="chevron-left"
+      size="sm"
+      [label]="scrollBackLabel()"
+      [tooltip]="scrollBackLabel()"
+      (click)="scrollBy(-1)"
+    />
+  }
+
+  <div
+    #strip
+    class="flex min-w-0 flex-1 items-end gap-1 overflow-x-auto"
+    role="tablist"
+    [id]="listId"
+    [attr.aria-label]="label()"
+  >
+    @for (tab of tabs(); track tab.id) {
+      <!--
+        THE TAB IS A DIRECT CHILD OF THE TABLIST, WITH NOTHING BETWEEN.
+
+        A `tablist` may own only `tab`s. The first attempt put the tab and a
+        real `ewms-icon-button` side by side inside a `role="presentation"`
+        box, which reads fine and is a critical axe violation: axe walks
+        through the presentation box and finds a `button` where only a `tab`
+        may be. A focusable close control cannot live in this list.
+
+        So the close affordance is the APG's own answer for deletable tabs: a
+        NON-FOCUSABLE glyph inside the tab for the mouse, and `Delete` for the
+        keyboard, announced by `aria-keyshortcuts` so it is discoverable rather
+        than folklore. The function is available to both, which is what WCAG
+        2.1.1 asks; what is not available is a second Tab stop per tab, and on
+        a strip of twelve documents that is a gain.
+      -->
+      <button
+        type="button"
+        role="tab"
+        class="flex shrink-0 items-center gap-2 rounded-sm outline-none focus-visible:shadow-(--focus-ring-shadow) disabled:text-disabled"
+        [class]="
+          isDocument()
+            ? (activeId() === tab.id
+                ? 'h-(--tab-height) rounded-t-md bg-surface px-3 text-h4 text-primary shadow-sm'
+                : 'h-(--tab-height) rounded-t-md bg-secondary px-3 text-p text-secondary hover:bg-secondary-hover')
+            : (activeId() === tab.id
+                ? 'border-b-2 border-strong px-3 py-2 text-h4 text-primary'
+                : 'px-3 py-2 text-p text-secondary hover:text-primary')
+        "
+        [attr.data-tab]="tab.id"
+        [attr.aria-selected]="activeId() === tab.id"
+        [attr.aria-keyshortcuts]="isClosable(tab) ? 'Delete' : null"
+        [tabindex]="activeId() === tab.id ? 0 : -1"
+        [disabled]="tab.disabled === true"
+        (click)="onSelect(tab)"
+        (keydown)="onKeydown($event, tab)"
+      >
+        <span class="max-w-60 truncate">{{ tab.label }}</span>
+
+        @if (isClosable(tab)) {
+          <!--
+            `aria-hidden`, and it is not hiding anything from anybody: what it
+            hides is a DUPLICATE of an action the keyboard already has through
+            `Delete`, from a reader that would otherwise announce it as part of
+            the tab's own name («Artículos Cerrar Artículos»).
+
+            `stopPropagation` because this sits inside the tab: without it,
+            closing would also select.
+          -->
+          <span
+            class="flex items-center rounded-sm p-1 hover:bg-secondary-hover"
+            [attr.data-tab-close]="tab.id"
+            aria-hidden="true"
+            (click)="onCloseGlyph($event, tab)"
+          >
+            <ewms-icon name="x" size="sm" />
+          </span>
+        }
+      </button>
+    }
+  </div>
+
+  @if (showArrows()) {
+    <ewms-icon-button
+      icon="chevron-right"
+      size="sm"
+      [label]="scrollForwardLabel()"
+      [tooltip]="scrollForwardLabel()"
+      (click)="scrollBy(1)"
+    />
+  }
+</div>

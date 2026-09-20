@@ -279,20 +279,49 @@ describe('the DS-4 pattern pages, driven', () => {
       expect(rows.some((text) => text?.includes('Cliente corregido'))).toBe(true);
     });
 
+    /**
+     * `element.click()` IS NOT A MOUSE CLICK, and since DS-5 the screen can
+     * tell.
+     *
+     * A click synthesised by the DOM carries `detail === 0`, exactly like the
+     * one a browser dispatches when somebody activates a control from the
+     * keyboard -- and §2.1 of REQ-FE-DS4-003 scores a keyboard activation at
+     * ZERO. The counter started ignoring those when `Enter` began submitting
+     * the example form, because otherwise the screen charged a click for a
+     * flow the standard says is free, and the screen would have been the one
+     * lying.
+     *
+     * So this spec now presses the way a person does: with a real button.
+     */
+    function mouseClick(element: HTMLElement): void {
+      element.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, detail: 1 }));
+    }
+
     it('counts a click on a control, and ignores its own scaffolding', async () => {
       const count = (): string => query('[data-click-count]')!.textContent!.trim();
 
-      query<HTMLButtonElement>('[data-new-button] button')!.click();
+      mouseClick(query<HTMLButtonElement>('[data-new-button] button')!);
       await settle();
       expect(count()).toBe('1');
 
       // The reset and the failure switch are the demo talking about itself.
-      query<HTMLButtonElement>('[data-reset-clicks]')!.click();
+      mouseClick(query<HTMLButtonElement>('[data-reset-clicks]')!);
       await settle();
       expect(count()).toBe('0');
 
-      query<HTMLButtonElement>('[data-toggle-failure]')!.click();
+      mouseClick(query<HTMLButtonElement>('[data-toggle-failure]')!);
       await settle();
+      expect(count()).toBe('0');
+    });
+
+    it('a KEYBOARD activation costs nothing, which is what the standard says', async () => {
+      const count = (): string => query('[data-click-count]')!.textContent!.trim();
+
+      // `detail: 0` is what a browser dispatches when Enter or Space activates
+      // a control. §2.1: "Tab, flechas y Enter para recorrer y activar" = 0.
+      query<HTMLButtonElement>('[data-new-button] button')!.click();
+      await settle();
+
       expect(count()).toBe('0');
     });
 

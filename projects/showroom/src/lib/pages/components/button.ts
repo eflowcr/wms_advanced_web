@@ -126,6 +126,13 @@ const PROPS: readonly PropRow[] = [
       'Oculta el contenido sin cambiar el tamaño, pone aria-busy y aria-disabled, e ignora el click. No usa el disabled nativo, para no perder el foco.',
   },
   {
+    name: 'type',
+    type: "'button' | 'submit'",
+    default: "'button'",
+    description:
+      'Con submit, dentro de un <form>, Enter en cualquier campo envía. El default no cambia nada de lo que ya existía: un botón sólo envía si alguien lo escribió a propósito.',
+  },
+  {
     name: '<ng-content>',
     type: 'texto proyectado',
     default: '—',

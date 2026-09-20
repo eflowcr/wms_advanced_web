@@ -68,14 +68,14 @@ test.describe('case B: the default dictionary does not load', () => {
     await page.unroute(ES_DICTIONARY);
     await page.getByRole('button', { name: 'Reintentar / Try again' }).click();
 
-    await expect(page.getByRole('link', { name: 'Inicio' })).toBeVisible();
+    await expect(page.getByRole('navigation', { name: 'Menú principal' })).toBeVisible();
     await expect(page.locator('#startup-failure')).toBeHidden();
   });
 
   test('the notice stays hidden when the app starts normally', async ({ page }) => {
     await page.goto('/');
 
-    await expect(page.getByRole('link', { name: 'Inicio' })).toBeVisible();
+    await expect(page.getByRole('navigation', { name: 'Menú principal' })).toBeVisible();
     await expect(page.locator('#startup-failure')).toBeHidden();
   });
 });
@@ -86,7 +86,7 @@ test.describe('case A: a dictionary other than the default does not load', () =>
   test.beforeEach(async ({ page }) => {
     await page.route(EN_DICTIONARY, (route) => route.abort());
     await page.goto('/');
-    await expect(page.getByRole('link', { name: 'Inicio' })).toBeVisible();
+    await expect(page.getByRole('navigation', { name: 'Menú principal' })).toBeVisible();
     await page.getByLabel('Idioma', { exact: true }).selectOption('en');
   });
 
@@ -99,9 +99,9 @@ test.describe('case A: a dictionary other than the default does not load', () =>
     await expect(page.locator('[data-sample="plural"]').first()).toHaveText('Sin bultos');
 
     // Still working: navigation and rendering in Spanish carry on.
-    await page.getByRole('link', { name: 'Sistema de diseño' }).click();
+    await page.getByRole('treeitem', { name: 'Sistema de diseño' }).click();
     await expect(page).toHaveURL(/\/design-system$/);
-    await page.getByRole('link', { name: 'Inicio' }).click();
+    await page.getByRole('treeitem', { name: 'Dashboard' }).click();
     await expect(page.getByText('Sin bultos')).toBeVisible();
 
     // The whole storage state of the context, serialized: the failed choice is not in it.
@@ -116,7 +116,7 @@ test.describe('case A: a dictionary other than the default does not load', () =>
     await page.unroute(EN_DICTIONARY);
     await page.getByLabel('Idioma', { exact: true }).selectOption('en');
 
-    await expect(page.getByRole('link', { name: 'Home' })).toBeVisible();
+    await expect(page.getByRole('navigation', { name: 'Main menu' })).toBeVisible();
     await expect(page.getByRole('alert')).toHaveCount(0);
     await expect(page.locator('html')).toHaveAttribute('lang', 'en');
     expect(JSON.stringify(await page.context().storageState())).toContain('"ewms.lang"');

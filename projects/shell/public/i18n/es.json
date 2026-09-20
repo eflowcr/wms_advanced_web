@@ -37,6 +37,18 @@
     }
   },
   "shell": {
+    "breadcrumbs": {
+      "expand": "Mostrar {{ hidden }} niveles ocultos",
+      "label": "Ruta de la página"
+    },
+    "favorites": {
+      "add": "Agregar a favoritos",
+      "added": "Agregado a favoritos",
+      "empty": "Marcá una pantalla con ★",
+      "remove": "Quitar de favoritos",
+      "removed": "Quitado de favoritos",
+      "title": "Favoritos"
+    },
     "home": {
       "intro": "Scaffold de la fase DS-0. Las pantallas del producto llegan más adelante.",
       "samples": {
@@ -51,9 +63,38 @@
       "label": "Idioma",
       "unavailable": "No se pudo cargar el idioma elegido. La interfaz sigue en español; vuelva a intentarlo más tarde."
     },
-    "nav": {
+    "menu": {
+      "articles": "Artículos",
+      "carriers": "Transportistas",
+      "catalogs": "Catálogos",
+      "clients": "Clientes",
+      "dashboard": "Dashboard",
       "designSystem": "Sistema de diseño",
-      "home": "Inicio"
+      "home": "Inicio",
+      "locations": "Ubicaciones",
+      "lots": "Lotes",
+      "params": "Parámetros",
+      "profiles": "Perfiles",
+      "rates": "Tarifas",
+      "serials": "Series",
+      "settings": "Configuración",
+      "suppliers": "Proveedores",
+      "units": "Unidades",
+      "users": "Usuarios",
+      "warehouses": "Almacenes"
+    },
+    "nav": {
+      "closeMenu": "Cerrar el menú",
+      "mainMenu": "Menú principal",
+      "more": "Más",
+      "toggleMenu": "Contraer o expandir el menú"
+    },
+    "search": {
+      "label": "Buscar en la aplicación",
+      "placeholder": "Buscar…"
+    },
+    "session": {
+      "signOut": "Salir"
     },
     "shortcuts": {
       "actionColumn": "Acción",
@@ -72,6 +113,13 @@
       "singleKeyOff": "(apagado)",
       "title": "Atajos de teclado"
     },
+    "skipToContent": "Saltar al contenido",
+    "tabs": {
+      "label": "Documentos abiertos",
+      "limit": "No se pueden abrir más de {{ max }} pestañas a la vez. Cerrá alguna para abrir otra.",
+      "scrollBack": "Ver las pestañas anteriores",
+      "scrollForward": "Ver las pestañas siguientes"
+    },
     "toast": {
       "region": "Notificaciones",
       "severity": {
@@ -80,6 +128,10 @@
         "success": "Éxito",
         "warning": "Advertencia"
       }
+    },
+    "underConstruction": {
+      "body": "La navegación ya es la definitiva. La pantalla llega con su dominio; mientras tanto, esta página existe para que el menú no lleve a ningún sitio roto.",
+      "title": "Esta pantalla todavía no está construida"
     }
   }
 }

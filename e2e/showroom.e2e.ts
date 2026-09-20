@@ -15,61 +15,26 @@ import { expect, test, type Page } from '@playwright/test';
  * into this file is only what has a pass and a fail.
  */
 
-const BUTTON = '/design-system/components/button';
-const SPACING = '/design-system/foundations/spacing';
-const TEXT = '/design-system/components/text';
-const ICON_BUTTON = '/design-system/components/icon-button';
-const TOOLTIP = '/design-system/components/tooltip';
-const INPUT = '/design-system/components/input';
-const SELECT = '/design-system/components/select';
-const CHECKBOX = '/design-system/components/checkbox';
-const RADIO = '/design-system/components/radio';
-const TOGGLE = '/design-system/components/toggle';
-const BANNER = '/design-system/components/banner';
-const TOAST = '/design-system/components/toast';
-const CARD = '/design-system/components/card';
-const DIALOG = '/design-system/components/dialog';
-const SEARCH_SELECT = '/design-system/components/search-select';
-const TABLE = '/design-system/components/table';
-const PAGINATION = '/design-system/components/pagination';
-const KEYBOARD = '/design-system/patterns/keyboard';
-const SEARCH_CREATE_EDIT = '/design-system/patterns/search-create-edit';
-
-/**
- * Every navigable route. Twenty-four since DS-4: the twenty-two of DS-3 plus
- * the two pattern pages, which is what "nothing built is undocumented" looks
- * like when it is a test rather than a promise.
- *
- * Adding a route here is what subjects it to the four checks below that every
- * page owes: its heading renders, it does not scroll sideways at 1440 or 1280,
- * axe finds nothing, and Tab reaches every control exactly once.
- */
-const PAGES = [
-  { url: '/design-system', heading: 'Showroom del sistema de diseño' },
-  { url: '/design-system/foundations/brand', heading: 'Marca' },
-  { url: '/design-system/foundations/colors', heading: 'Color' },
-  { url: '/design-system/foundations/typography', heading: 'Tipografía' },
-  { url: SPACING, heading: 'Espaciado, radios y elevación' },
-  { url: '/design-system/foundations/icons', heading: 'Iconografía' },
-  { url: BUTTON, heading: 'Botón' },
-  { url: TEXT, heading: 'Texto' },
-  { url: ICON_BUTTON, heading: 'Icon Button' },
-  { url: TOOLTIP, heading: 'Tooltip' },
-  { url: INPUT, heading: 'Input' },
-  { url: SELECT, heading: 'Select / Dropdown' },
-  { url: CHECKBOX, heading: 'Checkbox' },
-  { url: RADIO, heading: 'Radio' },
-  { url: TOGGLE, heading: 'Toggle' },
-  { url: BANNER, heading: 'Banner' },
-  { url: TOAST, heading: 'Toast' },
-  { url: CARD, heading: 'Card' },
-  { url: DIALOG, heading: 'Dialog' },
-  { url: SEARCH_SELECT, heading: 'Selector con búsqueda' },
-  { url: TABLE, heading: 'Tabla de datos' },
-  { url: PAGINATION, heading: 'Paginación' },
-  { url: KEYBOARD, heading: 'Atajos de teclado' },
-  { url: SEARCH_CREATE_EDIT, heading: 'Buscar, crear, editar' },
-] as const;
+import {
+  PAGES,
+  BANNER,
+  BUTTON,
+  CARD,
+  CHECKBOX,
+  DIALOG,
+  ICON_BUTTON,
+  INPUT,
+  PAGINATION,
+  RADIO,
+  SEARCH_SELECT,
+  SELECT,
+  SPACING,
+  TABLE,
+  TEXT,
+  TOAST,
+  TOGGLE,
+  TOOLTIP,
+} from './routes';
 
 /** Fonts change every width measured, so nothing is measured before they land. */
 async function ready(page: Page): Promise<void> {
@@ -118,8 +83,14 @@ test.describe('the showroom renders and is reachable', () => {
     const total = await links.count();
     expect(total).toBeGreaterThan(20);
 
+    /*
+     * TWO SINCE DS-5, AND THAT IS THE SEARCH WORKING: «Toggle» matches by NAME
+     * and «Favoritos» by its SELECTOR, `ewms-favorite-toggle`. Narrowing the
+     * query to keep the number at one would test a coincidence instead of the
+     * behaviour.
+     */
     await search.fill('toggle');
-    await expect(links).toHaveCount(1);
+    await expect(links).toHaveCount(2);
 
     // The selector is searchable too: it is what you type in a template.
     await search.fill('ewms-select');
@@ -641,14 +612,26 @@ const MAX_TABS = 300;
  * so from the showroom's own first stop it is the second one, and that is the
  * number the showroom controls.
  *
- * The document number is five, and the three extra stops are the shell's
- * PROVISIONAL header -- `Home`, `Design system` and the language switcher.
- * Replacing that header is the App Shell, DS-5, which this work explicitly
- * does not build. So the number is asserted as measured rather than as
- * wished: it cannot get worse without this failing, and the gap between five
- * and the three the comanda asks for is reported, not papered over.
+ *
+ * THE DOCUMENT NUMBER, AND HOW DS-5 CLOSED IT (2026-09-19)
+ *
+ * DS-2 measured FIVE from the top of the document and reported the gap: the
+ * comanda asks for three, and three of the five were the shell's provisional
+ * header. DS-5 replaced that header with the real App Shell -- which has MORE
+ * chrome, not less: a rail, a tab strip, a trail, a star, a search of its own.
+ * Counting raw Tab presses, the catalogue search is now the twelfth stop.
+ *
+ * What closes the gap is not a shorter header. It is the SKIP LINK, which is
+ * the first thing in the document and lands on `<main>`: Tab, Enter, and then
+ * the two stops the showroom owns. THREE, which is the comanda's number, and
+ * the route a keyboard user actually takes on every screen rather than on this
+ * one.
+ *
+ * The raw count is asserted too, so the chrome cannot grow unnoticed. It is a
+ * ceiling, not a target: what has to stay small is the number below.
  */
-const TABS_TO_SEARCH_IN_DOCUMENT = 5;
+const TABS_TO_SEARCH_VIA_SKIP_LINK = 3;
+const TABS_TO_SEARCH_IN_DOCUMENT = 12;
 const TABS_TO_SEARCH_IN_SHOWROOM = 2;
 
 /**
@@ -740,6 +723,36 @@ async function stampFocusable(page: Page): Promise<Stamped> {
       ) {
         continue;
       }
+
+      /*
+       * A ROVING MEMBER OF A COMPOSITE WIDGET IS NOT A MISSING TAB STOP.
+       *
+       * `tabindex="-1"` on a button is normally the bug this walk exists to
+       * find: visible, enabled, and unreachable. Inside a `tree`, a `tablist`
+       * or a `treegrid` it is the opposite -- it is the APG pattern, where the
+       * whole widget is ONE stop and the arrows do the rest. The rail carries
+       * sixteen destinations; a Tab stop each would cost sixteen presses to
+       * get past the navigation on every screen.
+       *
+       * This does not soften the rule. A `tabindex="-1"` button OUTSIDE a
+       * composite still fails, and the new assertion below is stricter than
+       * what was here before: each composite must have EXACTLY ONE stop.
+       */
+      /*
+       * `tree` and `tablist` ONLY, and not `treegrid`. A grid's keyboard model
+       * is different: its cells legitimately hold controls of their own, and
+       * the Table's sheet has thirty-five of them. Adding it here would have
+       * excused a genuinely unreachable button inside a cell, which is the
+       * defect this walk exists to find.
+       */
+      const composite = el.closest('[role="tree"],[role="tablist"]');
+      if (composite !== null && tabindex !== null && Number(tabindex) < 0) {
+        roving.push(String(n));
+        labels[String(n)] = name(el);
+        el.setAttribute('data-kbd', String(n));
+        n += 1;
+        continue;
+      }
       if (el instanceof HTMLInputElement && el.type === 'hidden') {
         continue;
       }
@@ -803,7 +816,15 @@ async function readFocus(page: Page): Promise<TabStop> {
       boxShadow: style.boxShadow,
       outlineStyle: style.outlineStyle,
       outlineWidth: style.outlineWidth,
-      inShowroom: !el.closest('.app-layout__header'),
+      /*
+       * The showroom owns the catalogue; the App Shell owns the frame around
+       * it. Before DS-5 the frame was one provisional header with a class of
+       * its own; now it is a header, a rail, a tab strip and a trail, so the
+       * question is asked of all four.
+       */
+      inShowroom: !el.closest(
+        '[data-app-header], [data-skip-link], ewms-nav-rail, ewms-nav-bottom, ewms-tabs, ewms-breadcrumbs',
+      ),
     };
   });
 }
@@ -900,6 +921,30 @@ test.describe('keyboard only', () => {
       ).toEqual([]);
 
       /*
+       * A COMPOSITE WIDGET IS ONE TAB STOP. NOT TWO, AND NOT NONE.
+       *
+       * The counterpart of treating roving members as expected-not-to-be-
+       * stops: if a `tree` or a `tablist` is on the page, exactly one of its
+       * members must be in the tab order. None means the whole widget is
+       * unreachable; two means the roving tabindex is broken and it has
+       * started costing a stop per member again.
+       */
+      const composites = await page.evaluate(() =>
+        Array.from(document.querySelectorAll('[role="tree"],[role="tablist"]'))
+          .filter((widget) => (widget as HTMLElement).offsetParent !== null)
+          .map((widget) => ({
+            name: widget.getAttribute('aria-label') ?? widget.getAttribute('role') ?? '?',
+            stops: Array.from(
+              widget.querySelectorAll('[data-kbd]:not([tabindex="-1"])'),
+            ).length,
+          })),
+      );
+      expect(
+        composites.filter((widget) => widget.stops !== 1),
+        `${url}: a composite widget is not exactly one tab stop`,
+      ).toEqual([]);
+
+      /*
        * WCAG 2.4.7: every stop has to SHOW that it has the focus.
        *
        * BOX-SHADOW **OR** OUTLINE, and the difference is deliberate rather
@@ -956,9 +1001,59 @@ test.describe('keyboard only', () => {
   }
 
   /**
+   * THE SKIP LINK IS THE ROUTE TO THE SEARCH, AND IT COSTS THREE.
+   *
+   * The comanda asks for the catalogue search within three Tab presses. Before
+   * DS-5 it was five and the gap was reported; the App Shell has more chrome
+   * than the provisional header did, so the raw count went up rather than
+   * down. The skip link is what makes the number true: first in the document,
+   * lands on `<main>`, and from there the search is the showroom's own two.
+   *
+   * The skip link deliberately targets `main` and NOT the page's `h1`: on this
+   * page the heading sits after the sidebar, so landing on it would take you
+   * PAST the search you were skipping to.
+   */
+  test('the skip link puts the catalogue search three Tab presses away', async ({ page }) => {
+    await page.goto('/design-system');
+    await expect(page.getByRole('heading', { level: 1 }).first()).toBeVisible();
+    await ready(page);
+
+    await stampFocusable(page);
+
+    // One Tab from the top of the document: the skip link, and nothing before.
+    await page.evaluate(() => {
+      (document.activeElement as HTMLElement | null)?.blur();
+      document.body.setAttribute('tabindex', '-1');
+      document.body.focus();
+      document.body.removeAttribute('tabindex');
+    });
+    await page.keyboard.press('Tab');
+    await expect(page.locator('[data-skip-link]')).toBeFocused();
+
+    // Enter, and then count to the search.
+    await page.keyboard.press('Enter');
+    let presses = 1;
+    for (let i = 0; i < 6; i += 1) {
+      await page.keyboard.press('Tab');
+      presses += 1;
+      const isSearch = await page.evaluate(
+        () => document.activeElement?.id === 'showroom-search',
+      );
+      if (isSearch) {
+        break;
+      }
+    }
+
+    await expect(page.locator('#showroom-search')).toBeFocused();
+    expect(presses, 'Tab presses from the top of the document via the skip link').toBeLessThanOrEqual(
+      TABS_TO_SEARCH_VIA_SKIP_LINK,
+    );
+  });
+
+  /**
    * The sidebar must not be a wall you tab through to reach the search. The
-   * search sits ABOVE the catalogue links for exactly this reason, so the
-   * only stops before it are the shell's provisional header.
+   * search sits ABOVE the catalogue links for exactly this reason, so from the
+   * showroom's own first stop it is the second.
    */
   test('the sidebar is not a wall in front of the catalogue search', async ({ page }) => {
     await page.goto('/design-system');
@@ -972,7 +1067,9 @@ test.describe('keyboard only', () => {
 
     expect(index, `the search was never reached by Tab. Order: ${chain}`).toBeGreaterThanOrEqual(0);
 
-    // From the top of the document, shell header included.
+    // From the top of the document, the App Shell's whole chrome included.
+    // A ceiling rather than a target: the route that matters is the skip
+    // link's, asserted above.
     expect(
       index + 1,
       `tabs to the search: ${stops
@@ -1948,6 +2045,20 @@ test.describe('DS-3 lote D: detalle, menú, ventana y paginador', () => {
   });
 
   test('a filter field IS a compact row tall, and a narrow range stacks', async ({ page }) => {
+    /*
+     * A WIDER VIEWPORT THAN THE DEFAULT, AND THE REASON IS THE APP SHELL.
+     *
+     * What is under test is the COMPONENT's rule: an `md` column fits two
+     * boxes side by side and an `sm` one stacks them. From DS-5 the catalogue
+     * renders inside the App Shell, whose rail takes 232 px of the width, and
+     * at 1280 the date column stopped being wide enough -- so the date range
+     * stacked too and the test failed having proved the component right.
+     *
+     * Giving it the room the assertion is about is not weakening it: the
+     * stacking half is asserted on the SAME page at the SAME width, on a
+     * column that is narrow by declaration rather than by accident.
+     */
+    await page.setViewportSize({ width: 1600, height: 900 });
     await page.goto(TABLE);
     await ready(page);
 

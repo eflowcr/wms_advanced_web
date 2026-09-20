@@ -75,7 +75,7 @@ const PROPS: readonly PropRow[] = [
     type: 'IconName',
     default: '— (requerido)',
     description:
-      'Nombre del catálogo cerrado de 70 iconos. Uno fuera de la lista no compila. Va aria-hidden: el nombre lo da label.',
+      'Nombre del catálogo cerrado de 71 iconos. Uno fuera de la lista no compila. Va aria-hidden: el nombre lo da label.',
   },
   {
     name: 'label',

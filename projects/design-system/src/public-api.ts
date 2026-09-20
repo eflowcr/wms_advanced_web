@@ -204,3 +204,59 @@ export {
   type ShortcutHelpMessages,
   type ShortcutMap,
 } from './lib/keyboard/shortcuts.types';
+
+/*
+ * Navigation (DS-5). The three pieces the App Shell is assembled from, and the
+ * fourth that replaces the rail on a narrow screen.
+ *
+ * NONE OF THEM KNOWS THE ROUTER. They take items, say which one is current,
+ * and emit what was chosen; the shell, which is the only thing that knows what
+ * a route means, navigates. That is what lets the showroom demonstrate a live
+ * navigation tree with no router in the page, and what keeps a second
+ * application from inheriting this one's route tree.
+ *
+ * `Viewport` is exported because the shell has to ask the same question the
+ * navigation asks -- are we above the breakpoint? -- and two answers to it
+ * would let the bar and the rail be on screen at once.
+ */
+export { NavRail } from './lib/navigation/nav-rail';
+export { NavBottom, BOTTOM_NAV_SLOTS } from './lib/navigation/nav-bottom';
+export { Tabs, type TabsMode } from './lib/navigation/tabs';
+export { Breadcrumbs } from './lib/navigation/breadcrumbs';
+export { Viewport, NAV_BOTTOM_BREAKPOINT_TOKEN } from './lib/navigation/viewport';
+export {
+  CRUMB_FOLD_THRESHOLD,
+  foldCrumbs,
+  isGroup,
+  parentOf,
+  visibleItems,
+  type Crumb,
+  type NavItem,
+  type Tab,
+} from './lib/navigation/navigation.types';
+
+/*
+ * Favourites (DS-5, REQ-FE-DS4-002 v1.2).
+ *
+ * `EWMS_FAVORITES_STORE` is an injection token the library defines and does
+ * not implement, like the table's messages and the shortcut map. What DOES
+ * ship is `InMemoryFavoritesStore`, for the reason `ArrayTableSource` ships:
+ * the shell and the showroom both need it, and "an array in a field" written
+ * twice is two things that drift. A backend implementation is a different
+ * matter and will not live here.
+ *
+ * The list is in memory and IS LOST ON RELOAD. That is the accepted cost of
+ * the user's decision of 2026-09-19, it opens no ESLint exception, and it ends
+ * when the Security Core exists (PLN-WMS-005, Sprint 1). An end-to-end test
+ * asserts the loss, so the day somebody connects a backend the test fails and
+ * forces the documents to be updated.
+ */
+export { Favorites } from './lib/favorites/favorites';
+export { FavoriteToggle } from './lib/favorites/favorite-toggle';
+export { FavoritesNav, FAVORITES_SHOWN } from './lib/favorites/favorites-nav';
+export { InMemoryFavoritesStore } from './lib/favorites/in-memory-favorites-store';
+export {
+  EWMS_FAVORITES_STORE,
+  type Favorite,
+  type FavoritesStore,
+} from './lib/favorites/favorites.types';

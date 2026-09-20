@@ -292,6 +292,24 @@ export class ShowroomSearchCreateEdit {
    * cost a click.
    */
   private countClick(event: Event): void {
+    /*
+     * A KEYBOARD ACTIVATION IS NOT A CLICK, and `detail === 0` is how the DOM
+     * says so: a click that came from a pointer carries the number of the
+     * press, and one synthesised by activating a control from the keyboard
+     * carries zero.
+     *
+     * It started to matter in DS-5. Until then the form had no submit button,
+     * so `Enter` in a field did nothing and there was no synthetic click to
+     * mistake for a real one. Now `Enter` submits -- the browser dispatches a
+     * click on the submit button to do it -- and without this line the counter
+     * charged a click for a flow that §2.1 of REQ-FE-DS4-003 scores at ZERO.
+     * The screen would have been the one lying, which is the single thing the
+     * showroom exists not to do.
+     */
+    if (event instanceof MouseEvent && event.detail === 0) {
+      return;
+    }
+
     const target = event.target as Element | null;
     if (target === null || typeof target.closest !== 'function') {
       return;
