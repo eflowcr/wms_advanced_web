@@ -88,3 +88,75 @@ test('the three levels exist in the Playwright configuration', async () => {
   // The number that forced the split: one worker is what it must never be again.
   assert.match(config, /workers: CI \? 4 : undefined/);
 });
+
+/**
+ * THE JOB NAMES THE RULESET ALREADY REQUIRES, COPIED LETTER FOR LETTER.
+ *
+ * The ruleset «Protect» requires checks by name, and GitHub takes the name
+ * from a job's `name:`. A required check nobody reports does not fail -- it
+ * waits forever, and the pull request is blocked with nothing red to look at.
+ * It happened twice: 3dab2a3, and again on the DS-5 closing PR.
+ *
+ * THESE ARE INPUTS, NOT CHOICES. The ruleset lives in GitHub and editing it
+ * needs admin rights this team does not have (checked 2026-09-20: `push`, no
+ * `admin`). Renaming a job here does not rename the requirement; it orphans
+ * it. So this list is what GitHub asks for, and the test exists to make a
+ * well-meant rename fail HERE -- inside `verify`, on the pull request -- and
+ * not as a merge button nobody can press.
+ *
+ * Read from the ruleset on 2026-09-20 (three of ci.yml's; `Analyze (actions)`
+ * and `Analyze (javascript-typescript)` are codeql.yml's and are not listed).
+ */
+const REQUIRED_JOB_NAMES = {
+  verify: 'Types, lint, tests, budgets',
+  smoke: 'Playwright smoke',
+  secrets: 'Gitleaks',
+};
+
+/** The block of one job, from its id to the next job at the same indent. */
+async function job(id) {
+  const workflow = await readFile(WORKFLOW, 'utf8');
+  const block = workflow.match(new RegExp(`^ {2}${id}:\\r?\\n(?:(?: {3,}.*)?\\r?\\n)+`, 'm'));
+  assert.ok(block, `ci.yml no declara el job \`${id}\``);
+  return block[0];
+}
+
+test('every job the ruleset requires is named exactly as the ruleset asks', async () => {
+  for (const [id, name] of Object.entries(REQUIRED_JOB_NAMES)) {
+    assert.match(
+      await job(id),
+      new RegExp(`^ {4}name: ${name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\r?$`, 'm'),
+      `el job \`${id}\` debe llamarse «${name}», que es lo que exige el ruleset`,
+    );
+  }
+});
+
+test('the showroom verdict always reports, so it can be required one day', async () => {
+  const block = await job('showroom');
+
+  // The one name that is ours: the ruleset does not ask for it yet.
+  assert.match(block, /^ {4}name: Playwright showroom\r?$/m);
+  // A job with a conditional `if:` is SKIPPED when it is false, and a skipped
+  // required check is not a passing one to GitHub.
+  assert.match(block, /^ {4}if: \$\{\{ always\(\) \}\}$/m);
+});
+
+test('no name in the workflow carries a rule number', async () => {
+  // The numbers live in the vault, where a rule can be cited. Here they made
+  // renumbering a rule the same thing as renaming a required check.
+  const workflow = await readFile(WORKFLOW, 'utf8');
+  const numbered = [...workflow.matchAll(/^\s*(?:- )?name: .*\bGate\b.*$/gim)].map((m) =>
+    m[0].trim(),
+  );
+
+  assert.deepEqual(numbered, []);
+});
+
+test('the workflow limits the GITHUB_TOKEN to reading, once, for every job', async () => {
+  // CodeQL (actions/missing-workflow-permissions) reports every job of a
+  // workflow that does not say. Declared at the top, so a job added later is
+  // covered without anybody remembering to.
+  const workflow = await readFile(WORKFLOW, 'utf8');
+
+  assert.match(workflow, /^permissions:\r?\n {2}contents: read\r?$/m);
+});

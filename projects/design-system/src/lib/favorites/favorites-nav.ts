@@ -1,8 +1,19 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
 import { Icon } from '../icon/icon';
 import { Tooltip } from '../tooltip/tooltip';
+import type { IconName } from '../../icons/icons.generated';
 import { Favorites } from './favorites';
-import type { Favorite } from './favorites.types';
+import { EWMS_FAVORITE_LABELS, type Favorite } from './favorites.types';
+
+/** A favourite as the block draws it: the stored route, and its resolved words. */
+interface FavoriteRow {
+  readonly favorite: Favorite;
+  readonly label: string;
+  readonly icon: IconName;
+}
+
+/** A route nobody can name still gets an icon, and it is the block's own. */
+const NEUTRAL_ICON: IconName = 'star';
 
 /**
  * How many favourites the block shows.
@@ -80,8 +91,27 @@ export class FavoritesNav {
   readonly favoriteSelect = output<Favorite>();
 
   private readonly favorites = inject(Favorites);
+  private readonly labels = inject(EWMS_FAVORITE_LABELS);
 
-  protected readonly shown = computed(() => this.favorites.list().slice(0, FAVORITES_SHOWN));
+  /**
+   * THE NAME IS RESOLVED HERE, AT THE MOMENT OF DRAWING, and that is the whole
+   * of REQ-FE-DS4-002 v1.3. `labelFor(route)()` is read inside the computed,
+   * so a language switch repaints the block without anybody telling it to.
+   *
+   * A ROUTE THAT NO LONGER RESOLVES SHOWS ITSELF. A screen that was removed
+   * leaves a favourite behind; an empty row would be a button nobody can
+   * identify, and an error would punish the user for our rename.
+   */
+  protected readonly shown = computed<readonly FavoriteRow[]>(() =>
+    this.favorites
+      .list()
+      .slice(0, FAVORITES_SHOWN)
+      .map((favorite) => ({
+        favorite,
+        label: this.labels.labelFor(favorite.route)() || favorite.route,
+        icon: favorite.icon ?? this.labels.iconFor(favorite.route) ?? NEUTRAL_ICON,
+      })),
+  );
 
   protected onSelect(favorite: Favorite): void {
     this.favoriteSelect.emit(favorite);

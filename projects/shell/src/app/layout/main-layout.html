@@ -112,7 +112,7 @@
 
     <!-- The star of whatever page is showing. One tag, every screen. -->
     <ewms-favorite-toggle
-      [favorite]="pageFavorite()"
+      [route]="pageRoute()"
       [addLabel]="'shell.favorites.add' | transloco"
       [removeLabel]="'shell.favorites.remove' | transloco"
       [addedMessage]="'shell.favorites.added' | transloco"
@@ -168,7 +168,7 @@
           [label]="'shell.favorites.title' | transloco"
           [emptyLabel]="'shell.favorites.empty' | transloco"
           [expanded]="railExpanded()"
-          [activeRoute]="pageFavorite().route"
+          [activeRoute]="pageRoute()"
           (favoriteSelect)="onFavoriteSelect($event)"
         />
 
@@ -277,7 +277,7 @@
         ground="navy"
         [label]="'shell.favorites.title' | transloco"
         [emptyLabel]="'shell.favorites.empty' | transloco"
-        [activeRoute]="pageFavorite().route"
+        [activeRoute]="pageRoute()"
         (favoriteSelect)="onFavoriteSelect($event)"
       />
     </ewms-nav-bottom>

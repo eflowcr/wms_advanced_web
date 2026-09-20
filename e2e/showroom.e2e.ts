@@ -119,6 +119,88 @@ test.describe('the showroom renders and is reachable', () => {
 });
 
 /**
+ * FAVOURITES, ACROSS THE SHELL AND THE CATALOGUE (DS-5 closing).
+ *
+ * Here and not in `smoke`, which is capped at twelve tests: what these defend
+ * is a contract -- one list, and a route as the identity -- and every change
+ * that can break it touches `design-system/`, `showroom/` or the shell's
+ * layout, which is exactly when this project runs.
+ *
+ * A Spanish browser, so the first name on screen is the Spanish one and the
+ * switch to English is the event under test rather than the starting point.
+ */
+test.describe('favourites: one list, and the route as the identity', () => {
+  test.use({ locale: 'es-CR' });
+
+  /**
+   * ONE LIST OF FAVOURITES PER APPLICATION.
+   *
+   * The defect this closes: the showroom provided `EWMS_FAVORITES_STORE` a
+   * second time, so a catalogue page had two stars over two lists, and marking
+   * it in one left the other empty. State is provided once, by the shell; the
+   * catalogue reads it by injection, the way it reads `EWMS_SHORTCUT_MAP`.
+   */
+  test('a catalogue page has ONE star, and the rail and the sidebar agree', async ({ page }) => {
+    const route = '/design-system/components/button';
+    await page.goto(route);
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+
+    // Exactly one two-state button on the page, and it is the header's.
+    const star = page.locator('[aria-pressed]');
+    await expect(star).toHaveCount(1);
+    await expect(page.locator('[data-app-header] [aria-pressed]')).toHaveCount(1);
+
+    const inRail = page.locator(`ewms-nav-rail [data-favorite="${route}"]`);
+    const inSidebar = page.locator(`[data-sidebar] [data-favorite="${route}"]`);
+
+    await star.click();
+    await expect(star).toHaveAttribute('aria-pressed', 'true');
+    await expect(inRail).toHaveCount(1);
+    await expect(inSidebar).toHaveCount(1);
+    // Each block names it in its own words, and neither shows a bare path.
+    await expect(inSidebar).toHaveText('Botón');
+    await expect(inRail).not.toContainText('/design-system');
+
+    await star.click();
+    await expect(star).toHaveAttribute('aria-pressed', 'false');
+    await expect(inRail).toHaveCount(0);
+    await expect(inSidebar).toHaveCount(0);
+  });
+
+  /**
+   * A FAVOURITE IS A ROUTE (REQ-FE-DS4-002 v1.3).
+   *
+   * Until then it stored the name it had when it was marked, already
+   * translated, so «Artículos» stayed «Artículos» in English -- a list half
+   * translated, which is what ADR 0008 exists to prevent. Nothing is reloaded
+   * and nothing is marked again below: the only thing that changes is the
+   * language, and the name is resolved when the block draws.
+   */
+  test('a favourite follows the language, in the rail and in the catalogue', async ({ page }) => {
+    await page.goto('/');
+    await page.locator('[data-nav-item="catalogs"]').click();
+    await page.locator('[data-nav-item="articles"]').click();
+    await page.locator('[data-app-header] [data-favorite-toggle] button').click();
+
+    const inRail = page.locator('ewms-nav-rail [data-favorite="/catalogos/articulos"]');
+    await expect(inRail).toHaveText('Artículos');
+
+    await page.locator('#language-switcher').selectOption('en');
+    await expect(inRail).toHaveText('Articles');
+
+    // The catalogue's sidebar reads the SAME list and asks the application for
+    // the name, so it follows too -- inside a catalogue that is Spanish only.
+    await page.locator('[data-nav-item="design-system"]').click();
+    const inSidebar = page.locator('[data-sidebar] [data-favorite="/catalogos/articulos"]');
+    await expect(inSidebar).toHaveText('Articles');
+
+    await page.locator('#language-switcher').selectOption('es');
+    await expect(inSidebar).toHaveText('Artículos');
+    await expect(inRail).toHaveText('Artículos');
+  });
+});
+
+/**
  * PENDING SINCE PR 1, NUMBER ONE.
  *
  * The whole reason the Loading state hides its content with `visibility` and
@@ -934,9 +1016,7 @@ test.describe('keyboard only', () => {
           .filter((widget) => (widget as HTMLElement).offsetParent !== null)
           .map((widget) => ({
             name: widget.getAttribute('aria-label') ?? widget.getAttribute('role') ?? '?',
-            stops: Array.from(
-              widget.querySelectorAll('[data-kbd]:not([tabindex="-1"])'),
-            ).length,
+            stops: Array.from(widget.querySelectorAll('[data-kbd]:not([tabindex="-1"])')).length,
           })),
       );
       expect(
@@ -1036,18 +1116,42 @@ test.describe('keyboard only', () => {
     for (let i = 0; i < 6; i += 1) {
       await page.keyboard.press('Tab');
       presses += 1;
-      const isSearch = await page.evaluate(
-        () => document.activeElement?.id === 'showroom-search',
-      );
+      const isSearch = await page.evaluate(() => document.activeElement?.id === 'showroom-search');
       if (isSearch) {
         break;
       }
     }
 
     await expect(page.locator('#showroom-search')).toBeFocused();
-    expect(presses, 'Tab presses from the top of the document via the skip link').toBeLessThanOrEqual(
-      TABS_TO_SEARCH_VIA_SKIP_LINK,
-    );
+    expect(
+      presses,
+      'Tab presses from the top of the document via the skip link',
+    ).toBeLessThanOrEqual(TABS_TO_SEARCH_VIA_SKIP_LINK);
+  });
+
+  /**
+   * THE THIRD NUMBER OF THE SHEET: ZERO, WITH `/`.
+   *
+   * App-Shell.md gives three counts for reaching a search from this page --
+   * 12 from the top of the document, 3 by the skip link, 0 with the shortcut
+   * -- and until the DS-5 closing only the first two were asserted here. The
+   * measure the comanda asks for is the one counted FROM THE SKIP LINK, which
+   * is the first focusable element and where a keyboard user really starts;
+   * the other two are what it costs to ignore it and what it costs to know
+   * the shortcut.
+   *
+   * `/` lands in the APPLICATION's search, in the header: the catalogue does
+   * not claim the shortcut, so the shell answers it, on every screen.
+   */
+  test('`/` reaches a search with no Tab at all', async ({ page }) => {
+    await page.goto('/design-system');
+    await expect(page.getByRole('heading', { level: 1 }).first()).toBeVisible();
+    await ready(page);
+    await page.getByRole('heading', { level: 1 }).first().click();
+
+    await page.keyboard.press('/');
+
+    await expect(page.locator('[data-shell-search]')).toBeFocused();
   });
 
   /**

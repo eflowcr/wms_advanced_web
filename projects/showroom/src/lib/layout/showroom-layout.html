@@ -30,21 +30,17 @@
       ground. Not a copy: RFE-04 asks for one block in a fixed place in the
       navigation, and a second one written for the catalogue is how "one
       pattern" becomes two.
+
+      AND THE SAME LIST. It reads the application's one `Favorites` by
+      injection; nothing here provides a store.
     -->
     <ewms-favorites-nav
       ground="surface"
-      label="Favoritos del catálogo"
+      label="Favoritos"
       emptyLabel="Marcá una página con ★"
       [activeRoute]="activeRoute()"
       (favoriteSelect)="onFavorite($event)"
     />
-    <p class="text-caption text-secondary">
-      Los del <strong>catálogo</strong>, no los de la aplicación: el App Shell tiene su propia
-      estrella arriba y su propio bloque en el rail. Son las mismas piezas con
-      <strong>otro almacén</strong> detrás de la misma interfaz, que es exactamente lo que
-      <span class="font-mono">EWMS_FAVORITES_STORE</span> existe para permitir — y la demostración
-      de que mudarlos al backend cuesta una clase.
-    </p>
 
     <div class="flex flex-col gap-2">
       <label class="text-caption text-secondary" for="showroom-search">
@@ -59,9 +55,7 @@
         (input)="onSearch($event)"
       />
       @if (filtering()) {
-        <p class="text-caption text-secondary" role="status">
-          {{ matches() }} resultado(s)
-        </p>
+        <p class="text-caption text-secondary" role="status">{{ matches() }} resultado(s)</p>
       }
     </div>
 
@@ -83,10 +77,7 @@
                     {{ entry.name }}
                   </a>
                 } @else {
-                  <span
-                    class="block px-2 py-1 text-p text-secondary"
-                    [attr.title]="entry.note"
-                  >
+                  <span class="block px-2 py-1 text-p text-secondary" [attr.title]="entry.note">
                     {{ entry.name }} {{ statusLabels[entry.status] }}
                   </span>
                 }
@@ -115,27 +106,15 @@
     dogfooding rather than a rig: what the demo exercises is the path a product
     screen will use.
   -->
+  <!--
+    NO STAR HERE, FOR THE REASON THERE IS NO TOAST OUTLET HERE.
+
+    The star of whatever page is showing is in the application's header, one
+    tag for every screen, and a catalogue page is a screen. A second one in
+    this layout was a second control for the same route over the same list --
+    two `aria-pressed` buttons on one page saying the same thing.
+  -->
   <div class="flex min-w-0 flex-col gap-4 p-8">
-    <!--
-      THE STAR, ON EVERY PAGE, AND WRITTEN ONCE.
-
-      The comanda asks for the toggle in the header of every showroom page so
-      that it reads as a PATTERN and not as one page's button. Twenty-five
-      copies of the same tag would have been twenty-five chances to write it
-      differently; here it is one, above the outlet, and it names whatever page
-      is showing.
-    -->
-    <div class="flex items-center justify-end gap-2 border-b border-default pb-3">
-      <span class="text-caption text-secondary">{{ pageFavorite().label }}</span>
-      <ewms-favorite-toggle
-        [favorite]="pageFavorite()"
-        addLabel="Agregar a favoritos"
-        removeLabel="Quitar de favoritos"
-        addedMessage="Agregado a favoritos"
-        removedMessage="Quitado de favoritos"
-      />
-    </div>
-
     <router-outlet />
   </div>
 </div>

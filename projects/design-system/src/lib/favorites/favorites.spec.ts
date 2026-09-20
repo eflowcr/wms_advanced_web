@@ -1,14 +1,34 @@
-import { Component, signal } from '@angular/core';
+import { Component, computed, signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { expectNoAxeViolations } from '@ewms/testing';
 import { Favorites } from './favorites';
 import { FavoriteToggle } from './favorite-toggle';
 import { FavoritesNav, FAVORITES_SHOWN } from './favorites-nav';
 import { InMemoryFavoritesStore } from './in-memory-favorites-store';
-import { EWMS_FAVORITES_STORE, type Favorite, type FavoritesStore } from './favorites.types';
+import {
+  EWMS_FAVORITE_LABELS,
+  EWMS_FAVORITES_STORE,
+  type Favorite,
+  type FavoriteLabelResolver,
+  type FavoritesStore,
+} from './favorites.types';
 
-const ARTICLES: Favorite = { route: '/articulos', label: 'Artículos', icon: 'package' };
-const CLIENTS: Favorite = { route: '/clientes', label: 'Clientes', icon: 'operator' };
+const ARTICLES: Favorite = { route: '/articulos' };
+const CLIENTS: Favorite = { route: '/clientes' };
+
+/**
+ * The words, in two languages, the way an application would hold them. The
+ * language is a signal so a test can switch it and watch the block follow.
+ */
+const language = signal<'es' | 'en'>('es');
+const NAMES: Record<string, { es: string; en: string }> = {
+  '/articulos': { es: 'Artículos', en: 'Items' },
+  '/clientes': { es: 'Clientes', en: 'Customers' },
+};
+const LABELS: FavoriteLabelResolver = {
+  labelFor: (route) => computed(() => NAMES[route]?.[language()] ?? ''),
+  iconFor: (route) => (route === '/articulos' ? 'package' : null),
+};
 
 describe('InMemoryFavoritesStore', () => {
   let store: InMemoryFavoritesStore;
@@ -35,7 +55,7 @@ describe('InMemoryFavoritesStore', () => {
 
   it('adding the same route twice does not duplicate it', async () => {
     await store.add(ARTICLES);
-    await store.add({ ...ARTICLES, label: 'Otro nombre' });
+    await store.add({ ...ARTICLES, icon: 'operator' });
 
     expect(await store.read()).toHaveLength(1);
   });
@@ -44,11 +64,11 @@ describe('InMemoryFavoritesStore', () => {
     await store.add(CLIENTS);
     await store.add(ARTICLES);
 
-    // Not alphabetical: sorting by label would reshuffle the block every time
+    // Not alphabetical: sorting by name would reshuffle the block every time
     // the language changed.
-    expect((await store.read()).map((favorite) => favorite.label)).toEqual([
-      'Clientes',
-      'Artículos',
+    expect((await store.read()).map((favorite) => favorite.route)).toEqual([
+      '/clientes',
+      '/articulos',
     ]);
   });
 
@@ -84,7 +104,7 @@ describe('Favorites', () => {
     const marked = favorites.isFavorite('/articulos');
     expect(marked()).toBe(false);
 
-    await favorites.toggle(ARTICLES);
+    await favorites.toggle('/articulos');
 
     expect(marked()).toBe(true);
     expect(favorites.list()).toHaveLength(1);
@@ -94,8 +114,8 @@ describe('Favorites', () => {
   it('PACQ-01.2: toggling twice returns to exactly where it started', async () => {
     const favorites = serviceWith(new InMemoryFavoritesStore());
 
-    await favorites.toggle(ARTICLES);
-    await favorites.toggle(ARTICLES);
+    await favorites.toggle('/articulos');
+    await favorites.toggle('/articulos');
 
     expect(favorites.list()).toEqual([]);
     expect(favorites.isFavorite('/articulos')()).toBe(false);
@@ -121,10 +141,30 @@ describe('Favorites', () => {
     };
 
     const favorites = serviceWith(recording);
-    await favorites.toggle(ARTICLES);
+    await favorites.toggle('/articulos');
 
     expect(calls).toContain('add');
     expect(favorites.list()).toEqual([CLIENTS]);
+  });
+
+  it('THE STORE NEVER SEES A NAME: what is written is the route, and only the route', async () => {
+    // REQ-FE-DS4-002 v1.3 §12. A name is presentation -- it depends on the
+    // language and on what the screen is called tomorrow -- and a backend that
+    // kept it would hand back lists half translated. `toEqual` on the whole
+    // object, so a field added later fails here rather than reaching the wire.
+    const written: Favorite[] = [];
+    const recording: FavoritesStore = {
+      read: () => Promise.resolve([...written]),
+      add: (favorite) => {
+        written.push(favorite);
+        return Promise.resolve();
+      },
+      remove: () => Promise.resolve(),
+    };
+
+    await serviceWith(recording).toggle('/articulos');
+
+    expect(written).toEqual([{ route: '/articulos' }]);
   });
 
   it('unmarking goes through `remove`, not through a rewritten list', async () => {
@@ -134,7 +174,7 @@ describe('Favorites', () => {
     // The constructor read is already in flight; wait for it before asserting.
     await Promise.resolve();
 
-    await favorites.toggle(ARTICLES);
+    await favorites.toggle('/articulos');
 
     expect(await store.read()).toEqual([]);
   });
@@ -149,7 +189,7 @@ describe('Favorites', () => {
     };
     const favorites = serviceWith(rejecting);
 
-    await favorites.toggle(ARTICLES);
+    await favorites.toggle('/articulos');
 
     expect(favorites.list()).toEqual([]);
   });
@@ -158,7 +198,7 @@ describe('Favorites', () => {
 @Component({
   template: `
     <ewms-favorite-toggle
-      [favorite]="favorite"
+      [route]="route"
       addLabel="Agregar a favoritos"
       removeLabel="Quitar de favoritos"
       addedMessage="Agregado a favoritos"
@@ -173,10 +213,14 @@ describe('Favorites', () => {
     />
   `,
   imports: [FavoriteToggle, FavoritesNav],
-  providers: [{ provide: EWMS_FAVORITES_STORE, useClass: InMemoryFavoritesStore }, Favorites],
+  providers: [
+    { provide: EWMS_FAVORITES_STORE, useClass: InMemoryFavoritesStore },
+    Favorites,
+    { provide: EWMS_FAVORITE_LABELS, useValue: LABELS },
+  ],
 })
 class TestHost {
-  readonly favorite = ARTICLES;
+  readonly route = '/articulos';
   readonly expanded = signal(true);
   readonly activeRoute = signal<string | null>(null);
   chosen: string | null = null;
@@ -187,6 +231,7 @@ describe('the star and the block, together', () => {
   let host: TestHost;
 
   beforeEach(async () => {
+    language.set('es');
     await TestBed.configureTestingModule({ imports: [TestHost] }).compileComponents();
     fixture = TestBed.createComponent(TestHost);
     host = fixture.componentInstance;
@@ -210,7 +255,9 @@ describe('the star and the block, together', () => {
   }
 
   function star(): HTMLButtonElement {
-    return fixture.nativeElement.querySelector('[data-favorite-toggle] button') as HTMLButtonElement;
+    return fixture.nativeElement.querySelector(
+      '[data-favorite-toggle] button',
+    ) as HTMLButtonElement;
   }
 
   function block(): HTMLElement {
@@ -277,9 +324,9 @@ describe('the star and the block, together', () => {
     await settle();
 
     expect(
-      (fixture.nativeElement.querySelector('[data-favorite="/articulos"]') as HTMLElement).getAttribute(
-        'aria-current',
-      ),
+      (
+        fixture.nativeElement.querySelector('[data-favorite="/articulos"]') as HTMLElement
+      ).getAttribute('aria-current'),
     ).toBe('page');
   });
 
@@ -311,11 +358,51 @@ describe('the star and the block, together', () => {
     // and find nothing. This is the same chain the shell and the showroom use.
     const favorites = fixture.componentRef.injector.get(Favorites);
     for (let index = 0; index < FAVORITES_SHOWN + 3; index += 1) {
-      await favorites.toggle({ route: `/r${index}`, label: `R${index}` });
+      await favorites.toggle(`/r${index}`);
     }
     await settle();
 
     expect(fixture.nativeElement.querySelectorAll('[data-favorite]')).toHaveLength(FAVORITES_SHOWN);
+  });
+
+  it('THE NAME FOLLOWS THE LANGUAGE, without marking again and without a reload', async () => {
+    // The defect v1.3 closes: «Artículos», marked in Spanish, stayed
+    // «Artículos» in English because the name had been stored with the route.
+    star().click();
+    await settle();
+    expect(block().textContent).toContain('Artículos');
+
+    language.set('en');
+    await settle();
+    expect(block().textContent).toContain('Items');
+    expect(block().textContent).not.toContain('Artículos');
+
+    language.set('es');
+    await settle();
+    expect(block().textContent).toContain('Artículos');
+  });
+
+  it('A ROUTE NOBODY CAN NAME SHOWS ITSELF: never an empty row, never an error', async () => {
+    // A screen that was removed leaves its favourite behind. The block shows
+    // the route as it is and the row still works.
+    const favorites = fixture.componentRef.injector.get(Favorites);
+    await favorites.toggle('/pantalla-que-ya-no-existe');
+    await settle();
+
+    const selector = '[data-favorite="/pantalla-que-ya-no-existe"]';
+    const row = fixture.nativeElement.querySelector(selector) as HTMLElement;
+    expect(row.textContent?.trim()).toBe('/pantalla-que-ya-no-existe');
+    // The neutral icon is drawn: a row is never text alone.
+    expect(row.querySelector('svg')).not.toBeNull();
+
+    // Collapsed there is no text at all, so the route is the accessible name.
+    host.expanded.set(false);
+    await settle();
+    expect(
+      (fixture.nativeElement.querySelector(selector) as HTMLElement).getAttribute('aria-label'),
+    ).toBe('/pantalla-que-ya-no-existe');
+
+    await expectNoAxeViolations(fixture.nativeElement);
   });
 
   it('is its own landmark, separate from the menu', () => {

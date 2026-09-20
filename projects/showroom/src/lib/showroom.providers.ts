@@ -1,19 +1,19 @@
-import type { Provider } from '@angular/core';
+import { inject, signal, type Provider } from '@angular/core';
 import {
-  EWMS_FAVORITES_STORE,
+  EWMS_FAVORITE_LABELS,
   EWMS_SEARCH_SELECT_MESSAGES,
   EWMS_SHORTCUT_HELP_MESSAGES,
   EWMS_SHORTCUT_MAP,
   EWMS_TABLE_FORMATTERS,
   EWMS_TABLE_MESSAGES,
-  Favorites,
-  InMemoryFavoritesStore,
   parseTableDate,
+  type FavoriteLabelResolver,
   type SearchSelectMessages,
   type ShortcutHelpMessages,
   type TableFormatters,
   type TableMessages,
 } from '@ewms/design-system';
+import { CATALOG } from './catalog';
 import { SHOWROOM_SHORTCUT_MAP } from './shortcuts.map';
 
 /**
@@ -36,20 +36,42 @@ export function provideShowroomDesignSystem(): Provider[] {
     { provide: EWMS_SHORTCUT_HELP_MESSAGES, useValue: SHORTCUT_HELP_MESSAGES },
 
     /*
-     * FAVOURITES, IN MEMORY, PROVIDED BY THE CATALOGUE ITSELF.
+     * THE NAMES OF THE CATALOGUE'S ROUTES, AND NOT THE STORE.
      *
-     * The same class the shell provides, and that is the demonstration rather
-     * than a shortcut: two applications, one store interface, one
-     * implementation swapped in one line. When the Security Core exists, the
-     * shell provides a different class here and neither the star, the block,
-     * nor this file changes shape.
-     *
-     * The catalogue's own list is ITS list: it lives in this tab and dies with
-     * it, which is the accepted cost written in REQ-FE-DS4-002 v1.2.
+     * `EWMS_FAVORITES_STORE` and `Favorites` are NOT provided here, on purpose:
+     * the catalogue renders inside the application and reads the application's
+     * one list by injection. Providing the store a second time gave a page two
+     * stars and two lists that disagreed. WORDS may be provided twice -- that
+     * is what every other line of this file is -- and state may not.
      */
-    { provide: EWMS_FAVORITES_STORE, useClass: InMemoryFavoritesStore },
-    Favorites,
+    { provide: EWMS_FAVORITE_LABELS, useFactory: favoriteLabels },
   ];
+}
+
+/**
+ * What a favourite is called IN THE SIDEBAR OF THE CATALOGUE.
+ *
+ * A catalogue page by the name of its entry in `catalog.ts`, so the block reads
+ * like the list underneath it. Anything else is a screen of the application's,
+ * and the application knows what it is called: the question goes up to the
+ * resolver provided above this one (`skipSelf`), which is how «Artículos»
+ * marked in the shell has a name down here and not a bare path. Alone -- in a
+ * unit test, with nothing above -- it resolves to nothing and the block shows
+ * the route, which is the behaviour the library promises.
+ */
+function favoriteLabels(): FavoriteLabelResolver {
+  const parent = inject(EWMS_FAVORITE_LABELS, { skipSelf: true, optional: true });
+  const entries = CATALOG.flatMap((section) => section.entries);
+  const nameOf = (route: string) => entries.find((entry) => entry.route === route)?.name;
+  return {
+    labelFor: (route) => {
+      const name = nameOf(route);
+      return name === undefined
+        ? (parent?.labelFor(route) ?? signal('').asReadonly())
+        : signal(name).asReadonly();
+    },
+    iconFor: (route) => (nameOf(route) === undefined ? (parent?.iconFor(route) ?? null) : null),
+  };
 }
 
 /**

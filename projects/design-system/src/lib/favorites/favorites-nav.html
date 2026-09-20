@@ -45,23 +45,23 @@
       is a button nobody can identify.
     -->
     <ul class="list-none">
-      @for (favorite of shown(); track favorite.route) {
+      @for (row of shown(); track row.favorite.route) {
         <li>
           <button
             type="button"
             class="flex w-full items-center gap-3 rounded-sm py-2 text-left text-p outline-none focus-visible:shadow-(--focus-ring-shadow) aria-[current=page]:bg-primary aria-[current=page]:text-h4 aria-[current=page]:text-on-primary"
             [class]="(expanded() ? 'px-2' : 'justify-center px-1') + ' ' + tone().hover"
-            [attr.data-favorite]="favorite.route"
-            [attr.aria-label]="expanded() ? null : favorite.label"
-            [attr.aria-current]="activeRoute() === favorite.route ? 'page' : null"
-            [ewmsTooltip]="favorite.label"
+            [attr.data-favorite]="row.favorite.route"
+            [attr.aria-label]="expanded() ? null : row.label"
+            [attr.aria-current]="activeRoute() === row.favorite.route ? 'page' : null"
+            [ewmsTooltip]="row.label"
             [tooltipDisabled]="expanded()"
             position="right"
-            (click)="onSelect(favorite)"
+            (click)="onSelect(row.favorite)"
           >
-            <ewms-icon [name]="favorite.icon ?? 'star'" size="lg" />
+            <ewms-icon [name]="row.icon" size="lg" />
             @if (expanded()) {
-              <span class="min-w-0 flex-1 truncate">{{ favorite.label }}</span>
+              <span class="min-w-0 flex-1 truncate">{{ row.label }}</span>
             }
           </button>
         </li>

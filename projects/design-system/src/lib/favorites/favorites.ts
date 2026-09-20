@@ -50,12 +50,14 @@ export class Favorites {
    * invisible; with a backend it is the difference between showing what was
    * saved and showing what we hoped was saved.
    */
-  async toggle(favorite: Favorite): Promise<void> {
-    const marked = this.items().some((current) => current.route === favorite.route);
+  async toggle(route: string): Promise<void> {
+    const marked = this.items().some((current) => current.route === route);
     if (marked) {
-      await this.store.remove(favorite.route);
+      await this.store.remove(route);
     } else {
-      await this.store.add(favorite);
+      // The route and nothing else: what it is called is resolved when the
+      // block is drawn (`EWMS_FAVORITE_LABELS`), never written down here.
+      await this.store.add({ route });
     }
     await this.refresh();
   }

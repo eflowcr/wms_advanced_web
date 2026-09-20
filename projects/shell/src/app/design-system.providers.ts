@@ -1,5 +1,7 @@
-import { inject, type Provider } from '@angular/core';
+import { computed, inject, type Provider } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import {
+  EWMS_FAVORITE_LABELS,
   EWMS_FAVORITES_STORE,
   EWMS_SEARCH_SELECT_MESSAGES,
   EWMS_SHORTCUT_HELP_MESSAGES,
@@ -9,6 +11,7 @@ import {
   Favorites,
   InMemoryFavoritesStore,
   parseTableDate,
+  type FavoriteLabelResolver,
   type SearchSelectMessages,
   type ShortcutHelpMessages,
   type TableFormatters,
@@ -16,6 +19,7 @@ import {
 } from '@ewms/design-system';
 import { TranslocoService } from '@jsverse/transloco';
 import { TranslocoLocaleService } from '@jsverse/transloco-locale';
+import { menuEntryFor } from './layout/menu';
 import { SHORTCUT_MAP } from './shortcuts.map';
 
 /**
@@ -72,16 +76,57 @@ export function provideEwmsDesignSystem(): Provider[] {
      * Until then they live as long as the tab does. No browser storage, no
      * ESLint exception -- which was the whole difficulty of the decision.
      */
+    /*
+     * AND IT IS THE ONLY PLACE THE STORE IS PROVIDED. The showroom renders
+     * inside this application and reads THIS list by injection, the way it
+     * reads nothing else of the shell's: a dictionary may be provided twice,
+     * state may not. Two stores meant a catalogue page with two stars and two
+     * lists that disagreed.
+     */
     {
       provide: EWMS_FAVORITES_STORE,
       useClass: InMemoryFavoritesStore,
     },
     Favorites,
     {
+      provide: EWMS_FAVORITE_LABELS,
+      useFactory: favoriteLabels,
+    },
+    {
       provide: EWMS_SHORTCUT_HELP_MESSAGES,
       useFactory: shortcutHelpMessages,
     },
   ];
+}
+
+/**
+ * WHAT A FAVOURITE IS CALLED, RESOLVED WHEN IT IS DRAWN (REQ-FE-DS4-002 v1.3).
+ *
+ * The store keeps a route and nothing else. The name comes from the menu --
+ * the same `menuEntryFor` the tabs and the crumbs use, so a screen cannot have
+ * one name in the strip and another in the block -- and through Transloco at
+ * the moment of asking.
+ *
+ * SIGNALS, NOT GETTERS, unlike the dictionaries above. A getter is re-read
+ * when something else makes the template run again; the favourites block is
+ * `OnPush` and nothing else in it changes when the language does. Reading
+ * `lang()` inside the computed is what makes the switch repaint it.
+ *
+ * A route the menu does not know resolves to the empty string, and the block
+ * shows the route itself.
+ */
+function favoriteLabels(): FavoriteLabelResolver {
+  const transloco = inject(TranslocoService);
+  const lang = toSignal(transloco.langChanges$, { initialValue: transloco.getActiveLang() });
+  return {
+    labelFor: (route) =>
+      computed(() => {
+        lang();
+        const entry = menuEntryFor(route);
+        return entry === undefined ? '' : transloco.translate(entry.labelKey);
+      }),
+    iconFor: (route) => menuEntryFor(route)?.icon ?? null,
+  };
 }
 
 /**

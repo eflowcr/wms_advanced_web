@@ -1,14 +1,58 @@
 name: CI
 
 # Every job below FAILS the build. Nothing here is advisory.
-# If a gate is too strict, the gate changes deliberately -- it is never demoted
+# If a rule is too strict, the rule changes deliberately -- it is never demoted
 # to a warning to get a branch green.
+#
+# FOUR JOBS, AND THEIR NAMES ARE DICTATED BY THE BRANCH RULE.
+#
+#   Types, lint, tests, budgets   types, lint, tokens, icons, i18n, shortcuts,
+#                                 clicks, unit tests with coverage and axe,
+#                                 production build with budgets, npm audit
+#   Playwright smoke              the end-to-end floor
+#   Playwright showroom           the catalogue's suite -- ALWAYS REPORTS,
+#                                 runs only when needed
+#   Gitleaks                      secrets, history and working tree
+#
+# THE NAME IS THE CONTRACT, AND WE ARE NOT THE ONES WHO HOLD IT. The ruleset
+# «Protect» requires checks BY NAME, letter for letter, and GitHub takes the
+# name from a job's `name:`. A required check whose name no job reports does
+# not fail: it WAITS FOREVER, and the pull request is blocked with nothing red
+# to look at. It happened in DS-5 (3dab2a3) and again on the DS-5 closing PR.
+#
+# The ruleset lives in GitHub, not in this repository, and editing it needs
+# admin rights that this team does not have (verified 2026-09-20: `push`, no
+# `admin`, no `maintain`). So the three names it already knows are FIXED
+# INPUTS, copied here exactly:
+#
+#     Types, lint, tests, budgets · Playwright smoke · Gitleaks
+#
+# Do not "improve" them. Renaming one does not rename the requirement; it
+# orphans it. `Playwright showroom` is the only free name -- the ruleset does
+# not ask for it yet -- and it follows the same style so the family reads as
+# one set the day somebody with admin rights can add it.
+#
+# What the DS-5 closing DID fix, and keeps: no job or step carries a «Gate N»
+# any more. The FOURTEEN RULES are numbered in the vault (Integracion
+# Continua.md), where a number can be cited, rather than here, where
+# renumbering a rule used to mean renaming a check.
+# `tools/ci/e2e-levels.test.mjs` asserts the names and the absence of numbers,
+# so this comment is not the only guard.
 
 on:
   push:
     branches: [main, development]
   pull_request:
     branches: [main, development]
+
+# LEAST PRIVILEGE, DECLARED ONCE FOR EVERY JOB. Without this block the
+# GITHUB_TOKEN takes the repository's default, which may be read-write. No job
+# here writes to the repository: they check out, run, and upload artifacts --
+# and artifacts go through the runner's own token, not this one. A job that
+# one day needs more asks for it in a `permissions:` of its own, where the
+# exception is visible. Same block as codeql.yml.
+permissions:
+  contents: read
 
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
@@ -19,8 +63,9 @@ env:
   GITLEAKS_VERSION: '8.30.1'
 
 jobs:
-  # ------------------------------------------------------ gates 1,2,3,5,6,8,9,10,11,12
+  # ---------------------------------------------------------------------- verify
   verify:
+    # Required by the ruleset under EXACTLY this name. See the header.
     name: Types, lint, tests, budgets
     runs-on: ubuntu-latest
     steps:
@@ -37,18 +82,18 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      # Gate 1 -- any type error fails the build.
-      - name: Gate 1 - TypeScript (strict)
+      # Any type error fails the build.
+      - name: TypeScript (strict)
         run: npm run typecheck
 
-      # Gate 2 + Gate 9 -- boundary rules and security rules are both ESLint errors.
+      # Boundary rules and security rules are both ESLint errors.
       # --max-warnings=0 means a warning is a failure too.
-      - name: Gate 2 + 9 - ESLint (boundaries, security, zero warnings)
+      - name: ESLint (boundaries, security, zero warnings)
         run: npm run lint
 
-      # Gate 9 (template half) -- the ESLint rule covers .innerHTML in TypeScript;
-      # this covers the [innerHTML] binding in Angular templates.
-      - name: Gate 9 - no [innerHTML] bindings in templates
+      # The template half of the security rule: ESLint covers .innerHTML in
+      # TypeScript; this covers the [innerHTML] binding in Angular templates.
+      - name: No [innerHTML] bindings in templates
         run: |
           if grep -rn '\[innerHTML\]' projects --include='*.html'; then
             echo "::error::[innerHTML] binding is forbidden (XSS). Render through a template or sanitise explicitly."
@@ -56,55 +101,55 @@ jobs:
           fi
           echo "No [innerHTML] bindings found."
 
-      # Gate 10 -- every visual value comes from a design token (ADR 0005, ADR 0009).
+      # Every visual value comes from a design token (ADR 0005, ADR 0009).
       # Fails on raw hex / rgb() / rgba() / hsl() / px, on Tailwind default utilities
       # (bg-blue-500 carries no hex and still bypasses the system), and on primitive
       # tokens used outside tokens.css -- the single file where raw values are legitimate.
-      - name: Gate 10 - Design tokens (no raw values, no Tailwind defaults)
+      - name: Design tokens (no raw values, no Tailwind defaults)
         run: npm run lint:tokens
 
-      # Gate 11 -- icons (ADR 0011). icons.generated.ts must match a fresh
-      # regeneration byte for byte (like a lockfile), and no template may hold a
+      # Icons (ADR 0011). icons.generated.ts must match a fresh regeneration
+      # byte for byte (like a lockfile), and no template may hold a
       # hand-written <svg>: every icon goes through <ewms-icon>.
-      - name: Gate 11 - Icons (generated table in sync, no loose <svg>)
+      - name: Icons (generated table in sync, no loose <svg>)
         run: npm run lint:icons
 
-      # Gate 12 -- i18n (ADR 0008). Keys used vs. defined in both directions
+      # i18n (ADR 0008). Keys used vs. defined in both directions
       # (transloco-keys-manager), identical key sets in every dictionary,
       # canonical dictionary format with valid ICU, and no hardcoded human
       # text in templates. The showroom is exempt; the reason lives in the script.
-      - name: Gate 12 - i18n (keys in sync, same keys per language, no hardcoded text)
+      - name: i18n (keys in sync, same keys per language, no hardcoded text)
         run: npm run lint:i18n
 
-      # Gate 13 -- the shortcut map (REQ-FE-DS4-001 RFE-01). Every key is named
-      # in a map file and nowhere else, and exactly one global keyboard
-      # listener exists. Built in DS-4 and, until DS-5, never wired here: the
-      # script existed, `npm run lint:shortcuts` ran it, and nothing in CI
-      # called it. A gate that only runs when somebody remembers is not a gate.
-      - name: Gate 13 - Shortcut map (one map, one listener)
+      # The shortcut map (REQ-FE-DS4-001 RFE-01). Every key is named in a map
+      # file and nowhere else, and exactly one global keyboard listener
+      # exists. Built in DS-4 and, until DS-5, never wired here: the script
+      # existed, `npm run lint:shortcuts` ran it, and nothing in CI called it.
+      # A rule that only runs when somebody remembers is not a rule.
+      - name: Shortcut map (one map, one listener)
         run: npm run lint:shortcuts
 
-      # Gate 14 -- the click budget (REQ-FE-DS4-003 HG-02). The four numbers
-      # are declared once, and both the screen and the end-to-end test import
-      # them rather than restating them. Same history as gate 13: written in
+      # The click budget (REQ-FE-DS4-003 HG-02). The numbers are declared
+      # once, and both the screen and the end-to-end test import them rather
+      # than restating them. Same history as the shortcut map: written in
       # DS-4, wired in DS-5.
-      - name: Gate 14 - Click budget (declared once, imported twice)
+      - name: Click budget (declared once, imported twice)
         run: npm run lint:click-budget
 
-      # Gate 3 + Gate 5 -- unit tests, coverage thresholds, and the axe-core
-      # accessibility harness all run in this one Vitest suite.
-      - name: Gate 3 + 5 - Vitest, coverage thresholds, axe-core
+      # Unit tests, coverage thresholds, and the axe-core accessibility
+      # harness all run in this one Vitest suite.
+      - name: Vitest, coverage thresholds, axe-core
         run: npm test
 
-      # Gate 8 -- bundle budgets live in angular.json; exceeding maximumError fails here.
-      - name: Gate 8 - Production build and bundle budgets
+      # Bundle budgets live in angular.json; exceeding maximumError fails here.
+      - name: Production build and bundle budgets
         run: npm run build
 
-      # Gate 6 -- dependency vulnerabilities.
-      - name: Gate 6 - npm audit
+      # Dependency vulnerabilities.
+      - name: npm audit
         run: npm run audit:ci
 
-  # ----------------------------------------------------------------- gate 4a/4b
+  # -------------------------------------------------------------- smoke, showroom
   #
   # THE SUITE RUNS IN LEVELS, AND THE NUMBER THAT FORCED IT IS 183 x 1 WORKER.
   #
@@ -123,14 +168,51 @@ jobs:
   #             request it runs only when something it documents changed; on a
   #             push to development or main it always runs. Three shards.
   #
-  # GATE 4 IS STILL BLOCKING. `e2e-showroom-gate` below always runs and fails
-  # when the sharded suite ran and was not green, so there is one required
-  # check whose name never disappears from a pull request -- which a job with
-  # an `if:` cannot promise, because a skipped required check is not the same
-  # thing to GitHub as a passing one.
+  # `smoke` and `showroom` above are the PLAYWRIGHT PROJECT names, in
+  # playwright.config.ts. The jobs that run them are named for the ruleset.
+  #
+  # THE END-TO-END RULE IS STILL BLOCKING. The job named `Playwright showroom`
+  # below always runs and fails when the sharded suite ran and was not green,
+  # so there is one check whose name never disappears from a pull request --
+  # which a job with an `if:` cannot promise, because a skipped required check
+  # is not the same thing to GitHub as a passing one. The ruleset does not
+  # require it yet; when it can, this job is the one to add.
 
-  changes:
-    name: What changed
+  smoke:
+    # Required by the ruleset under EXACTLY this name. See the header.
+    name: Playwright smoke
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up Node
+        uses: actions/setup-node@v5
+        with:
+          node-version-file: .node-version
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browser
+        run: npx playwright install chromium --with-deps
+
+      # Boots the real app, walks every route, and runs one flow per pattern
+      # on the keyboard alone.
+      - name: Playwright smoke suite
+        run: npm run e2e:smoke
+
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-smoke
+          path: playwright-report/
+          retention-days: 7
+
+  # Not a required check: it answers a question for the three jobs below it.
+  showroom-changes:
+    name: Playwright showroom (what changed)
     runs-on: ubuntu-latest
     outputs:
       showroom: ${{ steps.filter.outputs.showroom }}
@@ -169,46 +251,14 @@ jobs:
             echo "showroom=false" >> "$GITHUB_OUTPUT"
           fi
 
-  e2e-smoke:
-    # The NAME is the contract: `development` requires a check called exactly
-    # "Playwright smoke", so renaming this job to say which gate it is would
-    # leave the required check waiting for a report that never comes, and the
-    # PR blocked with nothing red to look at. The gate number lives in the
-    # step below, where the log shows it.
-    name: Playwright smoke
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v5
-
-      - name: Set up Node
-        uses: actions/setup-node@v5
-        with:
-          node-version-file: .node-version
-          cache: npm
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Install Playwright browser
-        run: npx playwright install chromium --with-deps
-
-      # Gate 4a -- boots the real app, walks every route, and runs one flow per
-      # pattern on the keyboard alone.
-      - name: Gate 4a - Playwright smoke test
-        run: npm run e2e:smoke
-
-      - name: Upload Playwright report
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: playwright-report-smoke
-          path: playwright-report/
-          retention-days: 7
-
-  e2e-showroom:
-    name: Gate 4b - Playwright showroom (shard ${{ matrix.shard }}/3)
-    needs: changes
-    if: needs.changes.outputs.showroom == 'true'
+  # Not required individually: `Playwright showroom (1/3)`... report to the job
+  # called `Playwright showroom`, which is the one a branch rule would ask for.
+  # Requiring a shard by name would block every pull request on which the suite
+  # did not have to run.
+  showroom-shards:
+    name: Playwright showroom (${{ matrix.shard }}/3)
+    needs: showroom-changes
+    if: needs.showroom-changes.outputs.showroom == 'true'
     runs-on: ubuntu-latest
     strategy:
       # One shard failing must not cancel the other two: the point of a merged
@@ -234,7 +284,7 @@ jobs:
       # `blob` and not `html`: a shard's own html report is a third of the
       # truth. The blobs are merged below into one report that reads like one
       # run.
-      - name: Gate 4b - Playwright showroom suite
+      - name: Playwright showroom suite
         run: npx playwright test --project=showroom --shard=${{ matrix.shard }}/3 --reporter=blob
 
       - name: Upload blob report
@@ -245,10 +295,10 @@ jobs:
           path: blob-report/
           retention-days: 7
 
-  e2e-showroom-report:
-    name: Playwright showroom report
-    needs: [changes, e2e-showroom]
-    if: ${{ !cancelled() && needs.changes.outputs.showroom == 'true' }}
+  showroom-report:
+    name: Playwright showroom (report)
+    needs: [showroom-changes, showroom-shards]
+    if: ${{ !cancelled() && needs.showroom-changes.outputs.showroom == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -279,25 +329,32 @@ jobs:
           path: playwright-report/
           retention-days: 7
 
-  e2e-showroom-gate:
-    name: Gate 4b - Playwright showroom
-    needs: [changes, e2e-showroom]
-    # ALWAYS, and that is the whole point: this is the check branch protection
+  showroom:
+    # THE ONE NAME THAT IS OURS TO CHOOSE: the ruleset does not ask for this
+    # check yet, because adding it needs admin rights this team does not have.
+    # It is shaped like a required check anyway -- one name, always reported --
+    # so the day somebody can add it, nothing here has to change.
+    name: Playwright showroom
+    needs: [showroom-changes, showroom-shards]
+    # ALWAYS, and that is the whole point: this is the shape branch protection
     # requires. When the suite did not have to run it passes and says so; when
     # it ran and was not green it fails. An `if:` on the sharded job alone
-    # would make the required check vanish from the pull request instead of
-    # passing it.
+    # would make the check vanish from the pull request instead of passing it.
     if: ${{ always() }}
     runs-on: ubuntu-latest
     steps:
       - name: The showroom suite must be green whenever it ran
         env:
-          NEEDED: ${{ needs.changes.outputs.showroom }}
-          RESULT: ${{ needs.e2e-showroom.result }}
+          NEEDED: ${{ needs.showroom-changes.outputs.showroom }}
+          RESULT: ${{ needs.showroom-shards.result }}
         run: |
-          if [ "$NEEDED" != "true" ]; then
+          if [ "$NEEDED" = "false" ]; then
             echo "Nothing the showroom documents changed: the suite did not run."
             exit 0
+          fi
+          if [ "$NEEDED" != "true" ]; then
+            echo "::error::The path filter gave no answer ('$NEEDED'): refusing to report green without knowing."
+            exit 1
           fi
           if [ "$RESULT" != "success" ]; then
             echo "::error::The showroom suite is not green ($RESULT)."
@@ -305,8 +362,9 @@ jobs:
           fi
           echo "The showroom suite is green."
 
-  # ------------------------------------------------------------------------ gate 7
+  # --------------------------------------------------------------------- secrets
   secrets:
+    # Required by the ruleset under EXACTLY this name. See the header.
     name: Gitleaks
     runs-on: ubuntu-latest
     steps:
@@ -325,9 +383,9 @@ jobs:
           sudo mv /tmp/gitleaks /usr/local/bin/gitleaks
           gitleaks version
 
-      # Gate 7 -- any detected secret fails the build.
-      - name: Gate 7 - Scan git history for secrets
+      # Any detected secret fails the build.
+      - name: Scan git history for secrets
         run: gitleaks git . --config .gitleaks.toml --redact --no-banner
 
-      - name: Gate 7 - Scan working tree for secrets
+      - name: Scan working tree for secrets
         run: gitleaks dir . --config .gitleaks.toml --redact --no-banner
