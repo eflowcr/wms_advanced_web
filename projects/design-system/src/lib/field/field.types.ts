@@ -2,39 +2,27 @@ import { BUTTON_FONT_SIZES, BUTTON_HEIGHT_CLASSES, type ButtonSize } from '../bu
 import type { IconSize } from '../icon/icon';
 
 /**
- * Everything the Input and the Select agree on.
- *
- * The two are separate components with separate public APIs, and they share a
- * box: same heights, same type scale, same radius, same border colours, same
- * focus ring. A form row mixing an input, a select and a button only lines up
- * because none of the three owns those numbers.
- *
- * The heights and the type scale are NOT redefined here -- they are the
- * Button's, imported. They are the control scale of the whole system, and
- * there is one copy of it (button.types.ts).
+ * Lo que Input y Select comparten: mismas alturas, escala tipográfica, radio,
+ * colores de borde y anillo de foco. Una fila con un campo, un select y un botón
+ * se alinea porque ninguno de los tres es dueño de esos números.
+ * Las alturas y la escala NO se redefinen acá: son las del Botón, importadas.
  */
 
 export type FieldSize = ButtonSize;
 
-/**
- * `error` is PURELY VISUAL. Neither component validates anything: the parent
- * form decides, and says so through this input.
- */
+/** `error` es PURAMENTE VISUAL: ninguno de los dos valida, decide el formulario. */
 export type FieldState = 'default' | 'error' | 'disabled' | 'readonly';
 
-/** 32 / 40 / 48. The Button's scale, not a second copy of it. */
+/** 32 / 40 / 48. La escala del Botón, no una segunda copia. */
 export const FIELD_HEIGHT_CLASSES = BUTTON_HEIGHT_CLASSES;
 
-/** 13 / 14 / 15. Also the Button's. */
+/** 13 / 14 / 15. También del Botón. */
 export const FIELD_FONT_SIZES = BUTTON_FONT_SIZES;
 
 /**
- * 10 / 12 / 14, and deliberately NOT the Button's 12 / 16 / 20.
- *
- * A button's padding is what separates its label from its edge; a field's is
- * what separates the caret from its edge, and a field is typically much wider
- * than its content. Copying the Button's padding here would push the text of
- * every field a third of a centimetre further in than the design asks for.
+ * 10 / 12 / 14, y a propósito NO el 12 / 16 / 20 del Botón: el relleno de un botón
+ * separa su etiqueta del borde, el de un campo separa el cursor, y un campo suele
+ * ser mucho más ancho que su contenido.
  */
 export const FIELD_PADDING_CLASSES: Readonly<Record<FieldSize, string>> = {
   sm: 'px-2.5',
@@ -43,42 +31,28 @@ export const FIELD_PADDING_CLASSES: Readonly<Record<FieldSize, string>> = {
 };
 
 /**
- * Decorative field icons -- the search glyph, the chevron, the eye -- are
- * `sm` (16 px) at EVERY field size, matching the Small button's icon.
- *
- * The rule is about rows, not about fields: a Small button and a Medium input
- * sit side by side constantly, and two icon sizes on one row read as a
- * mistake. Growing the icon with the field would be internally tidy and worse
- * on screen. See the Input ficha, "Icono -- lo que impone ewms-icon".
+ * Los iconos decorativos de un campo son `sm` (16 px) en TODOS los tamaños, como
+ * el del botón Small: la regla es sobre filas, no sobre campos, y dos tamaños de
+ * icono en una fila se leen como un error.
  */
 export const FIELD_ICON_SIZE: IconSize = 'sm';
 
 /**
- * The box itself. `border-solid` is explicit because Tailwind's preflight
- * resets every element to `0 solid` -- the width comes from `border`, and
- * leaving the style implicit is one reset away from an invisible field.
- *
- * `outline-none` removes the user-agent ring that the focus-ring token
- * replaces; the replacement is on the same line, never removed without one.
+ * La caja. `border-solid` va explícito porque el preflight de Tailwind resetea
+ * todo a `0 solid`: dejar el estilo implícito está a un reset de un campo
+ * invisible. `outline-none` saca el anillo del user-agent que reemplaza el token.
  */
 export const FIELD_BASE_CLASSES =
   'w-full box-border rounded-control border border-solid outline-none ' +
   'focus-visible:shadow-(--focus-ring-shadow)';
 
 /**
- * Border colour per state.
- *
- * Focus is passed in rather than expressed as a `:focus` variant because there
- * is no border utility for the action blue: the theme maps `--color-bg-primary`
- * as a background role only. The component already tracks focus -- it owes the
- * consumer its two focus outputs and owes the form onTouched -- so the state is
- * there for free, and a computed string is something jsdom can actually assert
- * on, which a `:focus` rule is not.
- *
- * ERROR OUTRANKS FOCUS. A field in error that gains focus keeps the danger
- * border and gets the ordinary focus ring on top: the system has exactly one
- * focus colour, everywhere, and a second one would make the ring mean two
- * different things (Fundamentos de Marca, "Anillo de foco").
+ * Color de borde por estado. El foco se pasa como argumento en vez de expresarse
+ * como variante `:focus` porque no hay utilidad de borde para el azul de acción,
+ * y además una cadena calculada es algo que jsdom puede afirmar.
+ * EL ERROR GANA AL FOCO: un campo en error que recibe foco conserva el borde de
+ * peligro y suma el anillo. El sistema tiene un solo color de foco (Fundamentos
+ * de Marca).
  */
 export function fieldBorderColor(state: FieldState, focused: boolean): string {
   if (state === 'error') {
@@ -91,14 +65,10 @@ export function fieldBorderColor(state: FieldState, focused: boolean): string {
 }
 
 /**
- * Surface, foreground and cursor per state.
- *
- * DISABLED AND READ-ONLY SHARE A BACKGROUND AND NOTHING ELSE. Read-only text
- * is real content someone may need to read and copy, so it keeps the primary
- * foreground and the ordinary cursor; only the grey surface says "not editable
- * here". Painting it `text-disabled` would make an unmodifiable value look
- * like an unavailable one, and the two mean opposite things to whoever is
- * reading the screen.
+ * Superficie, frente y cursor por estado. DESHABILITADO Y SOLO-LECTURA COMPARTEN
+ * EL FONDO Y NADA MÁS: el texto de solo-lectura es contenido real que alguien
+ * puede necesitar leer y copiar, así que conserva el frente primario. Pintarlo
+ * `text-disabled` haría que un valor inmodificable parezca no disponible.
  */
 export function fieldSurfaceClasses(state: FieldState): string {
   switch (state) {

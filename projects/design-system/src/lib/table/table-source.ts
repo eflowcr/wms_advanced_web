@@ -1,48 +1,38 @@
 import type { Observable } from 'rxjs';
 
 /**
- * THE DATA CONTRACT OF `ewms-table`.
- *
- * Like `SearchSource<T>`, this is not an abstraction over an endpoint that
- * exists: it is the endpoint's specification, written first, so the table is
- * not built against a guess. The table knows nothing about HTTP -- no URL, no
- * status code, no transport. Moving from the in-memory source to a real
- * backend changes an implementation of this interface and nothing else.
+ * EL CONTRATO DE DATOS de `ewms-table`. Como `SearchSource<T>`, es la
+ * especificación del endpoint escrita antes que él: la tabla no sabe nada de
+ * HTTP, y pasar a un backend real cambia una implementación y nada más.
  */
 export interface TableSource<T> {
   load(query: TableQuery): Observable<TablePage<T>>;
 }
 
 /**
- * What one column's filter carries, AND THE SHAPE COMES FROM THE COLUMN'S
- * TYPE.
- *
- * A range written as text is a filter that cannot compare: "between 100 and
- * 900" as the string "100-900" forces every implementation to parse it, and
- * they will parse it differently. So a number column sends two numbers and a
- * date column sends two ISO dates, and the source is handed something it can
- * act on rather than something it has to interpret.
+ * Qué lleva el filtro de una columna, Y LA FORMA SALE DEL TIPO DE LA COLUMNA. Un
+ * rango escrito como texto es un filtro que no puede comparar: «100-900» obliga a
+ * cada implementación a parsearlo, y lo parsearán distinto. Una columna numérica
+ * manda dos números y una de fecha dos fechas ISO.
  */
 export type TableFilterValue = string | NumberRange | DateRange;
 
-/** `number`: either bound may be missing, which means "unbounded". */
+/** `number`: cualquiera de los dos límites puede faltar, y eso es «sin límite». */
 export interface NumberRange {
   min?: number;
   max?: number;
 }
 
-/** `date`: ISO 8601, either bound may be missing. */
+/** `date`: ISO 8601, cualquiera de los dos límites puede faltar. */
 export interface DateRange {
   from?: string;
   to?: string;
 }
 
 /**
- * The two ranges are told apart by NAMED GUARDS rather than by an inline `in`.
- *
- * TypeScript will not narrow the negative branch of `'min' in f || 'max' in f`
- * -- which reads as if it should and quietly leaves the other side as the
- * whole union. A guard says what it means and narrows both ways.
+ * Los dos rangos se distinguen con GUARDAS CON NOMBRE y no con un `in` en línea:
+ * TypeScript no estrecha la rama negativa de `'min' in f || 'max' in f` -se lee
+ * como si debiera y deja el otro lado como la unión entera-.
  */
 export function isNumberRange(filter: TableFilterValue): filter is NumberRange {
   return typeof filter !== 'string' && ('min' in filter || 'max' in filter);
@@ -52,14 +42,14 @@ export function isDateRange(filter: TableFilterValue): filter is DateRange {
   return typeof filter !== 'string' && ('from' in filter || 'to' in filter);
 }
 
-/** Everything the table is asking for, in one object. */
+/** Todo lo que la tabla está pidiendo, en un objeto. */
 export interface TableQuery {
-  /** The global quick filter. Empty string when there is none. */
+  /** El filtro rápido global. Cadena vacía cuando no hay. */
   readonly search: string;
-  /** Per column, keyed by the column's `key`. Absent key = no filter. */
+  /** Por columna, por su `key`. Clave ausente = sin filtro. */
   readonly filters: Readonly<Record<string, TableFilterValue>>;
   readonly sort: TableSort | null;
-  /** Zero-based. */
+  /** Base cero. */
   readonly page: number;
   readonly pageSize: number;
 }
@@ -69,35 +59,30 @@ export interface TableSort {
   readonly direction: 'asc' | 'desc';
 }
 
-/** One page of rows. */
+/** Una página de filas. */
 export interface TablePage<T> {
   readonly rows: readonly T[];
   readonly page: number;
   readonly pageSize: number;
   /**
-   * How many rows match in total, or `null` when the source does not know.
-   *
-   * `null` IS A LEGITIMATE ANSWER, exactly as in `SearchPage`. A source that
-   * counts rows on every keystroke is a source that pays for a count on every
-   * keystroke, and plenty of real ones refuse to. **Without a total there is
-   * no paginator** -- which is honest: a paginator with no last page is a
-   * control that lies about how far it can go.
+   * Cuántas filas coinciden, o `null` si la fuente no lo sabe. `null` ES UNA
+   * RESPUESTA LEGÍTIMA, igual que en `SearchPage`. SIN TOTAL NO HAY PAGINADOR, y
+   * es honesto: uno sin última página es un control que miente sobre hasta dónde
+   * llega.
    */
   readonly total: number | null;
 }
 
-/** The empty query, which is what a table asks for before anyone touches it. */
+/** La consulta vacía, que es lo que pide una tabla antes de que nadie la toque. */
 export function emptyQuery(pageSize: number): TableQuery {
   return { search: '', filters: {}, sort: null, page: 0, pageSize };
 }
 
 /**
- * Read a top-level property of a row.
- *
- * `key` is a property NAME and not a path, on purpose: a path needs a parser,
- * a parser needs an error case, and the escape hatch for anything deeper is
- * already there and is better -- an `ewmsCell` template, where the consumer
- * writes ordinary Angular instead of a string mini-language.
+ * Lee una propiedad de primer nivel de una fila. `key` es un NOMBRE y no un
+ * camino a propósito: un camino necesita un parser, un parser necesita un caso de
+ * error, y la salida para algo más profundo ya existe y es mejor -una plantilla
+ * `ewmsCell`, donde el consumidor escribe Angular común-.
  */
 export function readCell<T>(row: T, key: string): unknown {
   return (row as Record<string, unknown>)[key];

@@ -20,20 +20,14 @@ import {
 } from '../selection/selection.types';
 
 /**
- * A checkbox: an 18x18 box with a check, a dash or nothing in it.
+ * Una casilla: 18x18 con un tilde, un guion o nada.
  *
- * NOT A TOGGLE, and the difference is not how it looks. A checkbox is a
- * SELECTION INSIDE A FORM, confirmed later by something else -- a Save button,
- * a bulk action, a submit. A toggle APPLIES THE MOMENT IT IS TOUCHED. Picking
- * the wrong one puts a Save button next to a setting that was already saved,
- * or silently discards a selection someone thought they had made. See
- * `ewms-toggle`.
- *
- * The native `<input type="checkbox">` is kept and styled with
- * `appearance-none`, rather than hidden behind a painted `<span>`. What that
- * buys, all of it for free and none of it re-implemented: the role, Space to
- * toggle, the tab order, the focus ring on the real focus target, and the name
- * that the wrapping `<label>` gives it.
+ * NO ES UN TOGGLE, y la diferencia no es cómo se ve: una casilla es una SELECCIÓN
+ * DENTRO DE UN FORMULARIO que algo confirma después; un toggle APLICA AL TOCARLO.
+ * Elegir mal pone un botón Guardar al lado de algo ya guardado.
+ * Se conserva el `<input type="checkbox">` nativo con `appearance-none` en vez de
+ * esconderlo tras un span pintado: así el rol, la barra espaciadora, el orden de
+ * tabulación, el anillo de foco y el nombre del `<label>` salen gratis.
  */
 @Component({
   selector: 'ewms-checkbox',
@@ -47,50 +41,34 @@ export class Checkbox extends FormControlBase<boolean> {
   readonly checked = input<boolean>(false);
 
   /**
-   * Neither on nor off: the "select all" box above a list where some rows are
-   * selected and some are not.
-   *
-   * It outranks `checked` visually and in what is announced, because it is the
-   * more specific claim: a box that is both indeterminate and checked is
-   * indeterminate.
+   * Ni sí ni no: la casilla de «seleccionar todo» sobre una lista a medias. Gana
+   * sobre `checked` al verse y al anunciarse, porque es la afirmación más
+   * específica.
    */
   readonly indeterminate = input<boolean>(false);
 
   /**
-   * The visible text beside the box, already translated. Optional, because the
-   * box is not always labelled in place -- the header of a selectable table is
-   * the case that matters -- and then `ariaLabel` carries the name instead.
-   *
-   * ONE OF THE TWO IS REQUIRED in practice: a checkbox with neither has no
-   * accessible name and fails axe. The type cannot say "exactly one of these",
-   * so the spec asserts it instead. See the PR report.
+   * El texto visible al lado, ya traducido. Opcional, porque la cabecera de una
+   * tabla seleccionable no lo lleva y entonces el nombre lo pone `ariaLabel`. UNA
+   * DE LAS DOS es obligatoria en la práctica: sin ninguna no hay nombre accesible
+   * y falla axe. El tipo no sabe decir «exactamente una», así que lo afirma el spec.
    */
   readonly label = input<string>('');
 
-  /**
-   * The accessible name when there is no visible text: a column of row
-   * checkboxes, where the name has to say WHICH row. Already translated.
-   */
+  /** El nombre accesible cuando no hay texto visible: una columna de casillas de
+   * fila, donde el nombre tiene que decir CUÁL fila. Ya traducido. */
   readonly ariaLabel = input<string>('');
 
   /**
-   * NOT called `change`, and the name is load-bearing -- the same rule the
-   * Tooltip's `tooltipDisabled` follows, on the output side.
-   *
-   * `change` is a native event, and it bubbles. An output by that name puts
-   * two different things on one binding: a consumer writing it gets this
-   * component's boolean AND the raw DOM Event travelling up from the `<input>`
-   * inside, and the handler runs twice with two kinds of argument. ESLint's
-   * no-output-native forbids it for exactly that reason. The Checkbox ficha
-   * asks for `(change)`; that name was written before the collision was known.
-   * See the PR report.
-   *
-   * `checkedChange` is also what the Toggle's ficha already asks for, so the
-   * two selection controls now read the same.
+   * NO se llama `change`, y el nombre carga peso: `change` es un evento nativo y
+   * burbujea, así que una salida con ese nombre pone dos cosas en un mismo enlace
+   * -el booleano de este componente Y el Event crudo que sube del `<input>`- y el
+   * handler corre dos veces con dos tipos de argumento. ESLint no-output-native lo
+   * prohíbe. Desviación de la ficha, reportada.
    */
   readonly checkedChange = output<boolean>();
 
-  /** The base seeds itself from the component's own value input. */
+  /** La base se siembra del propio valor del componente. */
   protected readonly valueSource = this.checked;
 
   private readonly box = viewChild.required<ElementRef<HTMLInputElement>>('box');
@@ -101,13 +79,13 @@ export class Checkbox extends FormControlBase<boolean> {
 
   protected readonly borderWidth = SELECTION_BORDER_WIDTH;
 
-  /** Checked and indeterminate share the filled treatment; only the glyph differs. */
+  /** Marcado e indeterminado comparten el relleno; solo cambia el glifo. */
   protected readonly isOn = computed(() => this.indeterminate() || this.controlValue());
 
   protected readonly boxClasses = computed(
     () =>
-      // rounded-sm is 4 px: the checkbox's corner, and the one thing about the
-      // box that the radio does not share.
+      // rounded-sm son 4 px: la esquina de la casilla, lo único de la caja que el
+      // radio no comparte.
       `${SELECTION_CONTROL_BASE_CLASSES} rounded-sm ` +
       selectionBoxClasses(this.isOn(), this.isDisabled()),
   );
@@ -115,11 +93,9 @@ export class Checkbox extends FormControlBase<boolean> {
   protected readonly glyphClasses = SELECTION_GLYPH_CLASSES;
 
   /**
-   * `mixed`, not `true` and not `false`.
-   *
-   * The visual difference between checked and indeterminate is one glyph
-   * inside an otherwise identical blue box, so anyone not looking at it gets
-   * the state from here and from nowhere else.
+   * `mixed`, ni `true` ni `false`: entre marcado e indeterminado solo cambia un
+   * glifo dentro de una caja idéntica, así que quien no la ve saca el estado de
+   * acá y de ningún otro lado.
    */
   protected readonly ariaChecked = computed(() => {
     if (this.indeterminate()) {
@@ -132,14 +108,11 @@ export class Checkbox extends FormControlBase<boolean> {
     super();
 
     /**
-     * `indeterminate` EXISTS ONLY AS A DOM PROPERTY. There is no HTML
-     * attribute for it: writing `indeterminate="true"` in a template sets an
-     * unknown attribute, the box renders unchecked, and nothing anywhere
-     * reports a problem. It has to be assigned to the element.
-     *
-     * An effect rather than a one-off in ngAfterViewInit, because the input
-     * changes over the component's life -- a "select all" box moves in and out
-     * of the state every time a row is picked.
+     * `indeterminate` EXISTE SOLO COMO PROPIEDAD DEL DOM: no hay atributo HTML,
+     * así que escribirlo en una plantilla pone un atributo desconocido, la caja
+     * se pinta sin marcar y nada reporta nada. Hay que asignarlo al elemento.
+     * Un effect y no un ngAfterViewInit porque la entrada cambia durante la vida
+     * del componente.
      */
     effect(() => {
       this.box().nativeElement.indeterminate = this.indeterminate();
@@ -147,20 +120,14 @@ export class Checkbox extends FormControlBase<boolean> {
   }
 
   /**
-   * The native control reports what it now is; that value is committed and
-   * emitted.
+   * EL EVENTO NATIVO SE FRENA ACÁ: este componente publica `checkedChange` y el
+   * `<input>` de abajo es un detalle. Dejar burbujear su `change` le daría al
+   * consumidor un segundo evento sin documentar cuyo target es ese elemento
+   * privado.
    *
-   * THE NATIVE EVENT IS STOPPED HERE, and that is not tidiness. This
-   * component publishes `checkedChange`; the `<input>` under it is an
-   * implementation detail. Letting its `change` bubble out of the host would
-   * hand a consumer a second, undocumented event whose target is that private
-   * element -- something to bind to, read the checked flag from, and be broken
-   * by the next change in here.
-   *
-   * `indeterminate` is deliberately NOT cleared. It is the consumer's claim
-   * about a set of other things, and only the consumer knows whether this
-   * click resolved it -- guessing would make the "select all" box flicker out
-   * of the mixed state on a click that did not select everything.
+   * `indeterminate` NO se limpia: es la afirmación del consumidor sobre otras
+   * cosas y solo él sabe si este clic la resolvió. Adivinar haría parpadear la
+   * casilla de «seleccionar todo» en un clic que no seleccionó todo.
    */
   protected onNativeChange(event: Event): void {
     event.stopPropagation();

@@ -1,30 +1,24 @@
 <!--
-  ONE live region, always in the document, whatever the queue holds.
-
-  It is the container that is live and not each toast, and it is here even when
-  there is nothing in it. A region that appears along with its first message is
-  announced inconsistently -- some screen readers miss content that arrives in
-  the same frame the region does -- so the region waits, empty, and only its
-  contents change.
-
-  `polite` and never `assertive`: a toast reports something that already
-  happened, and cutting into the sentence someone is listening to in order to
-  say "saved" is worse than saying it a moment later. A message that really
-  cannot wait is a Banner with role="alert", which is the other component.
+  UNA región viva, siempre en el documento, tenga lo que tenga la cola. Lo vivo es el
+  contenedor y no cada toast, y está incluso vacío: una región que aparece junto con
+  su primer mensaje se anuncia de forma inconsistente -algunos lectores se pierden
+  contenido que llega en el mismo cuadro que la región-.
+  `polite` y nunca `assertive`: un toast informa algo que ya pasó, y cortar la frase
+  que alguien escucha para decir «guardado» es peor que decirlo un momento después.
+  Un mensaje que de verdad no puede esperar es un Banner con role="alert".
 -->
 <div [class]="outletClasses" role="status" aria-live="polite" [attr.aria-label]="regionLabel()">
   @for (toast of toasts(); track toast.id) {
     <div [class]="toastClasses + ' ' + surfaceClasses(toast)">
       <!--
-        The 4 px leading accent, in the family's SOLID rather than its border.
-        Measured: the border tone against this surface is 1.45-1.62:1, an
-        accent nobody sees; the solid is 3.71-4.28:1. See feedback.types.ts.
-      -->
+  La barra de acento de 4 px, en el SOLID de la familia y no en su borde. Medido: el
+  tono de borde contra esta superficie da 1.45-1.62:1, un acento que nadie ve; el
+  solid da 3.71-4.28:1. Ver feedback.types.ts.
+-->
       <span class="w-1 shrink-0" [class]="accentClasses(toast)" aria-hidden="true"></span>
 
       <div [class]="bodyClasses">
-        <!-- Informative, like the banner's: the severity is not readable from
-             the colour alone. -->
+        <!-- Informativo, como el del banner: la severidad no se lee solo del color. -->
         <ewms-icon [name]="iconName(toast)" [size]="iconSize" [label]="severityLabel(toast)" />
         <p class="min-w-0 text-p">{{ toast.message }}</p>
       </div>

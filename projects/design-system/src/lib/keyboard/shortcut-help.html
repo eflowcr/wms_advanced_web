@@ -1,12 +1,10 @@
 <!--
-  No role here: the CDK's container around this template already carries
-  role="dialog", aria-modal and the focus trap. A second dialog role nested
-  inside the first is two dialogs to a screen reader.
-
-  The `@if` is not defensive padding. The words arrive from whichever root
-  layout mounted the engine, and "nothing mounted" is a state that really
-  exists -- a page rendered alone in a test bed. Rendering an empty dialog then
-  is better than rendering one full of undefined.
+  Sin rol acá: el contenedor del CDK alrededor ya lleva role="dialog", aria-modal y
+  la trampa de foco, y un segundo rol de diálogo anidado son dos diálogos para un
+  lector de pantalla.
+  El `@if` no es relleno defensivo: las palabras vienen del layout raíz que montó el
+  motor, y «no montó nada» es un estado que existe de verdad -una página sola en un
+  test bed-. Pintar un diálogo vacío es mejor que pintar uno lleno de undefined.
 -->
 @if (messages(); as words) {
   <div
@@ -16,10 +14,10 @@
     <p class="text-p text-secondary">{{ words.intro }}</p>
 
     <!--
-      A real table, because this IS one: two columns whose rows are pairs. A
-      grid of divs would read to a screen reader as a run of unrelated text,
-      and the header cells are what tell somebody which side is the key.
-    -->
+  Una tabla de verdad, porque ESTO lo es: dos columnas cuyas filas son pares. Una
+  grilla de divs se leería como texto suelto, y las celdas de cabecera son lo que
+  dice de qué lado está la tecla.
+-->
     <table class="w-full border-collapse text-left">
       <thead>
         <tr>
@@ -39,11 +37,10 @@
             </th>
             <td class="border-b border-default py-2">
               <!--
-                One <kbd> per key of the chord, which is what the element is
-                for: `Alt+N` inside a single <kbd> is one key called "Alt+N".
-                The `+` between them is aria-hidden -- it is punctuation
-                holding two keys apart, not something to read out.
-              -->
+  Un `<kbd>` por tecla del acorde, que es para lo que existe el elemento: `Alt+N`
+  dentro de un solo `<kbd>` es una tecla llamada «Alt+N». El `+` va aria-hidden: es
+  puntuación que separa dos teclas, no algo que leer.
+-->
               <span class="inline-flex items-center gap-1">
                 @for (key of row.chord; track $index) {
                   @if (!$first) {
@@ -66,10 +63,10 @@
 
     @if (hasSingleKey()) {
       <!--
-        WCAG 2.2 2.1.4. The switch sits WITH the list rather than in a settings
-        screen nobody opens, because the moment somebody wants it off is the
-        moment they have just discovered one of them fired at them.
-      -->
+  WCAG 2.2 2.1.4. El conmutador está CON la lista y no en una pantalla de ajustes
+  que nadie abre, porque el momento en que alguien lo quiere apagar es el momento en
+  que uno de ellos le acaba de disparar.
+-->
       <div class="flex flex-col gap-1 rounded-md border border-default bg-secondary p-3">
         <ewms-toggle
           [checked]="singleKeyShortcuts()"

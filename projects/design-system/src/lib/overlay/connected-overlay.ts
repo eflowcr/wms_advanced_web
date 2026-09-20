@@ -9,24 +9,17 @@ import {
 import type { Injector } from '@angular/core';
 
 /**
- * The CDK overlay setup shared by everything in this library that floats next
- * to a trigger: the Tooltip (PR 1) and the Select's panel (this one).
- *
- * The positions and the strategy are the whole of it, and they are not
- * obvious enough to write twice. Two copies would drift on the flip
- * behaviour, and the second copy is always the one nobody tests at the edge
- * of the viewport.
- *
- * WHAT THIS DOES NOT DO: appearance, portals, focus, or closing. Those differ
- * per consumer and belong to the consumer.
- *
- * Requires `.cdk-overlay-container { position: fixed }`, which arrives with
- * `@angular/cdk/overlay-prebuilt.css` in the shell's styles.css. Without it
- * the computed coordinates are measured against the document instead of the
- * viewport and the panel lands at the foot of the page.
+ * El armado de overlay del CDK que comparte todo lo que flota junto a un gatillo:
+ * el Tooltip y el panel del Select. Las posiciones y la estrategia no son lo
+ * bastante obvias como para escribirlas dos veces, y la segunda copia siempre es
+ * la que nadie prueba en el borde del viewport.
+ * NO hace apariencia, portales, foco ni cierre: eso cambia por consumidor.
+ * Necesita `.cdk-overlay-container { position: fixed }`, que llega con el CSS
+ * prearmado del CDK: sin él las coordenadas se miden contra el documento en vez
+ * del viewport y el panel aterriza al pie de la página.
  */
 
-/** Centred on the trigger -- what a tooltip wants. */
+/** Centrado sobre el gatillo: lo que quiere un tooltip. */
 export const ABOVE: ConnectedPosition = {
   originX: 'center',
   originY: 'top',
@@ -52,11 +45,8 @@ export const AFTER: ConnectedPosition = {
   overlayY: 'center',
 };
 
-/**
- * Flush with the trigger's leading edge -- what a panel wants. A dropdown
- * whose left edge does not line up with its trigger's reads as misplaced,
- * however well centred it is.
- */
+/** Al ras del borde inicial del gatillo: lo que quiere un panel. Un desplegable
+ * cuyo borde izquierdo no coincide con el del gatillo se lee mal puesto. */
 export const BELOW_START: ConnectedPosition = {
   originX: 'start',
   originY: 'bottom',
@@ -70,13 +60,9 @@ export const ABOVE_START: ConnectedPosition = {
   overlayY: 'bottom',
 };
 
-/**
- * Preferred placement first, its fallback second.
- *
- * The CDK walks the list and takes the first that fits: that IS the flip. A
- * panel or a tooltip cut off by the edge of the window is useless, so the
- * fallback is not a refinement.
- */
+/** La colocación preferida primero y su alternativa después. El CDK recorre la
+ * lista y toma la primera que entra: ESO es el volteo, y no es un refinamiento -un
+ * panel cortado por el borde de la ventana no sirve-. */
 export const PANEL_POSITIONS: readonly ConnectedPosition[] = [BELOW_START, ABOVE_START];
 
 export function createConnectedOverlay(
@@ -87,19 +73,19 @@ export function createConnectedOverlay(
 ): OverlayRef {
   const positionStrategy = createFlexibleConnectedPositionStrategy(injector, origin)
     .withPositions([...positions])
-    // Fixed dimensions, then push: the panel keeps its size and is nudged back
-    // inside the viewport rather than being squeezed into a scrollable stub.
+    // Dimensiones fijas y después empujar: el panel conserva su tamaño y se corre
+    // hacia adentro en vez de quedar aplastado en un muñón con scroll.
     .withFlexibleDimensions(false)
     .withPush(true);
 
   return createOverlayRef(injector, {
     positionStrategy,
-    // Follow the trigger while the page scrolls instead of detaching. A panel
-    // that vanishes on the first scroll of a long form is a bug report.
+    // Sigue al gatillo mientras la página se desplaza en vez de soltarse: un panel
+    // que se esfuma al primer scroll de un formulario largo es un reporte de bug.
     scrollStrategy: createRepositionScrollStrategy(injector),
     ...config,
   });
 }
 
-/** What `createConnectedOverlay` takes: the preferred placement, then fallbacks. */
+/** Lo que toma `createConnectedOverlay`: la preferida y después las alternativas. */
 export type ConnectedPositionList = readonly ConnectedPosition[];

@@ -10,20 +10,15 @@ import {
 } from '../selection/selection.types';
 
 /**
- * One option out of several. Same 18x18 box, same border, same focus ring and
- * same row-as-hit-target as `ewms-checkbox`, through selection.types.ts; a
- * circle instead of a rounded square, and a dot instead of a check.
- *
- * GROUPING IS THE NATIVE ONE. Radios sharing a `name` exclude each other
- * because the browser makes them, not because this component keeps a registry:
- * checking one unchecks its siblings before any Angular code runs. `name` is
- * required for exactly that reason -- a radio without one is a radio in a
- * group of one, which is a checkbox that cannot be switched off.
- *
- * THE VALUE OF THE GROUP IS NOT THIS COMPONENT'S `value`. `value` is what THIS
- * option contributes when it is the chosen one; the control's value is
- * whichever option's `value` is currently selected. That is why `checked` is
- * derived by comparison and is not an input.
+ * Una opción entre varias. Misma caja de 18x18, mismo borde, mismo anillo y misma
+ * fila-como-blanco que `ewms-checkbox`; un círculo en vez de un cuadrado y un
+ * punto en vez de un tilde.
+ * EL AGRUPAMIENTO ES EL NATIVO: los radios que comparten `name` se excluyen porque
+ * lo hace el navegador, antes de que corra código de Angular. Por eso `name` es
+ * obligatorio: un radio sin él es un grupo de uno, o sea una casilla que no se
+ * puede apagar.
+ * EL VALOR DEL GRUPO NO ES EL `value` DE ESTE COMPONENTE: `value` es lo que aporta
+ * ESTA opción al ser la elegida, y por eso `checked` se deriva y no es entrada.
  */
 @Component({
   selector: 'ewms-radio',
@@ -33,42 +28,32 @@ import {
   providers: [provideValueAccessor(() => Radio)],
 })
 export class Radio extends FormControlBase<unknown> {
-  /** What the group's value becomes when this option is picked. */
+  /** En qué se convierte el valor del grupo cuando se elige esta opción. */
   readonly value = input.required<unknown>();
 
-  /**
-   * The group. Required: shared `name` IS the grouping, and leaving it out
-   * produces a radio that can be switched on and never off.
-   */
+  /** El grupo. Obligatorio: el `name` compartido ES el agrupamiento, y sin él sale
+   * un radio que se puede encender y nunca apagar. */
   readonly name = input.required<string>();
 
-  /** Visible text beside the dot, already translated. */
+  /** Texto visible al lado del punto, ya traducido. */
   readonly label = input<string>('');
 
-  /** The accessible name when there is no visible text. */
+  /** El nombre accesible cuando no hay texto visible. */
   readonly ariaLabel = input<string>('');
 
   /**
-   * NOT called `change`: it is a native event name, it bubbles, and an output
-   * sharing it delivers both this value and the raw DOM Event on one binding.
-   * See the comment on `Checkbox.checkedChange` and the PR report.
-   *
-   * `valueChange` is what the ficha already proposes for the optional radio
-   * group wrapper, so the group and the option now speak the same way.
+   * NO se llama `change`: es un nombre de evento nativo, burbujea, y una salida que
+   * lo comparta entrega este valor Y el Event crudo en el mismo enlace. Ver el
+   * comentario de `Checkbox.checkedChange`.
    */
   readonly valueChange = output<unknown>();
 
-  /**
-   * The base seeds itself from the component's value input -- except here,
-   * where `value` is this option's identity rather than the group's value.
-   * Nothing seeds this control: it starts empty and is filled by `writeValue`.
-   */
+  /** La base se siembra del valor del componente, salvo acá: `value` es la
+   * identidad de esta opción y no el valor del grupo. Nada la siembra. */
   protected readonly valueSource = signal<unknown>(null);
 
-  /**
-   * Derived, never stored. Two sources of truth for "is this the selected
-   * one?" is how a radio group ends up with two dots in it.
-   */
+  /** Derivado, nunca guardado: dos fuentes de verdad para «¿es esta la elegida?»
+   * es cómo un grupo de radios termina con dos puntos. */
   protected readonly isChecked = computed(() => this.controlValue() === this.value());
 
   protected readonly rowClasses = computed(
@@ -79,18 +64,15 @@ export class Radio extends FormControlBase<unknown> {
 
   protected readonly boxClasses = computed(
     () =>
-      // The only visual difference from the checkbox: a full circle.
+      // La única diferencia visual con la casilla: un círculo entero.
       `${SELECTION_CONTROL_BASE_CLASSES} rounded-full ` +
       selectionBoxClasses(this.isChecked(), this.isDisabled()),
   );
 
   protected readonly glyphClasses = SELECTION_GLYPH_CLASSES;
 
-  /**
-   * The native `change` is stopped for the same reason as the Checkbox's: the
-   * `<input>` is an implementation detail and its events are not part of this
-   * component's API. See the comment on `Checkbox.onNativeChange`.
-   */
+  /** El `change` nativo se frena por lo mismo que en el Checkbox: el `<input>` es
+   * un detalle y sus eventos no son parte de la API. */
   protected onNativeChange(event: Event): void {
     event.stopPropagation();
     this.commit(this.value());

@@ -1,22 +1,17 @@
 <!--
-  The `role="dialog"`, the focus trap, the `aria-modal` and the focus
-  restoration all live on the CDK's container around this template. What is
-  here is the content and nothing else -- which is why there is no role on this
-  element: a second `dialog` role nested inside the first would be two dialogs
-  as far as a screen reader is concerned.
+  El `role="dialog"`, la trampa de foco, el `aria-modal` y la devolución del foco
+  viven en el contenedor del CDK. Acá está el contenido y nada más, y por eso este
+  elemento no lleva rol: un segundo `dialog` anidado serían dos diálogos.
 -->
 <div [class]="boxClasses">
   <!--
-    THE ICON ZONE IS A SHAPE WITH A HALO AND NO GLYPH, AND THAT IS ON PURPOSE.
-
-    It is a documented exception in the Modal sheet, carrying an explicit
-    warning for whoever arrives later with the icon set in hand: do NOT "fix"
-    this by putting a triangle in it. The shape was validated with the user on
-    27/08; changing it is a decision somebody takes, not a gap to tidy up.
-
-    aria-hidden because there is nothing here to read: the tone is already in
-    the title and in the words of the body, and a circle has no name.
-  -->
+  LA ZONA DEL ICONO ES UNA FORMA CON HALO Y SIN GLIFO, Y ES A PROPÓSITO. Es una
+  excepción documentada en la ficha Modal, con aviso explícito para quien llegue
+  después con el set de iconos en la mano: NO «arreglarla» metiéndole un triángulo.
+  La forma se validó con el usuario el 27/08.
+  `aria-hidden` porque no hay nada que leer: el tono ya está en el título y en el
+  cuerpo, y un círculo no tiene nombre.
+-->
   <span
     class="shrink-0 rounded-full border border-solid"
     [class]="iconClasses()"
@@ -29,11 +24,11 @@
   <p [id]="options.bodyId" class="text-p text-secondary">{{ options.body }}</p>
 
   <!--
-    The footer is right-aligned while the title and the body are centred, which
-    is what the sheet's v1.1 settles on. Cancel first in the DOM, so the
-    keyboard reaches the safe answer before the destructive one: the CDK puts
-    the focus on the first tabbable element, and that has to be Cancel.
-  -->
+  El pie va alineado a la derecha mientras el título y el cuerpo van centrados, que
+  es lo que fija la v1.1 de la ficha. Cancelar primero en el DOM, así el teclado
+  llega a la respuesta segura antes que a la destructiva: el CDK pone el foco en el
+  primer tabulable, y ese tiene que ser Cancelar.
+-->
   <div class="flex w-full justify-end gap-2">
     <ewms-button variant="secondary" (click)="cancel()">{{ options.cancelLabel }}</ewms-button>
     <ewms-button [variant]="confirmVariant()" (click)="confirm()">

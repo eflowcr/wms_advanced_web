@@ -1,12 +1,10 @@
 <!--
-  ONE element for both uses, with the interactive attributes bound to null when
-  the card is a plain container. Two templates behind an `@if` would mean two
-  `<ng-content>` blocks with the same selector, and only one of them would ever
-  receive the projected content.
-
-  `role`, `tabindex` and `aria-checked` are all absent -- not empty, absent --
-  outside a group: a container with `role="radio"` and no radiogroup around it
-  is invalid markup, and axe says so.
+  UN elemento para los dos usos, con los atributos interactivos atados a null cuando
+  la card es un contenedor. Dos plantillas tras un `@if` serían dos `<ng-content>`
+  con el mismo selector, y solo uno recibiría el contenido proyectado.
+  `role`, `tabindex` y `aria-checked` están ausentes -no vacíos, ausentes- fuera de
+  un grupo: un contenedor con `role="radio"` sin radiogroup alrededor es marcado
+  inválido, y axe lo dice.
 -->
 <div
   #box
@@ -21,10 +19,9 @@
   <ng-content select="[ewmsCardHeader]" />
 
   <!--
-    The body is the default slot, so a selectable card is written with its
-    content straight inside and a content card names only the parts that are
-    not the body.
-  -->
+  El cuerpo es el hueco por defecto, así una card seleccionable se escribe con su
+  contenido adentro y una de contenido solo nombra las partes que no son el cuerpo.
+-->
   <div class="flex min-w-0 flex-col gap-2">
     <ng-content />
   </div>
@@ -33,10 +30,10 @@
 
   @if (inGroup() && selected()) {
     <!--
-      The third cue, after the border and the fill. Decorative in the
-      accessibility sense: `aria-checked` on the box already says the same
-      thing to a screen reader, and saying it twice is noise.
-    -->
+  La tercera señal, después del borde y el relleno. Decorativa en el sentido de
+  accesibilidad: `aria-checked` en la caja ya se lo dice a un lector, y decirlo dos
+  veces es ruido.
+-->
     <span class="text-(color:--color-bg-primary)" aria-hidden="true">
       <ewms-icon name="check" size="sm" />
     </span>

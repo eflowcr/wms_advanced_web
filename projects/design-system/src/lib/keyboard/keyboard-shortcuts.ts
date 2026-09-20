@@ -12,91 +12,51 @@ import {
 } from './shortcuts.types';
 import { isTextEntry } from './text-entry';
 
-/** Undo a registration. Returned by `register`, and called for you on destroy. */
+/** Deshace un registro. La devuelve `register`, y en destroy se llama sola. */
 export type Unregister = () => void;
 
 /**
- * What the engine decided about one keystroke, and why.
- *
- * EXISTS SO THE CATALOGUE CAN SHOW THE TRUTH RATHER THAN A RE-ENACTMENT.
- * `/design-system/patterns/keyboard` shows the last key and how it was
- * classified, and the only honest way to do that is to publish what the engine
- * really concluded -- a page that installed its own listener and worked the
- * answer out again would be demonstrating a second implementation, and the
- * source gate forbids it anyway.
- *
- * It is also what the end-to-end test reads to assert that a scan was
- * classified as a scan, rather than inferring it from a side effect.
+ * Qué decidió el motor sobre una tecla, y por qué. El catálogo y el E2E leen la
+ * conclusión del motor en vez de rehacerla: una página con su propio listener
+ * sería una segunda implementación, y la compuerta de código la prohíbe.
  */
 export interface ShortcutEvent {
-  /** `KeyboardEvent.key`, as the browser reported it. */
+  /** `KeyboardEvent.key`, tal como lo reportó el navegador. */
   readonly key: string;
-  /** The action it turned out to be, or null when it was not a binding. */
+  /** La acción que resultó ser, o null si no era un atajo. */
   readonly action: ShortcutAction | null;
   readonly outcome: ShortcutOutcome;
 }
 
 /**
- * Every way a keystroke can end, in the order `handle` decides them. Each one
- * is a branch somebody could get wrong, so each one has a name.
+ * Cómo puede terminar una tecla, en el orden en que `handle` lo decide. Cada una
+ * es una rama que alguien podría equivocar, así que cada una tiene nombre.
  */
 export type ShortcutOutcome =
-  /** Another handler nearer the event already answered it. */
+  /** Otro handler más cerca del evento ya la atendió. */
   | 'already-handled'
-  /** Inside a scanner run: nothing may act on it (RFE-05). */
+  /** Dentro de una ráfaga de escáner: nada puede actuar sobre ella (RFE-05). */
   | 'burst'
-  /** A run closed on Enter: delivered whole, as one scan (RFE-05). */
+  /** Una ráfaga cerrada con Enter: se entrega entera, como un escaneo (RFE-05). */
   | 'scan'
-  /** Not a binding at all. An ordinary keystroke. */
+  /** No era un atajo. Una tecla común. */
   | 'key'
-  /** A binding, but the focus is in a text field and it may not fire (RFE-04). */
+  /** Es un atajo, pero el foco está en un campo y no puede disparar (RFE-04). */
   | 'in-text-field'
-  /** A binding, but single-character shortcuts are switched off (RFE-09). */
+  /** Es un atajo, pero los de un solo carácter están apagados (RFE-09). */
   | 'single-key-off'
-  /** A binding nobody registered a handler for. */
+  /** Un atajo que nadie registró. */
   | 'unregistered'
-  /** Waiting out one threshold window to be sure it is not a scan. */
+  /** Esperando una ventana de umbral para asegurarse de que no es un escaneo. */
   | 'deferred'
-  /** A handler ran. */
+  /** Corrió un handler. */
   | 'shortcut';
 
 /**
- * THE GLOBAL SHORTCUT ENGINE (REQ-FE-DS4-001).
- *
- * One instance for the whole application -- `providedIn: 'root'` -- fed by one
- * document listener that `ewmsShortcutsHost` mounts in the root layout. No
- * screen listens for keys of its own; a screen says WHAT it does with an
- * action and never with which key (RFE-01, RFE-03).
- *
- *
- * THE FOUR THINGS THIS HAS TO GET RIGHT, IN ORDER OF WHAT THEY COST WHEN WRONG
- *
- * 1. A scan must never fire a shortcut. The cost is a wrong inventory
- *    movement. See `handle` and `ScanDetector`.
- * 2. Nothing but Escape may fire inside a text field. The cost is a form
- *    opening over somebody's half-typed code.
- * 3. Ctrl+S must never reach the browser. The cost is a half-finished page
- *    saved to disk and a person who thinks they saved their work.
- * 4. Single-character shortcuts must be switchable off. Not a nicety: WCAG 2.2
- *    2.1.4 requires it, and speech-input users are the ones who need it.
- *
- *
- * WHY THE MAP IS HANDED TO THIS SERVICE RATHER THAN INJECTED BY IT
- *
- * `EWMS_SHORTCUT_MAP` is provided by the root layout COMPONENT, which puts it
- * in an element injector -- the shell provides its own on `MainLayout`, and
- * the showroom provides its own on `ShowroomLayout`, for the bundle reasons
- * each of those files sets out. A `providedIn: 'root'` service resolves from
- * the environment injector, which is above all of that and would find nothing.
- *
- * So the directive injects the map -- it is IN that chain, which is the whole
- * point of it being a directive on the layout -- and mounts it here. The
- * service stays a singleton, so there is one registry of handlers no matter
- * how deep the screen that registers is.
- *
- * `mount` throwing on a second call is HG-04 enforced rather than hoped for: a
- * second `ewmsShortcutsHost` anywhere fails loudly at startup instead of
- * quietly doubling every shortcut.
+ * El motor global de atajos (REQ-FE-DS4-001). Uno por aplicación, alimentado por
+ * el único listener que monta `ewmsShortcutsHost` en el layout raíz: una pantalla
+ * dice QUÉ hace con una acción, nunca con qué tecla (RFE-01, RFE-03).
+ * Ficha: 08-Sistema-de-Diseno/Componentes/Atajos-de-Teclado.
  */
 @Injectable({ providedIn: 'root' })
 export class KeyboardShortcuts {
@@ -108,57 +68,39 @@ export class KeyboardShortcuts {
   private readonly classified = new Subject<ShortcutEvent>();
 
   /**
-   * Whether `/` and `?` act at all. WCAG 2.2 2.1.4 (Character Key Shortcuts)
-   * asks for a shortcut that is a single printable character to be switchable
-   * off or remappable, and RFE-04 is not enough on its own: it only covers
-   * text fields, and 2.1.4 exists for people whose speech input produces
-   * characters anywhere.
-   *
-   * IN MEMORY ONLY. Remembering it needs somewhere to keep a preference per
-   * user, which needs the Security Core of the backend (PLN-WMS-005, Sprint 1)
-   * -- the same dependency that defers favourites. Declared, not disguised.
+   * Si `/` y `?` actúan. WCAG 2.2 2.1.4 exige poder apagar un atajo de un solo
+   * carácter; RFE-04 no alcanza, porque solo cubre campos de texto. EN MEMORIA:
+   * recordarlo necesita el Security Core (PLN-WMS-005), igual que favoritos.
    */
   readonly singleKeyShortcuts = signal(true);
 
-  /** Every scan the engine classified, whole, one event per code (RFE-05). */
+  /** Cada escaneo que el motor clasificó, entero, un evento por código (RFE-05). */
   readonly scans: Observable<string> = this.scanned.asObservable();
 
   /**
-   * Every keystroke the one listener saw, with what became of it.
-   *
-   * One emission per keydown, always, including the ones nothing happened to.
-   * Cheap by construction -- a small object, and in a zoneless application no
-   * change detection unless somebody subscribes and writes a signal -- and it
-   * is what lets the catalogue and the end-to-end test read the engine's own
-   * conclusion instead of guessing at it from a side effect.
+   * Cada tecla que vio el único listener, con lo que fue de ella. Una emisión por
+   * keydown, siempre, incluidas las que no provocaron nada.
    */
   readonly events: Observable<ShortcutEvent> = this.classified.asObservable();
 
   /**
-   * The map the engine actually dispatches from, or null before a host mounts.
-   *
-   * NULL IS A REAL STATE AND IS NOT PAPERED OVER: a page rendered on its own
-   * in a test bed has no root layout above it, and a page that showed a map
-   * nothing was listening to would be the showroom lying. Read by the help
-   * dialog and by the keyboard pattern page.
+   * El mapa desde el que despacha el motor, o null antes de que monte un host.
+   * NULL ES UN ESTADO REAL: una página sola en un test bed no tiene layout raíz,
+   * y mostrar un mapa que nadie escucha sería el showroom mintiendo.
    */
   readonly bindings: Signal<ShortcutMap | null> = this.map.asReadonly();
 
-  /** The help dialog's words, from the same mount. */
+  /** Los textos del diálogo de ayuda, del mismo mount. */
   readonly helpMessages: Signal<ShortcutHelpMessages | null> = this.messages.asReadonly();
 
-  /**
-   * A single-character shortcut waiting out one threshold window. See
-   * `handle` for why it waits.
-   */
+  /** Un atajo de un carácter esperando su ventana de umbral. Ver `handle`. */
   private pending: ReturnType<typeof setTimeout> | null = null;
 
   /**
-   * Take over the keyboard. Called by `ewmsShortcutsHost` and by nothing else.
+   * Toma el teclado. La llama `ewmsShortcutsHost` y nadie más.
    *
-   * @throws if a host is already mounted. Two of them is two document
-   *   listeners, which is every shortcut firing twice and the rule in RFE-03
-   *   broken -- and it is far better found at startup than by an operator.
+   * @throws si ya hay un host montado. Dos son dos listeners, o sea cada atajo
+   *   disparando dos veces, y mejor encontrarlo al arrancar que un operario.
    */
   mount(map: ShortcutMap, messages: ShortcutHelpMessages): void {
     if (this.map() !== null) {
@@ -171,7 +113,7 @@ export class KeyboardShortcuts {
     this.messages.set(messages);
   }
 
-  /** The host went away. Everything it brought goes with it. */
+  /** El host se fue. Todo lo que trajo se va con él. */
   unmount(): void {
     this.map.set(null);
     this.messages.set(null);
@@ -179,20 +121,12 @@ export class KeyboardShortcuts {
   }
 
   /**
-   * Say what this screen does with an action.
+   * Dice qué hace esta pantalla con una acción.
    *
-   * MUST BE CALLED FROM AN INJECTION CONTEXT -- a field initialiser or a
-   * constructor -- and that is a contract rather than an accident: it is how
-   * the registration learns whose life it shares, so a screen that navigated
-   * away stops answering without anybody remembering to say so (RFE-01,
-   * PACQ-01.2). Angular's own `takeUntilDestroyed` asks for the same thing for
-   * the same reason. The returned function covers the rarer case of a
-   * registration shorter-lived than its component -- an open dialog taking
-   * over `save`, for instance.
-   *
-   * REGISTERING AN ACTION TWICE THROWS. A second handler quietly winning, or
-   * quietly losing, is how two screens end up disagreeing about what Alt+N
-   * does and nobody finds out until an operator does.
+   * DESDE UN CONTEXTO DE INYECCIÓN, y es contrato: así el registro sabe de quién
+   * es la vida que comparte y una pantalla que navegó deja de responder sola.
+   * REGISTRAR DOS VECES LA MISMA ACCIÓN LANZA: un segundo handler ganando en
+   * silencio es cómo dos pantallas discrepan sobre qué hace Alt+N.
    */
   register(action: ShortcutAction, handler: () => void): Unregister {
     if (this.handlers.has(action)) {
@@ -204,8 +138,8 @@ export class KeyboardShortcuts {
     this.handlers.set(action, handler);
 
     const unregister = (): void => {
-      // Only if it is still OURS: a later registration of the same action must
-      // not be torn down by an earlier owner's destruction.
+      // Solo si sigue siendo NUESTRO: un registro posterior de la misma acción
+      // no lo puede desarmar la destrucción de un dueño anterior.
       if (this.handlers.get(action) === handler) {
         this.handlers.delete(action);
       }
@@ -215,49 +149,34 @@ export class KeyboardShortcuts {
     return unregister;
   }
 
-  /** Whether anybody is currently answering this action. Read by the help dialog. */
+  /** Si alguien está respondiendo esta acción. Lo lee el diálogo de ayuda. */
   isRegistered(action: ShortcutAction): boolean {
     return this.handlers.has(action);
   }
 
   /**
-   * One keydown, from the one listener.
-   *
-   * THE ORDER OF THE CHECKS IS THE DESIGN. Each one can only be moved by
-   * accepting a failure the REQ names, and the comments say which.
+   * Un keydown, del único listener. EL ORDEN DE LAS COMPROBACIONES ES EL DISEÑO:
+   * mover una cuesta un fallo que el REQ nombra, y los comentarios dicen cuál.
    */
   handle(event: KeyboardEvent): void {
-    // No host, no map, nothing to dispatch against.
+    // Sin host no hay mapa, y sin mapa no hay contra qué despachar.
     if (this.map() === null) {
       return;
     }
 
     /*
-     * Somebody nearer the event already answered it -- the dialog closing on
-     * Escape is the case that exists today. Answering it again would cancel
-     * the screen behind the dialog as well as closing the dialog.
-     *
-     * THE DETECTOR IS STILL FED, AND SKIPPING IT WAS A DEFECT (found in DS-5
-     * by walking buscar -> crear -> editar on the keyboard alone).
-     *
-     * A key somebody else consumed is still a key that HAPPENED. When a code
-     * is scanned into an `ewms-search-select`, the field's own detector
-     * resolves the scan and calls `preventDefault` on the closing Enter -- so
-     * the engine returned here and its own run was never closed. The run then
-     * sat open, four or more characters long, until the NEXT bare Enter
-     * anywhere on the page, which the engine read as a scan closing and
-     * cancelled: a focused button that could not be activated with Enter,
-     * which is a WCAG 2.1.1 failure on every screen that has a search field.
-     *
-     * The verdict is discarded on purpose -- nothing may act on a handled key.
-     * What the call buys is the bookkeeping: the Enter closes the run, an
-     * arrow breaks it, a character extends it, exactly as if the engine had
-     * been the one to answer.
+     * Alguien más cerca del evento ya la atendió, y aun así SE ALIMENTA EL
+     * DETECTOR: saltarlo fue un defecto de DS-5. Un código escaneado en un
+     * `ewms-search-select` lo resuelve el detector del campo, que hace
+     * `preventDefault` sobre el Enter de cierre, así que la ráfaga del motor
+     * quedaba abierta hasta el Enter siguiente -y un botón enfocado dejaba de
+     * activarse con Enter, WCAG 2.1.1. El veredicto se descarta a propósito:
+     * nada puede actuar sobre una tecla ya atendida, solo se lleva la cuenta.
      */
     if (event.defaultPrevented) {
       this.detector.accept(event, readMilliseconds(SCAN_THRESHOLD_TOKEN));
-      // A key arriving cancels a single character still waiting, and a handled
-      // key is a key arriving. Same rule, no exception for who answered it.
+      // Una tecla que llega cancela un carácter que seguía esperando, y una
+      // tecla atendida es una tecla que llega. Sin excepción por quién respondió.
       this.cancelPending();
       this.classify(event, null, 'already-handled');
       return;
@@ -267,18 +186,16 @@ export class KeyboardShortcuts {
     const verdict = this.detector.accept(event, threshold);
 
     /*
-     * ANY key arriving cancels a single-character shortcut that was still
-     * waiting. A person who means `/` presses it alone; a gun that emitted `/`
-     * as the first character of a code sends the second one microseconds
-     * later. This is what makes RFE-05 hold for a code that BEGINS with a
-     * shortcut character -- the length of the run cannot tell you that yet,
-     * because at the first character there is no run.
+     * CUALQUIER tecla cancela un atajo de un carácter que seguía esperando. Quien
+     * quiere `/` lo pulsa solo; una pistola que emitió `/` como primer carácter
+     * manda el segundo microsegundos después. Así vale RFE-05 para un código que
+     * EMPIEZA por un carácter de atajo, que el largo de la ráfaga no puede ver.
      */
     this.cancelPending();
 
     if (verdict.kind === 'scan') {
-      // The whole code, once, as its own event. The keys that made it never
-      // reached a handler.
+      // El código entero, una vez, como evento propio. Las teclas que lo formaron
+      // nunca llegaron a un handler.
       event.preventDefault();
       this.classify(event, null, 'scan');
       this.scanned.next(verdict.code);
@@ -286,8 +203,8 @@ export class KeyboardShortcuts {
     }
 
     if (verdict.kind === 'burst') {
-      // Mid-scan. Nothing acts, and nothing is prevented either: the field
-      // under the focus, if there is one, is still collecting the code.
+      // En plena ráfaga. Nada actúa y nada se previene: el campo bajo el foco, si
+      // lo hay, sigue juntando el código.
       this.classify(event, null, 'burst');
       return;
     }
@@ -300,15 +217,15 @@ export class KeyboardShortcuts {
     const [action, binding] = entry;
 
     /*
-     * RFE-02: Ctrl+S never reaches the browser, REGISTERED OR NOT. A screen
-     * with nothing to save still must not let the browser write a half-drawn
-     * page to disk while the person believes they saved their work.
+     * RFE-02: Ctrl+S nunca llega al navegador, REGISTRADO O NO. Una pantalla sin
+     * nada que guardar tampoco puede dejar que el navegador escriba a disco una
+     * página a medio dibujar mientras la persona cree que guardó.
      */
     if (binding.preventDefault === true) {
       event.preventDefault();
     }
 
-    // RFE-04: inside a field, only the binding that says it may.
+    // RFE-04: dentro de un campo, solo el atajo que dice que puede.
     if (isTextEntry(event) && binding.insideTextFields !== true) {
       this.classify(event, action, 'in-text-field');
       return;
@@ -319,16 +236,15 @@ export class KeyboardShortcuts {
       return;
     }
 
-    // WCAG 2.2 2.1.4: switched off, a single character is just a character.
+    // WCAG 2.2 2.1.4: apagado, un carácter es solo un carácter.
     if (!this.singleKeyShortcuts()) {
       this.classify(event, action, 'single-key-off');
       return;
     }
 
     /*
-     * With no threshold declared there is nothing to wait for and no scan can
-     * be recognised anyway, so the shortcut acts at once. Same contract as
-     * everywhere else a token is missing: no fallback number lives here.
+     * Sin umbral declarado no hay nada que esperar y ningún escaneo se puede
+     * reconocer, así que el atajo actúa ya. Ningún número de reserva vive acá.
      */
     if (threshold === null) {
       this.fire(action, event);
@@ -336,14 +252,10 @@ export class KeyboardShortcuts {
     }
 
     /*
-     * Wait one threshold window -- 50 ms as the token stands, which is well
-     * under what anybody perceives -- and act only if nothing else arrived.
-     *
-     * The default is prevented NOW rather than when the timer runs, and it has
-     * to be: by then the event is long finished and `preventDefault` does
-     * nothing, so the browser would already have opened its own find-on-page
-     * for `/`. The cost of being wrong is that a `/` typed outside a field
-     * during a scan produces no character, which is what should happen anyway.
+     * Espera una ventana de umbral -50 ms con el token de hoy- y actúa solo si no
+     * llegó nada más. EL DEFAULT SE PREVIENE AHORA Y NO EN EL TIMER: para
+     * entonces el evento terminó hace rato y `preventDefault` no hace nada, así
+     * que el navegador ya habría abierto su buscar-en-página para `/`.
      */
     event.preventDefault();
     this.classify(event, action, 'deferred');
@@ -355,19 +267,16 @@ export class KeyboardShortcuts {
     }, threshold);
   }
 
-  /** The surface lost the focus, or a route changed: forget the open run. */
+  /** La superficie perdió el foco, o cambió una ruta: se olvida la ráfaga abierta. */
   reset(): void {
     this.cancelPending();
     this.detector.reset();
   }
 
   /**
-   * Run the handler now, claiming the key.
-   *
-   * The default is prevented only when a handler actually answers: an
-   * unregistered `Alt+N` has no business swallowing a combination the browser
-   * or an assistive technology may want. The one exception is declared on the
-   * binding and applied before this is ever reached.
+   * Corre el handler y reclama la tecla. El default se previene solo cuando un
+   * handler responde: un `Alt+N` sin registrar no tiene por qué tragarse una
+   * combinación que el navegador o una ayuda técnica quizá quieran.
    */
   private fire(action: ShortcutAction, event: KeyboardEvent): void {
     const handler = this.handlers.get(action);
@@ -388,7 +297,7 @@ export class KeyboardShortcuts {
     this.classified.next({ key: event.key, action, outcome });
   }
 
-  /** The action this keydown is, or null. */
+  /** La acción que es este keydown, o null. */
   private find(event: KeyboardEvent): readonly [ShortcutAction, ShortcutBinding] | null {
     const entries = Object.entries(this.map() ?? {}) as readonly (readonly [
       ShortcutAction,

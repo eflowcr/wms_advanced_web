@@ -9,22 +9,14 @@ import {
 } from './dialog.types';
 
 /**
- * What `DialogService.confirm` renders. NOT PART OF THE PUBLIC API.
- *
- * A consumer never writes this component: they call `confirm()` and get a
- * promise. Exporting it would invite a second way to raise a confirmation,
- * which is how two confirmations in one application end up looking different.
- *
- * The buttons are real `ewms-button`s, not a pair of styled elements. That is
- * the point of a design system having a Button: the focus ring, the loading
- * pattern and the disabled behaviour are decided once.
- *
- * THE IDS ARRIVE IN THE DATA RATHER THAN BEING GENERATED HERE. The container's
- * `aria-labelledby` has to be in the config before the dialog opens, and the
- * config is built by the service -- so the service mints the ids and this
- * template merely uses them. The alternative was to generate them here and
- * reach into the container afterwards through an underscore-prefixed method,
- * which is the CDK's internals and not its API.
+ * Lo que pinta `DialogService.confirm`. NO ES PARTE DE LA API PÚBLICA: un consumidor
+ * nunca escribe este componente, llama a `confirm()` y recibe una promesa.
+ * Exportarlo invitaría a una segunda forma de levantar una confirmación.
+ * Los botones son `ewms-button` de verdad y no un par de elementos estilados: para
+ * eso un sistema de diseño tiene un Botón.
+ * LOS IDS LLEGAN EN LOS DATOS y no se generan acá: el `aria-labelledby` del
+ * contenedor tiene que estar en la config antes de abrir, y la config la arma el
+ * servicio.
  */
 @Component({
   selector: 'ewms-confirm-dialog',
@@ -48,11 +40,8 @@ export class ConfirmDialog {
     this.dialogRef.close(true);
   }
 
-  /**
-   * Cancel closes with `false`, and so does every other way out -- Escape, the
-   * backdrop when the tone allows it, and a ref closed with nothing. One
-   * answer for "not confirmed", reached four ways.
-   */
+  /** Cancelar cierra con `false`, y también lo hacen las otras tres salidas -Escape,
+   * el fondo cuando el tono lo permite, y una ref cerrada sin nada-. */
   protected cancel(): void {
     this.dialogRef.close(false);
   }

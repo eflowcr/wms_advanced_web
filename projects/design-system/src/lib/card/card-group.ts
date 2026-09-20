@@ -3,18 +3,11 @@ import { FormControlBase, provideValueAccessor } from '../forms/control-value-ac
 import type { CardGroupMember } from './card.types';
 
 /**
- * Single choice over cards, with the keyboard contract of a radio group.
- *
- * THIS IS A RADIO GROUP THAT LOOKS LIKE CARDS, not a list of buttons that
- * happens to remember one. The sheet says so ("mismo patron de grupo que el
- * radio"), and the consequence is the part people skip: a radio group is ONE
- * tab stop, entered at the chosen option, with the arrows moving inside it.
- * Making each card its own tab stop would turn a four-warehouse selector into
- * four stops on the way to the Save button.
- *
- * The value is the chosen card's `optionValue`, delivered through
- * `ControlValueAccessor` like every other control in this library. The group
- * holds it; the cards only report clicks and draw themselves.
+ * Elección única sobre cards, con el contrato de teclado de un grupo de radios.
+ * ES UN GRUPO DE RADIOS QUE PARECE CARDS, no una lista de botones que recuerda
+ * uno: un grupo de radios es UN solo tab stop, al que se entra por la opción
+ * elegida y donde mueven las flechas. Un tab stop por card convertiría un
+ * selector de cuatro depósitos en cuatro paradas camino al botón Guardar.
  */
 @Component({
   selector: 'ewms-card-group',
@@ -24,32 +17,25 @@ import type { CardGroupMember } from './card.types';
   providers: [provideValueAccessor(() => CardGroup)],
 })
 export class CardGroup extends FormControlBase<unknown> {
-  /** The chosen value. Seeds the control; `writeValue` takes over after that. */
+  /** El valor elegido. Siembra el control; después manda `writeValue`. */
   readonly value = input<unknown>(null);
 
-  /**
-   * Names the group for assistive technology. Required for the same reason
-   * every other control's label is: a group with no name is a group nobody
-   * can be told about. Already translated (ADR 0008).
-   */
+  /** Nombra el grupo para la ayuda técnica. Obligatoria como la de cualquier otro
+   * control: un grupo sin nombre es un grupo del que nadie puede hablar. */
   readonly label = input.required<string>();
 
   protected readonly valueSource = this.value;
 
-  /** The cards, in construction order -- which is DOM order in one template. */
+  /** Las cards, en orden de construcción, que en una plantilla es orden del DOM. */
   private readonly members = signal<readonly CardGroupMember[]>([]);
 
-  /** What the cards read to know whether they are the chosen one. */
+  /** Lo que leen las cards para saber si son la elegida. */
   readonly selectedValue = computed(() => this.controlValue());
 
   /**
-   * The one card that is in the tab order: the chosen one, or the first that
-   * can be chosen when nothing is.
-   *
-   * A group where nothing is selected still has to be reachable, and it has to
-   * be reachable at exactly one place. Returning `null` would drop the whole
-   * group out of the tab order the moment it starts empty, which is how it
-   * starts every time.
+   * La única card en el orden de tabulación: la elegida, o la primera elegible
+   * cuando no hay ninguna. Devolver `null` sacaría al grupo entero del orden de
+   * tabulación justo cuando empieza vacío, que es como empieza siempre.
    */
   readonly tabbableValue = computed<unknown>(() => {
     const enabled = this.members().filter((member) => !this.memberDisabled(member));
@@ -60,22 +46,22 @@ export class CardGroup extends FormControlBase<unknown> {
     return (selected ?? enabled[0])?.optionValue() ?? null;
   });
 
-  /** Called by a card as it is created. */
+  /** La llama una card al crearse. */
   register(member: CardGroupMember): void {
     this.members.update((current) => [...current, member]);
   }
 
-  /** Called by a card as it is destroyed. */
+  /** La llama una card al destruirse. */
   unregister(member: CardGroupMember): void {
     this.members.update((current) => current.filter((existing) => existing !== member));
   }
 
-  /** Either source disables: the group's own input, or the card's. */
+  /** Cualquiera de las dos deshabilita: la entrada del grupo o la de la card. */
   memberDisabled(member: CardGroupMember): boolean {
     return this.isDisabled() || member.ownDisabled();
   }
 
-  /** Record a choice and tell the form. Ignored while the group is disabled. */
+  /** Registra una elección y avisa al formulario. Se ignora si el grupo está off. */
   select(value: unknown): void {
     if (this.isDisabled()) {
       return;
@@ -85,17 +71,11 @@ export class CardGroup extends FormControlBase<unknown> {
   }
 
   /**
-   * Move to the next or previous enabled card, choosing it on the way.
-   *
-   * SELECTION FOLLOWS THE FOCUS, which is the native behaviour of a radio
-   * group and not an invention: in a group of radios the arrow keys change the
-   * answer, they do not merely browse it. Browsing without choosing is the
-   * listbox pattern, and this is not one.
-   *
-   * It WRAPS, unlike the Select's panel. The two are opposite cases: a panel
-   * is a list you are reading through and the end of it is information, while
-   * a radio group is a closed set of four things and stopping at the last one
-   * only makes a person press the other arrow.
+   * Va a la card siguiente o anterior habilitada, eligiéndola de paso. LA
+   * SELECCIÓN SIGUE AL FOCO, que es el comportamiento nativo de un grupo de
+   * radios: las flechas cambian la respuesta, no la hojean. Y DA LA VUELTA, al
+   * revés que el panel del Select: un panel es una lista que se lee y su final es
+   * información; un grupo de radios es un conjunto cerrado.
    */
   move(delta: number): void {
     const enabled = this.members().filter((member) => !this.memberDisabled(member));

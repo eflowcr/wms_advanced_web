@@ -1,50 +1,39 @@
 /**
- * Flattening the tree, and NOTHING ELSE.
- *
- * This file has no Angular in it, no signals and no DOM. That is what makes
- * the tree the one part of the table with a spec of its own: given a set of
- * roots, a way to find children and a set of expanded keys, it returns the
- * array the template loops over. Every awkward case -- a parent with no
- * children, a child expanded inside a collapsed parent, lazily loaded children
- * that have not arrived -- is a pure function call with an expected value.
- *
- * THE FLATTENING IS WHAT MAKES VIRTUALISATION POSSIBLE WITHOUT TRICKS. A
- * nested renderer cannot be virtualised: the CDK needs one flat list with a
- * known length, and that is exactly what comes out of here.
+ * Aplanar el árbol y NADA MÁS: sin Angular, sin señales y sin DOM. Por eso es la
+ * única parte de la tabla con spec propio -cada caso raro es una llamada a una
+ * función pura con un valor esperado-, y por eso la virtualización sale sin
+ * trucos: el CDK necesita una lista plana con largo conocido y acá está.
  */
 
-/** A row, ready to be drawn. The template knows this and not the tree. */
+/** Una fila lista para dibujar. La plantilla conoce esto, no el árbol. */
 export interface FlatRow<T> {
   readonly row: T;
-  /** 0 for a root. Drives `aria-level` (which is 1-based, so level + 1). */
+  /** 0 en una raíz. Alimenta `aria-level`, que es base 1 (level + 1). */
   readonly level: number;
   readonly hasChildren: boolean;
   readonly expanded: boolean;
-  /** How many siblings this row has, including itself. `aria-setsize`. */
+  /** Cuántos hermanos tiene esta fila, ella incluida. `aria-setsize`. */
   readonly setSize: number;
-  /** 1-based position among its siblings. `aria-posinset`. */
+  /** Posición base 1 entre sus hermanos. `aria-posinset`. */
   readonly posInSet: number;
-  /** Lazily loaded children are on their way. */
+  /** Los hijos perezosos vienen en camino. */
   readonly loading: boolean;
-  /** Lazily loaded children failed; the row offers a retry. */
+  /** Los hijos perezosos fallaron; la fila ofrece reintentar. */
   readonly failed: boolean;
-  /** What `trackBy` returned. Identifies the row for expansion and selection. */
+  /** Lo que devolvió `trackBy`. Identifica la fila para expandir y seleccionar. */
   readonly key: unknown;
 }
 
-/** What `flattenTree` needs to know about the world. */
+/** Lo que `flattenTree` necesita saber del mundo. */
 export interface FlattenOptions<T> {
   /**
-   * The children already available for a row, or `null` when it has none.
-   *
-   * `undefined` means something different from `null` and the difference
-   * matters: `undefined` is "this row has children but they are not here yet"
-   * -- a lazy parent nobody has expanded, or one whose load is in flight.
-   * `null` is "this row is a leaf". Collapsing the two would either hide the
-   * toggle on every lazy parent or draw one on every leaf.
+   * Los hijos ya disponibles, o `null` si no tiene. `undefined` es distinto de
+   * `null`: `undefined` es «tiene hijos y no llegaron», `null` es «es una hoja».
+   * Juntarlos escondería el toggle en todo padre perezoso o lo dibujaría en toda
+   * hoja.
    */
   children: (row: T) => readonly T[] | null | undefined;
-  /** True when a row is known to have children even if they are not loaded. */
+  /** Cierto cuando se sabe que una fila tiene hijos aunque no estén cargados. */
   hasChildren: (row: T) => boolean;
   key: (row: T) => unknown;
   expanded: ReadonlySet<unknown>;
@@ -53,12 +42,10 @@ export interface FlattenOptions<T> {
 }
 
 /**
- * Walk the tree depth-first and return the visible rows in order.
- *
- * A collapsed row's descendants are not in the result at all -- they are not
- * hidden with CSS. A row that is not in the DOM cannot be reached by Tab, read
- * by a screen reader, or counted into `aria-rowcount`, and all three would be
- * wrong for something the person has collapsed.
+ * Camina el árbol en profundidad y devuelve las filas visibles en orden. Los
+ * descendientes de una fila plegada no están en el resultado: no se esconden con
+ * CSS. Una fila fuera del DOM no la alcanza el Tab, no la lee un lector y no
+ * cuenta para `aria-rowcount`, y las tres cosas serían erróneas.
  */
 export function flattenTree<T>(
   roots: readonly T[],
@@ -90,15 +77,10 @@ function walk<T>(
       setSize,
       posInSet: index + 1,
       /*
-       * BOTH GATED ON `expanded`, and that is not belt and braces.
-       *
-       * The two sets outlive the gesture: a load in flight keeps its key, and
-       * a failure keeps its key until somebody retries. Read on their own they
-       * put a spinner -- or a red "could not load" row with a retry button --
-       * under a parent that is drawn collapsed, which is the state the first
-       * capture of the lazy demo caught. What the sets remember is what
-       * happened to the children; whether that is on screen is the parent's
-       * business.
+       * LAS DOS DEPENDEN DE `expanded`, y no es redundancia: los conjuntos viven
+       * más que el gesto -una carga en vuelo guarda su clave, un fallo la guarda
+       * hasta que alguien reintente-, así que leídos solos ponen un spinner o una
+       * fila roja bajo un padre dibujado plegado.
        */
       loading: expanded && options.loading.has(key),
       failed: expanded && options.failed.has(key),
@@ -112,12 +94,10 @@ function walk<T>(
 }
 
 /**
- * Every key in the tree, roots and descendants alike -- what "expand all"
- * needs, and what tells the table whether anything is expandable at all.
- *
- * It walks the WHOLE tree rather than the visible rows, which is the point:
- * the visible rows of a fully collapsed tree are the roots, and expanding
- * those would leave their children collapsed.
+ * Todas las claves del árbol, raíces y descendientes: lo que necesita «expandir
+ * todo». Camina el árbol ENTERO y no las filas visibles, que es el punto: las
+ * visibles de un árbol plegado son las raíces, y expandirlas dejaría a sus hijos
+ * plegados.
  */
 export function expandableKeys<T>(
   roots: readonly T[],

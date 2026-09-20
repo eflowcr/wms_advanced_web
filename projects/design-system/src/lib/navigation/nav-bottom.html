@@ -1,21 +1,17 @@
 <!--
-  The sheet is written BEFORE the bar in the DOM and drawn above it on screen.
-
-  The order matters for the keyboard: once the sheet is open the focus is
-  trapped inside it, and when it closes the focus goes back to the control that
-  opened it. Nothing here depends on the visual order, which is what `fixed`
-  positioning decides.
+  La hoja se escribe ANTES que la barra en el DOM y se dibuja encima en pantalla. El
+  orden importa para el teclado: con la hoja abierta el foco queda atrapado adentro,
+  y al cerrarse vuelve al control que la abrió. Nada de acá depende del orden
+  visual, que lo decide el posicionamiento fijo.
 -->
 @if (open()) {
   <!--
-    A REAL `<button>`, not a `<div>` with a click handler.
-
-    An element that answers a click has to be focusable, or a keyboard user has
-    a control they can see and cannot reach. `tabindex="-1"` with `aria-hidden`
-    is the honest shape for THIS one: it is a duplicate of the close control
-    inside the sheet and of Escape, so it must not be a second stop in the Tab
-    order, and a reader should not announce it at all.
-  -->
+  Un `<button>` DE VERDAD y no un `<div>` con un manejador de clic: algo que responde
+  a un clic tiene que ser enfocable, o alguien con teclado ve un control que no puede
+  alcanzar. `tabindex="-1"` con `aria-hidden` es la forma honesta para ESTE, que es
+  un duplicado del cierre de la hoja y de Escape: no puede ser una segunda parada y
+  un lector no debería anunciarlo.
+-->
   <button
     type="button"
     class="fixed inset-0 z-10 bg-overlay"
@@ -31,11 +27,10 @@
     data-nav-bottom-sheet
   >
     <!--
-      The favourites block on a narrow screen. On the rail it is pinned above
-      the tree; here it is the first thing in the sheet, which is the same
-      promise -- a fixed place in the navigation -- at a width where nothing
-      can be pinned.
-    -->
+  El bloque de favoritos en pantalla angosta. En el rail va fijado sobre el árbol;
+  acá es lo primero de la hoja, que es la misma promesa -un lugar fijo en la
+  navegación- a un ancho donde no se puede fijar nada.
+-->
     <ng-content select="[navBottomTop]" />
 
     <nav class="p-2" [attr.aria-label]="moreLabel()">

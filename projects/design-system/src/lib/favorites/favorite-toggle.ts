@@ -3,37 +3,22 @@ import { IconButton } from '../icon-button/icon-button';
 import { Favorites } from './favorites';
 
 /**
- * THE STAR (REQ-FE-DS4-002 RFE-03). One control, in the header of every screen
- * that can be a favourite.
+ * LA ESTRELLA (REQ-FE-DS4-002 RFE-03), en la cabecera de cada pantalla que puede
+ * ser favorita.
  *
- * `aria-pressed`, NOT `aria-checked` and not a plain button. It is a two-state
- * button and `aria-pressed` is exactly that; `aria-checked` belongs to things
- * in a group where one is chosen.
- *
- * THE NAME SAYS WHAT IT DOES AND CHANGES WITH THE STATE -- «Agregar a
- * favoritos» / «Quitar de favoritos» -- because a button called «Favorito»
- * says what it IS and not what pressing it will do. Both strings arrive
- * translated from the consumer (ADR 0008).
- *
- * THE STATE IS NOT COLOUR ALONE. Marked, the control is the `primary` variant:
- * a filled blue box with a white star. Unmarked it is `ghost`: no box at all.
- * A background that appears and disappears is a change of shape, which is what
- * WCAG 1.4.1 asks for, and `aria-pressed` carries it for anyone who sees
- * neither.
- *
- * AND A LIVE REGION, which is RFE-05 and is not redundant with `aria-pressed`.
- * The pressed state is announced when the button is re-read; the live region
- * is what confirms the ACTION at the moment it happens, without the focus
- * having to move. The two messages are required inputs on purpose -- an
- * optional one is an optional one that nobody passes, and then the star is
- * silent.
- *
- * IT READS THE SERVICE RATHER THAN TAKING `pressed` AS AN INPUT, which is the
- * one place this piece is not purely presentational, deliberately. The comanda
- * asks for a PATTERN, not a button: a screen writes one tag and gets the
- * behaviour, instead of every screen wiring a signal to an input and an output
- * back to a service slightly differently. `ShortcutsHost` has the same shape
- * for the same reason.
+ * `aria-pressed` y no `aria-checked`: es un botón de dos estados, y `aria-checked`
+ * es de las cosas de un grupo donde se elige una.
+ * EL NOMBRE DICE QUÉ HACE Y CAMBIA CON EL ESTADO -«Agregar a favoritos» /
+ * «Quitar de favoritos»-, porque uno llamado «Favorito» dice qué ES y no qué va a
+ * pasar al pulsarlo.
+ * EL ESTADO NO ES SOLO COLOR: marcada es la variante `primary` -caja azul- y sin
+ * marcar es `ghost`, sin caja. Un fondo que aparece y desaparece es un cambio de
+ * forma (WCAG 1.4.1). Y una región viva (RFE-05), que no es redundante con
+ * `aria-pressed`: aquel se anuncia al releer el botón, esta confirma la ACCIÓN en
+ * el momento, sin mover el foco.
+ * LEE EL SERVICIO EN VEZ DE RECIBIR `pressed`: es el único punto donde esta pieza
+ * no es puramente presentacional, y es deliberado -la comanda pide un PATRÓN, no
+ * un botón-.
  */
 @Component({
   selector: 'ewms-favorite-toggle',
@@ -59,14 +44,14 @@ import { Favorites } from './favorites';
   host: { class: 'inline-flex items-center', 'data-favorite-toggle': '' },
 })
 export class FavoriteToggle {
-  /** Which screen this is. The route IS the favourite; its name is never stored. */
+  /** Qué pantalla es esta. La ruta ES el favorito; su nombre no se guarda nunca. */
   readonly route = input.required<string>();
 
-  /** Both already translated. They differ, and that is the requirement. */
+  /** Las dos ya traducidas. Son distintas, y eso es el requisito. */
   readonly addLabel = input.required<string>();
   readonly removeLabel = input.required<string>();
 
-  /** What the live region says afterwards. Already translated. */
+  /** Lo que dice la región viva después. Ya traducido. */
   readonly addedMessage = input.required<string>();
   readonly removedMessage = input.required<string>();
 
@@ -81,8 +66,8 @@ export class FavoriteToggle {
   );
 
   protected onToggle(): void {
-    // Read BEFORE the write: after it, `marked()` is the new state and the
-    // message would describe what just stopped being true.
+    // Se lee ANTES de escribir: después, `marked()` es el estado nuevo y el
+    // mensaje describiría lo que acaba de dejar de ser cierto.
     const wasMarked = this.marked();
     void this.favorites.toggle(this.route()).then(() => {
       this.announcement.set(wasMarked ? this.removedMessage() : this.addedMessage());

@@ -33,7 +33,7 @@ import { Input as TextInput } from '../input/input';
 import { Pagination } from '../pagination/pagination';
 
 import { readMilliseconds, readPixels } from '../tokens/read-token';
-/** The one wait of the system for a box somebody is typing into. */
+/** La única espera del sistema para una caja que alguien está tipeando. */
 const DELAY_SEARCH_INPUT_TOKEN = '--delay-search-input';
 import { CellTemplate, TableColumn } from './column';
 import {
@@ -81,7 +81,7 @@ export type { CellContext } from './column';
 export { TableColumn, CellTemplate } from './column';
 export type { FlatRow } from './tree';
 
-/** The full-width panel a master row unfolds. */
+/** El panel a todo lo ancho que despliega una fila maestra. */
 @Directive({ selector: '[ewmsDetail]' })
 export class DetailTemplate<T = unknown> {
   readonly template = inject<TemplateRef<{ $implicit: T }>>(TemplateRef);
@@ -94,7 +94,7 @@ export class DetailTemplate<T = unknown> {
   }
 }
 
-/** What fills the table when there is nothing to show. */
+/** Lo que llena la tabla cuando no hay nada que mostrar. */
 @Directive({ selector: '[ewmsEmpty]' })
 export class EmptyTemplate {
   readonly template = inject<TemplateRef<unknown>>(TemplateRef);
@@ -102,43 +102,13 @@ export class EmptyTemplate {
 
 let nextTableId = 0;
 
-/** What a failed query shows: nothing, honestly. */
+/** Lo que muestra una consulta que falló: nada, honestamente. */
 const EMPTY_PAGE: TablePage<never> = { rows: [], page: 0, pageSize: 0, total: 0 };
 
 /**
- * The data table.
- *
- * IT IS WHERE A WMS OPERATOR LIVES, and it is the component that most easily
- * becomes a monster. The rule this file was written against fits in a line:
- * **a lot of capability, very little code in the consumer.** A table of
- * expediciones with three levels, coloured states, sorting, per-column
- * filters, a quick filter, multiple selection, a context menu, a detail panel
- * and an empty state is twenty-four lines of markup on the other side.
- *
- * Everything below exists to keep that number small.
- *
- *
- * ONE LOOP, BECAUSE THE TREE IS FLATTENED FIRST
- *
- * There is no nested `<table>` and no recursive markup. `flattenTree()` -- a
- * pure function, tested on its own -- turns roots plus a set of expanded keys
- * into one array, and the template walks it. That is also what makes
- * virtualisation possible without tricks -- the CDK needs a flat list with a
- * known length, and it already has one.
- *
- *
- * THE STATE OF A ROW IS DATA, NEVER A CLASS
- *
- * `rowState` yields one of four families; the row takes that family's surface
- * and the `badge` column draws icon and words from the SAME dictionary. A
- * class per view is how one screen ends up calling "con incidencia" red and
- * another amber.
- *
- *
- * NOT A `ControlValueAccessor`, and that is not an omission
- *
- * The selection is an output. What lives in a table is a query, not a field,
- * and a table inside a `formControlName` would be a category error.
+ * La tabla de datos. `flattenTree()` aplana el árbol antes de pintar: un solo
+ * bucle en la plantilla, y la ventana virtual sale sin trucos. El estado de una
+ * fila es dato, nunca una clase. Ficha: 08-Sistema-de-Diseno/Componentes/Tabla.
  */
 @Component({
   selector: 'ewms-table',
@@ -159,23 +129,18 @@ const EMPTY_PAGE: TablePage<never> = { rows: [], page: 0, pageSize: 0, total: 0 
 export class Table<T> {
   readonly source = input.required<TableSource<T>>();
 
-  /** Names the grid. A table nobody can ask for is a table nobody can find. */
+  /** Nombra la grilla. Una tabla por la que nadie puede preguntar no se encuentra. */
   readonly ariaLabel = input.required<string>();
 
   /**
-   * Where the children of a row come from: a function, or the NAME of a
-   * property. `children="hijos"` is exactly `(row) => row.hijos ?? null`.
-   *
-   * With this there is a tree and the role is `treegrid`; without it the role
-   * is `grid`. The role is not an input because it is not a choice: it is what
-   * the table turned out to be.
+   * De dónde salen los hijos: una función, o el NOMBRE de una propiedad.
+   * Con `children` el rol es `treegrid`; sin él, `grid`.
    */
   readonly children = input<TableChildren<T> | string | null>(null);
 
   /**
-   * What state a row is in: a function, or the NAME of a column whose `badges`
-   * dictionary holds the answer. `rowState="estado"` makes one dictionary feed
-   * both the tint and the badge.
+   * En qué estado está una fila: una función, o el NOMBRE de una columna con
+   * diccionario `badges`. Un diccionario alimenta el tinte y la insignia.
    */
   readonly rowState = input<((row: T) => RowState | null) | string | null>(null);
 
@@ -184,11 +149,8 @@ export class Table<T> {
   readonly menuItems = input<readonly MenuItem[]>([]);
 
   /**
-   * Render only the rows in view.
-   *
-   * Recommended from about five hundred rows. It is an input and not automatic
-   * because virtualising costs a fixed row height and a scroll container, and
-   * a table of twenty rows pays that for nothing.
+   * Pinta solo las filas a la vista. Desde unas 500 filas: cuesta una altura de
+   * fila fija y un contenedor con scroll, y veinte filas lo pagan por nada.
    */
   readonly virtual = input<boolean>(false);
 
@@ -201,13 +163,12 @@ export class Table<T> {
   readonly pageSize = input<number>(50);
 
   /**
-   * What identifies a row. ALSO WHAT IDENTIFIES A SELECTION: the selection is
-   * a set of keys, not of objects, so it survives a page change -- which is
-   * exactly when a selection held by reference disappears without a word.
+   * Qué identifica una fila, y también una selección: la selección es un
+   * conjunto de claves, así sobrevive a un cambio de página.
    */
   readonly trackBy = input<(row: T) => unknown>((row) => row);
 
-  /** Overrides the provided dictionary, for one table. */
+  /** Pisa el diccionario provisto, para una sola tabla. */
   readonly messages = input<Partial<TableMessages> | null>(null);
   readonly formatters = input<Partial<TableFormatters> | null>(null);
 
@@ -236,7 +197,7 @@ export class Table<T> {
   protected readonly headerCellClasses = HEADER_CELL_CLASSES;
   protected readonly cellClasses = CELL_CLASSES;
 
-  /** The texts, token first and input on top. */
+  /** Los textos: primero el token, la entrada encima. */
   protected readonly text = computed(() => ({
     ...this.providedMessages,
     ...(this.messages() ?? {}),
@@ -247,7 +208,7 @@ export class Table<T> {
     ...(this.formatters() ?? {}),
   }));
 
-  // -------------------------------------------------------------- the query
+  // -------------------------------------------------------------- la consulta
 
   private readonly search = signal('');
   private readonly filters = signal<Readonly<Record<string, TableFilterValue>>>({});
@@ -263,13 +224,8 @@ export class Table<T> {
   }));
 
   /**
-   * What a load needs: the source AND the query.
-   *
-   * BOTH, because a screen that swaps its source -- a different warehouse, a
-   * different document type -- has to reload, and reading the source inside
-   * the switchMap would have left the old rows on screen until somebody
-   * happened to sort or filter. Found by the spec that swaps a failing source
-   * for a working one.
+   * La fuente Y la consulta: sin la fuente, cambiarla dejaba las filas viejas
+   * en pantalla hasta que alguien ordenara o filtrara.
    */
   private readonly request = computed(() => ({ source: this.source(), query: this.query() }));
 
@@ -285,15 +241,15 @@ export class Table<T> {
     return total === null ? null : Math.max(1, Math.ceil(total / this.pageSize()));
   });
 
-  // ------------------------------------------------------------- the tree
+  // ------------------------------------------------------------------ el arbol
 
   private readonly expanded = signal<ReadonlySet<unknown>>(new Set());
   private readonly loadingChildren = signal<ReadonlySet<unknown>>(new Set());
   private readonly failedChildren = signal<ReadonlySet<unknown>>(new Set());
-  /** Children that arrived from an Observable, by row key. */
+  /** Hijos que llegaron de un Observable, por clave de fila. */
   private readonly lazyChildren = signal<ReadonlyMap<unknown, readonly T[]>>(new Map());
 
-  /** The children resolver, whichever form the consumer used. */
+  /** El resolvedor de hijos, en la forma que haya usado el consumidor. */
   private readonly resolveChildren = computed<TableChildren<T> | null>(() => {
     const declared = this.children();
     if (declared === null) {
@@ -305,7 +261,7 @@ export class Table<T> {
     return declared;
   });
 
-  /** The state resolver, whichever form the consumer used. */
+  /** El resolvedor de estado, en la forma que haya usado el consumidor. */
   private readonly resolveRowState = computed<((row: T) => RowState | null) | null>(() => {
     const declared = this.rowState();
     if (declared === null) {
@@ -324,11 +280,8 @@ export class Table<T> {
   protected readonly isTree = computed(() => this.resolveChildren() !== null);
 
   /**
-   * The children of a row that are already in hand.
-   *
-   * `undefined` and `null` mean different things and the difference draws the
-   * toggle: `undefined` is "there are children, they are not here yet",
-   * `null` is "this is a leaf".
+   * Los hijos que ya están en mano. `undefined` es «hay hijos y no llegaron»;
+   * `null` es «es una hoja». La diferencia dibuja el toggle.
    */
   private readonly childrenOf = (row: T): readonly T[] | null | undefined => {
     const resolve = this.resolveChildren();
@@ -354,9 +307,8 @@ export class Table<T> {
     if (resolved === null) {
       return false;
     }
-    // A lazy parent has children by definition: that is what returning an
-    // Observable says. Drawing the toggle only after they arrive would mean
-    // nobody could ever ask for them.
+    // Un padre perezoso tiene hijos por definición: dibujar el toggle recién
+    // cuando llegan dejaría que nadie los pudiera pedir.
     return isObservable(resolved) || resolved.length > 0;
   };
 
@@ -394,42 +346,31 @@ export class Table<T> {
     () => !this.allSelected() && this.rows().some((flat) => this.selectedKeys().has(flat.key)),
   );
 
-  // ------------------------------------------------------------- the grid
+  // ------------------------------------------------------------------ la grilla
 
-  /** The columns the keyboard walks: the checkbox, then the declared ones. */
+  /** Las columnas que camina el teclado: la casilla y después las declaradas. */
   protected readonly columnCount = computed(
     () => this.columns().length + (this.selectable() ? 1 : 0),
   );
 
-  /** Where the keyboard is. One tab stop for the whole table. */
+  /** Dónde está el teclado. Un solo tab stop para toda la tabla. */
   protected readonly focusRow = signal(0);
   protected readonly focusColumn = signal(0);
 
   constructor() {
     /*
-     * The query drives the source, and a change CANCELS the request in flight:
-     * a slow page 0 landing after a fast page 1 would paint the wrong page
-     * with nothing to say it had.
-     *
-     * NO DEBOUNCE HERE, and that is deliberate. Sorting and paging are single
-     * gestures and have to answer at once; only a box somebody is TYPING INTO
-     * needs a wait, and that wait belongs on the box.
+     * Un cambio de consulta CANCELA la petición en vuelo: una página 0 lenta que
+     * aterriza después de una página 1 rápida pinta la página equivocada. Sin
+     * debounce: solo una caja que se TIPEA necesita espera, y es suya.
      */
     toObservable(this.request)
       .pipe(
         tap(({ query }) => this.queryChange.emit(query)),
         switchMap(({ source, query }) =>
           /*
-           * A SOURCE THAT ERRORS MUST NOT TAKE THE TABLE WITH IT.
-           *
-           * An error escaping the switchMap kills the outer subscription, and
-           * then the table never loads again -- not on a new filter, not on a
-           * new page, not ever, and with nothing on screen to say why. Caught
-           * per query, so the next one still runs.
-           *
-           * What is shown is the empty page, which is honest about there being
-           * nothing to show. A table-level error state with a retry is worth
-           * having and is not in this scope; it is reported as a gap.
+           * Un error que escapa del switchMap mata la suscripción de afuera y la
+           * tabla no vuelve a cargar nunca, sin nada que lo diga. Se atrapa por
+           * consulta; el estado de error con reintento es un hueco declarado.
            */
           source.load(query).pipe(catchError(() => of(EMPTY_PAGE as TablePage<T>))),
         ),
@@ -445,13 +386,9 @@ export class Table<T> {
       });
 
     /*
-     * MEASURE THE BOX ONCE, IN THE READ PHASE.
-     *
-     * Without this the first window is computed against a height of zero, so a
-     * virtualised table opens showing only the overscan -- a dozen rows for a
-     * box that fits a dozen, and nothing in reserve -- until somebody scrolls.
-     * The read is in `afterNextRender` because `clientHeight` is a layout read
-     * and doing it during rendering is how a component starts thrashing.
+     * La caja se mide una vez, en fase de lectura. Sin esto la primera ventana se
+     * calcula contra una altura de cero y la tabla abre mostrando solo el
+     * overscan. `clientHeight` es lectura de layout: va en afterNextRender.
      */
     afterNextRender({
       read: () => {
@@ -463,9 +400,8 @@ export class Table<T> {
     });
 
     /*
-     * An overlay lives in the body, NOT inside this component, so destroying
-     * the table does not take the open menu with it. Navigating away with the
-     * menu open would otherwise leave it floating over the next screen.
+     * El overlay vive en el body y no acá: destruir la tabla no se lleva el menú
+     * abierto, que si no quedaría flotando sobre la pantalla siguiente.
      */
     this.destroyRef.onDestroy(() => {
       this.releaseMenuGesture();
@@ -475,18 +411,9 @@ export class Table<T> {
   }
 
   /**
-   * The wait between the last keystroke and the query, for a box somebody is
-   * typing into.
-   *
-   * It reads `--delay-search-input` -- the SAME token the search select uses,
-   * because "how long before a typed query leaves" is one number for the
-   * system, not one per component.
-   *
-   * WITH NO TOKEN DECLARED THERE IS NO WAIT AT ALL, rather than a number
-   * invented here. Same rule as the Toast's duration: no fallback lives in
-   * TypeScript. It also makes the component synchronous under jsdom, where no
-   * stylesheet is loaded -- which is why its spec can assert on a filter
-   * without driving a clock.
+   * La espera entre la última tecla y la consulta. Lee `--delay-search-input`, el
+   * mismo token que el selector con búsqueda. SIN TOKEN NO HAY ESPERA: ningún
+   * número de reserva vive en TypeScript, igual que la duración del Toast.
    */
   private typed(source: Observable<string>): Observable<string> {
     const delay = readMilliseconds(DELAY_SEARCH_INPUT_TOKEN);
@@ -515,7 +442,7 @@ export class Table<T> {
     return rowClasses(this.isSelected(flat), state ? familyTintClass(state) : '');
   }
 
-  /** The value a cell shows: formatted for display, never for sorting. */
+  /** El valor que muestra una celda: formateado para ver, nunca para ordenar. */
   protected display(column: TableColumn, row: T): string {
     const value = readCell(row, column.key());
     switch (column.type()) {
@@ -544,9 +471,8 @@ export class Table<T> {
   }
 
   /**
-   * `aria-sort` goes on the header, and only on the one that is sorted.
-   * `none` on every other column is valid and noisy; absent is what assistive
-   * technology expects on a column that simply is not the sort.
+   * `aria-sort` solo en la columna ordenada: `none` en las demás es válido y
+   * ruidoso, y ausente es lo que espera un lector de pantalla.
    */
   protected ariaSort(column: TableColumn): string | null {
     const direction = this.sortDirection(column);
@@ -557,9 +483,8 @@ export class Table<T> {
   }
 
   /**
-   * Ascending, descending, then NONE. The third press is what lets someone get
-   * back to the order the source returned, which is usually the meaningful one
-   * -- newest first, or whatever the backend decided.
+   * Ascendente, descendente y NINGUNO. El tercer clic devuelve el orden que dio
+   * la fuente, que suele ser el que significa algo.
    */
   protected toggleSort(column: TableColumn): void {
     if (!column.sortable()) {
@@ -583,17 +508,8 @@ export class Table<T> {
   );
 
   /**
-   * One `FormControl` per filter box, made on demand and kept.
-   *
-   * `ewms-input` has no `value` input on purpose -- its value travels through
-   * `ControlValueAccessor`, like every other control here -- so the way to
-   * drive one from inside another component is a control. Making them lazily
-   * keeps the map to the boxes that actually exist: a table with one
-   * filterable column does not carry twelve controls.
-   *
-   * The memo matters: the template asks for a control on every change
-   * detection pass, and a new control each time would wipe what somebody is
-   * typing.
+   * Un `FormControl` por caja de filtro, creado a demanda y memorizado: la
+   * plantilla lo pide en cada ciclo y uno nuevo cada vez borraría lo tipeado.
    */
   private readonly filterControls = new Map<string, FormControl<string>>();
 
@@ -623,9 +539,8 @@ export class Table<T> {
 
     if (raw.trim() === '') {
       /*
-       * AN EMPTY BOX MEANS UNBOUNDED, NOT ZERO, and that is the whole
-       * usefulness of a range: "up to 50" is a max with no min. Reading the
-       * empty box as 0 would silently drop every row below it.
+       * Una caja vacía es SIN LÍMITE, no cero: «hasta 50» es un máximo sin mínimo,
+       * y leerla como 0 tiraría en silencio toda fila por debajo.
        */
       delete base[bound];
     } else {
@@ -673,11 +588,8 @@ export class Table<T> {
   }
 
   /**
-   * Fetch children that arrive as an Observable, once.
-   *
-   * Once, and not on every expand: re-fetching on the second expand of the
-   * same row is how a table that felt fast becomes a table that hits the
-   * network every time somebody browses back up.
+   * Una sola vez: volver a pedirlos en cada expansión es cómo una tabla rápida
+   * pasa a pegarle a la red cada vez que alguien navega hacia arriba.
    */
   private loadLazyChildren(flat: FlatRow<T>): void {
     const resolve = this.resolveChildren();
@@ -728,11 +640,8 @@ export class Table<T> {
   }
 
   /**
-   * The header box selects what is ON SCREEN, not everything the source holds.
-   *
-   * A "select all" that reached rows nobody has seen is how somebody deletes
-   * four hundred records meaning to delete twenty. The indeterminate state
-   * says the same thing: some of these, not all of these.
+   * La casilla de cabecera selecciona lo que está EN PANTALLA, no todo lo que
+   * tiene la fuente: si no, alguien borra 400 registros queriendo borrar 20.
    */
   protected toggleAll(): void {
     const keys = new Set(this.selectedKeys());
@@ -759,7 +668,7 @@ export class Table<T> {
 
   // --------------------------------------------------------------- paging
 
-  /** The paginator is rendered only when the source counted. */
+  /** El paginador se pinta solo cuando la fuente contó. */
   protected readonly showPagination = computed(() => (this.pageCount() ?? 0) > 1);
 
   protected goToPage(page: number): void {
@@ -782,17 +691,13 @@ export class Table<T> {
   }
 
   /**
-   * The treegrid keyboard of the WAI-ARIA Authoring Practices, followed rather
-   * than reinvented.
-   *
-   * The one part worth spelling out is the arrows: on a parent row they belong
-   * to the TREE, and only when there is nothing to expand or collapse do they
-   * move between cells. That is what makes a keyboard user able to walk a
-   * three-level table without reaching for a toggle.
+   * El teclado del treegrid de las WAI-ARIA APG. En una fila padre las flechas
+   * son del ÁRBOL, y solo cuando no hay nada que expandir o plegar se mueven
+   * entre celdas: así se camina una tabla de tres niveles sin tocar un toggle.
    */
   protected onKeydown(event: KeyboardEvent, rowIndex: number): void {
-    // The WHOLE flat list, never the window: the arrows walk the table, and
-    // what happens to be rendered is an implementation detail.
+    // La lista aplanada ENTERA y nunca la ventana: las flechas caminan la tabla,
+    // y lo que esté pintado es un detalle.
     const rows = this.rows();
     const flat = rows[rowIndex];
     if (!flat) {
@@ -826,8 +731,8 @@ export class Table<T> {
           return;
         }
         if (this.focusColumn() === 0 && flat.level > 0) {
-          // The first cell of a child row: go to the parent, which is the
-          // nearest row above with a smaller level.
+          // Primera celda de una fila hija: al padre, la fila de arriba más
+          // cercana con nivel menor.
           this.moveFocus(parentIndexOf(rows, rowIndex), 0);
           return;
         }
@@ -851,8 +756,8 @@ export class Table<T> {
 
       case ' ':
         if (this.selectable()) {
-          // Space scrolls the page by default, which is the last thing
-          // somebody ticking rows wants.
+          // Espacio hace scroll por defecto, que es lo último que quiere alguien
+          // tildando filas.
           event.preventDefault();
           this.toggleRow(flat);
         }
@@ -861,16 +766,9 @@ export class Table<T> {
       case 'ContextMenu':
       case 'F10':
         /*
-         * THE KEYBOARD'S RIGHT CLICK.
-         *
-         * `Shift+F10` is the shortcut every desktop already has, and the
-         * dedicated menu key is the same gesture on a keyboard that has one.
-         * Without them the row menu would be a mouse-only feature -- the
-         * kebab is reachable by tab, but only after walking out of the grid
-         * -- and the actions an operator uses most would be the slowest
-         * things on the screen.
-         *
-         * A bare F10 is left alone: it belongs to the browser.
+         * Shift+F10 y la tecla de menú son el clic derecho del teclado. Sin ellas
+         * el menú de fila sería solo de ratón. F10 a secas se deja: es del
+         * navegador.
          */
         if (event.key === 'F10' && !event.shiftKey) {
           return;
@@ -885,13 +783,9 @@ export class Table<T> {
   }
 
   /**
-   * Move the roving tab stop and take the focus with it.
-   *
-   * WITH A WINDOW OPEN, THE TARGET ROW MAY NOT BE IN THE DOM YET, so the box
-   * is scrolled to it first and the focus follows on the next turn. Without
-   * that, holding the down arrow through a virtualised table would lose the
-   * focus the moment it left the window -- which is the failure that makes
-   * people stop using the keyboard.
+   * CON VENTANA ABIERTA la fila destino puede no estar en el DOM: primero se
+   * hace scroll y el foco va en el turno siguiente. Si no, bajar con la flecha
+   * pierde el foco al salir de la ventana.
    */
   private moveFocus(rowIndex: number, columnIndex: number): void {
     this.focusRow.set(rowIndex);
@@ -937,13 +831,8 @@ export class Table<T> {
   }
 
   /**
-   * Master/detail is NOT the tree, and the two are kept apart on purpose.
-   *
-   * A parent row unfolds more ROWS, in the same columns. A master row unfolds
-   * a PANEL -- one cell spanning the table, with content of its own that does
-   * not repeat the columns. Collapsing them into one gesture would mean a
-   * table where "expand" sometimes means a different thing, which is worse
-   * than two buttons.
+   * Maestro/detalle NO es el árbol. Una fila padre despliega más FILAS en las
+   * mismas columnas; una maestra despliega un PANEL de una celda.
    */
   protected toggleDetail(flat: FlatRow<T>): void {
     const open = new Set(this.openDetails());
@@ -955,27 +844,15 @@ export class Table<T> {
     this.openDetails.set(open);
   }
 
-  // ------------------------------------------------------------- the menu
+  // -------------------------------------------------------------------- el menu
 
   private menuOverlay: OverlayRef | null = null;
 
   /**
-   * Whether a NEW pointer gesture has begun since the menu opened.
-   *
-   * A right click is not one event but a burst, and the browsers disagree on
-   * its order. Chromium on X11 -- which is what CI runs -- delivers
-   * `contextmenu` on the press and `auxclick` on the release; Chromium on
-   * Windows delivers `auxclick` first and `contextmenu` last. CDK's
-   * outside-pointer stream listens to `click`, `auxclick` AND `contextmenu`
-   * on the body, so on X11 the `auxclick` of the very click that opened the
-   * menu reaches an overlay that already exists, counts as a click outside
-   * it, and closes what it just opened. On Windows nothing follows the
-   * `contextmenu`, which is why the menu works on a developer machine and
-   * not on CI.
-   *
-   * A new gesture always begins with a `pointerdown`. Until one arrives, a
-   * pointer event is still the tail of the click that opened the menu and is
-   * not a reason to close it.
+   * Si empezó un gesto NUEVO desde que se abrió el menú. Chromium sobre X11 manda
+   * `contextmenu` en la pulsación y `auxclick` en la suelta, y el `auxclick` del
+   * mismo clic cerraba lo que el `contextmenu` acababa de abrir (defecto 2a88b80).
+   * Un gesto nuevo siempre empieza con `pointerdown`.
    */
   private menuGestureEnded = false;
 
@@ -983,7 +860,6 @@ export class Table<T> {
     this.menuGestureEnded = true;
   };
 
-  /** Stop listening for the gesture that is allowed to close the menu. */
   private releaseMenuGesture(): void {
     this.host.nativeElement.ownerDocument.removeEventListener(
       'pointerdown',
@@ -1009,12 +885,8 @@ export class Table<T> {
   }
 
   /**
-   * Open the menu for a row, anchored wherever it was asked for.
-   *
-   * TWO WAYS IN, ONE MENU: the right button and the kebab. A trackpad and a
-   * touch screen have no right click, so right-click-only would be a menu half
-   * the people cannot open -- and a kebab-only one would ignore the habit of
-   * everybody who does have a right button.
+   * DOS ENTRADAS, UN MENÚ: botón derecho y kebab. Un trackpad no tiene clic
+   * derecho; solo el kebab ignoraría la costumbre de quien sí lo tiene.
    */
   protected openMenu(flat: FlatRow<T>, anchor: HTMLElement): void {
     if (!this.hasMenu()) {
@@ -1054,17 +926,14 @@ export class Table<T> {
     if (!this.hasMenu()) {
       return;
     }
-    // Replace the browser's menu, rather than adding a second one beside it.
+    // Reemplaza el menú del navegador en vez de sumar uno al lado.
     event.preventDefault();
     this.openMenu(flat, event.target as HTMLElement);
   }
 
   /**
-   * Close, and GIVE THE FOCUS BACK TO THE ROW.
-   *
-   * Not to the document: a menu that closes and drops the focus to the top of
-   * the page makes the keyboard start over, which is how somebody ends up
-   * using the mouse for everything.
+   * Devuelve el foco A LA FILA y no al documento: si no, el teclado empieza de
+   * cero y la persona termina usando el ratón para todo.
    */
   protected closeMenu(): void {
     if (!this.menuOverlay) {
@@ -1122,16 +991,11 @@ export class Table<T> {
     }
   }
 
-  // ---------------------------------------------------------- virtualisation
+  // ------------------------------------------------------- virtualizacion
 
   /**
-   * The row height in pixels, which is what windowing arithmetic needs.
-   *
-   * WITH NO TOKEN DECLARED THERE IS NO VIRTUALISATION, rather than an invented
-   * forty. Same rule as every other value this library reads at runtime: no
-   * fallback number lives in TypeScript. In practice that means jsdom -- where
-   * no stylesheet is loaded -- renders the ordinary table, which is also what
-   * lets the component's spec count rows.
+   * La altura de fila en píxeles, que es lo que pide la aritmética de la ventana.
+   * SIN TOKEN NO HAY VIRTUALIZACIÓN, en vez de un cuarenta inventado.
    */
   protected readonly rowPixels = computed(() =>
     readPixels(this.density() === 'sm' ? '--row-height-sm' : '--row-height-md'),
@@ -1142,35 +1006,14 @@ export class Table<T> {
   private readonly scrollTop = signal(0);
   private readonly viewportHeight = signal(0);
 
-  /** The box the window is measured against, once the view exists. */
   private readonly scrollBox = viewChild<ElementRef<HTMLElement>>('scrollBox');
 
-  /** Rows kept either side of the view, so a fast scroll does not show gaps. */
   private readonly overscan = 6;
 
   /**
-   * WHICH ROWS ARE IN THE DOM, AND HOW MUCH EMPTY SPACE STANDS EITHER SIDE.
-   *
-   *
-   * WHY THIS IS NOT `cdk-virtual-scroll-viewport`, WHICH THE COMANDA ASKED FOR
-   *
-   * The CDK's viewport positions its content wrapper with a transform and
-   * measures the wrapper itself. Wrapping a semantic `<table>` in one moves
-   * the whole table -- header included -- and the sticky header stops being
-   * sticky, because it is no longer sticky to the scrolling box. The CDK's own
-   * guidance is to virtualise a list of divs, which would mean giving up
-   * `<table>` semantics: the header/cell relationship, the row and column
-   * counts, and everything a screen reader gets from them for free. That trade
-   * is the wrong way round for a table an operator lives in.
-   *
-   * So the window is computed here, and it is short because THE TREE IS
-   * ALREADY FLAT: scroll offset over row height gives the first row, the
-   * viewport height gives how many, and two spacer rows hold the scrollbar at
-   * the right length. The flattening is what the comanda said would make
-   * virtualisation possible without tricks, and this is that sentence cashed
-   * in -- just not through the CDK.
-   *
-   * Reported as a deviation rather than done quietly.
+   * Qué filas están en el DOM y cuánto hueco queda a cada lado. NO es
+   * `cdk-virtual-scroll-viewport`: su transform mueve la tabla entera y la
+   * cabecera deja de ser pegajosa. Desviación declarada en la ficha Tabla.
    */
   protected readonly rowWindow = computed(() => {
     const all = this.rows();
@@ -1195,7 +1038,6 @@ export class Table<T> {
     this.viewportHeight.set(element.clientHeight);
   }
 
-  /** Measured once the container exists, so the first window is the right size. */
   protected onScrollBoxReady(element: HTMLElement): void {
     this.viewportHeight.set(element.clientHeight);
   }
@@ -1218,11 +1060,8 @@ function withoutKey(set: ReadonlySet<unknown>, key: unknown): ReadonlySet<unknow
 }
 
 /**
- * The nearest row above with a smaller level.
- *
- * Exported-shaped as a free function rather than a method so the keyboard rule
- * it serves can be read in one place: "left, on the first cell of a child, goes
- * to the parent" is one line of the WAI-ARIA table and one line here.
+ * La fila de arriba más cercana con nivel menor. Función libre para que la regla
+ * de teclado que sirve se lea en un solo lugar.
  */
 function parentIndexOf<T>(rows: readonly FlatRow<T>[], from: number): number {
   const level = rows[from]?.level ?? 0;
@@ -1234,5 +1073,5 @@ function parentIndexOf<T>(rows: readonly FlatRow<T>[], from: number): number {
   return from;
 }
 
-/** Which box of a filter a value came from. `text` is the whole filter. */
+/** De qué caja de un filtro vino un valor. `text` es el filtro entero. */
 type FilterBound = 'text' | 'min' | 'max' | 'from' | 'to';

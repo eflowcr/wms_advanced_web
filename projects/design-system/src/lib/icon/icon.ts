@@ -3,10 +3,8 @@ import { ICONS, type IconName } from '../../icons/icons.generated';
 
 export type IconSize = 'sm' | 'md' | 'lg' | 'xl';
 
-/**
- * Width/height and stroke width always travel together: the stroke is
- * compensated per size in tokens.css (--size-icon-* / --stroke-icon-*).
- */
+/** Ancho/alto y grosor de trazo viajan juntos: el trazo se compensa por tamaño en
+ * tokens.css (--size-icon-* / --stroke-icon-*). */
 const SIZE_CLASSES: Readonly<Record<IconSize, string>> = {
   sm: 'size-icon-sm stroke-icon-sm',
   md: 'size-icon-md stroke-icon-md',
@@ -15,23 +13,14 @@ const SIZE_CLASSES: Readonly<Record<IconSize, string>> = {
 };
 
 /**
- * The one way to put an icon on screen (ADR 0011).
+ * La única forma de poner un icono en pantalla (ADR 0011).
  *
- * The geometry is data: the template walks the primitives and binds each
- * attribute. No innerHTML, no DomSanitizer, so an icon can never carry markup.
- *
- * Colour is always `currentColor`. The icon inherits from its container and
- * never sets a colour of its own; one that needs a colour gets it from the
- * container.
- *
- * Accessibility is decided by whether the icon carries information:
- *   - no `label` (default): decorative. aria-hidden, not focusable. Correct
- *     whenever a visible text next to it already says the same thing.
- *   - `label`: role="img" with that aria-label. The text comes from the
- *     consumer, never from here, so it is translated where it is used.
- *
- * No `styles`/`styleUrl` (ADR 0010): sizing is Tailwind utilities backed by
- * the icon tokens.
+ * La geometría es dato: la plantilla recorre las primitivas y ata cada atributo.
+ * Sin innerHTML y sin DomSanitizer, así que un icono no puede llevar marcado.
+ * El color siempre es `currentColor`: hereda del contenedor y nunca pone uno.
+ * La accesibilidad la decide si el icono lleva información: sin `label` es
+ * decorativo -aria-hidden y fuera del foco-, con `label` es `role="img"` con ese
+ * nombre, que viene del consumidor y por eso se traduce donde se usa.
  */
 @Component({
   selector: 'ewms-icon',

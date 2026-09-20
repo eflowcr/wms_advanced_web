@@ -10,34 +10,18 @@ import {
 } from './table-source';
 
 /**
- * A `TableSource` over an array in memory.
- *
- * IT SHIPS FROM THE LIBRARY, unlike the search select's demo source, and the
- * difference is who it is for. A demo source is demo code. This one is what a
- * screen uses when its data already fits in memory -- a settings table, a
- * picking list for one order, anything the backend hands over whole -- and
- * every such screen would otherwise write the same filtering and paging again,
- * slightly differently.
- *
- * It is also the reference implementation of the contract: when the catalogue
- * endpoint arrives, this is what its behaviour is compared against.
- *
- *
- * FILTERING AND SORTING WORK ON THE RAW VALUE, NEVER ON THE FORMATTED TEXT.
- *
- * That is the whole reason the formatters live in the table and not here.
- * Sorting `[1200, 900]` by their formatted strings puts `1.200` before `900`,
- * which is wrong in a way nobody reports as a bug -- they just stop trusting
- * the column.
+ * Un `TableSource` sobre un arreglo en memoria. SALE DE LA LIBRERÍA, al revés que
+ * la fuente de demo del selector: esto es lo que usa una pantalla cuyos datos ya
+ * caben en memoria, y si no cada una escribiría el mismo filtrado y paginado,
+ * distinto. Es además la implementación de referencia del contrato.
+ * FILTRAR Y ORDENAR TRABAJAN SOBRE EL VALOR CRUDO, nunca sobre el texto
+ * formateado: ordenar `[1200, 900]` por sus cadenas pone «1.200» antes que «900»,
+ * que está mal de un modo que nadie reporta -simplemente dejan de confiar.
  */
 export class ArrayTableSource<T> implements TableSource<T> {
   constructor(
     private readonly rows: readonly T[],
-    /**
-     * Which properties the global quick filter looks at. Empty = all the
-     * top-level ones, which is the useful default for a table whose columns
-     * are the object's own fields.
-     */
+    /** Qué propiedades mira el filtro rápido. Vacío = todas las de primer nivel. */
     private readonly searchable: readonly string[] = [],
   ) {}
 
@@ -62,7 +46,11 @@ export class ArrayTableSource<T> implements TableSource<T> {
       return true;
     }
     const keys = this.searchable.length > 0 ? this.searchable : Object.keys(row as object);
-    return keys.some((key) => String(readCell(row, key) ?? '').toLowerCase().includes(needle));
+    return keys.some((key) =>
+      String(readCell(row, key) ?? '')
+        .toLowerCase()
+        .includes(needle),
+    );
   }
 
   private matchesFilters(row: T, filters: Readonly<Record<string, TableFilterValue>>): boolean {
@@ -72,10 +60,8 @@ export class ArrayTableSource<T> implements TableSource<T> {
   }
 }
 
-/**
- * One cell against one filter. Exported so the Table's own spec can pin the
- * three shapes down without building a source around them.
- */
+/** Una celda contra un filtro. Exportada para que el spec de la Tabla fije las
+ * tres formas sin armar una fuente alrededor. */
 export function matchesFilter(value: unknown, filter: TableFilterValue): boolean {
   if (typeof filter === 'string') {
     return (
@@ -89,9 +75,9 @@ export function matchesFilter(value: unknown, filter: TableFilterValue): boolean
   if (isNumberRange(filter)) {
     const number = Number(value);
     if (!Number.isFinite(number)) {
-      // A row whose value is not a number cannot be inside a numeric range.
-      // Keeping it would make "between 100 and 900" quietly include the rows
-      // with no value at all.
+      // Una fila cuyo valor no es número no puede estar dentro de un rango
+      // numérico: dejarla haría que «entre 100 y 900» incluyera en silencio las
+      // filas sin valor.
       return false;
     }
     return (
@@ -102,11 +88,9 @@ export function matchesFilter(value: unknown, filter: TableFilterValue): boolean
 
   if (isDateRange(filter)) {
     /*
-     * Dates compare as ISO 8601 STRINGS, which is exact rather than lazy: the
-     * format sorts lexicographically by construction, so `'2026-03-04' >=
-     * '2026-03-01'` is the same answer a Date comparison gives, without a parse
-     * that can silently produce Invalid Date on a value from a source that
-     * happens to use another shape.
+     * Las fechas se comparan como CADENAS ISO 8601, que es exacto y no perezoso: el
+     * formato ordena lexicográficamente por construcción, y así se evita un parseo
+     * que puede dar Invalid Date en silencio sobre un valor con otra forma.
      */
     const text = String(value ?? '');
     if (text === '') {
@@ -118,18 +102,15 @@ export function matchesFilter(value: unknown, filter: TableFilterValue): boolean
     );
   }
 
-  // An empty object is every bound cleared, which is no filter at all.
+  // Un objeto vacío es todos los límites borrados, o sea ningún filtro.
   return true;
 }
 
 /**
- * Sort by the raw value, with a stable order and nothing-last.
- *
- * NOTHING GOES LAST IN BOTH DIRECTIONS, which is not what a naive comparison
- * does. Rows with no value are not "smaller": they are absent, and burying
- * them at the bottom is what every spreadsheet does because it is what people
- * expect. Sorting them to the top on the descending pass would make the first
- * screenful of a descending sort a screenful of blanks.
+ * Ordena por el valor crudo, estable y con los vacíos al final EN AMBAS
+ * DIRECCIONES, que no es lo que hace una comparación ingenua: las filas sin valor
+ * no son «más chicas», están ausentes. Subirlas al ordenar descendente haría que
+ * la primera pantalla fuera una pantalla de blancos.
  */
 export function sortRows<T>(rows: readonly T[], query: TableQuery): readonly T[] {
   const sort = query.sort;
@@ -145,7 +126,7 @@ export function sortRows<T>(rows: readonly T[], query: TableQuery): readonly T[]
   });
 }
 
-/** `null` when both sides have a value; otherwise the nothing-last answer. */
+/** `null` cuando los dos lados tienen valor; si no, la respuesta de vacío-al-final. */
 function compareMissing(left: unknown, right: unknown): number | null {
   const leftEmpty = left === null || left === undefined || left === '';
   const rightEmpty = right === null || right === undefined || right === '';
@@ -161,12 +142,8 @@ function compareMissing(left: unknown, right: unknown): number | null {
   return null;
 }
 
-/**
- * Numbers numerically, everything else as text.
- *
- * `localeCompare` and not `<`, so that "Ñandú" lands where a Spanish reader
- * looks for it rather than after "Z".
- */
+/** Números numéricamente, todo lo demás como texto. `localeCompare` y no `<`, para
+ * que «Ñandú» caiga donde lo busca quien lee español y no después de la «Z». */
 function compareValues(left: unknown, right: unknown): number {
   if (typeof left === 'number' && typeof right === 'number') {
     return left - right;

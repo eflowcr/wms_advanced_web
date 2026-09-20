@@ -9,25 +9,23 @@ import {
 } from '@angular/core';
 import type { BadgeDictionary, TableColumnType, TableColumnWidth } from './table.types';
 
-/** What an `ewmsCell` template receives. */
+/** Lo que recibe una plantilla `ewmsCell`. */
 export interface CellContext<T> {
   readonly $implicit: T;
   readonly value: unknown;
 }
 
 /**
- * The escape hatch, and DELIBERATELY NOT THE MAIN ROAD.
- *
- * Five column types cover what a WMS table actually shows, and each of them
- * brings its own cell. This exists for the sixth thing -- a cell with a
- * tooltip, a link, two lines -- and it is a directive rather than an input so
- * that reaching for it looks like what it is: writing a template.
+ * La salida de emergencia, Y A PROPÓSITO NO EL CAMINO PRINCIPAL. Los cinco tipos
+ * de columna cubren lo que una tabla de WMS muestra; esto es para la sexta cosa
+ * -una celda con tooltip, un enlace, dos líneas- y es una directiva y no una
+ * entrada para que echar mano de ella se vea como lo que es: escribir una plantilla.
  */
 @Directive({ selector: '[ewmsCell]' })
 export class CellTemplate<T = unknown> {
   readonly template = inject<TemplateRef<CellContext<T>>>(TemplateRef);
 
-  /** Lets the compiler type `let-row` and `value` inside the template. */
+  /** Deja que el compilador tipe `let-row` y `value` dentro de la plantilla. */
   static ngTemplateContextGuard<T>(
     _directive: CellTemplate<T>,
     _context: unknown,
@@ -37,16 +35,12 @@ export class CellTemplate<T = unknown> {
 }
 
 /**
- * One column, DECLARED rather than configured.
- *
- * It renders nothing: the table queries these as content children and draws
- * the grid itself. A column that rendered its own cells would need the table
- * to hand it the row, the row to hand it back the width, and the two would
- * fight over which of them owns the `<tr>`.
- *
- * The declarative form is the whole point of the API. An array of column
- * objects in TypeScript reads as configuration; six lines of markup read as a
- * table, and a reviewer can see the columns in the order they will appear.
+ * Una columna, DECLARADA en vez de configurada. No pinta nada: la tabla las
+ * consulta como hijas de contenido y dibuja la grilla. Una columna que pintara sus
+ * celdas necesitaría que la tabla le pasara la fila y ella devolviera el ancho, y
+ * las dos pelearían por quién es dueña del `<tr>`.
+ * Un arreglo de objetos en TypeScript se lee como configuración; seis líneas de
+ * marcado se leen como una tabla, en el orden en que van a aparecer.
  */
 @Component({
   selector: 'ewms-column',
@@ -55,23 +49,17 @@ export class CellTemplate<T = unknown> {
 })
 export class TableColumn {
   /**
-   * Which property of the row this column shows. A property NAME, not a path:
-   * a path needs a parser and the escape hatch for anything deeper is already
-   * `ewmsCell`, where the consumer writes Angular instead of a mini-language.
-   *
-   * It is also the key this column's filter travels under in `TableQuery`, and
-   * what `aria-sort` is keyed by.
+   * Qué propiedad de la fila muestra. Un NOMBRE y no un camino: un camino necesita
+   * parser, y la salida para algo más profundo ya es `ewmsCell`. Es además la clave
+   * con la que viaja su filtro en `TableQuery` y por la que se indexa `aria-sort`.
    */
   readonly key = input.required<string>();
 
-  /** The heading, already translated. Empty is legitimate for `actions`. */
+  /** El encabezado, ya traducido. Vacío es legítimo en `actions`. */
   readonly header = input<string>('');
 
-  /**
-   * Decides four things at once: alignment, typography, which cell is drawn,
-   * and WHAT SHAPE ITS FILTER TAKES. A number column filters with two numbers,
-   * a date column with two dates.
-   */
+  /** Decide cuatro cosas de una vez: alineación, tipografía, qué celda se dibuja y
+   * QUÉ FORMA TOMA SU FILTRO. Una columna numérica filtra con dos números. */
   readonly type = input<TableColumnType>('text');
 
   readonly width = input<TableColumnWidth>('fill');
@@ -80,11 +68,8 @@ export class TableColumn {
 
   readonly filterable = input<boolean>(false);
 
-  /**
-   * Only for `type="badge"`. THE CENTRAL DICTIONARY: the badge draws from it,
-   * and `rowState="<this column's key>"` reads the same object to tint the
-   * row, so the two can never disagree.
-   */
+  /** Solo para `type="badge"`. EL DICCIONARIO CENTRAL: de él dibuja la insignia, y
+   * `rowState` lee el mismo objeto para teñir la fila, así no pueden discrepar. */
   readonly badges = input<BadgeDictionary>({});
 
   readonly cell = contentChild(CellTemplate);

@@ -1,15 +1,12 @@
 /**
- * The three tones a confirmation can take.
- *
- * `info` is the name and `neutral` is the colour, exactly as in the Banner and
- * the Toast -- and here it needed saying twice, because the Figma record of
- * this component painted Info blue. That was superseded by the brand rule: the
- * blue means "you click this" (Fundamentos de Marca), and the Modal sheet
- * carries the correction at the top of the page.
+ * Los tres tonos de una confirmación. `info` es el nombre y `neutral` el color,
+ * como en Banner y Toast: el registro de Figma pintaba Info azul y lo reemplazó
+ * la regla de marca -el azul es «acá se hace clic»-. La ficha Modal lo corrige
+ * en su encabezado.
  */
 export type DialogTone = 'danger' | 'warning' | 'info';
 
-/** What `DialogService.confirm` takes. Every string already translated (ADR 0008). */
+/** Lo que toma `DialogService.confirm`. Todo texto ya traducido (ADR 0008). */
 export interface ConfirmOptions {
   readonly title: string;
   readonly body: string;
@@ -19,12 +16,9 @@ export interface ConfirmOptions {
 }
 
 /**
- * What the confirmation component receives: the options, plus the two ids the
- * service minted for the container's `aria-labelledby` and `aria-describedby`.
- *
- * Internal. It exists because the ids have to be in the CDK's config BEFORE
- * the dialog opens, so they cannot be generated inside the component that uses
- * them.
+ * Lo que recibe el componente de confirmación: las opciones más los dos ids que
+ * acuñó el servicio. Interno: los ids tienen que estar en la config del CDK
+ * ANTES de abrir, así que no se pueden generar dentro del componente que los usa.
  */
 export interface ConfirmDialogData extends ConfirmOptions {
   readonly titleId: string;
@@ -32,34 +26,24 @@ export interface ConfirmDialogData extends ConfirmOptions {
 }
 
 /**
- * Whether the backdrop is allowed to dismiss this dialog.
- *
- * DELIBERATE FRICTION, AND IT COMES FROM THE SHEET: a destructive confirmation
- * does not close when you click outside it. The reasoning is that a stray
- * click is the cheapest gesture there is, and the whole point of the dialog is
- * to make the destructive answer cost more than the safe one. A warning or an
- * informative dialog has nothing to protect, so it closes like any overlay.
- *
- * Escape closes all three, always. That is not the same question: Escape is a
- * deliberate key, it is the documented way out of a modal, and WCAG 2.1.2 is
- * about not trapping the keyboard. A dialog that swallowed Escape would be a
- * keyboard trap dressed up as friction.
+ * Si el fondo puede descartar este diálogo. FRICCIÓN DELIBERADA, de la ficha: una
+ * confirmación destructiva no cierra al hacer clic afuera, porque un clic al
+ * pasar es el gesto más barato que hay y el diálogo existe para que la respuesta
+ * destructiva cueste más que la segura.
+ * Escape cierra las tres, siempre: es una tecla deliberada y la salida documentada
+ * de un modal, y tragarla sería una trampa de teclado disfrazada de fricción
+ * (WCAG 2.1.2).
  */
 export function backdropDismisses(tone: DialogTone): boolean {
   return tone !== 'danger';
 }
 
 /**
- * The icon zone: a 56 px circle in the tone's light surface, ringed in its
- * border, with a coloured halo behind it -- AND NO GLYPH INSIDE.
- *
- * THIS IS AN EXCEPTION THE SHEET DOCUMENTS, NOT A PIECE MISSING. The Modal
- * carries a warning to whoever arrives later with the icon set in hand: the
- * shape with the halo was validated with the user on 27/08, and putting a
- * glyph in it is a decision somebody has to take, not a gap to be tidied up.
- *
- * The halo lives in tokens.css as `--shadow-halo-*`, composed of semantic
- * tokens the way `--focus-ring-shadow` is.
+ * La zona del icono: un círculo de 56 px en la superficie del tono, con aro y
+ * halo, Y SIN GLIFO ADENTRO. Es una excepción que la ficha documenta, no una
+ * pieza que falte: la forma con halo se validó con el usuario el 27/08, y meterle
+ * un glifo es una decisión que alguien tiene que tomar. El halo vive en tokens.css
+ * como `--shadow-halo-*`.
  */
 export function dialogIconClasses(tone: DialogTone): string {
   switch (tone) {
@@ -73,45 +57,36 @@ export function dialogIconClasses(tone: DialogTone): string {
 }
 
 /**
- * The confirm button's variant.
- *
- * Danger for a destructive answer, Primary for everything else -- which is
- * what the sheet's Figma variants already did (Danger on Delete, Primary on
- * Info and Warning). Cancel is always Secondary.
+ * La variante del botón de confirmar: Danger para una respuesta destructiva,
+ * Primary para el resto, como ya hacían las variantes de Figma. Cancelar siempre
+ * es Secondary.
  */
 export function confirmButtonVariant(tone: DialogTone): 'danger' | 'primary' {
   return tone === 'danger' ? 'danger' : 'primary';
 }
 
 /**
- * The box.
+ * La caja. `--radius-dialog` y `--shadow-dialog` son geometría propia del Modal,
+ * el único componente del sistema que la tiene: la escala de elevación termina
+ * en el modal y este es el nivel que pide una tercera capa.
  *
- * `--radius-dialog` and `--shadow-dialog` are the Modal's own geometry, and
- * the only component in the system with geometry of its own: the elevation
- * scale stops at the modal, and this is the one level that asks for a third
- * layer and a wider spread.
- */
-/*
- * The width comes through the 4 px spacing scale (120 x 4 = 480 px) and NOT
- * through Tailwind's default container scale, which ADR 0009 deletes: one of
- * those utilities compiles, applies nothing, and only gate 10 notices.
- *
- * The name of the deleted one is not written anywhere in this file, comment
- * included. The gate reads every quoted run in a .ts file as a possible class
- * name, and a pair of backticks in a comment is a quoted run -- which is
- * exactly how this note failed the build the first time it was written.
+ * El ancho sale de la escala de 4 px (120 x 4 = 480 px) y NO de la escala de
+ * contenedores por defecto de Tailwind, que ADR 0009 borra: una de esas utilidades
+ * compila, no aplica nada y solo la compuerta 10 lo nota. Su nombre no se escribe
+ * en ningún lado de este archivo, comentarios incluidos: la compuerta lee toda
+ * tirada entre comillas de un .ts como posible clase, y un par de acentos graves
+ * en un comentario es una tirada entre comillas. Así rompió el build la primera
+ * vez que se escribió esta nota.
  */
 export const DIALOG_BOX_CLASSES =
   'flex w-full max-w-120 flex-col items-center gap-4 bg-surface p-6 text-center ' +
   'rounded-dialog shadow-dialog border border-default border-solid';
 
 /**
- * The backdrop: navy at 50 %, with the glass blur the sheet asks for.
- *
- * Navy and not black, like every other overlay in the system -- black puts the
- * scene out, navy tints it with the brand.
+ * El fondo: navy al 50 % con el desenfoque que pide la ficha. Navy y no negro,
+ * como toda capa del sistema: el negro apaga la escena, el navy la tiñe de marca.
  */
 export const DIALOG_BACKDROP_CLASSES = ['bg-overlay', 'backdrop-blur-dialog'];
 
-/** The pane. The box carries the look; the pane only has to stay out of the way. */
+/** El panel. La caja lleva el aspecto; el panel solo tiene que no estorbar. */
 export const DIALOG_PANEL_CLASSES = ['flex', 'max-w-full', 'p-4'];

@@ -3,71 +3,62 @@ import type { IconName } from '../../icons/icons.generated';
 import type { SemanticFamily } from '../feedback/feedback.types';
 
 /**
- * What a row's state is worth, named by the COLOUR FAMILY.
- *
- * Not by a message vocabulary: nobody says "an info row". The four are the
- * same four families the Banner and the Toast paint with, so a person who
- * learns what the crossed circle means in a toast finds it again in a row.
+ * Cuánto vale el estado de una fila, nombrado por la FAMILIA DE COLOR: nadie dice
+ * «una fila info». Son las mismas cuatro que pintan Banner y Toast.
  */
 export type RowState = SemanticFamily;
 
-/** What a value in a `badge` column turns into. */
+/** En qué se convierte un valor de una columna `badge`. */
 export interface BadgeDescriptor {
   readonly variant: RowState;
-  /** The words, already translated (ADR 0008). */
+  /** Las palabras, ya traducidas (ADR 0008). */
   readonly label: string;
 }
 
 /**
- * THE CENTRAL DICTIONARY, and the reason the row tint and the badge cannot
- * disagree.
- *
- * One object maps a raw value to a variant and a label; the `badge` column
- * draws from it, and `rowState="<key>"` reads the same object to tint the row.
- * The alternative the sheet forbids in as many words -- a class per view -- is
- * how one screen ends up calling "Con incidencia" red and another amber.
+ * EL DICCIONARIO CENTRAL, y por qué el tinte y la insignia no pueden discrepar:
+ * un objeto mapea valor crudo a variante y etiqueta, y lo leen la columna `badge`
+ * y `rowState`. Una clase por vista es cómo «Con incidencia» sale roja en una
+ * pantalla y ámbar en otra.
  */
 export type BadgeDictionary = Readonly<Record<string, BadgeDescriptor>>;
 
 export type TableColumnType = 'text' | 'number' | 'date' | 'badge' | 'actions';
 
 /**
- * A column's width, BY NAME.
- *
- * Never a CSS string: gate 10 rejects a raw length in a template anyway, and a
- * name is what keeps six tables in one application from each inventing their
- * own column widths. `fill` is the odd one out and is not a token -- it is
- * `flex: 1`, "take what is left".
+ * El ancho de una columna, POR NOMBRE y nunca una medida CSS: es lo que evita que
+ * seis tablas inventen cada una sus anchos. `fill` no es un token: es «tomá lo
+ * que sobra».
  */
 export type TableColumnWidth = 'sm' | 'md' | 'lg' | 'fill';
 
-/** Where the children of a row come from, when they are not a property. */
+/** De dónde salen los hijos de una fila, cuando no son una propiedad. */
 export type TableChildren<T> = (row: T) => readonly T[] | Observable<readonly T[]> | null;
 
-/** One entry of a row's context menu. */
+/** Una entrada del menú contextual de una fila. */
 export interface MenuItem {
   readonly id: string;
-  /** Already translated. */
+  /** Ya traducida. */
   readonly label: string;
   readonly icon?: IconName;
-  /** `danger` paints it as the destructive answer. Nothing else is coloured. */
+  /** `danger` la pinta como la respuesta destructiva. Nada más se colorea. */
   readonly tone?: 'danger';
   readonly separatorBefore?: boolean;
   readonly disabled?: boolean;
 }
 
-/** What `(rowActivate)` carries. An object, so a second field can arrive later. */
+/** Lo que lleva `(rowActivate)`. Un objeto, para que quepa otro campo mañana. */
 export interface RowActivateEvent<T> {
   readonly row: T;
 }
 
-/** What `(rowMenu)` carries. */
+/** Lo que lleva `(rowMenu)`. */
 export interface RowMenuEvent<T> {
   readonly row: T;
   readonly item: MenuItem;
 }
 
-/** 40 px and 32 px, from the tokens. See `--row-height-*`. */
+/** 40 px y 32 px, de los tokens. Ver `--row-height-*`. */
 export type TableDensity = 'md' | 'sm';
 
 export const ROW_HEIGHT: Readonly<Record<TableDensity, string>> = {
@@ -75,12 +66,8 @@ export const ROW_HEIGHT: Readonly<Record<TableDensity, string>> = {
   sm: 'var(--row-height-sm)',
 };
 
-/**
- * Column widths as inline styles rather than utilities.
- *
- * A `<col>`'s width is one declaration and there is no theme namespace for it;
- * the tokens are what keep the values out of the template.
- */
+/** Anchos como estilo en línea: el ancho de un `<col>` es una declaración y no
+ * hay espacio de tema para ella. Los tokens sacan los valores de la plantilla. */
 export const COLUMN_WIDTH: Readonly<Record<Exclude<TableColumnWidth, 'fill'>, string>> = {
   sm: 'var(--col-width-sm)',
   md: 'var(--col-width-md)',
@@ -88,12 +75,9 @@ export const COLUMN_WIDTH: Readonly<Record<Exclude<TableColumnWidth, 'fill'>, st
 };
 
 /**
- * Alignment and typography per column type.
- *
- * NUMBERS RIGHT AND MONO, and that is not decoration: two quantities are only
- * comparable at a glance when their digits line up, and they only line up in a
- * monospaced face flushed to the same edge. Dates are mono for the same reason
- * and start-aligned because they are read, not compared.
+ * Alineación y tipografía por tipo de columna. NÚMEROS A LA DERECHA Y MONO, y no
+ * es adorno: dos cantidades solo se comparan de un vistazo con los dígitos
+ * alineados. Las fechas van mono por lo mismo y al inicio porque se leen.
  */
 export function columnCellClasses(type: TableColumnType): string {
   switch (type) {
@@ -108,55 +92,37 @@ export function columnCellClasses(type: TableColumnType): string {
   }
 }
 
-/** The header follows its column's alignment, or a sort arrow lands in the wrong place. */
+/** La cabecera sigue la alineación de su columna, o la flecha de orden cae mal. */
 export function columnHeaderClasses(type: TableColumnType): string {
   return type === 'number' || type === 'actions' ? 'justify-end' : 'justify-start';
 }
 
-/**
- * The box.
- *
- * `border-separate` is deliberately NOT used: a collapsed border is what lets
- * a row's tint reach the edge of its cells without a seam between them.
- */
+/** La caja. `border-separate` NO se usa a propósito: el borde colapsado es lo que
+ * deja que el tinte de una fila llegue al borde de sus celdas sin costura. */
 export const TABLE_CLASSES = 'w-full border-collapse text-p';
 
 export const HEADER_CELL_CLASSES =
   'border-b border-strong bg-secondary px-3 text-caption text-secondary';
 
 /**
- * A cell, INCLUDING ITS FOCUS RING -- and the ring is an outline rather than
- * the system's usual box-shadow.
+ * Una celda, INCLUIDO SU ANILLO DE FOCO, y el anillo es un outline y no la sombra
+ * habitual del sistema: la sombra pinta dos bandas tres píxeles afuera, que en una
+ * tabla con borde colapsado caen sobre las celdas vecinas.
  *
- * The shadow token paints two bands three pixels out, which on a
- * border-collapse table lands on top of the neighbouring cells: the focused
- * cell would appear to have a halo over its neighbours' content. An outline is
- * drawn on the element's own edge and does not bleed.
- *
- * It is still the system's focus colour, from the same token. The icon grid in
- * the showroom made the same call for the same reason, and the keyboard walk
- * in e2e/showroom.e2e.ts accepts either -- what it refuses is a control with
- * no ring at all, or one falling back to the browser's own.
- *
- * NOTE THE ABSENCE OF `outline-none`, which every other control in this
- * library pairs with its ring. In Tailwind v4 that utility sets a variable the
- * later outline utilities read, so `outline-none` followed by a focus-visible
- * outline resolves to no outline at all -- the ring silently disappears and
- * the browser's own `outline-style: auto` shows through instead. The keyboard
- * walk caught exactly that. The icon grid, which arrived at this pattern
- * first, does not use it either.
+ * FIJARSE EN LA AUSENCIA DE `outline-none`, que todo otro control de la librería
+ * acompaña a su anillo: en Tailwind v4 esa utilidad fija una variable que leen las
+ * de outline posteriores, así que seguida de un outline en focus-visible resuelve
+ * a ningún outline -el anillo desaparece en silencio-. Lo atrapó la caminata por
+ * teclado.
  */
 export const CELL_CLASSES =
   'border-b border-default px-3 align-middle text-primary ' +
   'focus-visible:outline-2 focus-visible:outline-focus';
 
 /**
- * A row that can be walked, and the three things it can be.
- *
- * SELECTED WINS OVER THE STATE TINT. A row that is both "con incidencia" and
- * selected shows it is selected, because the state is already said twice -- by
- * the badge's icon and by its words -- while the selection is said by the tint
- * and the checkbox alone.
+ * Una fila que se puede caminar. SELECCIONADA GANA AL TINTE DE ESTADO: el estado
+ * ya se dice dos veces -el icono de la insignia y sus palabras- y la selección
+ * solo la dicen el tinte y la casilla.
  */
 export function rowClasses(selected: boolean, tint: string): string {
   const base = 'group';

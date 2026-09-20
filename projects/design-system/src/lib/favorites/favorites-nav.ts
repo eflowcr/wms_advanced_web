@@ -5,44 +5,30 @@ import type { IconName } from '../../icons/icons.generated';
 import { Favorites } from './favorites';
 import { EWMS_FAVORITE_LABELS, type Favorite } from './favorites.types';
 
-/** A favourite as the block draws it: the stored route, and its resolved words. */
+/** Un favorito como lo dibuja el bloque: la ruta guardada y sus palabras. */
 interface FavoriteRow {
   readonly favorite: Favorite;
   readonly label: string;
   readonly icon: IconName;
 }
 
-/** A route nobody can name still gets an icon, and it is the block's own. */
+/** Una ruta que nadie sabe nombrar igual lleva icono, y es el del bloque. */
 const NEUTRAL_ICON: IconName = 'star';
 
 /**
- * How many favourites the block shows.
- *
- * Eight, and the number is about the block rather than about the feature:
- * pinned above a tree of sixteen destinations, a list longer than eight stops
- * being a shortcut and becomes a second menu -- and on the rail it would push
- * the tree off the screen. Marking a ninth is allowed; the block shows the
- * first eight. REQ-FE-DS4-002 §16 leaves the question of a hard limit open,
- * and this is a display limit, which is a different thing.
+ * Cuántos favoritos muestra el bloque. Ocho, y el número es del bloque y no de la
+ * función: fijado sobre un árbol de dieciséis destinos, una lista de más de ocho
+ * deja de ser un atajo y se vuelve un segundo menú. Marcar un noveno se permite;
+ * el bloque muestra los primeros ocho. Es un límite de PANTALLA, no de datos.
  */
 export const FAVORITES_SHOWN = 8;
 
 /**
- * THE FIXED PLACE IN THE NAVIGATION (REQ-FE-DS4-002 RFE-04).
- *
- * This is the half of favourites that makes them worth having. A star with
- * nowhere to look at what you starred is a button that does nothing you can
- * see; the comanda asks for the screens somebody uses all day to be *"always
- * visible in a fixed place in the navigation"*, and this is that place.
- *
- * IT SHOWS AN EMPTY STATE AND NEVER DISAPPEARS. A block that vanishes when
- * there is nothing in it makes somebody believe the feature is not there -- and
- * the empty state is also the only place that says how to put something in it.
- *
- * IT DOES NOT NAVIGATE. Like every other navigation piece here it emits what
- * was chosen; the shell, which is the only thing that knows what a route
- * means, does the navigating. That is what keeps `@angular/router` out of a
- * presentation library and lets the showroom show this block without one.
+ * EL LUGAR FIJO EN LA NAVEGACIÓN (REQ-FE-DS4-002 RFE-04). Una estrella sin un
+ * sitio donde mirar lo que marcaste es un botón que no hace nada visible.
+ * MUESTRA UN ESTADO VACÍO Y NUNCA DESAPARECE: un bloque que se esfuma hace creer
+ * que la función no está, y el vacío es además el único lugar que dice cómo
+ * llenarlo. NO NAVEGA: emite lo elegido, como toda pieza de navegación.
  */
 @Component({
   selector: 'ewms-favorites-nav',
@@ -52,33 +38,24 @@ export const FAVORITES_SHOWN = 8;
   host: { class: 'block' },
 })
 export class FavoritesNav {
-  /** The heading over the block, already translated. */
+  /** El encabezado del bloque, ya traducido. */
   readonly label = input.required<string>();
 
-  /** What to say when there is nothing yet. Already translated. */
+  /** Qué decir cuando todavía no hay nada. Ya traducido. */
   readonly emptyLabel = input.required<string>();
 
-  /**
-   * Collapsed rail or expanded panel, passed down by whoever composes the
-   * rail. The block draws icons only in the narrow one, with tooltips, for the
-   * same reason the tree does.
-   */
+  /** Rail plegado o panel abierto, que pasa quien compone el rail. El bloque
+   * dibuja solo iconos en el angosto, con tooltips, como el árbol. */
   readonly expanded = input<boolean>(true);
 
-  /** Which route is the page you are on, so the block can mark it. */
+  /** Qué ruta es la página actual, para que el bloque la marque. */
   readonly activeRoute = input<string | null>(null);
 
   /**
-   * WHICH GROUND THE BLOCK IS SITTING ON, and why it is asked rather than
-   * assumed.
-   *
-   * The block was written for the App Shell's navy rail, where the text is
-   * `--color-text-on-dark` and hover is a darker blue. The showroom mounts the
-   * same block on a WHITE sidebar, where both of those are invisible or wrong.
-   * Inheriting the colour from the container would fix the text and not the
-   * hover, which has no ground-independent token.
-   *
-   * Two values, named after what they are, exactly like `ewms-demo-frame`'s.
+   * SOBRE QUÉ FONDO SE APOYA EL BLOQUE, y se pregunta en vez de suponerse: se
+   * escribió para el rail navy del shell, y el showroom lo monta sobre una barra
+   * BLANCA, donde ese texto y ese hover son invisibles o están mal. Heredar el
+   * color arreglaría el texto y no el hover, que no tiene token independiente.
    */
   readonly ground = input<'navy' | 'surface'>('navy');
 
@@ -94,13 +71,10 @@ export class FavoritesNav {
   private readonly labels = inject(EWMS_FAVORITE_LABELS);
 
   /**
-   * THE NAME IS RESOLVED HERE, AT THE MOMENT OF DRAWING, and that is the whole
-   * of REQ-FE-DS4-002 v1.3. `labelFor(route)()` is read inside the computed,
-   * so a language switch repaints the block without anybody telling it to.
-   *
-   * A ROUTE THAT NO LONGER RESOLVES SHOWS ITSELF. A screen that was removed
-   * leaves a favourite behind; an empty row would be a button nobody can
-   * identify, and an error would punish the user for our rename.
+   * EL NOMBRE SE RESUELVE ACÁ, AL DIBUJAR, y eso es todo REQ-FE-DS4-002 v1.3:
+   * `labelFor(route)()` se lee dentro del computed, así un cambio de idioma
+   * repinta el bloque solo. UNA RUTA QUE YA NO RESUELVE SE MUESTRA TAL CUAL: una
+   * fila vacía sería un botón que nadie puede identificar.
    */
   protected readonly shown = computed<readonly FavoriteRow[]>(() =>
     this.favorites

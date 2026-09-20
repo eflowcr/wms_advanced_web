@@ -1,11 +1,8 @@
 <!--
-  An `<input>`, not a button with a panel. That is the whole difference from
-  `ewms-select` and it is RFE-01: the field is editable from the first moment,
-  and nobody has to open anything before they can type.
-
-  It IS a labelable element, so the label is joined with for/id rather than
-  with aria-labelledby -- the opposite of the Select, where the trigger is a
-  <button> and could not be labelled that way.
+  Un `<input>` y no un botón con panel: esa es toda la diferencia con `ewms-select`
+  y es RFE-01, el campo se tipea desde el primer momento. Y SÍ es un elemento
+  etiquetable, así que la etiqueta se ata con for/id -al revés que el Select, cuyo
+  gatillo es un `<button>`-.
 -->
 <label [id]="labelId" [attr.for]="fieldId" class="block text-caption text-secondary mb-1">
   {{ label() }}
@@ -39,15 +36,12 @@
 </div>
 
 <!--
-  THE LIVE REGION (RFE-08). The focus never leaves the field, so nothing about
-  the list reaches a screen reader on its own: this is how it learns that a
-  search started, finished, found nothing, or failed.
-
-  `polite` because it speaks on every keystroke's worth of results, and
-  `assertive` there would talk over the person typing. It is always in the
-  document -- empty when there is nothing to say -- for the same reason the
-  toast outlet's region is: a region that appears together with its first
-  message is announced inconsistently.
+  LA REGIÓN VIVA (RFE-08). El foco nunca sale del campo, así que nada de la lista
+  llega solo a un lector de pantalla: así se entera de que una búsqueda empezó,
+  terminó, no encontró nada o falló.
+  `polite` porque habla con cada tanda de resultados y `assertive` pisaría a quien
+  tipea. Siempre está en el documento, vacía cuando no hay nada que decir: una
+  región que aparece con su primer mensaje se anuncia de forma inconsistente.
 -->
 <p [id]="statusId" class="sr-only" role="status" aria-live="polite">{{ announcement() }}</p>
 
@@ -56,19 +50,13 @@
 }
 
 <!--
-  THE ERROR IS RENDERED HERE, IN THE FLOW, AND NOT IN THE PANEL.
-
-  PACQ-03.2 asks for a retry reachable with Tab and activated with Enter. The
-  panel lives in a CDK overlay appended to the end of <body>, so a Tab from the
-  field would walk past it into the rest of the page -- a retry in there is
-  reachable in theory and unreachable in practice. In the flow, one Tab from
-  the field lands on it.
-
-  It also keeps the two states apart in the strongest possible way: "no
-  results" is a statement about the list and lives where the list is; an error
-  is a condition of the field, needs an action, and lives with the field. The
-  REQ is emphatic that confusing the two makes an outage look like an empty
-  warehouse.
+  EL ERROR SE PINTA ACÁ, EN EL FLUJO, Y NO EN EL PANEL.
+  PACQ-03.2 pide un reintento alcanzable con Tab: el panel vive en un overlay del
+  CDK al final de `<body>`, así que un Tab desde el campo pasaría de largo hacia el
+  resto de la página -un reintento ahí es alcanzable en teoría e inalcanzable en la
+  práctica-. En el flujo, un Tab desde el campo aterriza en él.
+  Y separa los dos estados: «sin resultados» habla de la lista y vive donde la
+  lista; un error es una condición del campo y vive con el campo.
 -->
 @if (status() === 'error') {
   <div
@@ -89,16 +77,13 @@
 }
 
 <!--
-  The panel. Nothing inside it is focusable and nothing carries a key handler:
-  the focus stays on the field and `aria-activedescendant` points at the active
-  row, which is the ARIA Authoring Practices combobox pattern and the same one
-  `ewms-select` uses.
-
-  That is why two accessibility rules are switched off on the rows below, and
-  the reasoning is the Select's, unchanged: both rules assume a widget where
-  every interactive element handles its own keyboard and takes its own focus.
-  Satisfying them literally would put every result into the tab order, which is
-  the thing aria-activedescendant exists to avoid.
+  El panel. Nada adentro es enfocable ni lleva manejador de teclas: el foco se queda
+  en el campo y `aria-activedescendant` apunta a la fila activa, que es el patrón
+  combobox de las APG y el mismo del Select.
+  Por eso hay dos reglas de accesibilidad apagadas en las filas de abajo: las dos
+  suponen un widget donde cada elemento interactivo maneja su teclado y toma su
+  foco, y cumplirlas al pie pondría cada resultado en el orden de tabulación, que
+  es justo lo que aria-activedescendant evita.
 -->
 <ng-template #panel>
   <ul [id]="listboxId" role="listbox" [class]="panelClasses" [attr.aria-labelledby]="labelId">
@@ -127,10 +112,9 @@
 
     @if (status() === 'empty') {
       <!--
-        RFE-03: the message repeats the text that was searched. Without it the
-        panel says "nothing" and the person has to look back at the field to
-        find out what "nothing" was about.
-      -->
+  RFE-03: el mensaje repite el texto buscado. Sin él el panel dice «nada» y hay que
+  volver a mirar el campo para saber de qué era ese «nada».
+-->
       <li [class]="noteClasses" aria-hidden="true">{{ words().noResults(searchedText()) }}</li>
     }
 

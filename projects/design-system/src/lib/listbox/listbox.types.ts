@@ -1,30 +1,17 @@
 /**
- * What every floating list in this library shares: how it looks, and how the
- * arrow keys move inside it.
- *
- * EXTRACTED IN DS-3, AND THAT IS A HARD GATE RATHER THAN TIDINESS.
- * REQ-FE-DS3-001 HG-04 forbids a second overlay or a second keyboard
- * implementation alongside `ewms-select`. The overlay was already shared
- * (overlay/connected-overlay.ts); this is the other half -- the panel, the
- * rows, and the movement -- so that `ewms-select` and `ewms-search-select`
- * cannot drift on what an active row looks like or on whether the list wraps.
- *
- * `select.types.ts` re-exports these under the names it already used, so the
- * Select's own code and spec did not have to be rewritten to prove the point.
+ * Lo que comparte toda lista flotante: cómo se ve y cómo la mueven las flechas.
+ * Extraído en DS-3 por HG-04 de REQ-FE-DS3-001, que prohíbe un segundo overlay o
+ * un segundo teclado junto a `ewms-select`: así el Select y el Search Select no
+ * pueden derivar en qué es una fila activa ni en si la lista da la vuelta.
  */
 
 /**
- * The floating panel.
- *
- * `--shadow-md` is the dropdown level of the elevation scale (`sm` is a card
- * at rest, `lg` is a modal), and the surface is the same white the field sits
- * on. `max-h-72` with `overflow-y-auto` is what stops a long list from running
- * off the bottom of the window -- NOT a limit on how many rows may be passed.
- *
- * `w-full` is load-bearing. The components size the overlay PANE to the
- * trigger's width, but the CDK's prebuilt stylesheet makes `.cdk-overlay-pane`
- * a flex container, and a flex item is content-sized on the main axis. Without
- * this the list comes out narrower than the field it belongs to.
+ * El panel flotante. `--shadow-md` es el nivel de desplegable de la escala de
+ * elevación, y `max-h-72` con scroll evita que una lista larga se salga por
+ * abajo: NO es un tope de cuántas filas se pueden pasar.
+ * `w-full` carga peso: la hoja del CDK hace de `.cdk-overlay-pane` un contenedor
+ * flex, y un item flex se dimensiona por su contenido, así que sin esto la lista
+ * sale más angosta que el campo.
  */
 export const LISTBOX_PANEL_CLASSES =
   'w-full bg-surface rounded-control shadow-md py-1 max-h-72 overflow-y-auto list-none p-0';
@@ -33,12 +20,10 @@ export const LISTBOX_OPTION_BASE_CLASSES =
   'flex items-center justify-between gap-2 px-3 py-1.5 cursor-pointer';
 
 /**
- * The two things a row can be, and they are independent.
- *
- * SELECTED is "this is the current value": the action blue, semibold, and a
- * check on the right. ACTIVE is "this is where the keyboard is": the same
- * ghost-hover background the mouse produces, so a list driven by the arrow
- * keys looks exactly like a list under the pointer. One row is usually both.
+ * Las dos cosas que puede ser una fila, y son independientes. SELECCIONADA es
+ * «este es el valor actual»; ACTIVA es «acá está el teclado», con el mismo fondo
+ * que produce el ratón, para que una lista movida con flechas se vea igual que
+ * una bajo el puntero. Una fila suele ser las dos.
  */
 export function listboxOptionClasses(selected: boolean, active: boolean): string {
   const classes = [LISTBOX_OPTION_BASE_CLASSES];
@@ -51,26 +36,15 @@ export function listboxOptionClasses(selected: boolean, active: boolean): string
   return classes.join(' ');
 }
 
-/**
- * The weight of the selected row, read as a token because the type scale's
- * weights are not Tailwind utilities here: ADR 0009 deletes Tailwind's theme,
- * so a font-weight utility compiles to nothing at all.
- */
+/** El peso de la fila elegida, leído como token: ADR 0009 borra el tema de
+ * Tailwind, así que una utilidad de font-weight compila a nada. */
 export const LISTBOX_SELECTED_WEIGHT = 'var(--text-control-selected-weight)';
 
 /**
- * Where the keyboard goes next.
- *
- * IT STOPS AT THE ENDS RATHER THAN WRAPPING, and that is the opposite of the
- * card group's answer on purpose. A panel is a list somebody is reading
- * through, and reaching the end of it is information; wrapping turns "hold the
- * down arrow" into an endless loop with no signal that the list finished. A
- * radio group, by contrast, is a closed set of four things, where stopping at
- * the last one only makes a person press the other arrow.
- *
- * `from < 0` means "nowhere yet", which is what a panel opened with no current
- * value starts at: the first press then lands on an end rather than on the
- * second row.
+ * Adónde va el teclado. FRENA EN LOS EXTREMOS EN VEZ DE DAR LA VUELTA, al revés
+ * que el grupo de cards y a propósito: un panel es una lista que se está leyendo
+ * y llegar al final es información, mientras que un grupo de radios es un
+ * conjunto cerrado de cuatro cosas. `from < 0` es «todavía en ningún lado».
  */
 export function moveActiveIndex(from: number, delta: number, count: number): number {
   if (count === 0) {

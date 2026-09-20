@@ -8,28 +8,18 @@ import {
 } from '../feedback/feedback.types';
 import { Icon } from '../icon/icon';
 import { ToastService } from './toast.service';
-import {
-  TOAST_BODY_CLASSES,
-  TOAST_CLASSES,
-  TOAST_OUTLET_CLASSES,
-  type Toast,
-} from './toast.types';
+import { TOAST_BODY_CLASSES, TOAST_CLASSES, TOAST_OUTLET_CLASSES, type Toast } from './toast.types';
 
 export type { Toast } from './toast.types';
 
 /**
- * Where the queue is drawn. MOUNTED ONCE, in the root layout, and nowhere else.
- *
- * A second outlet would render the same queue twice and give the screen reader
- * two live regions announcing every message -- which is the failure mode the
- * single-region rule exists to prevent. There is no guard in the code for it:
- * the outlet is cheap and the rule is enforced by where it is written, in the
- * shell's layout and the showroom's, one line each.
- *
- * The severity words arrive as an input rather than being built here, for the
- * usual reason: the design system speaks no language (ADR 0008). They are
- * translated once, at the one place the outlet is mounted, instead of at every
- * `show()` call.
+ * Donde se pinta la cola. SE MONTA UNA VEZ, en el layout raíz, y en ningún otro
+ * lado: un segundo outlet pintaría la misma cola dos veces y le daría al lector de
+ * pantalla dos regiones vivas anunciando cada mensaje. No hay guarda en el código
+ * -el outlet es barato y la regla la impone dónde se escribe, una línea en el
+ * layout del shell y otra en el del showroom-.
+ * Las palabras de severidad llegan como entrada: la librería no habla ningún
+ * idioma (ADR 0008), y así se traducen una vez y no en cada `show()`.
  */
 @Component({
   selector: 'ewms-toast-outlet',
@@ -39,16 +29,12 @@ export type { Toast } from './toast.types';
   host: { class: 'contents' },
 })
 export class ToastOutlet {
-  /**
-   * The four severities in words, for the icons' accessible names. The colour
-   * is never the only signal (WCAG 1.4.1), and this is the other one.
-   */
+  /** Las cuatro severidades en palabras, para el nombre accesible de los iconos. El
+   * color nunca es la única señal (WCAG 1.4.1), y esta es la otra. */
   readonly severityLabels = input.required<Readonly<Record<FeedbackVariant, string>>>();
 
-  /**
-   * Names the live region, so a screen reader announces WHERE the message came
-   * from and not only what it says.
-   */
+  /** Nombra la región viva, para que un lector anuncie DE DÓNDE vino el mensaje y
+   * no solo qué dice. */
   readonly regionLabel = input.required<string>();
 
   private readonly toastService = inject(ToastService);
@@ -76,16 +62,12 @@ export class ToastOutlet {
   }
 
   /**
-   * `Escape` closes the most recent message.
-   *
-   * ON THE DOCUMENT, because a toast is never focused: it is not a tab stop
-   * and it must not steal the focus from what the operator is doing, so there
-   * is no element for the key to arrive at. The listener is the only way the
-   * key can reach the queue at all.
-   *
-   * An event somebody already handled is left alone. The CDK's dialog and the
-   * Select both answer `Escape` and mark it handled; without this check,
-   * closing a dialog would also silently eat the message behind it.
+   * `Escape` cierra el mensaje más reciente. EN EL DOCUMENTO, porque un toast nunca
+   * tiene el foco -no es parada de tabulación y no puede robárselo a lo que el
+   * operario está haciendo-, así que no hay elemento al que la tecla pueda llegar.
+   * Un evento que alguien ya atendió se deja en paz: el diálogo del CDK y el Select
+   * responden `Escape` y lo marcan, y sin esta comprobación cerrar un diálogo se
+   * comería además el mensaje de atrás.
    */
   @HostListener('document:keydown.escape', ['$event'])
   protected onEscape(event: Event): void {
