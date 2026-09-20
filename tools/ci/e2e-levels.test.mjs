@@ -88,3 +88,54 @@ test('the three levels exist in the Playwright configuration', async () => {
   // The number that forced the split: one worker is what it must never be again.
   assert.match(config, /workers: CI \? 4 : undefined/);
 });
+
+/**
+ * THE FOUR REQUIRED CHECKS, BY NAME.
+ *
+ * The branch rule on `development` requires checks by name, letter for
+ * letter, and GitHub takes the name from a job's `name:`. A required check
+ * nobody reports does not fail -- it waits forever, and the pull request is
+ * blocked with nothing red to look at (3dab2a3). This is the guard that a
+ * comment in the workflow cannot be.
+ */
+const REQUIRED_CHECKS = ['verify', 'smoke', 'showroom', 'secrets'];
+
+/** Every job's visible name: the `name:` lines at job level (four spaces). */
+async function jobNames() {
+  const workflow = await readFile(WORKFLOW, 'utf8');
+  return [...workflow.matchAll(/^ {4}name: (.+)$/gm)].map((match) => match[1].trim());
+}
+
+test('the four required checks exist, named exactly', async () => {
+  const names = await jobNames();
+
+  for (const check of REQUIRED_CHECKS) {
+    assert.equal(
+      names.filter((name) => name === check).length,
+      1,
+      `ci.yml debe tener exactamente un job llamado «${check}»; hay: ${names.join(' | ')}`,
+    );
+  }
+});
+
+test('the check called `showroom` always reports, so it can be required', async () => {
+  const workflow = await readFile(WORKFLOW, 'utf8');
+  const job = workflow.match(/^ {2}showroom:\n(?:(?: {4}.*)?\n)+/m);
+
+  assert.ok(job, 'ci.yml no declara el job `showroom`');
+  assert.match(job[0], /^ {4}name: showroom$/m);
+  // A job with a conditional `if:` is SKIPPED when it is false, and a skipped
+  // required check is not a passing one to GitHub.
+  assert.match(job[0], /^ {4}if: \$\{\{ always\(\) \}\}$/m);
+});
+
+test('no name in the workflow carries a rule number', async () => {
+  // The numbers live in the vault, where a rule can be cited. Here they made
+  // renumbering a rule the same thing as renaming a required check.
+  const workflow = await readFile(WORKFLOW, 'utf8');
+  const numbered = [...workflow.matchAll(/^\s*(?:- )?name: .*\bGate\b.*$/gim)].map((m) =>
+    m[0].trim(),
+  );
+
+  assert.deepEqual(numbered, []);
+});
