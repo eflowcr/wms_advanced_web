@@ -1,11 +1,6 @@
 import axe from 'axe-core';
 
-/**
- * Run axe-core against a rendered component and fail with a readable report.
- *
- * Gate 5 of the CI contract. Wired in DS-0 with no design-system components
- * to exercise yet; every component spec from DS-2 onward calls this.
- */
+/** Corre axe-core sobre el componente renderizado y falla con un reporte legible. */
 export async function expectNoAxeViolations(root: Element): Promise<void> {
   const results = await axe.run(root, {
     resultTypes: ['violations'],
