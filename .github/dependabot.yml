@@ -1,9 +1,7 @@
 version: 2
 
-# Without this, nobody hears about a new CVE until someone happens to run CI.
-# Weekly cadence, with minor and patch bumps batched into a single PR so review
-# stays cheap. Majors are deliberately left out of the groups: Dependabot then
-# opens one PR per major, which is what a breaking change deserves.
+# Aviso semanal de CVE. Minor y patch van juntos en un PR; cada major va en su
+# propio PR porque puede romper.
 
 updates:
   - package-ecosystem: npm
@@ -33,7 +31,7 @@ updates:
       - dependency-name: '@vitest/coverage-v8'
         update-types: ['version-update:semver-major']
 
-  # Actions are pinned too, and they ship CVEs like anything else.
+  # Las actions tambien van fijadas y tambien reciben CVE.
   - package-ecosystem: github-actions
     directory: /
     target-branch: development

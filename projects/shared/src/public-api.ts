@@ -1,9 +1,2 @@
-/*
- * Public API surface of @ewms/shared
- *
- * This is the ONLY legal entry point into this library. Nothing outside it may
- * reach into src/lib/** directly -- see the boundary rules in eslint.config.js.
- *
- * Intentionally empty in DS-0. Content arrives in later phases.
- */
+// Unica entrada a la libreria (ver limites en eslint.config.js). Vacia hasta tener contenido.
 export {};
