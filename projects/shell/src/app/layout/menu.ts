@@ -1,61 +1,23 @@
 import type { IconName } from '@ewms/design-system';
 
-/**
- * One entry of the application's menu, BEFORE it is translated.
- *
- * `labelKey` and not `label`: this file is a structure, and the words for it
- * live in the dictionaries. The shell turns this into `NavItem[]` at render
- * time, which is why changing language redraws the menu without a reload.
- */
+/** Entrada del menú sin traducir: `labelKey` y no `label`, las palabras son del diccionario. */
 export interface MenuEntry {
   readonly id: string;
   readonly labelKey: string;
   readonly icon: IconName;
-  /** Absent on a group. */
+  /** Ausente en un grupo. */
   readonly route?: string;
   readonly children?: readonly MenuEntry[];
 }
 
 /**
- * THE MENU OF THE APPLICATION, STATIC, IN ONE FILE.
- *
- * Static because there is nothing to ask. The menu a user sees will one day
- * depend on their permissions, and permissions come from the Security Core
- * (PLN-WMS-005, Sprint 1) which does not exist. Building a menu service that
- * fetches from nowhere would be inventing a contract; building the tree the
- * design actually specifies is not.
- *
- * It lives in the SHELL and not in the design system, which is the line
- * `Navegacion.md` draws: the pieces do not know the real menu, the permissions
- * or the router, and this is all three.
- *
- * ONLY TWO ENTRIES HAVE A REAL SCREEN TODAY -- Dashboard and the design
- * system. THE OTHER THIRTEEN GO TO «En construcción», WHICH IS A PAGE WITH A
- * TITLE AND AN `h1`, NEVER A 404. A menu entry that 404s tells the operator the
- * application is broken; one that says "this is not built yet" tells them the
- * truth, and it keeps the shape of the navigation honest while the domains
- * arrive in DS-6.
+ * Menú estático: el real dependerá de permisos del Security Core (PLN-WMS-005), que no existe.
+ * Solo Dashboard y el design system tienen pantalla; las otras trece van a «En construcción»,
+ * nunca a un 404. Ver vault: 08-Sistema-de-Diseno/Componentes/App-Shell.
  */
-/*
- * THE KEYS, SPELLED OUT FOR THE EXTRACTOR.
- *
- * `transloco-keys-manager` finds keys written as literals in a template or in
- * a `translate('...')` call. The menu's labels reach `translate` through
- * `entry.labelKey`, which is DATA, so the extractor sees nothing and gate 12
- * reports seventeen dictionary entries "used nowhere" -- a correct complaint
- * about a genuinely dead key, and a false one here.
- *
- * The marker below is the convention i18n.md gives for exactly this case. It
- * has to be a doc comment holding ONE marker call on ONE line, which is why it
- * is long rather than wrapped: the extractor splits on commas, so a `*` from a
- * continuation line would become part of a key. Writing an example of the
- * marker in prose would also register whatever is inside it as a key -- which
- * is how this comment first broke the gate it exists to explain.
- *
- * It is not a second list to maintain. Every key in it also appears in `MENU`
- * immediately underneath, and one that fell out of either side fails the gate
- * from the other.
- */
+// El marcador de abajo declara las claves al extractor, que no ve `entry.labelKey`. Va en una
+// sola línea (parte por comas: un `*` de continuación entraría en la clave), y citarlo en prosa
+// también registra claves. Si una clave falta de un lado, la compuerta 12 falla.
 /** t(shell.menu.dashboard, shell.menu.catalogs, shell.menu.articles, shell.menu.clients, shell.menu.suppliers, shell.menu.locations, shell.menu.warehouses, shell.menu.units, shell.menu.lots, shell.menu.serials, shell.menu.carriers, shell.menu.rates, shell.menu.settings, shell.menu.users, shell.menu.profiles, shell.menu.params, shell.menu.designSystem) */
 export const MENU: readonly MenuEntry[] = [
   { id: 'dashboard', labelKey: 'shell.menu.dashboard', icon: 'dashboard', route: '/' },
@@ -139,12 +101,12 @@ export const MENU: readonly MenuEntry[] = [
   },
 ];
 
-/** Every destination in the tree, flattened. Used to resolve the active item. */
+/** Todos los destinos del árbol, aplanados. */
 export const MENU_DESTINATIONS: readonly MenuEntry[] = MENU.flatMap((entry) =>
   entry.children === undefined ? [entry] : entry.children,
 ).filter((entry) => entry.route !== undefined);
 
-/** `/articulos` matches `/articulos` and `/articulos/7`, never `/articulos-x`. */
+/** `/articulos` coincide con `/articulos` y `/articulos/7`, nunca con `/articulos-x`. */
 export function routeMatches(url: string, route: string | undefined): boolean {
   if (route === undefined) {
     return false;
@@ -156,12 +118,8 @@ export function routeMatches(url: string, route: string | undefined): boolean {
 }
 
 /**
- * Which destination a URL belongs to: the LONGEST route that matches it.
- *
- * Here and not in `MainLayout` since the favourites' label resolver asks the
- * same question about routes that are not the one showing, and two copies of
- * "which menu entry is this" is how a tab and a favourite end up with
- * different names for the same screen.
+ * La ruta más larga que coincide. Acá y no en `MainLayout` porque favoritos pregunta lo
+ * mismo: dos copias darían nombres distintos a la pestaña y al favorito de una pantalla.
  */
 export function menuEntryFor(url: string): MenuEntry | undefined {
   return MENU_DESTINATIONS.filter((entry) => routeMatches(url, entry.route)).sort(
@@ -169,10 +127,5 @@ export function menuEntryFor(url: string): MenuEntry | undefined {
   )[0];
 }
 
-/**
- * The entries that have no screen yet.
- *
- * Derived rather than listed, so a route built in DS-6 stops being "under
- * construction" by being given a component and nothing else.
- */
+/** Rutas con pantalla; el resto del menú se deriva a «En construcción» en app.routes.ts. */
 export const BUILT_ROUTES: readonly string[] = ['/', '/design-system'];

@@ -1,9 +1,6 @@
 import { DICTIONARIES } from './i18n.testing';
 
-/**
- * The same check as gate 12, step 2 (tools/ci/check-i18n.mjs), so a
- * dictionary that falls behind fails here before it reaches CI.
- */
+/** Paso 2 de la compuerta 12 (check-i18n.mjs): un diccionario atrasado falla antes de CI. */
 function keys(node: unknown, prefix = ''): string[] {
   if (node === null || typeof node !== 'object') {
     return [prefix];

@@ -11,10 +11,8 @@ bootstrapApplication(App, appConfig).catch((err: unknown) => {
 });
 
 /**
- * Case B of i18n.md, "Cuando el diccionario no carga": no dictionary loaded,
- * so nothing Angular renders could say anything. The notice is static HTML in
- * index.html, written in both languages; this only reveals it and wires the
- * retry button (an inline onclick would be blocked by the CSP).
+ * Caso B de i18n.md: sin diccionario, Angular no tiene con qué hablar. Revela el aviso
+ * estático de index.html y engancha el reintento acá porque la CSP bloquea un onclick en línea.
  */
 function showStartupFailure(): void {
   const notice = document.getElementById('startup-failure');

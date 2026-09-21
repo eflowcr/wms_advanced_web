@@ -2,13 +2,8 @@ import { TestBed } from '@angular/core/testing';
 import { MAX_OPEN_TABS, TabsService } from './tabs.service';
 
 /**
- * The open documents, as arithmetic.
- *
- * Everything interesting about an MDI strip is a question about a list --
- * which tab is next when you close this one, what happens at the limit -- and
- * none of it needs a router or a browser to answer. The parts that DO need a
- * browser (the focus after a close, the toast at the limit) are asserted in
- * `e2e/smoke.e2e.ts`.
+ * La tira como aritmética de listas, sin router ni navegador. El foco tras cerrar y el toast
+ * del límite se afirman en `e2e/smoke.e2e.ts`.
  */
 describe('TabsService', () => {
   let tabs: TabsService;
@@ -66,8 +61,7 @@ describe('TabsService', () => {
     });
 
     it('REFUSES the next one rather than dropping the oldest', () => {
-      // Closing somebody's work without being asked is worse than telling them
-      // the strip is full. The caller raises the warning; this returns false.
+      // Cerrar trabajo ajeno sin preguntar es peor que avisar que está llena; avisa quien llama.
       expect(tabs.activate('/one-more', 'Una más')).toBe(false);
 
       expect(tabs.tabs()).toHaveLength(MAX_OPEN_TABS);
@@ -75,8 +69,7 @@ describe('TabsService', () => {
     });
 
     it('but still ACTIVATES the route, so the screen is shown', () => {
-      // The strip could not take it; the navigation still happened, and a
-      // screen showing with no tab is better than a screen that does not show.
+      // La navegación igual ocurre: mejor una pantalla sin pestaña que ninguna pantalla.
       tabs.activate('/one-more', 'Una más');
 
       expect(tabs.activeRoute()).toBe('/one-more');
@@ -98,8 +91,7 @@ describe('TabsService', () => {
     });
 
     it('closing the ACTIVE one goes to the NEIGHBOUR, not to the first', () => {
-      // Closing the third of five and landing on the first is a jump nobody
-      // asked for.
+      // Cerrar la tercera de cinco y caer en la primera es un salto que nadie pidió.
       tabs.activate('/b', 'B');
 
       expect(tabs.close('/b')).toBe('/c');

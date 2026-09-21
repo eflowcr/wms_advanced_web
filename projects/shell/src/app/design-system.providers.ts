@@ -23,20 +23,9 @@ import { menuEntryFor } from './layout/menu';
 import { SHORTCUT_MAP } from './shortcuts.map';
 
 /**
- * WHERE THE DESIGN SYSTEM'S TEXTS AND FORMATS ACTUALLY COME FROM.
- *
- * The library defines the interfaces and the tokens and implements neither: it
- * speaks no language and imports no i18n library (ADR 0008). This file is the
- * other half -- it is in the shell, it may import Transloco, and it fills the
- * tokens once for the whole application.
- *
- * That is the rule written in the Nomenclatura note, seen from the side that
- * does the work: a dictionary that repeats between instances is provided once;
- * a label that differs at every use stays an input.
- *
- * Dates and numbers go through `transloco-locale`, which is what the ICU
- * helper in `core/i18n` already tells everyone to use. The table never learns
- * what a locale is: it asks for the answer.
+ * Llena una vez los tokens de textos y formatos del design system, que no habla
+ * ningún idioma (ADR 0008). Diccionario repetido entre instancias: se provee acá;
+ * etiqueta distinta en cada uso: sigue siendo input. Fechas y números por `transloco-locale`.
  */
 export function provideEwmsDesignSystem(): Provider[] {
   return [
@@ -52,37 +41,15 @@ export function provideEwmsDesignSystem(): Provider[] {
       provide: EWMS_SEARCH_SELECT_MESSAGES,
       useFactory: searchSelectMessages,
     },
-    /*
-     * The map is a plain value and the words are a factory, which is the whole
-     * split DS-4 is built on: the KEYS are the same in every language and the
-     * WORDS are not. The showroom provides its own pair for the same two
-     * tokens, which is how a demo page can register `create` without importing
-     * anything of the shell's.
-     */
+    // El mapa es valor y las palabras son fábrica (DS-4): las teclas no cambian con
+    // el idioma. El showroom provee su propio par para registrar `create` sin el shell.
     {
       provide: EWMS_SHORTCUT_MAP,
       useValue: SHORTCUT_MAP,
     },
-    /*
-     * FAVOURITES, IN MEMORY (REQ-FE-DS4-002 v1.2, decisión del usuario
-     * 2026-09-19).
-     *
-     * THE LINE THAT CHANGES WHEN THE BACKEND EXISTS IS THIS ONE, and nothing
-     * else: `InMemoryFavoritesStore` becomes a class that speaks to the
-     * Security Core's preferences endpoint (the contract is written in §12 of
-     * the REQ), and the star, the navigation block and `Favorites` are not
-     * touched. That is what RFE-02 bought.
-     *
-     * Until then they live as long as the tab does. No browser storage, no
-     * ESLint exception -- which was the whole difficulty of the decision.
-     */
-    /*
-     * AND IT IS THE ONLY PLACE THE STORE IS PROVIDED. The showroom renders
-     * inside this application and reads THIS list by injection, the way it
-     * reads nothing else of the shell's: a dictionary may be provided twice,
-     * state may not. Two stores meant a catalogue page with two stars and two
-     * lists that disagreed.
-     */
+    // Favoritos en memoria, sin almacenamiento del navegador (REQ-FE-DS4-002 v1.2,
+    // decisión del usuario 2026-09-19). Con backend solo cambia esta línea (§12 del REQ).
+    // Único lugar que provee el store: dos stores daban dos estrellas en desacuerdo.
     {
       provide: EWMS_FAVORITES_STORE,
       useClass: InMemoryFavoritesStore,
@@ -100,20 +67,9 @@ export function provideEwmsDesignSystem(): Provider[] {
 }
 
 /**
- * WHAT A FAVOURITE IS CALLED, RESOLVED WHEN IT IS DRAWN (REQ-FE-DS4-002 v1.3).
- *
- * The store keeps a route and nothing else. The name comes from the menu --
- * the same `menuEntryFor` the tabs and the crumbs use, so a screen cannot have
- * one name in the strip and another in the block -- and through Transloco at
- * the moment of asking.
- *
- * SIGNALS, NOT GETTERS, unlike the dictionaries above. A getter is re-read
- * when something else makes the template run again; the favourites block is
- * `OnPush` and nothing else in it changes when the language does. Reading
- * `lang()` inside the computed is what makes the switch repaint it.
- *
- * A route the menu does not know resolves to the empty string, and the block
- * shows the route itself.
+ * Nombre del favorito al dibujarlo, por el mismo `menuEntryFor` de pestañas y migas
+ * (REQ-FE-DS4-002 v1.3). Signals y no getters: el bloque es OnPush y solo `lang()`
+ * lo repinta. Ruta desconocida: cadena vacía, y el bloque muestra la ruta.
  */
 function favoriteLabels(): FavoriteLabelResolver {
   const transloco = inject(TranslocoService);
@@ -130,17 +86,9 @@ function favoriteLabels(): FavoriteLabelResolver {
 }
 
 /**
- * KEYS WRITTEN OUT LITERALLY, never built by concatenation.
- *
- * A one-line helper that interpolated the last segment of the key would be
- * three lines shorter and invisible to transloco-keys-manager, which reads the
- * source rather than running it: gate 12 would then report every one of these
- * as a key nobody uses, and a real missing key would be lost in the noise.
- * Same rule the language switcher follows.
- *
- * Writing the interpolated form even inside THIS COMMENT was enough to make
- * the extractor report it as a missing key, which is a fair demonstration of
- * the point.
+ * Claves literales, nunca concatenadas: transloco-keys-manager lee la fuente y la
+ * compuerta 12 las daría por huérfanas. Ojo: escribir la forma interpolada incluso
+ * en un comentario la hace reportar como clave faltante.
  */
 function tableMessages(): TableMessages {
   const transloco = inject(TranslocoService);
@@ -200,12 +148,8 @@ function tableMessages(): TableMessages {
 }
 
 /**
- * Getters and not plain values, so a language switch is picked up.
- *
- * `translate()` reads the ACTIVE language at the moment it is called. Building
- * the object with flat strings would freeze every table's chrome in whatever
- * language was loaded when the application started -- and the switcher would
- * change the page around them while their own words stayed put.
+ * Getters: `translate()` lee el idioma activo al llamarse, y con cadenas planas la
+ * interfaz quedaría en el idioma del arranque.
  */
 function searchSelectMessages(): SearchSelectMessages {
   const transloco = inject(TranslocoService);
@@ -231,14 +175,8 @@ function searchSelectMessages(): SearchSelectMessages {
 }
 
 /**
- * The help dialog's words. The LIST of shortcuts is not here and must not be:
- * the dialog reads `SHORTCUT_MAP` for the keys, and what this provides is one
- * label per action. Adding a shortcut adds a line to the map and a label here;
- * the dialog changes by itself (RFE-07).
- *
- * Getters, for the same reason the table's are: `translate()` reads the active
- * language at the moment it is called, and a dialog built once with flat
- * strings would stay in whichever language loaded first.
+ * Solo las palabras del diálogo de ayuda; la lista sale de `SHORTCUT_MAP` (RFE-07).
+ * Un atajo nuevo suma una línea al mapa y una etiqueta acá. Getters, como arriba.
  */
 function shortcutHelpMessages(): ShortcutHelpMessages {
   const transloco = inject(TranslocoService);
@@ -267,13 +205,7 @@ function shortcutHelpMessages(): ShortcutHelpMessages {
     get singleKeyOff() {
       return transloco.translate('shell.shortcuts.singleKeyOff');
     },
-    /*
-     * One getter per action, keys written out, NOT built from the action name.
-     * Same rule as the table's chrome and the same reason: the extractor reads
-     * the source rather than running it, and a key assembled at runtime is a
-     * key gate 12 reports as unused while a real missing one hides in the
-     * noise.
-     */
+    // Un getter por acción con la clave literal, por la misma regla de la tabla.
     actions: {
       get search() {
         return transloco.translate('shell.shortcuts.actions.search');
@@ -298,18 +230,8 @@ function tableFormatters(): TableFormatters {
   const locale = inject(TranslocoLocaleService);
   return {
     /**
-     * An unparseable value comes back as itself rather than as "Invalid Date".
-     *
-     * A table shows whatever the source handed over, and a source is allowed
-     * to have a gap or a value in a shape nobody expected. Printing the raw
-     * text is information; printing "Invalid Date" is the table blaming the
-     * data in English.
-     *
-     * THE PARSE IS `parseTableDate` AND NOT `new Date(...)`, and that is a
-     * correctness fix rather than tidiness: `new Date('2026-03-15')` is UTC
-     * midnight, so localising it printed the 14th everywhere west of UTC. The
-     * showroom's implementation of this same token had the identical bug, which
-     * is why the parse now lives in one place.
+     * Lo que no parsea vuelve tal cual, nunca «Invalid Date». `parseTableDate` y no
+     * `new Date('2026-03-15')`, que es medianoche UTC e imprimía el 14 al oeste de UTC.
      */
     date: (value) => {
       if (value === null || value === undefined || value === '') {

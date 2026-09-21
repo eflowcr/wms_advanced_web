@@ -1,25 +1,9 @@
 <!--
-  THE APP SHELL.
-
-  THE ONE KEYBOARD LISTENER OF THE APPLICATION is still the attribute on this
-  div, and the toast outlet at the bottom is still the only one. Neither was
-  duplicated when the provisional header was replaced -- `lint:shortcuts`
-  checks the first, and there is exactly one `<ewms-toast-outlet>` in the
-  repository.
-
-  The attribute carries no inputs. What the engine dispatches comes from
-  `EWMS_SHORTCUT_MAP`, provided by this component alongside the rest of the
-  design system's tokens; a screen says what it does with an action and never
-  with which key.
+  El único host de teclado (lo verifica `lint:shortcuts`) y, al pie, el único toast
+  outlet. Las teclas salen de `EWMS_SHORTCUT_MAP`: una pantalla dice qué hace, no con qué tecla.
 -->
 <div class="flex min-h-screen flex-col bg-canvas" ewmsShortcutsHost>
-  <!--
-    FIRST IN THE DOM, AND THAT IS THE WHOLE POINT (WCAG 2.4.1).
-
-    With a menu of sixteen destinations, a keyboard user without a skip link
-    pays the entire navigation before reaching the content, on every screen.
-    Visible only when focused, which is what `sr-only focus:not-sr-only` does.
-  -->
+  <!-- Primero en el DOM (WCAG 2.4.1): con dieciséis destinos, sin él se paga el menú entero. -->
   <a
     class="sr-only rounded-sm bg-primary px-4 py-2 text-p text-on-primary focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-10"
     href="#main"
@@ -29,16 +13,11 @@
     {{ 'shell.skipToContent' | transloco }}
   </a>
 
-  <!-- ================================== header, --shell-header-height tall -->
   <header
     class="flex h-(--shell-header-height) shrink-0 items-center gap-2 border-b border-default bg-surface px-3"
     data-app-header
   >
-    <!--
-      THE HAMBURGER ONLY EXISTS WHERE THE RAIL DOES. Below the breakpoint the
-      navigation is the bottom bar, and a control that collapses a rail that is
-      not on screen is a control that does nothing.
-    -->
+    <!-- La hamburguesa solo existe donde hay rail: debajo del corte manda la barra inferior. -->
     @if (viewport.isWide()) {
       <ewms-icon-button
         icon="menu"
@@ -52,17 +31,8 @@
     }
 
     <!--
-      THE WORDMARK WHERE IT FITS, THE ISOTYPE WHERE IT DOES NOT.
-
-      At 375 px the wordmark measures 145 px of a 375 px row that also has to
-      carry the star, the language, the way out and the avatar: the header
-      scrolled sideways, which is the one thing chrome must never do. Truncating
-      it to «eWMS Advan…» would be a brand rendered wrong; the isotype is the
-      answer the brand sheet already has for exactly this, and it is already in
-      `public/brand/`.
-
-      `[alt]` is bound and not written: a brand name is not translated, so it is
-      not a dictionary key (brand.ts) -- and gate 12 rejects a literal there.
+      A 375 px el logotipo ocupa 145 px y el header se desbordaba de costado; se usa el
+      isotipo en vez de truncar la marca. `[alt]` enlazado: la marca no es clave (brand.ts).
     -->
     @if (viewport.isWide()) {
       <span class="shrink-0 text-h3 text-primary">{{ brandName }}</span>
@@ -71,28 +41,12 @@
     }
 
     <!--
-      THE DESTINATION OF `/`.
-
-      A plain `<input>` and not `ewms-search-select`: there is nothing to
-      search yet -- no backend, no domains -- and a search box wired to nothing
-      that LOOKS like the real one is worse than one that plainly is not. What
-      it has to be today is a real field that the shortcut can land in, which
-      is what closes half the "five tabs to the search" gap.
+      Destino de `/`. Un `<input>` y no `ewms-search-select`: todavía no hay nada que
+      buscar, y un buscador que parece real sin estar conectado es peor.
     -->
     <!--
-      THE SEARCH FIELD IS A WIDE-SCREEN CONTROL, and dropping it below the
-      breakpoint is a decision rather than a compromise on space.
-
-      At 375 px the header has to carry the brand, the star, the language, the
-      way out and the avatar. A field as well overflows the row, and a header
-      that scrolls sideways is the one piece of chrome that must never do it.
-      What is lost is a field with nothing behind it yet -- there is no backend
-      and no domain to search -- and what `/` buys, which is a keyboard
-      affordance on a device that has no keyboard.
-
-      The day there IS something to search, the narrow layout gets a search
-      that opens over the page rather than sitting in the row. That is a screen
-      to design, not a width to squeeze.
+      Solo en pantalla ancha: a 375 px el campo desbordaba el header. Cuando haya qué
+      buscar, la vista angosta abre una búsqueda sobre la página. Ver vault: App-Shell.
     -->
     @if (viewport.isWide()) {
       <div class="min-w-0 flex-1">
@@ -110,7 +64,6 @@
       <span class="flex-1"></span>
     }
 
-    <!-- The star of whatever page is showing. One tag, every screen. -->
     <ewms-favorite-toggle
       [route]="pageRoute()"
       [addLabel]="'shell.favorites.add' | transloco"
@@ -129,12 +82,7 @@
       [tooltip]="'shell.session.signOut' | transloco"
     />
 
-    <!--
-      The avatar. `aria-hidden` on the circle and the name beside it in the
-      accessible name of nothing: it is decoration over data that is already
-      written in the rail's foot. A second announcement of the same user is
-      noise.
-    -->
+    <!-- Decorativo: el usuario ya está escrito al pie del rail; anunciarlo dos veces es ruido. -->
     <span
       class="flex size-10 shrink-0 items-center justify-center rounded-full bg-secondary text-h4 text-primary"
       data-shell-avatar
@@ -145,7 +93,6 @@
     </span>
   </header>
 
-  <!-- =========================================== rail + content + tabs -->
   <div class="flex min-h-0 flex-1">
     @if (viewport.isWide()) {
       <ewms-nav-rail
@@ -158,10 +105,7 @@
         (itemSelect)="onNavItemSelect($event)"
         (expandedChange)="onRailExpandedChange($event)"
       >
-        <!--
-          THE FIXED PLACE IN THE NAVIGATION (REQ-FE-DS4-002 RFE-04). The rail
-          does not know what is in this slot; the shell does.
-        -->
+        <!-- Lugar fijo de favoritos en la navegación (REQ-FE-DS4-002 RFE-04). -->
         <ewms-favorites-nav
           navRailTop
           ground="navy"
@@ -172,11 +116,7 @@
           (favoriteSelect)="onFavoriteSelect($event)"
         />
 
-        <!--
-          CREDENTIALS ARE DATA, NOT TEXT. «ePrac / 0001 - CEDI_ePRAC» comes from
-          `SessionContext`, which is the seat of the Security Core: when it
-          exists, this block fills from it and nothing here changes.
-        -->
+        <!-- Credenciales como dato de `SessionContext`, asiento del Security Core. -->
         <div navRailFooter class="flex flex-col gap-2 px-4 py-3">
           @if (railExpanded()) {
             <p class="text-caption" data-shell-credentials>
@@ -199,15 +139,8 @@
 
     <div class="flex min-w-0 flex-1 flex-col gap-3 p-4" [class.pb-20]="!viewport.isWide()">
       <!--
-        The open documents. The strip is empty until something is open.
-
-        WRAPPED IN A NAMED `<nav>`, and axe is the one who asked: the strip sat
-        outside every landmark, so a screen-reader user jumping by landmark
-        went from the header straight past it into the content. It IS
-        navigation -- it is how you move between the documents you have open --
-        so the landmark is the honest fix rather than a wrapper to silence a
-        rule. The `<nav>` names the REGION and the `tablist` inside names the
-        WIDGET; they say the same words because they are about the same thing.
+        El `<nav>` con nombre lo pidió axe: la tira quedaba fuera de todo landmark y quien
+        salta por landmarks se la saltaba. `<nav>` nombra la región; el `tablist`, el widget.
       -->
       @if (tabs().length > 0) {
         <nav [attr.aria-label]="'shell.tabs.label' | transloco">
@@ -234,18 +167,9 @@
       }
 
       <!--
-        `tabindex="-1"` so the skip link and the route change can put the focus
-        HERE when a page has no `h1`. Without it the focus goes nowhere and the
-        skip link moves the scroll and nothing else.
-
-        THE HEADING'S FOCUS RING IS THE SYSTEM'S, and it is styled from here
-        rather than on twenty-five headings. The focus lands on an `h1` after
-        EVERY navigation, so the browser's own outline -- whatever colour the
-        operating system happens to make it -- would be the most frequently
-        seen focus indicator in the application and the only one not from
-        tokens. `:focus` and not `:focus-visible`, deliberately: this focus is
-        always programmatic, and `:focus-visible` would hide the very case the
-        rule exists for.
+        `tabindex="-1"` para recibir el foco cuando la página no tiene `h1`. El anillo de
+        foco del `h1` se pone acá con `:focus` y no `:focus-visible`, porque ese foco siempre
+        es programático. Ver vault: App-Shell.
       -->
       <main
         #main
@@ -260,9 +184,8 @@
 
   @if (!viewport.isWide()) {
     <!--
-      THE BOTTOM BAR (decisión del usuario, 2026-09-19). Its cost is written in
-      the component and in the sheet: the twelve second-level destinations are
-      two taps away instead of one.
+      Barra inferior (decisión del usuario, 2026-09-19): los doce destinos de segundo
+      nivel quedan a dos toques.
     -->
     <ewms-nav-bottom
       [items]="navItems()"
@@ -283,24 +206,12 @@
     </ewms-nav-bottom>
   }
 
-  <!--
-    THE ROUTE CHANGE, SAID OUT LOUD.
-
-    A browser announces a page change because the document was replaced. A
-    single-page application replaces nothing, so without this a screen-reader
-    user presses a menu item and hears silence. The focus moving to the `h1` is
-    the other half; this is what covers the moment before it lands.
-  -->
+  <!-- Anuncia el cambio de ruta: una SPA no reemplaza el documento y el lector calla. -->
   <p class="sr-only" role="status" data-route-announce>{{ routeAnnouncement() }}</p>
 
   <!--
-    THE ONE TOAST OUTLET OF THE APPLICATION. There is no second one anywhere,
-    and that is the whole contract: one queue, one aria-live region, so a
-    screen reader is not interrupted afresh by every message.
-
-    The severity words are built here, at the single mounting point, because
-    the design system speaks no language (ADR 0008) and this is the only place
-    they would have to be translated.
+    El único toast outlet: una cola y una región aria-live, para no anunciar dos veces.
+    Las severidades se traducen acá porque el design system no habla idiomas (ADR 0008).
   -->
   <ewms-toast-outlet
     [severityLabels]="{

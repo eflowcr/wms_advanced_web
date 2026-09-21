@@ -9,13 +9,10 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
     provideRouter(routes),
-    // The i18n loader reads the dictionaries through HttpClient.
+    // El loader de i18n lee los diccionarios con HttpClient.
     provideHttpClient(withFetch()),
     provideEwmsI18n(),
-    /*
-     * Every route gets a translated document title (WCAG 2.4.2). Angular's own
-     * `title` takes a string, which would freeze the tab in one language.
-     */
+    // Título traducido por ruta (WCAG 2.4.2); el `title` de Angular lo congelaría en un idioma.
     { provide: TitleStrategy, useClass: EwmsTitleStrategy },
   ],
 };
