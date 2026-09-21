@@ -16,8 +16,13 @@ import type { ButtonIconPosition, ButtonSize, ButtonVariant } from './button.typ
         [size]="size()"
         [icon]="icon()"
         [iconPosition]="iconPosition()"
+        [iconOnly]="iconOnly()"
+        [label]="label()"
         [disabled]="disabled()"
         [loading]="loading()"
+        [pressed]="pressed()"
+        [expanded]="expanded()"
+        [controls]="controls()"
         (click)="onButtonClick($event)"
       >
         Save Changes
@@ -31,8 +36,13 @@ class TestHost {
   readonly size = signal<ButtonSize>('md');
   readonly icon = signal<IconName | null>(null);
   readonly iconPosition = signal<ButtonIconPosition>('left');
+  readonly iconOnly = signal(false);
+  readonly label = signal<string | null>(null);
   readonly disabled = signal(false);
   readonly loading = signal(false);
+  readonly pressed = signal<boolean | null>(null);
+  readonly expanded = signal<boolean | null>(null);
+  readonly controls = signal<string | null>(null);
 
   buttonClicked = false;
 
@@ -66,8 +76,7 @@ describe('Button, inside a form', () => {
     fixture = TestBed.createComponent(FormHost);
     host = fixture.componentInstance;
     document.body.appendChild(fixture.nativeElement);
-    fixture.detectChanges();
-    await fixture.whenStable();
+    await settle();
   });
 
   afterEach(() => {
@@ -84,25 +93,16 @@ describe('Button, inside a form', () => {
     return fixture.nativeElement.querySelector('ewms-button button') as HTMLButtonElement;
   }
 
-  it('submits the form when it is asked to', async () => {
-    button().click();
-    await settle();
-
-    expect(host.submits).toBe(1);
-  });
-
-  it('AND `Enter` IN A FIELD SUBMITS IT, which is the whole point', async () => {
+  it('submits on click AND on Enter in a field, which is the whole point', async () => {
     // El envío implícito necesita un botón submit; sin él, Enter no guardaba. Ver vault: Boton.
-    const field = fixture.nativeElement.querySelector('[data-field]') as HTMLInputElement;
-    field.focus();
-    fixture.nativeElement.querySelector('[data-form]').requestSubmit();
+    button().click();
+    (fixture.nativeElement.querySelector('[data-form]') as HTMLFormElement).requestSubmit();
     await settle();
 
-    expect(host.submits).toBe(1);
+    expect(host.submits).toBe(2);
   });
 
-  it('and does NOT submit while the default is left alone', async () => {
-    // `button` sigue siendo el default: nada anterior a DS-5 empieza a enviar.
+  it('does NOT submit while the default is left alone', async () => {
     host.type.set('button');
     await settle();
 
@@ -131,178 +131,215 @@ describe('Button', () => {
   let parentClicked: boolean;
 
   beforeEach(async () => {
-    await TestBed.configureTestingModule({
-      imports: [TestHost, Button],
-    }).compileComponents();
+    await TestBed.configureTestingModule({ imports: [TestHost] }).compileComponents();
 
     fixture = TestBed.createComponent(TestHost);
     host = fixture.componentInstance;
     parentClicked = false;
-
-    const parent = fixture.nativeElement.querySelector('#parent-container');
-    parent?.addEventListener('click', () => {
+    fixture.nativeElement.querySelector('#parent-container')?.addEventListener('click', () => {
       parentClicked = true;
     });
-
-    fixture.detectChanges();
-    await fixture.whenStable();
+    await settle();
   });
 
-  it('renders a native button with accessible name matching projected text', () => {
-    const button = fixture.debugElement.query(By.css('button')).nativeElement as HTMLButtonElement;
-    expect(button).not.toBeNull();
-    expect(button.textContent).toContain('Save Changes');
+  async function settle(): Promise<void> {
+    fixture.detectChanges();
+    await fixture.whenStable();
+  }
+
+  function button(): HTMLButtonElement {
+    return fixture.debugElement.query(By.css('button')).nativeElement as HTMLButtonElement;
+  }
+
+  /** Como getByRole con nombre, en jsdom: aria-label o el contenido referido. */
+  function accessibleName(): string {
+    const labelledBy = button().getAttribute('aria-labelledby');
+    if (labelledBy) {
+      return fixture.nativeElement.querySelector(`#${labelledBy}`)?.textContent?.trim() ?? '';
+    }
+    return button().getAttribute('aria-label') ?? '';
+  }
+
+  async function asIconOnly(): Promise<void> {
+    host.iconOnly.set(true);
+    host.icon.set('trash');
+    host.label.set('Eliminar');
+    host.variant.set('ghost');
+    await settle();
+  }
+
+  it('is named by its projected text', () => {
+    expect(accessibleName()).toBe('Save Changes');
+    expect(button().hasAttribute('aria-label')).toBe(false);
+  });
+
+  it('renders its icon decorative, on the chosen side', async () => {
+    host.icon.set('package');
+    host.iconPosition.set('right');
+    await settle();
+
+    const content = button().querySelector('span');
+    const icon = fixture.debugElement.query(By.directive(Icon)).nativeElement as Element;
+    expect(icon.querySelector('svg')?.getAttribute('aria-hidden')).toBe('true');
+    expect(content?.lastElementChild).toBe(icon);
   });
 
   describe('Loading pattern', () => {
-    it('keeps accessible name via aria-labelledby and marks aria-busy and aria-disabled during loading', async () => {
+    beforeEach(async () => {
       host.loading.set(true);
-      fixture.detectChanges();
-      await fixture.whenStable();
-
-      const button = fixture.debugElement.query(By.css('button')).nativeElement as HTMLButtonElement;
-      expect(button.getAttribute('aria-busy')).toBe('true');
-      expect(button.getAttribute('aria-disabled')).toBe('true');
-      expect(button.hasAttribute('disabled')).toBe(false);
-
-      const labelId = button.getAttribute('aria-labelledby');
-      expect(labelId).toBeTruthy();
-
-      const content = fixture.nativeElement.querySelector(`#${labelId}`);
-      expect(content).not.toBeNull();
-      expect(content?.textContent).toContain('Save Changes');
-      expect(content?.classList.contains('invisible')).toBe(true);
-
-      const spinner = fixture.debugElement.query(By.css('ewms-icon[name="spinner"]'));
-      expect(spinner).not.toBeNull();
+      await settle();
     });
 
-    it('suppresses (click) and stops native event bubbling to parent during loading', async () => {
-      host.loading.set(true);
-      fixture.detectChanges();
-      await fixture.whenStable();
+    it('keeps the name and focus, marks busy, and hides the content with visibility', () => {
+      expect(button().getAttribute('aria-busy')).toBe('true');
+      expect(button().getAttribute('aria-disabled')).toBe('true');
+      // Sin `disabled` nativo: conserva el foco mientras carga.
+      expect(button().hasAttribute('disabled')).toBe(false);
+      expect(accessibleName()).toBe('Save Changes');
+      expect(button().querySelector('span')?.classList.contains('invisible')).toBe(true);
+      expect(fixture.debugElement.query(By.css('ewms-icon[name="spinner"]'))).not.toBeNull();
+    });
 
-      const button = fixture.debugElement.query(By.css('button')).nativeElement as HTMLButtonElement;
-      button.click();
+    it('suppresses click and Enter, and stops bubbling to a parent listener', () => {
+      button().click();
+      button().dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }),
+      );
 
       expect(host.buttonClicked).toBe(false);
       expect(parentClicked).toBe(false);
     });
 
-    it('suppresses Enter keydown events during loading', async () => {
-      host.loading.set(true);
-      fixture.detectChanges();
-      await fixture.whenStable();
-
-      const buttonDebug = fixture.debugElement.query(By.css('button'));
-      const event = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true });
-      buttonDebug.nativeElement.dispatchEvent(event);
-
-      expect(host.buttonClicked).toBe(false);
-      expect(parentClicked).toBe(false);
-    });
-
-    it('retains focus when entering loading state', async () => {
-      const button = fixture.debugElement.query(By.css('button')).nativeElement as HTMLButtonElement;
-      button.focus();
-      expect(document.activeElement).toBe(button);
+    it('retains focus when entering loading', async () => {
+      host.loading.set(false);
+      await settle();
+      button().focus();
 
       host.loading.set(true);
-      fixture.detectChanges();
-      await fixture.whenStable();
+      await settle();
 
-      expect(document.activeElement).toBe(button);
+      expect(document.activeElement).toBe(button());
     });
   });
 
   describe('Disabled state', () => {
-    it('applies native disabled attribute and prevents clicks', async () => {
-      host.disabled.set(true);
-      fixture.detectChanges();
-      await fixture.whenStable();
-
-      const button = fixture.debugElement.query(By.css('button')).nativeElement as HTMLButtonElement;
-      expect(button.disabled).toBe(true);
-      expect(button.hasAttribute('aria-disabled')).toBe(false);
-
-      button.click();
-      expect(host.buttonClicked).toBe(false);
-      expect(parentClicked).toBe(false);
-    });
-
-    it('keeps the native disabled attribute when disabled and loading are both set', async () => {
+    it('uses the native attribute, even while loading, and blocks clicks', async () => {
       host.disabled.set(true);
       host.loading.set(true);
-      fixture.detectChanges();
-      await fixture.whenStable();
+      await settle();
 
-      const button = fixture.debugElement.query(By.css('button')).nativeElement as HTMLButtonElement;
       // Independientes: deshabilitado sigue así mientras carga; solo se suma `aria-busy`.
-      expect(button.disabled).toBe(true);
-      expect(button.getAttribute('aria-busy')).toBe('true');
-      expect(button.hasAttribute('aria-disabled')).toBe(false);
+      expect(button().disabled).toBe(true);
+      expect(button().getAttribute('aria-busy')).toBe('true');
+      expect(button().hasAttribute('aria-disabled')).toBe(false);
 
-      button.click();
+      button().click();
       expect(host.buttonClicked).toBe(false);
       expect(parentClicked).toBe(false);
     });
   });
 
-  describe('Focus ring', () => {
-    it('draws the ring from CSS on :focus-visible, with no inline box-shadow', () => {
-      const button = fixture.debugElement.query(By.css('button')).nativeElement as HTMLButtonElement;
+  it('draws the focus ring from CSS on :focus-visible, with no inline box-shadow', () => {
+    // jsdom no resuelve var() ni :focus-visible: se afirma la clase y que TS no escribe sombra.
+    expect(button().classList.contains('focus-visible:shadow-(--focus-ring-shadow)')).toBe(true);
+    button().focus();
+    expect(button().style.boxShadow).toBe('');
+  });
 
-      // jsdom no resuelve var() ni :focus-visible: se afirma la clase y que TypeScript no
-      // escribe la sombra.
-      expect(button.classList.contains('focus-visible:shadow-(--focus-ring-shadow)')).toBe(true);
-      expect(button.style.boxShadow).toBe('');
+  describe('Icon only', () => {
+    it('is named by label, not by the icon, and drops the projected text', async () => {
+      await asIconOnly();
 
-      button.focus();
-      expect(button.style.boxShadow).toBe('');
+      expect(button().getAttribute('aria-label')).toBe('Eliminar');
+      expect(button().hasAttribute('aria-labelledby')).toBe(false);
+      expect(button().textContent?.trim()).toBe('');
+    });
+
+    const boxes: readonly (readonly [ButtonSize, string, string])[] = [
+      ['sm', 'h-8 w-8', 'sm'],
+      ['md', 'h-10 w-10', 'md'],
+      // md a propósito: dos tamaños de icono en una barra se leen como un error.
+      ['lg', 'h-12 w-12', 'md'],
+    ];
+
+    it.each(boxes)('is a square box at size "%s"', async (size, box, iconSize) => {
+      await asIconOnly();
+      host.size.set(size);
+      await settle();
+
+      // Cuadrada por construcción; la caja pintada la mide e2e/showroom.e2e.ts.
+      for (const utility of box.split(' ')) {
+        expect(button().classList.contains(utility)).toBe(true);
+      }
+      expect([...button().classList].some((name) => name.startsWith('px-'))).toBe(false);
+      const icon = fixture.debugElement.query(By.directive(Icon)).componentInstance as Icon;
+      expect(icon.size()).toBe(iconSize);
+    });
+
+    it('shows label as a tooltip on focus, hidden from the name it repeats', async () => {
+      await asIconOnly();
+
+      button().dispatchEvent(new FocusEvent('focusin', { bubbles: true }));
+      fixture.detectChanges();
+
+      const panel = document.querySelector('.cdk-overlay-container div[id^="ewms-tooltip-"]');
+      expect(panel?.textContent).toBe('Eliminar');
+      expect(panel?.getAttribute('aria-hidden')).toBe('true');
+      expect(button().hasAttribute('aria-describedby')).toBe(false);
+      button().dispatchEvent(new FocusEvent('focusout', { bubbles: true }));
+    });
+
+    it('has no tooltip when there is text to read', () => {
+      button().dispatchEvent(new FocusEvent('focusin', { bubbles: true }));
+      fixture.detectChanges();
+
+      expect(document.querySelector('div[id^="ewms-tooltip-"]')).toBeNull();
+    });
+
+    it('fails in dev mode without a label, rather than render a nameless button', () => {
+      const fresh = TestBed.createComponent(TestHost);
+      fresh.componentInstance.iconOnly.set(true);
+      expect(() => fresh.detectChanges()).toThrow(/iconOnly requires a label/);
     });
   });
 
-  describe('Icon integration', () => {
-    it('renders icon with aria-hidden when icon input is provided', async () => {
-      host.icon.set('package');
-      host.iconPosition.set('left');
-      fixture.detectChanges();
-      await fixture.whenStable();
+  it('exposes pressed, expanded and controls only when they are set', async () => {
+    expect(button().hasAttribute('aria-pressed')).toBe(false);
+    expect(button().hasAttribute('aria-expanded')).toBe(false);
 
-      // Las entradas de Angular no se reflejan como atributos: se busca por directiva.
-      const icons = fixture.debugElement.queryAll(By.directive(Icon));
-      expect(icons.length).toBeGreaterThan(0);
-      const firstIcon = icons[0];
-      if (!firstIcon) throw new Error('No ewms-icon found in template');
-      const iconEl = firstIcon.nativeElement as Element;
-      expect(iconEl.querySelector('svg')?.getAttribute('aria-hidden')).toBe('true');
-    });
+    host.pressed.set(false);
+    host.expanded.set(true);
+    host.controls.set('panel-1');
+    await settle();
+
+    // `false` sí se escribe: un conmutador apagado sigue siendo conmutador.
+    expect(button().getAttribute('aria-pressed')).toBe('false');
+    expect(button().getAttribute('aria-expanded')).toBe('true');
+    expect(button().getAttribute('aria-controls')).toBe('panel-1');
   });
 
   describe('Accessibility (axe)', () => {
     const variants: readonly ButtonVariant[] = ['primary', 'secondary', 'danger', 'ghost'];
 
-    it.each(variants)('passes axe accessibility checks for variant "%s"', async (variant) => {
+    it.each(variants)('passes axe with text and icon only, variant "%s"', async (variant) => {
       host.variant.set(variant);
-      fixture.detectChanges();
-      await fixture.whenStable();
+      await settle();
+      await expectNoAxeViolations(fixture.nativeElement);
 
+      await asIconOnly();
+      host.variant.set(variant);
+      await settle();
       await expectNoAxeViolations(fixture.nativeElement);
     });
 
-    it('passes axe accessibility checks in loading state', async () => {
+    it('passes axe loading and disabled', async () => {
       host.loading.set(true);
-      fixture.detectChanges();
-      await fixture.whenStable();
-
+      await settle();
       await expectNoAxeViolations(fixture.nativeElement);
-    });
 
-    it('passes axe accessibility checks in disabled state', async () => {
+      host.loading.set(false);
       host.disabled.set(true);
-      fixture.detectChanges();
-      await fixture.whenStable();
-
+      await settle();
       await expectNoAxeViolations(fixture.nativeElement);
     });
   });

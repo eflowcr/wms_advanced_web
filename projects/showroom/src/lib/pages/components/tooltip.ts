@@ -2,7 +2,6 @@ import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import {
   Button,
   DESIGN_SYSTEM_VERSION,
-  IconButton,
   Tooltip,
   type TooltipPosition,
 } from '@ewms/design-system';
@@ -73,7 +72,7 @@ const ANATOMY = [
  */
 @Component({
   selector: 'ewms-showroom-tooltip',
-  imports: [Button, IconButton, Tooltip, DemoFrame, PropTable, TokenValue],
+  imports: [Button, Tooltip, DemoFrame, PropTable, TokenValue],
   templateUrl: './tooltip.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -95,8 +94,8 @@ export class ShowroomTooltip {
     "  {{ 'kpi.rotacion' | transloco }}",
     '</span>',
     '',
-    '<!-- dentro de un componente del DS: la entrada se llama tooltip -->',
-    '<ewms-icon-button icon="trash" label="Eliminar" tooltip="Eliminar" />',
+    '<!-- en el botón de solo ícono lo pone label -->',
+    '<ewms-button [iconOnly]="true" variant="ghost" icon="trash" label="Eliminar" />',
   ].join('\n');
 
   protected toggleSuppressed(): void {

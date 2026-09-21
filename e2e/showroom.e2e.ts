@@ -13,7 +13,6 @@ import {
   CARD,
   CHECKBOX,
   DIALOG,
-  ICON_BUTTON,
   INPUT,
   PAGINATION,
   RADIO,
@@ -49,11 +48,16 @@ test.describe('the showroom renders and is reachable', () => {
     });
   }
 
-  test('the old Spanish icon route still works', async ({ page }) => {
+  test('the retired routes still work', async ({ page }) => {
     // Las URL se declararon estables: un enlace ya compartido tiene que seguir abriendo.
-    await page.goto('/design-system/iconografia');
-    await expect(page).toHaveURL(/\/design-system\/foundations\/icons$/);
-    await expect(page.getByRole('heading', { level: 1, name: 'Iconografía' })).toBeVisible();
+    for (const [old, now, heading] of [
+      ['/design-system/iconografia', /\/foundations\/icons$/, 'Iconografía'],
+      ['/design-system/components/icon-button', /\/components\/button$/, 'Botón'],
+    ] as const) {
+      await page.goto(old);
+      await expect(page).toHaveURL(now);
+      await expect(page.getByRole('heading', { level: 1, name: heading })).toBeVisible();
+    }
   });
 
   test('the sidebar marks the page you are on', async ({ page }) => {
@@ -358,8 +362,8 @@ test.describe('the fixed geometry of the system', () => {
 
 // Cada ficha lee sus números del propio DOM en vez de imprimirlos; acá se comprueba que lea el correcto.
 test.describe('the component sheets measure what they claim', () => {
-  test('the icon button is square at the three sizes, over the 2.5.8 minimum', async ({ page }) => {
-    await page.goto(ICON_BUTTON);
+  test('the icon-only button is square at the three sizes', async ({ page }) => {
+    await page.goto(BUTTON);
     await ready(page);
 
     for (const [size, expected] of [
@@ -367,12 +371,12 @@ test.describe('the component sheets measure what they claim', () => {
       ['md', 40],
       ['lg', 48],
     ] as const) {
-      const box = await page.locator(`[data-size-sample="${size}"] button`).boundingBox();
-      expect(round(box?.width), `icon button ${size} width`).toBe(expected);
-      expect(round(box?.height), `icon button ${size} height`).toBe(expected);
+      const sample = page.locator(`[data-icon-size-sample="${size}"]`);
+      const box = await sample.locator('button').boundingBox();
+      expect(round(box?.width), `icon-only ${size} width`).toBe(expected);
+      expect(round(box?.height), `icon-only ${size} height`).toBe(expected);
+      await expect(sample).toContainText(`${expected} × ${expected} px`);
     }
-    // La página deriva el veredicto 2.5.8 de lo que midió: sin insignia de fallo, la derivación coincide.
-    await expect(page.getByText('por debajo de')).toHaveCount(0);
   });
 
   test('the text page reads back the element each variant really rendered', async ({ page }) => {

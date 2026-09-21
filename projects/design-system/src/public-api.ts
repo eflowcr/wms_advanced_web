@@ -8,7 +8,6 @@ export {
   type ButtonSize,
   type ButtonVariant,
 } from './lib/button/button';
-export { IconButton } from './lib/icon-button/icon-button';
 export { Tooltip, type TooltipPosition } from './lib/tooltip/tooltip';
 
 // Formulario (DS-2), ControlValueAccessor por una base común. `FieldSize` y `FieldState`

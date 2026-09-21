@@ -28,7 +28,7 @@ import { Badge } from '../badge/badge';
 import { Checkbox } from '../checkbox/checkbox';
 import { familyTintClass } from '../feedback/feedback.types';
 import { Icon } from '../icon/icon';
-import { IconButton } from '../icon-button/icon-button';
+import { Button } from '../button/button';
 import { Input as TextInput } from '../input/input';
 import { Pagination } from '../pagination/pagination';
 
@@ -109,7 +109,7 @@ const EMPTY_PAGE: TablePage<never> = { rows: [], page: 0, pageSize: 0, total: 0 
     Badge,
     Checkbox,
     Icon,
-    IconButton,
+    Button,
     NgTemplateOutlet,
     Pagination,
     ReactiveFormsModule,

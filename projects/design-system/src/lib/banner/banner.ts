@@ -7,7 +7,7 @@ import {
   type FeedbackVariant,
 } from '../feedback/feedback.types';
 import { Icon } from '../icon/icon';
-import { IconButton } from '../icon-button/icon-button';
+import { Button } from '../button/button';
 
 export type { FeedbackVariant } from '../feedback/feedback.types';
 
@@ -18,7 +18,7 @@ export type { FeedbackVariant } from '../feedback/feedback.types';
 @Component({
   selector: 'ewms-banner',
   templateUrl: './banner.html',
-  imports: [Icon, IconButton],
+  imports: [Icon, Button],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { class: 'block' },
 })

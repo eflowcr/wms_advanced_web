@@ -298,7 +298,7 @@ describe('Input', () => {
     });
 
     function toggle(): HTMLButtonElement {
-      return root().querySelector('ewms-icon-button button') as HTMLButtonElement;
+      return root().querySelector('ewms-button button') as HTMLButtonElement;
     }
 
     it('alternates the native type and keeps the focus on the button', async () => {
@@ -333,7 +333,7 @@ describe('Input', () => {
       await settle();
 
       // La alternativa sería un botón sin nombre accesible.
-      expect(root().querySelector('ewms-icon-button')).toBeNull();
+      expect(root().querySelector('ewms-button')).toBeNull();
     });
   });
 
@@ -345,13 +345,13 @@ describe('Input', () => {
     });
 
     it('appears only once there is something to clear', async () => {
-      expect(root().querySelector('ewms-icon-button')).toBeNull();
+      expect(root().querySelector('ewms-button')).toBeNull();
 
       control().value = 'pallet';
       control().dispatchEvent(new Event('input'));
       await settle();
 
-      expect(root().querySelector('ewms-icon-button')).not.toBeNull();
+      expect(root().querySelector('ewms-button')).not.toBeNull();
     });
 
     it('empties the field when pressed', async () => {
@@ -359,11 +359,11 @@ describe('Input', () => {
       control().dispatchEvent(new Event('input'));
       await settle();
 
-      (root().querySelector('ewms-icon-button button') as HTMLButtonElement).click();
+      (root().querySelector('ewms-button button') as HTMLButtonElement).click();
       await settle();
 
       expect(control().value).toBe('');
-      expect(root().querySelector('ewms-icon-button')).toBeNull();
+      expect(root().querySelector('ewms-button')).toBeNull();
     });
   });
 

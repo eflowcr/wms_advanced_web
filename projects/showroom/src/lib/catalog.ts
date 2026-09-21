@@ -87,7 +87,7 @@ const COMPONENTS: readonly CatalogEntry[] = [
     selector: 'ewms-button',
     route: `${SHOWROOM_BASE}/components/button`,
     status: 'ready',
-    note: 'Cuatro variantes, tres tamaños y el patrón anti-doble-envío.',
+    note: 'Cuatro variantes, tres tamaños, solo ícono cuadrado y el patrón anti-doble-envío.',
   },
   {
     id: 'text',
@@ -96,14 +96,6 @@ const COMPONENTS: readonly CatalogEntry[] = [
     route: `${SHOWROOM_BASE}/components/text`,
     status: 'ready',
     note: 'Las siete variantes semánticas, y por qué el nivel visual no se separa del nivel del documento.',
-  },
-  {
-    id: 'icon-button',
-    name: 'Icon Button',
-    selector: 'ewms-icon-button',
-    route: `${SHOWROOM_BASE}/components/icon-button`,
-    status: 'ready',
-    note: 'Cuadrado en los tres tamaños, con label y tooltip obligatorios en el tipo.',
   },
   {
     id: 'tooltip',

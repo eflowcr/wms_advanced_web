@@ -12,7 +12,7 @@ import {
 } from '../field/field.types';
 import { FormControlBase, provideValueAccessor } from '../forms/control-value-accessor';
 import { Icon } from '../icon/icon';
-import { IconButton } from '../icon-button/icon-button';
+import { Button } from '../button/button';
 import {
   PREFIX_ICON_OFFSET_CLASSES,
   PREFIX_PADDING_CLASSES,
@@ -31,7 +31,7 @@ let nextInputId = 0;
 @Component({
   selector: 'ewms-input',
   templateUrl: './input.html',
-  imports: [Icon, IconButton],
+  imports: [Icon, Button],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { class: 'block' },
   providers: [provideValueAccessor(() => Input)],

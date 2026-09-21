@@ -42,7 +42,7 @@ function releaseSingleton(instance: Tooltip): void {
 }
 
 /**
- * Describe, no nombra (por eso `ewms-icon-button` exige `label`). WCAG 2.2 1.4.13: Escape lo
+ * Describe, no nombra (por eso el botón de solo ícono exige `label`). WCAG 2.2 1.4.13: Escape lo
  * descarta, el puntero puede entrar y nunca cierra por tiempo. Ver vault: Tooltip.
  */
 @Directive({

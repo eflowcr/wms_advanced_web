@@ -44,9 +44,10 @@ export const showroomRoutes: Routes = [
         loadComponent: async () => (await import('./pages/components/text')).ShowroomText,
       },
       {
+        // El botón de solo ícono es una sección del Botón desde 2026-09-21; la URL sigue andando.
         path: 'components/icon-button',
-        loadComponent: async () =>
-          (await import('./pages/components/icon-button')).ShowroomIconButton,
+        redirectTo: 'components/button',
+        pathMatch: 'full',
       },
       {
         path: 'components/tooltip',

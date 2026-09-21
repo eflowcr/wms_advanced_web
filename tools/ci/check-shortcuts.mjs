@@ -46,7 +46,6 @@ export const KEY_EXEMPT = [
   'projects/design-system/src/lib/toast/',
   'projects/design-system/src/lib/card/',
   'projects/design-system/src/lib/button/',
-  'projects/design-system/src/lib/icon-button/',
   'projects/design-system/src/lib/overlay/',
   // DS-5: la hoja de la navegación inferior cierra con Escape y el rail se recorre con
   // flechas. Misma categoría que dialog y select: apagar `cancel` no debe dejar un panel

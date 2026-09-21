@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
-import { IconButton } from '../icon-button/icon-button';
+import { Button } from '../button/button';
 
 /** La Tabla le pasa las suyas. */
 export interface PaginationMessages {
@@ -16,7 +16,7 @@ export interface PaginationMessages {
 @Component({
   selector: 'ewms-pagination',
   templateUrl: './pagination.html',
-  imports: [IconButton],
+  imports: [Button],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { class: 'block' },
 })

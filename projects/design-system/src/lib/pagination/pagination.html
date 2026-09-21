@@ -10,22 +10,22 @@
   </span>
 
   <span class="flex items-center gap-1">
-    <ewms-icon-button
+    <ewms-button
+      [iconOnly]="true"
       icon="chevron-left"
       size="sm"
       variant="secondary"
       [label]="messages().previousPage"
-      [tooltip]="messages().previousPage"
       [disabled]="atStart()"
       data-previous-page
       (click)="previous()"
     />
-    <ewms-icon-button
+    <ewms-button
+      [iconOnly]="true"
       icon="chevron-right"
       size="sm"
       variant="secondary"
       [label]="messages().nextPage"
-      [tooltip]="messages().nextPage"
       [disabled]="atEnd()"
       data-next-page
       (click)="next()"

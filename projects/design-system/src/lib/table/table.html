@@ -245,23 +245,25 @@
                   <span class="flex w-full items-center justify-end gap-1">
                     @if (isMaster(flat.row)) {
                       <!-- Control aparte del toggle del árbol: uno despliega filas, el otro un panel. -->
-                      <ewms-icon-button
+                      <ewms-button
+                        [iconOnly]="true"
+                        variant="ghost"
                         [icon]="isDetailOpen(flat) ? 'chevron-up' : 'chevron-down'"
                         size="sm"
                         [label]="isDetailOpen(flat) ? text().collapse : text().expand"
-                        [tooltip]="isDetailOpen(flat) ? text().collapse : text().expand"
                         [attr.data-detail-toggle]="rowIndex"
                         [expanded]="isDetailOpen(flat)"
-                        [controlsId]="isDetailOpen(flat) ? detailId(flat) : null"
+                        [controls]="isDetailOpen(flat) ? detailId(flat) : null"
                         (click)="toggleDetail(flat)"
                       />
                     }
                     @if (hasMenu()) {
-                      <ewms-icon-button
+                      <ewms-button
+                        [iconOnly]="true"
+                        variant="ghost"
                         icon="more"
                         size="sm"
                         [label]="text().rowMenu"
-                        [tooltip]="text().rowMenu"
                         [attr.data-kebab]="rowIndex"
                         (click)="openMenu(flat, $any($event).currentTarget)"
                       />

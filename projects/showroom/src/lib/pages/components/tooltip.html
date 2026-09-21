@@ -32,7 +32,7 @@
           panel se construye como nodo del DOM dentro de un overlay del CDK.
         </p>
         <p class="text-caption text-secondary">
-          Entró al sistema porque el Icon Button lo exige. El alcance es deliberado: lo mínimo que
+          Entró al sistema porque el botón de solo ícono lo exige. El alcance es deliberado: lo mínimo que
           ese consumidor necesita, bien hecho.
         </p>
       </div>
@@ -66,11 +66,11 @@
         <div class="flex flex-col gap-5">
           <!--
             Caso 1, nombre duplicado: describes queda en false, el panel va aria-hidden y
-            el lector dice el nombre una vez. Es el caso del Icon Button.
+            el lector dice el nombre una vez. Es el caso del botón de solo ícono.
           -->
           <div class="flex flex-wrap items-center gap-3">
             <span data-demo-tooltip>
-              <ewms-icon-button icon="trash" label="Eliminar" tooltip="Eliminar" />
+              <ewms-button [iconOnly]="true" variant="ghost" icon="trash" label="Eliminar" />
             </span>
             <span class="min-w-64 flex-1 text-caption text-secondary">
               <strong>El nombre repetido.</strong>&ngsp;<code class="font-mono">label</code> y
@@ -105,9 +105,8 @@
           <!-- Caso 3: tooltipDisabled manejado desde la página con un botón del sistema. -->
           <div class="flex flex-wrap items-center gap-3">
             <!--
-              Va sobre un anfitrión con la directiva aplicada directo: ewms-icon-button la
-              aplica dentro de su plantilla y tooltipDisabled no llegaría (lo avisa
-              el compilador).
+              Va sobre un anfitrión con la directiva aplicada directo: ewms-button la
+              aplica dentro de su plantilla y tooltipDisabled no llegaría.
             -->
             <span data-demo-suppressed>
               <ewms-button
@@ -354,7 +353,7 @@
     <ul class="flex flex-col gap-2">
       <li>
         <strong>Aparece al hover Y al foco de teclado.</strong> Sólo-hover dejaría fuera a quien usa
-        teclado, y el Icon Button sería inservible para esa persona. Se escucha
+        teclado, y el botón de solo ícono sería inservible para esa persona. Se escucha
         <code class="font-mono">focusin</code>/<code class="font-mono">focusout</code> —los que
         burbujean— para que también funcione sobre un contenedor cuyo elemento enfocable es
         descendiente.
@@ -399,7 +398,7 @@
       </li>
       <li>
         <strong>Creer que eso lo encontró una revisión.</strong> Lo encontraron
-        <strong>dos pruebas del Icon Button que fallaron</strong>. La primera salida fue escribir
+        <strong>dos pruebas del botón de solo ícono que fallaron</strong>. La primera salida fue escribir
         <code class="font-mono">[attr.disabled]</code> en el consumidor, pero eso deja la trampa
         viva para cada componente del sistema que ponga un tooltip sobre un control nativo.
         Renombrar la entrada la cierra de raíz. Hay prueba de regresión, y se verificó que

@@ -41,10 +41,9 @@
             va un <code class="font-mono">&lt;a&gt;</code>.
           </li>
           <li>
-            <strong>Si no lleva texto, no es este componente</strong>: es
-            <code class="font-mono">&lt;ewms-icon-button&gt;</code>, que exige
-            <code class="font-mono">label</code> y <code class="font-mono">tooltip</code> en el
-            tipo — un botón sin nombre accesible no compila.
+            <strong>Si hay lugar para texto, va texto.</strong> Solo ícono
+            (<code class="font-mono">iconOnly</code>) es para cuando la palabra no entra —filas,
+            barras densas—, no para cuando queda más prolijo.
           </li>
           <li>
             <strong>Si hay más de una Primary en la vista</strong>, ninguna es la principal. Las
@@ -53,7 +52,7 @@
         </ul>
       </div>
     </div>
-    <ewms-demo-frame ground="canvas" label="La alternativa, al lado: sin texto va Icon Button">
+    <ewms-demo-frame ground="canvas" label="Con texto y solo ícono: el mismo componente">
       <!--
         Controles fijos y prosa flexible: sin eso la fila apretaba el botón
         hasta partir su etiqueta en dos líneas.
@@ -63,21 +62,21 @@
           <ewms-button variant="secondary">Con texto</ewms-button>
         </span>
         <span data-demo-tooltip class="shrink-0">
-          <ewms-icon-button icon="trash" label="Eliminar" tooltip="Eliminar" variant="ghost" />
+          <ewms-button [iconOnly]="true" icon="trash" label="Eliminar" variant="ghost" />
         </span>
         <span data-demo-iconbutton-loading class="shrink-0">
-          <ewms-icon-button
+          <ewms-button
+            [iconOnly]="true"
             icon="trash"
             label="Eliminando"
-            tooltip="Eliminando"
             variant="ghost"
             [loading]="true"
           />
         </span>
         <span class="min-w-64 flex-1 text-caption text-secondary">
-          El Icon Button lleva tooltip obligatorio: pasale el foco con Tab y aparece. El segundo está
-          en Loading, y mide exactamente lo mismo que el primero — el mismo patrón que el Botón, en
-          un control que además es cuadrado.
+          Solo ícono pone su <code class="font-mono">label</code> como nombre y como tooltip: pasale
+          el foco con Tab y aparece. El segundo está en Loading y mide exactamente lo mismo que el
+          primero.
         </span>
       </div>
     </ewms-demo-frame>
@@ -138,6 +137,55 @@
       oscurece su fondo. No es una excepción: el azul de marca sobre
       <code class="font-mono">--color-ghost-hover</code> mide 4.38:1 y la 1.4.3 pide 4.5:1; el tono
       de hover mide 5.65:1.
+    </p>
+  </section>
+
+  <!-- ============================================================ 4b. Solo ícono -->
+  <section class="flex flex-col gap-4" aria-labelledby="btn-icon-only" data-block="4b-solo-icono">
+    <h2 id="btn-icon-only" class="text-h2">Solo ícono</h2>
+    <p class="text-secondary">
+      Con <code class="font-mono">[iconOnly]="true"</code> el botón pierde el texto y gana dos
+      reglas: <strong>la caja es cuadrada</strong> —la altura de control usada también como
+      ancho— y <strong><code class="font-mono">label</code> es obligatoria</strong>: es el nombre
+      accesible y el tooltip, que se pone solo. Sin <code class="font-mono">label</code>, el modo
+      desarrollo tira un error.
+    </p>
+    <ewms-demo-frame ground="canvas" label="El caso real: una fila de tabla">
+      <div
+        class="flex flex-wrap items-center gap-3 rounded-md border border-default bg-surface p-3"
+        data-demo-row
+      >
+        <span class="min-w-48 flex-1 font-mono text-caption text-primary">
+          SKU-04871-B · A-04-17
+        </span>
+        <ewms-button [iconOnly]="true" variant="ghost" icon="edit" label="Editar artículo" />
+        <ewms-button [iconOnly]="true" variant="ghost" icon="download" label="Descargar etiqueta" />
+        <ewms-button [iconOnly]="true" variant="danger" icon="trash" label="Eliminar artículo" />
+      </div>
+    </ewms-demo-frame>
+    <ewms-demo-frame ground="canvas" label="Tres tamaños, cuadrados">
+      <ul class="flex flex-wrap items-end gap-8">
+        @for (sample of iconSizes(); track sample.size) {
+          <li class="flex flex-col items-start gap-2" [attr.data-icon-size-sample]="sample.size">
+            <ewms-button
+              [iconOnly]="true"
+              variant="secondary"
+              icon="trash"
+              [size]="sample.size"
+              [label]="'Eliminar, tamaño ' + sample.label"
+            />
+            <span class="text-caption text-secondary">
+              {{ sample.label }} · <span class="font-mono">{{ sample.height }}</span>
+            </span>
+          </li>
+        }
+      </ul>
+    </ewms-demo-frame>
+    <p class="text-caption text-secondary">
+      Un conmutador (la estrella de favoritos) pasa <code class="font-mono">pressed</code>; un
+      disparador de menú o panel, <code class="font-mono">expanded</code> y
+      <code class="font-mono">controls</code>. Son entradas y no atributos: sobre
+      <code class="font-mono">&lt;ewms-button&gt;</code> caerían en un elemento sin rol.
     </p>
   </section>
 
@@ -272,7 +320,7 @@
 
     <h3 class="text-h3">Entradas</h3>
     <p class="text-secondary">
-      Las siete de la tabla del bloque 3, todas <code class="font-mono">input()</code> de señales.
+      Las doce de la tabla del bloque 3, todas <code class="font-mono">input()</code> de señales.
     </p>
 
     <h3 class="text-h3">Salidas</h3>
@@ -286,9 +334,9 @@
         componente detiene el evento antes de que salga.
       </p>
       <p class="text-caption">
-        La ficha del vault todavía declara
-        <code class="font-mono">(click): EventEmitter&lt;MouseEvent&gt;</code>. <strong>Gana el
-        código</strong> y la ficha es lo que hay que corregir: un
+        La ficha del vault declaraba
+        <code class="font-mono">(click): EventEmitter&lt;MouseEvent&gt;</code> hasta el 2026-09-21.
+        <strong>Ganó el código</strong> y se corrigió la ficha: un
         <code class="font-mono">output</code> llamado <code class="font-mono">click</code> se
         superpone al evento nativo del mismo nombre y deja dos caminos para una sola cosa.
       </p>
@@ -345,6 +393,10 @@
         del nombre sigue la referencia aunque el nodo no se vea.
       </li>
       <li>El icono de un botón con texto es decorativo y no entra en el nombre.</li>
+      <li>
+        Solo ícono: el nombre es <code class="font-mono">aria-label</code> y el tooltip lo repite con
+        <code class="font-mono">aria-hidden</code>, para que el lector lo diga una sola vez.
+      </li>
     </ul>
 
     <h3 class="text-h3">Bloques que no aplican</h3>

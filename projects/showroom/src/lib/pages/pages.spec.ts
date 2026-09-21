@@ -16,7 +16,6 @@ import { ShowroomButton } from './components/button';
 import { ShowroomCard } from './components/card';
 import { ShowroomCheckbox } from './components/checkbox';
 import { ShowroomDialog } from './components/dialog';
-import { ShowroomIconButton } from './components/icon-button';
 import { ShowroomInput } from './components/input';
 import { ShowroomNavigation } from './components/navigation';
 import { ShowroomPagination } from './components/pagination';
@@ -387,11 +386,21 @@ describe('ShowroomButton', () => {
       '2-proposito',
       '3-demo',
       '4-variantes',
+      '4b-solo-icono',
       '5-matriz',
       '6-tamanos',
       '7-anatomia',
       '8-contrato',
     ]);
+  });
+
+  it('gives every icon-only demo a name, which is what label is for', async () => {
+    const { element } = await render(ShowroomButton);
+    const iconOnly = [...element.querySelectorAll('[data-block="4b-solo-icono"] button')];
+    expect(iconOnly).toHaveLength(6);
+    for (const button of iconOnly) {
+      expect(button.getAttribute('aria-label')?.length).toBeGreaterThan(0);
+    }
   });
 
   it('renders the four variants with their canonical names', async () => {
@@ -512,7 +521,6 @@ const BLOCKS = [
 // renderiza; una unión de sus tipos sería una unión a la que nada se puede asignar.
 const SHEETS: readonly { name: string; component: Type<unknown>; heading: string }[] = [
   { name: 'ShowroomText', component: ShowroomText, heading: 'Texto' },
-  { name: 'ShowroomIconButton', component: ShowroomIconButton, heading: 'Icon Button' },
   { name: 'ShowroomTooltip', component: ShowroomTooltip, heading: 'Tooltip' },
   { name: 'ShowroomInput', component: ShowroomInput, heading: 'Input' },
   { name: 'ShowroomSelect', component: ShowroomSelect, heading: 'Select / Dropdown' },
@@ -621,53 +629,6 @@ describe('ShowroomText', () => {
 
     expect(page.isPending({ pending: ['--text-mono-weight'] }, '--text-mono-weight')).toBe(true);
     expect(page.isPending({ pending: [] }, '--text-mono-weight')).toBe(false);
-  });
-});
-
-describe('ShowroomIconButton', () => {
-  it('renders the four variants and the full matrix with the real component', async () => {
-    const { element } = await render(ShowroomIconButton);
-    const variants = [...element.querySelectorAll('[data-variant]')].map((el) =>
-      el.getAttribute('data-variant'),
-    );
-    expect(variants).toEqual(['primary', 'secondary', 'danger', 'ghost']);
-
-    const matrix = element.querySelector('ewms-state-matrix');
-    expect(matrix?.querySelectorAll('tbody ewms-icon-button')).toHaveLength(20);
-  });
-
-  it('forces hover and focus with the token the component itself would use', async () => {
-    const { fixture } = await render(ShowroomIconButton);
-    const page = fixture.componentInstance as unknown as {
-      forced(variant: string, state: string): string;
-    };
-    expect(page.forced('primary', 'hover')).toBe('[&_button]:bg-primary-hover');
-    // Ghost oscurece el texto además del fondo: hallazgo de axe en PR 3.
-    expect(page.forced('ghost', 'hover')).toContain('text-(color:--color-bg-primary-hover)');
-    // Disabled y Loading son entradas reales: no se fuerza nada.
-    expect(page.forced('primary', 'disabled')).toBe('');
-    expect(page.forced('primary', 'loading')).toBe('');
-  });
-
-  it('falls back to the component default rather than casting an unknown id', async () => {
-    const { fixture } = await render(ShowroomIconButton);
-    const page = fixture.componentInstance as unknown as {
-      variantFor(id: string): string;
-      forced(variant: string, state: string): string;
-    };
-    expect(page.variantFor('danger')).toBe('danger');
-    // Ghost es el default de este componente; Primary es el del Button.
-    expect(page.variantFor('no-such-variant')).toBe('ghost');
-    expect(page.forced('no-such-variant', 'hover')).toBe('');
-  });
-
-  it('gives every demo instance a name, which is what the component is for', async () => {
-    const { element } = await render(ShowroomIconButton);
-    const buttons = [...element.querySelectorAll('button[aria-label]')];
-    expect(buttons.length).toBeGreaterThan(20);
-    for (const button of buttons) {
-      expect(button.getAttribute('aria-label')?.length).toBeGreaterThan(0);
-    }
   });
 });
 

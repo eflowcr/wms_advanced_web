@@ -956,7 +956,7 @@ describe('Table master/detail', () => {
     button.click();
     await settle();
 
-    // En el botón, no en el envoltorio `ewms-icon-button`: sin rol, nadie lo anuncia.
+    // En el botón, no en el envoltorio `ewms-button`: sin rol, nadie lo anuncia.
     const opened = toggle(0) as HTMLButtonElement;
     expect(opened.getAttribute('aria-expanded')).toBe('true');
     const cell = panels()[0]?.querySelector('td') as HTMLElement;

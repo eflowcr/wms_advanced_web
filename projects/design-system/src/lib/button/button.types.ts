@@ -29,14 +29,15 @@ export const BUTTON_PADDING_CLASSES: Readonly<Record<ButtonSize, string>> = {
   lg: 'px-5',
 };
 
-export const ICON_BUTTON_SIZE_CLASSES: Readonly<Record<ButtonSize, string>> = {
+/** Solo ícono: cuadrado, mismo paso de escala en los dos ejes. */
+export const ICON_ONLY_BOX_CLASSES: Readonly<Record<ButtonSize, string>> = {
   sm: 'h-8 w-8',
   md: 'h-10 w-10',
   lg: 'h-12 w-12',
 };
 
 /**
- * Comunes a Button e Icon Button (ADR 0010). El anillo de foco es sombra de dos bandas. Sin
+ * Comunes a todas las variantes (ADR 0010). El anillo de foco es sombra de dos bandas. Sin
  * transición de color, y su nombre no se escribe ni en comentarios. Ver vault: ADR 0009.
  */
 export const BUTTON_BASE_CLASSES =

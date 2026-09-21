@@ -12,7 +12,7 @@ import {
   afterNextRender,
 } from '@angular/core';
 import { Icon } from '../icon/icon';
-import { IconButton } from '../icon-button/icon-button';
+import { Button } from '../button/button';
 import type { Tab } from './navigation.types';
 
 export type TabsMode = 'section' | 'document';
@@ -26,7 +26,7 @@ let nextTabsId = 0;
 @Component({
   selector: 'ewms-tabs',
   templateUrl: './tabs.html',
-  imports: [Icon, IconButton],
+  imports: [Icon, Button],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { class: 'flex min-w-0' },
 })

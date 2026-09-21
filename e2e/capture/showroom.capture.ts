@@ -18,7 +18,6 @@ const ROUTES = [
   { name: '06-foundations-icons', url: '/design-system/foundations/icons' },
   { name: '07-components-button', url: '/design-system/components/button' },
   { name: '08-components-text', url: '/design-system/components/text' },
-  { name: '09-components-icon-button', url: '/design-system/components/icon-button' },
   { name: '10-components-tooltip', url: '/design-system/components/tooltip' },
   { name: '11-components-input', url: '/design-system/components/input' },
   { name: '12-components-select', url: '/design-system/components/select' },

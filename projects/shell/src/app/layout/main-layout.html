@@ -19,12 +19,12 @@
   >
     <!-- La hamburguesa solo existe donde hay rail: debajo del corte manda la barra inferior. -->
     @if (viewport.isWide()) {
-      <ewms-icon-button
+      <ewms-button
+        [iconOnly]="true"
         icon="menu"
         variant="ghost"
         data-rail-toggle
         [label]="'shell.nav.toggleMenu' | transloco"
-        [tooltip]="'shell.nav.toggleMenu' | transloco"
         [expanded]="railExpanded()"
         (click)="onRailExpandedChange(!railExpanded())"
       />
@@ -74,12 +74,12 @@
 
     <app-language-switcher />
 
-    <ewms-icon-button
+    <ewms-button
+      [iconOnly]="true"
       icon="logout"
       variant="ghost"
       data-shell-logout
       [label]="'shell.session.signOut' | transloco"
-      [tooltip]="'shell.session.signOut' | transloco"
     />
 
     <!-- Decorativo: el usuario ya está escrito al pie del rail; anunciarlo dos veces es ruido. -->

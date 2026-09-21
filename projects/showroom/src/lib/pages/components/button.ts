@@ -7,7 +7,7 @@ import {
   inject,
   signal,
 } from '@angular/core';
-import { Button, DESIGN_SYSTEM_VERSION, IconButton, type ButtonVariant } from '@ewms/design-system';
+import { Button, DESIGN_SYSTEM_VERSION, type ButtonVariant } from '@ewms/design-system';
 import { DemoFrame } from '../../ui/demo-frame';
 import { PropTable, type PropRow } from '../../ui/prop-table';
 import { StateMatrix, type MatrixAxis } from '../../ui/state-matrix';
@@ -107,6 +107,30 @@ const PROPS: readonly PropRow[] = [
       'Oculta el contenido sin cambiar el tamaño, pone aria-busy y aria-disabled, e ignora el click. No usa el disabled nativo, para no perder el foco.',
   },
   {
+    name: 'iconOnly',
+    type: 'boolean',
+    default: 'false',
+    description: 'Sin texto visible: caja cuadrada, y label pasa a ser el nombre y el tooltip.',
+  },
+  {
+    name: 'label',
+    type: 'string | null',
+    default: 'null',
+    description: 'Obligatoria con iconOnly (error en modo desarrollo). Llega traducida.',
+  },
+  {
+    name: 'pressed / expanded',
+    type: 'boolean | null',
+    default: 'null',
+    description: 'aria-pressed y aria-expanded. Null los deja fuera: no es un conmutador.',
+  },
+  {
+    name: 'controls',
+    type: 'string | null',
+    default: 'null',
+    description: 'aria-controls: el id del panel o menú que abre.',
+  },
+  {
     name: 'type',
     type: "'button' | 'submit'",
     default: "'button'",
@@ -149,14 +173,19 @@ interface SizeSample {
   readonly height: string;
 }
 
+const SIZE_SAMPLES: readonly SizeSample[] = [
+  { size: 'sm', label: 'Small', height: '…' },
+  { size: 'md', label: 'Medium', height: '…' },
+  { size: 'lg', label: 'Large', height: '…' },
+];
+
 /**
  * /design-system/components/button: la primera ficha y el molde de las demás. Tiene
  * los ocho bloques de la sección 4 de la especificación; el que no aplica lo dice.
  */
 @Component({
   selector: 'ewms-showroom-button',
-  // Sin Tooltip: ewms-icon-button ya aplica la directiva y esta plantilla no la escribe.
-  imports: [Button, IconButton, DemoFrame, PropTable, StateMatrix, TokenValue],
+  imports: [Button, DemoFrame, PropTable, StateMatrix, TokenValue],
   templateUrl: './button.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -169,11 +198,8 @@ export class ShowroomButton {
   protected readonly props = PROPS;
   protected readonly anatomy = ANATOMY;
 
-  protected readonly sizes = signal<readonly SizeSample[]>([
-    { size: 'sm', label: 'Small', height: '…' },
-    { size: 'md', label: 'Medium', height: '…' },
-    { size: 'lg', label: 'Large', height: '…' },
-  ]);
+  protected readonly sizes = signal<readonly SizeSample[]>(SIZE_SAMPLES);
+  protected readonly iconSizes = signal<readonly SizeSample[]>(SIZE_SAMPLES);
 
   /** Demo contra el doble envío. */
   protected readonly submitting = signal(false);
@@ -197,15 +223,22 @@ export class ShowroomButton {
 
     // Alturas medidas sobre los botones: el bloque existe para probar 32/40/48.
     afterNextRender(() => {
-      this.sizes.update((samples) =>
-        samples.map((sample) => {
-          const element = this.host.nativeElement.querySelector(
-            `[data-size-sample="${sample.size}"] button`,
-          );
-          const height = element?.getBoundingClientRect().height;
-          return { ...sample, height: height === undefined ? '—' : `${Math.round(height)} px` };
-        }),
-      );
+      this.sizes.update((samples) => this.measure(samples, 'data-size-sample', false));
+      this.iconSizes.update((samples) => this.measure(samples, 'data-icon-size-sample', true));
+    });
+  }
+
+  /** Solo ícono se mide en los dos ejes: el bloque existe para probar que es cuadrado. */
+  private measure(samples: readonly SizeSample[], attribute: string, square: boolean): SizeSample[] {
+    return samples.map((sample) => {
+      const box = this.host.nativeElement
+        .querySelector(`[${attribute}="${sample.size}"] button`)
+        ?.getBoundingClientRect();
+      if (!box) {
+        return { ...sample, height: '—' };
+      }
+      const height = `${Math.round(box.height)} px`;
+      return { ...sample, height: square ? `${Math.round(box.width)} × ${height}` : height };
     });
   }
 
