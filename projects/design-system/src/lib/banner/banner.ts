@@ -12,18 +12,14 @@ import { IconButton } from '../icon-button/icon-button';
 export type { FeedbackVariant } from '../feedback/feedback.types';
 
 /**
- * An inline message that stays until someone closes it.
+ * Un mensaje en línea que se queda hasta que alguien lo cierra.
  *
- * IT LIVES IN THE FLOW AND MAKES NO OVERLAY. That is the whole difference
- * between this and the Toast, and it decides which one a screen should use:
- * a banner pushes the layout down and stays there, so it is for a condition
- * that is still true (this warehouse is in stocktake, this order has an
- * incidence). A toast floats, leaves by itself, and is for something that just
- * happened.
- *
- * The icon is chosen from the variant and carries a `label`, because the
- * colour is not allowed to be the only signal (WCAG 1.4.1). Someone who does
- * not tell the four surfaces apart still hears "Error" before the message.
+ * VIVE EN EL FLUJO Y NO HACE NINGUNA CAPA: esa es toda la diferencia con el Toast y
+ * lo que decide cuál usar. Un banner empuja el layout y se queda, así que es para
+ * una condición que sigue siendo cierta; un toast flota, se va solo, y es para algo
+ * que acaba de pasar.
+ * El icono sale de la variante y lleva `label`, porque el color no puede ser la
+ * única señal (WCAG 1.4.1).
  */
 @Component({
   selector: 'ewms-banner',
@@ -35,40 +31,32 @@ export type { FeedbackVariant } from '../feedback/feedback.types';
 export class Banner {
   readonly variant = input<FeedbackVariant>('info');
 
-  /** The headline, already translated by the consumer (ADR 0008). */
+  /** El titular, ya traducido por el consumidor (ADR 0008). */
   readonly title = input.required<string>();
 
-  /** Optional second line. A one-line banner is a legitimate banner. */
+  /** Segunda línea opcional. Un banner de una línea es un banner legítimo. */
   readonly description = input<string>('');
 
   /**
-   * The severity, in words, for the icon's accessible name.
-   *
-   * REQUIRED IN THE TYPE, like the Icon Button's `label` and for the same
-   * reason: it is the only cue that does not depend on seeing the colour, so
-   * a default would quietly empty the guarantee. It is also the only string
-   * here the design system cannot produce -- it speaks no language.
+   * La severidad en palabras, para el nombre accesible del icono. OBLIGATORIA en el
+   * tipo, como el `label` del Icon Button y por lo mismo: es la única pista que no
+   * depende de ver el color, así que un valor por defecto vaciaría la garantía.
    */
   readonly severityLabel = input.required<string>();
 
   readonly dismissible = input<boolean>(false);
 
-  /**
-   * The accessible name of the close button. Ignored while `dismissible` is
-   * false, which is why it has a default instead of being required: making it
-   * required would tax every banner that has no button at all.
-   */
+  /** El nombre accesible del botón de cierre. Se ignora con `dismissible` en false,
+   * y por eso tiene default en vez de ser obligatorio: exigirlo gravaría a cada
+   * banner que no lleva botón. */
   readonly dismissLabel = input<string>('');
 
   /**
-   * NOT `(close)`. `close` is a method on `window` and on a `<dialog>`, and
-   * the rule of this system is that no public member is named after something
-   * native (Nomenclatura). `(dismiss)` says the same thing and collides with
-   * nothing.
-   *
-   * THE BANNER DOES NOT REMOVE ITSELF. It emits, and whoever placed it decides
-   * whether it goes away -- because "the user closed it" and "the condition
-   * ended" are different facts, and only the consumer knows the second one.
+   * NO es `(close)`: `close` es un método de `window` y de `<dialog>`, y la regla es
+   * que ningún miembro público se llame como algo nativo (Nomenclatura).
+   * EL BANNER NO SE SACA SOLO DE LA PANTALLA: emite, y quien lo puso decide si se
+   * va, porque «la persona lo cerró» y «la condición terminó» son hechos distintos
+   * y solo el consumidor conoce el segundo.
    */
   readonly dismiss = output<void>();
 
@@ -76,7 +64,7 @@ export class Banner {
 
   protected readonly iconName = computed(() => FEEDBACK_ICONS[this.variant()]);
 
-  /** `alert` for Danger and Warning, `status` for Success and Info. */
+  /** `alert` para Danger y Warning, `status` para Success e Info. */
   protected readonly role = computed(() => feedbackRole(this.variant()));
 
   protected readonly surfaceClasses = computed(() => feedbackSurfaceClasses(this.variant()));

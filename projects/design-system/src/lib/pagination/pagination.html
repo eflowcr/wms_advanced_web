@@ -1,11 +1,9 @@
 <!--
-  `role="navigation"` with a name, because that is what this is: a way to get
-  somewhere else in a set of results. A screen reader user landing on it out of
-  context needs to know that, and the page label alone does not say it.
-
-  The buttons are real `ewms-icon-button`s: their focus ring, their hit box and
-  their disabled behaviour are already decided, and a second copy of them here
-  would drift.
+  `role="navigation"` con nombre, porque eso es esto: una forma de ir a otro lado
+  dentro de un conjunto de resultados, y quien aterriza acá fuera de contexto
+  necesita saberlo.
+  Los botones son `ewms-icon-button` de verdad: su anillo, su caja y su
+  comportamiento deshabilitado ya están decididos.
 -->
 <nav class="flex items-center justify-end gap-3" [attr.aria-label]="label()">
   @if (totalLabel()) {
@@ -13,11 +11,10 @@
   }
 
   <!--
-    A live region, so moving between pages is announced. The focus stays on the
-    button that was pressed -- which is right, because the next press is
-    usually the same button -- and without this nothing would tell a screen
-    reader that the page underneath had changed at all.
-  -->
+  Una región viva, para que moverse entre páginas se anuncie. El foco se queda en el
+  botón pulsado -que está bien, porque la próxima pulsación suele ser el mismo-, y
+  sin esto nada avisaría que la página de abajo cambió.
+-->
   <span class="text-caption text-primary" role="status" aria-live="polite" data-page-label>
     {{ label() }}
   </span>

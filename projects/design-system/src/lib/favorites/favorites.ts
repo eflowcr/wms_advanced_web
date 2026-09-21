@@ -2,24 +2,15 @@ import { Injectable, computed, inject, signal, type Signal } from '@angular/core
 import { EWMS_FAVORITES_STORE, type Favorite } from './favorites.types';
 
 /**
- * THE FAVOURITES OF THIS SESSION, AS SIGNALS (REQ-FE-DS4-002 RFE-01).
- *
- * Signals and not a store library, like every other piece of state in this
- * application: PLN-WMS-002 §5 asks for state management in proportion to the
- * problem, and the problem is a list of at most a handful of routes.
- *
- * IT KNOWS THE INTERFACE AND NEVER A MECHANISM. Where the list is kept is
- * `EWMS_FAVORITES_STORE`'s business; this service reads through it, writes
- * through it, and holds the answer in a signal so the block in the navigation
- * and the star on the page redraw together without either of them asking.
- *
- * WHY IT IS HERE AND NOT IN `core/preferences/`, which is where the REQ put
- * it. Exactly the reason the keyboard engine is here: the showroom may not
- * import `@ewms/core` at all (the boundary is an ESLint error), and the
- * showroom is where the example screen lives. A service in `core/` would have
- * meant a second implementation for the catalogue, which is the drift the
- * single interface exists to prevent. Carried into v1.2 of the REQ with this
- * reason, as the same move was carried into v1.1 for `keyboard/`.
+ * LOS FAVORITOS DE ESTA SESIÓN, COMO SEÑALES (REQ-FE-DS4-002 RFE-01). Señales y no
+ * una librería de estado, como todo lo demás acá: PLN-WMS-002 §5 pide gestión de
+ * estado en proporción al problema, y el problema es una lista de unas pocas rutas.
+ * CONOCE LA INTERFAZ Y NUNCA UN MECANISMO: dónde se guarda la lista es asunto de
+ * `EWMS_FAVORITES_STORE`.
+ * VIVE ACÁ Y NO EN `core/preferences/`, donde lo puso el REQ, por lo mismo que el
+ * motor de teclado: el showroom no puede importar `@ewms/core` -la frontera es un
+ * error de ESLint- y el showroom es donde vive la pantalla de ejemplo. Llevado a
+ * la v1.2 del REQ con esta razón.
  */
 @Injectable()
 export class Favorites {
@@ -27,7 +18,7 @@ export class Favorites {
 
   private readonly items = signal<readonly Favorite[]>([]);
 
-  /** The list, in a stable order. */
+  /** La lista, en orden estable. */
   readonly list: Signal<readonly Favorite[]> = this.items.asReadonly();
 
   readonly count = computed(() => this.items().length);
@@ -36,27 +27,24 @@ export class Favorites {
     void this.refresh();
   }
 
-  /** Whether this route is marked. A signal, so a star redraws by itself. */
+  /** Si esta ruta está marcada. Una señal, así una estrella se repinta sola. */
   isFavorite(route: string): Signal<boolean> {
     return computed(() => this.items().some((favorite) => favorite.route === route));
   }
 
   /**
-   * Mark or unmark. Idempotent per pair: marking and unmarking returns the
-   * list to exactly where it was (PACQ-01.2).
-   *
-   * The signal is refreshed FROM THE STORE after the write rather than being
-   * patched optimistically. With the in-memory store the difference is
-   * invisible; with a backend it is the difference between showing what was
-   * saved and showing what we hoped was saved.
+   * Marca o desmarca. Idempotente por par: marcar y desmarcar devuelve la lista a
+   * donde estaba (PACQ-01.2). La señal se refresca DESDE EL STORE después de
+   * escribir y no se parchea optimistamente: con el store en memoria no se nota,
+   * con un backend es la diferencia entre mostrar lo guardado y lo que esperábamos.
    */
   async toggle(route: string): Promise<void> {
     const marked = this.items().some((current) => current.route === route);
     if (marked) {
       await this.store.remove(route);
     } else {
-      // The route and nothing else: what it is called is resolved when the
-      // block is drawn (`EWMS_FAVORITE_LABELS`), never written down here.
+      // La ruta y nada más: cómo se llama se resuelve al pintar el bloque
+      // (`EWMS_FAVORITE_LABELS`), nunca se anota acá.
       await this.store.add({ route });
     }
     await this.refresh();

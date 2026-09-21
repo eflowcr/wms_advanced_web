@@ -1,116 +1,84 @@
 import { InjectionToken } from '@angular/core';
 
 /**
- * The global actions, BY NAME. A screen registers `create`; it never registers
- * `Alt+N` (REQ-FE-DS4-001 RFE-01).
- *
- * The list is closed on purpose. An open `string` would let two screens invent
- * `nuevo` and `new` for the same thing, which is the drift the whole map
- * exists to prevent, and the help dialog would have nothing to label them
- * with. Per-domain shortcuts arrive with the first vertical domain (DS-6) and
- * will extend this union, not escape it.
+ * Las acciones globales, POR NOMBRE: una pantalla registra `create`, nunca
+ * `Alt+N` (RFE-01). La lista es cerrada a propósito: un `string` abierto dejaría
+ * inventar `nuevo` y `new` para lo mismo, que es la deriva que el mapa evita.
  */
 export type ShortcutAction =
-  /** Put the focus in the screen's search field. */
+  /** Pone el foco en el campo de búsqueda de la pantalla. */
   | 'search'
-  /** Start creating a new record. */
+  /** Empieza a crear un registro nuevo. */
   | 'create'
-  /** Save the active form. */
+  /** Guarda el formulario activo. */
   | 'save'
-  /** Cancel what is in progress, or close the open overlay. */
+  /** Cancela lo que está en curso, o cierra la capa abierta. */
   | 'cancel'
-  /** Open the list of shortcuts. */
+  /** Abre la lista de atajos. */
   | 'help';
 
 /**
- * One binding: which key, which modifiers, and the two behaviours that are
- * properties of the COMBINATION rather than opinions of the engine.
- *
- *
- * WHY `insideTextFields` AND `preventDefault` ARE DECLARED HERE
- *
- * RFE-04 has exactly one exception -- Escape -- and RFE-02 has exactly one
- * combination whose browser default has to go -- Ctrl+S. Written into the
- * engine, both would be a key name spelled somewhere other than the map, and
- * then the map is no longer the single place a key lives. Written here, the
- * engine stays generic and the map keeps its promise: changing Escape for
- * something else is editing one line of one file, and the help dialog updates
- * itself because it reads the same object.
+ * Un atajo: qué tecla, qué modificadores, y los dos comportamientos que son
+ * propiedad de la COMBINACIÓN y no opinión del motor. `insideTextFields` y
+ * `preventDefault` se declaran acá porque escritos dentro del motor serían un
+ * nombre de tecla fuera del mapa, y el mapa dejaría de ser el único lugar.
  */
 export interface ShortcutBinding {
-  /** The `KeyboardEvent.key` value, exactly as the browser reports it. */
+  /** El `KeyboardEvent.key`, tal cual lo reporta el navegador. */
   readonly key: string;
   readonly ctrl?: boolean;
   readonly alt?: boolean;
   /**
-   * Fires even with the focus inside a text field. RFE-04's single exception,
-   * and it is not a convenience: half the time somebody wants to cancel, the
-   * focus is inside the field they are filling in.
+   * Dispara aun con el foco dentro de un campo. La única excepción de RFE-04, y
+   * no es comodidad: la mitad de las veces que alguien quiere cancelar, el foco
+   * está en el campo que está llenando.
    */
   readonly insideTextFields?: boolean;
   /**
-   * The browser's own answer to this combination must not run.
-   *
-   * Applied WHETHER OR NOT anybody registered the action, which is the point
-   * for Ctrl+S: a half-finished page saved to disk is worse than nothing
-   * happening.
+   * La respuesta del navegador a esta combinación no puede correr. Se aplica ESTÉ
+   * O NO registrada la acción, que es el punto de Ctrl+S.
    */
   readonly preventDefault?: boolean;
   /**
-   * How the combination is written on screen, one `<kbd>` per element.
-   *
-   * Separate from `key` because the two genuinely differ: the key is `n` and
-   * what a person reads is `N`, the key is `/` and the chord is `/`. Deriving
-   * one from the other works until it does not, and the help dialog is the
-   * only reader.
+   * Cómo se escribe la combinación en pantalla, un `<kbd>` por elemento. Aparte
+   * de `key` porque de verdad difieren: la tecla es `n` y lo que se lee es `N`.
    */
   readonly chord: readonly string[];
 }
 
-/** Every action bound. A missing action is a compile error, not a silent gap. */
+/** Todas las acciones atadas. Una que falte es un error de compilación. */
 export type ShortcutMap = Readonly<Record<ShortcutAction, ShortcutBinding>>;
 
 /**
- * THE MAP, PROVIDED ONCE PER APPLICATION.
- *
- * The library defines the shape and implements none of it, exactly like
- * `EWMS_TABLE_MESSAGES` and `EWMS_SEARCH_SELECT_MESSAGES` before it. The shell
- * provides its map from `shortcuts.map.ts`; the showroom provides its own for
- * the pattern pages. Each application therefore has ONE file that names keys,
- * which is what RFE-01 asks for, and the two applications are free to differ
- * -- the showroom is a catalogue, not a warehouse screen.
+ * EL MAPA, PROVISTO UNA VEZ POR APLICACIÓN. La librería define la forma y no
+ * implementa ninguna, como `EWMS_TABLE_MESSAGES`. Así cada aplicación tiene UN
+ * archivo que nombra teclas (RFE-01), y el shell y el showroom pueden diferir.
  */
 export const EWMS_SHORTCUT_MAP = new InjectionToken<ShortcutMap>('EWMS_SHORTCUT_MAP');
 
 /**
- * The words the help dialog puts on screen, already translated (ADR 0008).
- *
- * The design system speaks no language. The shell fills this from Transloco,
- * the showroom from Spanish literals, and neither of them repeats the list of
- * shortcuts: what is provided here is one label per ACTION, and the keys come
- * from the map. Adding a shortcut adds a line to the map and a label here, and
- * the dialog changes by itself (RFE-07).
+ * Los textos del diálogo de ayuda, ya traducidos (ADR 0008). Se provee una
+ * etiqueta por ACCIÓN y las teclas salen del mapa: agregar un atajo es una línea
+ * en el mapa y una etiqueta acá, y el diálogo cambia solo (RFE-07).
  */
 export interface ShortcutHelpMessages {
   readonly title: string;
-  /** One sentence under the title, before the table. */
+  /** Una frase bajo el título, antes de la tabla. */
   readonly intro: string;
   readonly actionColumn: string;
   readonly keyColumn: string;
   readonly close: string;
-  /** The label of the WCAG 2.1.4 switch. */
+  /** La etiqueta del conmutador de WCAG 2.1.4. */
   readonly singleKeyLabel: string;
-  /** Why the switch is there, in one sentence. */
+  /** Por qué está ese conmutador, en una frase. */
   readonly singleKeyHint: string;
   /**
-   * Shown beside a single-character shortcut while the switch is off.
-   *
-   * The row is not hidden: a shortcut that vanished would leave somebody
-   * wondering whether they had imagined it, and the list is also how you find
-   * out the switch is what silenced it.
+   * Se muestra junto a un atajo de un carácter mientras el conmutador está
+   * apagado. La fila no se esconde: un atajo que desaparece deja a alguien
+   * dudando si lo imaginó, y la lista es cómo se descubre qué lo silenció.
    */
   readonly singleKeyOff: string;
-  /** What each action does, in the reader's language. */
+  /** Qué hace cada acción, en el idioma de quien lee. */
   readonly actions: Readonly<Record<ShortcutAction, string>>;
 }
 
@@ -119,26 +87,23 @@ export const EWMS_SHORTCUT_HELP_MESSAGES = new InjectionToken<ShortcutHelpMessag
 );
 
 /**
- * Whether this binding is a bare printable character -- `/` and `?` today.
- *
- * DERIVED AND NOT DECLARED, because it is a fact about the combination rather
- * than a decision somebody makes: a key that produces one character with no
- * modifier is one a person hits while doing something else, and one a barcode
- * gun can emit. WCAG 2.2 2.1.4 is about exactly this class of shortcut, and so
- * is the deferral the engine applies to it.
+ * Si este atajo es un carácter imprimible pelado -`/` y `?` hoy-. DERIVADO y no
+ * declarado, porque es un hecho de la combinación: una tecla que produce un
+ * carácter sin modificador es una que alguien pulsa haciendo otra cosa, y una
+ * que una pistola puede emitir. WCAG 2.2 2.1.4 va exactamente de esta clase.
  */
 export function isSingleCharacter(binding: ShortcutBinding): boolean {
   return binding.key.length === 1 && binding.ctrl !== true && binding.alt !== true;
 }
 
-/** Whether this keydown is the binding, modifiers included. */
+/** Si este keydown es el atajo, modificadores incluidos. */
 export function matches(binding: ShortcutBinding, event: KeyboardEvent): boolean {
   return (
     event.key === binding.key &&
     event.ctrlKey === (binding.ctrl ?? false) &&
     event.altKey === (binding.alt ?? false) &&
-    // Never claimed by a global shortcut: on macOS this is Command, and on
-    // Windows it opens the system menu. Neither belongs to the application.
+    // Nunca lo reclama un atajo global: en macOS es Command y en Windows abre el
+    // menú del sistema. Ninguno de los dos es de la aplicación.
     !event.metaKey
   );
 }

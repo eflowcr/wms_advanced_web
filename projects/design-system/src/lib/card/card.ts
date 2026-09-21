@@ -18,19 +18,12 @@ import {
 } from './card.types';
 
 /**
- * Two uses under one name, exactly as the sheet describes them.
- *
- *   - Inside an `ewms-card-group`: an OPTION. It takes a role, a tab position
- *     and the arrow keys from the group, and draws itself chosen or not.
- *   - Anywhere else: a CONTAINER. Header, body and footer, no state of its
- *     own, not interactive, not a tab stop.
- *
- * WHICH ONE IT IS COMES FROM WHERE IT IS WRITTEN, NOT FROM AN INPUT. A
- * `selectable` flag would let `<ewms-card selectable>` exist outside a group,
- * which is a radio with nothing to be a radio in -- an element with
- * `role="radio"` and no `radiogroup` around it, which is invalid and which axe
- * reports. Asking the injector removes the possibility instead of documenting
- * it away.
+ * Dos usos bajo un nombre, como los describe la ficha: dentro de un
+ * `ewms-card-group` es una OPCIÓN -toma rol, posición de tabulación y flechas del
+ * grupo-; en cualquier otro lado es un CONTENEDOR sin estado ni interacción.
+ * CUÁL ES SALE DE DÓNDE SE ESCRIBE, NO DE UNA ENTRADA: una bandera `selectable`
+ * dejaría existir una card seleccionable fuera de un grupo, o sea un `role="radio"`
+ * sin `radiogroup` alrededor, que es inválido y que axe reporta.
  */
 @Component({
   selector: 'ewms-card',
@@ -41,31 +34,24 @@ import {
 })
 export class Card implements CardGroupMember, OnDestroy {
   /**
-   * What this card is worth when it is the chosen one. Meaningless outside a
-   * group, and ignored there.
-   *
-   * Not called `value`: `value` is the group's, and the group is the thing a
-   * form binds to. Two members called `value` in one component tree is how a
-   * reader ends up binding the wrong one.
+   * Cuánto vale esta card al ser la elegida. Sin sentido fuera de un grupo. No se
+   * llama `value`: `value` es del grupo, que es a lo que se ata un formulario, y
+   * dos miembros con ese nombre es cómo alguien ata el que no era.
    */
   readonly optionValue = input<unknown>(null);
 
-  /** This card's own disabled input. The group's is OR-ed in, never subtracted. */
+  /** La entrada propia de la card. La del grupo se suma con O, nunca se resta. */
   readonly disabled = input<boolean>(false);
 
-  /**
-   * The group this card belongs to, or null when it is a plain container.
-   *
-   * `self: false` on purpose -- the group is an ancestor component, not this
-   * element. `optional: true` is what makes the container case legal.
-   */
+  /** El grupo al que pertenece, o null si es un contenedor. `self: false` porque el
+   * grupo es un ancestro; `optional: true` es lo que hace legal el caso contenedor. */
   private readonly group = inject(CardGroup, { optional: true });
 
   private readonly box = viewChild.required<ElementRef<HTMLElement>>('box');
 
   protected readonly inGroup = computed(() => this.group !== null);
 
-  /** Quien deshabilita gana: the card's own input, or the group's. */
+  /** Quien deshabilita gana: la entrada de la card, o la del grupo. */
   readonly ownDisabled = this.disabled;
 
   protected readonly isDisabled = computed(() =>
@@ -76,10 +62,8 @@ export class Card implements CardGroupMember, OnDestroy {
     () => this.group !== null && this.group.selectedValue() === this.optionValue(),
   );
 
-  /**
-   * One tab stop for the whole group, and this is where it lands. Everything
-   * else in the group is reachable with the arrows and nowhere else.
-   */
+  /** Un solo tab stop para todo el grupo, y acá aterriza. El resto se alcanza con
+   * las flechas y con nada más. */
   protected readonly tabIndex = computed<number | null>(() => {
     if (!this.group || this.isDisabled()) {
       return null;
@@ -118,11 +102,9 @@ export class Card implements CardGroupMember, OnDestroy {
   }
 
   /**
-   * The arrow keys and Space, as a radio group answers them.
-   *
-   * `Enter` is deliberately absent. In a radio group Enter belongs to the form
-   * around it -- it submits -- and swallowing it here would break the one
-   * gesture that makes a keyboard-driven form fast.
+   * Las flechas y la barra espaciadora, como responde un grupo de radios. `Enter`
+   * falta a propósito: en un grupo de radios es del formulario -envía-, y tragarlo
+   * rompería el gesto que hace rápido un formulario manejado con teclado.
    */
   protected onKeydown(event: KeyboardEvent): void {
     if (!this.group || this.isDisabled()) {
@@ -140,8 +122,8 @@ export class Card implements CardGroupMember, OnDestroy {
         this.group.move(-1);
         return;
       case ' ':
-        // Space scrolls the page by default, which is the last thing a person
-        // choosing an option wants.
+        // Espacio hace scroll por defecto, lo último que quiere quien elige una
+        // opción.
         event.preventDefault();
         this.group.select(this.optionValue());
         return;

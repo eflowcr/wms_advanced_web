@@ -21,13 +21,10 @@ export type { ButtonIconPosition, ButtonSize, ButtonVariant } from './button.typ
 let nextButtonId = 0;
 
 /**
- * Primary action button for the design system.
- *
- * Implements accessible loading states (retaining focus and accessible name),
- * token-based variant styling, and strict event suppression during loading/disabled states.
- *
- * The visual implementation is shared with `ewms-icon-button` through
- * button.types.ts: two public APIs, one style.
+ * El botón de acción del sistema. Estado de carga accesible -conserva foco y
+ * nombre-, estilo por token y supresión estricta de eventos mientras carga o está
+ * deshabilitado. La implementación visual se comparte con `ewms-icon-button` por
+ * button.types.ts: dos APIs públicas, un estilo.
  */
 @Component({
   selector: 'ewms-button',
@@ -45,24 +42,16 @@ export class Button {
   readonly loading = input<boolean>(false);
 
   /**
-   * WHETHER THIS BUTTON SUBMITS THE FORM IT IS IN. Default `'button'`, which
-   * means nothing that exists changes.
+   * SI ESTE BOTÓN ENVÍA EL FORMULARIO EN QUE ESTÁ. Por defecto `'button'`, así que
+   * nada de lo que existe cambia.
    *
-   * The Button rendered `type="button"` unconditionally until DS-5, and that
-   * was deliberate: a button that submits without anybody asking is a whole
-   * class of defect this system does not have. It also had a cost, found by
-   * building the example screen of DS-4 and written down as a pending decision
-   * on the Button's own sheet: A FORM WITH NO SUBMIT BUTTON IS NOT SENT BY
-   * `Enter` EITHER. The browser's implicit submission needs a submit button to
-   * exist, so every multi-field form in this system could only be saved by
-   * clicking or by Ctrl+S -- and `Enter` in a field, which is what everybody
-   * does, did nothing at all.
-   *
-   * So submitting stays something somebody writes on purpose; it is now
-   * possible to write it. `type="submit"` inside a `<form>` gives back the
-   * browser's own behaviour, `Enter` included, and the anti-double-submit
-   * pattern is unchanged: `loading` blocks the second press exactly as it
-   * blocks the second click.
+   * Hasta DS-5 el Botón pintaba `type="button"` siempre, y era deliberado. También
+   * tenía un costo, encontrado construyendo la pantalla de ejemplo de DS-4: UN
+   * FORMULARIO SIN BOTÓN DE ENVÍO TAMPOCO SE ENVÍA CON `Enter`, porque el envío
+   * implícito del navegador necesita que exista uno. Cada formulario de varios
+   * campos solo se podía guardar con clic o con Ctrl+S.
+   * Enviar sigue siendo algo que alguien escribe a propósito; ahora se puede
+   * escribir, y el patrón anti doble envío no cambia.
    */
   readonly type = input<'button' | 'submit'>('button');
 
@@ -89,11 +78,8 @@ export class Button {
 
   protected readonly spinnerColor = computed(() => buttonSpinnerColor(this.variant()));
 
-  /**
-   * `aria-disabled` marks the loading state only while the native attribute is
-   * absent. With `disabled` set the native attribute already conveys it, and
-   * carrying both would announce the state twice.
-   */
+  /** `aria-disabled` marca la carga solo mientras falta el atributo nativo: con
+   * `disabled` puesto el nativo ya lo dice, y los dos lo anunciarían dos veces. */
   protected readonly ariaDisabled = computed(() =>
     this.loading() && !this.disabled() ? 'true' : null,
   );

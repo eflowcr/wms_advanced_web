@@ -6,13 +6,10 @@ import {
 } from '../listbox/listbox.types';
 
 /**
- * One row of the panel.
- *
- * `label` is the text a person reads, already translated by the consumer --
- * the design system speaks no language (ADR 0008). `value` is what the form
- * receives, and it is `unknown` on purpose: an id, a code, an enum member or a
- * whole object are all legitimate, and narrowing it here would push every
- * consumer into a cast.
+ * Una fila del panel. `label` es el texto que se lee, ya traducido (ADR 0008).
+ * `value` es lo que recibe el formulario y es `unknown` a propósito: un id, un
+ * código, un miembro de enum o un objeto entero son todos legítimos, y estrecharlo
+ * acá empujaría a cada consumidor a un cast.
  */
 export interface SelectOption {
   label: string;
@@ -20,18 +17,14 @@ export interface SelectOption {
 }
 
 /**
- * THE PANEL AND THE ROWS NOW LIVE IN `listbox/`, AND THIS FILE ONLY NAMES
- * THEM.
- *
- * They moved there in DS-3 when `ewms-search-select` arrived, because
- * REQ-FE-DS3-001 HG-04 forbids a second panel or a second keyboard alongside
- * this one. Nothing about the Select changed: the names below are the ones its
- * template and its spec already used, which is what made the extraction
- * provable rather than merely plausible.
- *
- * Virtual scrolling for lists past a hundred options is noted in the ficha and
- * deliberately still absent: it is an optimisation with no consumer, and the
- * answer for a list that long is `ewms-search-select`, which pages.
+ * EL PANEL Y LAS FILAS VIVEN EN `listbox/`, y este archivo solo los nombra. Se
+ * mudaron en DS-3 con la llegada de `ewms-search-select`, porque HG-04 prohíbe un
+ * segundo panel o un segundo teclado. Del Select no cambió nada: estos son los
+ * nombres que su plantilla y su spec ya usaban, que es lo que hizo demostrable la
+ * extracción.
+ * El scroll virtual para listas de más de cien opciones sigue ausente a propósito:
+ * es una optimización sin consumidor, y la respuesta a una lista así de larga es
+ * `ewms-search-select`, que pagina.
  */
 export const SELECT_PANEL_CLASSES = LISTBOX_PANEL_CLASSES;
 export const SELECT_OPTION_BASE_CLASSES = LISTBOX_OPTION_BASE_CLASSES;

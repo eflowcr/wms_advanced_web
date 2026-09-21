@@ -1,7 +1,7 @@
 <!--
-  A named <nav> around an <ol>. The chevrons are decorative and say so:
-  `aria-hidden` on each, because "chevron right" read out between every step
-  is noise, and the list already carries the order.
+  Un `<nav>` con nombre alrededor de un `<ol>`. Los chevrones son decorativos y lo
+  dicen: «chevron derecha» leído entre cada paso es ruido, y la lista ya lleva el
+  orden.
 -->
 <nav class="min-w-0" [attr.aria-label]="label()">
   <ol class="flex min-w-0 list-none flex-wrap items-center gap-2">
@@ -9,9 +9,9 @@
       <li class="flex min-w-0 items-center gap-2">
         @if (isLast(crumb)) {
           <!--
-            The page you are on: current, and NOT a link. A link to here is a
-            link that does nothing, and it is announced as a destination.
-          -->
+  La página donde estás: actual y NO un enlace. Un enlace a acá es un enlace que no
+  hace nada, y se anuncia como destino.
+-->
           <span class="truncate text-h4 text-primary" aria-current="page">
             {{ crumb.label }}
           </span>
@@ -30,10 +30,9 @@
 
         @if (showsFoldAfter(crumb)) {
           <!--
-            THE FOLD IS A BUTTON, NOT AN ELLIPSIS DRAWN ON THE PAGE.
-            Three dots that cannot be pressed tell somebody their path was
-            shortened and give them no way to see it again.
-          -->
+  EL PLIEGUE ES UN BOTÓN, no unos puntos dibujados en la página: tres puntos que no
+  se pueden pulsar avisan que el camino se acortó y no dan forma de volver a verlo.
+-->
           <button
             type="button"
             class="rounded-sm px-1 text-p text-secondary outline-none hover:text-primary focus-visible:shadow-(--focus-ring-shadow)"

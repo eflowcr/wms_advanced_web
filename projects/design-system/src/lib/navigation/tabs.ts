@@ -20,27 +20,12 @@ export type TabsMode = 'section' | 'document';
 let nextTabsId = 0;
 
 /**
- * TWO MODES, ONE COMPONENT, AND THAT IS THE WHOLE DECISION.
- *
- *   `section`   an underlined strip for the sub-sections of one screen.
- *   `document`  the MDI strip of the App Shell: the active tab is a white
- *               card with a shadow, the others are flat grey, and each one
- *               closes.
- *
- * They look nothing alike and they ARE the same control: a list of things, one
- * of which is showing. Two components would be two keyboards, two focus
- * contracts and two sets of ARIA to keep in step, and the day somebody fixed
- * an arrow-key bug they would fix it in one of them.
- *
- * NO `tabpanel` IS RENDERED HERE, and that is not an omission. In the App
- * Shell the panel is the `<router-outlet>`; in a screen it is whatever the
- * consumer draws. A component that owned the panel would own the content, and
- * a document tab's content is a route.
- *
- * The keyboard is the APG's: the strip is one Tab stop, the arrows move
- * between tabs, Home and End jump, and Delete closes the one you are on when
- * it can be closed. Activation follows the focus -- these tabs show something
- * that is already loaded, so there is nothing to pay for moving through them.
+ * DOS MODOS, UN COMPONENTE: `section` es una tira subrayada para las subsecciones
+ * de una pantalla, `document` es la tira MDI del App Shell. No se parecen y SON el
+ * mismo control -una lista de cosas, una de ellas mostrándose-; dos componentes
+ * serían dos teclados y dos contratos de foco que mantener al día.
+ * ACÁ NO SE PINTA NINGÚN `tabpanel`: en el shell el panel es el `<router-outlet>`.
+ * El teclado es el de las APG y la activación sigue al foco.
  */
 @Component({
   selector: 'ewms-tabs',
@@ -55,16 +40,12 @@ export class Tabs {
   readonly mode = input<TabsMode>('section');
 
   /**
-   * The strip's accessible name, already translated.
-   *
-   * Required for the same reason the rail's is: a screen with section tabs
-   * inside a document tab has two tablists, and "tab list" twice tells a
-   * screen-reader user nothing about which is which.
+   * El nombre de la tira, ya traducido. Obligatorio como el del rail: una pantalla
+   * con tabs de sección dentro de una pestaña de documento tiene dos tablists.
    */
   readonly label = input.required<string>();
 
-
-  /** Labels for the overflow controls, already translated. */
+  /** Etiquetas de los controles de desborde, ya traducidas. */
   readonly scrollBackLabel = input<string>('');
   readonly scrollForwardLabel = input<string>('');
 
@@ -77,7 +58,7 @@ export class Tabs {
 
   protected readonly listId = `ewms-tabs-${++nextTabsId}`;
 
-  /** Whether the strip is wider than its box, so the arrows have a job. */
+  /** Si la tira es más ancha que su caja, para que las flechas tengan trabajo. */
   private readonly overflowing = signal(false);
 
   protected readonly isDocument = computed(() => this.mode() === 'document');
@@ -85,9 +66,8 @@ export class Tabs {
 
   constructor() {
     /*
-     * A ResizeObserver and not a window resize listener: the strip narrows
-     * when the rail expands, which no window event reports. Created after the
-     * first render because there is nothing to observe before it.
+     * Un ResizeObserver y no un listener de resize de ventana: la tira se angosta
+     * cuando el rail se abre, y eso ningún evento de ventana lo reporta.
      */
     afterNextRender(() => {
       const element = this.strip()?.nativeElement;
@@ -103,8 +83,8 @@ export class Tabs {
   }
 
   protected isClosable(tab: Tab): boolean {
-    // Closable unless it says otherwise: in an MDI strip a tab that cannot be
-    // closed is the exception, and the exception is what gets written down.
+    // Cerrable salvo que diga lo contrario: en una tira MDI la que no se cierra es
+    // la excepción, y la excepción es lo que se escribe.
     return this.isDocument() && tab.closable !== false;
   }
 
@@ -116,10 +96,8 @@ export class Tabs {
   }
 
   /**
-   * The mouse's way to close, from the glyph inside the tab.
-   *
-   * `stopPropagation` because the glyph sits inside the tab button: without
-   * it, closing a tab would also select it on the way out.
+   * El cierre con el ratón, desde el glifo de adentro. `stopPropagation` porque el
+   * glifo está dentro del botón de la pestaña: sin él, cerrarla la seleccionaría.
    */
   protected onCloseGlyph(event: Event, tab: Tab): void {
     event.stopPropagation();
@@ -127,11 +105,9 @@ export class Tabs {
   }
 
   /**
-   * The APG's tab keyboard.
-   *
-   * `Delete` closes the tab you are on. It is the only destructive key here
-   * and it is guarded twice: the tab has to be closable, and a tab is only
-   * closable in `document` mode -- a section is not something you close.
+   * El teclado de tabs de las APG. `Delete` cierra la pestaña donde estás: es la
+   * única tecla destructiva y va con doble guarda -tiene que ser cerrable, y solo
+   * lo es en modo `document`-.
    */
   protected onKeydown(event: KeyboardEvent, tab: Tab): void {
     const tabs = this.tabs().filter((candidate) => candidate.disabled !== true);

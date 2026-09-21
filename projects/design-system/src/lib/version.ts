@@ -1,13 +1,10 @@
 import { version } from '../../package.json';
 
 /**
- * The version of @ewms/design-system, taken from its own package.json at
- * compile time.
- *
- * Exported because the showroom shows which version of the system you are
- * looking at, and a version typed into a page by hand is wrong the first time
- * the library is bumped. The showroom cannot read this package.json itself:
- * crossing into another project by relative path is what the public API
- * exists to prevent (eslint.config.js).
+ * La versión de @ewms/design-system, tomada de su propio package.json en tiempo de
+ * compilación. Se exporta porque el showroom muestra qué versión estás mirando, y
+ * una versión tipeada a mano está mal la primera vez que se sube la librería. El
+ * showroom no puede leer ese package.json: cruzar a otro proyecto por ruta relativa
+ * es lo que la API pública existe para impedir.
  */
 export const DESIGN_SYSTEM_VERSION: string = version;

@@ -6,26 +6,16 @@ import { ShortcutHelp, SHORTCUT_HELP_TITLE_ID } from './shortcut-help';
 import { EWMS_SHORTCUT_HELP_MESSAGES, EWMS_SHORTCUT_MAP } from './shortcuts.types';
 
 /**
- * THE ONE KEYBOARD LISTENER OF THE APPLICATION (RFE-03).
- *
- * Written once, on the root layout, exactly as the comanda demands: *"in the
- * base navigation component, not as something each screen implements
- * separately"*. There is no second one anywhere, and that is checkable rather
- * than promised -- `shortcuts-host.spec.ts` greps the source for a global
- * `keydown` outside this folder and the search select's own field handler.
- *
- * `addEventListener` on the document rather than `@HostListener('document:…')`
- * so that removing it is explicit and this file says, in one place, both when
- * the listener starts and when it stops.
- *
- * NO NgZone ANYWHERE, and that is not an omission: this application runs
- * zoneless, so what schedules a render is a signal changing, not an event
- * firing. A handler that sets a signal updates the view; one that does not,
- * does not -- which is also why a barcode's forty keystrokes cost nothing.
- *
- * It registers `help` itself, because that is the one action belonging to the
- * engine rather than to a screen: every screen has it, and no screen should
- * have to remember to.
+ * EL ÚNICO LISTENER DE TECLADO DE LA APLICACIÓN (RFE-03), escrito una vez sobre el
+ * layout raíz. No hay un segundo en ningún lado, y es comprobable:
+ * `shortcuts-host.spec.ts` busca en el fuente un `keydown` global fuera de esta
+ * carpeta y del campo del selector.
+ * `addEventListener` sobre el documento y no `@HostListener`, para que este archivo
+ * diga en un solo lugar cuándo empieza y cuándo termina el listener.
+ * SIN NgZone: la aplicación es zoneless, así que lo que agenda un pintado es una
+ * señal que cambia y no un evento -por eso las cuarenta teclas de un barcode no
+ * cuestan nada-. Registra `help` él mismo: es la acción del motor y no de una
+ * pantalla.
  */
 @Directive({
   selector: '[ewmsShortcutsHost]',
@@ -37,16 +27,11 @@ export class ShortcutsHost {
 
   constructor() {
     /*
-     * THE MAP IS INJECTED HERE, NOT IN THE SERVICE, and that is the reason
-     * this is a directive on the layout rather than something the service
-     * does to itself on startup.
-     *
-     * Each application provides `EWMS_SHORTCUT_MAP` on its root layout
-     * COMPONENT -- the shell on `MainLayout`, the showroom on
-     * `ShowroomLayout` -- which puts it in an element injector. A directive on
-     * that same element is inside that chain; a `providedIn: 'root'` service
-     * is above it and would find nothing. So the directive reads the map and
-     * mounts it, and `KeyboardShortcuts` stays the one registry of handlers.
+     * EL MAPA SE INYECTA ACÁ Y NO EN EL SERVICIO, y por eso esto es una directiva
+     * sobre el layout: cada aplicación provee `EWMS_SHORTCUT_MAP` en su COMPONENTE
+     * de layout raíz, o sea en un inyector de elemento. Una directiva sobre ese
+     * mismo elemento está en esa cadena; un servicio `providedIn: 'root'` está por
+     * encima y no encontraría nada.
      */
     this.shortcuts.mount(inject(EWMS_SHORTCUT_MAP), this.messages);
 
@@ -65,13 +50,10 @@ export class ShortcutsHost {
   }
 
   /**
-   * RFE-07: the list, read off the map, in a dialog that returns the focus.
-   *
-   * The CDK does the returning (`restoreFocus`, set in DialogService), which
-   * is also why this dialog lives in the library and not in each application:
-   * it is user interface, it needs `DialogService`, and a copy per application
-   * would be the list of shortcuts written twice -- the one thing RFE-07
-   * forbids.
+   * RFE-07: la lista, leída del mapa, en un diálogo que devuelve el foco. Lo
+   * devuelve el CDK, que es también por qué este diálogo vive en la librería: es
+   * interfaz, necesita `DialogService`, y una copia por aplicación sería la lista
+   * de atajos escrita dos veces.
    */
   private openHelp(): void {
     this.dialog.open<void, void, ShortcutHelp>(ShortcutHelp, {

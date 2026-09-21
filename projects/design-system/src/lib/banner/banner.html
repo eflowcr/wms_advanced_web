@@ -1,18 +1,21 @@
 <!--
-  `role` is bound rather than written, because it is the one attribute here
-  that changes meaning with the variant: Danger and Warning interrupt the
-  screen reader, Success and Info wait their turn. Giving all four `alert`
-  would make every "saved" cut into whatever was being read.
-
-  The whole box is the live region, not just the text: a banner that appeared
-  has to be announced with its severity, and the severity is the icon's label.
+  `role` va atado y no escrito, porque es el único atributo de acá que cambia de
+  significado con la variante: Danger y Warning interrumpen al lector de pantalla,
+  Success e Info esperan su turno. Darles `alert` a los cuatro haría que cada
+  «guardado» cortara lo que se estuviera leyendo.
+  La caja entera es la región viva y no solo el texto: un banner que apareció se
+  anuncia con su severidad, y la severidad es la etiqueta del icono.
 -->
-<div [attr.role]="role()" class="flex items-start gap-3 rounded-md border p-4" [class]="surfaceClasses()">
+<div
+  [attr.role]="role()"
+  class="flex items-start gap-3 rounded-md border p-4"
+  [class]="surfaceClasses()"
+>
   <!--
-    `label` and not aria-hidden: this icon carries information that no visible
-    text repeats -- which of the four this is -- so it is the one icon in the
-    system that is never decorative.
-  -->
+  `label` y no aria-hidden: este icono lleva información que ningún texto visible
+  repite -cuál de los cuatro es-, así que es el único icono del sistema que nunca
+  es decorativo.
+-->
   <ewms-icon [name]="iconName()" [size]="iconSize" [label]="severityLabel()" />
 
   <div class="flex min-w-0 flex-1 flex-col gap-1">
@@ -24,14 +27,12 @@
 
   @if (dismissible()) {
     <!--
-      The close button is a real `ewms-icon-button`, not a bare <button> with
-      an x in it: the focus ring, the hit box and the disabled behaviour are
-      already decided there, and a second copy of them here would drift.
-
-      Ghost keeps it quiet inside a coloured surface, and its foreground is the
-      action blue -- which is correct rather than a clash: closing the banner
-      IS the click, and blue means "you click this".
-    -->
+  El botón de cierre es un `ewms-icon-button` de verdad y no un `<button>` pelado
+  con una x: el anillo de foco, la caja y el comportamiento deshabilitado ya están
+  decididos ahí.
+  Ghost lo mantiene callado dentro de una superficie de color, y su frente es el
+  azul de acción, que es correcto y no un choque: cerrar el banner ES el clic.
+-->
     <ewms-icon-button
       icon="x"
       size="sm"

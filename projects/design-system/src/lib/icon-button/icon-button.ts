@@ -15,22 +15,12 @@ import { Icon } from '../icon/icon';
 import { Tooltip } from '../tooltip/tooltip';
 
 /**
- * A button whose only visible content is an icon. For table rows, dense
- * toolbars, and anywhere text does not fit.
- *
- * NOT A VARIANT OF `ewms-button`, and the reason is types. In a single
- * component `label` would have to be optional -- redundant whenever there is
- * text -- and nothing would then stop `<ewms-button icon="trash" />`, which
- * compiles and has no accessible name. As a separate component `label` is
- * required in the type, so that button does not compile.
- *
- * What the two DO share is the implementation: the same tokens, the same focus
- * ring, the same loading pattern, written once in button.types.ts and reused
- * by both. Two public APIs, one style. They cannot drift.
- *
- * The default variant is `ghost`, not `primary`: this control lives in rows
- * and toolbars, where the correct emphasis is the lowest one. A `primary`
- * default would fill every table row with blue boxes.
+ * Un botón cuyo único contenido visible es un icono. NO es una variante de
+ * `ewms-button`, y la razón son los tipos: en un solo componente `label` tendría
+ * que ser opcional y nada impediría un botón de icono sin nombre accesible, que
+ * compila. Separados, `label` es obligatoria en el tipo y eso no compila.
+ * Comparten implementación (button.types.ts): dos APIs públicas, un estilo.
+ * La variante por defecto es `ghost` y no `primary`: vive en filas y barras.
  */
 @Component({
   selector: 'ewms-icon-button',
@@ -42,22 +32,14 @@ import { Tooltip } from '../tooltip/tooltip';
 export class IconButton {
   readonly icon = input.required<IconName>();
 
-  /**
-   * Required in the type, without exception: with no text there is no
-   * accessible name. A default value would empty the guarantee.
-   *
-   * The consumer passes it already translated -- the design system speaks no
-   * language (ADR 0008).
-   */
+  /** Obligatoria sin excepción: sin texto no hay nombre accesible, y un valor por
+   * defecto vaciaría la garantía. Llega ya traducida (ADR 0008). */
   readonly label = input.required<string>();
 
   /**
-   * Required as well, and NOT derived from `label`. They usually say the same
-   * thing, but generating it would close the case where they must differ:
-   * `label="Eliminar"` with `tooltip="Eliminar (no se puede deshacer)"`.
-   *
-   * Called `tooltip` and not `ewmsTooltip`: the component selector already
-   * carries the prefix, so repeating it on every attribute would be noise.
+   * Obligatorio también, y NO derivado de `label`: casi siempre dicen lo mismo,
+   * pero generarlo cerraría el caso en que deben diferir -«Eliminar» contra
+   * «Eliminar (no se puede deshacer)»-.
    */
   readonly tooltip = input.required<string>();
 
@@ -67,30 +49,18 @@ export class IconButton {
   readonly loading = input<boolean>(false);
 
   /**
-   * Whether what this button opens is open, and what it opens.
-   *
-   * INPUTS RATHER THAN ATTRIBUTES ON THE TAG, because `aria-expanded` written
-   * on `<ewms-icon-button>` lands on the custom element -- which has no role
-   * and is not the thing anybody presses -- while the state belongs on the
-   * `<button>` inside. The state was announced nowhere until these existed.
-   *
-   * Not `ariaExpanded`/`ariaControls`: those are the names of native IDL
-   * members, and nothing public here is allowed to shadow one.
+   * Si lo que abre está abierto, y qué abre. ENTRADAS Y NO ATRIBUTOS EN LA
+   * ETIQUETA: un `aria-expanded` escrito sobre `<ewms-icon-button>` cae en el
+   * elemento personalizado, que no tiene rol y no es lo que se pulsa.
    */
   readonly expanded = input<boolean | null>(null);
   readonly controlsId = input<string | null>(null);
 
   /**
-   * Whether this button is a TWO-STATE button, and which state it is in.
-   *
-   * Added in DS-5 for `ewms-favorite-toggle`, and an input rather than an
-   * attribute on the tag for exactly the reason `expanded` is: `aria-pressed`
-   * written on `<ewms-icon-button>` lands on the custom element, which has no
-   * role and is not what anybody presses.
-   *
-   * `null` by default, so an ordinary icon button carries no `aria-pressed`
-   * at all. A button that always announces "not pressed" is a button a screen
-   * reader describes as a toggle when it is not one.
+   * Si este botón es de DOS ESTADOS, y en cuál está. Entrada y no atributo, por lo
+   * mismo que `expanded`. `null` por defecto, así un botón de icono común no lleva
+   * `aria-pressed`: uno que siempre anuncia «no pulsado» es uno que un lector de
+   * pantalla describe como conmutador sin serlo.
    */
   readonly pressed = input<boolean | null>(null);
 
@@ -98,11 +68,8 @@ export class IconButton {
 
   protected readonly iconSize = computed(() => BUTTON_ICON_SIZES[this.size()]);
 
-  /**
-   * Square. The icon uses the Button's mapping (`sm` at Small, `md` at Medium
-   * and Large) rather than a larger one of its own: the two live side by side
-   * in the same toolbar, and two icons of different sizes read as a mistake.
-   */
+  /** Cuadrado. El icono usa el mapeo del Botón y no uno propio más grande: los dos
+   * conviven en la misma barra, y dos tamaños en una fila se leen como un error. */
   protected readonly boxClass = computed(() => ICON_BUTTON_SIZE_CLASSES[this.size()]);
 
   protected readonly variantClasses = computed(() =>
@@ -111,11 +78,8 @@ export class IconButton {
 
   protected readonly spinnerColor = computed(() => buttonSpinnerColor(this.variant()));
 
-  /**
-   * Same rule as the Button: `aria-disabled` marks the loading state only
-   * while the native attribute is absent, so the state is never announced
-   * twice.
-   */
+  /** Como el Botón: `aria-disabled` marca la carga solo mientras falta el atributo
+   * nativo, para que el estado no se anuncie dos veces. */
   protected readonly ariaDisabled = computed(() =>
     this.loading() && !this.disabled() ? 'true' : null,
   );

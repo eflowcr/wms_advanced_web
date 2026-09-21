@@ -1,29 +1,18 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
-import {
-  familyBoxClasses,
-  familyIcon,
-  type SemanticFamily,
-} from '../feedback/feedback.types';
+import { familyBoxClasses, familyIcon, type SemanticFamily } from '../feedback/feedback.types';
 import { Icon } from '../icon/icon';
 
 /**
- * A small label that says what state something is in.
+ * Una etiqueta chica que dice en qué estado está algo.
  *
- * BORN INSIDE THE TABLE AND DELIBERATELY NOT LIVING THERE. Its first consumer
- * is the Table's `badge` column, but nothing about it is table-shaped: a
- * detail header, a card and a list row all need to say "con incidencia" the
- * same way, and a badge that only existed inside the table would be copied by
- * hand the first time one of them did.
- *
- * ALWAYS ICON **AND** TEXT. The colour is never the only signal (WCAG 1.4.1),
- * and unlike the Banner this component has no room for a second line -- so the
- * text is the label itself and the icon is decorative beside it. That is why
- * `label` is required and there is no icon-only mode: an icon-only badge is a
- * colour with a picture on it.
- *
- * `Badge/Neutral` uses surface + text rather than solid + white, because the
- * neutral solid reaches only 4.19:1 (Fundamentos de Marca). The other three
- * follow it so the four look like one family.
+ * NACIÓ DENTRO DE LA TABLA Y A PROPÓSITO NO VIVE AHÍ: nada de esto tiene forma de
+ * tabla, y un detalle, una card y una fila de lista tienen que decir «con
+ * incidencia» igual.
+ * SIEMPRE ICONO Y TEXTO: el color nunca es la única señal (WCAG 1.4.1), y acá no
+ * hay lugar para una segunda línea, así que el texto es la etiqueta y el icono va
+ * decorativo al lado. Por eso `label` es obligatoria y no hay modo solo-icono.
+ * `Badge/Neutral` usa surface + text y no solid + blanco, porque el solid neutral
+ * llega apenas a 4.19:1 (Fundamentos de Marca).
  */
 @Component({
   selector: 'ewms-badge',
@@ -33,13 +22,11 @@ import { Icon } from '../icon/icon';
   host: { class: 'inline-flex' },
 })
 export class Badge {
-  /**
-   * Which of the four. Named by the COLOUR FAMILY and not by a message
-   * vocabulary: nobody says "an info row".
-   */
+  /** Cuál de las cuatro. Nombrada por la FAMILIA DE COLOR y no por un vocabulario
+   * de mensaje: nadie dice «una fila info». */
   readonly variant = input<SemanticFamily>('neutral');
 
-  /** The words. Required, and already translated (ADR 0008). */
+  /** Las palabras. Obligatorias y ya traducidas (ADR 0008). */
   readonly label = input.required<string>();
 
   protected readonly boxClasses = computed(() => familyBoxClasses(this.variant()));

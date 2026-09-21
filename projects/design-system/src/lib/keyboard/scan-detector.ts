@@ -1,85 +1,59 @@
 /**
- * THE ONE PLACE THAT TELLS A PERSON FROM A BARCODE GUN.
+ * El único lugar que distingue una persona de una pistola de códigos.
  *
- * A barcode reader presents itself to the operating system as a keyboard. It
- * emits the characters of a code one at a time and closes with Enter, and it
- * does so far faster than any hand: an industrial reader sits around 5-20 ms
- * per character, a very fast typist around 120 ms. `--threshold-scan-keystroke`
- * is where the line is drawn, and it is a token rather than a number in here
- * because the model of reader on the warehouse floor is not known yet
- * (REQ-FE-DS4-001 RFE-06).
- *
- *
- * WHY THIS IS A CLASS WITH NO FRAMEWORK IN IT
- *
- * It started inside `ewms-search-select`, which needed it first, and DS-4
- * needed the same measurement for the global shortcut engine. Two
- * implementations of "is this a gun?" is the one duplication this system
- * cannot afford: they would drift, and the half that drifted would fire a
- * shortcut in the middle of a scan -- which on a warehouse floor is a wrong
- * inventory movement, not an interface annoyance.
- *
- * So it lives here, it takes the threshold and the clock as arguments, and it
- * is tested on its own with simulated times at both sides of the line. Neither
- * consumer owns it and neither can quietly change it.
+ * Un lector se presenta al sistema como teclado: emite los caracteres uno a uno
+ * y cierra con Enter, a 5-20 ms por carácter contra los ~120 ms de alguien muy
+ * rápido. `--threshold-scan-keystroke` es dónde se traza la raya, y es un token
+ * porque todavía no se sabe qué modelo habrá en el depósito (RFE-06).
+ * Sin framework adentro, con el reloj como argumento, para que ni el motor de
+ * atajos ni `ewms-search-select` puedan cambiarla por su cuenta.
  */
 
 /**
- * How many keystrokes in a row have to arrive under the threshold before a run
- * counts as a scan.
- *
- * Two is not enough: two fast keys happen when somebody types "SK" with both
- * hands. A barcode is never two characters, so asking for four costs a real
- * scan nothing and keeps a fast typist from being mistaken for a gun.
+ * Cuántas teclas seguidas bajo el umbral hacen falta para que una ráfaga cuente
+ * como escaneo. Dos no alcanzan: dos teclas rápidas pasan al tipear «SK» con las
+ * dos manos. Un código de barras nunca tiene dos caracteres, así que pedir cuatro
+ * no le cuesta nada a un escaneo real.
  */
 export const SCAN_MIN_KEYSTROKES = 4;
 
-/** The token the consumers read to get the threshold. See tokens/read-token.ts. */
+/** El token del que los consumidores sacan el umbral. Ver tokens/read-token.ts. */
 export const SCAN_THRESHOLD_TOKEN = '--threshold-scan-keystroke';
 
 /**
- * What one keystroke turned out to be.
- *
- * `burst` and `scan` are different answers to different questions: `burst`
- * means "this key belongs to a run that is still open, do not act on it", and
- * `scan` means "the run closed on Enter and here is the whole code". A
- * consumer that only cares about suppressing shortcuts uses the first; one
- * that wants the code uses the second.
+ * Qué resultó ser una tecla. `burst` es «pertenece a una ráfaga abierta, no
+ * actúes»; `scan` es «la ráfaga cerró con Enter y acá está el código entero».
  */
 export type ScanVerdict =
-  /** An ordinary keystroke. A shortcut may act on it. */
+  /** Una tecla común. Un atajo puede actuar sobre ella. */
   | { readonly kind: 'key' }
-  /** Inside a run that is fast enough to be a gun. NOTHING may act on it. */
+  /** Dentro de una ráfaga con velocidad de pistola. NADA puede actuar. */
   | { readonly kind: 'burst' }
-  /** A qualifying run closed on Enter. The code is complete. */
+  /** Una ráfaga que califica cerró con Enter. El código está completo. */
   | { readonly kind: 'scan'; readonly code: string };
 
 const KEY: ScanVerdict = { kind: 'key' };
 const BURST: ScanVerdict = { kind: 'burst' };
 
 /**
- * One run of keystrokes, measured.
- *
- * One instance per surface that listens: the global engine has one, and each
- * `ewms-search-select` has its own. They must not share, because two fields
- * on one screen are two independent runs.
+ * Una ráfaga de teclas, medida. Una instancia por superficie que escucha: dos
+ * campos en una pantalla son dos ráfagas independientes y no pueden compartirla.
  */
 export class ScanDetector {
-  /** The characters of the run currently open, in order. */
+  /** Los caracteres de la ráfaga abierta, en orden. */
   private run: string[] = [];
-  /** When the last printable key of the run arrived. */
+  /** Cuándo llegó la última tecla imprimible de la ráfaga. */
   private lastKeystroke = 0;
 
   /**
-   * Fold one keydown into the run and say what it was.
+   * Mete un keydown en la ráfaga y dice qué fue.
    *
-   * @param threshold Milliseconds, from `--threshold-scan-keystroke`, or
-   *   `null` when the stylesheet does not declare it. With no threshold
-   *   nothing can be classified as a scan -- the surface still works, it just
-   *   never resolves one. No fallback number lives here, for the reason
-   *   read-token.ts gives.
-   * @param now The clock, injectable so the unit test can simulate times
-   *   rather than sleep. `Date.now()` in production.
+   * @param threshold Milisegundos, de `--threshold-scan-keystroke`, o `null` si la
+   *   hoja no lo declara. Sin umbral nada se puede clasificar como escaneo: la
+   *   superficie sigue andando, solo que nunca resuelve uno. Acá no vive ningún
+   *   número de reserva, por la razón que da read-token.ts.
+   * @param now El reloj, inyectable para que la prueba simule tiempos en vez de
+   *   dormir. `Date.now()` en producción.
    */
   accept(event: KeyboardEvent, threshold: number | null, now: number = Date.now()): ScanVerdict {
     if (event.key === 'Enter') {
@@ -90,17 +64,16 @@ export class ScanDetector {
     }
 
     /*
-     * A GUN SENDS NO MODIFIERS AND NO NAMED KEYS, AND BOTH HALVES MATTER.
+     * UNA PISTOLA NO MANDA MODIFICADORES NI TECLAS CON NOMBRE, y las dos mitades
+     * importan.
      *
-     * `key.length !== 1` catches ArrowDown, Escape, Tab and Shift: a run
-     * containing one of those was a person, so it breaks. That was found by
-     * the end-to-end walk of the search select page, where HOLDING the down
-     * arrow repeats every 30-odd milliseconds and arrived at Enter looking
-     * exactly like a scan.
-     *
-     * The modifier check is the same argument one level up: nothing a reader
-     * emits is held down with Ctrl or Alt, so a combination is proof of a
-     * person. It also means Alt+N and Ctrl+S never need to wait to be sure.
+     * `key.length !== 1` atrapa ArrowDown, Escape, Tab y Shift: una ráfaga con una
+     * de esas era una persona, así que se rompe. Lo encontró la caminata E2E de la
+     * página del selector, donde MANTENER la flecha abajo repite cada 30 y pico de
+     * milisegundos y llegaba al Enter con cara de escaneo.
+     * El modificador es el mismo argumento un nivel arriba: nada que emita un lector
+     * va con Ctrl o Alt, así que una combinación es prueba de persona, y Alt+N y
+     * Ctrl+S nunca tienen que esperar para estar seguros.
      */
     if (event.key.length !== 1 || event.ctrlKey || event.altKey || event.metaKey) {
       this.reset();
@@ -114,28 +87,25 @@ export class ScanDetector {
 
     const gap = now - this.lastKeystroke;
     this.lastKeystroke = now;
-    // A single slow gap starts the run over. That is what keeps a person who
-    // types a fast burst, pauses, and then types more from accumulating one
-    // long run across the pause -- and it is why the code carried out of a
-    // scan is the run's characters and not everything typed since the page
-    // loaded.
+    // Un solo hueco lento empieza la ráfaga de nuevo. Eso evita que quien tipea
+    // rápido, hace una pausa y sigue acumule una ráfaga larga a través de la pausa,
+    // y es por qué el código que sale de un escaneo son los caracteres de la ráfaga
+    // y no todo lo tipeado desde que cargó la página.
     this.run = gap <= threshold ? [...this.run, event.key] : [event.key];
 
     return this.run.length >= SCAN_MIN_KEYSTROKES ? BURST : KEY;
   }
 
   /**
-   * How many characters the open run holds.
-   *
-   * Read by a consumer that has to decide something about the run without
-   * feeding it a key -- there is one, and it is the search select deciding
-   * whether its Enter closes a scan or chooses the active row.
+   * Cuántos caracteres tiene la ráfaga abierta. Lo lee un consumidor que necesita
+   * decidir algo sin darle una tecla: hay uno, y es el selector con búsqueda
+   * decidiendo si su Enter cierra un escaneo o elige la fila activa.
    */
   get length(): number {
     return this.run.length;
   }
 
-  /** Forget the open run. Called when the surface loses the focus. */
+  /** Olvida la ráfaga abierta. Se llama cuando la superficie pierde el foco. */
   reset(): void {
     this.run = [];
     this.lastKeystroke = 0;

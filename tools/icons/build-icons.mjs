@@ -247,14 +247,14 @@ export async function buildIcons() {
   lines.push(
     '} as const satisfies Record<string, readonly IconPrimitive[]>;',
     '',
-    '/** Every icon that exists. A name outside this union is a compile error. */',
+    '/** Todos los iconos que existen. Un nombre fuera de esta union es error de compilacion. */',
     'export type IconName = keyof typeof DATA;',
     '',
     'export const ICONS: Readonly<Record<IconName, readonly IconPrimitive[]>> = DATA;',
     '',
     `export type IconCategory = ${CATEGORIES.map(quote).join(' | ')};`,
     '',
-    '/** Manifest grouping, names sorted. Used by the showroom catalogue. */',
+    '/** Agrupacion del manifiesto, nombres ordenados. La usa el catalogo del showroom. */',
     'export const ICON_CATEGORIES: Readonly<Record<IconCategory, readonly IconName[]>> = {',
   );
   for (const category of CATEGORIES) {

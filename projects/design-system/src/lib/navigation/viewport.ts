@@ -2,34 +2,20 @@ import { DOCUMENT } from '@angular/common';
 import { DestroyRef, Injectable, inject, signal, type Signal } from '@angular/core';
 import { readPixels } from '../tokens/read-token';
 
-/** The token that says where the navigation changes shape. */
+/** El token que dice dónde cambia de forma la navegación. */
 export const NAV_BOTTOM_BREAKPOINT_TOKEN = '--breakpoint-nav-bottom';
 
 /**
- * WHERE THE LAYOUT CHANGES SHAPE, READ FROM THE TOKEN AND NOT FROM A `md:`.
+ * DÓNDE CAMBIA DE FORMA EL LAYOUT, LEÍDO DEL TOKEN Y NO DE UN `md:`.
  *
- * The point of change is a design decision, so it lives in tokens.css like the
- * height of the header. Getting it from there to a media query is the part
- * that is not obvious, and the obvious route is broken:
- *
- *   Mapping `--breakpoint-nav-bottom` into Tailwind's `@theme` emits
- *   `@media (width >= var(--breakpoint-nav-bottom))`. A custom property is not
- *   substituted inside a media feature, so that query is invalid and false at
- *   every width. It compiles, no gate objects, and the layout never changes.
- *   Handing Tailwind a literal instead puts a raw pixel value in styles.css,
- *   which gate 10 rejects -- correctly.
- *
- * So the token is read with `readPixels` and handed to `matchMedia`. It is the
- * same move `ToastService` makes with `--duration-toast` and the shortcut
- * engine with `--threshold-scan-keystroke`, for the same reason: the value
- * cannot travel as a declaration, and a copy in the code is the drift gate 10
- * exists to prevent.
- *
- * WHEN THE TOKEN IS NOT THERE, THE WIDE LAYOUT WINS, and that is a decision
- * rather than a default. `readPixels` returns null when the stylesheet has not
- * loaded; with no number there is no query to ask, and the rail is the layout
- * that works at every width -- it merely costs space on a narrow screen. The
- * bottom bar is the one that would be wrong on a desktop.
+ * Mapear el token al `@theme` de Tailwind emite una media query con `var()`
+ * adentro, y una propiedad personalizada no se sustituye en una media feature: la
+ * consulta es inválida y falsa a cualquier ancho. Compila, ninguna compuerta se
+ * queja, y el layout no cambia nunca. Darle un literal mete un píxel crudo en
+ * styles.css, que la compuerta 10 rechaza con razón.
+ * Así que el token se lee con `readPixels` y se le pasa a `matchMedia`.
+ * SIN TOKEN GANA EL LAYOUT ANCHO, y es decisión: el rail funciona a cualquier
+ * ancho y solo cuesta espacio; la barra inferior sería la equivocada en escritorio.
  */
 @Injectable({ providedIn: 'root' })
 export class Viewport {
@@ -37,7 +23,7 @@ export class Viewport {
 
   private readonly wide = signal(true);
 
-  /** True when the viewport is at or above the navigation breakpoint. */
+  /** Cierto cuando el viewport está en o sobre el punto de corte. */
   readonly isWide: Signal<boolean> = this.wide.asReadonly();
 
   constructor() {

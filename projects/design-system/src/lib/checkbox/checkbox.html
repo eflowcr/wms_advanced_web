@@ -1,12 +1,9 @@
 <!--
-  The <label> WRAPS the control, so there is no for/id pair to keep in sync and
-  the whole row -- box, gap and text -- is the hit target. That is also why
-  cursor-pointer sits on the row: the text is part of the control, not
-  decoration beside it.
-
-  No aria-disabled next to the native `disabled`: the native attribute already
-  carries the state, and both would announce it twice (same rule as the
-  Button).
+  El `<label>` ENVUELVE al control, así no hay par for/id que mantener y la fila
+  entera -caja, hueco y texto- es el blanco. Por eso `cursor-pointer` va en la fila:
+  el texto es parte del control, no adorno al lado.
+  Sin `aria-disabled` junto al `disabled` nativo: el atributo ya lleva el estado y
+  los dos lo anunciarían dos veces (misma regla que el Botón).
 -->
 <label [class]="rowClasses()">
   <span class="relative inline-flex">
@@ -24,13 +21,11 @@
     />
 
     <!--
-      The glyph is a SIBLING laid over the box, not a child of it: an <input>
-      cannot have children. pointer-events-none keeps every click on the input
-      underneath, so the box never has two things competing for the same pixel.
-
-      Both glyphs are aria-hidden decoration. What the state IS comes from
-      aria-checked, which says `mixed` where the picture only says "blue".
-    -->
+  El glifo es un HERMANO puesto encima de la caja y no un hijo: un `<input>` no
+  tiene hijos. `pointer-events-none` deja cada clic en el input de abajo.
+  Los dos glifos son decoración aria-hidden: lo que el estado ES lo dice
+  `aria-checked`, que sabe decir `mixed` donde el dibujo solo dice «azul».
+-->
     <span [class]="glyphClasses">
       @if (indeterminate()) {
         <ewms-icon name="minus" size="sm" />

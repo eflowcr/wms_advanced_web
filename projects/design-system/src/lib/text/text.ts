@@ -4,11 +4,9 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 export type TextVariant = 'h1' | 'h2' | 'h3' | 'h4' | 'p' | 'caption' | 'mono';
 
 /**
- * The single canonical way to render styled typography in the design system.
- *
- * Each variant sets size, weight, and line-height together.
- * Renders the semantic HTML element for the variant (h1-h4, p, span).
- * No 'as' or 'level' escape hatches by design.
+ * La única forma canónica de pintar tipografía del sistema. Cada variante fija
+ * tamaño, peso e interlineado juntos y pinta el elemento semántico que le
+ * corresponde (h1-h4, p, span). Sin escapes por `as` ni por `level`, a propósito.
  */
 @Component({
   selector: 'ewms-text',

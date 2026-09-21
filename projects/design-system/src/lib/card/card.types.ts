@@ -1,56 +1,46 @@
 import type { Signal } from '@angular/core';
 
 /**
- * What a group needs from the cards inside it, and nothing more.
- *
- * It exists to break a cycle rather than to abstract anything: `ewms-card`
- * injects `CardGroup` to find out whether it is inside one, so the group
- * cannot import the card back to query it. The cards register themselves
- * through this interface instead, in construction order -- which is DOM order
- * within one template, and DOM order is what the arrow keys have to follow.
+ * Lo que un grupo necesita de las cards que tiene adentro, y nada más. Existe para
+ * romper un ciclo y no para abstraer: `ewms-card` inyecta `CardGroup` para saber si
+ * está dentro de uno, así que el grupo no puede importar la card para consultarla.
+ * Las cards se registran por esta interfaz en orden de construcción, que en una
+ * plantilla es orden del DOM, que es lo que tienen que seguir las flechas.
  */
 export interface CardGroupMember {
-  /** What this card is worth when it is the chosen one. */
+  /** Cuánto vale esta card al ser la elegida. */
   readonly optionValue: Signal<unknown>;
-  /** Its own disabled input, before the group's is OR-ed in. */
+  /** Su propia entrada `disabled`, antes de sumarle la del grupo. */
   readonly ownDisabled: Signal<boolean>;
-  /** Move the keyboard here. */
+  /** Traé el teclado acá. */
   focus(): void;
 }
 
 /**
- * The box, in both uses.
- *
- * `shadow-sm` is the elevation scale's "card at rest" and the only level a
- * card ever takes: a card that lifts to a dropdown's elevation reads as
- * floating over the page rather than lying on it.
+ * La caja, en los dos usos. `shadow-sm` es la «card en reposo» de la escala de
+ * elevación y el único nivel que toma una card: una que subiera al nivel de un
+ * desplegable se leería flotando sobre la página en vez de apoyada en ella.
  */
-export const CARD_BASE_CLASSES =
-  'flex flex-col gap-3 rounded-md border border-solid p-4 shadow-sm';
+export const CARD_BASE_CLASSES = 'flex flex-col gap-3 rounded-md border border-solid p-4 shadow-sm';
 
 /**
- * The extra a card takes when it is an option in a group: a hit target, a
- * pointer, and the system's focus ring.
- *
- * `outline-none` is paired with the replacement on the same line, never on its
- * own -- the same rule every other control in this library follows.
+ * Lo que suma una card cuando es una opción de un grupo: blanco, puntero y el
+ * anillo de foco del sistema. `outline-none` va emparejado con su reemplazo en la
+ * misma línea y nunca solo, como en todo control de esta librería.
  */
 export const CARD_SELECTABLE_CLASSES =
   'w-full text-left select-none outline-none focus-visible:shadow-(--focus-ring-shadow)';
 
 /**
- * Surface and border for a selectable card.
+ * Superficie y borde de una card seleccionable.
  *
- * SELECTED IS BORDER **AND** FILL, and the border is the accent.
- * `--color-row-selected` is never allowed to be the only signal -- Fundamentos
- * de Marca pairs it with an accent bar because the tint alone is within a
- * hair of `--color-ghost-hover`, and a WMS puts ghost buttons inside
- * selectable rows. A card does not need a 3 px bar to satisfy that: its whole
- * outline turns the action blue, which is the same guarantee drawn larger. The
- * check glyph in the corner is the third cue, for whoever reads neither.
- *
- * Disabled comes first and has no hover: a card that cannot be chosen must not
- * light up under the pointer.
+ * ELEGIDA ES BORDE Y RELLENO, y el borde es el acento. `--color-row-selected` nunca
+ * puede ser la única señal -Fundamentos de Marca lo acompaña con una barra, porque
+ * el tinte solo queda a un pelo de `--color-ghost-hover`-. Una card no necesita una
+ * barra de 3 px: su contorno entero se vuelve el azul de acción, que es la misma
+ * garantía dibujada más grande, y el tilde de la esquina es la tercera pista.
+ * Deshabilitada va primero y sin hover: una card que no se puede elegir no se
+ * enciende bajo el puntero.
  */
 export function cardSelectableClasses(selected: boolean, disabled: boolean): string {
   if (disabled) {

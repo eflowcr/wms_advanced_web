@@ -10,42 +10,29 @@ import {
   type ShortcutHelpMessages,
 } from './shortcuts.types';
 
-/** The id the heading carries, so the CDK container can point `aria-labelledby` at it. */
+/** El id del encabezado, para que el contenedor del CDK apunte su `aria-labelledby`. */
 export const SHORTCUT_HELP_TITLE_ID = 'ewms-shortcut-help-title';
 
-/** One row of the table: an action, what it does, and how it is written. */
+/** Una fila de la tabla: una acción, qué hace y cómo se escribe. */
 interface HelpRow {
   readonly action: ShortcutAction;
   readonly description: string;
   readonly chord: readonly string[];
-  /** Whether this one goes quiet when the 2.1.4 switch is off. */
+  /** Si esta se calla cuando el conmutador de 2.1.4 está apagado. */
   readonly singleKey: boolean;
 }
 
 /**
- * WHAT `?` OPENS (RFE-07), AND THE SWITCH WCAG 2.2 ASKS FOR (RFE-09).
+ * Qué abre `?` (RFE-07) y el conmutador que pide WCAG 2.2 (RFE-09).
  *
- * THE LIST IS NEVER WRITTEN TWICE. This component reads `EWMS_SHORTCUT_MAP`
- * -- the same object the engine dispatches from -- so a shortcut added to the
- * map appears here without anybody touching this file. What the application
- * provides separately is one LABEL per action, because the library speaks no
- * language (ADR 0008); the keys come from the map.
- *
- *
- * THE SWITCH IS NOT A SETTING SOMEBODY ASKED FOR
- *
- * WCAG 2.2 success criterion 2.1.4, Character Key Shortcuts, says that a
- * shortcut which is a single printable character must be switchable off or
- * remappable. RFE-04 -- no shortcut inside a text field -- does not satisfy
- * it: 2.1.4 exists for people using speech input, whose words become
- * characters wherever the focus happens to be, and for anyone whose switch or
- * head-pointer emits stray keys. `/` and `?` are exactly that class of
- * shortcut, so they get the switch. It was a finding against REQ-FE-DS4-001
- * v1.0, which did not have it, and is RFE-09 of v1.1.
- *
- * It lives in memory for as long as the tab does. Remembering it needs a place
- * to keep a preference per user, which needs the backend's Security Core
- * (PLN-WMS-005, Sprint 1) -- the dependency that also defers favourites.
+ * LA LISTA NUNCA SE ESCRIBE DOS VECES: este componente lee `EWMS_SHORTCUT_MAP`,
+ * el mismo objeto desde el que despacha el motor, así que un atajo agregado al
+ * mapa aparece acá sin tocar este archivo. La aplicación provee una ETIQUETA por
+ * acción, porque la librería no habla ningún idioma (ADR 0008).
+ * El conmutador no es una preferencia que alguien pidió: WCAG 2.2 2.1.4 exige
+ * poder apagar un atajo de un solo carácter imprimible, y RFE-04 no alcanza
+ * porque 2.1.4 existe para quien usa entrada por voz. Vive en memoria hasta que
+ * haya Security Core.
  */
 @Component({
   selector: 'ewms-shortcut-help',
@@ -62,30 +49,21 @@ export class ShortcutHelp {
   protected readonly singleKeyShortcuts = this.shortcuts.singleKeyShortcuts;
 
   /**
-   * THE MAP AND THE WORDS COME FROM THE ENGINE, not from the two injection
-   * tokens directly, and the reason is not style.
-   *
-   * A dialog is created by the CDK against the injector it was given, which is
-   * the environment one -- and both tokens are provided on a root layout
-   * COMPONENT, in an element injector below it. Injecting them here would find
-   * nothing. Reading them off `KeyboardShortcuts` also means this dialog can
-   * only ever show the map that is really dispatching, which for a list whose
-   * whole job is to be true is the stronger guarantee.
-   *
-   * Non-null by construction: the dialog is opened by the host, and the host
-   * mounted the map before it registered the action that opens this.
+   * EL MAPA Y LAS PALABRAS VIENEN DEL MOTOR y no de los dos tokens: un diálogo lo
+   * crea el CDK contra el inyector de entorno, y los dos tokens los provee un
+   * COMPONENTE de layout raíz, en un inyector de elemento de más abajo -inyectarlos
+   * acá no encontraría nada-. Leerlos del motor garantiza además que este diálogo
+   * solo pueda mostrar el mapa que de verdad está despachando.
    */
   protected readonly messages = computed<ShortcutHelpMessages | null>(() =>
     this.shortcuts.helpMessages(),
   );
 
   /**
-   * The map, in the order it was written.
-   *
-   * Insertion order and not alphabetical: the map lists the four working
-   * actions in the order somebody meets them -- find, create, save, cancel --
-   * and sorting by the Spanish or English name would scramble that differently
-   * per language.
+   * El mapa, en el orden en que se escribió. De inserción y no alfabético: el mapa
+   * lista las cuatro acciones en el orden en que alguien las encuentra -buscar,
+   * crear, guardar, cancelar- y ordenar por nombre lo desordenaría distinto en
+   * cada idioma.
    */
   protected readonly rows = computed<readonly HelpRow[]>(() => {
     const messages = this.messages();
@@ -101,7 +79,7 @@ export class ShortcutHelp {
     }));
   });
 
-  /** Whether any shortcut at all is affected by the switch. */
+  /** Si algún atajo se ve afectado por el conmutador. */
   protected readonly hasSingleKey = computed(() => this.rows().some((row) => row.singleKey));
 
   protected toggleSingleKey(enabled: boolean): void {

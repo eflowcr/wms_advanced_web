@@ -17,30 +17,14 @@ import { isGroup, parentOf, visibleItems, type NavItem } from './navigation.type
 let nextRailId = 0;
 
 /**
- * THE NAVIGATION TREE, AND NOTHING ELSE.
- *
- * It draws items, says which one is current, opens and closes groups, and
- * reports what was chosen. It does not know the router, the real menu, the
- * permissions, or what any route means. The shell knows all four
- * (`projects/shell/src/app/layout/`); this is the piece it draws with.
- *
- * TWO WIDTHS, ONE COMPONENT. Collapsed it is a rail of icons
- * (`--nav-rail-width`); expanded, a panel of icon and label
- * (`--nav-panel-width`). Both numbers come from the App Shell sheet, and
- * neither is written anywhere but tokens.css.
- *
- * EVERY ICON CARRIES A TOOLTIP WHEN THE RAIL IS COLLAPSED, and that is a
- * requirement rather than a nicety: a rail of unlabelled glyphs is unusable
- * for anyone who does not already know the product, and `aria-label` alone
- * serves a screen reader while leaving a sighted person guessing. The tooltip
- * directive already handles the three rules of WCAG 1.4.13, so this reuses it
- * instead of inventing a second hover panel.
- *
- * THE KEYBOARD IS THE APG'S TREEVIEW, deliberately -- the same decision the
- * Table made when it took `treegrid`. One Tab stop for the whole rail, the
- * arrows walk it, Right opens a group and Left closes it or climbs to the
- * parent. A tree of sixteen destinations where Tab visits each one costs
- * sixteen presses to get past the navigation, on every screen.
+ * EL ÁRBOL DE NAVEGACIÓN Y NADA MÁS: dibuja items, dice cuál es el actual, abre
+ * y cierra grupos y reporta lo elegido. No conoce el router, el menú real ni los
+ * permisos; eso es del shell.
+ * Dos anchos, un componente: rail de iconos (`--nav-rail-width`) o panel
+ * (`--nav-panel-width`). CADA ICONO LLEVA TOOLTIP CUANDO ESTÁ PLEGADO: un rail de
+ * glifos sin nombre es inusable para quien no conoce el producto, y `aria-label`
+ * solo sirve al lector de pantalla. El teclado es el treeview de las APG: un solo
+ * Tab para todo el rail. Ficha: 08-Sistema-de-Diseno/Componentes/Navegacion.
  */
 @Component({
   selector: 'ewms-nav-rail',
@@ -53,52 +37,44 @@ export class NavRail {
   readonly items = input.required<readonly NavItem[]>();
 
   /**
-   * The name of the landmark, already translated.
-   *
-   * Required, not defaulted: a page can hold more than one `<nav>` -- this one
-   * and the breadcrumbs -- and two unnamed navigation landmarks are
-   * indistinguishable in a screen reader's landmark list.
+   * El nombre del landmark, ya traducido. Obligatorio: una página puede tener más
+   * de un `<nav>` -este y las migas- y dos sin nombre son indistinguibles en la
+   * lista de landmarks de un lector de pantalla.
    */
   readonly label = input.required<string>();
 
-  /** Which item is the page you are on. Null while nothing matches. */
+  /** Qué item es la página donde estás. Null mientras nada coincide. */
   readonly activeId = input<string | null>(null);
 
-  /** Collapsed rail (72) or expanded panel (232). */
+  /** Rail plegado (72) o panel abierto (232). */
   readonly expanded = input<boolean>(true);
 
-  /** A destination was chosen. Groups never emit: they open. */
+  /** Se eligió un destino. Un grupo nunca emite: se abre. */
   readonly itemSelect = output<NavItem>();
 
-  /** The user asked for the other width, from the rail's own control. */
+  /** Alguien pidió el otro ancho, desde el control del propio rail. */
   readonly expandedChange = output<boolean>();
 
-  /** Label of the collapse/expand control, already translated. */
+  /** Etiqueta del control de plegar/desplegar, ya traducida. */
   readonly toggleLabel = input.required<string>();
 
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
 
   protected readonly treeId = `ewms-nav-rail-${++nextRailId}`;
 
-  /** Which groups are open. Uncontrolled: the rail owns its own disclosure. */
+  /** Qué grupos están abiertos. No controlado: el rail es dueño de su apertura. */
   private readonly open = signal<ReadonlySet<string>>(new Set());
 
-  /**
-   * The one item in the Tab order (the APG's roving tabindex).
-   *
-   * Null until something is focusable, which is resolved by `focusTarget`
-   * below: the active item when there is one, otherwise the first.
-   */
+  /** El único item en el orden de tabulación (tabindex móvil de las APG). */
   private readonly focusedId = signal<string | null>(null);
 
   protected readonly visible = computed(() => visibleItems(this.items(), this.open()));
 
   /**
-   * THE ACTIVE ITEM'S GROUP IS OPENED, AND NOT BY THE CONSUMER.
-   *
-   * Landing on /catalogos/articulos with "Catálogos" collapsed shows a rail
-   * that does not contain the page you are on. Making the shell open it would
-   * put tree state in the shell, where the tree is not.
+   * EL GRUPO DEL ITEM ACTIVO SE ABRE ACÁ Y NO EN EL CONSUMIDOR: aterrizar en
+   * /catalogos/articulos con «Catálogos» plegado muestra un rail que no contiene
+   * la página donde estás, y hacerlo en el shell pondría estado de árbol donde el
+   * árbol no está.
    */
   constructor() {
     effect(() => {
@@ -113,7 +89,7 @@ export class NavRail {
     });
   }
 
-  /** The item that carries `tabindex="0"`. Exactly one, always. */
+  /** El item que lleva `tabindex="0"`. Exactamente uno, siempre. */
   protected readonly focusTarget = computed(() => {
     const focused = this.focusedId();
     const visible = this.visible();
@@ -139,7 +115,7 @@ export class NavRail {
     this.expandedChange.emit(!this.expanded());
   }
 
-  /** Clicking a row: a group opens, a destination reports itself. */
+  /** Clic en una fila: un grupo abre, un destino se reporta. */
   protected onActivate(item: NavItem): void {
     this.focusedId.set(item.id);
     if (isGroup(item)) {
@@ -150,11 +126,8 @@ export class NavRail {
   }
 
   /**
-   * The treeview keyboard (WAI-ARIA APG).
-   *
-   * `Enter` and `Space` are not handled here: every row is a real `<button>`,
-   * so the browser already turns both into a click. Re-implementing them would
-   * be a second definition of "activate" that could drift from the first.
+   * El teclado del treeview (WAI-ARIA APG). `Enter` y `Space` no se atienden acá:
+   * cada fila es un `<button>` de verdad y el navegador ya los vuelve un clic.
    */
   protected onKeydown(event: KeyboardEvent, item: NavItem): void {
     const visible = this.visible();
@@ -177,7 +150,7 @@ export class NavRail {
         if (isGroup(item) && !this.isOpen(item)) {
           this.toggle(item);
         } else if (isGroup(item)) {
-          // Already open: step into it, which is what the APG asks for.
+          // Ya abierto: entrar, que es lo que piden las APG.
           this.moveTo(visible[index + 1]);
         }
         break;
@@ -185,7 +158,7 @@ export class NavRail {
         if (isGroup(item) && this.isOpen(item)) {
           this.toggle(item);
         } else {
-          // A child climbs to its group; a top-level leaf has nowhere to go.
+          // Un hijo sube a su grupo; una hoja de primer nivel no tiene adónde.
           const parent = parentOf(this.items(), item.id);
           if (parent !== null) {
             this.moveTo(parent);
@@ -209,11 +182,9 @@ export class NavRail {
   }
 
   /**
-   * Move the roving focus, and move the real focus with it.
-   *
-   * The DOM query is the honest way round: the list is rendered by a `@for`,
-   * so the element for an id exists only after the template has drawn it, and
-   * holding element references in the component would duplicate that state.
+   * Mueve el foco móvil y el foco real con él. La consulta al DOM es el camino
+   * honesto: la lista la pinta un `@for`, así que el elemento de un id existe solo
+   * después de dibujarse.
    */
   private moveTo(item: NavItem | undefined): void {
     if (item === undefined) {

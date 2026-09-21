@@ -1,17 +1,10 @@
 /**
- * Geometry of one icon, as data.
- *
- * icons.generated.ts is a table of these. The <ewms-icon> template walks the
- * list and binds `d`, so an icon never reaches the DOM as markup (no innerHTML,
- * no DomSanitizer). Presentation attributes (stroke, fill, stroke-width,
- * linecap, linejoin) are deliberately absent: the component sets them once on
- * the <svg>.
- *
- * Only <path>, on purpose (ADR 0011): Tabler outline ships every icon as paths
- * and so does the custom pallet. A shape drawn as <circle>, <rect> or <line>
- * is converted to a path before it enters the set, which is what any editor
- * does on export. One element type means one template branch and nothing that
- * no icon reaches.
+ * La geometría de un icono, como dato. icons.generated.ts es una tabla de estos: la
+ * plantilla de `<ewms-icon>` recorre la lista y ata `d`, así que un icono nunca
+ * llega al DOM como marcado. Los atributos de presentación están ausentes a
+ * propósito: los pone el componente una vez sobre el `<svg>`.
+ * Solo `<path>` (ADR 0011): Tabler entrega todo como paths y la tarima propia
+ * también. Un tipo de elemento es una rama de plantilla y nada que ningún icono use.
  */
 export interface IconPath {
   readonly type: 'path';

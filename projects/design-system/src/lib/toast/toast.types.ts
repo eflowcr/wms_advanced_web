@@ -1,59 +1,43 @@
 import type { FeedbackVariant } from '../feedback/feedback.types';
 
 /**
- * One message in the queue, as the outlet receives it.
- *
- * `id` is what the outlet tracks by and what `dismiss` takes. It is generated
- * by the service and never by a consumer: two screens that both invent "1"
- * would dismiss each other's messages.
+ * Un mensaje de la cola, como lo recibe el outlet. El `id` lo genera el servicio y
+ * nunca un consumidor: dos pantallas que inventaran «1» se descartarían los
+ * mensajes entre ellas.
  */
 export interface Toast {
   readonly id: number;
   readonly variant: FeedbackVariant;
-  /** Already translated by whoever called `show` (ADR 0008). */
+  /** Ya traducido por quien llamó a `show` (ADR 0008). */
   readonly message: string;
 }
 
-/** The token the service reads its default lifetime from. */
+/** El token del que el servicio saca su duración por defecto. */
 export const TOAST_DURATION_TOKEN = '--duration-toast';
 
 /**
- * The floating stack.
- *
- * BOTTOM RIGHT, and the sheet does not say so -- it says "flotante" and
- * nothing else. Reported as a hallazgo rather than written into the sheet:
- * where the stack sits is a design decision, not something the code gets to
- * settle on its own. Bottom right is what this build uses meanwhile, because
- * it is the corner furthest from the content a WMS operator is reading and the
- * one that does not cover the header.
- *
- * `z-10` puts the stack over page content and UNDER the CDK's overlay
- * container, which sits far higher. A toast raised while a dialog is open is
- * therefore behind it -- deliberate: the dialog is modal, and a message
- * floating over a modal invites a click that the modal is there to prevent.
+ * La pila flotante. ABAJO A LA DERECHA, y la ficha no lo dice -dice «flotante»-:
+ * reportado como hallazgo, porque dónde va la pila es una decisión de diseño. Es
+ * la esquina más lejos de lo que lee un operario y la que no tapa la cabecera.
+ * `z-10` la pone sobre el contenido y BAJO el contenedor de overlays del CDK, así
+ * que un toast levantado con un diálogo abierto queda detrás: es deliberado, el
+ * diálogo es modal y un mensaje flotando encima invita al clic que el modal evita.
  */
 export const TOAST_OUTLET_CLASSES =
   'fixed right-4 bottom-4 z-10 flex flex-col items-end gap-2 pointer-events-none';
 
 /**
- * One toast: white surface, the elevation of a popover, and a 4 px leading
- * accent in the family's solid.
- *
- * `pointer-events-auto` undoes the container's `pointer-events-none`. The
- * container spans a corner of the viewport and must not swallow clicks meant
- * for the page under it; the toasts themselves are real content and take
- * their own.
+ * Un toast: superficie blanca, elevación de popover y una barra de 4 px en el
+ * solid de la familia. `pointer-events-auto` deshace el `none` del contenedor, que
+ * abarca una esquina del viewport y no puede tragarse clics de la página de abajo.
  */
 export const TOAST_CLASSES =
   'pointer-events-auto flex max-w-96 items-stretch overflow-hidden rounded-md border shadow-md';
 
 /**
- * The padded part, inside the accent.
- *
- * The padding is here and NOT on the toast itself, so the 4 px bar reaches the
- * top and the bottom edge. On the outer box, `self-stretch` stretches a child
- * to the content box -- which excludes the padding -- and the accent came out
- * inset by twelve pixels at each end, which reads as a mistake rather than as
- * an accent.
+ * La parte con relleno, dentro del acento. El relleno va acá y NO en el toast, para
+ * que la barra de 4 px llegue arriba y abajo: en la caja de afuera, `self-stretch`
+ * estira al hijo hasta la caja de contenido -que excluye el relleno- y el acento
+ * salía metido doce píxeles en cada punta.
  */
 export const TOAST_BODY_CLASSES = 'flex min-w-0 items-center gap-2 px-4 py-3';

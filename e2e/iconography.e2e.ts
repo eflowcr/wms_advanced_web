@@ -1,4 +1,3 @@
-import AxeBuilder from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
 
 /**
@@ -47,8 +46,6 @@ test.describe('/design-system/foundations/icons', () => {
     expect(colours[0]?.[0]).not.toBe(colours[1]?.[0]);
   });
 
-  test('has no accessibility violations', async ({ page }) => {
-    const results = await new AxeBuilder({ page }).analyze();
-    expect(results.violations).toEqual([]);
-  });
+  // axe runs over this route in showroom.e2e.ts, with the other twenty-three:
+  // same route, same tool, same run. It was scanned twice.
 });

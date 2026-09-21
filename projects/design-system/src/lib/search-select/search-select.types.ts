@@ -1,89 +1,70 @@
 import { InjectionToken } from '@angular/core';
 
 /**
- * The four states a person can see, from RFE-03 of REQ-FE-DS3-001, plus the
- * two that are not states of the search at all.
- *
- * `empty` AND `error` ARE DIFFERENT VALUES AND THE REQ IS EXPLICIT ABOUT WHY:
- * confusing them makes a service outage look like an empty warehouse, which is
- * the worst possible reading on a warehouse floor. They never collapse into a
- * shared "nothing to show" branch.
+ * Los estados que una persona puede ver (RFE-03). `empty` Y `error` SON VALORES
+ * DISTINTOS y el REQ es explícito: confundirlos hace que una caída del servicio
+ * parezca un depósito vacío, que es la peor lectura posible en un depósito.
  */
 export type SearchStatus =
-  /** Nothing typed yet, or the text was cleared. */
+  /** Nada tipeado todavía, o se vació el texto. */
   | 'idle'
-  /** A query is in flight. */
+  /** Hay una consulta en vuelo. */
   | 'searching'
-  /** Results are on screen. */
+  /** Hay resultados en pantalla. */
   | 'ready'
-  /** The query came back with nothing. NOT an error. */
+  /** La consulta volvió sin nada. NO es un error. */
   | 'empty'
-  /** The source failed or ran out of time. NOT an absence of records. */
+  /** La fuente falló o se quedó sin tiempo. NO es ausencia de registros. */
   | 'error';
 
-/** The tokens the component reads at runtime. See lib/tokens/read-token.ts. */
+/** Los tokens que el componente lee en runtime. Ver lib/tokens/read-token.ts. */
 export const DELAY_SEARCH_INPUT_TOKEN = '--delay-search-input';
 export const TIMEOUT_SEARCH_TOKEN = '--timeout-search';
 
 /*
- * THE SCAN THRESHOLD IS NOT DECLARED HERE ANY MORE.
- *
- * It lived in this file while this component was the only thing that measured
- * a barcode burst. DS-4 gave the global shortcut engine the same problem, and
- * a second copy of the threshold's name -- or of how many fast keystrokes make
- * a run -- is the drift that ends with a shortcut firing mid-scan. Both now
- * read `keyboard/scan-detector.ts`, which owns the measurement and is tested
- * on its own with simulated times. Re-exported so this module's importers are
- * not asked to know where it moved.
+ * El umbral de escaneo YA NO SE DECLARA ACÁ: vivía en este archivo cuando este
+ * componente era lo único que medía una ráfaga. Una segunda copia es la deriva
+ * que termina con un atajo disparando en medio de un escaneo. Se reexporta para
+ * no obligar a los importadores a saber adónde se mudó.
  */
 export { SCAN_MIN_KEYSTROKES, SCAN_THRESHOLD_TOKEN } from '../keyboard/scan-detector';
 
 /**
- * The rows that are not results: the spinner, the empty note, the "load more".
- *
- * They share the row geometry of a result so the list does not jump when one
- * replaces the other, and they are `text-secondary` because none of them is
- * content -- they are the list talking about itself.
+ * Las filas que no son resultados: el spinner, la nota de vacío, «cargar más».
+ * Comparten la geometría de un resultado para que la lista no salte, y van en
+ * `text-secondary` porque ninguna es contenido: son la lista hablando de sí misma.
  */
 export const SEARCH_NOTE_CLASSES =
   'flex items-center gap-2 px-3 py-1.5 text-caption text-secondary';
 
 /**
- * The "load more" row.
- *
- * It is a ROW IN THE LIST, not a button beside it, and that is what makes it
- * keyboard-reachable without a tab stop of its own: the arrow keys walk onto
- * it like any other row and Enter activates it. A `<button>` in the panel
- * would need the focus, and the focus is not allowed to leave the field.
+ * La fila «cargar más». Es una FILA DE LA LISTA y no un botón al lado, y eso es
+ * lo que la hace alcanzable con el teclado sin un tab stop propio: las flechas
+ * caminan hasta ella. Un `<button>` en el panel necesitaría el foco, y el foco no
+ * puede salir del campo.
  */
 export const SEARCH_MORE_CLASSES =
   'flex w-full items-center justify-center gap-2 px-3 py-1.5 cursor-pointer text-caption ' +
   'text-(color:--color-bg-primary)';
 
 /**
- * The words the search select can put on screen, already translated.
- *
- * PROVIDED ONCE, NOT PASSED PER INSTANCE. It started as a required input and
- * moved here in DS-3 lote C, when the Table needed the same thing and having
- * two answers in one library would have been the worse outcome. The rule and
- * where its line falls are written in the Nomenclatura note.
+ * Los textos del selector, ya traducidos. PROVISTOS UNA VEZ, no pasados por
+ * instancia: empezaron siendo una entrada obligatoria y se mudaron en DS-3 lote C,
+ * cuando la Tabla necesitó lo mismo. La raya está en la nota Nomenclatura.
  */
 export interface SearchSelectMessages {
-  /** While a query is in flight. */
+  /** Mientras hay una consulta en vuelo. */
   readonly searching: string;
-  /** Nothing matched. Receives the text searched, which RFE-03 requires shown. */
+  /** Nada coincidió. Recibe el texto buscado, que RFE-03 exige mostrar. */
   readonly noResults: (query: string) => string;
-  /** The source failed or ran out of time. */
+  /** La fuente falló o se quedó sin tiempo. */
   readonly error: string;
-  /** The label of the retry action. */
+  /** La etiqueta de la acción de reintentar. */
   readonly retry: string;
-  /** The label of the "load more" row. */
+  /** La etiqueta de la fila «cargar más». */
   readonly more: string;
-  /**
-   * Announced when results land. Receives how many are on screen and the total
-   * the source reported, WHICH MAY BE NULL: RFE-02 makes `null` a legitimate
-   * answer, and the message is where that shows.
-   */
+  /** Se anuncia cuando llegan resultados. Recibe cuántos hay y el total que
+   * reportó la fuente, QUE PUEDE SER NULL: RFE-02 lo hace una respuesta legítima. */
   readonly results: (count: number, total: number | null) => string;
 }
 

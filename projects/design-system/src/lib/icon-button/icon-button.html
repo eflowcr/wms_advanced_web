@@ -1,18 +1,13 @@
 <!--
-  The clickable area is the whole box, not the glyph: the icon sits centred
-  inside a square button, so even the smallest glyph is clicked anywhere in the
-  full box around it.
-
-  `describes` is bound, not written as an attribute. `describes="false"` would
-  pass the string "false", which is truthy, and the tooltip would connect
-  itself with aria-describedby and be announced on top of the aria-label.
-
-  `[disabled]` is the plain native binding, and it stays unambiguous because
-  the tooltip directive calls its own switch `tooltipDisabled`. Were it called
-  `disabled`, Angular would resolve this binding to the directive instead and
-  the native attribute would never be written -- a button that looks disabled
-  and is still clickable. The prefix on that input is what keeps this line
-  meaning what it reads.
+  El área clicable es la caja entera y no el glifo: el icono va centrado en un botón
+  cuadrado, así que hasta el glifo más chico se pulsa en cualquier parte del cuadro.
+  `describes` va atado y no escrito como atributo: `describes="false"` pasaría la
+  cadena «false», que es verdadera, y el tooltip se conectaría por aria-describedby
+  anunciándose encima del aria-label.
+  `[disabled]` es el enlace nativo y queda sin ambigüedad porque la directiva de
+  tooltip llama `tooltipDisabled` a su propio interruptor: si se llamara `disabled`,
+  Angular resolvería este enlace a la directiva y el atributo nativo nunca se
+  escribiría -un botón con cara de deshabilitado y perfectamente clicable-.
 -->
 <button
   type="button"

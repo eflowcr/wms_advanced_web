@@ -1,11 +1,8 @@
 <!--
-  Same construction as the checkbox: the <label> wraps the native control, so
-  the whole row is the hit target and the text is the accessible name with no
-  for/id pair to maintain.
-
-  The dot is a plain <span>, not an icon. It is a filled circle with no
-  geometry to it, so an <ewms-icon> would be an SVG document to draw eight
-  pixels.
+  Misma construcción que la casilla: el `<label>` envuelve al control nativo, así la
+  fila entera es el blanco y el texto es el nombre accesible sin par for/id.
+  El punto es un `<span>` pelado y no un icono: es un círculo lleno sin geometría, y
+  un `<ewms-icon>` sería un documento SVG para dibujar ocho píxeles.
 -->
 <label [class]="rowClasses()">
   <span class="relative inline-flex">
@@ -24,7 +21,7 @@
 
     @if (isChecked()) {
       <span [class]="glyphClasses">
-        <!-- 8x8, centred. `size-2` is two 4 px steps. -->
+        <!-- 8x8, centrado. `size-2` son dos pasos de 4 px. -->
         <span class="size-2 rounded-full bg-(--color-text-on-primary)"></span>
       </span>
     }

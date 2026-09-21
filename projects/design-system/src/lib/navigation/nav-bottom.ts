@@ -16,36 +16,21 @@ import {
 import { Icon } from '../icon/icon';
 import { isGroup, type NavItem } from './navigation.types';
 
-/**
- * How many destinations fit across the bottom of a phone before the labels
- * stop being readable. Four at the narrowest width the system supports, with
- * a `text-caption` label under a `size-icon-lg` glyph; a fifth slot is what
- * the «more» control is.
- */
+/** Cuántos destinos entran abajo en un teléfono antes de que las etiquetas dejen
+ * de leerse: cuatro al ancho más angosto. El quinto lugar es el control «Más». */
 export const BOTTOM_NAV_SLOTS = 4;
 
 /**
- * THE NAVIGATION ON A NARROW SCREEN: A BOTTOM BAR.
+ * La navegación en pantalla angosta: una barra inferior. DECISIÓN DEL USUARIO
+ * (2026-09-19): el frente proponía un drawer y el usuario eligió la barra.
  *
- * DECISIÓN DEL USUARIO (2026-09-19). The frente proposed an overlay drawer and
- * argued against a bottom bar; the user chose the bottom bar, and this is it,
- * built as asked with the cost written down rather than hidden:
- *
- *   THE COST. A bottom bar carries three to five first-level destinations.
- *   This menu has four at the first level and TWELVE at the second (Catálogos
- *   has ten children, Configuración three). Those twelve are therefore TWO
- *   TAPS away, behind «Más» or behind their group -- one tap more than on the
- *   rail, on every one of them, on the device where taps are most expensive.
- *
- * What is NOT compromised is the keyboard and the focus. The sheet that holds
- * the rest of the tree traps focus while it is open, closes on Escape, and
- * gives the focus back to the control that opened it. A panel that drops the
- * focus on the body makes somebody tab through the whole page to get back.
- *
- * The CDK's `FocusTrap` directly, and NOT `DialogService`: this is a panel
- * attached to the bar, not a modal. Opening it as a dialog would give it
- * `role="dialog"`, the backdrop blur and the modal's geometry, which is not
- * what it is, and would make the navigation of the application a dialog.
+ * EL COSTO, escrito y no escondido: una barra lleva tres a cinco destinos de
+ * primer nivel, y este menú tiene cuatro en el primero y DOCE en el segundo. Esos
+ * doce quedan a DOS TOQUES, uno más que en el rail, en el dispositivo donde un
+ * toque cuesta más.
+ * La hoja usa el `FocusTrap` del CDK y NO `DialogService`: es un panel pegado a la
+ * barra, no un modal, y abrirla como diálogo le daría `role="dialog"` y haría de
+ * la navegación de la aplicación un diálogo.
  */
 @Component({
   selector: 'ewms-nav-bottom',
@@ -53,24 +38,20 @@ export const BOTTOM_NAV_SLOTS = 4;
   imports: [Icon],
   changeDetection: ChangeDetectionStrategy.OnPush,
   /*
-   * ESCAPE IS ANSWERED ON THE HOST, NOT ON THE SHEET.
-   *
-   * A `(keydown)` on the sheet's own `<div>` is an interaction handler on
-   * something that is not focusable, which the template lint rule rejects and
-   * is right to: an element that answers input a keyboard cannot reach is
-   * usually a bug. Here the element is a CONTAINER -- what has the focus is
-   * whatever is inside it -- so the listener belongs one level up, on the
-   * host, where the event has bubbled to by the time anybody sees it.
+   * ESCAPE SE ATIENDE EN EL HOST Y NO EN LA HOJA: un `(keydown)` sobre el `<div>`
+   * de la hoja es un manejador en algo que no es enfocable, que la regla de lint
+   * rechaza con razón. La hoja es un CONTENEDOR -lo enfocado es lo que tiene
+   * adentro-, así que el listener va un nivel arriba, adonde el evento burbujea.
    */
   host: { class: 'contents', '(keydown)': 'onSheetKeydown($event)' },
 })
 export class NavBottom {
   readonly items = input.required<readonly NavItem[]>();
 
-  /** The landmark's name, already translated. */
+  /** El nombre del landmark, ya traducido. */
   readonly label = input.required<string>();
 
-  /** The sheet's heading and the «more» control's name, already translated. */
+  /** El título de la hoja y el nombre del control «Más», ya traducidos. */
   readonly moreLabel = input.required<string>();
   readonly closeLabel = input.required<string>();
 
@@ -84,23 +65,20 @@ export class NavBottom {
   private readonly injector = inject(Injector);
 
   private trap: FocusTrap | null = null;
-  /** What to give the focus back to. Never guessed: it is remembered. */
+  /** A quién devolverle el foco. Nunca se adivina: se recuerda. */
   private opener: HTMLElement | null = null;
 
   protected readonly open = signal(false);
 
   constructor() {
-    // ONCE, here, and not on every open: registering the teardown inside the
-    // click handler adds a callback per opening and keeps every trap alive.
+    // UNA VEZ acá y no en cada apertura: registrar el desarme dentro del manejador
+    // de clic suma un callback por apertura y mantiene viva cada trampa.
     this.destroyRef.onDestroy(() => this.trap?.destroy());
   }
 
   /**
-   * What the bar shows, and what the sheet holds.
-   *
-   * A first-level GROUP never goes on the bar: tapping it on the bar would
-   * have to open something anyway, so it would be «Más» wearing its own name.
-   * The bar carries destinations; the sheet carries the tree.
+   * Qué muestra la barra y qué guarda la hoja. Un GRUPO de primer nivel nunca va a
+   * la barra: tocarlo tendría que abrir algo igual, o sea «Más» con otro nombre.
    */
   protected readonly barItems = computed(() =>
     this.items()
@@ -108,7 +86,7 @@ export class NavBottom {
       .slice(0, BOTTOM_NAV_SLOTS),
   );
 
-  /** Whether anything at all is left over for the sheet. */
+  /** Si sobra algo para la hoja. */
   protected readonly hasMore = computed(
     () => this.barItems().length < this.items().length || this.items().some(isGroup),
   );
@@ -121,7 +99,7 @@ export class NavBottom {
     this.itemSelect.emit(item);
   }
 
-  /** From inside the sheet: choose a destination and close behind you. */
+  /** Desde la hoja: elegir un destino y cerrar detrás. */
   protected onSheetSelect(item: NavItem): void {
     if (isGroup(item)) {
       return;
@@ -135,19 +113,11 @@ export class NavBottom {
     this.open.set(true);
 
     /*
-     * `afterNextRender` AND NOT `queueMicrotask`, and the difference is the
-     * whole feature.
-     *
-     * At the moment this click is handled, `@if (open())` has not drawn the
-     * sheet: `this.sheet()` is undefined and the trap is never built. A
-     * microtask is not late enough either -- zoneless Angular renders on its
-     * own schedule, not at the end of the current task -- so the first version
-     * of this silently did nothing, the focus stayed on «Más», and the panel
-     * was operable only because Escape is handled on the host. Found by
-     * opening it at 375 px and asking where the focus was.
-     *
-     * `afterNextRender` is the framework's answer to "when is the DOM there?",
-     * and it needs an injector because this is not an injection context.
+     * `afterNextRender` Y NO `queueMicrotask`, y la diferencia es toda la función:
+     * cuando se atiende este clic, `@if (open())` todavía no dibujó la hoja, así
+     * que la trampa nunca se construía. Un microtask tampoco alcanza -Angular
+     * zoneless pinta a su propio ritmo-, y la primera versión no hacía nada en
+     * silencio: el foco se quedaba en «Más». Encontrado abriéndola a 375 px.
      */
     afterNextRender(
       () => {
@@ -162,7 +132,7 @@ export class NavBottom {
     );
   }
 
-  /** Escape, the close control, or the backdrop. All three, one path. */
+  /** Escape, el control de cierre o el fondo. Los tres, un solo camino. */
   protected close(): void {
     if (!this.open()) {
       return;

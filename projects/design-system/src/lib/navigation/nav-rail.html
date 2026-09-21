@@ -1,16 +1,10 @@
 <!--
-  A named <nav>, a projected head, the tree, and a projected foot.
-
-  THE WIDTH IS A TOKEN AND THE SWITCH IS A CLASS, not two components. The rail
-  and the panel are the same tree at two widths (App Shell sheet), and two
-  components would be two keyboards to keep in step.
-
-  THE MARKUP IS A REAL `ul`/`li` TREE CARRYING TREE ROLES, both halves on
-  purpose. The lists are what the document structure actually is -- a nested
-  list of destinations -- and `role="tree"` is what tells a screen reader that
-  the arrows work here and Tab does not. A roving tabindex on a plain list is
-  the usual trap: one Tab stop, and nothing announcing why the other fifteen
-  destinations were skipped.
+  Un `<nav>` con nombre, una cabeza proyectada, el árbol y un pie proyectado.
+  EL ANCHO ES UN TOKEN Y EL CAMBIO ES UNA CLASE, no dos componentes: el rail y el
+  panel son el mismo árbol a dos anchos, y dos componentes serían dos teclados.
+  EL MARCADO ES UN ÁRBOL `ul`/`li` DE VERDAD CON ROLES DE ÁRBOL: la lista es lo que
+  el documento realmente es, y `role="tree"` es lo que avisa que acá andan las
+  flechas y no el Tab.
 -->
 <nav
   class="flex h-full flex-col bg-brand-navy text-on-dark"
@@ -18,10 +12,9 @@
   [attr.aria-label]="label()"
 >
   <!--
-    The favourites block goes here (REQ-FE-DS4-002 RFE-04). The rail does not
-    know that: it knows there is a slot above the tree, and the consumer knows
-    what belongs in it.
-  -->
+  Acá va el bloque de favoritos (REQ-FE-DS4-002 RFE-04). El rail no lo sabe: sabe
+  que hay un hueco sobre el árbol, y el consumidor sabe qué va en él.
+-->
   <div class="shrink-0">
     <ng-content select="[navRailTop]" />
   </div>
@@ -56,18 +49,18 @@
   </ul>
 
   <!--
-    Credentials and the customer's logo (App Shell sheet). The rail does not
-    know what a credential is; it knows there is a foot.
-  -->
+  Credenciales y logo del cliente. El rail no sabe qué es una credencial; sabe que
+  hay un pie.
+-->
   <div class="shrink-0 border-t border-strong">
     <ng-content select="[navRailFooter]" />
   </div>
 
   <!--
-    The width control lives INSIDE the rail and not in the header, because the
-    width is the rail's own state: `expanded` is an input, the change is an
-    output, and the consumer decides whether to remember it.
-  -->
+  El control de ancho vive DENTRO del rail y no en la cabecera, porque el ancho es
+  estado del rail: `expanded` entra, el cambio sale, y el consumidor decide si lo
+  recuerda.
+-->
   <div class="flex shrink-0 p-2" [class.justify-center]="!expanded()">
     <button
       type="button"
@@ -84,19 +77,14 @@
 </nav>
 
 <!--
-  ONE ROW, WRITTEN ONCE. A group and a destination differ in what they do, not
-  in how they look, and two copies of this markup would drift in a fortnight.
-
-  A TOOLTIP IS NOT AN ACCESSIBLE NAME, which is why `aria-label` is here AND is
-  conditional. Collapsed, the row has no visible text at all: the tooltip
-  serves a sighted person and `aria-label` serves everybody else. Expanded, the
-  label IS the visible text, and a second copy in an attribute would be an
-  override with nothing to override -- and the two would drift the day one of
-  them was translated and the other was not.
-
-  Found by collapsing the rail and looking: sixteen buttons with no accessible
-  name at all (WCAG 4.1.2), and invisible to axe because nothing had rendered
-  the collapsed state.
+  UNA FILA, ESCRITA UNA VEZ: un grupo y un destino difieren en lo que hacen, no en
+  cómo se ven, y dos copias de este marcado derivan en quince días.
+  UN TOOLTIP NO ES UN NOMBRE ACCESIBLE, y por eso `aria-label` está Y es
+  condicional: plegada, la fila no tiene texto visible -el tooltip sirve a quien ve
+  y `aria-label` al resto-; abierta, la etiqueta ES el texto visible y una segunda
+  copia derivaría el día que se tradujera una sola.
+  Encontrado plegando el rail y mirando: dieciséis botones sin nombre accesible
+  (WCAG 4.1.2), invisibles para axe porque nada había pintado el estado plegado.
 -->
 <ng-template #row let-item let-child="child">
   <button
@@ -124,11 +112,9 @@
 
       @if (item.badge !== undefined) {
         <!--
-          The number is drawn; the word that makes it mean something is the
-          consumer's, who folds it into `label`. The design system speaks no
-          language (ADR 0008), and a bare count with no word is what a badge
-          is everywhere else in this system too.
-        -->
+  El número se dibuja; la palabra que lo hace significar algo la pone el consumidor
+  dentro de `label`. El sistema de diseño no habla ningún idioma (ADR 0008).
+-->
         <span class="rounded-full bg-primary px-2 text-caption text-on-primary">
           {{ item.badge }}
         </span>

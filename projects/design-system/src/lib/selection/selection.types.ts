@@ -1,46 +1,33 @@
 /**
- * Everything the Checkbox and the Radio agree on.
- *
- * Two components, one job: an 18x18 box with a border, a glyph that appears
- * when it is on, and a label that is part of the hit target. Only the corner
- * radius and the glyph differ, so only those are written twice.
- *
- * They deliberately do NOT use the 32 / 40 / 48 control scale. A checkbox is
- * not sized to line up with a button -- it is sized to sit beside a line of
- * text -- and there is exactly one size of it.
+ * Lo que comparten Checkbox y Radio: una caja de 18x18 con borde, un glifo que
+ * aparece al encenderse y una etiqueta que es parte del blanco. Solo cambian el
+ * radio de esquina y el glifo, así que solo eso se escribe dos veces.
+ * NO usan la escala 32/40/48: una casilla no se dimensiona para alinearse con un
+ * botón sino para ir al lado de una línea de texto, y hay un solo tamaño.
  */
 
-/** 18x18. `size-*` is 4px-based, so 4.5 steps is 18 px. */
+/** 18x18. `size-*` es base 4 px, así que 4.5 pasos son 18 px. */
 export const SELECTION_BOX_SIZE_CLASS = 'size-4.5';
 
-/**
- * The 1.5 px border, from the token. Applied as a style binding rather than a
- * utility: Tailwind's border widths are whole pixels, and `border-[1.5 px]` is
- * a raw value gate 10 rejects. See `--border-width-selection` in tokens.css.
- */
+/** El borde de 1.5 px, del token. Como estilo y no como utilidad: los anchos de
+ * borde de Tailwind son píxeles enteros y un valor crudo lo rechaza la compuerta 10. */
 export const SELECTION_BORDER_WIDTH = 'var(--border-width-selection)';
 
 /**
- * The whole row is the hit target, label included -- that is what a `<label>`
- * wrapping the native control buys, with no JavaScript and no `for`/`id` pair
- * to keep in sync.
- *
- * `cursor-pointer` is on the row for the same reason: the label is not
- * decoration next to the control, it IS part of the control.
+ * La fila entera es el blanco, etiqueta incluida: eso compra un `<label>` que
+ * envuelve al control nativo, sin JavaScript y sin un par for/id que mantener.
+ * `cursor-pointer` va en la fila por lo mismo: la etiqueta no es adorno al lado
+ * del control, ES parte del control.
  */
 export const SELECTION_ROW_CLASSES = 'inline-flex items-center gap-2 select-none';
 
 /**
- * The native control, styled directly.
- *
- * `appearance-none` strips the platform widget and leaves an ordinary box we
- * paint -- and, crucially, it is still an `<input type="checkbox">`: real
- * focus, real keyboard behaviour (Space toggles), real role, real name from
- * the wrapping label. The glyph is a sibling laid over it with
- * `pointer-events-none`, because an input cannot have children.
- *
- * The alternative -- hiding the input and styling a `<span>` -- is the same
- * picture with every one of those guarantees re-implemented by hand.
+ * El control nativo, estilado directo. `appearance-none` quita el widget de la
+ * plataforma y deja una caja que pintamos, y sigue siendo un input de verdad:
+ * foco real, barra espaciadora, rol y nombre del label que lo envuelve. El glifo
+ * es un hermano encima con `pointer-events-none`, porque un input no tiene hijos.
+ * La alternativa -esconder el input y pintar un span- es la misma imagen con cada
+ * una de esas garantías reimplementada a mano.
  */
 export const SELECTION_CONTROL_BASE_CLASSES =
   'appearance-none shrink-0 border-solid outline-none ' +
@@ -48,15 +35,10 @@ export const SELECTION_CONTROL_BASE_CLASSES =
   SELECTION_BOX_SIZE_CLASS;
 
 /**
- * Surface and border for the box.
- *
- * `on` covers Checked AND Indeterminate: the ficha gives them the same
- * treatment on purpose, and only the glyph tells them apart. That is also why
- * the state can never be read from the colour alone, and why `aria-checked`
- * carries `mixed` rather than a boolean.
- *
- * Disabled comes first and has no hover: a control that cannot be operated
- * must not light up under the pointer.
+ * Superficie y borde de la caja. `on` cubre Marcado E Indeterminado: la ficha les
+ * da el mismo tratamiento y solo el glifo los distingue, que es también por qué
+ * el estado no se puede leer del color y por qué `aria-checked` lleva `mixed`.
+ * Deshabilitado va primero y no tiene hover.
  */
 export function selectionBoxClasses(on: boolean, disabled: boolean): string {
   if (disabled) {
@@ -69,14 +51,12 @@ export function selectionBoxClasses(on: boolean, disabled: boolean): string {
     : 'bg-surface border-(--color-border-strong) hover:border-(--color-bg-primary)';
 }
 
-/** The row's text and pointer, which follow the control's own state. */
+/** El texto y el puntero de la fila, que siguen al estado del control. */
 export function selectionRowStateClasses(disabled: boolean): string {
   return disabled ? 'text-disabled cursor-not-allowed' : 'text-primary cursor-pointer';
 }
 
-/**
- * The glyph laid over the box: the check, the indeterminate dash, the radio
- * dot. Never interactive -- every pointer event belongs to the input under it.
- */
+/** El glifo encima de la caja: el tilde, el guion, el punto del radio. Nunca
+ * interactivo: cada evento de puntero es del input de abajo. */
 export const SELECTION_GLYPH_CLASSES =
   'absolute inset-0 flex items-center justify-center pointer-events-none text-on-primary';

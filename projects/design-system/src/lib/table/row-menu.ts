@@ -8,34 +8,24 @@ import type { MenuItem } from './table.types';
 export { moveActiveIndex };
 
 /**
- * The row's context menu, as the small amount of state it really is.
- *
- * NOT A COMPONENT, and that is the point: what a menu needs is an overlay
- * (already shared, `overlay/`), a list with arrow keys (already shared,
- * `listbox/`) and somewhere to remember which row it belongs to. A component
- * would have added a second overlay, a second keyboard and a third place for
- * the two to disagree -- which is the thing DS-3 spent a hard gate avoiding.
+ * El menú contextual de una fila, como el poco estado que de verdad es. NO ES UN
+ * COMPONENTE: un menú necesita un overlay (ya compartido), una lista con flechas
+ * (ya compartida) y dónde recordar a qué fila pertenece. Un componente habría
+ * sumado un segundo overlay y un segundo teclado, que es lo que HG-04 evita.
  */
 export interface MenuAnchor {
-  /** Where the menu points. A cell for a right-click, the kebab for a press. */
+  /** Adónde apunta el menú. Una celda en clic derecho, el kebab si se pulsó. */
   readonly element: HTMLElement;
-  /** Which row it belongs to, by `trackBy` key. */
+  /** A qué fila pertenece, por la clave de `trackBy`. */
   readonly key: unknown;
 }
 
 /**
- * The positions a row menu takes. FOUR, AND END-ALIGNED FIRST.
- *
- * Not the Select's pair. A panel hangs under a trigger that starts at the left
- * of its field, so start-aligned is right there. A row menu hangs off a kebab
- * that sits at the RIGHT end of the row, and a start-aligned menu there opens
- * outwards into the margin -- in the first capture of this menu it ended up
- * flush against the edge of the window. Lining its right edge up with the
- * kebab is what every desktop menu does, and it is what leaves the menu over
- * the table it belongs to.
- *
- * The start-aligned pair stays as the last resort, for a kebab close enough to
- * the left edge that an end-aligned menu would hang off that side instead.
+ * Las posiciones de un menú de fila. CUATRO, Y ALINEADAS AL FINAL PRIMERO: no son
+ * las del Select. Un panel cuelga de un gatillo que empieza a la izquierda de su
+ * campo; un menú de fila cuelga de un kebab que está a la DERECHA, y alineado al
+ * inicio se abre hacia afuera -en la primera captura quedó pegado al borde de la
+ * ventana-. El par alineado al inicio queda de último recurso.
  */
 export const MENU_POSITIONS: ConnectedPositionList = [
   { originX: 'end', originY: 'bottom', overlayX: 'end', overlayY: 'top' },
@@ -47,25 +37,21 @@ export const MENU_POSITIONS: ConnectedPositionList = [
 export const MENU_CLASSES =
   'min-w-48 bg-surface rounded-control shadow-md py-1 list-none p-0 border border-default';
 
-/** Everything an entry has whatever state it is in. NO COLOUR HERE. */
+/** Todo lo que lleva una entrada en cualquier estado. ACÁ NO HAY COLOR. */
 export const MENU_ITEM_CLASSES = 'flex w-full items-center gap-2 px-3 py-1.5 text-p';
 
 /**
- * EXACTLY ONE COLOUR UTILITY PER ENTRY, chosen here.
- *
- * The obvious shape -- a base with `text-primary` and a modifier appended
- * after it -- does not work: both are `color` declarations in the same
- * Tailwind layer, so which one wins is decided by the order they happen to
- * sit in the generated stylesheet and NOT by the order of the class
- * attribute. It read as "the disabled entry looks like every other entry" in
- * the first capture of the menu, which is exactly the sort of thing a rule
- * that is right by construction prevents.
+ * EXACTAMENTE UNA UTILIDAD DE COLOR POR ENTRADA, elegida acá. La forma obvia -una
+ * base con `text-primary` y un modificador después- no funciona: las dos son
+ * declaraciones de `color` en la misma capa de Tailwind, así que gana la que quede
+ * antes en la hoja generada y NO el orden del atributo. En la primera captura la
+ * entrada deshabilitada se veía como cualquier otra.
  */
 const MENU_ITEM_TONES = {
   normal: 'cursor-pointer text-primary',
-  /** The destructive entry, and the only one that is coloured. */
+  /** La entrada destructiva, y la única que lleva color. */
   danger: 'cursor-pointer text-danger',
-  /** Disabled beats danger: a red entry somebody cannot press is a trap. */
+  /** Deshabilitada gana a peligro: una entrada roja que no se puede pulsar engaña. */
   disabled: 'cursor-not-allowed text-disabled',
 } as const;
 
@@ -81,11 +67,9 @@ export function menuItemClasses(item: MenuItem, active: boolean): string {
 }
 
 /**
- * Where the keyboard goes next INSIDE A MENU, skipping what cannot be chosen.
- *
- * A disabled entry stays visible -- it is information, "you cannot do this
- * here" -- and stays out of the walk: stopping on it would make the arrow keys
- * feel broken on the rows where it happens to be disabled.
+ * Adónde va el teclado DENTRO DE UN MENÚ, salteando lo que no se puede elegir. Una
+ * entrada deshabilitada queda visible -es información- y fuera del recorrido:
+ * frenar en ella haría sentir rotas las flechas en las filas donde lo esté.
  */
 export function moveMenuIndex(items: readonly MenuItem[], from: number, delta: number): number {
   const enabled = items
@@ -99,7 +83,7 @@ export function moveMenuIndex(items: readonly MenuItem[], from: number, delta: n
   return enabled[next]?.index ?? -1;
 }
 
-/** Build the overlay a row menu lives in. One place, one set of positions. */
+/** Arma el overlay donde vive un menú de fila. Un lugar, un juego de posiciones. */
 export function createMenuOverlay(
   injector: Injector,
   origin: HTMLElement,

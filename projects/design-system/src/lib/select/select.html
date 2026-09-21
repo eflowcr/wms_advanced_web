@@ -1,8 +1,7 @@
 <!--
-  A <button> is not a labelable element, so the visible label is joined to the
-  trigger with aria-labelledby instead of for/id. The trigger's own text is
-  then the VALUE, which is what the combobox pattern expects: the name says
-  what the control is for, the content says what is currently in it.
+  Un `<button>` no es un elemento etiquetable, así que la etiqueta visible se une al
+  gatillo con aria-labelledby y no con for/id. El texto del gatillo es entonces el
+  VALOR, que es lo que espera el patrón combobox.
 -->
 <span [id]="labelId" class="block text-caption text-secondary mb-1">{{ label() }}</span>
 
@@ -29,10 +28,9 @@
   <span class="truncate" [class]="triggerTextClasses()">{{ triggerText() }}</span>
 
   <!--
-    Decorative: the button already says what it is and what it holds. The
-    chevron is `sm` (16 px) at every field size, the same rule as the Input's
-    prefix icon -- see FIELD_ICON_SIZE and the chevron note in the PR report.
-  -->
+  Decorativo: el botón ya dice qué es y qué contiene. El chevron es `sm` (16 px) en
+  todos los tamaños de campo, la misma regla que el icono de prefijo del Input.
+-->
   <ewms-icon name="chevron-down" [size]="iconSize" />
 </button>
 
@@ -41,20 +39,13 @@
 }
 
 <!--
-  The panel, rendered into a CDK overlay. Nothing inside it is focusable: the
-  focus stays on the trigger and `aria-activedescendant` points at the active
-  row, which is the ARIA Authoring Practices pattern for a select-only
-  combobox.
-
-  That is why the rows carry no key handler and no tab stop of their own, and
-  why two accessibility rules are switched off for them below. Both rules
-  assume a widget where every interactive element handles its own keyboard and
-  takes its own focus; this one deliberately does the opposite, and neither
-  rule can see the keyboard contract (down, up, Enter, Escape) from here,
-  because it is implemented once, on the trigger. Satisfying them literally --
-  a key handler and a tabindex on every row -- would add a second,
-  contradictory keyboard path and put every option into the tab order, which
-  is the thing aria-activedescendant exists to avoid.
+  El panel, pintado en un overlay del CDK. Nada adentro es enfocable: el foco se
+  queda en el gatillo y `aria-activedescendant` apunta a la fila activa, que es el
+  patrón de las APG para un combobox de solo selección.
+  Por eso las filas no llevan manejador de teclas ni parada de tabulación, y por eso
+  hay dos reglas de accesibilidad apagadas abajo: las dos suponen un widget donde
+  cada elemento maneja su teclado, y ninguna puede ver desde acá el contrato
+  (abajo, arriba, Enter, Escape), que está implementado una vez, en el gatillo.
 -->
 <ng-template #panel>
   <ul [id]="listboxId" role="listbox" [class]="panelClasses" [attr.aria-labelledby]="labelId">
