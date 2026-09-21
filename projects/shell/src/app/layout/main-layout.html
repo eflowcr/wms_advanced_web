@@ -167,14 +167,14 @@
       }
 
       <!--
-        `tabindex="-1"` para recibir el foco cuando la página no tiene `h1`. El anillo de
-        foco del `h1` se pone acá con `:focus` y no `:focus-visible`, porque ese foco siempre
-        es programático. Ver vault: App-Shell.
+        `tabindex="-1"` para recibir el foco cuando la página no tiene `h1`. El foco va al `h1`
+        en cada navegación; el anillo, solo con `:focus-visible` (llegando por teclado): con
+        `:focus` se pintaba en cada clic (2026-09-21). Ver vault: App-Shell.
       -->
       <main
         #main
         id="main"
-        class="min-w-0 flex-1 [&_h1:focus]:rounded-sm [&_h1:focus]:shadow-(--focus-ring-shadow) [&_h1:focus]:outline-none"
+        class="min-w-0 flex-1 [&_h1:focus]:outline-none [&_h1:focus-visible]:rounded-sm [&_h1:focus-visible]:shadow-(--focus-ring-shadow)"
         tabindex="-1"
       >
         <router-outlet />

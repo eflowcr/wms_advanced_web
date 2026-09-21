@@ -20,7 +20,7 @@
   <!-- ================================================ 2. Qué resuelve / cuándo no -->
   <section class="flex flex-col gap-4" aria-labelledby="dp-purpose" data-block="2-proposito">
     <h2 id="dp-purpose" class="text-h2">Qué resuelve, y cuándo NO usarlo</h2>
-    <div class="grid grid-cols-[repeat(auto-fit,minmax(20rem,1fr))] gap-4">
+    <div class="grid grid-cols-[repeat(auto-fit,minmax(min(20rem,100%),1fr))] gap-4">
       <div class="flex flex-col gap-2 rounded-md border border-default bg-surface p-4">
         <h3 class="text-h3">Qué resuelve</h3>
         <p>
@@ -49,7 +49,7 @@
   <!-- ========================================================= 3. Demo principal -->
   <section class="flex flex-col gap-4" aria-labelledby="dp-demo" data-block="3-demo">
     <h2 id="dp-demo" class="text-h2">Demo principal</h2>
-    <div class="grid grid-cols-[repeat(auto-fit,minmax(24rem,1fr))] gap-6">
+    <div class="grid grid-cols-[repeat(auto-fit,minmax(min(24rem,100%),1fr))] gap-6">
       <ewms-demo-frame ground="canvas" label="Una fecha, desde hoy">
         <div class="flex max-w-80 flex-col gap-3" [formGroup]="form" data-demo-date>
           <ewms-date-picker

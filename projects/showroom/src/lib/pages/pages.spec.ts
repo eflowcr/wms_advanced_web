@@ -6,6 +6,7 @@ import {
   EWMS_FAVORITES_STORE,
   Favorites,
   InMemoryFavoritesStore,
+  Viewport,
   type FavoriteLabelResolver,
 } from '@ewms/design-system';
 import { expectNoAxeViolations } from '@ewms/testing';
@@ -62,6 +63,26 @@ async function render<T>(component: Type<T>) {
 }
 
 describe('ShowroomLayout', () => {
+  it('below the breakpoint swaps the sidebar for the system select, which navigates', async () => {
+    TestBed.overrideProvider(Viewport, { useValue: { isWide: signal(false).asReadonly() } });
+    const { fixture, element } = await render(ShowroomLayout);
+    const navigate = vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
+    expect(element.querySelector('[data-sidebar]')).toBeNull();
+    // Sin barra, el ajuste de alto al hacer scroll no tiene a quién medir, y no falla.
+    window.dispatchEvent(new Event('scroll'));
+
+    const field = element.querySelector<HTMLInputElement>('[data-catalog-picker] input')!;
+    field.value = 'botón';
+    field.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    await fixture.whenStable();
+    document.querySelector<HTMLElement>('[role="option"]')!.click();
+    await fixture.whenStable();
+
+    expect(navigate).toHaveBeenCalledWith('/design-system/components/button');
+    clearOverlays();
+  });
+
   it('lists every catalogue entry in the sidebar', async () => {
     const { element } = await render(ShowroomLayout);
     expect(element.querySelectorAll('[data-sidebar] nav li').length).toBeGreaterThan(20);

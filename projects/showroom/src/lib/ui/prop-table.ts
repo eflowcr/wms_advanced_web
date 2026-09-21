@@ -16,6 +16,8 @@ export interface PropRow {
   selector: 'ewms-prop-table',
   templateUrl: './prop-table.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  // min-w-0: dentro de una grilla, sin él la tabla estira la columna y se corta en vez de hacer scroll.
+  host: { class: 'block min-w-0' },
 })
 export class PropTable {
   readonly rows = input.required<readonly PropRow[]>();

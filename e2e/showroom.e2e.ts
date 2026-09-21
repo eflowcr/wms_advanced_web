@@ -60,11 +60,19 @@ test.describe('the showroom renders and is reachable', () => {
     }
   });
 
-  test('the sidebar marks the page you are on', async ({ page }) => {
-    await page.goto(BUTTON);
+  test('the sidebar marks the page you are on, once even when two entries share it', async ({
+    page,
+  }) => {
     const current = page.locator('[data-sidebar] a[aria-current="page"]');
-    await expect(current).toHaveCount(1);
-    await expect(current).toHaveText('Botón');
+    // Tabla y Badge comparten ruta: se marca solo la primera.
+    for (const [url, name] of [
+      [BUTTON, 'Botón'],
+      [TABLE, 'Tabla de datos'],
+    ] as const) {
+      await page.goto(url);
+      await expect(current).toHaveCount(1);
+      await expect(current).toHaveText(name);
+    }
   });
 
   test('the search filters the catalogue by name and by selector', async ({ page }) => {

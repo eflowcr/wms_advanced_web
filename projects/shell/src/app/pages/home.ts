@@ -11,6 +11,8 @@ import { BRAND_NAME } from '../brand';
   imports: [TranslocoCurrencyPipe, TranslocoDatePipe, TranslocoDecimalPipe, TranslocoPipe],
   selector: 'app-home',
   templateUrl: './home.html',
+  // El espaciado de «En construcción»: sin él el texto quedaba pegado al h1.
+  host: { class: 'flex flex-col gap-6' },
 })
 export class Home {
   protected readonly brandName = BRAND_NAME;
