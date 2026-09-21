@@ -2,10 +2,10 @@ import { SEARCH_PAGE_SIZE, type SearchPage, type SearchSource } from '@ewms/desi
 import { Observable, throwError, timer } from 'rxjs';
 import { map, switchMap } from 'rxjs/operators';
 
-/** One page of articles, named so a spec can say what it expects back. */
+/** Una página de artículos, con nombre para que la prueba diga qué espera. */
 export type SearchPageOfArticle = SearchPage<Article>;
 
-/** A synthetic article. No real data of any customer, ever (PLN-WMS-003 §6). */
+/** Artículo sintético: nunca datos reales de un cliente (PLN-WMS-003 §6). */
 export interface Article {
   readonly code: string;
   readonly name: string;
@@ -35,15 +35,8 @@ const SHAPES = [
 ] as const;
 
 /**
- * A seeded generator, so the catalogue is the SAME on every load.
- *
- * Captures of this page have to be comparable between one run and the next,
- * and a `Math.random()` catalogue makes every screenshot a different page.
- * This is the same reason the expediciones demo of the Table is seeded.
- *
- * xorshift32 rather than anything cleverer: it is four lines, it has no state
- * to get wrong, and the only property needed here is "the same sequence every
- * time".
+ * Generador con semilla (xorshift32): el catálogo sale igual en cada carga para
+ * que las capturas sean comparables entre corridas, como en expediciones.
  */
 function seeded(seed: number): () => number {
   let state = seed;
@@ -55,7 +48,7 @@ function seeded(seed: number): () => number {
   };
 }
 
-/** 340 synthetic articles, identical on every load. */
+/** 340 artículos sintéticos, idénticos en cada carga. */
 export const CATALOGUE: readonly Article[] = buildCatalogue();
 
 function buildCatalogue(): readonly Article[] {
@@ -75,39 +68,24 @@ function buildCatalogue(): readonly Article[] {
   return articles;
 }
 
-/** How the demo source can be made to misbehave, on purpose. */
+/** Cómo se puede hacer fallar a propósito la fuente de la demo. */
 export type SourceBehaviour =
-  /** Answers after a short, plausible wait. */
+  /** Responde tras una espera corta y verosímil. */
   | 'normal'
-  /** Answers after longer than the timeout token allows. */
+  /** Responde después de lo que permite el token de timeout. */
   | 'slow'
-  /** Fails outright. */
+  /** Falla directamente. */
   | 'failing';
 
 /**
- * The demo's data source: IN MEMORY, WITH SIMULATED LATENCY.
- *
- * NOT MSW, AND THAT IS A REPORTED DEVIATION FROM THE REQ, NOT AN OVERSIGHT.
- * REQ-FE-DS3-001 §3 asks for the demo to be built on MSW. Building it that way
- * means the demo calls `fetch` at a URL and a service worker answers -- and to
- * work at all, `mockServiceWorker.js` has to be served from the shell's
- * `public/`, which `angular.json` copies WHOLE into the production build. The
- * page would then ship a service worker and, with no worker registered in
- * production, its `fetch` would leave for a real origin. That is a real HTTP
- * call from showroom code, which HG-02 forbids in as many words.
- *
- * This source satisfies every RFE the MSW version would: it is an
- * implementation of `SearchSource` and nothing else, it pages, it waits, it
- * fails on demand, and it knows nothing about the component. The day a
- * catalogue endpoint exists, what changes is this class and nothing else --
- * which is the portability claim the REQ actually cares about.
- *
- * The verdict is reported rather than settled: see the DS-3 report.
+ * Fuente de la demo en memoria con latencia simulada, sin MSW: servir su worker
+ * lo mandaría a producción con fetch a un origen real (HG-02). Con backend, solo
+ * cambia esta clase. Ver vault: 08-Sistema-de-Diseno/Componentes/Search-Select.
  */
 export class CatalogueSource implements SearchSource<Article> {
   constructor(
     private readonly behaviour: () => SourceBehaviour,
-    /** Every query, recorded, so the page can show what it asked for. */
+    /** Registra cada consulta para que la página muestre qué pidió. */
     private readonly onQuery: (query: string, page: number) => void,
   ) {}
 
@@ -115,11 +93,7 @@ export class CatalogueSource implements SearchSource<Article> {
     this.onQuery(query, page);
     const behaviour = this.behaviour();
 
-    /*
-     * The latency is simulated because a source that answers synchronously
-     * would never show the searching state, and a demo where the spinner is
-     * impossible to see is a demo of a component that does not have one.
-     */
+    // Sin latencia, el estado «buscando» no se vería nunca en la demo.
     const wait = behaviour === 'slow' ? 6000 : 400;
 
     return timer(wait).pipe(
@@ -135,10 +109,7 @@ export class CatalogueSource implements SearchSource<Article> {
     );
   }
 
-  /**
-   * The filtering and the paging, which the BACKEND will do when it exists.
-   * Written here so the component never learns how either one works.
-   */
+  /** Filtrado y paginado que hará el backend; acá, para que el componente no los conozca. */
   private page(query: string, page: number): SearchPage<Article> {
     const needle = query.trim().toLowerCase();
     const matches = CATALOGUE.filter(
@@ -160,11 +131,8 @@ export class CatalogueSource implements SearchSource<Article> {
 }
 
 /**
- * The same catalogue, from a source that declines to count.
- *
- * It exists because `total: null` is a legitimate answer in the contract
- * (RFE-02) and the component has to work with it -- and "has to work with it"
- * is a claim worth showing on the page rather than asserting in a comment.
+ * El mismo catálogo desde una fuente que no cuenta: total null es una respuesta
+ * válida del contrato (RFE-02) y la página muestra que el componente la soporta.
  */
 export class UncountedSource implements SearchSource<Article> {
   constructor(private readonly inner: CatalogueSource) {}

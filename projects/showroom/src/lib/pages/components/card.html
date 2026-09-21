@@ -1,4 +1,4 @@
-<!-- The showroom is Spanish only, exempt from i18n (gate 12): declared so a screen reader never reads it as English. -->
+<!-- Showroom solo en español, exento de i18n (compuerta 12): se declara para que el lector de pantalla no lo lea en inglés. -->
 <article class="flex flex-col gap-10" lang="es">
   <!-- ============================================================ 1. Encabezado -->
   <header class="flex flex-col gap-2" data-block="1-encabezado">
@@ -67,9 +67,8 @@
             <ewms-card-group formControlName="almacen" label="Almacén de destino">
               @for (warehouse of warehouses; track warehouse.value) {
                 <!--
-                  El meta NO lleva `text-secondary`, y es un hallazgo medido,
-                  no un descuido: el gris secundario sobre el tinte de la card
-                  elegida da 4.35:1 y no llega al 4.5 de AA. Ver el bloque 7.
+                  El meta no lleva el gris secundario: sobre el tinte de la card elegida da
+                  4.35:1 y no llega al 4.5 de AA. Ver el bloque 7.
                 -->
                 <ewms-card [optionValue]="warehouse.value" [disabled]="warehouse.disabled">
                   <span class="text-h4">{{ warehouse.name }}</span>

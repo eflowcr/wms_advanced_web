@@ -19,7 +19,7 @@ import {
   type SelectionBox,
 } from './selection-shared';
 
-/** The row axis: what the box holds. Three, and the third is the point. */
+/** Filas: lo que contiene la casilla. Tres, y la tercera es la que importa. */
 const VALUES: readonly MatrixAxis[] = [
   { id: 'off', label: 'Sin marcar' },
   { id: 'on', label: 'Marcado' },
@@ -34,19 +34,15 @@ const STATES: readonly MatrixAxis[] = [
 ];
 
 /**
- * The forced states.
- *
- * Only Hover and Focus are forced, with the same tokens the control's own
- * rules use. Disabled is a real input, which matters beyond honesty: painted
- * with a class it would leave axe looking at an enabled control in the
- * disabled palette.
+ * Solo Hover y Focus se fuerzan, con los mismos tokens del control. Disabled va como
+ * entrada real: pintado con una clase, axe vería un control habilitado en gris.
  */
 const FORCED: Readonly<Record<string, string>> = {
   hover: '[&_input]:border-(--color-bg-primary)',
   focus: '[&_input]:shadow-(--focus-ring-shadow)',
 };
 
-/** VERIFIED AGAINST checkbox.ts. */
+/** Verificada contra checkbox.ts. */
 const PROPS: readonly PropRow[] = [
   {
     name: 'checked',
@@ -92,12 +88,8 @@ const PROPS: readonly PropRow[] = [
 ];
 
 /**
- * /design-system/components/checkbox -- the sheet of `ewms-checkbox`.
- *
- * Read it next to the Radio and the Toggle: the three share `FormControlBase`
- * and the three are `ControlValueAccessor`, and the comparison between them is
- * part of the information. The one thing only this page can show is the third
- * state.
+ * /design-system/components/checkbox: ficha de ewms-checkbox, para leer junto a Radio y
+ * Toggle (los tres son CVA sobre FormControlBase). Solo esta muestra el tercer estado.
  */
 @Component({
   selector: 'ewms-showroom-checkbox',
@@ -116,7 +108,7 @@ export class ShowroomCheckbox {
 
   protected readonly box = signal<SelectionBox>(SELECTION_BOX);
 
-  /** The «select all» demo: three rows and the header box above them. */
+  /** Demo de «seleccionar todo»: tres filas y la casilla de cabecera. */
   protected readonly rows = signal<readonly { id: string; label: string; on: boolean }[]>([
     { id: 'a', label: 'Reetiquetar SKU-04871-B', on: false },
     { id: 'b', label: 'Reetiquetar SKU-04872-C', on: true },
@@ -125,7 +117,7 @@ export class ShowroomCheckbox {
 
   protected readonly allOn = computed(() => this.rows().every((row) => row.on));
   protected readonly someOn = computed(() => this.rows().some((row) => row.on));
-  /** Mixed is "some but not all" -- the only claim the header box can honestly make. */
+  /** Mixto es «algunas, no todas». */
   protected readonly headerMixed = computed(() => this.someOn() && !this.allOn());
 
   protected readonly snippet = [
@@ -145,13 +137,8 @@ export class ShowroomCheckbox {
   ].join('\n');
 
   constructor() {
-    /*
-     * 18x18 and a 1.5 px border are the claims. The size is measured off the
-     * rendered control; the border is read as the DECLARATION, because
-     * Chromium floors a sub-pixel border and reports a whole pixel whatever
-     * the token says. What the component owes is the token; what the browser does with
-     * it is the browser's.
-     */
+    // 18x18 y borde de 1.5 px. El tamaño se mide; el borde se lee de la declaración
+    // porque Chromium redondea hacia abajo un borde subpíxel y reporta un píxel entero.
     afterNextRender(() => {
       this.box.set(readSelectionBox(this.host.nativeElement));
     });

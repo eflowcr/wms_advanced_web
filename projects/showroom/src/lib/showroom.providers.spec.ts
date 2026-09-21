@@ -7,26 +7,13 @@ import {
   TABLE_MESSAGES,
 } from './showroom.providers';
 
-/**
- * The catalogue's own dictionaries.
- *
- * They are tested because they are the showroom's proof that the token pattern
- * works twice: the shell fills the same interfaces out of `core/i18n`, and
- * this file fills them with `Intl` and literals. If the interface only ever
- * had one implementation, it would not be an interface -- it would be an
- * indirection.
- */
+// Los diccionarios del catálogo prueban que el patrón de tokens funciona dos veces: el shell
+// llena las mismas interfaces desde `core/i18n` y acá con `Intl` y literales.
 describe('the showroom dictionaries', () => {
   describe('formatters', () => {
     it('turns a number into text, and takes a numeric string too', () => {
-      /*
-       * WHAT THE SEPARATOR LOOKS LIKE IS NOT ASSERTED HERE, on purpose. Node
-       * is built with a trimmed ICU in this environment, so `Intl` falls back
-       * to the root locale and `1200` comes out without a separator -- which
-       * says something about the test runner and nothing about the code. The
-       * grouping a person actually sees is a browser fact, and the browser is
-       * where e2e checks it.
-       */
+      // El separador no se afirma: este Node trae ICU recortado y `Intl` cae al locale raíz
+      // (`1200` sin separador). La agrupación visible la verifica e2e en el navegador.
       expect(TABLE_FORMATTERS.number(1200)).toContain('1');
       expect(TABLE_FORMATTERS.number(1200)).toContain('200');
       expect(TABLE_FORMATTERS.number('900')).toContain('900');
@@ -37,9 +24,8 @@ describe('the showroom dictionaries', () => {
     });
 
     it('RETURNS THE RAW VALUE RATHER THAN "Invalid Date"', () => {
-      // A table shows whatever the source handed over, and a source may hold a
-      // value in a shape nobody expected. Printing the raw text is
-      // information; printing "Invalid Date" is the table blaming the data.
+      // La fuente puede traer formas inesperadas: el texto crudo es información;
+      // «Invalid Date» es la tabla culpando al dato.
       expect(TABLE_FORMATTERS.date('mañana')).toBe('mañana');
       expect(TABLE_FORMATTERS.number('no es un número')).toBe('no es un número');
     });
@@ -60,7 +46,7 @@ describe('the showroom dictionaries', () => {
     });
 
     it('says how many results, with or without a total', () => {
-      // `null` is a legitimate total, and the message is where that shows.
+      // `null` es un total legítimo y el mensaje lo refleja.
       expect(SEARCH_SELECT_MESSAGES.results(3, 340)).toBe('3 de 340 resultados');
       expect(SEARCH_SELECT_MESSAGES.results(3, null)).toBe('3 resultados');
     });
@@ -71,13 +57,8 @@ describe('the showroom dictionaries', () => {
   });
 });
 
-/**
- * What a favourite is called in the catalogue's sidebar (REQ-FE-DS4-002 v1.3).
- *
- * Two injectors, because that is the shape in the application: the shell's
- * resolver above, the catalogue's below it, asking upwards for what it does not
- * know.
- */
+// Nombre de un favorito en la barra del catálogo (REQ-FE-DS4-002 v1.3). Dos inyectores, como en
+// la aplicación: el resolvedor del shell arriba y el del catálogo abajo, preguntando hacia arriba.
 describe("the showroom's favourite labels", () => {
   const BUTTON = '/design-system/components/button';
 
@@ -98,7 +79,7 @@ describe("the showroom's favourite labels", () => {
   it('names a catalogue page by its entry, whatever is above', () => {
     expect(resolverUnder().labelFor(BUTTON)()).toBe('Botón');
     expect(resolverUnder(application).labelFor(BUTTON)()).toBe('Botón');
-    // The catalogue has no icons of its own: the block draws its neutral one.
+    // El catálogo no tiene íconos propios: el bloque dibuja el neutro.
     expect(resolverUnder(application).iconFor(BUTTON)).toBeNull();
   });
 

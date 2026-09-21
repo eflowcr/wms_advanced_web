@@ -56,11 +56,8 @@ const PAGINAS = 7;
 const FILAS = 163;
 
 /**
- * /design-system/components/pagination — la ficha de `ewms-pagination`.
- *
- * ES UN COMPONENTE PROPIO Y NO UN TROZO DE LA TABLA, y esta página existe para
- * decirlo: una lista de tarjetas, un registro de eventos y una cola de picking
- * paginan, y ninguno es una tabla. La tabla es sólo su primer consumidor.
+ * /design-system/components/pagination: ficha de ewms-pagination. Es un componente propio,
+ * no parte de la tabla: tarjetas, eventos o colas de picking también paginan.
  */
 @Component({
   selector: 'ewms-showroom-pagination',
@@ -69,11 +66,7 @@ const FILAS = 163;
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ShowroomPagination {
-  /**
-   * Los textos del paginador salen del mismo diccionario que los de la tabla:
-   * el catálogo ya lo provee, y tener dos juegos de palabras para el mismo
-   * control es cómo acaban diciendo cosas distintas.
-   */
+  /** Mismo diccionario que la tabla: dos juegos de textos para un control terminan discrepando. */
   private readonly tableMessages = inject(EWMS_TABLE_MESSAGES);
 
   protected readonly version = DESIGN_SYSTEM_VERSION;

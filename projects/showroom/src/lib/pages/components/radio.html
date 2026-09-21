@@ -1,4 +1,4 @@
-<!-- The showroom is Spanish only, exempt from i18n (gate 12): declared so a screen reader never reads it as English. -->
+<!-- Showroom solo en español, exento de i18n (compuerta 12): se declara para que el lector de pantalla no lo lea en inglés. -->
 <article class="flex flex-col gap-10" lang="es">
   <!-- ============================================================ 1. Encabezado -->
   <header class="flex flex-col gap-2" data-block="1-encabezado">
@@ -64,10 +64,7 @@
     <div class="grid grid-cols-[repeat(auto-fit,minmax(24rem,1fr))] gap-6">
       <ewms-demo-frame ground="canvas" label="Un grupo real, dentro de un formulario reactivo">
         <form [formGroup]="form" class="flex flex-col gap-3" data-demo-group>
-          <!--
-            A <fieldset> with a <legend>, not a heading and a div: the group is
-            the thing with a name, and that is the element that names a group.
-          -->
+          <!-- fieldset con legend, no título y div: el grupo es lo que tiene nombre. -->
           <fieldset class="flex flex-col gap-2 border-0 p-0">
             <legend class="mb-1 text-caption text-secondary">Tipo de recepción</legend>
             @for (option of options; track option.value) {
@@ -182,9 +179,8 @@
     <ewms-demo-frame ground="surface">
       <div class="flex flex-wrap items-center gap-6" data-measure-box>
 <!--
-          Its own group of one, not the demo's control: binding the same
-          FormControl to a second accessor would leave two components fighting
-          over which one writes it.
+          Grupo propio de uno, no el control de la demo: un mismo FormControl en dos
+          accesores deja a dos componentes peleando por escribirlo.
         -->
         <ewms-radio
           [formControl]="controlFor('on', 'medida')"

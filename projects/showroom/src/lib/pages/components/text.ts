@@ -14,10 +14,8 @@ import { TokenValue } from '../../ui/token-value';
 import { computedOf, tagOf } from './measure';
 
 /**
- * The seven variants, as the matrix's row axis.
- *
- * The ids ARE the component's union, so the template needs no cast and a
- * variant renamed in the library breaks this file at compile time.
+ * Filas de la matriz: las siete variantes. Los ids son la unión del componente,
+ * así que renombrar una variante en la librería rompe este archivo al compilar.
  */
 const VARIANTS: readonly MatrixAxis[] = [
   { id: 'h1', label: 'h1' },
@@ -30,13 +28,9 @@ const VARIANTS: readonly MatrixAxis[] = [
 ];
 
 /**
- * The column axis. NOT states: this component has none.
- *
- * `ewms-text` is a primitive with no hover, no focus and no disabled -- it
- * renders an element and stops. So the matrix's second axis is the thing that
- * actually varies and that the component exists to couple: the ELEMENT the
- * variant renders against the LOOK it renders with. Reading the grid across a
- * row is the whole argument of the component in one line.
+ * Columnas: no son estados, porque ewms-text no tiene hover, foco ni deshabilitado.
+ * Cruzan el elemento que se renderiza con cómo se ve, que es justo el acople
+ * que el componente existe para garantizar.
  */
 const AXES: readonly MatrixAxis[] = [
   { id: 'element', label: 'Elemento del documento' },
@@ -53,7 +47,7 @@ const VARIANT_BY_ID: Readonly<Record<string, TextVariant>> = {
   mono: 'mono',
 };
 
-/** One line of sample text per variant, so the grid is not seven copies of "Aa". */
+/** Un texto de muestra por variante, para que la grilla no sea siete veces «Aa». */
 const SAMPLES: Readonly<Record<string, string>> = {
   h1: 'Recepción de mercancía',
   h2: 'Órdenes pendientes',
@@ -65,11 +59,8 @@ const SAMPLES: Readonly<Record<string, string>> = {
 };
 
 /**
- * The property table.
- *
- * VERIFIED AGAINST text.ts. One input, required, and no `as`: that absence is
- * the component, so it is written into the table rather than left to be
- * noticed.
+ * Verificada contra text.ts: una sola entrada, requerida, y sin input as.
+ * Esa ausencia es el componente, por eso la tabla la dice explícitamente.
  */
 const PROPS: readonly PropRow[] = [
   {
@@ -89,9 +80,8 @@ const PROPS: readonly PropRow[] = [
 ];
 
 /**
- * The tokens each variant consumes. Four of them are knowingly undeclared in
- * tokens.css and are marked as such instead of being filled in with a guess --
- * the same treatment the Fundamentos page gives them.
+ * Tokens por variante. Cuatro no están declarados en tokens.css y se marcan
+ * como pendientes en vez de inventarles valor, igual que en Fundamentos.
  */
 interface VariantTokens {
   readonly variant: string;
@@ -153,25 +143,18 @@ const TOKENS: readonly VariantTokens[] = [
   },
 ];
 
-/** What the browser actually built for a variant, read back off the page. */
+/** Lo que el navegador construyó para cada variante, leído de la página. */
 interface RenderedElement {
   readonly variant: string;
-  /** `H2`, `P`, `SPAN` -- measured, never written down. */
+  /** H2, P, SPAN: medido, nunca escrito a mano. */
   readonly tag: string;
   readonly fontSize: string;
 }
 
 /**
- * /design-system/components/text -- the sheet of `ewms-text`.
- *
- * NOT the type scale. The scale is at /design-system/foundations/typography,
- * where it is shown at its real size with its tokens; this page is about the
- * COMPONENT, and the component's whole reason to exist is a rule the scale
- * cannot state: the visual level and the document level cannot be separated.
- *
- * Which is why block 7 reads the tag name out of the DOM rather than printing
- * a table of promises. `variant="h3"` renders `<h3>` is a claim, and the page
- * that documents it should be the page that checks it.
+ * /design-system/components/text: ficha de ewms-text. La escala tipográfica vive en
+ * foundations/typography; acá importa la regla de que nivel visual y nivel del
+ * documento no se separan, y por eso el bloque 7 lee la etiqueta del DOM.
  */
 @Component({
   selector: 'ewms-showroom-text',
@@ -201,11 +184,8 @@ export class ShowroomText {
   ].join('\n');
 
   constructor() {
-    /*
-     * The element and its size come off the rendered page, not out of a list
-     * here. A table saying "h3 renders <h3>" written by hand is a table that
-     * keeps saying it after somebody adds an `as` input.
-     */
+    // Elemento y tamaño salen de la página renderizada: una tabla escrita a mano
+    // seguiría diciendo «h3 da un h3» aunque alguien agregara un input as.
     afterNextRender(() => {
       this.rendered.update((rows) =>
         rows.map((row) => {
@@ -219,12 +199,8 @@ export class ShowroomText {
   }
 
   /**
-   * The element a variant really produced, for the matrix's first column.
-   *
-   * It reads the SAME measurement the anatomy table shows, rather than
-   * printing the variant's own name a second time: the row header already
-   * says `h3`, and a column repeating it would be a grid that looks like it
-   * proves the coupling while proving nothing at all.
+   * Elemento medido para la primera columna. Repetir el nombre de la variante
+   * aparentaría probar el acople sin probar nada.
    */
   protected tagFor(id: string): string {
     return this.rendered().find((row) => row.variant === id)?.tag ?? '…';
@@ -238,7 +214,7 @@ export class ShowroomText {
     return SAMPLES[id] ?? '';
   }
 
-  /** A heading variant, which is what makes the coupling bite. */
+  /** Solo en los encabezados el acople tiene consecuencias. */
   protected isHeading(id: string): boolean {
     return id.startsWith('h');
   }

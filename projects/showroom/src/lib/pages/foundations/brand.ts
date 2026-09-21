@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { DemoFrame } from '../../ui/demo-frame';
 import { TokenValue } from '../../ui/token-value';
 
-/** One of the three shapes the eWMS mark comes in. */
+/** Una de las tres formas de la marca eWMS. */
 interface BrandShape {
   readonly id: string;
   readonly name: string;
@@ -10,34 +10,18 @@ interface BrandShape {
   readonly mono: string;
   readonly alt: string;
   readonly use: string;
-  /** Height utility, so the three keep a sensible relative scale. */
+  /** Utilidad de alto, para que las tres guarden una escala relativa sensata. */
   readonly height: string;
 }
 
 const BRAND_BASE = '/brand';
 
 /**
- * /design-system/foundations/brand — the mark, for the person building a screen.
- *
- * The question it answers is "I need the logo on this screen, which file and
- * how", and nothing else: no product messaging, no sales material (Showroom
- * spec, section 2, note of 2026-09-18).
- *
- * HOW THE MONO FILES ARE PAINTED, AND WHY NOT AS AN IMAGE ELEMENT
- *
- * The mono SVGs are a single path filled with `currentColor`. Loaded through
- * an `img` element they render in their own document, where `currentColor`
- * resolves to that document's initial colour and comes out black — the exact
- * opposite of what the file exists to prove. Inlining the markup is not available
- * either: gate 11 forbids a hand-written vector tag in a template (and reads
- * one in a comment exactly the same way, correctly), and the CSP forbids
- * injecting one.
- *
- * So the file is used as a MASK and the colour is a background of
- * `currentColor`. The mask's alpha is the glyph, so what lands on screen is
- * the same shape taking the same inherited colour, which is what the page is
- * demonstrating. It goes through the same `--color-text-*` tokens as any text.
+ * La marca, para quien arma una pantalla: qué archivo y cómo, nada de material comercial
+ * (Ver vault: Showroom - Especificacion §2, nota del 2026-09-18).
  */
+// Los SVG mono van como máscara con fondo `currentColor`: en un `img` se pintan negros (otro
+// documento), y la compuerta 11 y la CSP impiden incrustarlos. Así heredan el color del texto.
 @Component({
   selector: 'ewms-showroom-brand',
   imports: [DemoFrame, TokenValue],
@@ -106,7 +90,7 @@ export class ShowroomBrand {
     },
   ];
 
-  /** The mask declaration for a mono file. See the class comment. */
+  /** Declaración de máscara para un archivo mono (ver el comentario de la clase). */
   protected mono(file: string): Record<string, string> {
     return {
       'mask-image': `url("${file}")`,

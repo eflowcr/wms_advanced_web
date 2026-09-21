@@ -13,7 +13,7 @@ import { DemoFrame } from '../../ui/demo-frame';
 import { TokenReader } from '../../ui/token-reader';
 import { TokenValue } from '../../ui/token-value';
 
-/** One step of the spacing scale, rendered at the width the multiplier gives it. */
+/** Un paso de la escala de espaciado, al ancho que le da el multiplicador. */
 interface SpacingStep {
   readonly steps: number;
   readonly utility: string;
@@ -89,13 +89,8 @@ const ELEVATIONS = [
 ] as const;
 
 /**
- * /design-system/foundations/spacing — one multiplier, five radii, three
- * control heights and three elevations.
- *
- * The mixed row at the end is not decoration. Input and Button share the
- * 32/40/48 heights by rule but carry different horizontal padding, and that
- * row is the only place the rule can actually be looked at: a real Input, a
- * real Select and a real Button, side by side, at the same size.
+ * Un multiplicador, cinco radios, tres alturas de control y tres elevaciones. La fila mixta final
+ * es el único lugar donde se ve la regla 32/40/48: Input, Select y Button reales, lado a lado.
  */
 @Component({
   selector: 'ewms-showroom-spacing',
@@ -117,7 +112,7 @@ export class ShowroomSpacing {
     { value: 'c', label: 'Cuarentena' },
   ];
 
-  /** The base multiplier, read live. Every number below is derived from it. */
+  /** Multiplicador base leído en vivo; todo número de abajo se deriva de él. */
   protected readonly base = signal('…');
 
   constructor() {

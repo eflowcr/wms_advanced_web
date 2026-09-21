@@ -1,4 +1,4 @@
-<!-- The showroom is Spanish only, exempt from i18n (gate 12): declared so a screen reader never reads it as English. -->
+<!-- Showroom solo en español, exento de i18n (compuerta 12): se declara para que el lector de pantalla no lo lea en inglés. -->
 <article class="flex flex-col gap-10" lang="es">
   <!-- ============================================================ 1. Encabezado -->
   <header class="flex flex-col gap-2" data-block="1-encabezado">
@@ -106,9 +106,8 @@
                 Que falle
               </ewms-button>
               <!--
-                Secondary y NO ghost, y es un hallazgo medido: el primer plano
-                del Ghost sobre `bg-secondary` da 4.31:1 y no llega al 4.5 de
-                AA. Lo encontró axe sobre esta misma página. Ver el bloque 7.
+                Secondary y no Ghost, hallazgo medido: el primer plano del Ghost sobre el fondo
+                secundario da 4.31:1, bajo el 4.5 de AA. Lo encontró axe acá. Ver el bloque 7.
               -->
               <ewms-button variant="secondary" size="sm" data-toggle-counts (click)="toggleCounts()">
                 {{ counts() ? 'Que deje de contar (total: null)' : 'Que vuelva a contar' }}

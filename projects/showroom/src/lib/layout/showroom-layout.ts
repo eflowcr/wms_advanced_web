@@ -8,56 +8,25 @@ import { countEntries, filterCatalog, STATUS_LABELS } from '../catalog';
 import { provideShowroomDesignSystem } from '../showroom.providers';
 
 /**
- * The frame every showroom page renders inside: a fixed sidebar, a search box
- * over the catalogue, and the version of the design system on screen.
- *
- * IT IS THE SHOWROOM'S OWN LAYOUT, NOT THE SHELL'S. The shell's chrome wraps
- * this one (app.routes.ts mounts the showroom inside MainLayout) and is not
- * touched: the two answer to different people.
- *
- * NONE OF THE CHROME USES A DESIGN-SYSTEM COMPONENT. The search field is a
- * plain `<input>` and the links are plain `<a>`, built from tokens by hand. If
- * the sidebar depended on the Button, a broken Button would take away the page
- * that documents the Button -- the tool that diagnoses cannot depend on what it
- * diagnoses (Showroom spec, section 5). The tokens are the same; the components
- * are not.
- *
- * ONE EXCEPTION SINCE DS-5, DELIBERATE: `ewms-favorites-nav`. It is not chrome
- * that could be rebuilt from tokens -- it IS the feature REQ-FE-DS4-002 asks to
- * see working, and the requirement is that the block lives in a FIXED PLACE IN
- * THE NAVIGATION (RFE-04) rather than inside a page. Building a second copy
- * for the catalogue is exactly what RFE-04 forbids.
- *
- * THE BLOCK READS THE APPLICATION'S LIST, NOT ONE OF ITS OWN. `Favorites` and
- * its store are provided once, by the shell, and arrive here by injection.
- * The star is the application's too: it is in the header above this layout.
+ * Marco propio del showroom (barra lateral, búsqueda, versión), dentro del `MainLayout` del shell.
+ * Su cromo no usa componentes del DS: la herramienta que diagnostica no puede depender de lo
+ * que diagnostica (Ver vault: Showroom - Especificacion §5).
  */
+// Única excepción desde DS-5: `ewms-favorites-nav`, porque REQ-FE-DS4-002 RFE-04 lo quiere fijo
+// en la navegación y prohíbe una segunda copia. Lee la lista de la aplicación, que provee el
+// shell por inyección; la estrella también es del shell.
 @Component({
   selector: 'ewms-showroom-layout',
   templateUrl: './showroom-layout.html',
   imports: [RouterLink, RouterLinkActive, RouterOutlet, FavoritesNav],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  /*
-   * THE CATALOGUE'S OWN DICTIONARIES, ON THE COMPONENT AND NOT ON THE ROUTE.
-   *
-   * The shell provides its own on `MainLayout`, which this layout renders
-   * inside. A component's providers live in the ELEMENT injector, and that
-   * chain is walked before any environment injector -- so route-level
-   * providers here lost to MainLayout's, and every showroom page quietly
-   * showed the shell's strings in whatever language the application was in.
-   * The table's row checkboxes reading "Select the row" in a Spanish-only
-   * catalogue is how it was noticed.
-   *
-   * On the component they are nearer than MainLayout's and win, which is what
-   * "the catalogue speaks for itself" has to mean.
-   *
-   * WORDS ONLY. The favourites' STORE is not among them: state provided here
-   * would be a second list, and a second list is a defect.
-   */
+  // Diccionarios en el componente y no en la ruta: el inyector de elemento se recorre antes que
+  // el de entorno, y en la ruta perdían contra los de `MainLayout` (se vio «Select the row» en la
+  // tabla). Solo palabras: proveer acá el almacén de favoritos sería una segunda lista.
   providers: [provideShowroomDesignSystem()],
 })
 export class ShowroomLayout {
-  /** Compile-time, from the library's package.json. Never typed in by hand. */
+  /** En tiempo de compilación, del package.json de la librería; nunca a mano. */
   protected readonly version = DESIGN_SYSTEM_VERSION;
   protected readonly statusLabels = STATUS_LABELS;
 
@@ -65,18 +34,13 @@ export class ShowroomLayout {
 
   protected readonly query = signal('');
 
-  /** The catalogue, filtered. One list, so the sidebar cannot drift from the index. */
+  /** El catálogo filtrado. Una sola lista: la barra lateral no se desvía del índice. */
   protected readonly sections = computed(() => filterCatalog(this.query()));
   protected readonly matches = computed(() => countEntries(this.sections()));
   protected readonly filtering = computed(() => this.query().trim().length > 0);
 
-  /**
-   * The URL, as a signal.
-   *
-   * `startWith` because a navigation that already finished emits nothing: the
-   * layout is created BY that navigation, so without it the first page has no
-   * route and the block would mark nothing as current until you moved.
-   */
+  // `startWith` porque la navegación que creó este layout ya terminó y no emite: sin él,
+  // la primera página no tendría ruta y el bloque no marcaría nada como actual.
   private readonly url = toSignal(
     this.router.events.pipe(
       filter((event): event is NavigationEnd => event instanceof NavigationEnd),
@@ -86,18 +50,14 @@ export class ShowroomLayout {
     { initialValue: this.router.url },
   );
 
-  /** The page showing, so the block can mark it. */
+  /** La página visible, para que el bloque la marque. */
   protected readonly activeRoute = computed(() => this.url().split('?')[0] ?? '/design-system');
 
   protected onSearch(event: Event): void {
     this.query.set((event.target as HTMLInputElement).value);
   }
 
-  /**
-   * A favourite chosen in the block. The BLOCK does not navigate -- it emits,
-   * and the thing that knows what a route means does the navigating. Here that
-   * is the catalogue; in the shell it is the shell.
-   */
+  /** El bloque no navega, emite; navega quien sabe qué es una ruta (acá, el catálogo). */
   protected onFavorite(favorite: Favorite): void {
     void this.router.navigateByUrl(favorite.route);
   }

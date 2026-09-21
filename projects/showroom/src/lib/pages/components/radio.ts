@@ -21,11 +21,8 @@ import {
 } from './selection-shared';
 
 /**
- * The row axis: two, not three.
- *
- * A radio has no indeterminate state, and the absence is information -- it is
- * the one place where the two selection controls, which share everything else,
- * genuinely differ in what they can express.
+ * Dos filas, no tres: un radio no tiene indeterminado. Es la única diferencia real
+ * de expresión con el Checkbox, con el que comparte todo lo demás.
  */
 const VALUES: readonly MatrixAxis[] = [
   { id: 'off', label: 'Sin elegir' },
@@ -39,10 +36,10 @@ const STATES: readonly MatrixAxis[] = [
   { id: 'disabled', label: 'Disabled' },
 ];
 
-/** The identity every matrix cell offers; «elegido» is its control holding it. */
+/** Valor que ofrece cada celda; «elegido» es que su control lo tenga. */
 const CELL_VALUE = 'la-elegida';
 
-/** Same two forced states, same two tokens as the Checkbox: they share the code. */
+/** Mismos estados forzados y tokens que el Checkbox: comparten código. */
 const FORCED: Readonly<Record<string, string>> = {
   hover: '[&_input]:border-(--color-bg-primary)',
   focus: '[&_input]:shadow-(--focus-ring-shadow)',
@@ -59,7 +56,7 @@ const RECEPTION_TYPES: readonly Option[] = [
   { value: 'traslado', label: 'Traslado entre almacenes' },
 ];
 
-/** VERIFIED AGAINST radio.ts. */
+/** Verificada contra radio.ts. */
 const PROPS: readonly PropRow[] = [
   {
     name: 'value',
@@ -103,11 +100,8 @@ const PROPS: readonly PropRow[] = [
 ];
 
 /**
- * /design-system/components/radio -- the sheet of `ewms-radio`.
- *
- * Its twin is the Checkbox, and the pages are written to be read together: the
- * anatomy table is literally the same constant, because the two components
- * share `selection.types.ts`.
+ * /design-system/components/radio: ficha de ewms-radio, gemela de la del Checkbox. La
+ * tabla de anatomía es la misma constante porque comparten selection.types.ts.
  */
 @Component({
   selector: 'ewms-showroom-radio',
@@ -160,17 +154,9 @@ export class ShowroomRadio {
   }
 
   /**
-   * One `FormControl` per cell of the matrix, and one native `name` per cell
-   * too.
-   *
-   * `checked` on a Radio is DERIVED -- `controlValue() === value()` -- and is
-   * not an input, precisely so a group can never end up with two dots in it.
-   * The consequence for a page like this one is that a cell cannot be told to
-   * look chosen: it has to actually be the chosen option of a group. So every
-   * cell gets its own group of one, seeded with the value that makes it so.
-   *
-   * Sharing one control between the cells would have been shorter and wrong:
-   * clicking any «Sin elegir» cell would have lit up all of them at once.
+   * Un FormControl y un name por celda: checked es derivado, así que cada celda es su
+   * propio grupo de uno. Con un control compartido, un clic en una celda «Sin elegir»
+   * las encendía todas.
    */
   private readonly cellControls = new Map<string, FormControl<unknown>>();
 
@@ -179,13 +165,9 @@ export class ShowroomRadio {
     let control = this.cellControls.get(key);
     if (!control) {
       control = new FormControl<unknown>(value === 'on' ? CELL_VALUE : null);
-      /*
-       * The Disabled column is disabled THROUGH THE FORM, not through the
-       * `disabled` input, and that is on purpose twice over: it exercises
-       * `setDisabledState` -- the other half of the OR in block 8 -- and it
-       * avoids Angular's warning about binding `[disabled]` on an element that
-       * already carries a reactive-forms directive.
-       */
+      // Se deshabilita por el formulario, no por la entrada: ejercita setDisabledState
+      // (la otra mitad del OR del bloque 8) y evita el aviso de Angular por
+      // enlazar [disabled] junto a una directiva de formularios reactivos.
       if (state === 'disabled') {
         control.disable();
       }
@@ -194,7 +176,7 @@ export class ShowroomRadio {
     return control;
   }
 
-  /** The `value` every matrix cell contributes, so «elegido» means equal to it. */
+  /** Valor que aporta cada celda: «elegido» significa igual a este. */
   protected readonly cellValue = CELL_VALUE;
 
   protected cellName(value: string, state: string): string {

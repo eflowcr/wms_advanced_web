@@ -1,11 +1,8 @@
-<!-- The showroom is Spanish only, exempt from i18n (gate 12): declared so a screen reader never reads it as English. -->
+<!-- Showroom solo en español, exento de i18n (compuerta 12): se declara para que el lector de pantalla no lo lea en inglés. -->
 <div class="grid grid-cols-[17rem_minmax(0,1fr)] items-start bg-canvas" lang="es">
   <!--
-    A <div>, not an <aside>, and the content region is a <div> and not a
-    <main>: the shell already renders a <main> around this whole tree, and a
-    second one inside it is a duplicate landmark. The one landmark the
-    showroom does own is the <nav> below, which is what the sidebar actually
-    is. Everything else here is layout.
+    <div> y no <aside> ni <main>: el shell ya pone el <main> y un segundo duplica el landmark.
+    El único landmark propio es el <nav> de abajo.
   -->
   <div
     class="sticky top-0 flex h-screen flex-col gap-4 overflow-y-auto border-r border-default bg-surface p-4"
@@ -24,15 +21,8 @@
     </div>
 
     <!--
-      THE FAVOURITES BLOCK, AT THE TOP OF THE SIDEBAR (REQ-FE-DS4-002 RFE-04).
-
-      The same component the App Shell pins above its rail, on its `surface`
-      ground. Not a copy: RFE-04 asks for one block in a fixed place in the
-      navigation, and a second one written for the catalogue is how "one
-      pattern" becomes two.
-
-      AND THE SAME LIST. It reads the application's one `Favorites` by
-      injection; nothing here provides a store.
+      Bloque de favoritos arriba de la barra (REQ-FE-DS4-002 RFE-04): el mismo componente del
+      App Shell, no una copia, y la misma lista `Favorites` por inyección; acá no se provee almacén.
     -->
     <ewms-favorites-nav
       ground="surface"
@@ -93,26 +83,12 @@
   </div>
 
   <!--
-    NO `<ewms-toast-outlet>` HERE, AND THAT IS THE POINT.
-
-    The showroom is mounted inside the shell's MainLayout (app.routes.ts), and
-    MainLayout already carries the application's one outlet. A second one on
-    this page would put two aria-live regions in the same document and have a
-    screen reader announce every message twice -- exactly the failure the
-    single-region rule exists to prevent.
-
-    The toast demo on /components/toast therefore raises its messages into the
-    SHELL's outlet, with the shell's translated severity words. That is real
-    dogfooding rather than a rig: what the demo exercises is the path a product
-    screen will use.
+    Sin `<ewms-toast-outlet>` a propósito: `MainLayout` ya tiene el único, y dos regiones aria-live
+    anunciarían todo dos veces. La demo de toast usa el outlet del shell, el camino real.
   -->
   <!--
-    NO STAR HERE, FOR THE REASON THERE IS NO TOAST OUTLET HERE.
-
-    The star of whatever page is showing is in the application's header, one
-    tag for every screen, and a catalogue page is a screen. A second one in
-    this layout was a second control for the same route over the same list --
-    two `aria-pressed` buttons on one page saying the same thing.
+    Tampoco estrella, por la misma razón: la del encabezado de la aplicación sirve a toda pantalla;
+    otra acá serían dos `aria-pressed` para la misma ruta y la misma lista.
   -->
   <div class="flex min-w-0 flex-col gap-4 p-8">
     <router-outlet />

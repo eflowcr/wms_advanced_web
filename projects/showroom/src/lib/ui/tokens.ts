@@ -1,31 +1,12 @@
-/**
- * Reading tokens out of the running page, and the colour maths the catalogue
- * needs on top of them.
- *
- * WHY THE VALUES ARE NEVER WRITTEN DOWN HERE
- *
- * A catalogue that transcribes token values starts lying the day somebody
- * edits tokens.css. It already happened in this project, one layer up: six
- * component sheets in the vault carried `--color-border-strong` next to a hex
- * that had gone stale, and the stale one failed contrast. There it was fixed
- * by deleting the column. Here it is fixed by never writing the value at all.
- *
- * WHY THE CHAIN NEEDS THE CSSOM AND NOT getComputedStyle
- *
- * `getComputedStyle(root).getPropertyValue('--color-text-primary')` hands back
- * the SUBSTITUTED value, so the answer is the final colour and the chain is
- * gone: you cannot tell which primitive a semantic points at, and that arrow
- * is the whole concept of the two layers. The declared text -- the literal
- * `var(...)` naming the primitive -- only exists in the stylesheet, so the
- * chain is walked over the CSSOM and only the last value is taken from the
- * computed style.
- *
- * (No primitive is named anywhere in this file, comments included: gate 10
- * reads a name in a comment exactly as it reads one in code, and it is right
- * to -- a name written down here is a name that can go stale.)
+/*
+ * Lee tokens de la página en vivo y hace la matemática de color. Nunca se transcriben valores:
+ * el catálogo mentiría el día que se toque tokens.css (Ver vault: Showroom - Especificacion §5.3).
+ * Ningún primitivo se nombra acá, ni en comentarios: la compuerta 10 los lee igual.
  */
+// La cadena se recorre sobre el CSSOM y no con getComputedStyle, que devuelve el valor ya
+// sustituido y pierde a qué primitivo apunta cada semántico; solo el valor final sale de ahí.
 
-/** One step of the walk: a token and the text it was declared with. */
+/** Un paso del recorrido: un token y el texto con que se declaró. */
 export interface TokenLink {
   readonly name: string;
   readonly declared: string;
@@ -33,41 +14,34 @@ export interface TokenLink {
 
 export interface TokenChain {
   readonly name: string;
-  /** `missing` is rendered, loudly. A token nobody declared is a bug worth seeing. */
+  /** `missing` se muestra bien visible: un token que nadie declaró es un bug. */
   readonly status: 'resolved' | 'missing';
-  /** From the token asked for down to the primitive, in order. */
+  /** Del token pedido hasta el primitivo, en orden. */
   readonly links: readonly TokenLink[];
-  /** The last token of the walk when it ended on a primitive, else null. */
+  /** Último token del recorrido si terminó en un primitivo; si no, null. */
   readonly primitive: string | null;
-  /** The computed value, substituted by the browser. Empty when missing. */
+  /** Valor computado por el navegador; vacío si falta. */
   readonly value: string;
 }
 
-/**
- * `var(--name` — the reference, not the whole function. Written as a character
- * class rather than the literal three letters followed by a parenthesis so it
- * reads as what it matches; either spelling is fine for gate 10, which only
- * objects to the colour functions.
- */
+// Captura la referencia `var(--nombre`, no la función entera. A la compuerta 10 solo le
+// molestan las funciones de color.
 const VAR_REFERENCE = /var\(\s*(--[\w-]+)/g;
 
-/** Every token named anywhere in a declared value. */
+/** Todo token nombrado en un valor declarado. */
 export function referencedTokens(declared: string): readonly string[] {
   return [...declared.matchAll(VAR_REFERENCE)]
     .map((match) => match[1])
     .filter((name): name is string => name !== undefined);
 }
 
-/** A declaration with no reference in it is, by definition, a primitive. */
+/** Una declaración sin referencias es, por definición, un primitivo. */
 export function isPrimitiveValue(declared: string): boolean {
   return referencedTokens(declared).length === 0;
 }
 
-/**
- * Whether a rule targets the root. tokens.css declares everything on a single
- * `:root`, and Tailwind emits its own `:root` blocks too; anything else (a
- * component rule, a utility) is not where a token lives.
- */
+// tokens.css declara todo en un solo `:root` y Tailwind emite los suyos; cualquier otra regla
+// (componente, utilidad) no es donde vive un token.
 function targetsRoot(selector: string): boolean {
   return selector.split(',').some((part) => {
     const trimmed = part.trim();
@@ -75,11 +49,8 @@ function targetsRoot(selector: string): boolean {
   });
 }
 
-/**
- * Duck typing rather than `instanceof CSSStyleRule`: the constructor belongs to
- * the document's own window, and an element rendered inside another realm
- * would fail the check for a reason that has nothing to do with the rule.
- */
+// Duck typing y no `instanceof CSSStyleRule`: el constructor es del window del documento
+// y un elemento de otro realm fallaría el chequeo sin culpa de la regla.
 function isStyleRule(rule: CSSRule): rule is CSSStyleRule {
   return 'selectorText' in rule && 'style' in rule;
 }
@@ -106,16 +77,13 @@ function collectFromRules(rules: CSSRuleList, into: Map<string, string>): void {
         }
       }
     } else if (isGroupingRule(rule)) {
-      // Tailwind wraps its output in `@layer`, so the tokens sit one level in.
+      // Tailwind envuelve su salida en `@layer`: los tokens están un nivel adentro.
       collectFromRules(rule.cssRules, into);
     }
   }
 }
 
-/**
- * Every custom property declared on the root, with the text it was written
- * with. Later declarations win, which is what the cascade does anyway.
- */
+/** Toda propiedad personalizada declarada en la raíz, con su texto. Gana la última, como en la cascada. */
 export function readDeclarations(document: Document): ReadonlyMap<string, string> {
   const declarations = new Map<string, string>();
   const sheets = document.styleSheets;
@@ -126,19 +94,15 @@ export function readDeclarations(document: Document): ReadonlyMap<string, string
         collectFromRules(rules, declarations);
       }
     } catch {
-      // A cross-origin sheet throws on access. Nothing of ours is served that
-      // way, and a sheet we cannot read simply contributes nothing.
+      // Una hoja de otro origen lanza al leerla; ninguna nuestra se sirve así y no aporta nada.
     }
   }
   return declarations;
 }
 
 /**
- * Walks a token down to its primitive.
- *
- * The walk stops when a declaration names more than one token: a composite
- * such as `--focus-ring-shadow` has no single parent, and inventing one would
- * be a worse answer than showing the declaration as written.
+ * Recorre un token hasta su primitivo. Se detiene si una declaración nombra más de un token:
+ * un compuesto como `--focus-ring-shadow` no tiene un único padre.
  */
 export function resolveChain(
   name: string,
@@ -174,7 +138,7 @@ export function resolveChain(
   };
 }
 
-// --------------------------------------------------------------------- colour
+// ---------------------------------------------------------------------- color
 
 export interface Rgb {
   readonly r: number;
@@ -184,14 +148,9 @@ export interface Rgb {
 }
 
 /**
- * Turns any colour the CSS parser accepts into channels, by letting the parser
- * do it: the value is assigned to a probe element and read back from its
- * computed style, which the browser has already normalised.
- *
- * Doing it this way means the catalogue never has to know the colour syntaxes
- * tokens.css happens to use today, and keeps every literal colour out of this
- * file. A value the parser rejects -- a shadow, a length -- leaves the
- * property empty and comes back as null.
+ * Convierte cualquier color que acepte el parser CSS en canales, vía un elemento sonda y su
+ * estilo computado. Así no hay que conocer sintaxis ni escribir colores literales; lo que el
+ * parser rechaza (una sombra, una longitud) devuelve null.
  */
 export function parseColor(view: Window, probe: HTMLElement, value: string): Rgb | null {
   probe.style.color = '';
@@ -211,7 +170,7 @@ export function parseColor(view: Window, probe: HTMLElement, value: string): Rgb
   };
 }
 
-/** Lays a translucent colour over an opaque one, so the ratio means something. */
+/** Compone un color translúcido sobre uno opaco, para que la razón de contraste signifique algo. */
 export function composite(foreground: Rgb, background: Rgb): Rgb {
   const mix = (top: number, bottom: number) =>
     top * foreground.alpha + bottom * (1 - foreground.alpha);
@@ -223,7 +182,7 @@ export function composite(foreground: Rgb, background: Rgb): Rgb {
   };
 }
 
-/** WCAG 2.x relative luminance. */
+/** Luminancia relativa, WCAG 2.x. */
 export function luminance(colour: Rgb): number {
   const channel = (value: number) => {
     const scaled = value / 255;
@@ -232,7 +191,7 @@ export function luminance(colour: Rgb): number {
   return 0.2126 * channel(colour.r) + 0.7152 * channel(colour.g) + 0.0722 * channel(colour.b);
 }
 
-/** WCAG 2.x contrast ratio, foreground composited over the background first. */
+/** Razón de contraste WCAG 2.x, con el frente compuesto antes sobre el fondo. */
 export function contrastRatio(foreground: Rgb, background: Rgb): number {
   const front = foreground.alpha < 1 ? composite(foreground, background) : foreground;
   const lighter = Math.max(luminance(front), luminance(background));
@@ -240,16 +199,15 @@ export function contrastRatio(foreground: Rgb, background: Rgb): number {
   return (lighter + 0.05) / (darker + 0.05);
 }
 
-/** The two thresholds the catalogue judges against. */
+/** Los dos umbrales AA contra los que juzga el catálogo. */
 export const AA_TEXT = 4.5;
 export const AA_NON_TEXT = 3;
 
 export type ContrastVerdict = 'pass' | 'fail' | 'exempt';
 
 /**
- * `exempt` is not a softer `fail`. WCAG 1.4.3 exempts a disabled control, and
- * a decorative divider is not a control at all: marking those as failures
- * would train everyone to ignore the column.
+ * `exempt` no es un `fail` suave: WCAG 1.4.3 exime al control deshabilitado y un divisor
+ * decorativo no es control. Marcarlos como falla enseñaría a ignorar la columna.
  */
 export function verdict(ratio: number, minimum: number, exempt: boolean): ContrastVerdict {
   if (exempt) {
@@ -258,7 +216,7 @@ export function verdict(ratio: number, minimum: number, exempt: boolean): Contra
   return ratio >= minimum ? 'pass' : 'fail';
 }
 
-/** One decimal is the precision the vault records and argues about. */
+/** La razón con la precisión con que la registra el vault. */
 export function formatRatio(ratio: number): string {
   return `${ratio.toFixed(2)}:1`;
 }

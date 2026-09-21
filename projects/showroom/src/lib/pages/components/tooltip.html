@@ -1,4 +1,4 @@
-<!-- The showroom is Spanish only, exempt from i18n (gate 12): declared so a screen reader never reads it as English. -->
+<!-- Showroom solo en español, exento de i18n (compuerta 12): se declara para que el lector de pantalla no lo lea en inglés. -->
 <article class="flex flex-col gap-10" lang="es">
   <!-- ============================================================ 1. Encabezado -->
   <header class="flex flex-col gap-2" data-block="1-encabezado">
@@ -65,9 +65,8 @@
       <ewms-demo-frame ground="canvas" label="La directiva sobre tres anfitriones distintos">
         <div class="flex flex-col gap-5">
           <!--
-            Case 1: the duplicated name. `describes` stays false (the default),
-            so the panel is aria-hidden and the screen reader says the name
-            once. This is the Icon Button's case, applied from inside.
+            Caso 1, nombre duplicado: describes queda en false, el panel va aria-hidden y
+            el lector dice el nombre una vez. Es el caso del Icon Button.
           -->
           <div class="flex flex-wrap items-center gap-3">
             <span data-demo-tooltip>
@@ -82,8 +81,8 @@
           </div>
 
           <!--
-            Case 2: the descriptive one. `describes` is bound to true, so the
-            panel takes role="tooltip" and is connected with aria-describedby.
+            Caso 2, descriptivo: describes en true, el panel toma role="tooltip" y se
+            conecta con aria-describedby.
           -->
           <div class="flex flex-wrap items-center gap-3">
             <span
@@ -103,18 +102,12 @@
             </span>
           </div>
 
-          <!--
-            Case 3: tooltipDisabled, driven from the page. The switch is an
-            ordinary button of the design system, so nothing here reimplements
-            a control to demonstrate a directive.
-          -->
+          <!-- Caso 3: tooltipDisabled manejado desde la página con un botón del sistema. -->
           <div class="flex flex-wrap items-center gap-3">
             <!--
-              The switch goes on a host the directive is applied to DIRECTLY.
-              It cannot go on `<ewms-icon-button>`: that component applies the
-              directive inside its own template, so `tooltipDisabled` written
-              on its element would not reach anything -- which is what the
-              compiler says, and is worth knowing.
+              Va sobre un anfitrión con la directiva aplicada directo: ewms-icon-button la
+              aplica dentro de su plantilla y tooltipDisabled no llegaría (lo avisa
+              el compilador).
             -->
             <span data-demo-suppressed>
               <ewms-button

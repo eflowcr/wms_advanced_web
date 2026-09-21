@@ -14,28 +14,21 @@ import {
   type Rgb,
 } from './tokens';
 
-/*
- * The normalised strings the CSS parser hands back are ASSEMBLED, not written.
- *
- * Gate 10 rejects a colour function anywhere under projects/, and it cannot
- * tell a fixture from a stylesheet -- nor should it have to. Building the
- * string from a constant keeps the fixture realistic (this is exactly the
- * shape a browser returns) without writing the syntax the gate is there to
- * keep out of the source.
- */
+// Las cadenas normalizadas del parser se arman, no se escriben: la compuerta 10 rechaza toda
+// función de color bajo projects/ y no distingue fixture de hoja de estilos.
 const FN = 'rgb';
 const parsed = (...channels: readonly (number | string)[]) => `${FN}(${channels.join(', ')})`;
 
-/* Colour keywords, for the same reason: no hex anywhere outside tokens.css. */
+// Palabras clave de color, por lo mismo: ningún hex fuera de tokens.css.
 const NAVY_KEYWORD = 'navy';
 const WHITE_KEYWORD = 'white';
 
-/* And lengths, which gate 10 reads the same way. */
+// Y longitudes, que la compuerta 10 lee igual.
 const UNIT = 'px';
 const len = (value: number) => `${value}${UNIT}`;
 const shadow = (a: number, b: number) => `0 0 0 ${len(a)} var(--a), 0 0 0 ${len(b)} var(--b)`;
 
-/** A tiny stand-in for the slice of the CSSOM readDeclarations walks. */
+/** Doble mínimo de la parte del CSSOM que recorre readDeclarations. */
 function styleRule(selectorText: string, declarations: Record<string, string>) {
   const names = Object.keys(declarations);
   return {
@@ -154,7 +147,7 @@ describe('resolveChain', () => {
   it('stops at a declaration that names more than one token', () => {
     const chain = resolveChain('--composite', declarations, shadow(2, 5));
     expect(chain.links).toHaveLength(1);
-    // No single parent, so none is invented.
+    // Sin padre único, no se inventa uno.
     expect(chain.primitive).toBeNull();
   });
 
@@ -179,7 +172,7 @@ describe('resolveChain', () => {
 });
 
 describe('colour', () => {
-  /** A probe whose computed colour is whatever the parser would have produced. */
+  /** Sonda cuyo color computado es lo que habría devuelto el parser. */
   function probeFor(normalised: string) {
     const element = { style: { color: '' } } as unknown as HTMLElement;
     const view = {
@@ -201,8 +194,7 @@ describe('colour', () => {
   it('returns null for a value the parser refuses', () => {
     const element = { style: { color: '' } } as unknown as HTMLElement;
     const view = { getComputedStyle: () => ({ color: '' }) } as unknown as Window;
-    // The assignment leaves the property empty, which is how a non-colour is
-    // told apart from a colour.
+    // La asignación deja la propiedad vacía: así se distingue lo que no es color.
     expect(parseColor(view, element, `0 ${len(1)} ${len(2)}`)).toBeNull();
   });
 

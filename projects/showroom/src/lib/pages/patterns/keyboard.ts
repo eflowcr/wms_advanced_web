@@ -13,7 +13,7 @@ import { DemoFrame } from '../../ui/demo-frame';
 import { PropTable, type PropRow } from '../../ui/prop-table';
 import { TokenValue } from '../../ui/token-value';
 
-/** One line of the live log: what arrived, and what became of it. */
+/** Una línea del registro en vivo: qué llegó y qué pasó con eso. */
 interface LogLine {
   readonly id: number;
   readonly key: string;
@@ -21,14 +21,8 @@ interface LogLine {
   readonly action: ShortcutAction | null;
 }
 
-/**
- * What each outcome MEANS, in one sentence.
- *
- * Written out rather than derived from the name, because the name is a
- * programmer's word and this column is the whole point of the demo: somebody
- * pressing a key wants to know why nothing happened, and "in-text-field" is
- * not an answer.
- */
+// Qué significa cada resultado, en una frase escrita y no derivada del nombre: quien aprieta
+// una tecla quiere saber por qué no pasó nada, e «in-text-field» no es respuesta.
 const OUTCOMES: Readonly<Record<ShortcutOutcome, string>> = {
   'already-handled': 'Otro componente más cercano ya la respondió; el motor no la vuelve a tocar.',
   burst: 'Llegó dentro de una ráfaga de escáner. Ningún atajo puede actuar sobre ella.',
@@ -42,7 +36,7 @@ const OUTCOMES: Readonly<Record<ShortcutOutcome, string>> = {
   shortcut: 'Se disparó el manejador de la acción.',
 };
 
-/** The colour of a log line, by how much it matters. */
+/** Color de una línea del registro según cuánto importa. */
 const OUTCOME_TONE: Readonly<Record<ShortcutOutcome, string>> = {
   'already-handled': 'text-secondary',
   burst: 'text-warning',
@@ -113,23 +107,15 @@ const ANATOMY = [
   { part: 'Elevación del diálogo de ayuda', token: '--shadow-dialog' },
 ] as const;
 
-/** How many lines of the log are kept. A scan alone is a dozen. */
+/** Líneas que se guardan del registro; un escaneo solo ya son una docena. */
 const LOG_LENGTH = 12;
 
 /**
- * /design-system/patterns/keyboard — the sheet of the shortcut engine
- * (REQ-FE-DS4-001).
- *
- * THE DEMO IS THE REAL ENGINE, NOT A REPLICA. The log reads
- * `KeyboardShortcuts.events`, which is what the one document listener
- * published about each keystroke. This page installs no listener of its own --
- * it could not: `tools/ci/check-shortcuts.mjs` fails the build for a global
- * keydown outside `keyboard/`, and that rule is the point of the page.
- *
- * It registers `search` and `create` so there is something to fire, and leaves
- * `save` unregistered ON PURPOSE: `unregistered` is one of the outcomes worth
- * showing, and Ctrl+S still has to stop the browser from saving the page.
+ * Ficha del motor de atajos (REQ-FE-DS4-001). La demo es el motor real: lee
+ * `KeyboardShortcuts.events` y no instala oyente propio (check-shortcuts.mjs lo prohíbe).
  */
+// Registra `search` y `create`; `save` queda sin registrar a propósito para mostrar
+// `unregistered`, y Ctrl+S igual debe impedir que el navegador guarde la página.
 @Component({
   selector: 'ewms-showroom-keyboard',
   imports: [DemoFrame, PropTable, TokenValue],
@@ -145,14 +131,8 @@ export class ShowroomKeyboard {
   protected readonly minKeystrokes = SCAN_MIN_KEYSTROKES;
   protected readonly outcomes = OUTCOMES;
 
-  /**
-   * The outcomes as a list, IN THE ORDER `handle` DECIDES THEM.
-   *
-   * An array and not the record through `keyvalue`, because that pipe sorts by
-   * key and the order is the whole content of this block: what the table shows
-   * is the sequence of checks, and alphabetising it would turn a design into a
-   * glossary.
-   */
+  // En el orden en que `handle` decide. Arreglo y no el pipe `keyvalue`, que ordena por clave:
+  // el orden de los chequeos es el contenido del bloque.
   protected readonly outcomeRows = (Object.keys(OUTCOMES) as ShortcutOutcome[]).map((outcome) => ({
     outcome,
     meaning: OUTCOMES[outcome],
@@ -165,15 +145,8 @@ export class ShowroomKeyboard {
 
   protected readonly singleKeyShortcuts = this.shortcuts.singleKeyShortcuts;
 
-  /**
-   * The map, from the engine rather than from the token.
-   *
-   * At runtime this is the SHELL'S map, because the shell's layout is what
-   * mounted the engine and the showroom renders inside it. That is the honest
-   * answer and the page says so: one application, one engine, one map. The
-   * showroom's own map exists for the day it is served on its own, and for
-   * these pages' unit tests.
-   */
+  // El mapa sale del motor, no del token: en ejecución es el del shell, que montó el motor.
+  // Una aplicación, un motor, un mapa. El del showroom es para servirlo solo y para las pruebas.
   protected readonly bindings = computed(() => {
     const map = this.shortcuts.bindings();
     if (map === null) {
@@ -217,7 +190,7 @@ export class ShowroomKeyboard {
     this.nextId += 1;
     const line: LogLine = {
       id: this.nextId,
-      // A named key prints as itself; a space would otherwise print as nothing.
+      // El espacio se imprime con nombre; si no, no se vería nada.
       key: event.key === ' ' ? 'Space' : event.key,
       outcome: event.outcome,
       action: event.action,

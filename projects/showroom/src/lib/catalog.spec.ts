@@ -16,8 +16,7 @@ describe('the catalogue', () => {
         if (entry.status === 'ready') {
           expect(entry.route, entry.id).toContain(SHOWROOM_BASE);
         } else {
-          // A page that does not exist must not be navigable: the state is
-          // visible instead, which is the point of listing it at all.
+          // Una página que no existe no es navegable: en su lugar se ve el estado.
           expect(entry.route, entry.id).toBeNull();
         }
       }
@@ -25,17 +24,8 @@ describe('the catalogue', () => {
   });
 
   it('leaves nothing built without a page', () => {
-    /*
-     * The promise DS-2 PR 4 closed, kept as a test so it cannot quietly
-     * reopen: every component that compiles and is green has a sheet in the
-     * showroom.
-     *
-     * `built` REMAINS A LEGAL STATE and the type keeps it on purpose -- it is
-     * what a catalogue entry looks like between a component landing and its
-     * page being written. What this asserts is that the gap does not survive
-     * the PR that opened it: build a component and its sheet goes in the same
-     * change, or this fails and names it.
-     */
+    // Promesa cerrada en DS-2 PR 4: todo componente en verde tiene ficha. `built` sigue siendo
+    // un estado legal, pero no sobrevive al PR que lo abrió: componente y ficha van juntos.
     const built = CATALOG.flatMap((section) =>
       section.entries.filter((entry) => entry.status === 'built').map((entry) => entry.id),
     );
@@ -63,12 +53,8 @@ describe('the catalogue', () => {
     it('matches by name, ignoring case', () => {
       const sections = filterCatalog('TOGGLE');
 
-      /*
-       * TWO SINCE DS-5, AND THAT IS THE SEARCH WORKING RATHER THAN FAILING:
-       * «Toggle» matches by NAME and «Favoritos» matches by SELECTOR
-       * (`ewms-favorite-toggle`). Narrowing the query to keep the number at
-       * one would be testing a coincidence instead of the behaviour.
-       */
+      // Dos desde DS-5, y es la búsqueda funcionando: «Toggle» por nombre y «Favoritos» por
+      // selector (`ewms-favorite-toggle`). Achicar la consulta probaría una coincidencia.
       expect(sections.flatMap((section) => section.entries).map((entry) => entry.id)).toEqual([
         'toggle',
         'favorites',

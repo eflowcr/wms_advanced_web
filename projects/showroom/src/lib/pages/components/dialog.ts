@@ -60,7 +60,7 @@ const MATRIX_STATES: readonly MatrixAxis[] = [
   { id: 'backdrop', label: 'Click en el backdrop' },
 ];
 
-/** The halo samples, written out in full so Tailwind sees every class. */
+/** Muestras del halo escritas completas para que Tailwind vea cada clase. */
 const HALO_SAMPLES: Readonly<Record<string, string>> = {
   danger: 'bg-danger-surface border-danger shadow-(--shadow-halo-danger)',
   warning: 'bg-warning-surface border-warning shadow-(--shadow-halo-warning)',
@@ -68,15 +68,9 @@ const HALO_SAMPLES: Readonly<Record<string, string>> = {
 };
 
 /**
- * VERIFIED AGAINST dialog.service.ts.
- *
- * The option rows are prefixed with a bullet rather than repeating the word
- * `options`, and the reason is a failure rather than taste: written in full,
- * the first column's longest word could not be broken, the table grew past its
- * column, and `overflow-x-auto` turned into a scrolling region. Chrome makes a
- * scrollable region a tab stop of its own and axe reports it as one without
- * keyboard access -- two failures, one cause, neither about the dialog. The
- * Toast sheet hit the same wall first.
+ * Verificada contra dialog.service.ts. Las opciones llevan viñeta en vez de repetir
+ * options: con el nombre completo la tabla desbordaba y axe marcaba la región con
+ * scroll sin acceso por teclado (igual que en Toast).
  */
 const PROPS: readonly PropRow[] = [
   {
@@ -159,12 +153,8 @@ const ANATOMY = [
 ] as const;
 
 /**
- * /design-system/components/dialog -- the sheet of `DialogService`.
- *
- * THE DEMO OPENS REAL DIALOGS. There is no picture of one on this page: a
- * dialog is a focus trap, a backdrop and a promise, and none of those is
- * visible in a still. The matrix underneath is a table of facts for the same
- * reason -- three modal dialogs cannot be held open side by side.
+ * /design-system/components/dialog: ficha de DialogService. La demo abre diálogos
+ * reales; la matriz es una tabla de hechos porque tres modales no se abren a la vez.
  */
 @Component({
   selector: 'ewms-showroom-dialog',
@@ -182,7 +172,7 @@ export class ShowroomDialog {
   protected readonly matrixVariants = MATRIX_VARIANTS;
   protected readonly matrixStates = MATRIX_STATES;
 
-  /** What the last confirmation answered, so the promise is visible. */
+  /** Respuesta de la última confirmación, para que se vea la promesa. */
   protected readonly lastAnswer = signal('(todavía ninguna)');
 
   protected readonly snippet = [

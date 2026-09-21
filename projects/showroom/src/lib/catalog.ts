@@ -1,42 +1,30 @@
-/**
- * THE catalogue. One constant, several consumers: the sidebar, the home page
- * index and the search box all read this list and nothing else.
- *
- * If each of them carried its own copy they would disagree within a fortnight,
- * and the catalogue's whole job is to be the place where you find out what
- * already exists.
- *
- * Pages that do not exist yet are listed too, with their state visible and no
- * link. A gap you can see is information; a gap you cannot see is something
- * everyone forgets. (Showroom spec, section 6.)
+/*
+ * El catálogo: única lista que leen la barra lateral, el índice y la búsqueda. Las páginas que
+ * aún no existen también figuran, sin enlace: un hueco visible es información
+ * (Ver vault: Showroom - Especificacion §6).
  */
 
-/**
- * How far along a catalogue entry is. The four values are deliberately about
- * the WORK, not about the page: `built` means the component compiles and is
- * tested but nobody has written its sheet yet, which is a different problem
- * from `documented`, where the sheet exists and the code does not.
- */
+/** Avance de una entrada, sobre el trabajo y no sobre la página. */
 export type CatalogStatus =
-  /** Page written and navigable. */
+  /** Página escrita y navegable. */
   | 'ready'
-  /** Component built and green; its sheet in the showroom is still missing. */
+  /** Componente construido y en verde; falta su ficha en el showroom. */
   | 'built'
-  /** Sheet written in the vault; the component is not built. */
+  /** Ficha escrita en el vault; el componente no está construido. */
   | 'documented'
-  /** Reserved slot: neither sheet nor code, kept visible so it is not forgotten. */
+  /** Lugar reservado, sin ficha ni código; visible para que no se olvide. */
   | 'gap';
 
 export interface CatalogEntry {
   readonly id: string;
-  /** Shown in the sidebar and the index. Spanish, like the rest of the pages. */
+  /** Se muestra en la barra lateral y el índice, en español. */
   readonly name: string;
-  /** The Angular selector, so the search finds a component by what you type in a template. */
+  /** Selector de Angular, para que la búsqueda encuentre lo que se escribe en una plantilla. */
   readonly selector: string | null;
-  /** Absolute route, or null when there is no page to go to yet. */
+  /** Ruta absoluta, o null si todavía no hay página. */
   readonly route: string | null;
   readonly status: CatalogStatus;
-  /** One line on what it is, or on why it is not here yet. */
+  /** Una línea sobre qué es, o por qué todavía no está. */
   readonly note: string;
 }
 
@@ -46,7 +34,7 @@ export interface CatalogSection {
   readonly entries: readonly CatalogEntry[];
 }
 
-/** Where the showroom is mounted by the shell (app.routes.ts). */
+/** Dónde monta el shell el showroom (app.routes.ts). */
 export const SHOWROOM_BASE = '/design-system';
 
 const FOUNDATIONS: readonly CatalogEntry[] = [
@@ -312,7 +300,7 @@ export const CATALOG: readonly CatalogSection[] = [
   { id: 'patterns', title: 'Patrones', entries: PATTERNS },
 ];
 
-/** Human-readable badge for an entry that has no page. */
+/** Etiqueta visible para una entrada sin página. */
 export const STATUS_LABELS: Readonly<Record<CatalogStatus, string>> = {
   ready: '',
   built: '(pendiente)',
@@ -321,9 +309,8 @@ export const STATUS_LABELS: Readonly<Record<CatalogStatus, string>> = {
 };
 
 /**
- * Filters the catalogue by name and by selector, keeping the sections so the
- * sidebar does not reshuffle while you type. Sections that end up empty are
- * dropped: an empty heading reads like a broken page.
+ * Filtra por nombre y selector conservando las secciones, para que la barra no se reordene
+ * al escribir. Las secciones vacías se quitan: un encabezado vacío parece una página rota.
  */
 export function filterCatalog(query: string): readonly CatalogSection[] {
   const needle = query.trim().toLowerCase();
@@ -340,7 +327,7 @@ export function filterCatalog(query: string): readonly CatalogSection[] {
   })).filter((section) => section.entries.length > 0);
 }
 
-/** How many entries a filtered catalogue holds, for the result count. */
+/** Cantidad de entradas de un catálogo filtrado, para el conteo de resultados. */
 export function countEntries(sections: readonly CatalogSection[]): number {
   return sections.reduce((total, section) => total + section.entries.length, 0);
 }

@@ -21,13 +21,9 @@ import { TokenValue } from '../../ui/token-value';
 import { formatBox, formatHeight, rectOf, widthOf } from './measure';
 
 /**
- * The matrix's row axis: the states that are REAL INPUTS on the closed
- * trigger.
- *
- * Focus and Open are absent for the Input's reason -- the border colour is an
- * inline style bound to a signal the component owns, so a forced cell would
- * paint the ring over the wrong border. Open is also impossible to hold still
- * in a grid: the panel lives in a single CDK overlay outside the table.
+ * Solo estados reales del disparador cerrado. Sin Focus ni Open, por lo mismo que en
+ * Input (borde en línea atado a una señal); además el panel abierto vive en un
+ * overlay del CDK fuera de la tabla.
  */
 const STATES: readonly MatrixAxis[] = [
   { id: 'default', label: 'Default' },
@@ -44,7 +40,7 @@ const SIZES: readonly MatrixAxis[] = [
 
 const SIZE_BY_ID: Readonly<Record<string, FieldSize>> = { sm: 'sm', md: 'md', lg: 'lg' };
 
-/** The one chevron size, in CSS pixels: `sm` at every field size. */
+/** Tamaño único del chevron en píxeles CSS: sm en todos los tamaños de campo. */
 const CHEVRON_SIZE = 16;
 
 const OPTIONS: readonly SelectOption[] = [
@@ -55,7 +51,7 @@ const OPTIONS: readonly SelectOption[] = [
   { value: 'transito', label: 'En tránsito' },
 ];
 
-/** VERIFIED AGAINST select.ts. */
+/** Verificada contra select.ts. */
 const PROPS: readonly PropRow[] = [
   {
     name: 'label',
@@ -138,12 +134,8 @@ interface ChevronSample {
 }
 
 /**
- * /design-system/components/select -- the sheet of `ewms-select`.
- *
- * THE PANEL IS THE COMPONENT. A capture of a closed select is a capture of an
- * input with a chevron, so the page leads with the panel open and everything
- * that only exists while it is open: the active row, the selected row, the
- * keyboard contract and the flip.
+ * /design-system/components/select: ficha de ewms-select. El panel es el componente, así
+ * que la página abre con él desplegado: fila activa, seleccionada, teclado y volteo.
  */
 @Component({
   selector: 'ewms-showroom-select',
@@ -185,11 +177,8 @@ export class ShowroomSelect {
   ].join('\n');
 
   constructor() {
-    /*
-     * The chevron is 16 px at all three sizes, which is the one number on this
-     * page somebody is most likely to "fix" into 14 / 16 / 18. Measured off the
-     * rendered SVG, and compared across the three, so the claim defends itself.
-     */
+    // El chevron mide 16 px en los tres tamaños; alguien querrá «arreglarlo» a
+    // 14 / 16 / 18. Se mide el SVG en los tres y se compara.
     afterNextRender(() => {
       this.chevrons.update((samples) =>
         samples.map((sample) => {
@@ -212,7 +201,7 @@ export class ShowroomSelect {
     return SIZE_BY_ID[id] ?? 'md';
   }
 
-  /** The matrix's «Con selección» row is the only one that starts with a value. */
+  /** Solo la fila «Con selección» arranca con valor. */
   protected valueFor(id: string): unknown {
     return id === 'selected' ? 'muelle-3' : null;
   }
@@ -225,7 +214,7 @@ export class ShowroomSelect {
     return id === 'disabled';
   }
 
-  /** The label of the option currently held by the form, for the live readout. */
+  /** Etiqueta de la opción que tiene el formulario, para la lectura en vivo. */
   protected chosenLabel(): string {
     const value = this.chosen();
     return OPTIONS.find((option) => option.value === value)?.label ?? '(sin elegir)';

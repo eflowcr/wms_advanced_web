@@ -1,4 +1,4 @@
-<!-- The showroom is Spanish only, exempt from i18n (gate 12): declared so a screen reader never reads it as English. -->
+<!-- Showroom solo en español, exento de i18n (compuerta 12): se declara para que el lector de pantalla no lo lea en inglés. -->
 <article class="flex flex-col gap-10" lang="es">
   <!-- ============================================================ 1. Encabezado -->
   <header class="flex flex-col gap-2" data-block="1-encabezado">
@@ -55,9 +55,8 @@
     </div>
     <ewms-demo-frame ground="canvas" label="La alternativa, al lado: sin texto va Icon Button">
       <!--
-        `shrink-0` on the controls and `flex-1` on the prose: without it the
-        flex row squeezed the button until its label wrapped onto two lines,
-        which is the one thing a size demo must never do.
+        Controles fijos y prosa flexible: sin eso la fila apretaba el botón
+        hasta partir su etiqueta en dos líneas.
       -->
       <div class="flex flex-wrap items-center gap-4">
         <span class="shrink-0">
@@ -181,11 +180,9 @@
     <ewms-demo-frame ground="canvas">
       <div class="flex flex-wrap items-center gap-4">
         <!--
-          (click) on the component element, because <ewms-button> declares no
-          output of its own: the native click bubbles out of the inner
-          <button>, and the component stops it before it gets here whenever it
-          is disabled or loading. That is the contract block 8 describes, and
-          this demo is the thing that proves it.
+          (click) va sobre el elemento: ewms-button no declara salida propia; el click
+          nativo burbujea y el componente lo corta si está deshabilitado o cargando.
+          Es el contrato del bloque 8 y esta demo lo prueba.
         -->
         <span data-demo-submit>
           <ewms-button

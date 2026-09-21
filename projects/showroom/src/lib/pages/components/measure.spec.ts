@@ -14,30 +14,15 @@ import {
 } from './measure';
 
 /**
- * The measuring helpers, including the arm nobody ever sees.
- *
- * WHY THIS FILE EXISTS. Every component sheet reads its numbers off the
- * rendered DOM, and every one of those reads has a "there was nothing to
- * measure" arm that, by construction, never runs on a page that rendered
- * correctly. Left inside each page it was six unreachable branches and six
- * chances to print the word `undefined` at a reader the one day a selector
- * went stale.
- *
- * Here it is one function per question, and the missing case is an ordinary
- * argument.
- *
- * jsdom lays nothing out, so every rectangle it produces is zero. That is fine
- * for what is under test: these functions are about FORMATTING and COMPARING a
- * rectangle, not about producing one. Whether the rectangle is the right one is
- * asserted in e2e/showroom.e2e.ts, in a browser.
+ * Prueba la rama «nada que medir», que en una página bien renderizada nunca corre.
+ * jsdom no maqueta (todo mide cero): acá se prueba formatear y comparar; que el
+ * rectángulo sea el correcto lo afirma e2e/showroom.e2e.ts.
  */
 function withElement<T>(
   build: (root: HTMLElement) => void,
   use: (root: HTMLElement) => T,
 ): T {
-  // Built node by node rather than from a string of markup: raw `innerHTML` is
-  // banned repository-wide, tests included, and a test that needs an exception
-  // to a security rule is a test that can be written differently.
+  // Nodo a nodo: innerHTML está prohibido en todo el repositorio, pruebas incluidas.
   const root = document.createElement('div');
   build(root);
   document.body.appendChild(root);
@@ -48,7 +33,7 @@ function withElement<T>(
   }
 }
 
-/** A `<tag>` inside the scratch root, optionally holding one child element. */
+/** Agrega un elemento a la raíz de prueba, con un hijo opcional. */
 function append(root: HTMLElement, tag: string, child?: string): HTMLElement {
   const element = document.createElement(tag);
   if (child) {
@@ -58,7 +43,7 @@ function append(root: HTMLElement, tag: string, child?: string): HTMLElement {
   return element;
 }
 
-/** A rectangle jsdom will not produce, so the maths has something to chew on. */
+/** Rectángulo que jsdom no produce, para que las cuentas tengan con qué trabajar. */
 function rect(width: number, height: number): DOMRect {
   return { width, height, x: 0, y: 0, top: 0, left: 0, right: width, bottom: height } as DOMRect;
 }
@@ -116,7 +101,7 @@ describe('clearsSquare', () => {
   });
 
   it('does NOT pass something that was never measured', () => {
-    // A green badge that means "we could not check" is worse than no badge.
+    // Un badge verde que significa «no se pudo verificar» es peor que ningún badge.
     expect(clearsSquare(null, 24)).toBe(false);
   });
 });
@@ -144,8 +129,8 @@ describe('isExactly', () => {
 
 describe('orNotMeasured', () => {
   it('keeps a real value and replaces an empty one', () => {
-    // Not a length literal: gate 10 reads every string in a .ts file as a
-    // possible raw value, and this function does not care what it is holding.
+    // Sin longitud literal: la compuerta 10 lee toda cadena de un .ts como posible
+    // valor crudo, y a esta función le da igual qué contiene.
     expect(orNotMeasured('un valor')).toBe('un valor');
     expect(orNotMeasured('')).toBe(NOT_MEASURED);
     expect(orNotMeasured(null)).toBe(NOT_MEASURED);

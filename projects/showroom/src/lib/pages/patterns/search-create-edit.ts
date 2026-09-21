@@ -31,49 +31,22 @@ import { FLOW_BUDGETS, type FlowId } from './click-budget';
 import { ExpedicionForm, type ExpedicionDraft } from './expedicion-form';
 import { ExpedicionSource } from './expedicion-source';
 
-/**
- * Only the headers. The table's own sheet is where the three-level tree is
- * demonstrated; here the subject is the FLOW, and a tree would add an expand
- * click to every count that has nothing to do with searching or editing.
- */
+// Solo cabeceras: el árbol se demuestra en la ficha de Tabla; acá sumaría un clic de
+// expandir a cada conteo que nada tiene que ver con buscar o editar.
 const CABECERAS = EXPEDICIONES.map(({ hijos: _hijos, ...row }) => row);
 
-/**
- * Controls whose click ADVANCES a flow, per §2.1 of REQ-FE-DS4-003.
- *
- * Opening a panel or a dropdown is on the list on purpose: the REQ counts it
- * even though it is not the final step, and a counter that quietly forgave it
- * would be a counter that always agreed with the budget.
- */
+// Controles cuyo clic avanza un flujo (REQ-FE-DS4-003 §2.1). Abrir un panel o desplegable
+// cuenta a propósito: el REQ lo cuenta aunque no sea el paso final.
 const FLOW_CONTROLS =
   'button, a[href], input, select, textarea, [role="button"], [role="option"], [role="switch"]';
 
 /**
- * /design-system/patterns/search-create-edit -- THE EXAMPLE SCREEN
- * (REQ-FE-DS4-003 RFE-02), and the composition the comanda's step 6 asks for.
- *
- * NOTHING NEW IS BUILT HERE. Every part is a component that already shipped:
- * `ewms-search-select` from DS-3, `ewms-table` from DS-3, `DialogService`,
- * `ToastService`, `ewms-banner`, and the shortcut engine from DS-4. That is
- * the claim the page exists to make -- that the budget is met by ASSEMBLING
- * the system, not by a screen solving it again.
- *
- *
- * THE COUNTER COUNTS REAL CLICKS, AND IT IS THE SAME NUMBER THE TEST ASSERTS
- *
- * RFE-04 asks the screen to show its own count, and HG-02 asks the screen and
- * the test to read the budget from one place. Both do: the numbers come from
- * `click-budget.ts`, and `e2e/click-budget.e2e.ts` walks these same flows with
- * its own counter and compares against the same constants. A count the page
- * computed for itself, or a test that hard-coded a 2, would each be a way of
- * agreeing with a budget nobody checked.
- *
- * The listener is on the DOCUMENT and not on this component's root, because a
- * dialog renders in the CDK's overlay container OUTSIDE this tree -- and the
- * clicks on Guardar and Cancelar are exactly the ones the create and cancel
- * budgets are about. It is a click listener; the rule about a single global
- * listener is about the KEYBOARD, and that one still belongs to the engine.
+ * Pantalla ejemplo de REQ-FE-DS4-003 RFE-02: solo compone piezas ya publicadas; el presupuesto
+ * se cumple ensamblando el sistema. Ver vault: Patron-Buscar-Crear-Editar.
  */
+// Los presupuestos salen de click-budget.ts, igual que en e2e/click-budget.e2e.ts (HG-02).
+// El oyente de clics va en el document porque el diálogo vive fuera de este árbol (overlay
+// del CDK); la regla de oyente global único es del teclado, y ese sigue siendo del motor.
 @Component({
   selector: 'ewms-showroom-search-create-edit',
   imports: [Banner, Button, DemoFrame, FormsModule, SearchSelect, Table, TableColumn],
@@ -89,7 +62,7 @@ export class ShowroomSearchCreateEdit {
   protected readonly budgets = FLOW_BUDGETS;
   protected readonly estados = ESTADOS;
 
-  /** The shipments, as state: saving one changes the table AND the search. */
+  /** Las expediciones como estado: guardar una cambia la tabla y la búsqueda. */
   private readonly rows = signal<readonly ExpedicionRow[]>(CABECERAS);
 
   protected readonly table = computed(
@@ -103,7 +76,7 @@ export class ShowroomSearchCreateEdit {
     () => this.failing(),
   );
 
-  /** `code` is what a scanned barcode is matched against, and is never shown alone. */
+  /** `code` es contra lo que se compara un código escaneado; nunca se muestra solo. */
   protected readonly display: SearchDisplay<ExpedicionRow> = {
     label: (row) => `${row.codigo} — ${row.cliente}`,
     code: (row) => row.codigo,
@@ -112,7 +85,7 @@ export class ShowroomSearchCreateEdit {
   protected readonly chosen = signal<ExpedicionRow | null>(null);
   protected readonly lastSaved = signal<string | null>(null);
 
-  /** Real mouse clicks on controls that advance a flow, since the last reset. */
+  /** Clics reales de puntero sobre controles que avanzan un flujo, desde el último reinicio. */
   protected readonly clicks = signal(0);
 
   private readonly searchHost = viewChild.required<ElementRef<HTMLElement>>('searchHost');
@@ -127,14 +100,8 @@ export class ShowroomSearchCreateEdit {
     this.shortcuts.register('search', () => this.focusSearch());
     this.shortcuts.register('create', () => this.openForm(null));
 
-    /*
-     * A scan chooses the shipment WITHOUT the panel, and the table follows.
-     *
-     * The search select resolves the scan itself when the focus is in it; this
-     * subscription is for the other case, which is the one that matters on a
-     * warehouse floor: the gun is fired with the focus nowhere in particular,
-     * and the screen still has to land on the right record.
-     */
+    // Un escaneo con el foco fuera del selector (el caso típico en piso de bodega) elige la
+    // expedición sin panel y la tabla la sigue. Con foco adentro lo resuelve el propio selector.
     this.shortcuts.scans.pipe(takeUntilDestroyed()).subscribe((code) => this.resolveScan(code));
 
     const doc = inject(DOCUMENT);
@@ -145,7 +112,7 @@ export class ShowroomSearchCreateEdit {
     );
   }
 
-  /** `/` lands here. The field is a component, so the page asks its host for the input. */
+  /** Destino de `/`. El campo es un componente: se le pide el input a su host. */
   protected focusSearch(): void {
     this.searchHost().nativeElement.querySelector('input')?.focus();
   }
@@ -172,14 +139,13 @@ export class ShowroomSearchCreateEdit {
     });
 
     if (result === undefined) {
-      // Cancelled. Nothing is saved and nothing is said: a toast for "you
-      // changed your mind" is a notification about the absence of an event.
+      // Cancelado: no se guarda ni se avisa; un toast por «cambiaste de idea» notificaría la nada.
       return;
     }
     this.commit(result);
   }
 
-  /** Editing what the search chose. The third click of the edit budget. */
+  /** Edita lo elegido en la búsqueda: el tercer clic del presupuesto de editar. */
   protected editChosen(): void {
     const row = this.chosen();
     if (row !== null) {
@@ -187,7 +153,7 @@ export class ShowroomSearchCreateEdit {
     }
   }
 
-  /** A row activated in the table -- double click, or Enter on the focused row. */
+  /** Fila activada en la tabla: doble clic o Enter sobre la fila enfocada. */
   protected onRowActivate(event: RowActivateEvent<ExpedicionRow>): void {
     this.chosen.set(event.row);
     void this.openForm(event.row);
@@ -234,14 +200,7 @@ export class ShowroomSearchCreateEdit {
     this.toasts.show('success', `Guardada la expedición ${draft.codigo}.`);
   }
 
-  /**
-   * A whole code arrived. Choose the shipment it names; say so if it names none.
-   *
-   * A banner and not a toast for the miss: an unknown code is a condition that
-   * stays true until somebody does something about it, and a message that
-   * disappears in three seconds is the wrong shape for that. The Toast's own
-   * sheet says exactly this.
-   */
+  /** Llegó un código completo: elige la expedición que nombra, o avisa si no hay ninguna. */
   private resolveScan(code: string): void {
     const match = this.rows().find((row) => row.codigo.toLowerCase() === code.trim().toLowerCase());
     if (match === undefined) {
@@ -252,60 +211,27 @@ export class ShowroomSearchCreateEdit {
     this.focusChosenRow(match);
   }
 
-  /**
-   * The table takes the focus to the scanned row, so the eye lands where the
-   * gun did.
-   *
-   * The row is found by the code it SHOWS rather than by an index into the
-   * model: the table sorts, filters and pages, so the fifth row of the data is
-   * not reliably the fifth row on screen. Matching what is rendered is the
-   * only reading that stays true.
-   */
+  // Lleva el foco a la fila escaneada. Se busca por el código que muestra y no por índice:
+  // la tabla ordena, filtra y pagina, así que la quinta fila del modelo no es la quinta en pantalla.
   private focusChosenRow(row: ExpedicionRow): void {
     const rows = this.root().nativeElement.querySelectorAll<HTMLElement>('tbody [role="row"]');
     for (const element of rows) {
       if (element.textContent?.includes(row.codigo) === true) {
-        /*
-         * The FIRST CELL, and not the one carrying `tabindex="0"`.
-         *
-         * The table is a treegrid with a roving tabindex: exactly one cell in
-         * the whole grid is tabbable at a time, and it is wherever the keyboard
-         * was left -- so inside any other row there is no `tabindex="0"` to
-         * find. That is what the first version of this looked for, and it
-         * silently focused nothing. Each cell answers `(focus)` by adopting the
-         * roving index, so focusing a `tabindex="-1"` cell directly is both
-         * allowed and what moves the grid's idea of "here".
-         */
+        // La primera celda, no la de `tabindex="0"`: con tabindex rotatorio hay una sola en toda
+        // la grilla y casi nunca está en esta fila (la primera versión no enfocaba nada). Cada
+        // celda adopta el índice al recibir `(focus)`, así que enfocar una con -1 es válido.
         element.querySelector<HTMLElement>('[role="gridcell"]')?.focus();
         return;
       }
     }
   }
 
-  /**
-   * One click, counted if it advances a flow.
-   *
-   * `capture: true` so a control that stops propagation -- and several do, on
-   * purpose -- is still counted. Clicks outside the demo region and outside an
-   * open dialog are the catalogue's own chrome and are not part of any flow;
-   * so is the counter's own reset button, which would otherwise make resetting
-   * cost a click.
-   */
+  // Cuenta el clic si avanza un flujo. Va en captura porque varios controles cortan la
+  // propagación. Fuera de la demo o del diálogo abierto es cromo del catálogo, no flujo.
   private countClick(event: Event): void {
-    /*
-     * A KEYBOARD ACTIVATION IS NOT A CLICK, and `detail === 0` is how the DOM
-     * says so: a click that came from a pointer carries the number of the
-     * press, and one synthesised by activating a control from the keyboard
-     * carries zero.
-     *
-     * It started to matter in DS-5. Until then the form had no submit button,
-     * so `Enter` in a field did nothing and there was no synthetic click to
-     * mistake for a real one. Now `Enter` submits -- the browser dispatches a
-     * click on the submit button to do it -- and without this line the counter
-     * charged a click for a flow that §2.1 of REQ-FE-DS4-003 scores at ZERO.
-     * The screen would have been the one lying, which is the single thing the
-     * showroom exists not to do.
-     */
+    // `detail === 0`: activación por teclado, no clic. Desde DS-5 `Enter` envía el formulario
+    // con un clic sintético, y sin esto se cobraba un flujo que §2.1 puntúa en cero.
+    // Ver vault: REQ-FE-DS4-003 - Minimo de clics.
     if (event instanceof MouseEvent && event.detail === 0) {
       return;
     }

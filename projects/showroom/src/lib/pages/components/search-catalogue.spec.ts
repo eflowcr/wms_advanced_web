@@ -8,12 +8,8 @@ import {
 } from './search-catalogue';
 
 /**
- * The demo's data source, tested on its own.
- *
- * IT IS DEMO CODE AND IT STILL GETS A SPEC, because it is the stand-in for the
- * catalogue endpoint: what it does -- filter, page, count, fail, take its time
- * -- is exactly what the backend will be asked to do, and the component's own
- * spec proves nothing about whether this half of the contract is honoured.
+ * Aunque es código de demo, sustituye al endpoint del catálogo: filtrar, paginar,
+ * contar, fallar y demorar es lo que se le pedirá al backend.
  */
 describe('CatalogueSource', () => {
   let behaviour: SourceBehaviour;
@@ -34,7 +30,7 @@ describe('CatalogueSource', () => {
     vi.useRealTimers();
   });
 
-  /** Subscribe, run the clock forward, and hand back what arrived. */
+  /** Se suscribe, adelanta el reloj y devuelve lo que llegó. */
   async function ask(query: string, page = 0): Promise<SearchPageOfArticle> {
     const answer = firstValueFrom(source.search(query, page));
     await vi.advanceTimersByTimeAsync(7000);
@@ -45,7 +41,7 @@ describe('CatalogueSource', () => {
     expect(CATALOGUE.length).toBe(340);
     expect(CATALOGUE[0]?.code).toBe('SKU-88000');
     expect(CATALOGUE[42]?.code).toBe('SKU-88042');
-    // Same codes, same names, run after run: a capture has to be comparable.
+    // Mismos códigos y nombres en cada corrida: las capturas deben ser comparables.
     expect(CATALOGUE[42]?.name).toBe(CATALOGUE[42]?.name);
     expect(new Set(CATALOGUE.map((article) => article.code)).size).toBe(CATALOGUE.length);
   });
@@ -107,7 +103,7 @@ describe('CatalogueSource', () => {
       landed = true;
     });
 
-    // Past the 5 s the component tolerates, and still nothing.
+    // Pasados los 5 s que tolera el componente, y todavía nada.
     await vi.advanceTimersByTimeAsync(5000);
     expect(landed).toBe(false);
 
@@ -148,8 +144,7 @@ describe('UncountedSource', () => {
 
     const page = await answer;
     expect(page.total).toBeNull();
-    // Everything else is untouched: a source that declines to count still
-    // knows whether there is more.
+    // Lo demás queda igual: una fuente que no cuenta igual sabe si hay más.
     expect(page.items.length).toBe(20);
     expect(page.hasMore).toBe(true);
   });

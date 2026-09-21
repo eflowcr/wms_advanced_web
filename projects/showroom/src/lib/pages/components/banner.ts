@@ -14,9 +14,8 @@ import { TokenValue } from '../../ui/token-value';
 import { formatBox, rectOf } from './measure';
 
 /**
- * The four variants, with the family each one paints with and the role it
- * takes. The table on the page is generated from this, so the page cannot
- * claim a pairing the demo does not render.
+ * Variantes con su familia de color y su rol. La tabla de la página sale de acá y no
+ * puede afirmar un par que la demo no renderiza.
  */
 interface VariantRow {
   readonly variant: FeedbackVariant;
@@ -78,10 +77,10 @@ const MATRIX_STATES: readonly MatrixAxis[] = [
   { id: 'dismissible', label: 'Con cerrar' },
 ];
 
-/** The icon size the component fixes, in CSS pixels: `md`. */
+/** Tamaño de icono que fija el componente, en píxeles CSS (md). */
 const ICON_SIZE = 18;
 
-/** VERIFIED AGAINST banner.ts. */
+/** Verificada contra banner.ts. */
 const PROPS: readonly PropRow[] = [
   {
     name: 'variant',
@@ -152,12 +151,8 @@ interface IconSample {
 }
 
 /**
- * /design-system/components/banner -- the sheet of `ewms-banner`.
- *
- * THE PAGE LEADS WITH THE PAIRING THAT SURPRISES PEOPLE: Info is called Info
- * and is painted neutral. Every other decision on this page follows from the
- * same rule -- the blue means "you click this" -- and a reader who leaves
- * knowing only that one thing has got the important part.
+ * /design-system/components/banner: ficha de ewms-banner. Abre con lo que sorprende:
+ * Info se pinta neutral, porque el azul significa «esto se hace clic».
  */
 @Component({
   selector: 'ewms-showroom-banner',
@@ -175,7 +170,7 @@ export class ShowroomBanner {
   protected readonly props = PROPS;
   protected readonly anatomy = ANATOMY;
 
-  /** Counted by the demo, so «no se saca solo» is shown and not asserted. */
+  /** Lo cuenta la demo, para mostrar que «no se saca solo». */
   protected readonly dismissCount = signal(0);
 
   protected readonly iconSamples = signal<readonly IconSample[]>(
@@ -195,12 +190,8 @@ export class ShowroomBanner {
   ].join('\n');
 
   constructor() {
-    /*
-     * The icon is 18 px in all four variants -- the system's `md`. Read off
-     * the rendered SVG rather than printed, because "the icon grows with the
-     * severity" is precisely the kind of thing that gets added later by
-     * someone who thinks danger should shout.
-     */
+    // El icono mide 18 px (md) en las cuatro variantes; se mide el SVG porque alguien
+    // querrá agrandarlo según la severidad.
     afterNextRender(() => {
       this.iconSamples.update((samples) =>
         samples.map((sample) => {

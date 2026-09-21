@@ -1,19 +1,11 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 
-/** Which ground a demo sits on. */
+/** Fondo sobre el que va una demo. */
 export type DemoGround = 'canvas' | 'surface' | 'navy';
 
 /**
- * Widget 5.4 — the demo frame. Sounds trivial; it is what makes every page of
- * the catalogue look like one thing.
- *
- * Three grounds, because some tokens can only be judged on the right one.
- * `navy` exists for the rail: `--color-text-on-dark` and
- * `--color-focus-ring-on-dark` say nothing on white.
- *
- * Built by hand from tokens, like the rest of the chrome, and never out of
- * design-system components: a broken Button must break its own demo and
- * nothing else (Showroom spec, section 5).
+ * Widget 5.4, marco de demo. Tres fondos porque algunos tokens solo se juzgan en el suyo
+ * (`--color-text-on-dark` no dice nada sobre blanco). Hecho con tokens, sin componentes del DS.
  */
 @Component({
   selector: 'ewms-demo-frame',
@@ -22,7 +14,7 @@ export type DemoGround = 'canvas' | 'surface' | 'navy';
 })
 export class DemoFrame {
   readonly ground = input<DemoGround>('canvas');
-  /** Optional caption above the frame. */
+  /** Leyenda opcional sobre el marco. */
   readonly label = input<string>('');
 
   protected readonly groundClasses = computed(() => {

@@ -1,4 +1,4 @@
-<!-- The showroom is Spanish only, exempt from i18n (gate 12): declared so a screen reader never reads it as English. -->
+<!-- Showroom solo en español, exento de i18n (compuerta 12): se declara para que el lector de pantalla no lo lea en inglés. -->
 <article class="flex flex-col gap-10" lang="es">
   <!-- ============================================================ 1. Encabezado -->
   <header class="flex flex-col gap-2" data-block="1-encabezado">
@@ -68,11 +68,7 @@
   <section class="flex flex-col gap-4" aria-labelledby="sce-demo" data-block="3-demo">
     <h2 id="sce-demo" class="text-h2">Demo principal</h2>
 
-    <!--
-      RFE-04: the screen measures ITSELF. The budgets come from
-      click-budget.ts, which is the same file the end-to-end test imports, so
-      the number advertised here and the number asserted there cannot drift.
-    -->
+    <!-- RFE-04: la pantalla se mide sola, con los presupuestos de click-budget.ts, el mismo archivo que importa e2e. -->
     <div
       class="flex flex-col gap-3 rounded-md border border-strong bg-secondary p-4"
       data-budget-panel
@@ -126,11 +122,7 @@
       <div class="flex flex-wrap items-center gap-4">
         <p class="flex items-baseline gap-2">
           <span class="text-caption text-secondary">Clics reales contados:</span>
-          <!--
-            A live region: the number is the whole point of the panel, and the
-            person who most needs to be told it went up is the one who cannot
-            see it change.
-          -->
+          <!-- Región viva: quien más necesita enterarse de que el número subió es quien no lo ve cambiar. -->
           <strong
             class="font-mono text-h2 text-primary"
             role="status"
@@ -165,9 +157,8 @@
       <div class="flex flex-col gap-4" #flow data-flow>
         @if (failing()) {
           <!--
-            A Banner and not a Toast: the source being down stays true until
-            somebody fixes it, and a message that leaves after three seconds is
-            the wrong shape for a condition. The Toast's own sheet says so.
+            Banner y no Toast: la fuente caída sigue siendo cierta hasta que alguien la arregla,
+            y un mensaje que se va en tres segundos no sirve para una condición.
           -->
           <ewms-banner
             variant="danger"
@@ -191,10 +182,7 @@
             />
           </div>
 
-          <!--
-            WCAG 2.1.1: nothing exists only behind a shortcut. Alt+N is the
-            accelerator; this button is the way.
-          -->
+          <!-- WCAG 2.1.1: nada existe solo detrás de un atajo. Alt+N acelera; este botón es el camino. -->
           <ewms-button variant="primary" data-new-button (click)="openForm(null)">
             Nuevo
           </ewms-button>

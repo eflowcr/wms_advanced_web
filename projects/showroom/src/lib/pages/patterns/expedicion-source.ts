@@ -4,25 +4,15 @@ import { switchMap } from 'rxjs/operators';
 import type { ExpedicionRow } from '../components/expediciones';
 
 /**
- * The example screen's search source, over the shipments already on the
- * screen's table.
- *
- * ONE LIST BEHIND BOTH CONTROLS, and that is what makes the flows mean
- * anything: searching finds a shipment the table really holds, and saving one
- * changes what the next search returns. Two lists would have made every count
- * a count of a demo rather than of a flow.
- *
- * Synthetic throughout. No real data of any customer, ever (PLN-WMS-003 §6).
- *
- * The latency is small and real: 120 ms is enough for the searching state to
- * exist without making the click count a test of somebody's patience. The
- * search select's own sheet uses 400 ms because showing that state IS its
- * subject; here it is not.
+ * Fuente de búsqueda de la pantalla ejemplo, sobre las mismas filas de la tabla: buscar encuentra
+ * lo que la tabla tiene y guardar cambia la próxima búsqueda. Datos sintéticos (PLN-WMS-003 §6).
  */
+// 120 ms: alcanza para que exista el estado «buscando» sin volver el conteo una prueba de
+// paciencia. La ficha del selector usa 400 ms porque ese estado es su tema.
 export class ExpedicionSource implements SearchSource<ExpedicionRow> {
   constructor(
     private readonly rows: () => readonly ExpedicionRow[],
-    /** Flipped by the demo to show the error path. */
+    /** La demo lo invierte para mostrar el camino de error. */
     private readonly failing: () => boolean,
   ) {}
 
@@ -39,7 +29,7 @@ export class ExpedicionSource implements SearchSource<ExpedicionRow> {
     );
   }
 
-  /** What the backend will do when it exists. The component never learns how. */
+  /** Lo que hará el backend cuando exista; el componente nunca sabe cómo. */
   private page(query: string, page: number): SearchPage<ExpedicionRow> {
     const needle = query.trim().toLowerCase();
     const matches = this.rows().filter(

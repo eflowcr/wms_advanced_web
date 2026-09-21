@@ -15,10 +15,8 @@ import { PropTable, type PropRow } from '../../ui/prop-table';
 import { TokenValue } from '../../ui/token-value';
 
 /**
- * El árbol de la demo. Es el árbol REAL del App Shell recortado, no uno
- * inventado: un grupo con muchos hijos y otro con pocos es exactamente la
- * forma que hace difícil a la navegación, y una demo con tres ítems planos no
- * enseña nada de eso.
+ * Árbol real del App Shell, recortado: un grupo con muchos hijos y otro con pocos
+ * es la forma que complica la navegación; tres ítems planos no enseñarían nada.
  */
 const TREE: readonly NavItem[] = [
   { id: 'dashboard', label: 'Dashboard', icon: 'dashboard', route: '/dashboard' },
@@ -195,17 +193,9 @@ const ANATOMY: readonly { readonly part: string; readonly token: string }[] = [
 ];
 
 /**
- * /design-system/components/navigation — la ficha de las tres piezas.
- *
- * LA DEMO ESTÁ SINCRONIZADA A PROPÓSITO. Elegir en el rail cambia la miga y
- * abre la pestaña, y elegir una pestaña mueve el rail: es la afirmación que
- * esta página viene a hacer — que las tres piezas son presentacionales y que
- * el estado vive fuera de ellas, en quien compone. Tres demos independientes
- * enseñarían tres controles y esconderían lo único que importa saber para
- * montarlas.
- *
- * NO HAY ROUTER EN ESTA PÁGINA, y eso también es la demostración: si alguna
- * pieza importara `@angular/router`, este catálogo no podría enseñarla.
+ * /design-system/components/navigation: rail, miga y pestañas sincronizados a propósito,
+ * porque el estado vive en quien compone. Sin router: si una pieza importara
+ * @angular/router, el catálogo no podría mostrarla.
  */
 @Component({
   selector: 'ewms-showroom-navigation',
@@ -239,12 +229,8 @@ export class ShowroomNavigation {
   protected readonly sectionActive = signal('detail');
 
   /**
-   * La miga del destino elegido, DERIVADA DEL ÁRBOL y no de una segunda tabla.
-   *
-   * La primera versión llevaba un `TRAIL` con el camino de cada id escrito a
-   * mano. Funcionaba y era una segunda fuente de la misma verdad: agregar un
-   * hijo al árbol y olvidarse de la tabla daba una miga que mentía. El árbol ya
-   * dice de quién cuelga cada ítem, así que la miga se lee de ahí.
+   * Miga derivada del árbol: una tabla de caminos escrita a mano era una segunda
+   * fuente de verdad que mentía al agregar un hijo.
    */
   protected readonly crumbs = computed<readonly Crumb[]>(() => {
     const active = this.activeId();
@@ -275,10 +261,8 @@ export class ShowroomNavigation {
   }
 
   /**
-   * Cerrar una pestaña, y a dónde va el foco.
-   *
-   * Cerrar la activa pasa la selección a la vecina; cerrar la última deja la
-   * lista vacía y el foco en el sitio, nunca perdido en el body.
+   * Cerrar la activa pasa la selección a la vecina; cerrar la última deja la lista
+   * vacía y el foco en su sitio, nunca perdido en el body.
    */
   protected onTabClose(closed: Tab): void {
     const tabs = this.openTabs();

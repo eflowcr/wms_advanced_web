@@ -18,7 +18,7 @@ import {
 } from '@ewms/design-system';
 import type { EstadoExpedicion } from '../components/expediciones';
 
-/** What the form edits. A new record arrives with the fields already blank. */
+/** Lo que edita el formulario; un registro nuevo llega con los campos en blanco. */
 export interface ExpedicionDraft {
   readonly id: string | null;
   codigo: string;
@@ -35,26 +35,12 @@ export const ESTADO_OPTIONS: readonly SelectOption[] = [
 ];
 
 /**
- * The create/edit form of the example screen.
- *
- * ONE COMPONENT FOR BOTH FLOWS, and that is the point rather than a saving:
- * REQ-FE-DS4-003 RFE-05 says the budget is guaranteed by the PATTERN, and a
- * screen with two different forms is a screen where one of them grows a click
- * the other does not have.
- *
- *
- * IT TAKES OVER `save` AND `cancel` WHILE IT IS OPEN
- *
- * The registrations are withdrawn when this component is destroyed, which is
- * when the dialog closes, so the screen behind it gets them back without
- * either of them knowing about the other. That is the reason `register`
- * returns to the injector's life rather than to a route's.
- *
- * `cancel` is NOT registered here. The CDK's dialog already closes on Escape
- * and marks the event handled, and the engine skips anything already
- * answered -- so Escape closes this and nothing else, in zero clicks. A
- * registration would have been a second answer to the same key.
+ * Formulario de crear y editar: uno solo para ambos flujos, porque el presupuesto lo garantiza
+ * el patrón (REQ-FE-DS4-003 RFE-05) y dos formularios terminan con clics distintos.
  */
+// Toma `save` mientras está abierto; el registro muere con el inyector del diálogo y la pantalla
+// de atrás lo recupera. `cancel` no se registra: el diálogo del CDK ya cierra con Escape y marca
+// el evento como atendido, y el motor saltea lo atendido.
 @Component({
   selector: 'ewms-expedicion-form',
   imports: [Button, EwmsInput, FormsModule, Select, Toggle],
@@ -77,21 +63,12 @@ export class ExpedicionForm {
   protected readonly estado = signal<string>(this.initial.estado);
   protected readonly urgente = signal(this.initial.urgente);
 
-  /** The `<form>` itself, so Ctrl+S can submit it rather than click something. */
+  /** El `<form>`, para que Ctrl+S lo envíe en vez de hacer clic en algo. */
   private readonly form = viewChild<ElementRef<HTMLFormElement>>('form');
 
   constructor() {
-    /*
-     * `requestSubmit()` AND NOT `save()`, since DS-5.
-     *
-     * Ctrl+S used to call the method directly, because there was no submit
-     * button to press. Now that there is one, going through the FORM is what
-     * keeps the three gestures on one path: `Enter` in a field, the button,
-     * and the shortcut all raise one `submit` event, and anything that is ever
-     * added to submission -- validation, a guard, a confirm -- applies to all
-     * three at once. `requestSubmit()` and not `click()` for the same reason:
-     * clicking a button is a way to submit, not the submission itself.
-     */
+    // `requestSubmit()` y no `save()` ni `click()` (DS-5): Enter, el botón y el atajo levantan
+    // un único `submit`, y lo que se agregue al envío (validación, guarda) vale para los tres.
     this.shortcuts.register('save', () => this.form()?.nativeElement.requestSubmit());
   }
 
@@ -105,14 +82,8 @@ export class ExpedicionForm {
     });
   }
 
-  /**
-   * Cancel closes with nothing, and so does Escape and so does the backdrop.
-   *
-   * NO CONFIRMATION, even with the fields changed. REQ-FE-DS4-003 §2.2 is
-   * explicit: cancelling costs one click and a screen that asks you to confirm
-   * the cancellation of something never saved is spending the budget on a
-   * question.
-   */
+  // Cancelar, Escape y el fondo cierran sin nada. Sin confirmación aunque haya cambios:
+  // REQ-FE-DS4-003 §2.2 fija cancelar en un clic.
   protected cancel(): void {
     this.dialogRef.close(undefined);
   }
