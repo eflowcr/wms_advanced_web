@@ -1,6 +1,6 @@
 import type { Observable } from 'rxjs';
-import type { IconName } from '../../icons/icons.generated';
 import type { SemanticFamily } from '../feedback/feedback.types';
+import type { MenuItem } from '../menu/menu.types';
 
 /** Nombrado por familia de color, las mismas cuatro de Banner y Toast. */
 export type RowState = SemanticFamily;
@@ -20,15 +20,7 @@ export type TableColumnWidth = 'sm' | 'md' | 'lg' | 'fill';
 
 export type TableChildren<T> = (row: T) => readonly T[] | Observable<readonly T[]> | null;
 
-export interface MenuItem {
-  readonly id: string;
-  readonly label: string;
-  readonly icon?: IconName;
-  /** Lo pinta como respuesta destructiva. */
-  readonly tone?: 'danger';
-  readonly separatorBefore?: boolean;
-  readonly disabled?: boolean;
-}
+export type { MenuItem } from '../menu/menu.types';
 
 /** Un objeto, para que quepa otro campo mañana. */
 export interface RowActivateEvent<T> {

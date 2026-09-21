@@ -96,6 +96,11 @@ export const showroomRoutes: Routes = [
         pathMatch: 'full',
       },
       {
+        path: 'components/split-button',
+        loadComponent: async () =>
+          (await import('./pages/components/split-button')).ShowroomSplitButton,
+      },
+      {
         path: 'components/table',
         loadComponent: async () => (await import('./pages/components/table')).ShowroomTable,
       },

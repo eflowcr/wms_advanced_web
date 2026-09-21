@@ -5,6 +5,7 @@ import {
   EWMS_FAVORITES_STORE,
   EWMS_SELECT_MESSAGES,
   EWMS_SHORTCUT_HELP_MESSAGES,
+  EWMS_SPLIT_BUTTON_MESSAGES,
   EWMS_SHORTCUT_MAP,
   EWMS_TABLE_FORMATTERS,
   EWMS_TABLE_MESSAGES,
@@ -14,6 +15,7 @@ import {
   type FavoriteLabelResolver,
   type SelectMessages,
   type ShortcutHelpMessages,
+  type SplitButtonMessages,
   type TableFormatters,
   type TableMessages,
 } from '@ewms/design-system';
@@ -62,6 +64,10 @@ export function provideEwmsDesignSystem(): Provider[] {
     {
       provide: EWMS_SHORTCUT_HELP_MESSAGES,
       useFactory: shortcutHelpMessages,
+    },
+    {
+      provide: EWMS_SPLIT_BUTTON_MESSAGES,
+      useFactory: splitButtonMessages,
     },
   ];
 }
@@ -222,6 +228,15 @@ function shortcutHelpMessages(): ShortcutHelpMessages {
       get help() {
         return transloco.translate('shell.shortcuts.actions.help');
       },
+    },
+  };
+}
+
+function splitButtonMessages(): SplitButtonMessages {
+  const transloco = inject(TranslocoService);
+  return {
+    get moreActions() {
+      return transloco.translate('ds.splitButton.moreActions');
     },
   };
 }

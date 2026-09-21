@@ -21,6 +21,7 @@ import { ShowroomNavigation } from './components/navigation';
 import { ShowroomPagination } from './components/pagination';
 import { ShowroomRadio } from './components/radio';
 import { ShowroomSelect } from './components/select';
+import { ShowroomSplitButton } from './components/split-button';
 import { ShowroomTable } from './components/table';
 import { ShowroomText } from './components/text';
 import { ShowroomToast } from './components/toast';
@@ -248,10 +249,10 @@ describe('ShowroomHome', () => {
     const { element } = await render(ShowroomHome);
     expect(element.querySelectorAll('[data-entry]').length).toBeGreaterThan(20);
     expect(element.querySelector('[data-entry="button"] a')).not.toBeNull();
-    // `split-button` y no `navigation` (dejó de ser hueco en DS-5, la tabla en DS-3 lote C).
-    // Importa que un hueco siga visible, no cuál: un hueco visible es información.
-    expect(element.querySelector('[data-entry="split-button"] a')).toBeNull();
-    expect(element.querySelector('[data-entry="split-button"]')?.textContent).toContain(
+    // Un patrón y no un componente: los dos últimos huecos (split button y date picker) se
+    // cerraron el 2026-09-21. Importa que un hueco siga visible, no cuál.
+    expect(element.querySelector('[data-entry="pattern-form"] a')).toBeNull();
+    expect(element.querySelector('[data-entry="pattern-form"]')?.textContent).toContain(
       '(pendiente)',
     );
     expect(element.querySelector('[data-entry="navigation"] a')).not.toBeNull();
@@ -532,6 +533,7 @@ const SHEETS: readonly { name: string; component: Type<unknown>; heading: string
   { name: 'ShowroomDialog', component: ShowroomDialog, heading: 'Dialog' },
   { name: 'ShowroomTable', component: ShowroomTable, heading: 'Tabla de datos' },
   { name: 'ShowroomPagination', component: ShowroomPagination, heading: 'Paginación' },
+  { name: 'ShowroomSplitButton', component: ShowroomSplitButton, heading: 'Split button' },
   { name: 'ShowroomNavigation', component: ShowroomNavigation, heading: 'Navegación' },
 ];
 
@@ -1152,6 +1154,26 @@ describe('ShowroomDialog', () => {
     expect(page.isGlyph('glyph')).toBe(true);
     expect(page.isGlyph('confirm')).toBe(false);
     expect(page.glyphFor('no-such-tone')).toBeNull();
+  });
+});
+
+describe('ShowroomSplitButton', () => {
+  afterEach(clearOverlays);
+
+  it('reports which output each gesture fired: the main action, then a menu choice', async () => {
+    const { fixture, element } = await render(ShowroomSplitButton);
+    const last = () => element.querySelector('[data-demo-last]')?.textContent;
+    const [main, trigger] = [...element.querySelectorAll<HTMLButtonElement>('[data-demo-split] button')];
+
+    main!.click();
+    await fixture.whenStable();
+    expect(last()).toBe('pdf');
+
+    trigger!.click();
+    await fixture.whenStable();
+    document.querySelector<HTMLElement>('[data-split-action="csv"]')!.click();
+    await fixture.whenStable();
+    expect(last()).toBe('csv');
   });
 });
 

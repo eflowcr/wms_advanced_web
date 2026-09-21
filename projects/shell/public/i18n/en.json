@@ -15,6 +15,9 @@
       "retry": "Retry",
       "searching": "Searching…"
     },
+    "splitButton": {
+      "moreActions": "More options"
+    },
     "table": {
       "childrenFailed": "The lines could not be loaded.",
       "collapse": "Collapse the row",

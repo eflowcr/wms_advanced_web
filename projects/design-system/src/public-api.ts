@@ -98,7 +98,15 @@ export {
   type TableDensity,
 } from './lib/table/table.types';
 export { expandableKeys, flattenTree, type FlattenOptions } from './lib/table/tree';
-export { menuItemClasses, moveMenuIndex } from './lib/table/row-menu';
+export { menuItemClasses, moveMenuIndex } from './lib/menu/menu';
+
+// Split button (2026-09-21): acción principal y alternativas, sobre el menú de la Tabla.
+export {
+  SplitButton,
+  type SplitAction,
+  type SplitButtonMessages,
+} from './lib/split-button/split-button';
+export { EWMS_SPLIT_BUTTON_MESSAGES } from './lib/split-button/split-button.types';
 
 // Pagination (DS-3): aparte de la tabla, porque cards, logs y colas de picking también paginan.
 export { Pagination, type PaginationMessages } from './lib/pagination/pagination';

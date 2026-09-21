@@ -3,6 +3,7 @@ import {
   EWMS_FAVORITE_LABELS,
   EWMS_SELECT_MESSAGES,
   EWMS_SHORTCUT_HELP_MESSAGES,
+  EWMS_SPLIT_BUTTON_MESSAGES,
   EWMS_SHORTCUT_MAP,
   EWMS_TABLE_FORMATTERS,
   EWMS_TABLE_MESSAGES,
@@ -27,6 +28,7 @@ export function provideShowroomDesignSystem(): Provider[] {
     { provide: EWMS_SELECT_MESSAGES, useValue: SELECT_MESSAGES },
     { provide: EWMS_SHORTCUT_MAP, useValue: SHOWROOM_SHORTCUT_MAP },
     { provide: EWMS_SHORTCUT_HELP_MESSAGES, useValue: SHORTCUT_HELP_MESSAGES },
+    { provide: EWMS_SPLIT_BUTTON_MESSAGES, useValue: { moreActions: 'Más opciones' } },
 
     // Nombres de rutas, no el almacén: `EWMS_FAVORITES_STORE` y `Favorites` vienen de la aplicación.
     // Proveerlos otra vez dio una página con dos estrellas y dos listas en desacuerdo.

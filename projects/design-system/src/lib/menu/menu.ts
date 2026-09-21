@@ -3,11 +3,14 @@ import { TemplatePortal } from '@angular/cdk/portal';
 import { Injector, type ViewContainerRef, type TemplateRef } from '@angular/core';
 import { createConnectedOverlay, type ConnectedPositionList } from '../overlay/connected-overlay';
 import { moveActiveIndex } from '../listbox/listbox.types';
-import type { MenuItem } from './table.types';
+import type { MenuItem } from './menu.types';
 
 export { moveActiveIndex };
 
-/** No es un componente: overlay y lista ya compartidos; uno propio duplicaría teclado (HG-04). */
+/**
+ * Menú de la fila de la Tabla y del split button. No es un componente: overlay y lista ya
+ * compartidos; uno propio duplicaría teclado (HG-04).
+ */
 export interface MenuAnchor {
   /** Una celda en clic derecho, el kebab si se pulsó. */
   readonly element: HTMLElement;

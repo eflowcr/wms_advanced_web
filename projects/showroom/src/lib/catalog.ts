@@ -220,10 +220,10 @@ const COMPONENTS: readonly CatalogEntry[] = [
   {
     id: 'split-button',
     name: 'Split button',
-    selector: null,
-    route: null,
-    status: 'gap',
-    note: 'Hueco reservado, sin ficha. El patrón «Descargar / PDF / Excel / CSV».',
+    selector: 'ewms-split-button',
+    route: `${SHOWROOM_BASE}/components/split-button`,
+    status: 'ready',
+    note: 'Acción principal y alternativas a un clic: «Descargar / PDF / Excel / CSV». El menú es el de la Tabla.',
   },
   {
     id: 'date-picker',

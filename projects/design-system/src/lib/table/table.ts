@@ -73,7 +73,7 @@ import {
   MENU_SEPARATOR_CLASSES,
   MENU_POSITIONS,
   moveMenuIndex,
-} from './row-menu';
+} from '../menu/menu';
 import { expandableKeys, flattenTree, type FlatRow } from './tree';
 
 export type { CellContext } from './column';

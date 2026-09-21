@@ -30,6 +30,7 @@ const ROUTES = [
   { name: '19-components-dialog', url: '/design-system/components/dialog' },
   { name: '21-components-table', url: '/design-system/components/table' },
   { name: '22-components-pagination', url: '/design-system/components/pagination' },
+  { name: '23-components-split-button', url: '/design-system/components/split-button' },
 ] as const;
 
 /**
