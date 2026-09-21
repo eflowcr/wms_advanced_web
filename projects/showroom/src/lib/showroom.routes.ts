@@ -1,11 +1,8 @@
 import type { Routes } from '@angular/router';
 
 /**
- * Lazy route tree mounted by the shell at /design-system.
- *
- * Routes are in English without exception: a route is an identifier, not
- * interface text. The i18n exemption covers the CONTENT of the pages, which
- * stays Spanish, not their URLs (Showroom spec, section 3, closed 2026-09-17).
+ * Rutas perezosas que el shell monta en /design-system. En inglés sin excepción: una ruta es
+ * identificador, no texto (Ver vault: Showroom - Especificacion §3, 2026-09-17).
  */
 export const showroomRoutes: Routes = [
   {
@@ -120,13 +117,8 @@ export const showroomRoutes: Routes = [
           (await import('./pages/patterns/search-create-edit')).ShowroomSearchCreateEdit,
       },
       {
-        /*
-         * PERMANENT redirect, not a leftover. The iconography page lived at
-         * /design-system/iconografia while the routes were still in Spanish,
-         * and section 3 of the spec declares every showroom URL stable -- a
-         * link already pasted into Slack has to keep working. Deleting this
-         * because it looks dead is exactly the mistake the promise forbids.
-         */
+        // Redirección permanente, no resto: la iconografía vivía en /design-system/iconografia y
+        // la especificación §3 declara estables las URL (un enlace ya pegado debe seguir andando).
         path: 'iconografia',
         redirectTo: 'foundations/icons',
         pathMatch: 'full',

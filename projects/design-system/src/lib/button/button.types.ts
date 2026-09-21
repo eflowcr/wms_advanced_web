@@ -4,15 +4,13 @@ export type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'ghost';
 export type ButtonSize = 'sm' | 'md' | 'lg';
 export type ButtonIconPosition = 'left' | 'right';
 
-/** Tamaño de icono por tamaño de botón. `lg` usa el icono `md` a propósito:
- * iconos más grandes desbalancean una barra de herramientas. */
+/** `lg` usa el icono `md` a propósito: uno más grande desbalancea una barra de herramientas. */
 export const BUTTON_ICON_SIZES: Readonly<Record<ButtonSize, IconSize>> = {
   sm: 'sm',
   md: 'md',
   lg: 'md',
 };
 
-/** Token de tamaño de fuente por tamaño de botón. */
 export const BUTTON_FONT_SIZES: Readonly<Record<ButtonSize, string>> = {
   sm: 'var(--text-control-sm-size)',
   md: 'var(--text-control-md-size)',
@@ -25,14 +23,12 @@ export const BUTTON_HEIGHT_CLASSES: Readonly<Record<ButtonSize, string>> = {
   lg: 'h-12',
 };
 
-/** Relleno horizontal por tamaño, para botones con texto. */
 export const BUTTON_PADDING_CLASSES: Readonly<Record<ButtonSize, string>> = {
   sm: 'px-3',
   md: 'px-4',
   lg: 'px-5',
 };
 
-/** Caja cuadrada por tamaño, para botones de icono. */
 export const ICON_BUTTON_SIZE_CLASSES: Readonly<Record<ButtonSize, string>> = {
   sm: 'h-8 w-8',
   md: 'h-10 w-10',
@@ -40,41 +36,16 @@ export const ICON_BUTTON_SIZE_CLASSES: Readonly<Record<ButtonSize, string>> = {
 };
 
 /**
- * Las utilidades que llevan Button e Icon Button por igual.
- *
- * `relative` ancla el spinner absoluto, así ocultar el contenido no cambia la
- * caja. El anillo es `:focus-visible` y no `:focus`: decide el navegador.
- * `outline-none` saca el anillo del user-agent que reemplaza la sombra de
- * `--focus-ring-shadow` -nunca se saca sin reemplazo-, y es box-shadow y no
- * outline porque el token pinta dos bandas.
- *
- * NO HAY TRANSICIÓN DE COLOR, a propósito, y su nombre no se escribe en ningún
- * lado de este repositorio, comentarios incluidos: Tailwind escanea texto crudo
- * y no sabe qué es un comentario, así que nombrarla emite una regla muerta en el
- * CSS enviado. El error se cometió dos veces escribiendo este mismo comentario y
- * lo atrapó el tamaño del bundle. Volver a ponerla necesita un token de duración
- * en tokens.css, porque `--*: initial` borra la duración por defecto y la clase
- * compila cayendo a cero: parece que anima y no anima (ADR 0009).
- *
- * Vive acá y no en una hoja de componente porque esas se inyectan en línea y la
- * CSP estricta las bloquea (ADR 0010).
+ * Comunes a Button e Icon Button (ADR 0010). El anillo de foco es sombra de dos bandas. Sin
+ * transición de color, y su nombre no se escribe ni en comentarios. Ver vault: ADR 0009.
  */
 export const BUTTON_BASE_CLASSES =
   'relative inline-flex items-center justify-center rounded-control outline-none select-none ' +
   'focus-visible:shadow-(--focus-ring-shadow)';
 
 /**
- * Colores por variante y estado, compartidos para que no deriven. Deshabilitado
- * gana sobre la paleta interactiva: no tiene hover ni activo.
- *
- * GHOST LLEVA SU FRENTE ACÁ, COMO CLASE Y NO COMO ESTILO EN LÍNEA. Su frente es
- * el azul de marca, que en el tema es un rol de fondo y no tiene utilidad
- * `text-*` propia. Una declaración en línea no puede expresar un hover, y Ghost
- * lo necesita: el azul de marca sobre `--color-ghost-hover` mide 4.38:1, bajo el
- * 4.5:1 de WCAG 1.4.3, y el tono de hover de la misma rampa mide 5.65:1.
- * Ghost oscurece su TEXTO en hover igual que Primary su fondo: el mismo gesto,
- * no una excepción (Boton.md, decisión del 2026-09-18). El spinner queda en
- * `--color-bg-primary`: no es texto, y 1.4.11 le pide 3:1.
+ * Deshabilitado gana: sin hover ni activo. Ghost lleva su frente como clase, porque en hover
+ * oscurece el texto (4.38:1 no pasa, 5.65:1 sí) y en línea no hay hover. Ver vault: Boton.
  */
 export function buttonVariantClasses(variant: ButtonVariant, disabled: boolean): string {
   if (disabled) {
@@ -105,8 +76,7 @@ export function buttonVariantClasses(variant: ButtonVariant, disabled: boolean):
   }
 }
 
-/** El spinner hereda el frente, salvo donde el color de texto de la variante no
- * es lo que debería girar. */
+/** Hereda el frente, salvo donde el texto de la variante no es lo que debería girar. */
 export function buttonSpinnerColor(variant: ButtonVariant): string {
   switch (variant) {
     case 'secondary':
@@ -118,17 +88,11 @@ export function buttonSpinnerColor(variant: ButtonVariant): string {
   }
 }
 
-/**
- * Si una interacción no puede llegar al consumidor. `loading` es independiente de
- * `disabled`: un botón cargando conserva el foco nativo, así que el atributo
- * `disabled` no puede ser lo que frena el segundo clic. Este predicado sí.
- */
+/** Cargando conserva el foco, así que el atributo `disabled` no frena el segundo clic: esto sí. */
 export function isInteractionBlocked(disabled: boolean, loading: boolean): boolean {
   return disabled || loading;
 }
 
-/** Corta un evento en seco, incluidos los listeners del mismo elemento y los de
- * cualquier ancestro. */
 export function suppressEvent(event: Event): void {
   event.preventDefault();
   event.stopImmediatePropagation();

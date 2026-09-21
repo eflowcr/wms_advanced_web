@@ -7,26 +7,10 @@ import { provideShowroomDesignSystem } from '../../showroom.providers';
 import { ShowroomKeyboard } from './keyboard';
 import { ShowroomSearchCreateEdit } from './search-create-edit';
 
-/**
- * The two pattern pages, DRIVEN.
- *
- * `pages.spec.ts` renders every page and checks its structure; that is where
- * the eight blocks and the axe run live. What is here is the half that only
- * shows up when somebody USES the page: opening the form, saving, cancelling,
- * a scan arriving, a click being counted.
- *
- *
- * THE ENGINE IS REAL, AND THAT IS WHY THERE IS A HOST
- *
- * Both pages register actions on `KeyboardShortcuts`, and the engine only
- * dispatches once a root layout has mounted it -- which in the running
- * application is the shell's `MainLayout`. So the host below plays that part:
- * `ewmsShortcutsHost` on an element whose injector carries the showroom's own
- * map. Without it these tests would drive the pages with the keyboard
- * disconnected, which is the one thing they exist to exercise.
- *
- * The browser half -- how many clicks a flow really costs with a pointer --
- * needs a pointer, and lives in e2e/click-budget.e2e.ts.
+/*
+ * Las páginas de patrón, usadas (estructura y axe están en pages.spec.ts). El motor de atajos
+ * es real y solo despacha montado por un layout raíz (`MainLayout` en el shell): el host de abajo
+ * hace ese papel. Los clics reales con puntero se cuentan en e2e/click-budget.e2e.ts.
  */
 
 @Component({
@@ -45,7 +29,7 @@ class ScreenHost {}
 })
 class KeyboardHost {}
 
-/** Everything the CDK's overlay left behind, which is where a dialog renders. */
+/** El contenedor de overlays del CDK, donde se renderiza el diálogo. */
 function overlay(): Element | null {
   return document.querySelector('.cdk-overlay-container');
 }
@@ -56,15 +40,8 @@ function cleanUpOverlays(): void {
   }
 }
 
-/**
- * The threshold, declared by hand because jsdom loads no stylesheet.
- *
- * `--threshold-scan-keystroke` lives in tokens.css, and with no stylesheet the
- * token reads as absent -- at which point NOTHING can be classified as a scan,
- * by design, and every scan case here would pass vacuously while testing the
- * absence of the token instead of the presence of a gun. Declaring it is the
- * same thing search-select.spec.ts does, for the same reason.
- */
+// Umbral declarado a mano: jsdom no carga tokens.css, y sin `--threshold-scan-keystroke` nada
+// se clasifica como escaneo y esos casos pasarían en vacío. Igual que search-select.spec.ts.
 const THRESHOLD_MS = 50;
 
 describe('the DS-4 pattern pages, driven', () => {
@@ -83,7 +60,7 @@ describe('the DS-4 pattern pages, driven', () => {
       providers: [provideRouter([])],
     }).compileComponents();
     const fixture = TestBed.createComponent(host);
-    // In the document, so focus and the overlay have somewhere to live.
+    // En el document, para que el foco y el overlay tengan dónde vivir.
     document.body.appendChild(fixture.nativeElement);
     fixture.detectChanges();
     await fixture.whenStable();
@@ -94,16 +71,9 @@ describe('the DS-4 pattern pages, driven', () => {
     target.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, ...init }));
   }
 
-  /**
-   * One keystroke per character at gun speed, closed by Enter.
-   *
-   * SYNCHRONOUS, AND THAT IS WHAT MAKES IT DETERMINISTIC. Sleeping five
-   * milliseconds between keys sounds more faithful and is not: on a loaded
-   * test runner a five-millisecond sleep can take fifty, the run breaks, and
-   * the case fails for a reason that has nothing to do with the code. Dispatched
-   * in a tight loop the gaps are zero, which is under any threshold and is
-   * exactly what the classifier is being asked about.
-   */
+  // Una tecla por carácter a velocidad de pistola, cerrada con Enter. Síncrono a propósito:
+  // dormir 5 ms entre teclas puede tardar 50 en una máquina cargada y romper la ráfaga;
+  // en bucle cerrado los huecos son cero, bajo cualquier umbral.
   function scan(code: string): void {
     for (const char of code) {
       press(char);
@@ -159,13 +129,12 @@ describe('the DS-4 pattern pages, driven', () => {
 
       expect(query('[data-expedicion-form]')).toBeNull();
       expect(query('[data-last-saved]')?.textContent?.trim()).toBe('EXP-2026-0777');
-      // The new record went to the top of the table, which is what makes the
-      // search that follows able to find it.
+      // El registro nuevo va arriba de la tabla, y por eso la búsqueda siguiente lo encuentra.
       expect(page.querySelector('tbody [role="row"]')?.textContent).toContain('EXP-2026-0777');
     });
 
     it('a record saved with nothing typed still gets a code and a client', async () => {
-      // The empty-form arm: a demo screen must not put a blank row in a table.
+      // Formulario vacío: una pantalla demo no debe meter una fila en blanco.
       press('n', { altKey: true });
       await settle();
       query<HTMLButtonElement>('[data-form-save] button')!.click();
@@ -218,15 +187,14 @@ describe('the DS-4 pattern pages, driven', () => {
     });
 
     it('the form gives back `save` when it closes', async () => {
-      // The registration lives as long as the dialog's injector and no longer,
-      // which is what lets the screen behind it take the action back without
-      // the two knowing about each other.
+      // El registro vive lo que el inyector del diálogo: así la pantalla de atrás recupera
+      // la acción sin que ninguno conozca al otro.
       press('n', { altKey: true });
       await settle();
       press('Escape', {}, query('[data-expedicion-form]')!);
       await settle();
 
-      // Opening a second form must not throw "already registered".
+      // Abrir un segundo formulario no debe lanzar «already registered».
       press('n', { altKey: true });
       await settle();
 
@@ -279,20 +247,8 @@ describe('the DS-4 pattern pages, driven', () => {
       expect(rows.some((text) => text?.includes('Cliente corregido'))).toBe(true);
     });
 
-    /**
-     * `element.click()` IS NOT A MOUSE CLICK, and since DS-5 the screen can
-     * tell.
-     *
-     * A click synthesised by the DOM carries `detail === 0`, exactly like the
-     * one a browser dispatches when somebody activates a control from the
-     * keyboard -- and §2.1 of REQ-FE-DS4-003 scores a keyboard activation at
-     * ZERO. The counter started ignoring those when `Enter` began submitting
-     * the example form, because otherwise the screen charged a click for a
-     * flow the standard says is free, and the screen would have been the one
-     * lying.
-     *
-     * So this spec now presses the way a person does: with a real button.
-     */
+    // `element.click()` no es un clic de mouse: lleva `detail === 0`, igual que una activación
+    // por teclado, que §2.1 puntúa en cero y el contador ignora desde DS-5. Acá se hace con `detail: 1`.
     function mouseClick(element: HTMLElement): void {
       element.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, detail: 1 }));
     }
@@ -304,7 +260,7 @@ describe('the DS-4 pattern pages, driven', () => {
       await settle();
       expect(count()).toBe('1');
 
-      // The reset and the failure switch are the demo talking about itself.
+      // Reiniciar y el interruptor de falla son la demo hablando de sí misma.
       mouseClick(query<HTMLButtonElement>('[data-reset-clicks]')!);
       await settle();
       expect(count()).toBe('0');
@@ -317,8 +273,8 @@ describe('the DS-4 pattern pages, driven', () => {
     it('a KEYBOARD activation costs nothing, which is what the standard says', async () => {
       const count = (): string => query('[data-click-count]')!.textContent!.trim();
 
-      // `detail: 0` is what a browser dispatches when Enter or Space activates
-      // a control. §2.1: "Tab, flechas y Enter para recorrer y activar" = 0.
+      // `detail: 0` es lo que despacha el navegador cuando Enter o Espacio activan un control.
+      // §2.1: «Tab, flechas y Enter para recorrer y activar» = 0.
       query<HTMLButtonElement>('[data-new-button] button')!.click();
       await settle();
 
@@ -332,29 +288,25 @@ describe('the DS-4 pattern pages, driven', () => {
       await settle();
 
       expect(page.querySelector('ewms-banner')).not.toBeNull();
-      // And it can be put back, which is what makes the switch a demonstration
-      // rather than a one-way door.
+      // Y se puede revertir: es una demostración, no una puerta de una sola vía.
       query<HTMLButtonElement>('[data-toggle-failure]')!.click();
       await settle();
       expect(page.querySelector('ewms-banner')).toBeNull();
     });
 
     it('the search source answers, and a result can be chosen from the panel', async () => {
-      /*
-       * The only case that drives `ExpedicionSource` end to end -- a scan
-       * resolves against the rows in memory and never asks the source, so
-       * without this the demo's whole data path would be untested.
-       */
+      // Único caso que recorre `ExpedicionSource` de punta a punta: el escaneo resuelve contra
+      // las filas en memoria y nunca le pregunta a la fuente.
       const field = page.querySelector<HTMLInputElement>('[data-search-host] input')!;
       field.focus();
       field.value = 'textiles';
       field.dispatchEvent(new Event('input', { bubbles: true }));
 
-      // Past the input delay and the source's own latency.
+      // Más que la demora de entrada y la latencia de la fuente.
       await new Promise((resolve) => setTimeout(resolve, 700));
       await settle();
 
-      // The panel is a CDK overlay, so it is NOT inside this component's tree.
+      // El panel es un overlay del CDK: no está dentro del árbol del componente.
       const option = query<HTMLElement>('[role="listbox"] [role="option"]');
       expect(option?.textContent).toContain('Textiles Sur');
 
@@ -376,20 +328,15 @@ describe('the DS-4 pattern pages, driven', () => {
       await new Promise((resolve) => setTimeout(resolve, 700));
       await settle();
 
-      /*
-       * IN THE FLOW, NOT IN THE PANEL. The search select draws a failed query
-       * under the field, with its retry one Tab away -- which is the whole
-       * point of that decision, and is why this reads the component's own tree
-       * rather than the overlay the results would have appeared in.
-       */
+      // En el flujo, no en el panel: el selector dibuja la falla bajo el campo, con Reintentar
+      // a un Tab. Por eso se lee el árbol del componente y no el overlay.
       expect(page.querySelector('[data-search-host]')?.textContent).toContain(
         'No se pudo consultar',
       );
     });
 
     it('activating a row in the table opens it for editing', async () => {
-      // Double click, which is the mouse half of `(rowActivate)` -- the other
-      // half being Enter on the focused row.
+      // Doble clic: la mitad de mouse de `(rowActivate)`; la otra es Enter sobre la fila enfocada.
       const row = page.querySelector<HTMLElement>('tbody [role="row"]')!;
       const codigo = row.textContent ?? '';
       row.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
@@ -426,13 +373,8 @@ describe('the DS-4 pattern pages, driven', () => {
     });
 
     it('a scan INTO the field is resolved by the field, against the record code', async () => {
-      /*
-       * The other half of the scan story, and the one DS-3 built: with the
-       * focus in the search select, the FIELD classifies the burst and matches
-       * it against `display.code`. The screen's own subscription handles the
-       * case where the gun is fired with the focus nowhere -- both exist, and
-       * a warehouse hits both.
-       */
+      // La otra mitad del escaneo (DS-3): con foco en el selector, el campo clasifica la ráfaga
+      // y la compara con `display.code`. Con foco en ningún lado responde la suscripción de la pantalla.
       const field = page.querySelector<HTMLInputElement>('[data-search-host] input')!;
       field.focus();
       for (const char of 'EXP-2026-0403') {
@@ -448,13 +390,8 @@ describe('the DS-4 pattern pages, driven', () => {
     });
 
     it('a browser that submits the form implicitly saves it, like Guardar does', async () => {
-      /*
-       * `ewms-button` renders `type="button"` unconditionally, so this form has
-       * no submit button and no browser reaches this listener today. It is
-       * wired anyway, because a <form> that quietly did nothing on submit is a
-       * trap for whoever adds a single-field version of it later -- and the
-       * only honest way to keep a wire live is to exercise it.
-       */
+      // Un <form> que no hiciera nada al enviarse es una trampa para quien le agregue una versión
+      // de un solo campo; la única forma honesta de mantener vivo ese cable es ejercitarlo.
       press('n', { altKey: true });
       await settle();
       const codigo = query<HTMLInputElement>('[data-form-codigo] input')!;
@@ -494,7 +431,7 @@ describe('the DS-4 pattern pages, driven', () => {
 
     it('`/` puts the focus in the search field and costs nothing', async () => {
       press('/');
-      // The engine defers a single-character shortcut by one threshold window.
+      // El motor difiere un atajo de un carácter una ventana de umbral.
       await new Promise((resolve) => setTimeout(resolve, THRESHOLD_MS * 3));
       await settle();
 
@@ -556,7 +493,7 @@ describe('the DS-4 pattern pages, driven', () => {
     it('counts the shortcuts it registered, and only after the deferral', async () => {
       press('/');
       await settle();
-      // Still waiting: a gun that started with `/` would arrive about now.
+      // Todavía espera: una pistola que arrancó con `/` llegaría justo ahora.
       expect(page.querySelector('[data-demo-search-hits]')?.textContent?.trim()).toBe('0');
 
       await new Promise((resolve) => setTimeout(resolve, THRESHOLD_MS * 3));
@@ -569,8 +506,7 @@ describe('the DS-4 pattern pages, driven', () => {
     });
 
     it('shows `unregistered` for an action nobody answered', async () => {
-      // `save` is deliberately left unregistered on this page, so the outcome
-      // can be seen rather than only described.
+      // `save` queda sin registrar a propósito en esta página, para que el resultado se vea.
       press('s', { ctrlKey: true });
       await settle();
 

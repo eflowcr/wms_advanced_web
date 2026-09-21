@@ -2,39 +2,19 @@ import { Injectable, computed, signal, type Signal } from '@angular/core';
 import type { Tab } from '@ewms/design-system';
 
 /**
- * HOW MANY DOCUMENTS MAY BE OPEN AT ONCE.
- *
- * Twelve, and it is a DECISION OF THE TEAM (2026-09-19) rather than a
- * technical limit, so it is written down with its reason and can be revised:
- *
- *   - MEMORY. Every open tab is a route whose component stays addressable, and
- *     with real domains each one holds a table, its filters and its page.
- *   - LEGIBILITY. Past a dozen the strip is scrolling in both directions and
- *     the tab you want is faster to reach from the menu than from the strip,
- *     at which point the strip has stopped doing its job.
- *
- * What happens at the limit is a WARNING and a refusal, not a silent drop of
- * the oldest: closing somebody's work without being asked is worse than
- * telling them the strip is full.
+ * Decisión del equipo (2026-09-19), no límite técnico: por memoria y legibilidad. Al llegar se
+ * avisa y se rechaza la nueva; nunca se cierra la más vieja. Ver vault: App-Shell.
  */
 export const MAX_OPEN_TABS = 12;
 
-/** One open document: the route it is, and the title it shows. */
+/** Un documento abierto: su ruta y el título que muestra. */
 export interface OpenTab extends Tab {
   readonly route: string;
 }
 
 /**
- * THE OPEN DOCUMENTS, IN MEMORY, IN THE SHELL.
- *
- * In the shell and not in the design system, for the reason `App-Shell.md`
- * gives: which routes are open is a fact about THIS application. `ewms-tabs`
- * draws a list of things one of which is showing, and knows nothing about
- * routes.
- *
- * In memory, and lost on reload, like the favourites and for the same reason:
- * there is no browser storage anywhere in this application and no exception is
- * opened here either.
+ * Documentos abiertos, del shell porque son rutas de esta aplicación (`ewms-tabs` no sabe de
+ * rutas). En memoria y se pierden al recargar: la app no usa almacenamiento del navegador.
  */
 @Injectable({ providedIn: 'root' })
 export class TabsService {
@@ -42,19 +22,15 @@ export class TabsService {
 
   readonly tabs: Signal<readonly OpenTab[]> = this.open.asReadonly();
 
-  /** Which route is showing. Null before the first navigation resolves. */
+  /** Null antes de que resuelva la primera navegación. */
   private readonly active = signal<string | null>(null);
   readonly activeRoute: Signal<string | null> = this.active.asReadonly();
 
   readonly isFull = computed(() => this.open().length >= MAX_OPEN_TABS);
 
   /**
-   * A route was navigated to: open it if it was not open, and activate it.
-   *
-   * Returns `false` when the strip was full and the route was NOT opened, so
-   * the caller can say so. It does not raise the toast itself: the design
-   * system speaks no language, and neither does a service that would have to
-   * choose the words.
+   * Abre la ruta si hacía falta y la activa. `false` si la tira estaba llena: el aviso lo da
+   * quien llama, porque este servicio no elige palabras.
    */
   activate(route: string, label: string, closable = true): boolean {
     this.active.set(route);
@@ -70,13 +46,7 @@ export class TabsService {
     return true;
   }
 
-  /**
-   * Keep a tab's label in step with the language.
-   *
-   * A tab's title is the route's title, translated. Without this, switching
-   * language redrew the menu and left the strip in the previous one -- which
-   * is exactly the kind of half-translated screen ADR 0008 exists to prevent.
-   */
+  /** Sin esto, cambiar de idioma dejaba la tira en el anterior (lo que evita el ADR 0008). */
   relabel(route: string, label: string): void {
     this.open.update((tabs) =>
       tabs.map((tab) => (tab.route === route ? { ...tab, label } : tab)),
@@ -84,11 +54,8 @@ export class TabsService {
   }
 
   /**
-   * Close one, and say where to go next.
-   *
-   * Returns the route that should now be showing, or `null` when nothing is
-   * left. The NEIGHBOUR and not the first: closing the third of five tabs and
-   * landing on the first is a jump nobody asked for.
+   * Devuelve la ruta que debe mostrarse, o `null` si no queda ninguna. La vecina y no la
+   * primera: cerrar la tercera de cinco y caer en la primera es un salto que nadie pidió.
    */
   close(route: string): string | null {
     const tabs = this.open();

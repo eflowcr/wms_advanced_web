@@ -3,17 +3,8 @@ import { FormControlBase, provideValueAccessor } from '../forms/control-value-ac
 import { SELECTION_ROW_CLASSES, selectionRowStateClasses } from '../selection/selection.types';
 
 /**
- * Un interruptor: 44x24, encendido o apagado, aplicado al instante.
- *
- * TOGGLE O CHECKBOX, la confusión más común de esta librería, y no es cómo se
- * ven: un toggle ES ACCIÓN INMEDIATA -no hay Guardar porque no queda nada que
- * guardar- y una casilla es una SELECCIÓN DENTRO DE UN FORMULARIO. Equivocarse
- * deja una preferencia ya aplicada con un Guardar que sugiere que no.
- * `role="switch"` y NUNCA `role="checkbox"`: una casilla se anuncia
- * «marcada/no marcada» y un interruptor «encendido/apagado». Abajo sigue siendo
- * un input de casilla, porque el rol era lo único que había que cambiar.
- * SIN TRANSICIÓN EN EL PULGAR: no hay token de duración y ADR 0009 borró el de
- * Tailwind, así que una utilidad de animación compilaría a cero fingiendo que no.
+ * Interruptor de 44x24 que aplica al instante; una casilla es selección a confirmar. Ver vault:
+ * Toggle. `role="switch"` para anunciar encendido/apagado. Sin transición: no hay token (ADR 0009).
  */
 @Component({
   selector: 'ewms-toggle',
@@ -25,27 +16,20 @@ import { SELECTION_ROW_CLASSES, selectionRowStateClasses } from '../selection/se
 export class Toggle extends FormControlBase<boolean> {
   readonly checked = input<boolean>(false);
 
-  /** El texto visible al lado del interruptor, ya traducido. */
   readonly label = input<string>('');
 
-  /** El nombre accesible donde no hay lugar para texto visible. */
   readonly ariaLabel = input<string>('');
 
   readonly checkedChange = output<boolean>();
 
   protected readonly valueSource = this.checked;
 
-  /**
-   * El blanco es la FILA y no la pista: 44x24 es difícil de acertar con un dedo
-   * enguantado sobre una tablet, que es donde se usa este control. Un `<label>`
-   * que envuelve al input da la fila entera, texto incluido, gratis.
-   */
+  /** El blanco es la fila: 44x24 es difícil de acertar con guantes en una tablet. */
   protected readonly rowClasses = computed(
     () => `${SELECTION_ROW_CLASSES} ${selectionRowStateClasses(this.isDisabled())}`,
   );
 
-  /** La pista, que es el propio input nativo. Deshabilitado va primero y sin
-   * hover: un interruptor que no se puede mover no se enciende bajo el puntero. */
+  /** La pista es el input nativo; deshabilitado va sin hover. */
   protected readonly trackClasses = computed(() => {
     const base =
       'appearance-none relative shrink-0 w-11 h-6 rounded-full outline-none ' +
@@ -59,8 +43,7 @@ export class Toggle extends FormControlBase<boolean> {
       : `${base} bg-(--color-border-strong) hover:bg-(--color-border-strong-hover)`;
   });
 
-  /** El pulgar: 20x20 metido 2 px. 2 + 20 + 2 son los 24 px de alto de la pista, y
-   * 20 px de recorrido lo dejan a los mismos 2 px del borde opuesto. */
+  /** 20x20 a 2 px del borde (2 + 20 + 2 = 24); 20 px de recorrido. */
   protected readonly thumbClasses = computed(
     () =>
       'absolute top-0.5 left-0.5 size-5 rounded-full pointer-events-none ' +
@@ -68,8 +51,7 @@ export class Toggle extends FormControlBase<boolean> {
       (this.controlValue() ? 'translate-x-5' : 'translate-x-0'),
   );
 
-  /** El `change` nativo se frena adentro, por lo mismo que en `Checkbox`: este
-   * control publica `checkedChange` y el `<input>` de abajo es un detalle. */
+  /** Se frena como en `Checkbox`: el `<input>` es un detalle interno. */
   protected onNativeChange(event: Event): void {
     event.stopPropagation();
     const value = (event.target as HTMLInputElement).checked;

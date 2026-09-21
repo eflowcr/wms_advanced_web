@@ -10,17 +10,13 @@ const ITEMS: readonly MenuItem[] = [
 
 describe('moveMenuIndex', () => {
   it('skips what cannot be chosen', () => {
-    // From "Ver detalle" the next stop is "Duplicar": stopping on the
-    // disabled "Imprimir" would make the arrows feel broken on exactly the
-    // rows where an action happens to be unavailable.
+    // De «Ver detalle» a «Duplicar»: frenar en «Imprimir» deshabilitado rompe las flechas.
     expect(moveMenuIndex(ITEMS, 0, 1)).toBe(2);
     expect(moveMenuIndex(ITEMS, 2, -1)).toBe(0);
   });
 
   it('stops at the ends rather than wrapping', () => {
-    // The same rule as the listbox, and shared with it: the arrows are how
-    // somebody finds out where the list ends, and a walk that silently jumps
-    // back to the top hides that. Escape is how you leave.
+    // Misma regla que el listbox: no da la vuelta, así se nota el final. Escape sale.
     expect(moveMenuIndex(ITEMS, 3, 1)).toBe(3);
     expect(moveMenuIndex(ITEMS, 0, -1)).toBe(0);
   });
@@ -47,8 +43,7 @@ describe('menuItemClasses', () => {
   });
 
   it('shows a disabled entry as unavailable rather than as dangerous', () => {
-    // Danger and disabled together would read as a red entry somebody is
-    // being invited to press.
+    // Peligro más deshabilitada se leería como una entrada roja que invita a pulsarla.
     const disabled = { ...(ITEMS[3] as MenuItem), disabled: true };
     const classes = menuItemClasses(disabled, false);
     expect(classes).toContain('text-disabled');

@@ -16,10 +16,7 @@ import {
 const ARTICLES: Favorite = { route: '/articulos' };
 const CLIENTS: Favorite = { route: '/clientes' };
 
-/**
- * The words, in two languages, the way an application would hold them. The
- * language is a signal so a test can switch it and watch the block follow.
- */
+/** Palabras en dos idiomas; el idioma es una señal para poder cambiarlo en la prueba. */
 const language = signal<'es' | 'en'>('es');
 const NAMES: Record<string, { es: string; en: string }> = {
   '/articulos': { es: 'Artículos', en: 'Items' },
@@ -42,8 +39,7 @@ describe('InMemoryFavoritesStore', () => {
   });
 
   it('adds ONE at a time, never replacing the list', async () => {
-    // The same rule the backend contract asks for (REQ-FE-DS4-002 §12): two
-    // tabs open must not overwrite one another.
+    // Regla del contrato al backend (REQ-FE-DS4-002 §12): dos pestañas no se pisan.
     await store.add(ARTICLES);
     await store.add(CLIENTS);
 
@@ -64,8 +60,7 @@ describe('InMemoryFavoritesStore', () => {
     await store.add(CLIENTS);
     await store.add(ARTICLES);
 
-    // Not alphabetical: sorting by name would reshuffle the block every time
-    // the language changed.
+    // No alfabético: ordenar por nombre reordenaría el bloque con cada cambio de idioma.
     expect((await store.read()).map((favorite) => favorite.route)).toEqual([
       '/clientes',
       '/articulos',
@@ -122,8 +117,7 @@ describe('Favorites', () => {
   });
 
   it('PACQ-01.3: A DIFFERENT STORE, AND THE SERVICE DOES NOT CHANGE', async () => {
-    // This is the proof that swapping to the backend costs one class. If this
-    // test needed anything else, RFE-02 would not be met.
+    // Prueba de RFE-02: pasar al backend cuesta una clase y nada más.
     const calls: string[] = [];
     const recording: FavoritesStore = {
       read: () => {
@@ -148,10 +142,8 @@ describe('Favorites', () => {
   });
 
   it('THE STORE NEVER SEES A NAME: what is written is the route, and only the route', async () => {
-    // REQ-FE-DS4-002 v1.3 §12. A name is presentation -- it depends on the
-    // language and on what the screen is called tomorrow -- and a backend that
-    // kept it would hand back lists half translated. `toEqual` on the whole
-    // object, so a field added later fails here rather than reaching the wire.
+    // v1.3 §12: el nombre es presentación. `toEqual` sobre el objeto entero: un campo nuevo
+    // falla acá antes de llegar al cable.
     const written: Favorite[] = [];
     const recording: FavoritesStore = {
       read: () => Promise.resolve([...written]),
@@ -171,7 +163,7 @@ describe('Favorites', () => {
     const store = new InMemoryFavoritesStore();
     await store.add(ARTICLES);
     const favorites = serviceWith(store);
-    // The constructor read is already in flight; wait for it before asserting.
+    // La lectura del constructor ya está en vuelo: esperarla antes de afirmar.
     await Promise.resolve();
 
     await favorites.toggle('/articulos');
@@ -180,8 +172,7 @@ describe('Favorites', () => {
   });
 
   it('reads back FROM THE STORE after a write, rather than patching hopefully', async () => {
-    // With the in-memory store the difference is invisible; with a backend it
-    // is the difference between showing what was saved and what we hoped was.
+    // Con backend es la diferencia entre lo guardado y lo que se esperaba guardar.
     const rejecting: FavoritesStore = {
       read: () => Promise.resolve([]),
       add: () => Promise.resolve(),
@@ -239,12 +230,8 @@ describe('the star and the block, together', () => {
     await fixture.whenStable();
   });
 
-  /**
-   * The store's interface is asynchronous IN ITS FORM (RFE-02), so a toggle
-   * costs several microtask turns even when the answer is immediate: write,
-   * then read back, then set the signal. Draining them here is what makes the
-   * tests describe the component rather than the number of `await`s inside it.
-   */
+  // La interfaz es asíncrona en su forma (RFE-02): drenar las microtareas describe el
+  // componente y no la cantidad de `await` que tiene adentro.
   async function settle(): Promise<void> {
     for (let turn = 0; turn < 4; turn += 1) {
       await Promise.resolve();
@@ -270,7 +257,6 @@ describe('the star and the block, together', () => {
   });
 
   it('PACQ-03.1: with nothing marked the block is NOT a hole', () => {
-    // A block that disappears makes somebody believe the feature is not there.
     expect(block()).not.toBeNull();
     expect(fixture.nativeElement.querySelector('[data-favorites-empty]')).not.toBeNull();
   });
@@ -280,7 +266,7 @@ describe('the star and the block, together', () => {
     await settle();
 
     expect(star().getAttribute('aria-pressed')).toBe('true');
-    // The name says what pressing it will do NOW, which is the opposite thing.
+    // El nombre dice lo que hará pulsarlo ahora, que es lo contrario.
     expect(star().getAttribute('aria-label')).toBe('Quitar de favoritos');
     expect(block().textContent).toContain('Artículos');
     expect(fixture.nativeElement.querySelector('[data-favorites-empty]')).toBeNull();
@@ -300,7 +286,7 @@ describe('the star and the block, together', () => {
   });
 
   it('the marked state is not colour alone: the control changes shape', async () => {
-    // `ghost` has no box; `primary` is a filled one. WCAG 1.4.1.
+    // `ghost` no tiene caja; `primary` es rellena. WCAG 1.4.1.
     const before = star().className;
     star().click();
     await settle();
@@ -347,15 +333,12 @@ describe('the star and the block, together', () => {
     expect(empty.querySelector('svg')?.getAttribute('aria-label')).toBe(
       'Marcá una pantalla con la estrella',
     );
-    // A `tabindex="0"` on a non-control is the defect the DS-2 keyboard walk
-    // found on the Tooltip's own page.
+    // Un `tabindex="0"` en algo que no es control: el defecto que halló la caminata de DS-2.
     expect(empty.querySelector('[tabindex]')).toBeNull();
   });
 
   it(`shows at most ${FAVORITES_SHOWN}: past that the block stops being a shortcut`, async () => {
-    // The service is provided on the HOST COMPONENT, so it lives in the
-    // element injector -- `TestBed.inject` would look in the environment one
-    // and find nothing. This is the same chain the shell and the showroom use.
+    // El servicio está en el inyector del host: `TestBed.inject` no lo encontraría.
     const favorites = fixture.componentRef.injector.get(Favorites);
     for (let index = 0; index < FAVORITES_SHOWN + 3; index += 1) {
       await favorites.toggle(`/r${index}`);
@@ -366,8 +349,7 @@ describe('the star and the block, together', () => {
   });
 
   it('THE NAME FOLLOWS THE LANGUAGE, without marking again and without a reload', async () => {
-    // The defect v1.3 closes: «Artículos», marked in Spanish, stayed
-    // «Artículos» in English because the name had been stored with the route.
+    // El defecto que cierra v1.3: «Artículos» marcado en español seguía así en inglés.
     star().click();
     await settle();
     expect(block().textContent).toContain('Artículos');
@@ -383,8 +365,7 @@ describe('the star and the block, together', () => {
   });
 
   it('A ROUTE NOBODY CAN NAME SHOWS ITSELF: never an empty row, never an error', async () => {
-    // A screen that was removed leaves its favourite behind. The block shows
-    // the route as it is and the row still works.
+    // Una pantalla eliminada deja su favorito: se muestra la ruta y la fila sigue andando.
     const favorites = fixture.componentRef.injector.get(Favorites);
     await favorites.toggle('/pantalla-que-ya-no-existe');
     await settle();
@@ -392,10 +373,10 @@ describe('the star and the block, together', () => {
     const selector = '[data-favorite="/pantalla-que-ya-no-existe"]';
     const row = fixture.nativeElement.querySelector(selector) as HTMLElement;
     expect(row.textContent?.trim()).toBe('/pantalla-que-ya-no-existe');
-    // The neutral icon is drawn: a row is never text alone.
+    // Se dibuja el icono neutral: una fila nunca es solo texto.
     expect(row.querySelector('svg')).not.toBeNull();
 
-    // Collapsed there is no text at all, so the route is the accessible name.
+    // Plegado no hay texto: la ruta es el nombre accesible.
     host.expanded.set(false);
     await settle();
     expect(

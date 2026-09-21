@@ -17,15 +17,8 @@ import { CATALOG } from './catalog';
 import { SHOWROOM_SHORTCUT_MAP } from './shortcuts.map';
 
 /**
- * The showroom's own copy of what the shell provides from `core/i18n`.
- *
- * IT IS NOT A DUPLICATE OF THE SHELL'S, it is the showroom's. The catalogue is
- * Spanish only and exempt from i18n (gate 12), and it may not import
- * `@ewms/core` at all -- the boundary in eslint.config.js forbids it. So the
- * strings are literals and the formatters are the browser's own.
- *
- * Writing them here is also the honest test of the rule: if providing a
- * dictionary once were awkward, this file would be where it showed.
+ * Lo que el shell provee desde `core/i18n`, en versión propia del showroom: solo español, exento
+ * de i18n (compuerta 12) y sin acceso a `@ewms/core` (frontera en eslint.config.js).
  */
 export function provideShowroomDesignSystem(): Provider[] {
   return [
@@ -35,30 +28,16 @@ export function provideShowroomDesignSystem(): Provider[] {
     { provide: EWMS_SHORTCUT_MAP, useValue: SHOWROOM_SHORTCUT_MAP },
     { provide: EWMS_SHORTCUT_HELP_MESSAGES, useValue: SHORTCUT_HELP_MESSAGES },
 
-    /*
-     * THE NAMES OF THE CATALOGUE'S ROUTES, AND NOT THE STORE.
-     *
-     * `EWMS_FAVORITES_STORE` and `Favorites` are NOT provided here, on purpose:
-     * the catalogue renders inside the application and reads the application's
-     * one list by injection. Providing the store a second time gave a page two
-     * stars and two lists that disagreed. WORDS may be provided twice -- that
-     * is what every other line of this file is -- and state may not.
-     */
+    // Nombres de rutas, no el almacén: `EWMS_FAVORITES_STORE` y `Favorites` vienen de la aplicación.
+    // Proveerlos otra vez dio una página con dos estrellas y dos listas en desacuerdo.
+    // Las palabras se pueden proveer dos veces; el estado, no.
     { provide: EWMS_FAVORITE_LABELS, useFactory: favoriteLabels },
   ];
 }
 
-/**
- * What a favourite is called IN THE SIDEBAR OF THE CATALOGUE.
- *
- * A catalogue page by the name of its entry in `catalog.ts`, so the block reads
- * like the list underneath it. Anything else is a screen of the application's,
- * and the application knows what it is called: the question goes up to the
- * resolver provided above this one (`skipSelf`), which is how «Artículos»
- * marked in the shell has a name down here and not a bare path. Alone -- in a
- * unit test, with nothing above -- it resolves to nothing and the block shows
- * the route, which is the behaviour the library promises.
- */
+// Nombre de un favorito en la barra del catálogo: el de su entrada en `catalog.ts`; si no es del
+// catálogo, se le pregunta al resolvedor de arriba (`skipSelf`). Sin nadie arriba no resuelve
+// nada y el bloque muestra la ruta, como promete la librería.
 function favoriteLabels(): FavoriteLabelResolver {
   const parent = inject(EWMS_FAVORITE_LABELS, { skipSelf: true, optional: true });
   const entries = CATALOG.flatMap((section) => section.entries);
@@ -75,15 +54,8 @@ function favoriteLabels(): FavoriteLabelResolver {
 }
 
 /**
- * Plain literals, not getters.
- *
- * The shell's copy uses getters because `translate()` reads the ACTIVE
- * language and the switcher can change it under an object built once. The
- * showroom is Spanish only and exempt from i18n (gate 12), so there is no
- * language to change and nothing to defer.
- *
- * The LIST of shortcuts is not here. The dialog reads it from
- * `SHOWROOM_SHORTCUT_MAP`; what this provides is one label per action.
+ * Literales y no getters (el shell los usa porque cambia de idioma; acá no hay idioma que cambiar).
+ * La lista de atajos sale de `SHOWROOM_SHORTCUT_MAP`; esto da una etiqueta por acción.
  */
 export const SHORTCUT_HELP_MESSAGES: ShortcutHelpMessages = {
   title: 'Atajos de teclado',
@@ -126,22 +98,10 @@ export const TABLE_MESSAGES: TableMessages = {
   rowsTotal: (total) => (total === 1 ? '1 fila' : `${total} filas`),
 };
 
-/**
- * `Intl` directly, and not `transloco-locale`.
- *
- * The showroom cannot reach `@ewms/core`, and it does not need to: what the
- * table asks for is two functions that return strings. That is exactly the
- * portability the token buys -- the same component, in the same page, with a
- * different implementation behind the same interface.
- */
+/** `Intl` directo y no `transloco-locale`: la tabla solo pide dos funciones que devuelvan texto. */
 export const TABLE_FORMATTERS: TableFormatters = {
-  /**
-   * `parseTableDate` and not `new Date(...)`. The two are not equivalent for
-   * the shape a row actually carries: `new Date('2026-03-15')` is UTC
-   * midnight, and formatting that in local time printed the 14th in every
-   * timezone west of UTC. The shell's implementation of this token had the
-   * same bug; the parse is shared now so a fix cannot land in only one.
-   */
+  // `parseTableDate` y no `new Date(...)`: `new Date('2026-03-15')` es medianoche UTC e imprimía
+  // el 14 al oeste de UTC. El shell tenía el mismo bug; el parseo compartido evita arreglar uno solo.
   date: (value) => {
     if (value === null || value === undefined || value === '') {
       return '';

@@ -1,23 +1,7 @@
 <!--
-  No role here: the CDK container around this template carries role="dialog",
-  aria-modal and the focus trap.
-
-  A <form> and not a <div> because it IS one: a named group of fields with one
-  commit. `ngSubmit` is wired for the browsers and the cases that submit
-  implicitly.
-
-  AND SINCE DS-5 `Enter` SAVES IT, which is the limitation this form reported
-  in DS-4 and the Button closed. The pending note on the Button's sheet read:
-  `ewms-button` rendered `type="button"` unconditionally -- deliberately, so
-  that nothing in this system submits by accident -- so this form had no submit
-  button, and a form with several fields and no submit button is not sent by
-  `Enter` either. Saving was the click or Ctrl+S, and `Enter` in a field, which
-  is what everybody does, did nothing.
-
-  Now there is ONE path and three ways into it: `Enter` in any field and the
-  «Guardar» button both go through the browser's own submission, and Ctrl+S
-  calls `requestSubmit()` rather than clicking anything. Three gestures, one
-  `ngSubmit`, one method -- which is what makes them impossible to drift.
+  Sin role: el contenedor del CDK pone role="dialog", aria-modal y la trampa de foco.
+  Desde DS-5 (botón con type="submit") Enter, «Guardar» y Ctrl+S van por un solo `ngSubmit`.
+  Antes, sin botón de envío, Enter en un campo no hacía nada. Ver vault: REQ-FE-DS4-003 - Minimo de clics.
 -->
 <form
   #form
@@ -58,11 +42,8 @@
   />
 
   <!--
-    A Toggle and not a Checkbox, on the rule the Toggle's own sheet states: it
-    applies the moment you flip it. There is a Guardar beside it, which argues
-    for a Checkbox -- but "urgente" changes nothing until the form is saved
-    either way, and the switch is what reads as a property of the shipment
-    rather than as an instruction to the form.
+    Toggle y no Checkbox aunque haya Guardar: «urgente» no cambia nada hasta guardar igual,
+    y el interruptor se lee como propiedad de la expedición, no como orden al formulario.
   -->
   <ewms-toggle
     label="Urgente"
@@ -77,18 +58,10 @@
     <kbd class="font-mono">Esc</kbd> cancela, en un solo gesto y sin preguntar.
   </p>
 
-  <!--
-    Cancel first in the DOM, like the confirmation dialog: the CDK focuses the
-    first tabbable element, and that has to be the safe answer.
-  -->
+  <!-- Cancelar primero en el DOM: el CDK enfoca el primer tabulable y debe ser la respuesta segura. -->
   <div class="flex w-full justify-end gap-2">
     <ewms-button variant="secondary" data-form-cancel (click)="cancel()"> Cancelar </ewms-button>
-    <!--
-      NO `(click)` HANDLER, AND THAT IS THE POINT. The button submits the form
-      and the form saves. A click handler beside `ngSubmit` would be a second
-      way to save, and the day one of them grew a validation step the other
-      would not have it.
-    -->
+    <!-- Sin `(click)` a propósito: el botón envía y el formulario guarda; dos caminos terminarían divergiendo. -->
     <ewms-button variant="primary" type="submit" data-form-save>Guardar</ewms-button>
   </div>
 </form>

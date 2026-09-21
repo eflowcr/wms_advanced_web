@@ -5,30 +5,21 @@ import type { IconName } from '../../icons/icons.generated';
 import { Favorites } from './favorites';
 import { EWMS_FAVORITE_LABELS, type Favorite } from './favorites.types';
 
-/** Un favorito como lo dibuja el bloque: la ruta guardada y sus palabras. */
 interface FavoriteRow {
   readonly favorite: Favorite;
   readonly label: string;
   readonly icon: IconName;
 }
 
-/** Una ruta que nadie sabe nombrar igual lleva icono, y es el del bloque. */
+/** Una ruta sin icono propio lleva el del bloque. */
 const NEUTRAL_ICON: IconName = 'star';
 
-/**
- * Cuántos favoritos muestra el bloque. Ocho, y el número es del bloque y no de la
- * función: fijado sobre un árbol de dieciséis destinos, una lista de más de ocho
- * deja de ser un atajo y se vuelve un segundo menú. Marcar un noveno se permite;
- * el bloque muestra los primeros ocho. Es un límite de PANTALLA, no de datos.
- */
+/** Límite de pantalla, no de datos: más de ocho deja de ser atajo. Ver vault: REQ-FE-DS4-002. */
 export const FAVORITES_SHOWN = 8;
 
 /**
- * EL LUGAR FIJO EN LA NAVEGACIÓN (REQ-FE-DS4-002 RFE-04). Una estrella sin un
- * sitio donde mirar lo que marcaste es un botón que no hace nada visible.
- * MUESTRA UN ESTADO VACÍO Y NUNCA DESAPARECE: un bloque que se esfuma hace creer
- * que la función no está, y el vacío es además el único lugar que dice cómo
- * llenarlo. NO NAVEGA: emite lo elegido, como toda pieza de navegación.
+ * Lugar fijo de favoritos (REQ-FE-DS4-002 RFE-04). Nunca desaparece: vacío muestra cómo
+ * llenarlo. No navega: emite lo elegido.
  */
 @Component({
   selector: 'ewms-favorites-nav',
@@ -38,25 +29,16 @@ export const FAVORITES_SHOWN = 8;
   host: { class: 'block' },
 })
 export class FavoritesNav {
-  /** El encabezado del bloque, ya traducido. */
   readonly label = input.required<string>();
 
-  /** Qué decir cuando todavía no hay nada. Ya traducido. */
   readonly emptyLabel = input.required<string>();
 
-  /** Rail plegado o panel abierto, que pasa quien compone el rail. El bloque
-   * dibuja solo iconos en el angosto, con tooltips, como el árbol. */
+  /** Plegado dibuja solo iconos con tooltip, como el árbol. */
   readonly expanded = input<boolean>(true);
 
-  /** Qué ruta es la página actual, para que el bloque la marque. */
   readonly activeRoute = input<string | null>(null);
 
-  /**
-   * SOBRE QUÉ FONDO SE APOYA EL BLOQUE, y se pregunta en vez de suponerse: se
-   * escribió para el rail navy del shell, y el showroom lo monta sobre una barra
-   * BLANCA, donde ese texto y ese hover son invisibles o están mal. Heredar el
-   * color arreglaría el texto y no el hover, que no tiene token independiente.
-   */
+  /** Se pregunta: sobre blanco el hover del rail navy es invisible y no tiene token propio. */
   readonly ground = input<'navy' | 'surface'>('navy');
 
   protected readonly tone = computed(() =>
@@ -70,12 +52,8 @@ export class FavoritesNav {
   private readonly favorites = inject(Favorites);
   private readonly labels = inject(EWMS_FAVORITE_LABELS);
 
-  /**
-   * EL NOMBRE SE RESUELVE ACÁ, AL DIBUJAR, y eso es todo REQ-FE-DS4-002 v1.3:
-   * `labelFor(route)()` se lee dentro del computed, así un cambio de idioma
-   * repinta el bloque solo. UNA RUTA QUE YA NO RESUELVE SE MUESTRA TAL CUAL: una
-   * fila vacía sería un botón que nadie puede identificar.
-   */
+  // El nombre se resuelve al dibujar (REQ-FE-DS4-002 v1.3): un cambio de idioma repinta solo.
+  // Una ruta que ya no resuelve se muestra tal cual.
   protected readonly shown = computed<readonly FavoriteRow[]>(() =>
     this.favorites
       .list()

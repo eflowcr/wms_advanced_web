@@ -1,4 +1,4 @@
-<!-- The showroom is Spanish only, exempt from i18n (gate 12): declared so a screen reader never reads it as English. -->
+<!-- Showroom solo en español, exento de i18n (compuerta 12): se declara para que el lector de pantalla no lo lea en inglés. -->
 <article class="flex flex-col gap-10" lang="es">
   <!-- ============================================================ 1. Encabezado -->
   <header class="flex flex-col gap-2" data-block="1-encabezado">
@@ -186,10 +186,8 @@
     <ewms-prop-table [rows]="props" caption="Propiedades de <ewms-table>" />
 
     <!--
-      LO QUE SIGUE VIVE DENTRO DEL BLOQUE DE DEMO, no en un bloque propio.
-      Todas las fichas del catálogo tienen los mismos ocho bloques, y esa forma
-      compartida es lo que hace que se puedan leer en serie; una ficha con un
-      bloque de más es una ficha que hay que aprender aparte.
+      Lo que sigue va dentro del bloque de demo: todas las fichas tienen los mismos
+      ocho bloques y así se leen en serie.
     -->
     <h3 class="text-h3">Composición avanzada</h3>
     <p class="text-secondary">
@@ -224,8 +222,8 @@
           <ewms-column key="acciones" header="Acciones" type="actions" width="sm" />
 
           <!--
-            El panel NO repite las columnas: para eso está el árbol. Lo que
-            pone aquí es lo que la fila dejó fuera, y una acción propia.
+            El panel no repite las columnas (para eso está el árbol): muestra lo que la
+            fila dejó fuera y una acción propia.
           -->
           <ng-template ewmsDetail let-row>
             @let fila = comoExpedicion(row);

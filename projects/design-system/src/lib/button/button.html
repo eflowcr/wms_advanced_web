@@ -1,9 +1,4 @@
-<!--
-  `[attr.type]` y no un atributo fijo, desde DS-5. El default sigue siendo `button`,
-  así que nada de lo que existía cambia; lo que ahora se puede escribir es
-  `type="submit"`, que le devuelve a un formulario de varios campos el envío
-  implícito del navegador con `Enter`.
--->
+<!-- `[attr.type]` desde DS-5: `submit` devuelve el envío implícito con Enter. Ver vault: Boton. -->
 <button
   [attr.type]="type()"
   [class]="baseClasses + ' ' + heightClass() + ' ' + paddingClass() + ' ' + variantClasses()"

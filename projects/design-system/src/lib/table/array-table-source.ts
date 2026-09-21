@@ -10,18 +10,13 @@ import {
 } from './table-source';
 
 /**
- * Un `TableSource` sobre un arreglo en memoria. SALE DE LA LIBRERÍA, al revés que
- * la fuente de demo del selector: esto es lo que usa una pantalla cuyos datos ya
- * caben en memoria, y si no cada una escribiría el mismo filtrado y paginado,
- * distinto. Es además la implementación de referencia del contrato.
- * FILTRAR Y ORDENAR TRABAJAN SOBRE EL VALOR CRUDO, nunca sobre el texto
- * formateado: ordenar `[1200, 900]` por sus cadenas pone «1.200» antes que «900»,
- * que está mal de un modo que nadie reporta -simplemente dejan de confiar.
+ * Fuente en memoria y referencia del contrato. Filtrar y ordenar usan el valor crudo, nunca
+ * el texto formateado. Ver vault: Tabla §3.
  */
 export class ArrayTableSource<T> implements TableSource<T> {
   constructor(
     private readonly rows: readonly T[],
-    /** Qué propiedades mira el filtro rápido. Vacío = todas las de primer nivel. */
+    /** Qué mira el filtro rápido. Vacío = todas las de primer nivel. */
     private readonly searchable: readonly string[] = [],
   ) {}
 
@@ -60,8 +55,7 @@ export class ArrayTableSource<T> implements TableSource<T> {
   }
 }
 
-/** Una celda contra un filtro. Exportada para que el spec de la Tabla fije las
- * tres formas sin armar una fuente alrededor. */
+/** Exportada para que el spec fije las tres formas sin armar una fuente. */
 export function matchesFilter(value: unknown, filter: TableFilterValue): boolean {
   if (typeof filter === 'string') {
     return (
@@ -75,9 +69,7 @@ export function matchesFilter(value: unknown, filter: TableFilterValue): boolean
   if (isNumberRange(filter)) {
     const number = Number(value);
     if (!Number.isFinite(number)) {
-      // Una fila cuyo valor no es número no puede estar dentro de un rango
-      // numérico: dejarla haría que «entre 100 y 900» incluyera en silencio las
-      // filas sin valor.
+      // Sin número no está en ningún rango: si no, «entre 100 y 900» incluiría las vacías.
       return false;
     }
     return (
@@ -87,11 +79,7 @@ export function matchesFilter(value: unknown, filter: TableFilterValue): boolean
   }
 
   if (isDateRange(filter)) {
-    /*
-     * Las fechas se comparan como CADENAS ISO 8601, que es exacto y no perezoso: el
-     * formato ordena lexicográficamente por construcción, y así se evita un parseo
-     * que puede dar Invalid Date en silencio sobre un valor con otra forma.
-     */
+    // Como cadenas ISO 8601: ordenan lexicográficamente y no hay Invalid Date silencioso.
     const text = String(value ?? '');
     if (text === '') {
       return false;
@@ -102,16 +90,11 @@ export function matchesFilter(value: unknown, filter: TableFilterValue): boolean
     );
   }
 
-  // Un objeto vacío es todos los límites borrados, o sea ningún filtro.
+  // Objeto vacío: todos los límites borrados, ningún filtro.
   return true;
 }
 
-/**
- * Ordena por el valor crudo, estable y con los vacíos al final EN AMBAS
- * DIRECCIONES, que no es lo que hace una comparación ingenua: las filas sin valor
- * no son «más chicas», están ausentes. Subirlas al ordenar descendente haría que
- * la primera pantalla fuera una pantalla de blancos.
- */
+/** Estable, con los vacíos al final en ambas direcciones: descendente no abre con blancos. */
 export function sortRows<T>(rows: readonly T[], query: TableQuery): readonly T[] {
   const sort = query.sort;
   if (!sort) {
@@ -126,7 +109,6 @@ export function sortRows<T>(rows: readonly T[], query: TableQuery): readonly T[]
   });
 }
 
-/** `null` cuando los dos lados tienen valor; si no, la respuesta de vacío-al-final. */
 function compareMissing(left: unknown, right: unknown): number | null {
   const leftEmpty = left === null || left === undefined || left === '';
   const rightEmpty = right === null || right === undefined || right === '';
@@ -142,8 +124,7 @@ function compareMissing(left: unknown, right: unknown): number | null {
   return null;
 }
 
-/** Números numéricamente, todo lo demás como texto. `localeCompare` y no `<`, para
- * que «Ñandú» caiga donde lo busca quien lee español y no después de la «Z». */
+/** `localeCompare` y no `<`: «Ñandú» cae donde lo busca quien lee español. */
 function compareValues(left: unknown, right: unknown): number {
   if (typeof left === 'number' && typeof right === 'number') {
     return left - right;

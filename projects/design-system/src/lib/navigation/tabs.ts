@@ -20,12 +20,8 @@ export type TabsMode = 'section' | 'document';
 let nextTabsId = 0;
 
 /**
- * DOS MODOS, UN COMPONENTE: `section` es una tira subrayada para las subsecciones
- * de una pantalla, `document` es la tira MDI del App Shell. No se parecen y SON el
- * mismo control -una lista de cosas, una de ellas mostrándose-; dos componentes
- * serían dos teclados y dos contratos de foco que mantener al día.
- * ACÁ NO SE PINTA NINGÚN `tabpanel`: en el shell el panel es el `<router-outlet>`.
- * El teclado es el de las APG y la activación sigue al foco.
+ * Dos modos (`section`, `document` MDI), un componente: un solo teclado y contrato de foco.
+ * No pinta `tabpanel`: en el shell es el `<router-outlet>`. Ver vault: Navegacion.
  */
 @Component({
   selector: 'ewms-tabs',
@@ -39,13 +35,9 @@ export class Tabs {
   readonly activeId = input<string | null>(null);
   readonly mode = input<TabsMode>('section');
 
-  /**
-   * El nombre de la tira, ya traducido. Obligatorio como el del rail: una pantalla
-   * con tabs de sección dentro de una pestaña de documento tiene dos tablists.
-   */
+  /** Obligatorio: tabs de sección dentro de una pestaña de documento son dos tablists. */
   readonly label = input.required<string>();
 
-  /** Etiquetas de los controles de desborde, ya traducidas. */
   readonly scrollBackLabel = input<string>('');
   readonly scrollForwardLabel = input<string>('');
 
@@ -58,17 +50,13 @@ export class Tabs {
 
   protected readonly listId = `ewms-tabs-${++nextTabsId}`;
 
-  /** Si la tira es más ancha que su caja, para que las flechas tengan trabajo. */
   private readonly overflowing = signal(false);
 
   protected readonly isDocument = computed(() => this.mode() === 'document');
   protected readonly showArrows = computed(() => this.isDocument() && this.overflowing());
 
   constructor() {
-    /*
-     * Un ResizeObserver y no un listener de resize de ventana: la tira se angosta
-     * cuando el rail se abre, y eso ningún evento de ventana lo reporta.
-     */
+    // ResizeObserver: la tira se angosta al abrir el rail y ningún evento de ventana lo dice.
     afterNextRender(() => {
       const element = this.strip()?.nativeElement;
       if (element === undefined || typeof ResizeObserver === 'undefined') {
@@ -83,8 +71,7 @@ export class Tabs {
   }
 
   protected isClosable(tab: Tab): boolean {
-    // Cerrable salvo que diga lo contrario: en una tira MDI la que no se cierra es
-    // la excepción, y la excepción es lo que se escribe.
+    // En MDI la que no se cierra es la excepción.
     return this.isDocument() && tab.closable !== false;
   }
 
@@ -95,20 +82,13 @@ export class Tabs {
     this.tabSelect.emit(tab);
   }
 
-  /**
-   * El cierre con el ratón, desde el glifo de adentro. `stopPropagation` porque el
-   * glifo está dentro del botón de la pestaña: sin él, cerrarla la seleccionaría.
-   */
+  // El glifo está dentro del botón de la pestaña: sin `stopPropagation`, cerrar la seleccionaría.
   protected onCloseGlyph(event: Event, tab: Tab): void {
     event.stopPropagation();
     this.tabClose.emit(tab);
   }
 
-  /**
-   * El teclado de tabs de las APG. `Delete` cierra la pestaña donde estás: es la
-   * única tecla destructiva y va con doble guarda -tiene que ser cerrable, y solo
-   * lo es en modo `document`-.
-   */
+  // Teclado de tabs de las APG. `Delete` solo cierra en modo `document` y si es cerrable.
   protected onKeydown(event: KeyboardEvent, tab: Tab): void {
     const tabs = this.tabs().filter((candidate) => candidate.disabled !== true);
     const index = tabs.findIndex((candidate) => candidate.id === tab.id);

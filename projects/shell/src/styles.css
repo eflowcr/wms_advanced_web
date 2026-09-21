@@ -1,74 +1,37 @@
 /*
- * Global stylesheet.
- *
- * tokens.css must be imported HERE, in the same file as the Tailwind import:
- * Tailwind v4 only turns an `@theme` block into utilities when it resolves the
- * block in the stylesheet it is processing. The relative path is a CSS-layer
- * import; the deep-import ban in eslint.config.js governs TypeScript modules.
- *
- * This file holds no raw values: the design-token gate (ci.yml, gate 10)
- * scans it like any other. Every value comes from tokens.css.
+ * tokens.css va acá, junto al import de Tailwind: v4 solo convierte un `@theme` en utilidades
+ * si lo resuelve en la hoja que procesa. Sin valores crudos: la compuerta 10 la escanea.
  */
 @import 'tailwindcss';
 @import '../../design-system/src/styles/tokens.css';
 
 /*
- * CDK overlay positioning. The only line in this PR outside
- * projects/design-system/, and it is here because it has to be: the CDK
- * appends `.cdk-overlay-container` to the end of <body> and positions the
- * panes inside it absolutely. Without `position: fixed` on that container the
- * coordinates the position strategy computes are measured against the wrong
- * box and the panel lands at the bottom of the document instead of next to
- * its trigger. The Tooltip (PR 1) shipped without it; the Select needs it too.
- *
- * The prebuilt sheet carries no colour, spacing or typography of its own, so
- * gate 10 has nothing to object to: it is layout plumbing for a container this
- * application never styles.
+ * El CDK cuelga su contenedor al final de <body>; sin su `position: fixed` el panel cae al
+ * fondo del documento en vez de junto a su disparador. No trae color ni espaciado propios.
  */
 @import '@angular/cdk/overlay-prebuilt.css';
 
-/*
- * The icon sources are geometry and semantic names, never class names. Left
- * in the scan, an icon called `filter` emits Tailwind's `.filter` utility.
- */
+/* Los íconos son geometría y nombres, no clases: escaneados, sus nombres emitían utilidades. */
 @source not '../../design-system/src/icons';
 
 /*
- * TAILWIND AS AN ENGINE, NOT AS A DESIGN SYSTEM (ADR 0009)
- *
- * `--*: initial` deletes Tailwind's whole default theme: its palette, spacing,
- * radii, shadows, type scale, easings and breakpoints. The only utilities that
- * exist are the ones mapped below, and each one points at a semantic token.
- *
- * A default utility does NOT fail the Tailwind compile: Tailwind silently
- * drops class names it does not recognise, so the markup keeps it and it
- * simply applies no style. The build cannot catch it; gate 10 does.
- *
- * `inline`: utilities are emitted with the referenced token itself, e.g.
- *   .bg-primary { background-color: var(--color-bg-primary) }
- * `reference`: Tailwind emits no CSS variables of its own for this block.
- *   Several names below are identical on both sides (`--radius-lg:
- *   var(--radius-lg)`); without `reference` Tailwind would also emit that
- *   self-reference into :root and it would fight tokens.css in the cascade.
- *
- * Utility names follow the property namespaces, so a colour role only exists
- * where it makes sense: `bg-primary`, `text-secondary`, `border-strong`,
- * `outline-focus`. Breakpoints are intentionally absent until a layout needs
- * them, and then they are tokens too.
+ * Tailwind como motor, no como design system (ADR 0009). `--*: initial` borra su tema: solo
+ * existe lo mapeado acá, y una utilidad por defecto se descarta en silencio (la atrapa la
+ * compuerta 10). `reference` evita emitir variables propias que pelearían con tokens.css.
  */
 @theme inline reference {
   --*: initial;
 
-  /* Spacing: one multiplier derives the whole scale (p-2 = 2 x base, gap-4 = 4 x base) */
+  /* Espaciado: un solo multiplicador deriva toda la escala. */
   --spacing: var(--spacing-base);
 
-  /* Families. `--default-*` feeds Tailwind's preflight for html and code. */
+  /* `--default-*` alimenta el preflight de Tailwind para html y code. */
   --default-font-family: var(--font-family-sans);
   --default-mono-font-family: var(--font-family-mono);
   --font-sans: var(--font-family-sans);
   --font-mono: var(--font-family-mono);
 
-  /* Type scale: text-h1 sets size, weight and line-height together */
+  /* Escala tipográfica: cada nivel fija tamaño, peso e interlineado juntos. */
   --text-h1: var(--text-h1-size);
   --text-h1--font-weight: var(--text-h1-weight);
   --text-h1--line-height: var(--text-h1-line-height);
@@ -87,22 +50,18 @@
   --text-caption--font-weight: var(--text-caption-weight);
   --text-mono: var(--text-mono-size);
 
-  /* Radii */
   --radius-sm: var(--radius-sm);
   --radius-control: var(--radius-control);
   --radius-md: var(--radius-md);
   --radius-lg: var(--radius-lg);
   --radius-full: var(--radius-full);
-  /* The Modal's own geometry. It is not `lg` with another name: the elevation
-   * and radius scales stop at the modal, and this is the level past them. */
+  /* El Modal está un nivel más allá de la escala de radios: no es `lg` con otro nombre. */
   --radius-dialog: var(--radius-dialog);
 
-  /* Blur. One value, the Modal's backdrop, so `backdrop-blur-dialog` is the
-   * only blur utility the system emits. */
+  /* Un solo desenfoque, el del fondo del Modal. */
   --blur-dialog: var(--backdrop-blur);
 
-  /* Icons: size-icon-md sets width and height, stroke-icon-md the stroke
-   * width. Always used in pairs; the stroke compensation is in tokens.css. */
+  /* Tamaño y trazo de ícono van siempre en pareja; la compensación está en tokens.css. */
   --size-icon-sm: var(--size-icon-sm);
   --size-icon-md: var(--size-icon-md);
   --size-icon-lg: var(--size-icon-lg);
@@ -113,42 +72,22 @@
   --stroke-width-icon-xl: var(--stroke-icon-xl);
 
   /*
-   * NO `--breakpoint-*` HERE, AND IT IS NOT AN OVERSIGHT -- IT IS A TRAP THAT
-   * WAS WALKED INTO AND BACKED OUT OF (DS-5).
-   *
-   * `--*: initial` deleted Tailwind's breakpoints with the rest of its theme.
-   * The system does have one point of change -- below `--breakpoint-nav-bottom`
-   * the navigation is a bottom bar, above it a rail -- and the obvious move
-   * was to map that token here so `nav-bottom:` variants would exist.
-   *
-   * It compiles, and it never matches. Tailwind emits
-   * `@media (width >= var(--breakpoint-nav-bottom))`, and a CSS custom
-   * property is not substituted inside a media feature: the query is invalid
-   * and silently false at every width. Nothing fails; the layout simply never
-   * changes. Giving Tailwind a literal instead would put a raw pixel value in
-   * this file, which gate 10 rejects -- correctly.
-   *
-   * So the breakpoint stays a token in tokens.css and is read from TypeScript
-   * with `readPixels`, exactly as `--duration-toast` and
-   * `--threshold-scan-keystroke` already are, and `matchMedia` does the rest.
-   * See lib/navigation/viewport.ts. `tools/ci/no-var-breakpoints.test.mjs`
-   * keeps this file from growing one back.
+   * Sin `--breakpoint-*` a propósito (DS-5): Tailwind emitiría `@media (width >= var(...))`, que
+   * nunca coincide porque una custom property no se sustituye en un media query. El corte se lee
+   * con `readPixels` (viewport.ts); lo vigila `tools/ci/no-var-breakpoints.test.mjs`.
    */
 
-  /* App shell geometry -> h-(--shell-header-height), w-(--nav-rail-width). */
   --shell-header-height: var(--shell-header-height);
   --nav-rail-width: var(--nav-rail-width);
   --nav-panel-width: var(--nav-panel-width);
   --nav-bottom-height: var(--nav-bottom-height);
   --tab-height: var(--tab-height);
 
-  /* Elevation */
   --shadow-sm: var(--shadow-sm);
   --shadow-md: var(--shadow-md);
   --shadow-lg: var(--shadow-lg);
   --shadow-dialog: var(--shadow-dialog);
 
-  /* Backgrounds -> bg-* */
   --background-color-canvas: var(--color-canvas);
   --background-color-surface: var(--color-surface);
   --background-color-brand-navy: var(--color-brand-navy);
@@ -163,9 +102,7 @@
   --background-color-danger-hover: var(--color-bg-danger-hover);
   --background-color-danger-active: var(--color-bg-danger-active);
   --background-color-danger-disabled: var(--color-bg-danger-disabled);
-  /* Semantic families: bg-<family>-solid and bg-<family>-surface, the same
-   * shape for all four. `-solid` keeps them apart from bg-danger, which is
-   * the danger BUTTON (same value today, different meaning). */
+  /* `-solid` separa la familia semántica del botón de peligro: mismo valor, otro significado. */
   --background-color-danger-solid: var(--color-danger-solid);
   --background-color-danger-surface: var(--color-danger-surface);
   --background-color-warning-solid: var(--color-warning-solid);
@@ -177,7 +114,6 @@
   --background-color-row-selected: var(--color-row-selected);
   --background-color-overlay: var(--color-overlay);
 
-  /* Text colours -> text-* */
   --text-color-primary: var(--color-text-primary);
   --text-color-secondary: var(--color-text-secondary);
   --text-color-disabled: var(--color-text-disabled);
@@ -188,8 +124,7 @@
   --text-color-success: var(--color-success-text);
   --text-color-neutral: var(--color-neutral-text);
 
-  /* Borders -> border-*. `border-default` is for decorative dividers only;
-   * a border that defines a control is `border-strong`. */
+  /* El borde por defecto es solo para divisores decorativos; el de un control es el fuerte. */
   --border-color-default: var(--color-border);
   --border-color-strong: var(--color-border-strong);
   --border-color-strong-hover: var(--color-border-strong-hover);
@@ -198,7 +133,6 @@
   --border-color-success: var(--color-success-border);
   --border-color-neutral: var(--color-neutral-border);
 
-  /* Focus -> outline-* and ring-* */
   --outline-color-focus: var(--color-focus-ring);
   --outline-color-focus-on-dark: var(--color-focus-ring-on-dark);
   --ring-color-focus: var(--color-focus-ring);
@@ -206,18 +140,9 @@
 }
 
 /*
- * MONTSERRAT, SELF-HOSTED
- *
- * Served from 'self' because the CSP (index.html) allows `font-src 'self'`
- * and nothing else. Source files and the subset command: assets-src/fonts/.
- *
- * `font-weight: 100 900` IS LOAD-BEARING. The variable font's `wght` axis
- * defaults to 100 (Thin). Without the range, the browser treats the face as a
- * single weight and renders every weight at the axis default: the whole app
- * turns Thin. The range lets each requested weight select its instance.
- *
- * One face per subset: the browser only downloads latin-ext when a character
- * in its unicode-range is actually on the page. Spanish lives in latin.
+ * Montserrat servida desde 'self' (la CSP solo permite `font-src 'self'`); subset en
+ * assets-src/fonts/. El rango `100 900` es obligatorio: sin él el eje `wght` queda en 100 y
+ * toda la app se ve Thin. Una cara por subset: latin-ext solo baja si hay un carácter suyo.
  */
 @font-face {
   font-family: 'Montserrat';
@@ -265,10 +190,7 @@
     U+A720-A7FF;
 }
 
-/*
- * Document defaults. The weight is set explicitly as well, so body text never
- * depends on the browser's `normal` resolving against a variable font.
- */
+/* Peso explícito para no depender de `normal` contra una fuente variable. */
 @layer base {
   html {
     background-color: var(--color-canvas);

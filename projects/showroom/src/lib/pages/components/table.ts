@@ -39,14 +39,8 @@ import {
 import { NOT_MEASURED } from './measure';
 
 /**
- * THE CONSUMER'S TEMPLATE, VERBATIM.
- *
- * Not a paraphrase and not a trimmed version: this is what
- * `table.html` renders below, character for character, and the page counts its
- * lines off the DOM rather than printing a number somebody typed. That count
- * is the measure the API was designed against -- the comanda's ceiling is
- * forty lines, and if this string grew past it the API would be what needs
- * fixing, not the demo.
+ * Plantilla del consumidor, literal: es lo que table.html renderiza debajo. La página
+ * cuenta sus líneas en el DOM; el techo es cuarenta, y si lo pasa se arregla la API.
  */
 const CONSUMER_TEMPLATE = [
   '<ewms-table',
@@ -74,7 +68,7 @@ const CONSUMER_TEMPLATE = [
   '</ewms-table>',
 ].join('\n');
 
-/** And the whole component behind it. */
+/** Y el componente entero que hay detrás. */
 const CONSUMER_COMPONENT = [
   'protected readonly expediciones = new ArrayTableSource(EXPEDICIONES);',
   'protected readonly porId = (row: ExpedicionRow) => row.id;',
@@ -92,7 +86,7 @@ const MATRIX_STATES: readonly MatrixAxis[] = [
   { id: 'tint', label: 'Tinte de la fila' },
 ];
 
-/** The row tints, written out in full so Tailwind sees every class. */
+/** Tintes de fila escritos completos para que Tailwind vea cada clase. */
 const TINTS: Readonly<Record<string, string>> = {
   neutral: 'bg-neutral-surface',
   warning: 'bg-warning-surface',
@@ -107,7 +101,7 @@ const LABELS: Readonly<Record<string, string>> = {
   danger: 'Con incidencia',
 };
 
-/** VERIFIED AGAINST table.ts. */
+/** Verificada contra table.ts. */
 const PROPS: readonly PropRow[] = [
   {
     name: 'source',
@@ -202,13 +196,8 @@ const ANATOMY = [
 ] as const;
 
 /**
- * /design-system/components/table -- the sheet of `ewms-table`.
- *
- * THE DEMO IS THE FIRST THING ON THE PAGE AND THE TEMPLATE IS THE SECOND,
- * because those two together are the claim: a table with three levels,
- * coloured states, sorting, typed filters, a quick filter, selection and an
- * empty state, and the markup that produced it. The line count under the
- * snippet is read off the DOM, so it cannot drift from the snippet above it.
+ * /design-system/components/table: ficha de ewms-table. Primero la demo y después
+ * la plantilla que la produce: juntas son el argumento de la página.
  */
 @Component({
   selector: 'ewms-showroom-table',
@@ -239,11 +228,7 @@ export class ShowroomTable {
   protected readonly consumerTemplate = CONSUMER_TEMPLATE;
   protected readonly consumerComponent = CONSUMER_COMPONENT;
 
-  /**
-   * The source. ONE LINE, because `ArrayTableSource` already filters, sorts
-   * and pages -- which is why it ships from the library rather than living in
-   * the demo.
-   */
+  /** Una línea: ArrayTableSource ya filtra, ordena y pagina, por eso vive en la librería. */
   protected readonly expediciones = new ArrayTableSource<ExpedicionRow>(EXPEDICIONES, [
     'codigo',
     'cliente',
@@ -269,11 +254,8 @@ export class ShowroomTable {
   ]);
 
   /**
-   * La fuente de la demo con ventana, que empieza con una muestra.
-   *
-   * Las cinco mil se cargan cuando se piden: una ficha del catálogo que
-   * construye cinco mil filas nada más abrirse es una ficha lenta para todo el
-   * mundo, se mire o no esa demo.
+   * Arranca con una muestra; las cinco mil filas se cargan solo cuando se piden,
+   * para no hacer lenta la ficha a quien no mira esta demo.
    */
   protected readonly ubicaciones = signal<TableSource<UbicacionRow>>(
     new ArrayTableSource<UbicacionRow>(generarUbicaciones(UBICACIONES_MUESTRA), [
@@ -300,7 +282,7 @@ export class ShowroomTable {
   protected readonly consulta = signal<TableQuery | null>(null);
   protected readonly ultimaActivada = signal('(ninguna)');
 
-  /** The snippet's line count, READ OFF THE DOM rather than printed. */
+  /** Líneas del fragmento, leídas del DOM. */
   protected readonly templateLines = signal(NOT_MEASURED);
   protected readonly componentLines = signal(NOT_MEASURED);
   protected readonly underCeiling = signal(false);
@@ -335,21 +317,14 @@ export class ShowroomTable {
     this.ultimaAccion.set(`${event.item.label} · ${event.row.codigo}`);
   }
 
-  /**
-   * La demo no descarga nada: lo deja escrito.
-   *
-   * Un catálogo que abriera un PDF estaría enseñando un backend que no existe,
-   * y la regla del encargo es que ninguna demo tiene datos reales ni red.
-   */
+  /** No descarga nada, solo lo anota: ninguna demo tiene datos reales ni red. */
   protected descargar(row: ExpedicionRow): void {
     this.ultimaDescarga.set(row.codigo);
   }
 
   /**
-   * `ewmsDetail` entrega la fila como `unknown`: una directiva usada como
-   * atributo suelto no tiene ninguna entrada de la que el compilador pueda
-   * inferir el tipo. Se reporta como hueco de ergonomía; aquí se resuelve con
-   * una conversión en un solo sitio.
+   * ewmsDetail entrega la fila como unknown: usada como atributo suelto no hay
+   * entrada de la que inferir el tipo. Hueco de ergonomía; se convierte solo acá.
    */
   protected comoExpedicion(row: unknown): ExpedicionRow {
     return row as ExpedicionRow;
@@ -376,7 +351,7 @@ export class ShowroomTable {
     return stateId === 'badge';
   }
 
-  /** What the last query asked for, as one readable line. */
+  /** La última consulta, en una línea legible. */
   protected consultaResumen(): string {
     const query = this.consulta();
     if (!query) {
@@ -390,7 +365,7 @@ export class ShowroomTable {
   }
 }
 
-/** Lines of a `<pre>`, or null when there was nothing to read. */
+/** Líneas de un pre, o null si no había nada que leer. */
 function countLines(element: Element | null): number | null {
   const text = element?.textContent;
   return text ? text.trimEnd().split('\n').length : null;

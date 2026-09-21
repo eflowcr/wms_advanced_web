@@ -1,4 +1,4 @@
-<!-- The showroom is Spanish only, exempt from i18n (gate 12): declared so a screen reader never reads it as English. -->
+<!-- Showroom solo en español, exento de i18n (compuerta 12): se declara para que el lector de pantalla no lo lea en inglés. -->
 <article class="flex flex-col gap-10" lang="es">
   <!-- ============================================================ 1. Encabezado -->
   <header class="flex flex-col gap-2" data-block="1-encabezado">
@@ -70,10 +70,8 @@
       <ewms-demo-frame ground="canvas" label="El caso real: una fila de tabla, sin texto visible">
         <div class="flex flex-col gap-4">
           <!--
-            A row like the one this control was built for: no visible text, a
-            translated `label` for whoever cannot see it and a `tooltip` for
-            whoever can. Focus it with Tab and the tooltip appears too -- that
-            is 1.4.13, not a nicety.
+            Sin texto visible: label traducido para quien no ve y tooltip para quien ve.
+            Con Tab también aparece el tooltip: es WCAG 1.4.13.
           -->
           <div
             class="flex flex-wrap items-center gap-3 rounded-md border border-default bg-surface p-3"

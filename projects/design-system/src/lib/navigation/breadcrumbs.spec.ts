@@ -10,7 +10,7 @@ const SHORT: readonly Crumb[] = [
   { label: 'Artículos' },
 ];
 
-/** The case the sheet named: "Inicio / … / Ubicación A1-12-03". */
+/** El caso de la ficha: «Inicio / … / Ubicación A1-12-03». */
 const DEEP: readonly Crumb[] = [
   { label: 'Inicio', route: '/' },
   { label: 'Almacenes', route: '/almacenes' },
@@ -74,8 +74,7 @@ describe('Breadcrumbs', () => {
     const current = fixture.nativeElement.querySelector('[aria-current="page"]') as HTMLElement;
 
     expect(current.textContent?.trim()).toBe('Artículos');
-    // A link to where you already are is announced as a destination and goes
-    // nowhere.
+    // Un enlace a donde ya estás se anuncia como destino y no lleva a nada.
     expect(current.tagName).toBe('SPAN');
   });
 
@@ -114,8 +113,7 @@ describe('Breadcrumbs', () => {
     });
 
     it('THE ELLIPSIS IS A BUTTON, and it says how much it is hiding', () => {
-      // Three dots that cannot be pressed tell somebody their path was
-      // shortened and give them no way to see it again.
+      // Tres puntos que no se pulsan no dejan volver a ver el camino.
       expect(fold()).not.toBeNull();
       expect(fold()?.getAttribute('aria-label')).toBe('Mostrar 5 niveles ocultos');
     });

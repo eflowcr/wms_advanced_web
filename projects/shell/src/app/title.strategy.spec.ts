@@ -11,20 +11,15 @@ import { EwmsTitleStrategy } from './title.strategy';
 class Blank {}
 
 /**
- * Every route has a title, and it is translated (WCAG 2.4.2).
- *
- * The thing worth defending is not that a title is set -- Angular does that --
- * but that the title follows the DICTIONARY. A route carrying a finished
- * string would leave the browser tab in whichever language it was written in,
- * which is the one string the rest of the interface cannot fix on a language
- * change.
+ * Lo que se defiende no es que haya título (eso lo hace Angular) sino que siga al diccionario
+ * al cambiar de idioma (WCAG 2.4.2).
  */
 describe('EwmsTitleStrategy', () => {
   let router: Router;
   let title: Title;
 
   beforeEach(async () => {
-    // Spanish, through the browser language, exactly as startup resolves it.
+    // Español por el idioma del navegador, como lo resuelve el arranque.
     vi.spyOn(window.navigator, 'language', 'get').mockReturnValue('es-CR');
     TestBed.configureTestingModule({
       providers: [
@@ -58,8 +53,7 @@ describe('EwmsTitleStrategy', () => {
   afterEach(() => vi.restoreAllMocks());
 
   it('puts the screen FIRST and the product second', async () => {
-    // A tab strip truncates from the right, and what tells two tabs apart is
-    // the screen's name, not the product's.
+    // La pestaña trunca por la derecha: lo que distingue dos es el nombre de la pantalla.
     expect(title.getTitle()).toBe(`Dashboard · ${BRAND_NAME}`);
   });
 

@@ -4,13 +4,13 @@ import { TokenReader } from '../../ui/token-reader';
 import { TokenValue } from '../../ui/token-value';
 import { AA_NON_TEXT, AA_TEXT, formatRatio, verdict, type ContrastVerdict } from '../../ui/tokens';
 
-/** A family of primitives, read live so a new tone shows up on its own. */
+/** Familia de primitivos, leída en vivo para que un tono nuevo aparezca solo. */
 interface ToneRamp {
   readonly family: string;
   readonly names: readonly string[];
 }
 
-/** Semantics grouped by the role they play. The grouping is intent, not value. */
+/** Semánticos agrupados por rol; el agrupamiento es intención, no valor. */
 interface RoleGroup {
   readonly id: string;
   readonly title: string;
@@ -18,15 +18,12 @@ interface RoleGroup {
   readonly tokens: readonly string[];
 }
 
-/** A pair the catalogue checks, with the threshold it is judged against. */
+/** Par que verifica el catálogo, con el umbral contra el que se juzga. */
 interface ContrastPair {
   readonly foreground: string;
   readonly background: string;
   readonly minimum: number;
-  /**
-   * WCAG 1.4.3 exempts a disabled control, and a decorative divider is not a
-   * control at all. Exempt is not a softer failure: it is a different question.
-   */
+  /** WCAG 1.4.3 exime al control deshabilitado y un divisor decorativo no es control: otra pregunta, no una falla suave. */
   readonly exempt: boolean;
   readonly note: string;
 }
@@ -133,14 +130,8 @@ const ROLES: readonly RoleGroup[] = [
   },
 ];
 
-/**
- * The pairs the page measures.
- *
- * WHICH pairs is design intent and is written here; WHAT they measure is not
- * written anywhere -- the ratio comes from the tokens as the browser computed
- * them. Move a token and break a contrast and this table says so on the next
- * reload, without anyone remembering to re-check.
- */
+// Qué pares medir es intención de diseño y se escribe acá; cuánto dan sale de los tokens
+// computados. Si un token rompe un contraste, la tabla lo dice en la próxima recarga.
 const PAIRS: readonly ContrastPair[] = [
   {
     foreground: '--color-text-primary',
@@ -355,12 +346,8 @@ const PAIRS: readonly ContrastPair[] = [
 ];
 
 /**
- * /design-system/foundations/colors — the two layers, and whether they pass.
- *
- * The primitives are not listed in this file: they are read out of the running
- * stylesheet, so a tone added to tokens.css appears here without anyone
- * editing this page. The semantic groups ARE listed, because grouping by role
- * is a judgement and not a fact about the file.
+ * Las dos capas de color y si pasan contraste. Los primitivos se leen de la hoja en vivo;
+ * los grupos semánticos se escriben porque agrupar por rol es un juicio, no un hecho del archivo.
  */
 @Component({
   selector: 'ewms-showroom-colors',
@@ -394,7 +381,7 @@ export class ShowroomColors {
     });
   }
 
-  /** The utility that paints a verdict. Failing has to be loud. */
+  /** Utilidad que pinta un veredicto; la falla tiene que verse fuerte. */
   protected verdictClasses(value: ContrastVerdict): string {
     switch (value) {
       case 'pass':
@@ -417,7 +404,7 @@ export class ShowroomColors {
     }
   }
 
-  /** A swatch of any token, primitive included: the value never reaches the source. */
+  /** Muestra de cualquier token, primitivos incluidos, sin que el valor llegue al fuente. */
   protected swatch(token: string): Record<string, string> {
     return { 'background-color': `var(${token})` };
   }

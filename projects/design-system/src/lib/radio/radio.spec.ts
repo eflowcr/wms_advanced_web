@@ -5,7 +5,7 @@ import { By } from '@angular/platform-browser';
 import { expectNoAxeViolations } from '@ewms/testing';
 import { Radio } from './radio';
 
-/** A radio group: two options bound to one form control, as it is really used. */
+/** Dos opciones atadas a un control, como se usa de verdad. */
 @Component({
   template: `
     <ewms-radio
@@ -32,12 +32,7 @@ class GroupHost {
   lastChange: unknown = null;
 }
 
-/**
- * One radio, no form. Deliberately separate from `GroupHost`: `[disabled]` and
- * `[formControl]` on the same element also hits `FormControlDirective`'s own
- * `disabled` input, which exists only to print a warning. Keeping them apart
- * keeps that warning out of every run.
- */
+/** Aparte de `GroupHost`: `[disabled]` junto a `[formControl]` imprime un aviso de Angular. */
 @Component({
   template: `
     <ewms-radio
@@ -57,14 +52,8 @@ class PlainHost {
 }
 
 /**
- * Give an element the focus, then take it away, driving the two native events
- * through the DOM methods rather than through a synthesised `FocusEvent`.
- *
- * The reason is gate 10: it reads every string literal in a .ts file as a
- * possible class name, and the name of the second of those two events is also
- * a stock Tailwind filter utility, so spelling it as a literal fails the
- * build. The method call says the same thing and is closer to what a browser
- * actually does. Reported in the PR report.
+ * Por métodos del DOM y no con un `FocusEvent` sintético: el nombre del segundo evento es una
+ * utilidad de Tailwind y, como cadena, rompe la compuerta 10.
  */
 function focusThenLeave(element: HTMLElement): void {
   element.focus();
@@ -98,7 +87,7 @@ describe('Radio', () => {
     return Array.from(root().querySelectorAll<HTMLInputElement>('input[type="radio"]'));
   }
 
-  /** `strict` forbids an unchecked index; the fixture always renders both. */
+  /** `strict` prohíbe un índice sin chequear; el fixture siempre pinta los dos. */
   function radio(index: number): HTMLInputElement {
     const found = radios()[index];
     if (!found) {
@@ -107,7 +96,7 @@ describe('Radio', () => {
     return found;
   }
 
-  /** The jsdom equivalent of `getByRole('radio', { name })`. */
+  /** Como `getByRole` con nombre, en jsdom. */
   function byRoleAndName(name: string): HTMLInputElement | null {
     return (
       radios().find(
@@ -141,8 +130,7 @@ describe('Radio', () => {
       radio(1).click();
       await settle();
 
-      // The browser unchecks the first one before any of our code runs; the
-      // form value is what confirms both halves agree afterwards.
+      // El navegador desmarca el primero; el valor del formulario confirma que coinciden.
       expect(radio(0).checked).toBe(false);
       expect(radio(1).checked).toBe(true);
       expect(host.control.value).toBe('con-orden');
@@ -162,17 +150,14 @@ describe('Radio', () => {
       radio(0).click();
       await settle();
 
-      // The native `change` bubbles and this output shares its name; without
-      // the stopPropagation in the component the handler would also receive
-      // the raw DOM Event.
+      // Sin el stopPropagation, el handler también recibiría el Event crudo.
       expect(host.lastChange).toBe('ciega');
     });
   });
 
   describe('Appearance', () => {
     it('is a circle on the same 18 px box and 1.5 px border as the checkbox', () => {
-      // jsdom does no layout: the rendered 18x18 and the 8x8 dot cannot be
-      // measured here. See the PR report.
+      // jsdom no hace layout: el 18x18 y el punto de 8x8 no se miden.
       expect(radio(0).classList.contains('size-4.5')).toBe(true);
       expect(radio(0).classList.contains('rounded-full')).toBe(true);
       expect(radio(0).style.borderWidth).toBe('var(--border-width-selection)');
@@ -278,8 +263,7 @@ describe('Radio, standalone', () => {
     host.disabled.set(true);
     await settle();
 
-    // The form's half of the decision, called the way Angular calls it.
-    // Neither source can re-enable what the other disabled.
+    // Como lo llama Angular: ninguna fuente rehabilita lo que la otra deshabilitó.
     instance().setDisabledState(false);
     await settle();
 

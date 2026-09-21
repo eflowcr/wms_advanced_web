@@ -1,17 +1,6 @@
-<!--
-  La hoja se escribe ANTES que la barra en el DOM y se dibuja encima en pantalla. El
-  orden importa para el teclado: con la hoja abierta el foco queda atrapado adentro,
-  y al cerrarse vuelve al control que la abrió. Nada de acá depende del orden
-  visual, que lo decide el posicionamiento fijo.
--->
+<!-- La hoja va antes que la barra en el DOM y encima en pantalla (posición fija). -->
 @if (open()) {
-  <!--
-  Un `<button>` DE VERDAD y no un `<div>` con un manejador de clic: algo que responde
-  a un clic tiene que ser enfocable, o alguien con teclado ve un control que no puede
-  alcanzar. `tabindex="-1"` con `aria-hidden` es la forma honesta para ESTE, que es
-  un duplicado del cierre de la hoja y de Escape: no puede ser una segunda parada y
-  un lector no debería anunciarlo.
--->
+  <!-- `<button>` real con `tabindex="-1"` y `aria-hidden`: duplica el cierre y Escape. -->
   <button
     type="button"
     class="fixed inset-0 z-10 bg-overlay"
@@ -26,11 +15,7 @@
     class="fixed inset-x-0 bottom-(--nav-bottom-height) z-10 max-h-[70vh] overflow-y-auto bg-brand-navy text-on-dark"
     data-nav-bottom-sheet
   >
-    <!--
-  El bloque de favoritos en pantalla angosta. En el rail va fijado sobre el árbol;
-  acá es lo primero de la hoja, que es la misma promesa -un lugar fijo en la
-  navegación- a un ancho donde no se puede fijar nada.
--->
+    <!-- Favoritos: primero en la hoja, el lugar fijo a este ancho. -->
     <ng-content select="[navBottomTop]" />
 
     <nav class="p-2" [attr.aria-label]="moreLabel()">

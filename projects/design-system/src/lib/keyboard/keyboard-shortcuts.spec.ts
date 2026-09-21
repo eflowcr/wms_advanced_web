@@ -13,16 +13,8 @@ import {
 } from './shortcuts.types';
 
 /**
- * The engine, driven through a real host on a real document.
- *
- * NOT A UNIT TEST OF A PURE FUNCTION, deliberately: what RFE-01 to RFE-05
- * describe is behaviour a person has while typing, and the interesting failures
- * -- a shortcut firing inside a field, a scan opening a form -- are about the
- * focus and the event, which are document-level facts.
- *
- * The map here is the SHELL'S map, written out. It is the only copy of those
- * keys outside the two map files, and it is here so that a change to a binding
- * breaks this test rather than passing silently.
+ * Host real sobre documento real: las fallas de RFE-01 a RFE-05 son de foco y de evento.
+ * El mapa es copia del del shell, para que cambiar una tecla rompa esta prueba.
  */
 
 const MAP: ShortcutMap = {
@@ -104,11 +96,7 @@ describe('KeyboardShortcuts', () => {
     }
   });
 
-  /**
-   * Register from inside an injection context, which `register` requires --
-   * and requires for a reason worth exercising: it is how the registration
-   * learns whose life it shares.
-   */
+  /** Registra en un contexto de inyección, como exige `register`. */
   function listen(action: 'search' | 'create' | 'save' | 'cancel'): void {
     TestBed.runInInjectionContext(() => {
       shortcuts.register(action, () => fired.push(action));
@@ -123,7 +111,7 @@ describe('KeyboardShortcuts', () => {
     return fixture.nativeElement.querySelector('#field') as HTMLInputElement;
   }
 
-  /** Wait past the single-character deferral window. */
+  /** Pasa la ventana de espera de los atajos de un carácter. */
   async function settleDeferral(): Promise<void> {
     await new Promise((resolve) => setTimeout(resolve, THRESHOLD + 20));
   }
@@ -144,7 +132,6 @@ describe('KeyboardShortcuts', () => {
     });
 
     it('PACQ-01.2: a destroyed consumer stops answering', async () => {
-      // A child component's registration, gone when the child is.
       @Component({ selector: 'ewms-shortcut-consumer', template: '' })
       class Consumer {
         constructor() {
@@ -172,8 +159,7 @@ describe('KeyboardShortcuts', () => {
       });
       document.body.dispatchEvent(event);
 
-      // Nothing registered `create`, so the combination stays the browser's
-      // -- and an assistive technology's.
+      // Nadie registró `create`: la combinación sigue siendo del navegador.
       expect(event.defaultPrevented).toBe(false);
     });
   });
@@ -228,12 +214,7 @@ describe('KeyboardShortcuts', () => {
     });
 
     it('prevents the browser default even with NOBODY registered', () => {
-      /*
-       * The binding says so, and the engine obeys the binding rather than
-       * knowing the key. A screen with nothing to save must still not let the
-       * browser write a half-drawn page to disk while the person believes they
-       * saved their work.
-       */
+      // Lo dice el binding, no la tecla. Ver vault: Atajos-de-Teclado.
       const event = new KeyboardEvent('keydown', {
         key: 's',
         ctrlKey: true,
@@ -264,12 +245,8 @@ describe('KeyboardShortcuts', () => {
     });
 
     it('a code that BEGINS with `/` does not fire the search either', async () => {
-      /*
-       * The case the run length cannot catch: at the first character there is
-       * no run yet. What saves it is the engine waiting one threshold window
-       * before acting on a single character, and the second character of the
-       * code arriving inside that window.
-       */
+      // En el primer carácter no hay ráfaga: lo salva la espera de un umbral, dentro de
+      // la cual llega el segundo carácter.
       listen('search');
       const scans: string[] = [];
       shortcuts.scans.subscribe((code) => scans.push(code));
@@ -288,7 +265,7 @@ describe('KeyboardShortcuts', () => {
       listen('search');
       press('/');
 
-      // Nothing yet: the engine is waiting to see whether a gun is talking.
+      // Todavía nada: el motor espera por si es una pistola.
       expect(fired).toEqual([]);
 
       await settleDeferral();
@@ -334,8 +311,7 @@ describe('KeyboardShortcuts', () => {
     });
 
     it('an event another handler already answered is left alone', () => {
-      // The open dialog closing on Escape is the case that exists today:
-      // answering it again would cancel the screen behind it as well.
+      // Hoy es el diálogo que cierra con Escape: responder de nuevo cancelaría la pantalla de atrás.
       listen('cancel');
       const event = new KeyboardEvent('keydown', {
         key: 'Escape',
@@ -349,29 +325,18 @@ describe('KeyboardShortcuts', () => {
     });
 
     /**
-     * THE REGRESSION OF DS-5, and it is worth naming what it cost.
-     *
-     * A code scanned into an `ewms-search-select` is resolved by that field's
-     * own detector, which calls `preventDefault` on the closing Enter. The
-     * engine used to return at the check above WITHOUT telling its own
-     * detector anything -- so its run stayed open, four or more characters
-     * long, and the next bare Enter anywhere on the page closed it as a scan
-     * and was cancelled.
-     *
-     * What that looked like to a person: a focused button that Enter would not
-     * press. WCAG 2.1.1, on every screen with a search field, and invisible to
-     * a mouse. It was found by walking buscar -> crear -> editar on the
-     * keyboard alone in `e2e/smoke.e2e.ts`.
+     * Regresión de DS-5: tras un escaneo en search-select, el Enter siguiente no activaba
+     * un botón enfocado (WCAG 2.1.1). Ver vault: Atajos-de-Teclado.
      */
     it('a key somebody else answered still closes the open run', () => {
       listen('cancel');
 
-      // A fast run, exactly as a gun emits it, none of it prevented.
+      // Ráfaga de pistola, sin prevenir.
       for (const char of 'ABCD') {
         press(char, { cancelable: true });
       }
 
-      // The closing Enter, consumed by the field that resolved the scan.
+      // El Enter de cierre, consumido por el campo que resolvió el escaneo.
       const consumed = new KeyboardEvent('keydown', {
         key: 'Enter',
         bubbles: true,
@@ -380,7 +345,7 @@ describe('KeyboardShortcuts', () => {
       consumed.preventDefault();
       document.body.dispatchEvent(consumed);
 
-      // The next Enter is an ordinary Enter: the run closed with the one above.
+      // El siguiente es un Enter común: la ráfaga cerró con el anterior.
       const later = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true });
       document.body.dispatchEvent(later);
 
@@ -402,7 +367,6 @@ describe('KeyboardShortcuts', () => {
 
       expect(dialog).not.toBeNull();
       const keys = [...dialog.querySelectorAll('kbd')].map((k) => k.textContent?.trim());
-      // Every chord of the map, and nothing invented.
       expect(keys).toEqual(['/', 'Alt', 'N', 'Ctrl', 'S', 'Esc', '?']);
     });
 
@@ -410,7 +374,7 @@ describe('KeyboardShortcuts', () => {
       const dialog = await openHelp();
       const rows = dialog.querySelectorAll('tbody tr');
 
-      // Five actions in the map, five rows. The dialog counts nothing itself.
+      // Una fila por acción del mapa: el diálogo no cuenta nada por su cuenta.
       expect(rows.length).toBe(Object.keys(MAP).length);
     });
 

@@ -24,20 +24,17 @@ export type { TooltipPosition } from './tooltip.types';
 
 let nextTooltipId = 0;
 
-/**
- * El tooltip abierto, en toda la página: abrir uno cierra el anterior. El ámbito
- * de módulo es lo que lo hace cierto entre instancias que no se conocen.
- */
+/** Uno abierto por página: el ámbito de módulo lo garantiza entre instancias que no se conocen. */
 let openTooltip: Tooltip | null = null;
 
-/** Registra `instance` como el abierto y devuelve quien tenía el lugar. */
+/** Devuelve quién tenía el lugar. */
 function claimSingleton(instance: Tooltip): Tooltip | null {
   const previous = openTooltip;
   openTooltip = instance;
   return previous;
 }
 
-/** Suelta el lugar, pero solo si `instance` sigue siendo quien lo tiene. */
+/** Solo si `instance` sigue teniendo el lugar. */
 function releaseSingleton(instance: Tooltip): void {
   if (openTooltip === instance) {
     openTooltip = null;
@@ -45,38 +42,22 @@ function releaseSingleton(instance: Tooltip): void {
 }
 
 /**
- * Texto descriptivo corto al lado de un control, en hover y en foco de teclado.
- *
- * UN TOOLTIP NO ES UN NOMBRE ACCESIBLE: describe. Quien navega con teclado puede
- * no verlo nunca y en una pantalla táctil no hay hover, por eso
- * `ewms-icon-button` exige `label` además de `tooltip`.
- * WCAG 2.2 1.4.13 impone tres cosas, y las tres están: se descarta con Escape,
- * el puntero puede entrar al panel, y NUNCA cierra por temporizador.
- * El selector va prefijado: un `[tooltip]` pelado choca con cualquier cosa.
+ * Describe, no nombra (por eso `ewms-icon-button` exige `label`). WCAG 2.2 1.4.13: Escape lo
+ * descarta, el puntero puede entrar y nunca cierra por tiempo. Ver vault: Tooltip.
  */
 @Directive({
   selector: '[ewmsTooltip]',
 })
 export class Tooltip implements OnDestroy {
-  /** El texto, ya traducido por el consumidor (ADR 0008). */
+  /** Ya traducido (ADR 0008). */
   readonly text = input.required<string>({ alias: 'ewmsTooltip' });
 
   readonly position = input<TooltipPosition>('top');
 
-  /**
-   * Si el texto AGREGA información que el nombre accesible no da ya. `false` es el
-   * caso del Icon Button, donde `label` y `tooltip` dicen lo mismo: atarlos con
-   * `aria-describedby` haría que un lector lo anuncie dos veces, así que el panel
-   * va `aria-hidden`. La directiva no adivina: lo declara el consumidor.
-   */
+  /** True si el texto agrega algo al nombre; en false el panel va `aria-hidden` para no repetirlo. */
   readonly describes = input<boolean>(false);
 
-  /**
-   * Apaga el tooltip sin quitar la directiva. NO se llama `disabled`, y el nombre
-   * carga peso: una entrada así captura el `[disabled]` del propio host, el
-   * atributo nativo nunca se escribe, y el control queda con cara de deshabilitado
-   * y perfectamente clicable. Falla en silencio, en el peor atributo posible.
-   */
+  /** No `disabled`: capturaría el `[disabled]` del host, que quedaría clicable. Ver vault: Tooltip. */
   readonly tooltipDisabled = input<boolean>(false);
 
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
@@ -92,8 +73,7 @@ export class Tooltip implements OnDestroy {
   private pointerInsidePanel = false;
 
   constructor() {
-    // Apagar la directiva en vuelo cierra lo que esté abierto, y un cambio de
-    // texto con el panel abierto se refleja en vez de quedar viejo.
+    // Apagarla cierra el panel; un texto nuevo se refleja en el panel abierto.
     effect(() => {
       if (this.tooltipDisabled()) {
         this.hide();
@@ -112,8 +92,6 @@ export class Tooltip implements OnDestroy {
     this.overlayRef = null;
   }
 
-  // ---------------------------------------------------------------- gatillos
-
   @HostListener('mouseenter')
   protected onMouseEnter(): void {
     this.scheduleShow();
@@ -125,11 +103,7 @@ export class Tooltip implements OnDestroy {
     this.schedulePointerHide();
   }
 
-  /**
-   * El par focusin/focusout, que burbujea, para que la directiva sirva también en
-   * un envoltorio cuyo elemento enfocable es descendiente. El foco nunca espera:
-   * navegar con Tab es deliberado, no se pasa de largo por un control.
-   */
+  /** focusin burbujea: sirve en un envoltorio. El foco no espera, porque Tab es deliberado. */
   @HostListener('focusin')
   protected onFocusIn(): void {
     this.show();
@@ -139,8 +113,6 @@ export class Tooltip implements OnDestroy {
   protected onFocusOut(): void {
     this.hide();
   }
-
-  // ----------------------------------------------------------------- tiempos
 
   private scheduleShow(): void {
     if (this.tooltipDisabled() || this.showTimer) {
@@ -160,10 +132,7 @@ export class Tooltip implements OnDestroy {
     }
   }
 
-  /**
-   * Cierra cuando el puntero salió del control Y del panel. La gracia es tiempo de
-   * viaje, no una vida: un tooltip donde el puntero descansa no cierra nunca.
-   */
+  /** La gracia es tiempo de viaje hacia el panel, no una vida útil. */
   private schedulePointerHide(): void {
     this.cancelHide();
     this.hideTimer = setTimeout(() => {
@@ -181,8 +150,6 @@ export class Tooltip implements OnDestroy {
     }
   }
 
-  // ------------------------------------------------------------ abrir y cerrar
-
   private show(): void {
     if (this.tooltipDisabled() || this.overlayRef?.hasAttached()) {
       return;
@@ -190,8 +157,7 @@ export class Tooltip implements OnDestroy {
     this.cancelShow();
     this.cancelHide();
 
-    // Primero se reclama el lugar: así el hide() del tooltip anterior encuentra el
-    // lugar ya tomado y lo deja en paz.
+    // Se reclama antes, para que el hide() del anterior no lo suelte.
     const previous = claimSingleton(this);
     if (previous && previous !== this) {
       previous.hide();
@@ -204,8 +170,7 @@ export class Tooltip implements OnDestroy {
       this.host.nativeElement.setAttribute('aria-describedby', this.panelId);
     }
 
-    // Escape tiene que andar aunque el tooltip se abriera por hover y el foco esté
-    // en otro lado: el listener va en el documento, no en el host.
+    // En el documento: Escape anda aunque se abriera por hover con el foco en otro lado.
     this.document.addEventListener('keydown', this.onDocumentKeydown, true);
   }
 
@@ -225,19 +190,14 @@ export class Tooltip implements OnDestroy {
     releaseSingleton(this);
   }
 
-  /** Escape descarta sin mover puntero ni foco: nada acá llama a `focus()`. */
+  /** Descarta sin mover puntero ni foco. */
   private readonly onDocumentKeydown = (event: KeyboardEvent): void => {
     if (event.key === 'Escape') {
       this.hide();
     }
   };
 
-  // ------------------------------------------------------------------- panel
-
-  /**
-   * Las posiciones son del tooltip; la estrategia se comparte con el panel del
-   * Select (overlay/connected-overlay.ts). Solo cambia la lista de ubicaciones.
-   */
+  /** Estrategia compartida con el Select (overlay/connected-overlay.ts); cambian las posiciones. */
   private createOverlay(): OverlayRef {
     return createConnectedOverlay(
       this.injector,
@@ -247,23 +207,19 @@ export class Tooltip implements OnDestroy {
   }
 
   private buildPanel(): HTMLElement {
-    // Un DomPortal mueve un nodo que ya existe y deja un comentario donde estaba,
-    // así que el nodo necesita padre. Este sostén es ese padre y nunca entra al
-    // documento: existe para que el CDK tenga a quién devolver el panel.
+    // DomPortal exige que el nodo tenga padre; este sostén nunca entra al documento.
     const holder = this.document.createElement('div');
     const panel = this.document.createElement('div');
     holder.appendChild(panel);
 
     panel.id = this.panelId;
     panel.className = TOOLTIP_CLASSES;
-    // textContent y nunca innerHTML: un tooltip no puede llevar marcado.
+    // Nunca innerHTML: un tooltip no lleva marcado.
     panel.textContent = this.text();
 
     if (this.describes()) {
       panel.setAttribute('role', 'tooltip');
     } else {
-      // La etiqueta del control ya da el nombre; anunciar también el panel lo
-      // diría dos veces.
       panel.setAttribute('aria-hidden', 'true');
     }
 

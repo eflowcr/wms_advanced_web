@@ -3,8 +3,8 @@ import path from 'node:path';
 import { expect, test, type Page } from '@playwright/test';
 
 /**
- * Renders every showroom route, captures it, and writes down what it measured.
- * See playwright.capture.config.ts for why this is a rig and not a test.
+ * Renderiza cada ruta del showroom, la captura y anota lo que midió.
+ * Por qué es un banco de captura y no una prueba: ver playwright.capture.config.ts.
  */
 
 const OUT = path.resolve('showroom-captures');
@@ -35,10 +35,8 @@ const ROUTES = [
 ] as const;
 
 /**
- * The first capture lies if the fallback face is still on screen: every width
- * measured under it is wrong. `document.fonts.ready` alone is not enough — it
- * resolves without downloading a weight nothing has painted yet, and these
- * pages paint 400 through 700.
+ * Con la fuente de respaldo en pantalla todo ancho medido está mal. document.fonts.ready solo no
+ * alcanza: resuelve sin bajar pesos aún no pintados, y estas páginas pintan de 400 a 700.
  */
 async function waitForMontserrat(page: Page): Promise<void> {
   await page.evaluate(async () => {
@@ -58,9 +56,8 @@ interface Measured {
 }
 
 /**
- * Everything the pages tagged with `data-measure`, with the geometry and the
- * computed properties that come from tokens. Reading them back out of the
- * browser is the only way to know a token actually applied.
+ * Geometría y propiedades calculadas de todo lo marcado con data-measure: leerlas del navegador
+ * es la única forma de saber que un token se aplicó.
  */
 async function measure(page: Page): Promise<readonly Measured[]> {
   return page.evaluate(() => {
@@ -98,7 +95,7 @@ async function measure(page: Page): Promise<readonly Measured[]> {
   });
 }
 
-/** Horizontal scroll is a defect, so the rig reports it per width. */
+/** El desplazamiento horizontal es un defecto: se reporta por ancho. */
 async function overflow(page: Page, width: number): Promise<string> {
   await page.setViewportSize({ width, height: 900 });
   await page.waitForTimeout(150);
@@ -112,18 +109,12 @@ async function overflow(page: Page, width: number): Promise<string> {
 }
 
 /**
- * Tabs until the wanted element holds focus. Calling .focus() would not do:
- * `:focus-visible` is the browser's own decision and it only grants the ring
- * when focus arrived from the keyboard, which is the state worth looking at.
+ * Tabula hasta enfocar el elemento: con .focus() el navegador no concede focus-visible,
+ * que solo da el anillo cuando el foco llega por teclado.
  */
 async function focusByTabbing(page: Page, selector: string, maxTabs = 80): Promise<boolean> {
-  /*
-   * Blur, do not click. Clicking the page to "reset" focus put the pointer on
-   * the shell header's first link, the app navigated away, and every walk
-   * after that was tabbing around the home page wondering why the button was
-   * missing. Blurring drops the sequential-navigation starting point without
-   * touching anything.
-   */
+  // Blur y no clic: un clic para «reiniciar» el foco caía en el primer enlace de la cabecera y la app
+  // navegaba a otra página. Blur borra el punto de partida de Tab sin tocar nada.
   await page.evaluate(() => {
     if (document.activeElement instanceof HTMLElement) {
       document.activeElement.blur();
@@ -179,7 +170,6 @@ test.describe('showroom capture rig', () => {
       report.push(render(`${route.name} (${route.url})`, await measure(page)));
       report.push(`  ${await overflow(page, 1440)}`);
       report.push(`  ${await overflow(page, 1280)}`);
-      // Leave the viewport where the next capture expects it.
       await page.setViewportSize({ width: 1440, height: 900 });
     });
   }
@@ -188,9 +178,8 @@ test.describe('showroom capture rig', () => {
     await page.goto('/design-system/components/button');
     await waitForMontserrat(page);
 
-    // A control focused from the keyboard on both grounds: the 2px gap inside
-    // --focus-ring-shadow is painted with --color-surface, so the canvas is
-    // where it can go wrong.
+    // Foco por teclado sobre los dos fondos: el hueco de 2px de --focus-ring-shadow se pinta con
+    // --color-surface, así que sobre el lienzo es donde puede fallar.
     const focusedOnCanvas = await focusByTabbing(page, '[data-focus-canvas]');
     expect(focusedOnCanvas, 'the canvas focus sample must be reachable by Tab').toBe(true);
     await page.screenshot({ path: path.join(OUT, '20-focus-on-canvas.png') });
@@ -199,21 +188,18 @@ test.describe('showroom capture rig', () => {
     expect(focusedOnSurface, 'the surface focus sample must be reachable by Tab').toBe(true);
     await page.screenshot({ path: path.join(OUT, '21-focus-on-surface.png') });
 
-    // Loading returns to Default on its own, so the shot has to be taken while
-    // it is still spinning.
+    // Loading vuelve solo a Default: la captura se toma mientras gira.
     await page.locator('[data-demo-submit] button').click();
     await page.waitForTimeout(400);
     await page.screenshot({ path: path.join(OUT, '22-button-loading.png') });
     report.push(render('button page, loading', await measure(page)));
 
-    // The tooltip, opened from the keyboard.
     const tooltipFocused = await focusByTabbing(page, '[data-demo-tooltip]');
     expect(tooltipFocused, 'the tooltip sample must be reachable by Tab').toBe(true);
     await page.waitForTimeout(400);
     await page.screenshot({ path: path.join(OUT, '23-tooltip-open.png') });
 
-    // The Select panel. The CDK overlay CSS landed in PR 2 and nothing ever
-    // rendered with it: this is the first time that code runs in a browser.
+    // El panel del Select: el CSS de overlay del CDK llegó en el PR 2 y acá corre por primera vez en navegador.
     await page.goto('/design-system/foundations/spacing');
     await waitForMontserrat(page);
     await page.locator('[data-demo-select] button').first().click();
@@ -221,19 +207,15 @@ test.describe('showroom capture rig', () => {
     await page.screenshot({ path: path.join(OUT, '24-select-open.png') });
     report.push(render('spacing page, select open', await measure(page)));
 
-    /*
-     * The Select's own sheet, with its panel up. A capture of a closed select
-     * is a capture of an input with a chevron, so the one shot that matters on
-     * that page is this one -- and it is the shot the ROUTES loop above cannot
-     * take, because nothing on a freshly loaded page is open.
-     */
+    // La ficha del Select con el panel abierto: el bucle de ROUTES no puede tomarla porque en una
+    // página recién cargada no hay nada abierto.
     await page.goto('/design-system/components/select');
     await waitForMontserrat(page);
     await page.locator('[data-demo-select] button').first().click();
     await page.waitForTimeout(300);
     await page.screenshot({ path: path.join(OUT, '25-select-page-open.png') });
 
-    // The Select panel near the bottom edge, where it has to flip upwards.
+    // El panel del Select cerca del borde inferior, donde tiene que abrirse hacia arriba.
     await page.locator('[data-demo-select]').evaluate((el) => {
       const style = (el as HTMLElement).style;
       style.position = 'fixed';
@@ -246,10 +228,7 @@ test.describe('showroom capture rig', () => {
     await page.waitForTimeout(300);
     await page.screenshot({ path: path.join(OUT, '26-select-flipped.png') });
 
-    /*
-     * The tooltip sheet, opened from the keyboard, on its own page. The panel
-     * is an overlay: it is absent from every full-page shot the loop takes.
-     */
+    // La ficha del tooltip abierta por teclado: es un overlay y no sale en las capturas de página completa.
     await page.goto('/design-system/components/tooltip');
     await waitForMontserrat(page);
     const sheetTooltip = await focusByTabbing(page, '[data-demo-describes]');
@@ -257,15 +236,14 @@ test.describe('showroom capture rig', () => {
     await page.waitForTimeout(400);
     await page.screenshot({ path: path.join(OUT, '27-tooltip-page-open.png') });
 
-    // The four placements, one at a time, since only one tooltip exists at once.
+    // Las cuatro posiciones de a una: solo existe un tooltip a la vez.
     for (const position of ['top', 'bottom', 'left', 'right'] as const) {
       await page.locator(`[data-position-sample="${position}"] button`).hover();
       await page.waitForTimeout(350);
       await page.screenshot({ path: path.join(OUT, `28-tooltip-${position}.png`) });
     }
 
-    // The Input's password field with its value revealed, which no full-page
-    // shot reaches either: it needs a click on the suffix button.
+    // La clave del Input revelada: requiere un clic en el botón sufijo, ninguna captura completa llega.
     await page.goto('/design-system/components/input');
     await waitForMontserrat(page);
     await page.getByRole('button', { name: 'Mostrar la clave' }).first().click();
@@ -274,11 +252,8 @@ test.describe('showroom capture rig', () => {
     report.push(render('input page, password revealed', await measure(page)));
   });
 
-  /**
-   * The lote D states, none of which a freshly loaded page shows: a panel has
-   * to be unfolded, a menu has to be opened, children have to be asked for and
-   * five thousand rows have to be built.
-   */
+  // Estados del lote D que una página recién cargada no muestra: panel desplegado, menú abierto,
+  // hijos pedidos y cinco mil filas construidas.
   test('captures the DS-3 lote D states', async ({ page }) => {
     const TABLE_PAGE = '/design-system/components/table';
     const DETALLE = '[data-demo-detalle]';
@@ -290,33 +265,26 @@ test.describe('showroom capture rig', () => {
     await waitForMontserrat(page);
     await page.waitForTimeout(250);
 
-    // The detail panel, unfolded.
     await page.locator(`${DETALLE} [data-detail-toggle="0"] button`).click();
     await page.locator(`${DETALLE} [data-detail="0"]`).scrollIntoViewIfNeeded();
     await page.waitForTimeout(200);
     await page.screenshot({ path: path.join(OUT, '30-table-detail-open.png') });
     report.push(render('table page, detail panel open', await measure(page)));
 
-    // The row menu, from the kebab. It is an overlay, so no full-page shot
-    // above has ever contained it.
+    // El menú de fila (kebab) es un overlay: ninguna captura de página completa lo contiene.
     await page.locator(`${DETALLE} [data-kebab="1"] button`).click();
     await page.waitForTimeout(250);
     await page.screenshot({ path: path.join(OUT, '31-table-row-menu.png') });
     await page.keyboard.press('Escape');
 
-    /*
-     * The children on their way, and the children that never arrive. The
-     * loading row lasts as long as the demo's own delay, so that shot has to
-     * be taken while it is still there.
-     */
+    // Hijos en camino e hijos que nunca llegan: la fila de carga dura lo que la demora de la demo.
     const failing = page.locator(`${PEREZOSA} tr.bg-danger-surface`).first();
     const failingRow = await failing.getAttribute('data-row');
     const ok = page.locator(`${PEREZOSA} tr[data-row]:not(.bg-danger-surface)`).first();
     const okRow = await ok.getAttribute('data-row');
 
-    // Two different rows: the loading shot needs one whose children arrive,
-    // and folding the failing one back up to reuse it would take its error
-    // row away with it -- which is the behaviour, not a way to take a picture.
+    // Dos filas distintas: plegar la que falla para reusarla se llevaría su fila de error,
+    // que es el comportamiento correcto.
     await page.locator(`${PEREZOSA} [data-toggle="${okRow}"]`).click();
     await page.locator(`${PEREZOSA} [data-loading="${okRow}"]`).scrollIntoViewIfNeeded();
     await page.screenshot({ path: path.join(OUT, '32-table-children-loading.png') });
@@ -326,7 +294,6 @@ test.describe('showroom capture rig', () => {
     await page.locator(`${PEREZOSA} [data-failed="${failingRow}"]`).scrollIntoViewIfNeeded();
     await page.screenshot({ path: path.join(OUT, '33-table-children-failed.png') });
 
-    // Five thousand rows, and a window over them.
     await page.locator('[data-load-all]').click();
     await expect(page.locator('[data-loaded-count]')).toContainText('5000');
     await page.locator(VIRTUAL).scrollIntoViewIfNeeded();
@@ -334,15 +301,13 @@ test.describe('showroom capture rig', () => {
     await page.screenshot({ path: path.join(OUT, '34-table-virtual-top.png') });
     report.push(render('table page, five thousand rows windowed', await measure(page)));
 
-    // The same table a thousand rows down: the window moved and the header is
-    // still stuck to the top of the box.
+    // Mil filas más abajo: la ventana se movió y la cabecera sigue fija arriba.
     await page.locator(`${VIRTUAL} [data-scroll-box]`).evaluate((element) => {
       element.scrollTop = 32 * 1000;
     });
     await page.waitForTimeout(250);
     await page.screenshot({ path: path.join(OUT, '35-table-virtual-scrolled.png') });
 
-    // The paginator, on the second page.
     await page.locator(PAGINADA).scrollIntoViewIfNeeded();
     await page.locator(`${PAGINADA} [data-next-page] button`).click();
     await page.waitForTimeout(200);

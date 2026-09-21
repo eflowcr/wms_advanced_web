@@ -3,13 +3,12 @@ import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { expectNoAxeViolations } from '@ewms/testing';
 import { Banner, type FeedbackVariant } from './banner';
 
-/** The four variants, with the family each one paints with and its role. */
+/** Variante, familia con la que pinta y rol. */
 const VARIANTS: readonly (readonly [FeedbackVariant, string, string])[] = [
   ['success', 'success', 'status'],
   ['warning', 'warning', 'alert'],
   ['danger', 'danger', 'alert'],
-  // Info is called Info and is painted neutral. That pairing is the whole
-  // point of the table and the reason this row exists.
+  // Info se pinta neutral: por esta fila existe la tabla.
   ['info', 'neutral', 'status'],
 ];
 
@@ -124,8 +123,7 @@ describe('Banner', () => {
       await settle();
 
       expect(host.dismissed).toBe(1);
-      // Still on screen: whether the banner goes away is the consumer's call,
-      // because only the consumer knows whether the condition ended.
+      // Sigue en pantalla: sacarlo lo decide el consumidor.
       expect((fixture.nativeElement as HTMLElement).textContent).toContain('Recepción parcial');
     });
   });

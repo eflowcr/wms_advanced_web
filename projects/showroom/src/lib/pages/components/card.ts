@@ -22,7 +22,7 @@ interface Warehouse {
   readonly disabled: boolean;
 }
 
-/** The warehouse picker the sheet describes, the fourth one unavailable. */
+/** Selector de almacén de la ficha; el cuarto no está disponible. */
 const WAREHOUSES: readonly Warehouse[] = [
   { value: 'norte', name: 'Norte', meta: '4 muelles · 12 pasillos', disabled: false },
   { value: 'central', name: 'Central', meta: '9 muelles · 34 pasillos', disabled: false },
@@ -43,13 +43,12 @@ const MATRIX_STATES: readonly MatrixAxis[] = [
 ];
 
 /**
- * Hover forced with the same token the component's own rule uses, so the cell
- * is the component and not a drawing of it. The forcing lives on the page and
- * not in the widget, next to the classes a reviewer would compare it against.
+ * Hover forzado con el mismo token del componente. Vive en la página, no en el widget,
+ * junto a las clases con que se compara.
  */
 const FORCED_HOVER = '[&_[role=radio]]:border-(--color-border-strong)';
 
-/** VERIFIED AGAINST card.ts AND card-group.ts. */
+/** Verificada contra card.ts y card-group.ts. */
 const PROPS: readonly PropRow[] = [
   {
     name: 'card: optionValue',
@@ -118,14 +117,8 @@ const ANATOMY = [
 ] as const;
 
 /**
- * /design-system/components/card -- the sheet of `ewms-card` and
- * `ewms-card-group`.
- *
- * THE PAGE'S ONE MEASURED CLAIM IS THE TAB ORDER, and it is the right one to
- * measure: the sheet's whole ask is "the same group semantics as a radio", and
- * the part of that people quietly drop is that a group is ONE tab stop. A page
- * that only said so would be a promise; this one counts the elements that
- * carry `tabindex="0"` and shows the number.
+ * /design-system/components/card: ficha de ewms-card y ewms-card-group. Lo que se mide es
+ * que el grupo sea una sola parada de tabulador, como un radio: cuenta los tabindex 0.
  */
 @Component({
   selector: 'ewms-showroom-card',
@@ -161,7 +154,7 @@ export class ShowroomCard {
     initialValue: this.form.controls.almacen.value,
   });
 
-  /** How many tab stops the demo group really has, counted off the DOM. */
+  /** Paradas de tabulador reales del grupo, contadas en el DOM. */
   protected readonly tabStops = signal(NOT_MEASURED);
   protected readonly cardsInGroup = signal(NOT_MEASURED);
   protected readonly isOneStop = signal(false);
@@ -195,7 +188,7 @@ export class ShowroomCard {
     });
   }
 
-  /** The label of the warehouse the form holds, for the live readout. */
+  /** Etiqueta del almacén que tiene el formulario, para la lectura en vivo. */
   protected chosenLabel(): string {
     const value = this.chosen();
     return WAREHOUSES.find((warehouse) => warehouse.value === value)?.name ?? '(ninguno)';
@@ -213,7 +206,7 @@ export class ShowroomCard {
     return stateId === 'disabled';
   }
 
-  /** Empty unless the cell is the hover one; see FORCED_HOVER. */
+  /** Vacío salvo en la celda de hover; ver FORCED_HOVER. */
   protected forced(variantId: string, stateId: string): string {
     return variantId === 'option' && stateId === 'hover' ? FORCED_HOVER : '';
   }

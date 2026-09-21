@@ -1,17 +1,10 @@
 /**
- * The shell's host page against its own CSP.
- *
- * The CSP (style-src 'self', script-src 'self') blocks inline <style>,
- * inline <script>, style="" and on*="" -- silently: the page loads, and the
- * style or the handler simply does not apply. index.html is the one page
- * where people write that kind of markup by hand (the startup-failure notice
- * lives there), so this makes the mistake loud instead of invisible.
- *
- * Allowing an inline <style> by hash was tried and does not hold: the dev
- * server rewrites inline styles (it appends a source map), so the hash never
- * matches there. Styles for the host page go in a file under public/.
- *
- * Run with `npm run test:tools` (part of `npm test`).
+ * La página host del shell contra su propia CSP. La CSP (style-src y script-src 'self')
+ * bloquea en silencio <style> y <script> inline, style="" y on*="": la página carga y
+ * el estilo o el handler no se aplica. index.html es donde se escribe ese markup a mano
+ * (el aviso de fallo de arranque), así que esto vuelve ruidoso el error.
+ * Permitir un <style> por hash no aguanta: el servidor de desarrollo reescribe los
+ * estilos inline (les agrega un source map). Ver vault: i18n.md. `npm run test:tools`.
  */
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
@@ -32,7 +25,7 @@ export function stripHtmlComments(input) {
   return current;
 }
 
-// Comments dropped, as the browser does: they mention <style> and CSP too.
+// Sin comentarios, como hace el navegador: también mencionan <style> y la CSP.
 const html = stripHtmlComments(await readFile(path.join(ROOT, HOST_PAGE), 'utf8'));
 const csp = /<meta\s+http-equiv="Content-Security-Policy"\s+content="([^"]*)"/i.exec(html)?.[1];
 

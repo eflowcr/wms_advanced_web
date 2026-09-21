@@ -1,9 +1,6 @@
 <!--
-  A table wider than its column scrolls sideways, and a region that scrolls
-  must be reachable by keyboard: WCAG 2.1.1, axe scrollable-region-focusable.
-  Chromium hands a scroller a tab stop by itself, which is the browser
-  patching the page; the stop is declared here so it is ours, carries the
-  focus ring, and does not depend on a browser feature.
+  Una región con scroll debe alcanzarse con teclado (WCAG 2.1.1, axe scrollable-region-focusable).
+  Chromium le da parada de Tab solo; se declara acá para que sea nuestra y lleve anillo de foco.
 -->
 <div
   class="overflow-x-auto outline-none focus-visible:shadow-(--focus-ring-shadow)"

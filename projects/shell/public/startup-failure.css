@@ -1,27 +1,9 @@
 /*
- * STARTUP-FAILURE NOTICE -- the one exception to "every style comes from the
- * bundle and every value from tokens.css".
- *
- * The notice in index.html shows when the app could not start (i18n.md,
- * "Cuando el diccionario no carga", case B), so it cannot depend on anything
- * the app builds: not the bundle CSS, not tokens.css. Hence a static file,
- * copied as is, with raw values.
- *
- * Why a file and not a <style> in index.html:
- *   - the CSP (style-src 'self') blocks inline <style>;
- *   - allowing it by hash does not hold: the dev server rewrites inline
- *     styles (it appends a source map), so the hash never matches there.
- *
- * Raw values, but only values tokens.css defines as primitives; gate 10
- * checks it, so the notice cannot drift from the brand:
- *   #010f42 navy-7 (text)          #f6f7f8 navy-97 (canvas, text on blue)
- *   #4465ec blue-48 (action, focus) #3a56c9 blue-41 (action hover)
- * The family is the stack of the sans token, so it still reads when the font
- * did not load either.
- *
- * If this file is missing too (a deploy without public/), the notice still
- * shows, unstyled: `hidden` and the text are HTML, not CSS.
+ * Aviso de arranque fallido (caso B): no depende del bundle ni de tokens.css, y la CSP bloquea
+ * un <style> en línea. Solo primitivos de tokens.css, y cae a la pila sans si falla la fuente.
+ * Ver vault: 08-Sistema-de-Diseno/i18n. Sin este archivo el aviso se ve igual, sin estilo.
  */
+/* #010f42 navy-7 · #f6f7f8 navy-97 · #4465ec blue-48 · #3a56c9 blue-41 (compuerta 10). */
 .startup-failure:not([hidden]) {
   display: flex;
   justify-content: center;

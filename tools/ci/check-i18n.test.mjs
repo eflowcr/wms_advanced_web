@@ -1,8 +1,8 @@
 /**
- * Tests for gate 12's pure checks (ADR 0008). The keys-manager step is a CLI
- * run and is exercised by `npm run lint:i18n` itself.
+ * Pruebas de los controles puros de la regla 12 (ADR 0008). El paso de keys-manager es
+ * una CLI y lo ejercita `npm run lint:i18n`.
  *
- * Plain node:test, no Angular. Run with `npm run test:tools` (part of `npm test`).
+ * node:test sin Angular. `npm run test:tools` (parte de `npm test`).
  */
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';

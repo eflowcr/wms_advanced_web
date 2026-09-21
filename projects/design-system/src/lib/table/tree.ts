@@ -1,39 +1,25 @@
-/**
- * Aplanar el árbol y NADA MÁS: sin Angular, sin señales y sin DOM. Por eso es la
- * única parte de la tabla con spec propio -cada caso raro es una llamada a una
- * función pura con un valor esperado-, y por eso la virtualización sale sin
- * trucos: el CDK necesita una lista plana con largo conocido y acá está.
- */
+// Aplanar el árbol y nada más: función pura, sin Angular ni DOM. Ver vault: Tabla §4.
 
-/** Una fila lista para dibujar. La plantilla conoce esto, no el árbol. */
 export interface FlatRow<T> {
   readonly row: T;
-  /** 0 en una raíz. Alimenta `aria-level`, que es base 1 (level + 1). */
+  /** Base 0; `aria-level` es level + 1. */
   readonly level: number;
   readonly hasChildren: boolean;
   readonly expanded: boolean;
-  /** Cuántos hermanos tiene esta fila, ella incluida. `aria-setsize`. */
+  /** Hermanos, ella incluida (`aria-setsize`). */
   readonly setSize: number;
-  /** Posición base 1 entre sus hermanos. `aria-posinset`. */
+  /** Base 1 (`aria-posinset`). */
   readonly posInSet: number;
-  /** Los hijos perezosos vienen en camino. */
   readonly loading: boolean;
-  /** Los hijos perezosos fallaron; la fila ofrece reintentar. */
   readonly failed: boolean;
-  /** Lo que devolvió `trackBy`. Identifica la fila para expandir y seleccionar. */
+  /** Lo que devolvió `trackBy`. */
   readonly key: unknown;
 }
 
-/** Lo que `flattenTree` necesita saber del mundo. */
 export interface FlattenOptions<T> {
-  /**
-   * Los hijos ya disponibles, o `null` si no tiene. `undefined` es distinto de
-   * `null`: `undefined` es «tiene hijos y no llegaron», `null` es «es una hoja».
-   * Juntarlos escondería el toggle en todo padre perezoso o lo dibujaría en toda
-   * hoja.
-   */
+  /** `undefined` = tiene hijos y no llegaron; `null` = hoja. Juntarlos rompe el toggle. */
   children: (row: T) => readonly T[] | null | undefined;
-  /** Cierto cuando se sabe que una fila tiene hijos aunque no estén cargados. */
+  /** Sabe que hay hijos aunque no estén cargados. */
   hasChildren: (row: T) => boolean;
   key: (row: T) => unknown;
   expanded: ReadonlySet<unknown>;
@@ -41,12 +27,7 @@ export interface FlattenOptions<T> {
   failed: ReadonlySet<unknown>;
 }
 
-/**
- * Camina el árbol en profundidad y devuelve las filas visibles en orden. Los
- * descendientes de una fila plegada no están en el resultado: no se esconden con
- * CSS. Una fila fuera del DOM no la alcanza el Tab, no la lee un lector y no
- * cuenta para `aria-rowcount`, y las tres cosas serían erróneas.
- */
+/** Los descendientes de una fila plegada no están: fuera del DOM, no escondidos con CSS. */
 export function flattenTree<T>(
   roots: readonly T[],
   options: FlattenOptions<T>,
@@ -76,12 +57,8 @@ function walk<T>(
       expanded,
       setSize,
       posInSet: index + 1,
-      /*
-       * LAS DOS DEPENDEN DE `expanded`, y no es redundancia: los conjuntos viven
-       * más que el gesto -una carga en vuelo guarda su clave, un fallo la guarda
-       * hasta que alguien reintente-, así que leídos solos ponen un spinner o una
-       * fila roja bajo un padre dibujado plegado.
-       */
+      // Dependen de `expanded`: los conjuntos sobreviven al gesto y pintarían
+      // bajo un padre plegado.
       loading: expanded && options.loading.has(key),
       failed: expanded && options.failed.has(key),
       key,
@@ -93,12 +70,7 @@ function walk<T>(
   });
 }
 
-/**
- * Todas las claves del árbol, raíces y descendientes: lo que necesita «expandir
- * todo». Camina el árbol ENTERO y no las filas visibles, que es el punto: las
- * visibles de un árbol plegado son las raíces, y expandirlas dejaría a sus hijos
- * plegados.
- */
+/** Todas las claves del árbol entero, no las visibles: lo que necesita «expandir todo». */
 export function expandableKeys<T>(
   roots: readonly T[],
   options: Pick<FlattenOptions<T>, 'children' | 'hasChildren' | 'key'>,

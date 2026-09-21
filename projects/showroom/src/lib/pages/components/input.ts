@@ -23,14 +23,9 @@ import { TokenValue } from '../../ui/token-value';
 import { formatHeight, rectOf, sameHeight } from './measure';
 
 /**
- * The matrix's row axis: the four states that are REAL INPUTS.
- *
- * Focus is deliberately absent. The field's border colour is an inline style
- * bound to the component's own focus signal, and an inline declaration cannot
- * be overridden by the wrapper utility the Button page uses to hold hover
- * still -- so a forced "Focus" cell here would show the ring and the WRONG
- * border, which is worse than not showing it. Focus is demonstrated instead
- * where it can be real: a field you reach with Tab, in block 3.
+ * Solo estados que son entradas reales. Sin Focus: el borde es un estilo en línea
+ * atado a la señal de foco y el envoltorio no lo puede pisar; mostraría el anillo con
+ * el borde equivocado. El foco real se muestra con Tab en el bloque 3.
  */
 const STATES: readonly MatrixAxis[] = [
   { id: 'default', label: 'Default' },
@@ -88,10 +83,7 @@ const TYPES: readonly TypeSample[] = [
   },
 ];
 
-/**
- * VERIFIED AGAINST input.ts, not against the vault sheet. Two rows exist
- * because the sheet was wrong and the code is right -- see block 8.
- */
+/** Verificada contra input.ts, no contra la ficha: dos filas corrigen la ficha (bloque 8). */
 const PROPS: readonly PropRow[] = [
   {
     name: 'label',
@@ -198,7 +190,7 @@ const ANATOMY = [
   { part: 'Icono decorativo (prefijo), los tres tamaños', token: '--size-icon-sm' },
 ] as const;
 
-/** A control height, measured against the Button of the same size. */
+/** Altura de control, medida contra el Button del mismo tamaño. */
 interface SizeSample {
   readonly size: FieldSize;
   readonly label: string;
@@ -208,13 +200,8 @@ interface SizeSample {
 }
 
 /**
- * /design-system/components/input -- the sheet of `ewms-input`.
- *
- * THE DEMO IS A REAL REACTIVE FORM, and that is not decoration. The component
- * is a `ControlValueAccessor`: what it owes is that `formControlName` reaches
- * it, that typing updates the control and that blur marks it touched. An input
- * shown on its own proves none of those, so the page shows the control's value
- * and its touched flag live underneath.
+ * /design-system/components/input: ficha de ewms-input. La demo es un formulario reactivo
+ * real y muestra en vivo el valor y el touched, que es lo que el CVA debe cumplir.
  */
 @Component({
   selector: 'ewms-showroom-input',
@@ -240,25 +227,22 @@ export class ShowroomInput {
   protected readonly props = PROPS;
   protected readonly anatomy = ANATOMY;
 
-  /**
-   * The demo form. A real `FormGroup`, with a control that the Input binds to
-   * through `formControlName` and nothing else.
-   */
+  /** FormGroup real; el Input se enlaza solo por formControlName. */
   protected readonly form = new FormGroup({
     sku: new FormControl('SKU-04871-B', { nonNullable: true }),
     clave: new FormControl('', { nonNullable: true }),
     busqueda: new FormControl('', { nonNullable: true }),
   });
 
-  /** The control's value, straight from the form -- not from a local copy. */
+  /** Valor tomado del formulario, no de una copia local. */
   protected readonly skuValue = toSignal(this.form.controls.sku.valueChanges, {
     initialValue: this.form.controls.sku.value,
   });
 
-  /** Flipped by the demo's own blur, which is where onTouched fires. */
+  /** Lo cambia el blur de la demo, que es donde se dispara onTouched. */
   protected readonly touched = signal(false);
 
-  /** How many times each prefixed output has fired, so the rename is visible. */
+  /** Veces que se disparó cada salida con prefijo, para que se vea el renombre. */
   protected readonly focusCount = signal(0);
   protected readonly blurCount = signal(0);
 
@@ -279,11 +263,7 @@ export class ShowroomInput {
   ].join('\n');
 
   constructor() {
-    /*
-     * The two heights are measured off the rendered controls and compared
-     * here. "Input and Button share the control scale" is the claim; a page
-     * that printed 40 next to 40 would keep printing it after they diverged.
-     */
+    // Se miden y comparan las dos alturas: Input y Button comparten la escala de control.
     afterNextRender(() => {
       this.measured.update((samples) =>
         samples.map((sample) => {

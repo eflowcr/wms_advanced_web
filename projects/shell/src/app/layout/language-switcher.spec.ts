@@ -24,7 +24,7 @@ function control(fixture: ComponentFixture<LanguageSwitcher>): HTMLSelectElement
   return (fixture.nativeElement as HTMLElement).querySelector('select') as HTMLSelectElement;
 }
 
-/** What a person does: picks an option in the native control. */
+/** Lo que hace una persona: elige una opción en el control nativo. */
 async function choose(fixture: ComponentFixture<LanguageSwitcher>, value: Language): Promise<void> {
   const select = control(fixture);
   select.value = value;

@@ -22,7 +22,7 @@ const DICTIONARIES = {
   },
 };
 
-/** In-memory stand-in for localStorage. */
+/** Reemplazo de localStorage en memoria. */
 class MemoryStorage implements Storage {
   private readonly items = new Map<string, string>();
   get length(): number {
@@ -45,7 +45,7 @@ class MemoryStorage implements Storage {
   }
 }
 
-/** Storage disabled, as in some private-browsing modes: every access throws. */
+/** Almacenamiento deshabilitado, como en algunos modos privados: todo acceso lanza. */
 class BrokenStorage extends MemoryStorage {
   override getItem(): string | null {
     throw new DOMException('denied', 'SecurityError');
@@ -59,7 +59,7 @@ function browserLanguage(value: string): void {
   vi.spyOn(window.navigator, 'language', 'get').mockReturnValue(value);
 }
 
-/** Leaving a language out of the dictionaries makes its load fail. */
+/** Dejar un idioma fuera de los diccionarios hace fallar su carga. */
 async function start(
   storage: Storage = new MemoryStorage(),
   dictionaries: Partial<typeof DICTIONARIES> = DICTIONARIES,
@@ -224,7 +224,7 @@ describe('LanguageService', () => {
       expect(service.active()).toBe('es');
       expect(document.documentElement.lang).toBe('es');
       expect(service.unavailable()).toBe('en');
-      // The preference is the user's; a dictionary failing today does not erase it.
+      // La preferencia es del usuario: que hoy falle un diccionario no la borra.
       expect(storage.getItem(LANGUAGE_STORAGE_KEY)).toBe('en');
     });
 

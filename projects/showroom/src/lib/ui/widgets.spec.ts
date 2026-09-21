@@ -98,8 +98,7 @@ describe('TokenValue', () => {
     const chip = element.querySelector<HTMLElement>('[data-swatch]');
     expect(chip?.style.backgroundColor).toBe('var(--color-text-primary)');
 
-    // A token whose value is not a colour gets no chip: an empty outlined box
-    // reads as "this colour is blank", which is a different and wrong claim.
+    // Un token que no es color no lleva muestra: una caja vacía se leería como «color en blanco».
     fixture.componentInstance.token.set('--not-a-colour');
     await fixture.whenStable();
     expect(element.querySelector('[data-swatch]')).toBeNull();
@@ -110,9 +109,7 @@ describe('TokenValue', () => {
     fixture.componentInstance.token.set('--a-shadow');
     fixture.componentInstance.swatch.set(true);
     await fixture.whenStable();
-    // The declaration holds two colours and two lengths. It is syntactically
-    // valid to the parser purely because it contains var(), which is exactly
-    // the trap this has to avoid.
+    // Dos colores y dos longitudes: el parser la acepta solo porque contiene var(), la trampa a evitar.
     expect(element.querySelector('[data-swatch]')).toBeNull();
   });
 

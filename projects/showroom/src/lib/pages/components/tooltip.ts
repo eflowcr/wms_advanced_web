@@ -24,11 +24,8 @@ const POSITIONS: readonly PositionSample[] = [
 ];
 
 /**
- * VERIFIED AGAINST tooltip.ts.
- *
- * The first row's name is what a consumer writes on the element, which is the
- * selector and not the field name -- `ewmsTooltip`, aliased onto `text`. The
- * table prints the thing you type.
+ * Verificada contra tooltip.ts. La primera fila es el selector que escribe el consumidor
+ * (ewmsTooltip, alias de text), no el nombre del campo.
  */
 const PROPS: readonly PropRow[] = [
   {
@@ -71,12 +68,8 @@ const ANATOMY = [
 ] as const;
 
 /**
- * /design-system/components/tooltip -- the sheet of `ewmsTooltip`.
- *
- * A DIRECTIVE, not a component, and the page is built around that: there is no
- * `<ewms-tooltip>` to render on its own, so every demo is the directive
- * applied to a host that already exists, and the property table documents what
- * you write on that host.
+ * /design-system/components/tooltip: ficha de ewmsTooltip. Es una directiva, no un
+ * componente: cada demo la aplica sobre un anfitrión existente.
  */
 @Component({
   selector: 'ewms-showroom-tooltip',
@@ -90,7 +83,7 @@ export class ShowroomTooltip {
   protected readonly props = PROPS;
   protected readonly anatomy = ANATOMY;
 
-  /** The switch of the `tooltipDisabled` demo, flipped from the page. */
+  /** Interruptor de la demo de tooltipDisabled. */
   protected readonly suppressed = signal(false);
 
   protected readonly snippet = [

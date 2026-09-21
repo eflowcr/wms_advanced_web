@@ -5,33 +5,21 @@ import { ArrayTableSource } from '@ewms/design-system';
 import { EXPEDICIONES, type ExpedicionRow } from './expediciones';
 
 /**
- * Las fuentes del lote D, todas sintéticas y todas en memoria.
- *
- * NADA DE HTTP Y NADA DE DATOS REALES. Lo que estas clases imitan es el
- * *tiempo* de una fuente remota —un hijo que tarda, un hijo que falla, una
- * página que llega— sin que exista petición alguna. Una demo con red sería una
- * demo que se cae cuando se corta, y el catálogo tiene que poder verse offline.
+ * Fuentes del lote D, sintéticas y en memoria, sin HTTP: imitan el tiempo de una
+ * fuente remota (hijo que tarda, hijo que falla) y el catálogo se ve sin red.
  */
 
 /** Cuánto tarda en «llegar» un hijo perezoso. Suficiente para verlo. */
 const RETRASO_HIJOS = 900;
 
-/**
- * Las cabeceras solas: la demo de detalle y menú no despliega el árbol, porque
- * lo que enseña es el panel y el menú, no la jerarquía.
- */
+/** Solo cabeceras: la demo de detalle y menú enseña el panel, no la jerarquía. */
 export const CABECERAS: readonly ExpedicionRow[] = EXPEDICIONES.map(
   ({ hijos: _sinHijos, ...cabecera }) => cabecera,
 );
 
 /**
- * Las acciones de una fila.
- *
- * `Anular` es la única coloreada y la última, separada del resto: es la
- * destructiva, y ponerla pegada a `Duplicar` es cómo se anula una expedición
- * queriendo copiarla. `Imprimir` está deshabilitada en la demo para que se vea
- * que una entrada no disponible se queda a la vista —es información— y fuera
- * del recorrido de las flechas.
+ * Anular, la destructiva, va última y separada: pegada a Duplicar se anula queriendo
+ * copiar. Imprimir está deshabilitada para mostrar que queda visible y fuera de las flechas.
  */
 export const ACCIONES_FILA: readonly MenuItem[] = [
   { id: 'ver', label: 'Ver detalle', icon: 'eye' },
@@ -41,14 +29,8 @@ export const ACCIONES_FILA: readonly MenuItem[] = [
 ];
 
 /**
- * Los hijos de una cabecera, con retraso, y los de una con incidencia no
- * llegan nunca.
- *
- * `hijos` como FUNCIÓN que devuelve un Observable: la tabla se encarga de la
- * fila «Cargando…» mientras tanto, y de la fila «No se pudo cargar» con su
- * botón de reintentar si el Observable falla. El consumidor no escribe ninguno
- * de esos dos estados. Falla siempre la misma cabecera porque un catálogo que
- * sólo enseña el camino feliz no enseña el componente.
+ * Hijos con retraso; los de una cabecera con incidencia fallan siempre. La tabla
+ * pinta «Cargando…» y «No se pudo cargar» con reintento sin que el consumidor escriba nada.
  */
 export function hijosPerezosos(row: ExpedicionRow): Observable<readonly ExpedicionRow[]> {
   const original = EXPEDICIONES.find((expedicion) => expedicion.id === row.id);
@@ -86,26 +68,17 @@ export function generarUbicaciones(cuantas: number): readonly UbicacionRow[] {
 }
 
 /**
- * Cuántas trae la demo antes de que se le pida el lote grande.
- *
- * LA PÁGINA NO CONSTRUYE CINCO MIL FILAS AL ABRIRSE. Sesenta ya se
- * desplazan y ya enseñan la ventana; las cinco mil se cargan con un botón,
- * porque una ficha del catálogo que cuesta cinco mil `<tr>` nada más entrar es
- * una ficha que nadie abre dos veces.
+ * Filas iniciales: sesenta ya desplazan y muestran la ventana. Las cinco mil se
+ * cargan con un botón para no hacer lenta la apertura de la ficha.
  */
 export const UBICACIONES_MUESTRA = 60;
 
-/** El tamaño a partir del cual la ventana deja de ser un lujo. */
+/** Tamaño a partir del cual la ventana virtual se vuelve necesaria. */
 export const UBICACIONES_TOTAL = 5000;
 
 /**
- * Una fuente que pagina de verdad: devuelve una página y el total, y por eso
- * la tabla monta el paginador.
- *
- * SIN RETRASO ARTIFICIAL, a diferencia de los hijos perezosos. Allí la espera
- * ES lo que se enseña —la fila «Cargando…»—; aquí sólo serviría para que la
- * página tuviera, durante medio segundo, controles que todavía no existen, y
- * el recorrido de tabulador del e2e los encontró sin haberlos medido.
+ * Pagina de verdad (página + total), así la tabla monta el paginador. Sin retraso:
+ * los controles aparecerían tarde y el recorrido de tabulador del e2e fallaba.
  */
 export class FuentePaginada implements TableSource<UbicacionRow> {
   private readonly base = new ArrayTableSource<UbicacionRow>(

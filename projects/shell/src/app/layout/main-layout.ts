@@ -40,37 +40,9 @@ import { MENU, MENU_DESTINATIONS, menuEntryFor, routeMatches, type MenuEntry } f
 import { MAX_OPEN_TABS, TabsService } from './tabs.service';
 
 /**
- * THE APP SHELL (DS-5). Header, navigation, document tabs, and the one place
- * every screen renders inside.
- *
- * IT IS THE ARMADO, NOT A COMPONENT. `App-Shell.md` settled this: the pieces
- * that know nothing about the application -- the rail, the tabs, the crumbs --
- * are the design system's; what knows the router, the real menu, the
- * credentials and the active warehouse is this file, and it lives in the
- * shell. That is why the App Shell is not in the catalogue and the navigation
- * pieces are.
- *
- * IT STILL MOUNTS EXACTLY ONE OF EACH:
- *
- *   - ONE keyboard listener (`ewmsShortcutsHost`), inherited from the
- *     provisional layout this replaces and NOT duplicated. `lint:shortcuts`
- *     checks that claim rather than trusting it.
- *   - ONE toast outlet, for the same reason: two aria-live regions announce
- *     every message twice.
- *
- * WHAT IT ADDS THAT THE PROVISIONAL HEADER DID NOT HAVE, and each of them
- * closes something that was written down as missing:
- *
- *   - A SKIP LINK, first in the DOM (WCAG 2.4.1). With a menu of sixteen
- *     destinations, a keyboard user without one pays the whole navigation on
- *     every screen. It is also half of what closes the "5 tabs to the search"
- *     gap; `/` is the other half.
- *   - THE FOCUS MOVES TO THE `h1` ON EVERY ROUTE CHANGE, and the new title is
- *     announced by a live region. A browser does neither in a single-page
- *     application, so without this a screen-reader user hears nothing at all
- *     when a page changes.
- *   - THE HEADER'S SEARCH FIELD IS WHERE `/` LANDS when the screen showing did
- *     not claim the action for itself.
+ * El App Shell (DS-5): header, navegación y pestañas. Es del shell y no del design
+ * system porque conoce router y menú. Un solo host de teclado y un solo toast outlet
+ * (lo verifica `lint:shortcuts`). Ver vault: 08-Sistema-de-Diseno/Componentes/App-Shell.
  */
 @Component({
   imports: [
@@ -90,19 +62,9 @@ import { MAX_OPEN_TABS, TabsService } from './tabs.service';
   selector: 'app-main-layout',
   templateUrl: './main-layout.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  /*
-   * The design system's texts and formats, PROVIDED ONCE for the whole
-   * application -- and provided HERE rather than in `appConfig`.
-   *
-   * `appConfig` is eager: anything it imports lands in the initial bundle, and
-   * importing the design system's barrel from there dragged the whole library
-   * in, initial budget and all. This component is lazily loaded like every
-   * other route, so the cost lands where the rest of the design system already
-   * is.
-   *
-   * Every routed page renders inside this one, so "once for the whole
-   * application" still holds.
-   */
+  // Acá y no en `appConfig`: importar el barril del design system desde lo eager lo
+  // metía entero en el bundle inicial. Este layout es lazy y envuelve toda ruta,
+  // así que sigue siendo una sola vez para toda la aplicación.
   providers: [provideEwmsDesignSystem()],
 })
 export class MainLayout {
@@ -122,18 +84,18 @@ export class MainLayout {
   private readonly main = viewChild<ElementRef<HTMLElement>>('main');
   private readonly searchField = viewChild<ElementRef<HTMLInputElement>>('headerSearch');
 
-  /** Collapsed rail or expanded panel. In memory, like everything else here. */
+  /** Rail colapsado o panel expandido; solo en memoria. */
   protected readonly railExpanded = signal(true);
 
-  /** What the live region says after a route change. */
+  /** Lo que anuncia la región viva tras un cambio de ruta. */
   protected readonly routeAnnouncement = signal('');
 
-  /** The language, as a signal, so every label below redraws when it changes. */
+  /** Leída por cada etiqueta de abajo para redibujarse al cambiar de idioma. */
   private readonly activeLang = toSignal(this.transloco.langChanges$, {
     initialValue: this.transloco.getActiveLang(),
   });
 
-  /** The URL, as a signal. `startWith` because the first navigation is done. */
+  /** `startWith` porque la primera navegación ya terminó al construirse. */
   private readonly url = toSignal(
     this.router.events.pipe(
       filter((event): event is NavigationEnd => event instanceof NavigationEnd),
@@ -143,30 +105,20 @@ export class MainLayout {
     { initialValue: this.router.url },
   );
 
-  /**
-   * The menu, translated.
-   *
-   * `activeLang()` is read so this recomputes on a language change: menu.ts
-   * holds keys, not words, and the whole point of that is that switching
-   * language redraws the navigation without a reload.
-   */
+  /** menu.ts guarda claves; leer `activeLang()` redibuja el menú sin recargar. */
   protected readonly navItems = computed<readonly NavItem[]>(() => {
     this.activeLang();
     return MENU.map((entry) => this.toNavItem(entry));
   });
 
-  /** Which menu entry is the page showing. */
   protected readonly activeId = computed(() => menuEntryFor(this.url())?.id ?? null);
 
   protected readonly tabs = computed<readonly Tab[]>(() => this.tabsService.tabs());
   protected readonly activeTabId = computed(() => this.tabsService.activeRoute());
 
   /**
-   * The crumbs of the page showing: its group, then itself.
-   *
-   * Built here and not by each screen, because the trail is a fact about the
-   * MENU and the menu lives here. A domain screen with a deeper trail of its
-   * own will extend this in DS-6.
+   * Inicio › grupo › pantalla. Se arma acá porque la miga es un hecho del menú;
+   * una pantalla con miga más profunda lo extiende en DS-6.
    */
   protected readonly crumbs = computed<readonly Crumb[]>(() => {
     this.activeLang();
@@ -186,14 +138,10 @@ export class MainLayout {
     return trail;
   });
 
-  /**
-   * What THIS page is, as a favourite: THE ROUTE, and nothing else. The star
-   * takes it as it is; what the route is called is resolved by the block when
-   * it draws (`EWMS_FAVORITE_LABELS`), so it is never handed over from here.
-   */
+  /** El favorito es solo la ruta; su nombre lo resuelve `EWMS_FAVORITE_LABELS` al dibujar. */
   protected readonly pageRoute = computed(() => this.url().split('?')[0] ?? '/');
 
-  /** What the page showing is called: for its tab and for the announcement. */
+  /** Nombre de la página, para su pestaña y para el anuncio. */
   private readonly pageTitle = computed(() => {
     this.activeLang();
     const active = this.activeId();
@@ -202,31 +150,15 @@ export class MainLayout {
   });
 
   constructor() {
-    /*
-     * ROUTE CHANGED: open the tab, move the focus, announce the title.
-     *
-     * All three in one effect because all three are the same event, and
-     * splitting them is how one of them gets forgotten. The browser does none
-     * of them in a single-page application.
-     */
+    // Cambio de ruta: abrir la pestaña, mover el foco y anunciar el título, en un
+    // solo efecto para que ninguno se olvide. En una SPA el navegador no hace ninguno.
     effect(() => {
       const url = this.url();
       const title = this.pageTitle();
 
-      /*
-       * `untracked`, AND IT IS LOAD-BEARING RATHER THAN TIDY.
-       *
-       * `TabsService.activate` writes `active` and `open` -- and, to decide
-       * what to write, it READS them. Called straight from an effect body,
-       * those reads become dependencies of this effect, and the writes then
-       * re-run it: an infinite synchronous loop that locks the tab before the
-       * first paint. It was found by opening the application, which is the
-       * only place it shows -- every unit test drives the service directly.
-       *
-       * What this effect genuinely depends on is the two lines above it: the
-       * url and the page it resolves to. Everything else is a consequence, and
-       * `untracked` is how that distinction is written down.
-       */
+      // `untracked` es obligatorio: `activate` lee y escribe `active`/`open`, y sin
+      // él el efecto se relanza a sí mismo en un bucle síncrono que cuelga la
+      // pestaña antes del primer pintado. Las pruebas unitarias no lo ven.
       untracked(() => {
         const opened = this.tabsService.activate(url, title, url !== '/');
         if (!opened) {
@@ -235,7 +167,7 @@ export class MainLayout {
             this.transloco.translate('shell.tabs.limit', { max: MAX_OPEN_TABS }),
           );
         } else {
-          // Keep an already-open tab's label in step with the language.
+          // Una pestaña ya abierta sigue al idioma actual.
           this.tabsService.relabel(url, title);
         }
 
@@ -244,18 +176,9 @@ export class MainLayout {
       });
     });
 
-    /*
-     * A LANGUAGE CHANGE RE-LABELS EVERY OPEN TAB, not just the active one.
-     *
-     * The effect above keeps the CURRENT route's tab in step, which was enough
-     * until somebody switched language with four documents open: the active
-     * tab turned Spanish and the other three stayed English. A strip in two
-     * languages is exactly the half-translated screen ADR 0008 exists to
-     * prevent, and it was found by switching the language and looking.
-     *
-     * The shell is the only thing that can do this: it owns the menu, so it is
-     * the only thing that knows what a route is CALLED.
-     */
+    // Un cambio de idioma reetiqueta todas las pestañas abiertas, no solo la activa:
+    // una tira en dos idiomas es la pantalla a medio traducir que evita el ADR 0008.
+    // Solo el shell puede: es dueño del menú, que sabe cómo se llama cada ruta.
     effect(() => {
       this.activeLang();
       untracked(() => {
@@ -268,32 +191,10 @@ export class MainLayout {
       });
     });
 
-    /*
-     * `/` LANDS IN THE HEADER'S SEARCH FIELD -- WHEN NOBODY ELSE CLAIMED IT.
-     *
-     * THE SHELL DOES NOT REGISTER `search`, AND THAT IS THE WHOLE TRICK.
-     *
-     * The obvious version -- take the action, give it back when a screen wants
-     * it -- cannot be made to work, and the reason is worth writing down. The
-     * engine THROWS on a second registration, deliberately: two handlers for
-     * `search` is two screens disagreeing about what `/` does. So the shell
-     * would have to release the action before the incoming screen asks for it,
-     * and there is no moment where that is true. THIS APPLICATION IS ZONELESS:
-     * a routed component is created by the change detection that FOLLOWS
-     * `NavigationEnd`, not before it, so the shell won the race against every
-     * screen and the showroom's pattern pages threw on load. Two attempts at
-     * ordering it failed before it was clear the shape was wrong, not the
-     * timing.
-     *
-     * What works is asking the engine what it already knows. It publishes what
-     * it decided about every keystroke, and `unregistered` means exactly
-     * "this WAS the search binding and nobody was listening". The shell
-     * answers those and only those.
-     *
-     * No registration, no race, no conflict -- and the rule the comanda asks
-     * for, stated once in code: `/` goes to the screen's own field when it has
-     * one, and to the header's when it does not.
-     */
+    // `/` va al buscador del header solo si ninguna pantalla lo reclamó. El shell
+    // no registra `search` (el motor lanza ante un doble registro y, sin zonas, no
+    // hay momento para soltarlo): contesta solo los eventos `unregistered`.
+    // Ver vault: 08-Sistema-de-Diseno/Componentes/App-Shell.
     this.shortcuts.events.pipe(takeUntilDestroyed()).subscribe((event) => {
       if (event.action === 'search' && event.outcome === 'unregistered') {
         this.focusSearch();
@@ -302,22 +203,8 @@ export class MainLayout {
   }
 
   /**
-   * THE SKIP LINK GOES TO `main`, AND THE ROUTE CHANGE GOES TO THE `h1`.
-   *
-   * Two different jobs, and conflating them cost the comanda's own number.
-   *
-   *   The route change has to say WHERE YOU ARE, so it lands on the heading
-   *   that names the page.
-   *
-   *   The skip link has to say TAB ON FROM HERE, so it lands on the start of
-   *   the content -- and `main` is the start. Landing on the heading instead
-   *   skips whatever sits before it inside the content, which on the showroom
-   *   is its entire sidebar, search field included: the skip link took you
-   *   PAST the thing you were skipping to.
-   *
-   * With `main` as the target, the catalogue's search is three presses from
-   * the top of the document -- Tab, Enter, Tab, Tab -- which is the number the
-   * comanda asks for and which the provisional header could not reach.
+   * El skip link va a `main`, no al `h1`: al `h1` se saltaba el sidebar del showroom
+   * con su buscador. Así el buscador queda a tres pulsaciones. Ver vault: App-Shell.
    */
   protected onSkip(event: Event): void {
     event.preventDefault();
@@ -338,7 +225,7 @@ export class MainLayout {
     void this.router.navigateByUrl(tab.id);
   }
 
-  /** Closing a tab navigates to the neighbour; closing the last goes home. */
+  /** Cerrar navega a la vecina; cerrar la última va al inicio. */
   protected onTabClose(tab: Tab): void {
     const next = this.tabsService.close(tab.id);
     void this.router.navigateByUrl(next ?? '/');
@@ -354,17 +241,13 @@ export class MainLayout {
     this.railExpanded.set(expanded);
   }
 
-  /** The star of the page showing, for the header. */
   protected favoritesCount(): number {
     return this.favorites.count();
   }
 
   /**
-   * THE FOCUS GOES TO THE PAGE'S `h1`, or to `main` when the page has none.
-   *
-   * `queueMicrotask` because the outlet has not drawn the new component at the
-   * moment the navigation ends: focusing here would land on the OLD heading,
-   * which is worse than not moving at all.
+   * Foco al `h1` de la página, o a `main` si no tiene. `queueMicrotask` porque al
+   * terminar la navegación el outlet todavía muestra el encabezado viejo.
    */
   private focusPage(): void {
     queueMicrotask(() => {
@@ -374,12 +257,8 @@ export class MainLayout {
       if (target === undefined || target === null) {
         return;
       }
-      /*
-       * AN `h1` IS NOT FOCUSABLE UNLESS SOMEBODY MAKES IT SO, and setting the
-       * attribute here rather than on twenty-five pages is the point: a page
-       * that forgot it would silently drop the focus of everyone arriving.
-       * `-1` keeps it out of the Tab order, so nothing else changes.
-       */
+      // Un `h1` no es focalizable: se le pone acá y no en veinticinco páginas, que
+      // podrían olvidarlo. `-1` lo deja fuera del orden de Tab.
       if (!target.hasAttribute('tabindex')) {
         target.setAttribute('tabindex', '-1');
       }
@@ -393,9 +272,8 @@ export class MainLayout {
       label: this.transloco.translate(entry.labelKey),
       icon: entry.icon,
     };
-    // Spread rather than `route: undefined`: with `exactOptionalPropertyTypes`
-    // an absent optional and a present `undefined` are not the same type, and
-    // the distinction is what keeps "a group has no route" honest.
+    // Spread y no `route: undefined`: con `exactOptionalPropertyTypes` no son el
+    // mismo tipo, y esa diferencia sostiene que un grupo no tiene ruta.
     return {
       ...base,
       ...(entry.route === undefined ? {} : { route: entry.route }),
@@ -405,17 +283,11 @@ export class MainLayout {
     };
   }
 
-  /**
-   * What the breadcrumbs' fold is called, with the count folded in.
-   *
-   * An arrow function held as a field, not built in the template: a new
-   * closure on every change detection would make the input look changed every
-   * time and redraw the trail for nothing.
-   */
+  /** Campo y no closure en la plantilla: uno nuevo por detección redibujaría las migas. */
   protected readonly expandCrumbsLabel = (hidden: number): string =>
     this.transloco.translate('shell.breadcrumbs.expand', { hidden });
 
-  /** The header's search field, focused by the `/` shortcut. */
+  /** Destino del atajo `/`. */
   protected focusSearch(): void {
     this.searchField()?.nativeElement.focus();
   }

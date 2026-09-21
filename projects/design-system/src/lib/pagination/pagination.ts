@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 import { IconButton } from '../icon-button/icon-button';
 
-/** Las palabras que necesita el paginador. La Tabla le pasa las suyas. */
+/** La Tabla le pasa las suyas. */
 export interface PaginationMessages {
   readonly previousPage: string;
   readonly nextPage: string;
@@ -10,13 +10,8 @@ export interface PaginationMessages {
 }
 
 /**
- * Anterior, siguiente y dónde estás.
- *
- * COMPONENTE PROPIO y no una pieza de la tabla: una lista de cards, un log y una
- * cola de picking paginan, y ninguno es una tabla. La tabla es su primer consumidor.
- * A PROPÓSITO NO ES UNA LISTA DE NÚMEROS DE PÁGINA: eso necesita saber cuántas hay
- * -y una fuente puede no contar (`total: null`)- y una regla para elidir el medio
- * que nadie pidió. Anterior y siguiente funcionan sepa lo que sepa la fuente.
+ * Aparte de la tabla: cards, logs y colas de picking también paginan. Sin números de página a
+ * propósito: exigen un total, que una fuente puede no dar (`total: null`).
  */
 @Component({
   selector: 'ewms-pagination',
@@ -26,18 +21,16 @@ export interface PaginationMessages {
   host: { class: 'block' },
 })
 export class Pagination {
-  /** Base cero, como todo lo que cuenta páginas en esta librería. */
+  /** Base cero, como en toda la librería. */
   readonly page = input.required<number>();
 
-  /** Cuántas páginas hay. Sin eso el componente no se pinta. */
   readonly pageCount = input.required<number>();
 
-  /** Cuántas filas coincidieron, para el texto al lado de los botones. */
   readonly total = input<number | null>(null);
 
   readonly messages = input.required<PaginationMessages>();
 
-  /** Base cero, como `page`. */
+  /** Base cero. */
   readonly pageChange = output<number>();
 
   protected readonly humanPage = computed(() => this.page() + 1);

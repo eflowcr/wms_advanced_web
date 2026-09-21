@@ -4,12 +4,8 @@ import { DemoFrame } from '../../ui/demo-frame';
 import { TokenValue } from '../../ui/token-value';
 
 /**
- * One step of the scale.
- *
- * `lineHeight` and `weight` may name a token that does not exist. That is not
- * an oversight in this page: tokens.css records three line-heights and the
- * mono weight as undecided, and the row stays with the gap visible rather than
- * disappearing or being filled in with a guess.
+ * Un paso de la escala. `lineHeight` y `weight` pueden nombrar un token inexistente: tokens.css
+ * deja sin decidir tres interlineados y el peso mono, y la fila muestra el hueco sin adivinar.
  */
 interface ScaleStep {
   readonly variant: TextVariant;
@@ -19,7 +15,7 @@ interface ScaleStep {
   readonly size: string;
   readonly weight: string;
   readonly lineHeight: string;
-  /** Tokens this step knowingly does not have. */
+  /** Tokens que este paso no tiene, a sabiendas. */
   readonly pending: readonly string[];
 }
 
@@ -97,12 +93,8 @@ const SCALE: readonly ScaleStep[] = [
 ];
 
 /**
- * /design-system/foundations/typography — the scale, rendered at its real size.
- *
- * The samples go through the real `ewms-text`, so what is on screen is the
- * component and not a copy of its styles. Sizes, weights and line-heights are
- * read live; the four values tokens.css leaves undecided are shown as the gaps
- * they are.
+ * La escala tipográfica a tamaño real, a través del `ewms-text` real. Tamaños, pesos e
+ * interlineados se leen en vivo; los cuatro valores sin decidir se muestran como huecos.
  */
 @Component({
   selector: 'ewms-showroom-typography',

@@ -35,7 +35,7 @@ const MATRIX_STATES: readonly MatrixAxis[] = [
   { id: 'value', label: 'Qué pasa con el valor' },
 ];
 
-/** The matrix is a table of facts, because these states cannot be held still. */
+/** La matriz es una tabla de hechos: estos estados no se pueden congelar. */
 const STATE_FACTS: Readonly<Record<string, Readonly<Record<string, string>>>> = {
   idle: {
     where: 'Nada. El panel no está en el documento.',
@@ -64,7 +64,7 @@ const STATE_FACTS: Readonly<Record<string, Readonly<Record<string, string>>>> = 
   },
 };
 
-/** VERIFIED AGAINST search-select.ts. */
+/** Verificada contra search-select.ts. */
 const PROPS: readonly PropRow[] = [
   {
     name: 'source',
@@ -147,12 +147,8 @@ const ANATOMY = [
 ] as const;
 
 /**
- * /design-system/components/search-select -- the sheet of
- * `ewms-search-select`, and the deliverable of REQ-FE-DS3-001.
- *
- * THE PAGE LEADS WITH THE SCANNER, because that is the case the REQ was
- * written for: an operator with a gun in one hand, whose code has to resolve
- * without touching anything. Typing is the fallback, not the main path.
+ * /design-system/components/search-select: ficha de ewms-search-select (REQ-FE-DS3-001).
+ * Abre con el escáner, el caso del REQ: el código se resuelve sin tocar nada; tipear es el plan B.
  */
 @Component({
   selector: 'ewms-showroom-search-select',
@@ -169,13 +165,13 @@ export class ShowroomSearchSelect {
   protected readonly pageSize = SEARCH_PAGE_SIZE;
   protected readonly catalogueSize = CATALOGUE.length;
 
-  /** How the demo source behaves, so the failure states can be seen. */
+  /** Comportamiento de la fuente, para ver los estados de falla. */
   protected readonly behaviour = signal<SourceBehaviour>('normal');
 
-  /** Whether the source reports a total at all -- `null` is legitimate. */
+  /** Si la fuente informa total; null es válido. */
   protected readonly counts = signal(true);
 
-  /** Every query the source received, newest first. */
+  /** Consultas recibidas por la fuente, la más nueva primero. */
   protected readonly queries = signal<readonly string[]>([]);
 
   private readonly counted = new CatalogueSource(
@@ -210,7 +206,7 @@ export class ShowroomSearchSelect {
     initialValue: this.form.controls.articulo.value,
   });
 
-  /** A real code from the synthetic catalogue, for the scan instructions. */
+  /** Código existente del catálogo sintético, para las instrucciones de escaneo. */
   protected readonly sampleCode = CATALOGUE[42]?.code ?? '';
 
   protected readonly snippet = [

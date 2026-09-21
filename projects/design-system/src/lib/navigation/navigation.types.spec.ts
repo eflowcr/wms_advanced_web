@@ -8,14 +8,7 @@ import {
   type NavItem,
 } from './navigation.types';
 
-/**
- * The arithmetic of the navigation, on its own.
- *
- * These four functions decide what the keyboard walks and what the trail
- * shows, and none of them needs a component to answer. Pulling them out is the
- * same move the scan detector made: "which item comes next when Catálogos is
- * closed?" is a question about a list, not about a rail.
- */
+// La aritmética de la navegación, sin componentes: qué camina el teclado y qué muestra el rastro.
 
 const TREE: readonly NavItem[] = [
   { id: 'dashboard', label: 'Dashboard', icon: 'dashboard', route: '/' },
@@ -38,8 +31,7 @@ describe('isGroup', () => {
   });
 
   it('an EMPTY children array is not a group', () => {
-    // A group that opens onto nothing is a control that does nothing when
-    // pressed. Whoever built the tree meant a destination.
+    // Un grupo que abre a nada no hace nada al pulsarlo.
     expect(isGroup({ id: 'x', label: 'X', icon: 'home', children: [] })).toBe(false);
   });
 });
@@ -52,8 +44,7 @@ describe('visibleItems', () => {
   });
 
   it('walks into an open group, in place', () => {
-    // In place and not appended: the arrows move down the screen, so the order
-    // this returns has to be the order the eye reads.
+    // En su lugar y no al final: el orden es el que lee el ojo.
     const visible = visibleItems(TREE, new Set(['catalogs']));
 
     expect(visible.map((item) => item.id)).toEqual([
@@ -92,7 +83,7 @@ describe('foldCrumbs', () => {
     const deep = trail(7);
     const { visible, folded } = foldCrumbs(deep, false);
 
-    // The first is the way out and the last is where you are: neither folds.
+    // La primera es la salida y la última dónde estás: ninguna se pliega.
     expect(visible.map((crumb) => crumb.label)).toEqual(['N0', 'N6']);
     expect(folded).toBe(5);
   });

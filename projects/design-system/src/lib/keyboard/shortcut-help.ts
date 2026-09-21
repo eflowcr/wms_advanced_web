@@ -10,29 +10,20 @@ import {
   type ShortcutHelpMessages,
 } from './shortcuts.types';
 
-/** El id del encabezado, para que el contenedor del CDK apunte su `aria-labelledby`. */
+/** Para el `aria-labelledby` del contenedor del CDK. */
 export const SHORTCUT_HELP_TITLE_ID = 'ewms-shortcut-help-title';
 
-/** Una fila de la tabla: una acción, qué hace y cómo se escribe. */
 interface HelpRow {
   readonly action: ShortcutAction;
   readonly description: string;
   readonly chord: readonly string[];
-  /** Si esta se calla cuando el conmutador de 2.1.4 está apagado. */
+  /** Se calla con el conmutador de 2.1.4 apagado. */
   readonly singleKey: boolean;
 }
 
 /**
- * Qué abre `?` (RFE-07) y el conmutador que pide WCAG 2.2 (RFE-09).
- *
- * LA LISTA NUNCA SE ESCRIBE DOS VECES: este componente lee `EWMS_SHORTCUT_MAP`,
- * el mismo objeto desde el que despacha el motor, así que un atajo agregado al
- * mapa aparece acá sin tocar este archivo. La aplicación provee una ETIQUETA por
- * acción, porque la librería no habla ningún idioma (ADR 0008).
- * El conmutador no es una preferencia que alguien pidió: WCAG 2.2 2.1.4 exige
- * poder apagar un atajo de un solo carácter imprimible, y RFE-04 no alcanza
- * porque 2.1.4 existe para quien usa entrada por voz. Vive en memoria hasta que
- * haya Security Core.
+ * Lo que abre `?` (RFE-07) y el conmutador de WCAG 2.2 2.1.4 (RFE-09). Lee el mismo mapa
+ * que despacha el motor: la lista nunca se escribe dos veces. Ver vault: Atajos-de-Teclado.
  */
 @Component({
   selector: 'ewms-shortcut-help',
@@ -49,22 +40,14 @@ export class ShortcutHelp {
   protected readonly singleKeyShortcuts = this.shortcuts.singleKeyShortcuts;
 
   /**
-   * EL MAPA Y LAS PALABRAS VIENEN DEL MOTOR y no de los dos tokens: un diálogo lo
-   * crea el CDK contra el inyector de entorno, y los dos tokens los provee un
-   * COMPONENTE de layout raíz, en un inyector de elemento de más abajo -inyectarlos
-   * acá no encontraría nada-. Leerlos del motor garantiza además que este diálogo
-   * solo pueda mostrar el mapa que de verdad está despachando.
+   * Del motor y no de los tokens: el CDK crea el diálogo con el inyector de entorno, y los
+   * tokens están en el inyector de elemento del layout raíz, donde no los encontraría.
    */
   protected readonly messages = computed<ShortcutHelpMessages | null>(() =>
     this.shortcuts.helpMessages(),
   );
 
-  /**
-   * El mapa, en el orden en que se escribió. De inserción y no alfabético: el mapa
-   * lista las cuatro acciones en el orden en que alguien las encuentra -buscar,
-   * crear, guardar, cancelar- y ordenar por nombre lo desordenaría distinto en
-   * cada idioma.
-   */
+  /** Orden de inserción, el del uso; alfabético cambiaría según el idioma. */
   protected readonly rows = computed<readonly HelpRow[]>(() => {
     const messages = this.messages();
     const entries = Object.entries(this.shortcuts.bindings() ?? {}) as readonly (readonly [
@@ -79,7 +62,6 @@ export class ShortcutHelp {
     }));
   });
 
-  /** Si algún atajo se ve afectado por el conmutador. */
   protected readonly hasSingleKey = computed(() => this.rows().some((row) => row.singleKey));
 
   protected toggleSingleKey(enabled: boolean): void {

@@ -1,9 +1,4 @@
-<!--
-  Un `<input>` y no un botón con panel: esa es toda la diferencia con `ewms-select`
-  y es RFE-01, el campo se tipea desde el primer momento. Y SÍ es un elemento
-  etiquetable, así que la etiqueta se ata con for/id -al revés que el Select, cuyo
-  gatillo es un `<button>`-.
--->
+<!-- RFE-01: un `<input>` que se tipea ya; es etiquetable, así que for/id (el Select usa un botón). -->
 <label [id]="labelId" [attr.for]="fieldId" class="block text-caption text-secondary mb-1">
   {{ label() }}
 </label>
@@ -36,12 +31,8 @@
 </div>
 
 <!--
-  LA REGIÓN VIVA (RFE-08). El foco nunca sale del campo, así que nada de la lista
-  llega solo a un lector de pantalla: así se entera de que una búsqueda empezó,
-  terminó, no encontró nada o falló.
-  `polite` porque habla con cada tanda de resultados y `assertive` pisaría a quien
-  tipea. Siempre está en el documento, vacía cuando no hay nada que decir: una
-  región que aparece con su primer mensaje se anuncia de forma inconsistente.
+  RFE-08: el foco no sale del campo; esta región anuncia la búsqueda. `polite`, porque
+  `assertive` pisaría a quien tipea. Siempre presente: una que aparece con su primer mensaje se anuncia mal.
 -->
 <p [id]="statusId" class="sr-only" role="status" aria-live="polite">{{ announcement() }}</p>
 
@@ -49,15 +40,7 @@
   <p [id]="hintId" class="mt-1 text-caption" [class]="hintClasses()">{{ hint() }}</p>
 }
 
-<!--
-  EL ERROR SE PINTA ACÁ, EN EL FLUJO, Y NO EN EL PANEL.
-  PACQ-03.2 pide un reintento alcanzable con Tab: el panel vive en un overlay del
-  CDK al final de `<body>`, así que un Tab desde el campo pasaría de largo hacia el
-  resto de la página -un reintento ahí es alcanzable en teoría e inalcanzable en la
-  práctica-. En el flujo, un Tab desde el campo aterriza en él.
-  Y separa los dos estados: «sin resultados» habla de la lista y vive donde la
-  lista; un error es una condición del campo y vive con el campo.
--->
+<!-- En el flujo y no en el panel: Tab alcanza el reintento (PACQ-03.2). Ver vault: Search-Select. -->
 @if (status() === 'error') {
   <div
     [id]="errorId"
@@ -77,13 +60,8 @@
 }
 
 <!--
-  El panel. Nada adentro es enfocable ni lleva manejador de teclas: el foco se queda
-  en el campo y `aria-activedescendant` apunta a la fila activa, que es el patrón
-  combobox de las APG y el mismo del Select.
-  Por eso hay dos reglas de accesibilidad apagadas en las filas de abajo: las dos
-  suponen un widget donde cada elemento interactivo maneja su teclado y toma su
-  foco, y cumplirlas al pie pondría cada resultado en el orden de tabulación, que
-  es justo lo que aria-activedescendant evita.
+  Combobox APG: el foco queda en el campo y `aria-activedescendant` marca la fila. Las dos
+  reglas apagadas abajo pondrían cada resultado en el orden de tabulación.
 -->
 <ng-template #panel>
   <ul [id]="listboxId" role="listbox" [class]="panelClasses" [attr.aria-labelledby]="labelId">
@@ -111,10 +89,7 @@
     }
 
     @if (status() === 'empty') {
-      <!--
-  RFE-03: el mensaje repite el texto buscado. Sin él el panel dice «nada» y hay que
-  volver a mirar el campo para saber de qué era ese «nada».
--->
+      <!-- RFE-03: repite el texto buscado, para no tener que volver a mirar el campo. -->
       <li [class]="noteClasses" aria-hidden="true">{{ words().noResults(searchedText()) }}</li>
     }
 

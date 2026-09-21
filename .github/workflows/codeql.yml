@@ -1,12 +1,8 @@
 name: CodeQL
 
-# SAST for TypeScript -- PLN-WMS-003 §8 requires static security analysis as a
-# CI gate. The repository is public, so CodeQL code scanning costs nothing.
-#
-# This workflow uploads findings to GitHub code scanning. What makes it BLOCK a
-# merge is the repository ruleset "Require code scanning results" on main and
-# development (CodeQL, severity "high or higher" / security alerts "high or
-# higher"). That rule lives in the repository settings, not in this file.
+# SAST que exige PLN-WMS-003 §8; gratis porque el repo es público. Este archivo solo
+# sube hallazgos: lo que bloquea el merge es el ruleset «Require code scanning
+# results» (high o superior), que vive en GitHub. Ver vault: Integracion Continua.md §5.
 
 on:
   push:
@@ -14,7 +10,7 @@ on:
   pull_request:
     branches: [main, development]
   schedule:
-    # Weekly, so new queries run against code that has not changed.
+    # Semanal: las consultas nuevas de CodeQL también corren sobre código sin cambios.
     - cron: '27 6 * * 1'
 
 concurrency:
@@ -34,14 +30,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # actions: the workflows themselves are attack surface (injection
-        # through untrusted event data, over-broad tokens).
+        # actions: los workflows también son superficie de ataque (inyección por datos
+        # del evento, tokens con permisos de más).
         language: [javascript-typescript, actions]
     steps:
       - uses: actions/checkout@v5
 
-      # No build step: CodeQL extracts JavaScript/TypeScript and workflow files
-      # straight from source.
+      # Sin build: CodeQL extrae TypeScript y los workflows directo del código fuente.
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v4
         with:

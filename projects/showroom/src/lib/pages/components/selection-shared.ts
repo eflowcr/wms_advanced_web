@@ -1,21 +1,11 @@
 /**
- * What the Checkbox and the Radio pages say identically, in one place.
- *
- * The two components already share `selection.types.ts` in the library -- one
- * box, one border, one focus ring, one hit-target rule, with only the corner
- * radius and the glyph written twice. Two showroom pages that re-typed that
- * list would be two chances for the sheets to disagree about a thing the code
- * cannot disagree about.
- *
- * The Toggle deliberately does NOT read from here: it shares `FormControlBase`
- * and the row-as-hit-target with those two, and nothing else. Its track is a
- * different shape with different tokens, and folding it in would suggest a
- * kinship the code does not have.
+ * Lo que las fichas de Checkbox y Radio dicen igual, como comparten selection.types.ts.
+ * El Toggle no lee de acá: su pista tiene otra forma y otros tokens.
  */
 
 import { computedOf, formatBox, orNotMeasured, rectOf } from './measure';
 
-/** The tokens both selection controls consume, in the order the pages show them. */
+/** Tokens de ambos controles de selección, en el orden en que los muestran las páginas. */
 export const SELECTION_ANATOMY = [
   { part: 'Fondo sin marcar', token: '--color-surface' },
   { part: 'Borde sin marcar', token: '--color-border-strong' },
@@ -30,24 +20,21 @@ export const SELECTION_ANATOMY = [
 ] as const;
 
 /**
- * The measured box.
- *
- * `declared`, `token` and `used` are three different answers to "how wide is
- * that border", and the page shows all three on purpose: they do not agree,
- * and the disagreement is the finding.
+ * Caja medida. declared, token y used son tres respuestas distintas al ancho del
+ * borde; se muestran las tres porque no coinciden, y ese es el hallazgo.
  */
 export interface SelectionBox {
-  /** `18 × 18 px`, off the rendered control. */
+  /** Tamaño medido sobre el control renderizado. */
   readonly size: string;
-  /** What the component wrote on the element: `var(--border-width-selection)`. */
+  /** Lo que el componente escribió en el elemento: var(--border-width-selection). */
   readonly declared: string;
-  /** What that token resolves to -- a sub-pixel width. */
+  /** A qué resuelve ese token: un ancho subpíxel. */
   readonly token: string;
-  /** What the browser ended up painting, which is not the same thing. */
+  /** Lo que el navegador terminó pintando, que no es lo mismo. */
   readonly used: string;
 }
 
-/** The placeholder shown until the first render has something to measure. */
+/** Marcador hasta que el primer render tenga algo que medir. */
 export const SELECTION_BOX: SelectionBox = {
   size: '…',
   declared: '…',
@@ -55,13 +42,7 @@ export const SELECTION_BOX: SelectionBox = {
   used: '…',
 };
 
-/**
- * Read the box off whichever of the two pages is rendering.
- *
- * Both sheets tag their measured sample `data-measure-box` and both want the
- * same four answers, so the read lives here rather than twice. The border is
- * asked for three ways deliberately -- see `SelectionBox`.
- */
+/** Lee la caja marcada con data-measure-box en cualquiera de las dos páginas. Ver SelectionBox. */
 export function readSelectionBox(root: ParentNode): SelectionBox {
   const input = root.querySelector<HTMLElement>('[data-measure-box] input');
   const rect = rectOf(root, '[data-measure-box] input');

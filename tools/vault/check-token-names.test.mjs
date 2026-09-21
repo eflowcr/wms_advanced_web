@@ -1,7 +1,6 @@
 /**
- * Tests for the vault token-name comparison (a manual tool, not a CI gate).
- *
- * Plain node:test. Run with `npm run test:tools` (part of `npm test`).
+ * Pruebas de la comparación de nombres de token del vault (herramienta manual, no
+ * compuerta de CI). node:test. `npm run test:tools` (parte de `npm test`).
  */
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';

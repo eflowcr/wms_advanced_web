@@ -7,10 +7,7 @@ import { Home } from './home';
 
 const BROWSER_LOCALE: Readonly<Record<Language, string>> = { es: 'es-CR', en: 'en-US' };
 
-/**
- * Renders Home in a language chosen through the browser language, which
- * startup applies without saving anything.
- */
+/** Dibuja Home en el idioma del navegador, que el arranque aplica sin guardar nada. */
 async function render(language: Language): Promise<HTMLElement> {
   vi.spyOn(window.navigator, 'language', 'get').mockReturnValue(BROWSER_LOCALE[language]);
   await TestBed.configureTestingModule({

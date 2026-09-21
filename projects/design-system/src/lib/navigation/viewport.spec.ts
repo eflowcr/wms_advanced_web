@@ -1,20 +1,9 @@
 import { TestBed } from '@angular/core/testing';
 import { NAV_BOTTOM_BREAKPOINT_TOKEN, Viewport } from './viewport';
 
-/**
- * The breakpoint, read from the token.
- *
- * What is worth testing here is not `matchMedia` -- it is the fallback. The
- * token is the single source of the number, and the question "what happens
- * when the stylesheet is not there?" has a deliberate answer that a default
- * would have hidden.
- */
+// El punto de corte leído del token. Lo que se prueba es la reserva sin hoja de estilos.
 describe('Viewport', () => {
-  /**
-   * The breakpoint as a NUMBER, so the strings below are built rather than
-   * written. A pixel literal in a spec is a raw value like any other and gate
-   * 10 rejects it -- correctly: the number lives in tokens.css.
-   */
+  /** Como número: un literal en px en un spec es valor crudo y la compuerta 10 lo rechaza. */
   const BREAKPOINT = 768;
   const realMatchMedia = window.matchMedia;
 
@@ -66,9 +55,7 @@ describe('Viewport', () => {
   });
 
   it('WITH NO TOKEN THE WIDE LAYOUT WINS, and that is a decision', () => {
-    // No stylesheet, no number, no query to ask. The rail works at every
-    // width -- it only costs space on a narrow screen. The bottom bar is the
-    // one that would be wrong on a desktop, so it is not the fallback.
+    // Sin hoja no hay número: gana el rail, que anda a todo ancho; la barra inferior no.
     const captured = stubMatchMedia(false);
 
     expect(TestBed.inject(Viewport).isWide()).toBe(true);
@@ -76,8 +63,7 @@ describe('Viewport', () => {
   });
 
   it('a token in a unit it cannot use is the same as no token', () => {
-    // `readPixels` accepts px and nothing else, on purpose: a breakpoint in
-    // `rem` moves with the browser's font size, which is a different feature.
+    // Solo px a propósito: un corte en `rem` se movería con la fuente del navegador.
     document.documentElement.style.setProperty(NAV_BOTTOM_BREAKPOINT_TOKEN, '48rem');
     stubMatchMedia(false);
 

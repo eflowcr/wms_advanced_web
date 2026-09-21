@@ -1,16 +1,6 @@
 /**
- * THE ROUTES OF THE APPLICATION, IN ONE PLACE, for every level of the suite.
- *
- * `smoke` walks all of them to prove each one answers; `showroom` walks the
- * catalogue's own to check that each page renders its heading, does not scroll
- * sideways, passes axe and can be crossed with Tab exactly once per control.
- *
- * ONE LIST AND NOT TWO. Before DS-5 this list lived inside showroom.e2e.ts;
- * splitting the suite into levels would have meant copying it into smoke, and
- * a route added to one copy and not the other is a route nobody checks. That
- * is the same reason `catalog.ts` is one constant with several consumers.
- *
- * This file is NOT a spec: `testMatch` only picks up `*.e2e.ts`.
+ * Las rutas de la app en una sola lista para todos los niveles: dos copias dejan rutas sin revisar.
+ * No es un spec: testMatch solo toma los .e2e.ts.
  */
 
 export const BUTTON = '/design-system/components/button';
@@ -34,13 +24,8 @@ export const KEYBOARD = '/design-system/patterns/keyboard';
 export const SEARCH_CREATE_EDIT = '/design-system/patterns/search-create-edit';
 
 /**
- * Every navigable route. Twenty-four since DS-4: the twenty-two of DS-3 plus
- * the two pattern pages, which is what "nothing built is undocumented" looks
- * like when it is a test rather than a promise.
- *
- * Adding a route here is what subjects it to the four checks below that every
- * page owes: its heading renders, it does not scroll sideways at 1440 or 1280,
- * axe finds nothing, and Tab reaches every control exactly once.
+ * Las 24 rutas navegables (22 de DS-3 más las dos de patrones). Sumarla acá la somete a las cuatro
+ * pruebas de showroom: título, sin desborde a 1440 y 1280, axe limpio y Tab una vez por control.
  */
 export const PAGES = [
   { url: '/design-system', heading: 'Showroom del sistema de diseño' },

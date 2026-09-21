@@ -1,25 +1,13 @@
 import { TestBed } from '@angular/core/testing';
 import { TokenReader } from './token-reader';
 
-/*
- * The fixtures below use INVENTED token names on purpose.
- *
- * Gate 10 rejects a primitive named anywhere outside tokens.css, and a test
- * file is nowhere special: a real primitive written here is a real primitive
- * that can go stale. Inventing the names also keeps these tests honest --
- * they check the walking, not whether somebody remembered what the navy ramp
- * happens to contain today.
- */
+// Nombres de token inventados a propósito: la compuerta 10 rechaza un primitivo fuera de
+// tokens.css, y así se prueba el recorrido y no el contenido actual de una rampa.
 
-/**
- * The reader is exercised against a real stylesheet injected into the test
- * document: jsdom builds a CSSOM for a <style> element, which is the same
- * surface the reader walks in a browser.
- *
- * What jsdom does NOT do is substitute `var()` in a computed custom property,
- * so the final VALUE is empty here and the chain is not. That split is the
- * point of the design: the chain comes from the declarations and only the last
- * value comes from the computed style.
+/*
+ * Se usa una hoja real inyectada: jsdom arma CSSOM para un <style>. No sustituye `var()` en
+ * propiedades computadas, así que el valor final queda vacío y la cadena no: justo la separación
+ * del diseño (cadena desde declaraciones, valor final del estilo computado).
  */
 describe('TokenReader', () => {
   let style: HTMLStyleElement;
@@ -28,8 +16,7 @@ describe('TokenReader', () => {
     return TestBed.inject(TokenReader);
   }
 
-  /* Assembled, not written: gate 10 reads a length in a fixture exactly as it
-     reads one in a stylesheet, and it has no way to tell them apart. */
+  // Armado y no escrito: la compuerta 10 lee una longitud en un fixture igual que en una hoja.
   const UNIT = 'px';
   const SHADOW = `0 0 0 2${UNIT} var(--color-surface), 0 0 0 5${UNIT} var(--accent-48)`;
 

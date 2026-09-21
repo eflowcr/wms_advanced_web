@@ -2,9 +2,8 @@ import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
 
 /**
- * ADR 0008 in a real browser: the switch happens without reloading, <html lang>
- * follows it, the choice survives a reload, and the page is clean for axe in
- * both languages.
+ * ADR 0008 en un navegador real: el cambio no recarga, html lang lo sigue, la elección sobrevive
+ * a la recarga y axe no encuentra nada en ninguno de los dos idiomas.
  */
 
 async function switchTo(page: Page, from: string, value: 'es' | 'en'): Promise<void> {
@@ -14,8 +13,8 @@ async function switchTo(page: Page, from: string, value: 'es' | 'en'): Promise<v
 test.describe('i18n with a Spanish browser', () => {
   test.use({ locale: 'es-CR' });
 
-  // A CSP violation (e.g. an eval-based ICU compiler) or a missing key thrown
-  // by the development missing handler surfaces here as a console error.
+  // Una violación de CSP (un compilador ICU con eval) o una clave faltante en desarrollo
+  // aparecen acá como error de consola.
   let consoleErrors: string[];
 
   test.beforeEach(async ({ page }) => {
@@ -52,7 +51,7 @@ test.describe('i18n with a Spanish browser', () => {
     await expect(page.getByRole('treeitem', { name: 'Design system' })).toBeVisible();
     await expect(page.getByText('No packages')).toBeVisible();
     await expect(page.getByText('1,250 packages')).toBeVisible();
-    // Same document: the flag set before switching is still there.
+    // Mismo documento: la marca puesta antes del cambio sigue ahí.
     expect(
       await page.evaluate(() => (window as unknown as { beforeSwitch?: boolean }).beforeSwitch),
     ).toBe(true);
@@ -70,7 +69,7 @@ test.describe('i18n with a Spanish browser', () => {
   test('the choice survives a reload', async ({ page }) => {
     await switchTo(page, 'Idioma', 'en');
     await expect(page.getByRole('navigation', { name: 'Main menu' })).toBeVisible();
-    // Also proves storageState exposes the key, so the "not saved" test below is not vacuous.
+    // Prueba que storageState expone la clave, así la prueba de «no se guarda» de abajo no es vacía.
     expect(JSON.stringify(await page.context().storageState())).toContain('"ewms.lang"');
 
     await page.reload();
@@ -82,8 +81,8 @@ test.describe('i18n with a Spanish browser', () => {
 
   test('formats numbers, dates and plurals with the locale of each language', async ({ page }) => {
     const sample = (name: string) => page.locator(`[data-sample="${name}"]`);
-    // es-CR groups thousands with a no-break space. Whether a 4-digit number
-    // is grouped depends on the ICU data of the runtime, hence the \s?.
+    // es-CR agrupa miles con espacio duro; si un número de 4 cifras se agrupa depende de los datos
+    // ICU del runtime, de ahí el \s?.
     await expect(sample('number')).toHaveText(/Peso neto: 12\s345,678 kg/);
     await expect(sample('plural').nth(2)).toHaveText(/1\s?250 bultos/);
     await expect(sample('currency')).toHaveText(/Monto: ₡\s?1\s250\s000,00/);
@@ -92,7 +91,7 @@ test.describe('i18n with a Spanish browser', () => {
     await switchTo(page, 'Idioma', 'en');
 
     await expect(sample('number')).toHaveText('Net weight: 12,345.678 kg');
-    // The currency stays CRC: it is data, not a language preference.
+    // La moneda sigue en CRC: es un dato, no una preferencia de idioma.
     await expect(sample('currency')).toHaveText('Amount: CRC 1,250,000.00');
     await expect(sample('date')).toHaveText(/Today is [A-Z][a-z]+ \d{1,2}, \d{4}/);
   });
@@ -119,7 +118,7 @@ test.describe('i18n with an English browser', () => {
 
     await expect(page.getByRole('navigation', { name: 'Main menu' })).toBeVisible();
     await expect(page.locator('html')).toHaveAttribute('lang', 'en');
-    // The whole storage state of the context, serialized: the key must not be in it.
+    // Todo el estado de almacenamiento del contexto, serializado: la clave no puede estar.
     expect(JSON.stringify(await page.context().storageState())).not.toContain('ewms.lang');
   });
 });

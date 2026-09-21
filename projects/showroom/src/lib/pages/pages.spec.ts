@@ -37,23 +37,13 @@ import { ShowroomSpacing } from './foundations/spacing';
 import { ShowroomTypography } from './foundations/typography';
 import { ShowroomHome } from './showroom-home';
 
-/**
- * Every page, rendered.
- *
- * What a unit test can say about these pages is narrow on purpose: they are
- * judged by looking at them, and the numbers they show come from a real
- * stylesheet that jsdom does not have. So what is asserted here is structure
- * -- that the blocks exist, that the demos render the real component, that the
- * markup is accessible -- and the measured facts live in e2e/showroom.e2e.ts,
- * where there is a browser to measure in.
+/*
+ * Todas las páginas, renderizadas. Acá se afirma estructura (bloques, componente real, a11y);
+ * lo medido vive en e2e/showroom.e2e.ts, porque jsdom no tiene la hoja de estilos real.
  */
 /**
- * THE FAVOURITES' STORE, PROVIDED BY THE TEST AND NOT BY THE CATALOGUE.
- *
- * In the application the showroom renders inside the shell and reads the
- * shell's one list by injection. A unit test has no shell, so the test stands
- * in for it HERE -- in the `TestBed`, never in `showroom.providers.ts`. Putting
- * it back in production code to make a test pass is how a page got two lists.
+ * El almacén de favoritos lo pone la prueba, en el `TestBed`, en lugar del shell que no existe acá.
+ * Nunca en `showroom.providers.ts`: así fue como una página terminó con dos listas.
  */
 function provideApplicationFavorites() {
   return [{ provide: EWMS_FAVORITES_STORE, useClass: InMemoryFavoritesStore }, Favorites];
@@ -62,12 +52,8 @@ function provideApplicationFavorites() {
 async function render<T>(component: Type<T>) {
   await TestBed.configureTestingModule({
     imports: [component],
-    /*
-     * The same providers the route installs. A page rendered without them is
-     * not the page the catalogue serves -- and the design system's texts are
-     * PROVIDED, not passed, so leaving them out would fail at injection rather
-     * than at an assertion.
-     */
+    // Los mismos proveedores que instala la ruta. Los textos del DS se proveen por
+    // inyección: sin ellos la prueba falla al inyectar, no en una aserción.
     providers: [provideRouter([]), provideShowroomDesignSystem(), provideApplicationFavorites()],
   }).compileComponents();
   const fixture = TestBed.createComponent(component);
@@ -100,8 +86,8 @@ describe('ShowroomLayout', () => {
     const search = element.querySelector<HTMLInputElement>('#showroom-search');
     const count = () => element.querySelectorAll('[data-sidebar] nav li').length;
 
-    // Two since DS-5: «Toggle» by name and «Favoritos» by its selector,
-    // `ewms-favorite-toggle`. The search matching both is the point of it.
+    // Dos desde DS-5: «Toggle» por nombre y «Favoritos» por su selector
+    // `ewms-favorite-toggle`. Que la búsqueda encuentre ambos es lo que se prueba.
     search!.value = 'toggle';
     search!.dispatchEvent(new Event('input'));
     await fixture.whenStable();
@@ -132,7 +118,7 @@ describe('ShowroomLayout', () => {
     expect(element.querySelector('[lang="es"]')).not.toBeNull();
   });
 
-  /** Mark a route in the application's list, the way the header's star does. */
+  /** Marca una ruta en la lista de la aplicación, como lo hace la estrella del encabezado. */
   async function mark(
     fixture: { detectChanges(): void; whenStable(): Promise<unknown> },
     route: string,
@@ -143,9 +129,8 @@ describe('ShowroomLayout', () => {
   }
 
   it('a catalogue page is NAMED from the catalogue, not from its path', async () => {
-    // The store holds the route and nothing else (REQ-FE-DS4-002 v1.3); the
-    // name is resolved when the block draws, and for a catalogue page that is
-    // the entry's name -- so the block reads like the list underneath it.
+    // El almacén guarda solo la ruta (REQ-FE-DS4-002 v1.3); el nombre se resuelve
+    // al dibujar y, para una página del catálogo, es el de su entrada.
     const { fixture, element } = await render(ShowroomLayout);
 
     await mark(fixture, '/design-system/components/button');
@@ -156,9 +141,8 @@ describe('ShowroomLayout', () => {
   });
 
   it('a screen of the APPLICATION is named by the application, one level up', async () => {
-    // One list means the sidebar also shows what was marked in the shell. The
-    // catalogue does not know what «/catalogos/articulos» is called, and asks
-    // the resolver above its own rather than showing a bare path.
+    // Con una sola lista, la barra lateral también muestra lo marcado en el shell. El catálogo
+    // no sabe cómo se llama «/catalogos/articulos» y le pregunta al resolvedor de arriba.
     const application: FavoriteLabelResolver = {
       labelFor: (route) => signal(route === '/catalogos/articulos' ? 'Artículos' : '').asReadonly(),
       iconFor: () => 'package',
@@ -183,9 +167,8 @@ describe('ShowroomLayout', () => {
   });
 
   it('ONE STAR PER PAGE, AND IT IS NOT THIS ONE: the layout carries the block only', async () => {
-    // The star is the application's, in the header above this layout. A second
-    // one here was a second `aria-pressed` for the same route over the same
-    // list -- which is what two stores looked like from the outside.
+    // La estrella es de la aplicación, en el encabezado. Una segunda acá era otro
+    // `aria-pressed` para la misma ruta y la misma lista: así se veían dos almacenes.
     const { element } = await render(ShowroomLayout);
 
     expect(element.querySelector('[data-favorite-toggle]')).toBeNull();
@@ -194,9 +177,8 @@ describe('ShowroomLayout', () => {
   });
 
   it('THE CATALOGUE PROVIDES WORDS AND NO STATE: no store, no `Favorites`', () => {
-    // The guard on the defect. A dictionary may be provided twice; the list
-    // may not, and the day somebody adds it back here a catalogue page has two
-    // lists again.
+    // Guarda del defecto: un diccionario se puede proveer dos veces, la lista no.
+    // Si alguien la vuelve a agregar acá, una página del catálogo tiene dos listas.
     const provided = provideShowroomDesignSystem().map((provider) =>
       typeof provider === 'object' && 'provide' in provider ? provider.provide : provider,
     );
@@ -216,20 +198,18 @@ describe('ShowroomLayout', () => {
     expect(entry).not.toBeNull();
     expect(element.querySelector('[data-favorites-empty]')).toBeNull();
 
-    // The block does not navigate: it emits, and the catalogue navigates.
+    // El bloque no navega: emite, y navega el catálogo.
     const navigate = vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
     entry!.click();
     expect(navigate).toHaveBeenCalledWith('/design-system/components/button');
   });
 
   it('the block marks the page you are on, and follows you when you move', async () => {
-    // `aria-current` comes from the URL the layout reads off the router, not
-    // from the star: the star is not in this layout any more.
+    // `aria-current` sale de la URL que el layout lee del router; la estrella ya no está acá.
     await TestBed.configureTestingModule({
       imports: [ShowroomLayout],
       providers: [
-        // Routes that MATCH, so the URL the layout reads is a real one. The
-        // components are irrelevant -- what is under test is the block.
+        // Rutas que coinciden, para que la URL leída sea real; los componentes no importan.
         provideRouter([
           { path: 'design-system/components/button', children: [] },
           { path: 'design-system/components/card', children: [] },
@@ -249,7 +229,7 @@ describe('ShowroomLayout', () => {
     const row = () => element.querySelector('[data-favorite="/design-system/components/button"]');
     expect(row()?.getAttribute('aria-current')).toBe('page');
 
-    // A query string is not part of what a page IS.
+    // La query string no cambia qué página es.
     await router.navigateByUrl('/design-system/components/button?estado=cargando');
     await fixture.whenStable();
     expect(row()?.getAttribute('aria-current')).toBe('page');
@@ -270,12 +250,8 @@ describe('ShowroomHome', () => {
     const { element } = await render(ShowroomHome);
     expect(element.querySelectorAll('[data-entry]').length).toBeGreaterThan(20);
     expect(element.querySelector('[data-entry="button"] a')).not.toBeNull();
-    /*
-     * `split-button` and not `navigation`: navigation stopped being a gap in
-     * DS-5, as the table did in DS-3 lote C. The assertion is about a gap
-     * still being VISIBLE rather than about which one it is -- a gap you can
-     * see is information, and one you cannot is something everyone forgets.
-     */
+    // `split-button` y no `navigation` (dejó de ser hueco en DS-5, la tabla en DS-3 lote C).
+    // Importa que un hueco siga visible, no cuál: un hueco visible es información.
     expect(element.querySelector('[data-entry="split-button"] a')).toBeNull();
     expect(element.querySelector('[data-entry="split-button"]')?.textContent).toContain(
       '(pendiente)',
@@ -306,7 +282,7 @@ describe('ShowroomBrand', () => {
     const { element } = await render(ShowroomBrand);
     const mono = element.querySelector<HTMLElement>('[data-measure="brand-mono-navy"]');
     expect(mono?.style.getPropertyValue('mask-image')).toContain('ewms-lockup-mono.svg');
-    // jsdom normalises the keyword's case; the point is that it is the keyword.
+    // jsdom normaliza mayúsculas; importa que sea la palabra clave.
     expect(mono?.style.getPropertyValue('background-color')?.toLowerCase()).toBe('currentcolor');
   });
 
@@ -353,7 +329,7 @@ describe('ShowroomTypography', () => {
       el.getAttribute('data-scale-step'),
     );
     expect(steps).toEqual(['h1', 'h2', 'h3', 'h4', 'p', 'caption', 'mono']);
-    // The component renders the semantic element for the variant, always.
+    // El componente siempre renderiza el elemento semántico de la variante.
     expect(element.querySelector('[data-scale-step="h3"] h3')).not.toBeNull();
     expect(element.querySelector('[data-scale-step="p"] p')).not.toBeNull();
   });
@@ -442,7 +418,7 @@ describe('ShowroomButton', () => {
       '[&_button]:bg-ghost-hover [&_button]:text-(color:--color-bg-primary-hover)',
     );
     expect(page.forced('danger', 'focus')).toContain('focus-ring-shadow');
-    // Disabled and Loading are real inputs, so nothing is forced for them.
+    // Disabled y Loading son entradas reales: no se fuerza nada.
     expect(page.forced('primary', 'disabled')).toBe('');
     expect(page.forced('primary', 'default')).toBe('');
   });
@@ -516,19 +492,10 @@ describe('the pages declare Spanish', () => {
   });
 });
 
-/**
- * The eight sheets of DS-2 PR 4.
- *
- * WHAT THESE CAN AND CANNOT SAY. jsdom lays nothing out, so every measured
- * claim these pages make -- 18x18, 44x24, a square icon button, a field and a
- * button sharing a height -- is asserted in e2e/showroom.e2e.ts instead, in a
- * browser. What is left here is what a DOM alone can answer: the eight blocks
- * are present and in order, the demos render the REAL component rather than a
- * picture of it, and the markup is accessible.
- *
- * The axe run matters more on these than on the earlier pages: every one of
- * them renders a dozen or more instances of a control, and a control rendered
- * a dozen times is a dozen chances to leave one without a name.
+/*
+ * Fichas de DS-2 PR 4. Lo medido (18x18, 44x24, alturas compartidas) va en e2e/showroom.e2e.ts;
+ * acá: los ocho bloques en orden, el componente real y axe, que pesa más porque cada ficha
+ * repite un control una docena de veces (una docena de chances de dejar uno sin nombre).
  */
 const BLOCKS = [
   '1-encabezado',
@@ -541,11 +508,8 @@ const BLOCKS = [
   '8-contrato',
 ];
 
-/**
- * `Type<unknown>` on purpose: the eight sheets share no base class and the
- * loop only ever renders them, so a union of eight component types would be a
- * union nothing can be assigned to.
- */
+// `Type<unknown>` a propósito: las fichas no comparten clase base y el bucle solo las
+// renderiza; una unión de sus tipos sería una unión a la que nada se puede asignar.
 const SHEETS: readonly { name: string; component: Type<unknown>; heading: string }[] = [
   { name: 'ShowroomText', component: ShowroomText, heading: 'Texto' },
   { name: 'ShowroomIconButton', component: ShowroomIconButton, heading: 'Icon Button' },
@@ -569,13 +533,9 @@ const SHEETS: readonly { name: string; component: Type<unknown>; heading: string
   { name: 'ShowroomNavigation', component: ShowroomNavigation, heading: 'Navegación' },
 ];
 
-/**
- * The pattern pages (DS-4). NOT component sheets -- a pattern is a
- * composition, and what it documents is a flow rather than an element -- but
- * they carry the SAME EIGHT BLOCKS, and that is the point: the catalogue is
- * read in series, and a page with a shape of its own is a page you have to
- * learn separately. The two blocks that genuinely do not apply say so out
- * loud instead of being dropped, exactly like the Pagination's.
+/*
+ * Páginas de patrón (DS-4): documentan un flujo, no un elemento, pero llevan los mismos ocho
+ * bloques porque el catálogo se lee en serie. Los que no aplican lo dicen, como en Paginación.
  */
 const PATTERNS: readonly { name: string; component: Type<unknown>; heading: string }[] = [
   { name: 'ShowroomKeyboard', component: ShowroomKeyboard, heading: 'Atajos de teclado' },
@@ -608,20 +568,9 @@ describe.each([...SHEETS, ...PATTERNS])('$name', ({ component, heading }) => {
     expect(element.querySelector('[lang="es"]')).not.toBeNull();
   });
 
-  /*
-   * A LONGER TIMEOUT THAN THE DEFAULT, AND IT IS NOT A DEFECT BEING HIDDEN.
-   *
-   * What is under test is whether axe finds a violation, never how long axe
-   * takes. Some of these pages render half a dozen tables -- one of them
-   * virtualising five thousand rows -- and auditing all of that inside jsdom
-   * sits close enough to the default five seconds that the Table's page failed
-   * intermittently on a loaded machine, with a timeout and no violation. A
-   * limit a run can cross for reasons that have nothing to do with the
-   * assertion is a limit that teaches people to re-run the build.
-   *
-   * Twenty seconds is far above anything measured here and still far below a
-   * hang: an axe run that genuinely never returns still fails.
-   */
+  // 20 s y no 5: se prueba si axe encuentra violaciones, no cuánto tarda. La página de Tabla
+  // (5000 filas virtualizadas) fallaba intermitente por tiempo, sin violación, en máquina cargada.
+  // Sigue muy por debajo de un cuelgue: un axe que nunca vuelve igual falla.
   it('has no accessibility violations', async () => {
     const { element } = await render(component);
     await expectNoAxeViolations(element);
@@ -639,8 +588,7 @@ describe('ShowroomText', () => {
 
   it('couples the variant to the element it renders, with no escape hatch', async () => {
     const { element } = await render(ShowroomText);
-    // The claim of the whole component, checked on the rendered demo rather
-    // than on the table that describes it.
+    // La promesa del componente, verificada en la demo renderizada y no en su tabla.
     expect(element.querySelector('[data-variant-sample="h3"] h3')).not.toBeNull();
     expect(element.querySelector('[data-variant-sample="caption"] span')).not.toBeNull();
     expect(element.querySelector('[data-variant-sample="caption"] h4')).toBeNull();
@@ -663,8 +611,7 @@ describe('ShowroomText', () => {
     };
 
     expect(page.variantFor('caption')).toBe('caption');
-    // An id the union does not know falls back to the least surprising variant
-    // rather than casting a string into the component's type.
+    // Un id desconocido cae a la variante menos sorpresiva, sin castear el string.
     expect(page.variantFor('no-such-variant')).toBe('p');
     expect(page.sampleFor('no-such-variant')).toBe('');
     expect(page.tagFor('no-such-variant')).toBe('…');
@@ -695,9 +642,9 @@ describe('ShowroomIconButton', () => {
       forced(variant: string, state: string): string;
     };
     expect(page.forced('primary', 'hover')).toBe('[&_button]:bg-primary-hover');
-    // Ghost darkens its text as well as its ground -- the PR 3 axe finding.
+    // Ghost oscurece el texto además del fondo: hallazgo de axe en PR 3.
     expect(page.forced('ghost', 'hover')).toContain('text-(color:--color-bg-primary-hover)');
-    // Disabled and Loading are real inputs, so nothing is forced for them.
+    // Disabled y Loading son entradas reales: no se fuerza nada.
     expect(page.forced('primary', 'disabled')).toBe('');
     expect(page.forced('primary', 'loading')).toBe('');
   });
@@ -709,8 +656,7 @@ describe('ShowroomIconButton', () => {
       forced(variant: string, state: string): string;
     };
     expect(page.variantFor('danger')).toBe('danger');
-    // Ghost, because that is this component's default -- not Primary, which is
-    // the Button's.
+    // Ghost es el default de este componente; Primary es el del Button.
     expect(page.variantFor('no-such-variant')).toBe('ghost');
     expect(page.forced('no-such-variant', 'hover')).toBe('');
   });
@@ -734,8 +680,7 @@ describe('ShowroomTooltip', () => {
 
   it('shows the directive applied to a host it does not own', async () => {
     const { element } = await render(ShowroomTooltip);
-    // The descriptive case goes on a plain element: that is the whole point of
-    // a directive, and it is what the prefixed selector exists for.
+    // El caso descriptivo va sobre un elemento común: para eso es directiva y tiene selector prefijado.
     expect(element.querySelector('[data-demo-describes]')).not.toBeNull();
   });
 
@@ -749,7 +694,7 @@ describe('ShowroomTooltip', () => {
     expect(host?.textContent).toContain('Descargar');
     toggle?.click();
     await fixture.whenStable();
-    // The switch flipped, and the control still says what it is.
+    // El interruptor cambió y el control sigue diciendo qué es.
     expect(element.textContent).toContain('Reactivar el tooltip');
     expect(host?.textContent).toContain('Descargar');
   });
@@ -778,8 +723,7 @@ describe('ShowroomInput', () => {
       form: { controls: { sku: { setValue(value: string): void } } };
     };
 
-    // Writing the CONTROL has to change the readout: that is the only way the
-    // page can claim the component is a real ControlValueAccessor.
+    // Escribir en el control debe cambiar la lectura: prueba de que es un ControlValueAccessor real.
     page.form.controls.sku.setValue('SKU-99999-Z');
     await fixture.whenStable();
     expect(element.querySelector('[data-demo-value]')?.textContent).toContain('SKU-99999-Z');
@@ -800,20 +744,15 @@ describe('ShowroomInput', () => {
     const { fixture, element } = await render(ShowroomInput);
     const input = element.querySelector<HTMLInputElement>('[data-demo-form] input');
 
-    /*
-     * Driven through the DOM methods rather than by dispatching events whose
-     * names are written out here. The second of those names is also a stock
-     * Tailwind utility, and gate 10 reads every string literal in a .ts file as
-     * a possible class name -- the same collision that made the component's own
-     * outputs prefixed, arriving from the other side.
-     */
+    // Con métodos del DOM y no despachando eventos por nombre: el segundo nombre es también
+    // una utilidad de Tailwind y la compuerta 10 lee todo literal de un .ts como clase
+    // (la misma colisión que obligó a prefijar las salidas del componente).
     input?.focus();
     await fixture.whenStable();
     input?.blur();
     await fixture.whenStable();
 
-    // The counters move, which means the page is bound to (fieldFocus) and
-    // (fieldBlur) and not to the native pair travelling up from the <input>.
+    // Los contadores se mueven: la página escucha (fieldFocus) y (fieldBlur), no el par nativo del <input>.
     expect(element.querySelector('[data-demo-form] dl')?.textContent).toContain('1 / 1');
   });
 
@@ -839,7 +778,7 @@ describe('ShowroomSelect', () => {
 
   it('keeps the panel out of the page until it is opened', async () => {
     const { element } = await render(ShowroomSelect);
-    // The panel is a CDK overlay: nothing in the component's own DOM.
+    // El panel es un overlay del CDK: nada en el DOM propio del componente.
     expect(element.querySelector('[role="listbox"]')).toBeNull();
   });
 
@@ -855,7 +794,7 @@ describe('ShowroomSelect', () => {
 
     expect(page.sizeFor('sm')).toBe('sm');
     expect(page.sizeFor('no-such-size')).toBe('md');
-    // Only one row starts with a value; the rest show the placeholder.
+    // Solo una fila arranca con valor; el resto muestra el placeholder.
     expect(page.valueFor('selected')).toBe('muelle-3');
     expect(page.valueFor('default')).toBeNull();
     expect(page.isError('error')).toBe(true);
@@ -884,7 +823,7 @@ describe('ShowroomCheckbox', () => {
     const [header, ...rows] = boxes;
     expect(header).toBeDefined();
 
-    // One of three rows starts on, so the header starts mixed.
+    // Una de tres filas arranca marcada: el encabezado arranca mixto.
     expect(header!.getAttribute('aria-checked')).toBe('mixed');
 
     header!.checked = true;
@@ -907,13 +846,13 @@ describe('ShowroomCheckbox', () => {
     const boxes = [...element.querySelectorAll<HTMLInputElement>('[data-demo-checklist] input')];
     const [header, first, , third] = boxes;
 
-    // Two of three on: still mixed.
+    // Dos de tres: sigue mixto.
     first!.checked = true;
     first!.dispatchEvent(new Event('change'));
     await fixture.whenStable();
     expect(header!.getAttribute('aria-checked')).toBe('mixed');
 
-    // The third completes the set, and only then is the header checked.
+    // La tercera completa el conjunto y recién ahí se marca el encabezado.
     third!.checked = true;
     third!.dispatchEvent(new Event('change'));
     await fixture.whenStable();
@@ -968,13 +907,11 @@ describe('ShowroomRadio', () => {
       forced(state: string): string;
     };
 
-    // Same cell, same control: a new one per change-detection pass would reset
-    // the dot on every render.
+    // Misma celda, mismo control: uno nuevo por detección de cambios reiniciaría el punto.
     expect(page.controlFor('on', 'default')).toBe(page.controlFor('on', 'default'));
     expect(page.controlFor('on', 'default').value).not.toBeNull();
     expect(page.controlFor('off', 'default').value).toBeNull();
-    // The Disabled column is disabled THROUGH THE FORM, which is the half of
-    // the OR that nothing else exercises.
+    // La columna Disabled se deshabilita por el formulario: la mitad del OR que nada más ejercita.
     expect(page.controlFor('on', 'disabled').disabled).toBe(true);
 
     expect(page.forced('hover')).toContain('border-(--color-bg-primary)');
@@ -1007,7 +944,7 @@ describe('ShowroomToggle', () => {
       'Cambios aplicados: 1',
     );
 
-    // The rule the demo exists to embody.
+    // La regla que la demo encarna: sin botón Guardar.
     expect(element.textContent).not.toContain('Guardar cambios');
   });
 
@@ -1039,12 +976,7 @@ describe('ShowroomToggle', () => {
   });
 });
 
-/**
- * The three sheets of DS-3 lote A.
- *
- * Same division of labour as the eight above: structure and behaviour here,
- * anything with a pixel in it in e2e/showroom.e2e.ts.
- */
+// Fichas de DS-3 lote A: estructura y comportamiento acá; lo que tenga píxeles, en e2e/showroom.e2e.ts.
 describe('ShowroomBanner', () => {
   it('renders the four variants through the real component', async () => {
     const { element } = await render(ShowroomBanner);
@@ -1053,7 +985,7 @@ describe('ShowroomBanner', () => {
 
   it('pairs each variant with its role, and Info with status', async () => {
     const { element } = await render(ShowroomBanner);
-    // The banner's own box, not the icon inside it: the icon is role="img".
+    // La caja del banner, no su ícono (el ícono es role="img").
     const roles = [...element.querySelectorAll('[data-icon-sample] ewms-banner > div')].map((box) =>
       box.getAttribute('role'),
     );
@@ -1191,13 +1123,9 @@ describe('ShowroomCard', () => {
   });
 });
 
-/**
- * The two sheets of DS-3 lote B.
- *
- * Both pages drive machinery that lives outside their own tree -- the dialog
- * renders in the CDK's overlay container, the search panel in another -- so
- * these tests clean the container up after themselves. A leftover overlay is
- * the sort of thing that makes the NEXT test fail for no visible reason.
+/*
+ * Fichas de DS-3 lote B. Diálogo y panel de búsqueda viven en el contenedor de overlays del CDK,
+ * fuera del árbol: se limpia después de cada prueba o la siguiente falla sin razón visible.
  */
 function clearOverlays(): void {
   for (const container of document.querySelectorAll('.cdk-overlay-container')) {
@@ -1219,7 +1147,7 @@ describe('ShowroomDialog', () => {
     expect(dialog).not.toBeNull();
     expect(dialog?.textContent).toContain('Eliminar la expedición');
 
-    // Cancel: three of the four ways out answer false.
+    // Cancelar: tres de las cuatro salidas responden false.
     document.querySelectorAll<HTMLButtonElement>('cdk-dialog-container button')[0]!.click();
     await fixture.whenStable();
 
@@ -1249,7 +1177,7 @@ describe('ShowroomDialog', () => {
     expect(halos[2]?.className).toContain('bg-neutral-surface');
     for (const halo of halos) {
       expect(halo.className).not.toContain('primary');
-      // The exception the sheet documents: a shape, with nothing inside it.
+      // La excepción que documenta la ficha: una forma sin nada adentro.
       expect(halo.querySelector('svg')).toBeNull();
     }
   });
@@ -1331,7 +1259,7 @@ describe('ShowroomSearchSelect', () => {
 
   it('shows a catalogue that is the same on every load', async () => {
     const { element } = await render(ShowroomSearchSelect);
-    // Seeded, so the count is a fact about the page and not about luck.
+    // Con semilla: la cantidad es un hecho de la página, no de la suerte.
     expect(element.querySelector('[data-block="3-demo"]')?.textContent).toContain('340 artículos');
   });
 
@@ -1372,7 +1300,7 @@ describe('ShowroomSearchSelect', () => {
     expect(page.messages.retry).toBe('Reintentar');
     expect(page.messages.more).toContain('más resultados');
 
-    // The total may be null, and the message is where that shows.
+    // El total puede ser null y el mensaje lo refleja.
     expect(page.messages.results(3, 340)).toBe('3 de 340 resultados');
     expect(page.messages.results(3, null)).toBe('3 resultados');
 
@@ -1395,13 +1323,8 @@ describe('ShowroomSearchSelect', () => {
   });
 });
 
-/**
- * The table's sheet.
- *
- * The one assertion that matters most is the line count: the API was designed
- * against it, and the page reads it off the DOM so it cannot drift from the
- * snippet it describes.
- */
+// Ficha de la tabla. Lo que más importa es la cuenta de líneas: la API se diseñó contra ella
+// y la página la lee del DOM para que no se desvíe del fragmento que describe.
 describe('ShowroomTable', () => {
   it('renders the real table, with three levels available', async () => {
     const { element } = await render(ShowroomTable);
@@ -1416,10 +1339,10 @@ describe('ShowroomTable', () => {
     const lines = Number(printed);
 
     expect(Number.isFinite(lines)).toBe(true);
-    // The comanda's ceiling. If this ever fails, the API is what needs fixing.
+    // El techo de la comanda. Si esto falla, lo que se arregla es la API.
     expect(lines).toBeLessThanOrEqual(40);
 
-    // And the number really is the snippet's, not a number somebody typed.
+    // Y el número es el del fragmento, no uno tipeado a mano.
     const snippet = element.querySelector('[data-consumer-template]')?.textContent ?? '';
     expect(snippet.trimEnd().split('\n').length).toBe(lines);
   });
@@ -1432,7 +1355,7 @@ describe('ShowroomTable', () => {
   it('the snippet is what the page actually renders', async () => {
     const { element } = await render(ShowroomTable);
     const snippet = element.querySelector('[data-consumer-template]')?.textContent ?? '';
-    // Not a paraphrase: every column of the demo is in the snippet.
+    // No es una paráfrasis: cada columna de la demo está en el fragmento.
     for (const key of ['codigo', 'cliente', 'fecha', 'bultos', 'estado']) {
       expect(snippet).toContain(`key="${key}"`);
     }
@@ -1533,13 +1456,9 @@ describe('ShowroomTable', () => {
   });
 });
 
-/**
- * The lote D demos of the Tabla sheet: the detail panel, the row menu, the
- * children that arrive late and the windowed demo's own lazy loading.
- *
- * They live inside the demo block rather than in a block of their own: every
- * sheet in the catalogue carries the same eight blocks, and a sheet with a
- * ninth is a sheet that has to be learnt separately.
+/*
+ * Demos del lote D de la ficha Tabla: panel de detalle, menú de fila, hijos tardíos y carga
+ * perezosa. Viven dentro del bloque demo: toda ficha lleva los mismos ocho bloques, no nueve.
  */
 describe('ShowroomTable — composición avanzada', () => {
   const DETALLE = '[data-demo-detalle]';
@@ -1621,10 +1540,9 @@ describe('ShowroomTable — composición avanzada', () => {
   it('does not build five thousand rows until they are asked for', async () => {
     const { element } = await render(ShowroomTable);
 
-    // La ficha abre con una muestra. Que al pulsar el botón lleguen las cinco
-    // mil y la ventana siga dibujando un puñado se comprueba en el navegador
-    // (e2e): aquí no hay hoja de estilos, así que no hay altura de fila, así
-    // que no hay ventana -- y cinco mil filas en jsdom son cinco mil filas.
+    // La ficha abre con una muestra. Que lleguen las 5000 y la ventana dibuje un puñado se
+    // prueba en e2e: acá no hay hoja de estilos, ni altura de fila, ni ventana, y 5000 filas
+    // en jsdom son 5000 filas.
     expect(element.querySelector('[data-loaded-count]')?.textContent).toContain('60');
     expect(element.querySelector<HTMLButtonElement>('[data-load-all]')?.disabled).toBe(false);
     expect(element.querySelector('[data-load-all]')?.textContent).toContain('5000');
@@ -1632,15 +1550,10 @@ describe('ShowroomTable — composición avanzada', () => {
 });
 
 describe('ShowroomNavigation', () => {
-  /**
-   * THE ONE CLAIM THIS PAGE MAKES: the three pieces are presentational and the
-   * state lives OUTSIDE them, in whoever composes. Every assertion below is
-   * that claim from a different side -- choose in the rail and the tabs and
-   * the crumbs move; choose a tab and the rail moves; close a tab and the
-   * neighbour takes over.
-   *
-   * There is no router in this page, and that is also the demonstration: a
-   * piece that imported one could not be shown here at all.
+  /*
+   * Lo único que afirma la página: las tres piezas son presentacionales y el estado vive en
+   * quien compone. No hay router acá, y eso también es la demostración: una pieza que lo importara
+   * no se podría mostrar.
    */
   function rail(element: HTMLElement, id: string): HTMLButtonElement {
     return element.querySelector(`[data-nav-item="${id}"]`) as HTMLButtonElement;
@@ -1706,15 +1619,13 @@ describe('ShowroomNavigation', () => {
   });
 
   it('closing every closable tab leaves the one that says it cannot be closed', async () => {
-    // `closable: false` is the exception and it is written down, so this is
-    // the end of the close chain on this page: Dashboard stays.
+    // `closable: false` es la excepción declarada: Dashboard se queda.
     const { fixture, element } = await render(ShowroomNavigation);
 
     element.querySelector<HTMLElement>('[data-tab-close="articles"]')!.click();
     await fixture.whenStable();
 
-    // The document strip only. The page also renders a `section` strip below,
-    // which is a different control demonstrating a different mode.
+    // Solo la tira de documentos; la tira `section` de abajo es otro control, otro modo.
     const documentTabs = [...element.querySelectorAll('[data-block="3-demo"] [data-tab]')].map(
       (tab) => tab.textContent?.trim(),
     );
@@ -1730,7 +1641,7 @@ describe('ShowroomNavigation', () => {
     element.querySelector<HTMLButtonElement>('[data-nav-rail-toggle]')!.click();
     await fixture.whenStable();
 
-    // Collapsed: the labels go, the destinations stay.
+    // Colapsado: se van las etiquetas, quedan los destinos.
     expect(rail(element, 'dashboard')).not.toBeNull();
     expect(rail(element, 'dashboard').textContent?.trim()).toBe('');
   });
@@ -1767,8 +1678,7 @@ describe('ShowroomNavigation', () => {
     element.querySelector<HTMLButtonElement>('[data-nav-sheet-item="clients"]')!.click();
     await fixture.whenStable();
 
-    // Two taps for a second-level screen, against one on the rail. The page
-    // says so in words; this is the same claim as a test.
+    // Dos toques para una pantalla de segundo nivel, contra uno en el riel.
     expect(element.querySelector('[data-demo-active]')?.textContent?.trim()).toBe('clients');
   });
 
@@ -1816,15 +1726,9 @@ describe('ShowroomPagination', () => {
   });
 });
 
-/**
- * The two pattern pages of DS-4, beyond the eight blocks the loop above
- * already checks.
- *
- * What is asserted here is what a DOM alone can answer: that the page reads
- * its numbers from the one place that owns them, and that it does not write
- * them down a second time. The COUNTS themselves -- how many clicks a flow
- * really costs -- need a browser with a pointer, and live in
- * e2e/click-budget.e2e.ts.
+/*
+ * Patrones de DS-4 más allá de los ocho bloques: que la página lea sus números de su único dueño.
+ * Los conteos de clics reales necesitan puntero y viven en e2e/click-budget.e2e.ts.
  */
 describe('ShowroomSearchCreateEdit', () => {
   it('shows the four budgets, and shows the numbers the constants hold', async () => {
@@ -1837,16 +1741,8 @@ describe('ShowroomSearchCreateEdit', () => {
     expect(shown).toEqual(FLOW_BUDGETS.map((budget) => ({ id: budget.id, max: budget.max })));
   });
 
-  /*
-   * HG-02 -- "the numbers are not written twice" -- IS NOT CHECKED HERE.
-   *
-   * It is a claim about the SOURCE, and a jsdom spec can only see what a page
-   * rendered: a template with a 2 typed into it renders exactly like one that
-   * read the 2 from the constant. So the scan lives with the other source
-   * gates, in tools/ci/check-click-budget.mjs, which `npm test` runs. What
-   * this file asserts is the half a DOM can answer -- that what is on screen
-   * equals what the constants hold, which is the test above.
-   */
+  // HG-02 (los números no se escriben dos veces) no se prueba acá: es sobre el fuente, y un 2
+  // tipeado renderiza igual que uno leído. Lo cubre tools/ci/check-click-budget.mjs (`npm test`).
 
   it('gives Nuevo a visible button and not only a shortcut (WCAG 2.1.1)', async () => {
     const { element } = await render(ShowroomSearchCreateEdit);
@@ -1856,19 +1752,14 @@ describe('ShowroomSearchCreateEdit', () => {
   it('will not offer to edit when nothing is chosen', async () => {
     const { element } = await render(ShowroomSearchCreateEdit);
     const edit = element.querySelector<HTMLButtonElement>('[data-edit-button] button');
-    /*
-     * The NATIVE attribute, not `aria-disabled`. `ewms-button` binds
-     * `[disabled]` to the real property and reserves `aria-disabled` for
-     * Loading, where the control must stay focusable -- so asserting the ARIA
-     * one here passed vacuously against `null` until it was checked.
-     */
+    // El atributo nativo, no `aria-disabled`: `ewms-button` reserva ese para Loading (sigue
+    // enfocable). Afirmar el ARIA acá pasaba en vacío contra `null`.
     expect(edit?.disabled).toBe(true);
   });
 
   it('does not count its own scaffolding as part of a flow', async () => {
     const { element } = await render(ShowroomSearchCreateEdit);
-    // The reset and the break-the-source switch are marked, so that using the
-    // demo never costs the demo's own budget.
+    // Reiniciar y romper la fuente están marcados: usar la demo no gasta su propio presupuesto.
     expect(element.querySelectorAll('[data-not-a-flow-click]').length).toBe(2);
   });
 });
@@ -1880,8 +1771,7 @@ describe('ShowroomKeyboard', () => {
       cell.textContent?.trim(),
     );
 
-    // Nine, because `handle` has nine ways out. A page listing eight would be
-    // a page hiding the branch somebody most needs explained.
+    // Nueve, porque `handle` tiene nueve salidas; listar ocho escondería una rama.
     expect(rows).toEqual([
       'already-handled',
       'burst',
@@ -1896,11 +1786,8 @@ describe('ShowroomKeyboard', () => {
   });
 
   it('says so when no root layout has mounted the engine', async () => {
-    /*
-     * A page rendered on its own in a test bed has no root layout above it, so
-     * there is no map to dispatch against. The page SAYS that rather than
-     * drawing an empty table that looks like a broken map.
-     */
+    // Sola en el TestBed no hay layout raíz ni mapa: la página lo dice en vez de dibujar
+    // una tabla vacía que parece un mapa roto.
     const { element } = await render(ShowroomKeyboard);
     expect(element.querySelector('[data-demo-keyboard]')?.textContent).toContain(
       'Ningún layout raíz montó el motor',

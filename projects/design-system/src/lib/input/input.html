@@ -1,9 +1,4 @@
-<!--
-  El `<label>` es real, atado por for/id, y siempre se pinta: un placeholder no lo
-  reemplaza -desaparece con la primera tecla y varios lectores no lo anuncian-.
-  El asterisco va `aria-hidden`: `required` ya está en el control nativo, así que
-  un lector lo dice solo, y el glifo lo diría dos veces y como «asterisco».
--->
+<!-- Asterisco `aria-hidden`: el `required` nativo ya lo anuncia; el glifo lo diría dos veces. -->
 <label [for]="fieldId" [class]="hideLabel() ? 'sr-only' : 'block text-caption text-secondary mb-1'">
   {{ label() }}
   @if (required()) {
@@ -13,11 +8,7 @@
 
 <div class="relative block">
   @if (hasPrefixIcon()) {
-    <!--
-  Decorativo: sin `label`, así que se pinta aria-hidden y fuera del orden de
-  tabulación. El campo ya lo nombra su `<label>`. El color se fija en el
-  contenedor y el icono lo hereda por currentColor (ADR 0011).
--->
+    <!-- Decorativo, sin `label`; el color lo hereda del contenedor por currentColor (ADR 0011). -->
     <span
       class="absolute top-1/2 -translate-y-1/2 flex items-center pointer-events-none text-secondary"
       [class]="prefixIconOffsetClass()"
@@ -46,10 +37,8 @@
     ></textarea>
   } @else {
     <!--
-  `readOnly` es la propiedad del DOM y no el atributo `readonly`: el atributo es
-  presente-o-ausente, así que atarle `false` igual dejaría el campo de solo
-  lectura. Es también por qué solo-lectura NO se arma con `disabled`: conserva
-  foco, parada de tabulación y selección de texto, y deshabilitado pierde las tres.
+  `readOnly` es la propiedad: el atributo `readonly` con `false` igual bloquea. Solo lectura no
+  es `disabled`: conserva foco, tabulación y selección.
 -->
     <input
       [id]="fieldId"
@@ -71,11 +60,7 @@
   }
 
   @if (hasSuffix()) {
-    <!--
-  La excepción a la regla del icono decorativo: este se pulsa, así que es un
-  `ewms-icon-button` con nombre obligatorio y traducido. `size="sm"` es el cuadrado
-  más chico que existe (32 px) y es para lo que está reservado el relleno derecho.
--->
+    <!-- Este icono se pulsa: `ewms-icon-button` con nombre; `sm` (32 px) llena el relleno derecho. -->
     <span class="absolute top-1/2 -translate-y-1/2 right-1 flex items-center">
       @if (hasPasswordToggle()) {
         <ewms-icon-button
@@ -98,11 +83,7 @@
   }
 </div>
 
-<!--
-  El hint es una DESCRIPCIÓN, por aria-describedby, y nunca parte del nombre
-  accesible: un campo llamado «SKU Formato ABC-123» es un campo por el que nadie
-  puede preguntar.
--->
+<!-- El hint describe, no nombra: nadie pregunta por un campo «SKU Formato ABC-123». -->
 @if (hint()) {
   <p [id]="hintId" class="mt-1 text-caption" [class]="hintClasses()">{{ hint() }}</p>
 }

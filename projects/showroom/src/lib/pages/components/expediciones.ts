@@ -1,36 +1,16 @@
 import type { BadgeDictionary } from '@ewms/design-system';
 
 /**
- * The expediciones demo: THREE LEVELS, generated from a seed.
- *
- * `EXPEDICIONES_CABECERA` → `EXPEDICIONES_DETALLE` → series y lotes, which is
- * the hierarchy the Table's sheet asks for. Twelve headers, three to eight
- * lines each, and every line carrying either serial numbers or batches.
- *
- * SEEDED, SO THE CAPTURES ARE COMPARABLE. A `Math.random()` demo makes every
- * screenshot a different table, and then "the filtered capture" cannot be
- * compared against "the collapsed capture". Same reason the search select's
- * catalogue is seeded.
- *
- * Synthetic throughout. No real data of any customer, ever (PLN-WMS-003 §6).
- *
- *
- * ONE ROW TYPE FOR THREE LEVELS, AND THAT IS THE HONEST SHAPE
- *
- * A cabecera, a línea and a serie are three different things, and a grid shows
- * them in one set of columns anyway -- that is what a tree table IS. So the
- * row is one interface whose fields mean something slightly different at each
- * level (`codigo` is the shipment, then the SKU, then the serial), which is
- * how every WMS grid models this. It is also the argument that decided
- * `[children]`: a homogeneous `children?: T[]` on the row would have forced
- * exactly this merge anyway, and then asked the model to carry view state too.
+ * Demo de tres niveles (cabecera, línea, serie o lote), sintética y con semilla para
+ * que las capturas sean comparables. Un solo tipo de fila: codigo es la expedición,
+ * el SKU o la serie según el nivel. Ver vault: 08-Sistema-de-Diseno/Componentes/Tabla.
  */
 export interface ExpedicionRow {
   readonly id: string;
   readonly nivel: 'cabecera' | 'linea' | 'serie';
   readonly codigo: string;
   readonly cliente: string;
-  /** ISO 8601, so it sorts and filters as a string without a parse. */
+  /** ISO 8601: ordena y filtra como cadena sin parsear. */
   readonly fecha: string;
   readonly bultos: number;
   readonly estado: EstadoExpedicion;
@@ -40,13 +20,8 @@ export interface ExpedicionRow {
 export type EstadoExpedicion = 'pendiente' | 'en-proceso' | 'completada' | 'con-incidencia';
 
 /**
- * THE CENTRAL DICTIONARY, and the only place a state becomes a colour or a
- * word.
- *
- * The table's `badge` column draws from it and `rowState="estado"` reads the
- * same object for the row's tint, so the two cannot disagree. The mapping is
- * the one the Tabla sheet fixed: Pendiente neutral, En proceso warning,
- * Completada success, Con incidencia danger.
+ * Único lugar donde un estado se vuelve color y palabra: el badge y el tinte de fila
+ * leen el mismo objeto y no pueden discrepar. El mapeo es el que fijó la ficha Tabla.
  */
 export const ESTADOS: BadgeDictionary = {
   pendiente: { variant: 'neutral', label: 'Pendiente' },
@@ -82,7 +57,7 @@ const ESTADO_KEYS: readonly EstadoExpedicion[] = [
   'con-incidencia',
 ];
 
-/** xorshift32: four lines, no state to get wrong, same sequence every time. */
+/** xorshift32: la misma secuencia en cada carga. */
 function seeded(seed: number): () => number {
   let state = seed;
   return () => {
@@ -97,7 +72,7 @@ function pick<T>(random: () => number, from: readonly T[]): T {
   return from[Math.floor(random() * from.length)] as T;
 }
 
-/** Twelve headers, identical on every load. */
+/** Doce cabeceras, idénticas en cada carga. */
 export const EXPEDICIONES: readonly ExpedicionRow[] = buildExpediciones();
 
 function buildExpediciones(): readonly ExpedicionRow[] {
@@ -111,11 +86,7 @@ function buildExpediciones(): readonly ExpedicionRow[] {
     for (let line = 0; line < lineCount; line += 1) {
       const bultos = 1 + Math.floor(random() * 40);
       const estado = pick(random, ESTADO_KEYS);
-      /*
-       * A line carries either serials or batches, never both: a serialised
-       * article is tracked one unit at a time and a batched one is tracked by
-       * lot, and no warehouse does both to the same SKU.
-       */
+      // Series o lotes, nunca ambos: ningún almacén rastrea un mismo SKU de las dos formas.
       const serialised = random() > 0.5;
       const childCount = 1 + Math.floor(random() * 3);
       const hijos: ExpedicionRow[] = [];
@@ -161,7 +132,7 @@ function buildExpediciones(): readonly ExpedicionRow[] {
   return cabeceras;
 }
 
-/** A date in the first quarter of 2026, as ISO 8601. */
+/** Fecha del primer trimestre de 2026, en ISO 8601. */
 function isoDate(random: () => number): string {
   const month = 1 + Math.floor(random() * 3);
   const day = 1 + Math.floor(random() * 28);

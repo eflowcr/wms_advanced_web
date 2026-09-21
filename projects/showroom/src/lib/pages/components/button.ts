@@ -13,7 +13,7 @@ import { PropTable, type PropRow } from '../../ui/prop-table';
 import { StateMatrix, type MatrixAxis } from '../../ui/state-matrix';
 import { TokenValue } from '../../ui/token-value';
 
-/** How long the anti-double-submit demo stays in Loading. */
+/** Cuánto dura en Loading la demo de doble envío. */
 export const DEMO_LOADING_MS = 1800;
 
 const VARIANTS: readonly MatrixAxis[] = [
@@ -31,7 +31,7 @@ const STATES: readonly MatrixAxis[] = [
   { id: 'loading', label: 'Loading' },
 ];
 
-/** Keeps the template's string ids in the component's own union, with no cast. */
+/** Lleva los ids de la plantilla a la unión del componente sin conversión. */
 const VARIANT_BY_ID: Readonly<Record<string, ButtonVariant>> = {
   primary: 'primary',
   secondary: 'secondary',
@@ -40,21 +40,9 @@ const VARIANT_BY_ID: Readonly<Record<string, ButtonVariant>> = {
 };
 
 /**
- * The forced states of the matrix.
- *
- * `:hover` and `:focus-visible` cannot be held still, so each cell gets the
- * SAME token its own rule would have applied, through an arbitrary variant on
- * the wrapper. The wrapper's selector is one step more specific than the
- * button's own utility, so it wins without anything being marked important.
- *
- * This mapping is the one thing on the page that can silently drift from the
- * component: if buttonVariantClasses() ever changes which token a hover uses,
- * this has to follow. It lives here, next to the demo, rather than inside the
- * matrix widget, precisely so a reviewer comparing the two has them on the
- * same screen.
- *
- * Disabled and Loading are NOT forced: they are real inputs, so the matrix
- * passes them to the real component and what renders is the real behaviour.
+ * Estados forzados: hover y foco no se pueden congelar, así que el envoltorio aplica
+ * el mismo token con más especificidad. Si buttonVariantClasses() cambia un token,
+ * esto lo sigue a mano. Disabled y Loading no se fuerzan: son entradas reales.
  */
 const FOCUS_RING = '[&_button]:shadow-(--focus-ring-shadow)';
 
@@ -63,12 +51,8 @@ const FORCED: Readonly<Record<string, Readonly<Record<string, string>>>> = {
     primary: '[&_button]:bg-primary-hover',
     secondary: '[&_button]:bg-secondary-hover',
     danger: '[&_button]:bg-danger-hover',
-    /*
-     * Two utilities, because Ghost's hover changes two things: the ground
-     * AND the text. Forcing only the background is what rendered the 4.38:1
-     * pair that axe caught in PR 3 -- the cell was showing a state the
-     * component no longer has.
-     */
+    // Ghost cambia fondo y texto en hover. Forzar solo el fondo mostró el par
+    // 4.38:1 que axe detectó en el PR 3: un estado que el componente ya no tiene.
     ghost: '[&_button]:bg-ghost-hover [&_button]:text-(color:--color-bg-primary-hover)',
   },
   focus: {
@@ -80,11 +64,8 @@ const FORCED: Readonly<Record<string, Readonly<Record<string, string>>>> = {
 };
 
 /**
- * The property table.
- *
- * VERIFIED AGAINST button.ts, NOT AGAINST THE VAULT SHEET. Where the two
- * disagree the code wins and the sheet is what gets corrected — see the note
- * in the contract block about `(click)`.
+ * Verificada contra button.ts, no contra la ficha del vault: si discrepan gana el
+ * código y se corrige la ficha (ver la nota sobre (click) en el bloque de contrato).
  */
 const PROPS: readonly PropRow[] = [
   {
@@ -164,23 +145,17 @@ const ANATOMY = [
 interface SizeSample {
   readonly size: 'sm' | 'md' | 'lg';
   readonly label: string;
-  /** Measured off the rendered button, never written down. */
+  /** Medido sobre el botón renderizado, nunca escrito a mano. */
   readonly height: string;
 }
 
 /**
- * /design-system/components/button — the first component sheet, and the
- * template the other nine are written against.
- *
- * The eight blocks of section 4 of the showroom spec are all here, in order.
- * A block that does not apply says so rather than disappearing: the visible
- * hole is information.
+ * /design-system/components/button: la primera ficha y el molde de las demás. Tiene
+ * los ocho bloques de la sección 4 de la especificación; el que no aplica lo dice.
  */
 @Component({
   selector: 'ewms-showroom-button',
-  // No Tooltip here: ewms-icon-button applies the directive itself, and
-  // importing it again only tells the compiler about a directive this template
-  // never writes.
+  // Sin Tooltip: ewms-icon-button ya aplica la directiva y esta plantilla no la escribe.
   imports: [Button, IconButton, DemoFrame, PropTable, StateMatrix, TokenValue],
   templateUrl: './button.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -200,7 +175,7 @@ export class ShowroomButton {
     { size: 'lg', label: 'Large', height: '…' },
   ]);
 
-  /** The anti-double-submit demo. */
+  /** Demo contra el doble envío. */
   protected readonly submitting = signal(false);
   protected readonly submitCount = signal(0);
   private timer: ReturnType<typeof setTimeout> | undefined;
@@ -220,9 +195,7 @@ export class ShowroomButton {
   constructor() {
     inject(DestroyRef).onDestroy(() => clearTimeout(this.timer));
 
-    // The heights are measured off the rendered buttons rather than written
-    // into the page: the block exists to prove 32/40/48, and a number typed
-    // here would prove nothing.
+    // Alturas medidas sobre los botones: el bloque existe para probar 32/40/48.
     afterNextRender(() => {
       this.sizes.update((samples) =>
         samples.map((sample) => {
@@ -240,16 +213,12 @@ export class ShowroomButton {
     return VARIANT_BY_ID[id] ?? 'primary';
   }
 
-  /** The wrapper utility that holds a state still. See FORCED. */
+  /** Utilidad del envoltorio que congela un estado. Ver FORCED. */
   protected forced(variant: string, state: string): string {
     return FORCED[state]?.[variant] ?? '';
   }
 
-  /**
-   * The demo of the pattern: one click, Loading, and back on its own. A second
-   * click while it is loading must not increase the counter — that is the
-   * whole point of the pattern, and the counter is how you see it.
-   */
+  /** Un clic pasa a Loading y vuelve solo; el contador prueba que un segundo clic no cuenta. */
   protected submit(): void {
     if (this.submitting()) {
       return;

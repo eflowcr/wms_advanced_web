@@ -1,20 +1,10 @@
 /**
- * A BREAKPOINT MAPPED THROUGH `var()` COMPILES AND NEVER MATCHES.
- *
- * Tailwind turns `--breakpoint-x` into `@media (width >= <value>)`. When the
- * value is `var(--something)` the media query is invalid: a custom property is
- * not substituted inside a media feature, so the condition is false at every
- * width. Nothing fails at build time, no gate objects, and the layout simply
- * never changes -- which is the worst shape a defect can take.
- *
- * DS-5 walked into it and backed out (see the comment in styles.css). The
- * system's one point of change, `--breakpoint-nav-bottom`, is read from
- * TypeScript with `readPixels` and applied through `matchMedia` instead.
- *
- * This test stops the mapping from being added back. It is not gate 10's job:
- * gate 10 objects to a raw pixel value, and the broken form has none.
- *
- * Run with `npm run test:tools`.
+ * Un breakpoint mapeado con `var()` compila y nunca se cumple: Tailwind lo vuelve
+ * `@media (width >= var(...))`, y una propiedad personalizada no se sustituye dentro de
+ * una media query. Nada falla y el layout nunca cambia. DS-5 cayó en eso (ver
+ * styles.css); `--breakpoint-nav-bottom` se lee desde TypeScript con `readPixels` y se
+ * aplica con `matchMedia`. La regla 10 no lo ve: la forma rota no lleva px crudo.
+ * Ver vault: 08-Sistema-de-Diseno/Componentes/Navegacion.md. `npm run test:tools`.
  */
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
@@ -25,7 +15,7 @@ import { fileURLToPath } from 'node:url';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const STYLES = path.join(ROOT, 'projects', 'shell', 'src', 'styles.css');
 
-/** The body of the `@theme ... { ... }` block, comments stripped. */
+/** El cuerpo del bloque `@theme ... { ... }`, sin comentarios. */
 async function themeBlock() {
   const css = await readFile(STYLES, 'utf8');
   const start = css.indexOf('@theme');

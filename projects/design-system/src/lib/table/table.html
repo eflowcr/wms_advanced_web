@@ -1,9 +1,4 @@
-<!--
-  Una `<table>` de verdad y no una grilla de divs: la cabecera atada a su columna,
-  la celda que sabe en qué fila y columna está y el «Estado, fila 4 de 12» de un
-  lector de pantalla ya son lo que un elemento table es. `role` va atado porque no
-  es una elección: con hijos hay árbol y es `treegrid`; sin ellos, `grid`.
--->
+<!-- Una `<table>` real: la semántica de cabecera y celda sale gratis. Con hijos es `treegrid`; sin ellos, `grid`. -->
 @if (quickFilter()) {
   <div class="mb-3 max-w-120" data-quick-filter>
     <ewms-input
@@ -17,10 +12,7 @@
   </div>
 }
 
-<!--
-  La caja de scroll. Con ventana abierta también desplaza en VERTICAL y tiene alto,
-  que es lo que le da algo que medir al cálculo de la ventana.
--->
+<!-- Con ventana también desplaza en vertical y tiene alto: es lo que mide la ventana. -->
 <div
   class="overflow-x-auto rounded-md border border-default"
   [class]="virtualised() ? 'max-h-120 overflow-y-auto' : ''"
@@ -36,11 +28,7 @@
     [attr.aria-rowcount]="page().total ?? rows().length"
     [attr.aria-colcount]="columnCount()"
   >
-    <!--
-  Pegajosa, para que las cabeceras queden mientras las filas pasan debajo. Es
-  también por qué la ventana se calcula acá y no con el viewport del CDK: un
-  transform sobre un envoltorio se lleva la cabecera y `sticky` se queda sin a qué.
--->
+    <!-- Pegajosa; por eso la ventana es propia y no el viewport del CDK. Ver vault: Tabla §10. -->
     <thead class="sticky top-0 z-10">
       <tr role="row">
         @if (selectable()) {
@@ -50,10 +38,6 @@
             [class]="headerCellClasses"
             [style.width]="'var(--col-width-sm)'"
           >
-            <!--
-  Selecciona lo que está EN PANTALLA, no todo lo que tiene la fuente: si no,
-  alguien borra 400 registros queriendo borrar 20. Indeterminada dice justo eso.
--->
             <ewms-checkbox
               [checked]="allSelected()"
               [indeterminate]="someSelected()"
@@ -72,11 +56,6 @@
             [attr.aria-sort]="ariaSort(column)"
           >
             @if (column.sortable()) {
-              <!--
-  Un botón, para que lo alcance el teclado y el navegador diga que se pulsa. Tres
-  estados: ascendente, descendente y NINGUNO -el tercer clic devuelve el orden que
-  dio la fuente-.
--->
               <button
                 type="button"
                 class="flex w-full cursor-pointer items-center gap-1 rounded-sm py-2 outline-none focus-visible:shadow-(--focus-ring-shadow)"
@@ -103,23 +82,13 @@
       </tr>
 
       @if (anyFilterable()) {
-        <!--
-  LA FORMA DE LA FILA DE FILTROS SALE DEL TIPO DE LA COLUMNA, y el consumidor no
-  configura nada: un rango escrito en una caja de texto obliga a cada fuente a
-  parsear «100-900», y cada una lo parsearía distinto.
-  Una caja vacía es SIN LÍMITE, nunca cero.
--->
+        <!-- La forma de cada filtro sale del tipo de la columna. Una caja vacía es sin límite, nunca cero. -->
         <tr role="row" data-filter-row>
           @if (selectable()) {
             <td [class]="headerCellClasses"></td>
           }
           @for (column of columns(); track column.key()) {
-            <!--
-  `<td>` DENTRO DE `<thead>`, Y NO `<th>`: una caja de filtro no es un encabezado
-  de columna -el encabezado es la fila de arriba-, y un segundo `<th>` daría dos
-  nombres a cada columna, o uno vacío donde no hay filtro, que es lo que axe
-  reporta como cabecera vacía.
--->
+            <!-- `<td>` y no `<th>`: un segundo `<th>` daría dos nombres por columna, o uno vacío que axe reporta. -->
             <td [class]="headerCellClasses" class="pb-2">
               @if (column.filterable()) {
                 @switch (column.type()) {
@@ -187,23 +156,14 @@
 
     <tbody>
       @if (rowWindow().before > 0) {
-        <!--
-  Las filas de arriba de la ventana, como alto y nada más: es lo que mantiene la
-  barra de scroll del largo de la tabla ENTERA.
--->
         <tr aria-hidden="true" data-spacer="before">
           <td [attr.colspan]="columnCount()" [style.height.px]="rowWindow().before"></td>
         </tr>
       }
 
       @for (flat of rowWindow().rows; track flat.key; let windowIndex = $index) {
-        <!-- El índice ABSOLUTO: el teclado camina la tabla, no la ventana. -->
+        <!-- Índice absoluto: el teclado camina la tabla, no la ventana. -->
         @let rowIndex = rowWindow().first + windowIndex;
-        <!--
-  UN SOLO BUCLE PARA TODO EL ÁRBOL. `flattenTree()` ya convirtió raíces y claves
-  expandidas en esta lista, así que una fila de tercer nivel es el mismo `<tr>` con
-  más `aria-level` y más sangría. No hay tabla anidada ni plantilla recursiva.
--->
         <tr
           role="row"
           [class]="rowClassesFor(flat)"
@@ -249,11 +209,7 @@
             >
               <span class="flex items-center gap-1">
                 @if ($first && isTree()) {
-                  <!--
-  EL TOGGLE VIVE DENTRO DE LA PRIMERA COLUMNA DE DATOS, junto al texto, y nunca en
-  una columna propia. La sangría es la del nivel, y una fila sin hijos lleva un
-  espaciador del mismo ancho para que todos los textos empiecen en la misma x.
--->
+                  <!-- El toggle vive en la primera columna; una hoja lleva un espaciador del mismo ancho. -->
                   <span
                     class="tree-toggle-spacer inline-block shrink-0"
                     [style.width]="'calc(' + flat.level + ' * var(--tree-indent))'"
@@ -288,11 +244,7 @@
                 } @else if (column.type() === 'actions') {
                   <span class="flex w-full items-center justify-end gap-1">
                     @if (isMaster(flat.row)) {
-                      <!--
-  El toggle de detalle NO es el del árbol, y es un control aparte a propósito: uno
-  despliega más filas en las mismas columnas y el otro un panel. Un botón que a
-  veces hiciera cualquiera de las dos sería impredecible.
--->
+                      <!-- Control aparte del toggle del árbol: uno despliega filas, el otro un panel. -->
                       <ewms-icon-button
                         [icon]="isDetailOpen(flat) ? 'chevron-up' : 'chevron-down'"
                         size="sm"
@@ -323,10 +275,6 @@
           }
         </tr>
         @if (isDetailOpen(flat)) {
-          <!--
-  UNA CELDA QUE ABARCA LA TABLA, con contenido del consumidor. Un panel que
-  repitiera las columnas sería el árbol con pasos de más.
--->
           <tr role="row" [attr.data-detail]="rowIndex">
             <td
               role="gridcell"
@@ -346,12 +294,7 @@
         }
 
         @if (flat.loading) {
-          <!--
-  Una fila propia y no un spinner dentro del padre: las celdas del padre tienen sus
-  datos, y un spinner ahí reemplazaría información que alguien está leyendo.
-  `aria-busy` en la fila es lo que le dice a un lector que espere en vez de
-  anunciar una rama vacía.
--->
+          <!-- Fila propia, no un spinner en el padre: no tapa datos, y `aria-busy` le dice al lector que espere. -->
           <tr role="row" aria-busy="true" [attr.data-loading]="rowIndex">
             <td role="gridcell" [attr.colspan]="columnCount()" [class]="cellClasses">
               <span class="flex items-center gap-2 text-caption text-secondary">
@@ -363,10 +306,7 @@
         }
 
         @if (flat.failed) {
-          <!--
-  El fallo va EN LÍNEA, donde habrían ido los hijos, y deja al padre expandido:
-  plegarlo escondería lo único que dice que algo salió mal.
--->
+          <!-- En línea y con el padre expandido: plegarlo escondería el error. -->
           <tr role="row" [attr.data-failed]="rowIndex">
             <td role="gridcell" [attr.colspan]="columnCount()" [class]="cellClasses">
               <span class="flex items-center gap-2 text-caption text-danger">
@@ -395,11 +335,7 @@
       @if (rows().length === 0) {
         <tr role="row" data-empty-row>
           <td role="gridcell" [attr.colspan]="columnCount()" class="p-8 text-center">
-            <!--
-  El estado vacío se PROYECTA: qué decir cuando un depósito no tiene expediciones
-  pendientes es una frase que solo la pantalla sabe, y un texto por defecto acá
-  sería un idioma.
--->
+            <!-- Se proyecta: el texto vacío es de la pantalla, no de la biblioteca (ADR 0008). -->
             @if (empty(); as template) {
               <ng-container [ngTemplateOutlet]="template.template" />
             }
@@ -422,14 +358,7 @@
   </div>
 }
 
-<!--
-  EL MENÚ, en el overlay compartido y con el movimiento compartido: `role="menu"`,
-  el foco en el menú y `aria-activedescendant` en la entrada activa, la misma forma
-  que el panel del Select -el foco tiene exactamente un lugar donde estar, y Escape
-  exactamente a qué devolverlo-.
-  Una entrada deshabilitada queda visible y fuera del recorrido: es información, y
-  frenar en ella haría sentir rotas las flechas.
--->
+<!-- Menú con foco en la lista y `aria-activedescendant`, como el Select. Una entrada deshabilitada se ve pero las flechas la saltan. -->
 <ng-template #menu>
   <ul
     [id]="menuId"

@@ -5,38 +5,19 @@ const BASE_URL = `http://localhost:${PORT}`;
 const CI = Boolean(process.env['CI']);
 
 /**
- * End-to-end configuration. Specs live in e2e/ and are named *.e2e.ts so the
- * Vitest unit-test runner never picks them up.
+ * Configuración e2e. Las specs viven en e2e/ y se llaman *.e2e.ts para que Vitest nunca
+ * las tome. Tres niveles por lo que cada uno defiende, cada uno con su disparador en
+ * .github/workflows/ci.yml: hasta DS-5 eran 183 pruebas en una cola con un worker, y
+ * cada dominio de DS-6 iba a sumar a esa misma cola.
  *
+ *   smoke     la app arranca, toda ruta responde y los tres patrones andan con teclado.
+ *             Todo PR y todo push, menos de dos minutos.
+ *   showroom  la documentación del catálogo. Cuando cambia lo que documenta, y siempre
+ *             en development y main. Una sola máquina.
+ *   domain    los dominios de DS-6. Vacío hoy.
  *
- * THREE LEVELS, AND THE NUMBER THAT FORCED THEM
- *
- * Until DS-5 this file declared ONE project and `workers: 1` in CI. That meant
- * 183 tests running one after another on the CI machine, and the suite was
- * already the longest job in the pipeline. The cost is not the problem by
- * itself; what makes it a problem is the direction of travel -- every domain
- * of DS-6 adds screens, and every screen adds tests to the same undivided
- * queue. A suite that can only grow and can only run serially stops being run.
- *
- * So the specs are split by WHAT THEY DEFEND, and each level gets its own
- * trigger (see .github/workflows/ci.yml):
- *
- *   smoke     the application boots, every route answers, and the three
- *             patterns still work end to end with the keyboard. Runs on EVERY
- *             pull request and on every push. Under two minutes, always.
- *
- *   showroom  the catalogue's own documentation: the component sheets, the
- *             iconography, the dictionaries, the click budget. Runs when what
- *             it documents changed, and unconditionally on development and
- *             main. Sharded three ways in CI.
- *
- *   domain    the vertical domains of DS-6. Empty today, declared now so the
- *             first domain has somewhere to put its tests instead of adding
- *             them to `showroom`.
- *
- * NOTHING WAS DELETED OR WEAKENED TO GET HERE. Every assertion that existed
- * before DS-5 still runs in `npm run e2e`; what changed is when each group
- * runs on its own and how many workers carry it.
+ * No se borró ni se debilitó nada: todo sigue corriendo en `npm run e2e`.
+ * Ver vault: 02-Arquitectura/Integracion Continua.md §4.1.
  */
 export default defineConfig({
   testDir: './e2e',
@@ -45,19 +26,9 @@ export default defineConfig({
   forbidOnly: CI,
   retries: CI ? 2 : 0,
 
-  /*
-   * FOUR WORKERS IN CI, NOT ONE.
-   *
-   * If a test stops passing in parallel, THAT TEST IS THE DEFECT -- shared
-   * state between specs, a hard-coded port, two tests writing the same file.
-   * The answer is to fix it, never to go back to one worker: serialising the
-   * suite hides the coupling instead of removing it, and the coupling is what
-   * makes a suite fragile as it grows.
-   *
-   * Four and not more because the GitHub runner has two cores: Playwright
-   * workers are mostly waiting on the browser, so a small oversubscription
-   * pays, and a large one only adds contention.
-   */
+  // Cuatro workers en CI, no uno. Si una prueba deja de pasar en paralelo, el defecto es
+  // esa prueba (estado compartido, puerto fijo): serializar esconde el acoplamiento. Cuatro
+  // y no más porque el runner tiene dos núcleos y un worker pasa casi todo esperando al navegador.
   workers: CI ? 4 : undefined,
 
   reporter: CI ? [['list'], ['html', { open: 'never' }]] : [['list']],
@@ -68,28 +39,16 @@ export default defineConfig({
 
   projects: [
     {
-      /*
-       * The floor. It answers one question -- is the application alive and are
-       * its three patterns still usable? -- and it has to answer it fast
-       * enough that nobody is tempted to skip it. The budget is two minutes
-       * and it is asserted by the job, not hoped for.
-       */
+      // El piso: ¿la app vive y sus tres patrones se usan? Tiene que ser tan rápido que
+      // nadie quiera saltearlo. Presupuesto: dos minutos.
       name: 'smoke',
       testMatch: 'smoke.e2e.ts',
       use: { ...devices['Desktop Chrome'] },
     },
     {
-      /*
-       * The catalogue's documentation, proved. These are the 183 assertions
-       * DS-2 to DS-4 built, unchanged: the component sheets, the keyboard walk
-       * over every route, the icon table, the dictionaries and their failure
-       * mode, and the click budget of the example screen.
-       *
-       * `click-budget.e2e.ts` belongs here and not in `smoke` although it is a
-       * pattern: it measures the showroom's example screen against a standard
-       * that lives in the vault, which is documentation of a number, not a
-       * check that the application boots.
-       */
+      // La documentación del catálogo, probada: las 183 aserciones de DS-2 a DS-4, sin
+      // cambios. click-budget va acá y no en smoke: mide la pantalla de ejemplo contra un
+      // estándar del vault, que es documentar un número, no comprobar que la app arranca.
       name: 'showroom',
       testMatch: [
         'showroom.e2e.ts',
@@ -101,14 +60,8 @@ export default defineConfig({
       use: { ...devices['Desktop Chrome'] },
     },
     {
-      /*
-       * Empty on purpose, and declared anyway.
-       *
-       * The first vertical domain of DS-6 will arrive with tests, and the only
-       * place to put them today would be `showroom` -- which is how a suite
-       * that was split stops being split. The folder and the project exist so
-       * that the right answer is also the obvious one.
-       */
+      // Vacío a propósito y declarado igual: el primer dominio de DS-6 trae pruebas, y sin
+      // este proyecto irían a `showroom`, que es como una suite partida deja de estarlo.
       name: 'domain',
       testMatch: 'domains/**/*.e2e.ts',
       use: { ...devices['Desktop Chrome'] },

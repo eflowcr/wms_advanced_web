@@ -1,11 +1,4 @@
-<!--
-  UN elemento para los dos usos, con los atributos interactivos atados a null cuando
-  la card es un contenedor. Dos plantillas tras un `@if` serían dos `<ng-content>`
-  con el mismo selector, y solo uno recibiría el contenido proyectado.
-  `role`, `tabindex` y `aria-checked` están ausentes -no vacíos, ausentes- fuera de
-  un grupo: un contenedor con `role="radio"` sin radiogroup alrededor es marcado
-  inválido, y axe lo dice.
--->
+<!-- Un solo elemento: dos plantillas duplicarían `<ng-content>`. Fuera de grupo, `role`, `tabindex` y `aria-checked` ausentes. -->
 <div
   #box
   [class]="classes()"
@@ -18,10 +11,6 @@
 >
   <ng-content select="[ewmsCardHeader]" />
 
-  <!--
-  El cuerpo es el hueco por defecto, así una card seleccionable se escribe con su
-  contenido adentro y una de contenido solo nombra las partes que no son el cuerpo.
--->
   <div class="flex min-w-0 flex-col gap-2">
     <ng-content />
   </div>
@@ -29,11 +18,7 @@
   <ng-content select="[ewmsCardFooter]" />
 
   @if (inGroup() && selected()) {
-    <!--
-  La tercera señal, después del borde y el relleno. Decorativa en el sentido de
-  accesibilidad: `aria-checked` en la caja ya se lo dice a un lector, y decirlo dos
-  veces es ruido.
--->
+    <!-- Tercera señal tras borde y relleno; decorativa: `aria-checked` ya lo dice. -->
     <span class="text-(color:--color-bg-primary)" aria-hidden="true">
       <ewms-icon name="check" size="sm" />
     </span>

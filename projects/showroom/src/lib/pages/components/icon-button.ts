@@ -36,15 +36,9 @@ const VARIANT_BY_ID: Readonly<Record<string, ButtonVariant>> = {
 };
 
 /**
- * The forced states, identical in shape to the Button page's -- which is the
- * point: the two components share button.types.ts, so a cell here that needed
- * a DIFFERENT utility would mean they had drifted.
- *
- * Disabled and Loading are NOT forced. They are real inputs and are passed to
- * the real component, which matters for more than honesty: forcing `disabled`
- * with a class would leave axe looking at an ENABLED control painted in the
- * disabled palette, and the 1.38:1 of disabled text -- which WCAG exempts --
- * would be reported as a contrast failure on a control that does not have one.
+ * Mismos estados forzados que Button: comparten button.types.ts. Disabled y Loading
+ * van como entradas reales; forzar disabled con una clase haría que axe reportara
+ * el 1.38:1 (exento en WCAG) como falla de contraste de un control habilitado.
  */
 const FOCUS_RING = '[&_button]:shadow-(--focus-ring-shadow)';
 
@@ -53,7 +47,7 @@ const FORCED: Readonly<Record<string, Readonly<Record<string, string>>>> = {
     primary: '[&_button]:bg-primary-hover',
     secondary: '[&_button]:bg-secondary-hover',
     danger: '[&_button]:bg-danger-hover',
-    // Ghost darkens its text as well as its ground. See button.types.ts.
+    // Ghost oscurece el texto además del fondo. Ver button.types.ts.
     ghost: '[&_button]:bg-ghost-hover [&_button]:text-(color:--color-bg-primary-hover)',
   },
   focus: {
@@ -64,11 +58,7 @@ const FORCED: Readonly<Record<string, Readonly<Record<string, string>>>> = {
   },
 };
 
-/**
- * VERIFIED AGAINST icon-button.ts. Three of these are required in the type,
- * and that is the component's whole argument -- so the column says so rather
- * than printing a default nobody can rely on.
- */
+/** Verificada contra icon-button.ts. Tres entradas son requeridas y la columna lo dice. */
 const PROPS: readonly PropRow[] = [
   {
     name: 'icon',
@@ -120,8 +110,8 @@ const PROPS: readonly PropRow[] = [
 ];
 
 const ANATOMY = [
-  // One token, two roles: the Primary ground and the Ghost glyph are the same
-  // blue, which is exactly why Ghost has no text utility of its own.
+  // Un token, dos roles: el fondo de Primary y el glifo de Ghost son el mismo azul,
+  // por eso Ghost no tiene utilidad de texto propia.
   { part: 'Fondo de Primary, e icono de Ghost en default', token: '--color-bg-primary' },
   { part: 'Fondo de Primary en hover, e icono de Ghost en hover', token: '--color-bg-primary-hover' },
   { part: 'Fondo de Ghost en hover', token: '--color-ghost-hover' },
@@ -141,28 +131,22 @@ const ANATOMY = [
 interface SizeSample {
   readonly size: 'sm' | 'md' | 'lg';
   readonly label: string;
-  /** Measured off the rendered button. `width x height`, never written down. */
+  /** Ancho x alto medido sobre el botón renderizado. */
   readonly box: string;
-  /** Whether the measured box clears the 24x24 of WCAG 2.2 2.5.8. */
+  /** Si la caja medida cumple el 24x24 de WCAG 2.2 2.5.8. */
   readonly clearsTarget: boolean;
 }
 
-/** WCAG 2.2 2.5.8 (Target Size, Minimum, AA), in CSS pixels. */
+/** WCAG 2.2 2.5.8 (tamaño mínimo de objetivo, AA), en píxeles CSS. */
 const MINIMUM_TARGET = 24;
 
 /**
- * /design-system/components/icon-button -- the sheet of `ewms-icon-button`.
- *
- * The demo has to show the REAL case and not a button with a glyph in it: no
- * visible text, a `label` for whoever cannot see it and a `tooltip` for
- * whoever can. Those two are what the component is, so they are what the page
- * leads with.
+ * /design-system/components/icon-button: ficha de ewms-icon-button. La demo muestra el
+ * caso real: sin texto visible, con label para quien no ve y tooltip para quien sí.
  */
 @Component({
   selector: 'ewms-showroom-icon-button',
-  // No Tooltip import: the component applies the directive itself, and
-  // declaring it again would tell the compiler about a directive this template
-  // never writes.
+  // Sin Tooltip: el componente ya aplica la directiva y esta plantilla no la escribe.
   imports: [IconButton, DemoFrame, PropTable, StateMatrix, TokenValue],
   templateUrl: './icon-button.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -195,11 +179,7 @@ export class ShowroomIconButton {
   ].join('\n');
 
   constructor() {
-    /*
-     * Square is a claim, and 2.5.8 is a threshold: both are measured off the
-     * rendered control. A page that printed "32 x 32" would go on printing it
-     * after the box stopped being square.
-     */
+    // Que sea cuadrado y que cumpla 2.5.8 se mide sobre el control renderizado.
     afterNextRender(() => {
       this.sizes.update((samples) =>
         samples.map((sample) => {
@@ -221,7 +201,7 @@ export class ShowroomIconButton {
     return VARIANT_BY_ID[id] ?? 'ghost';
   }
 
-  /** The wrapper utility that holds a state still. See FORCED. */
+  /** Utilidad del envoltorio que congela un estado. Ver FORCED. */
   protected forced(variant: string, state: string): string {
     return FORCED[state]?.[variant] ?? '';
   }

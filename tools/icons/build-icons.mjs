@@ -1,37 +1,17 @@
 /**
- * Builds projects/design-system/src/icons/icons.generated.ts from the manifest.
+ * Genera icons.generated.ts desde icons.manifest.json, la lista permitida y única fuente
+ * de verdad: nombre semántico -> archivo. `custom/<nombre>` lee custom/<nombre>.svg; lo
+ * demás es Tabler outline. Los dos pasan por la misma extracción (ADR 0011).
  *
- * The manifest (icons.manifest.json) is the allowlist and the only source of
- * truth for which icons exist: semantic product name -> source file. A value
- * of `custom/<name>` reads projects/design-system/src/icons/custom/<name>.svg;
- * anything else is a Tabler outline icon from node_modules/@tabler/icons.
- * Both go through exactly the same extraction, so the output does not reveal
- * where an icon came from. See ADR 0011.
+ *   - Tabler: el primer hijo debe ser la caja invisible `M0 0h24v24H0z`, que se descarta;
+ *     si falta, cambió el formato del paquete y falla. En los propios es opcional.
+ *   - Una caja en cualquier posición que no sea la primera falla.
+ *   - Solo <path> y solo `d`: otro elemento falla con la solución (convertirlo a path), y
+ *     otro atributo falla en vez de descartarse, porque tirar un `fill` cambia el icono.
+ *   - Salida determinista (iconos por nombre, primitivas en orden de archivo): check-icons
+ *     la regenera en memoria y compara byte a byte. Un SVG propio sin entrada falla.
  *
- * Rules, every one of them enforced here rather than trusted:
- *
- *   - Tabler files: the first child must be the invisible bounding box,
- *     <path stroke="none" d="M0 0h24v24H0z" fill="none"/>. It is dropped. A
- *     Tabler file without it is a change in the package format and fails.
- *   - Custom files: the bounding box is optional. If it is the first child it
- *     is dropped exactly as for Tabler; if not, every child is geometry. A
- *     custom icon should not need a Tabler artefact to be valid.
- *   - In either kind of file, a bounding box anywhere but first fails.
- *   - Only <path> is accepted, and only its `d`. The set is paths on purpose
- *     (ADR 0011): Tabler outline and the custom pallet are paths only, so a
- *     <circle>, <rect> or <line> would be a second format that no icon uses.
- *     Any other element fails with the fix (convert it to a path, as any
- *     editor does on export). Any other attribute fails instead of being
- *     silently dropped: dropping a `fill` would change how the icon looks.
- *   - Output is deterministic: icons sorted by name, primitives in file order,
- *     one serialisation. tools/ci/check-icons.mjs regenerates in memory and
- *     compares byte for byte, like a lockfile.
- *   - A custom SVG that the manifest does not reference fails: nothing in the
- *     icon directory exists outside the allowlist.
- *
- * The generated file is committed. It is not produced during the build.
- *
- *   npm run icons:build
+ * El archivo generado se versiona; no se produce en el build. `npm run icons:build`.
  */
 import { readdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
@@ -50,11 +30,11 @@ const BOUNDING_BOX = 'M0 0h24v24H0z';
 const CATEGORIES = ['domain', 'interface'];
 const NAME_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
-/** The only element an icon may contain, and its only attribute (ADR 0011). */
+/** El único elemento que puede tener un icono, y su único atributo (ADR 0011). */
 const SHAPE = 'path';
 const GEOMETRY_ATTRIBUTE = 'd';
 
-// ----------------------------------------------------------------- manifest
+// ----------------------------------------------------------------- manifiesto
 
 async function readManifest() {
   const manifest = JSON.parse(await readFile(path.join(ROOT, MANIFEST), 'utf8'));
@@ -110,10 +90,8 @@ function parseAttributes(text, where) {
 }
 
 /**
- * Extracts the geometry of one SVG file as a list of primitives.
- *
- * `requireBoundingBox` is true for Tabler files (a missing bounding box means
- * the package format changed) and false for custom files (optional).
+ * Extrae la geometría de un SVG como lista de primitivas. `requireBoundingBox` es true
+ * para Tabler (si falta la caja cambió el formato del paquete) y false para los propios.
  */
 export function extractPrimitives(svg, where, { requireBoundingBox }) {
   const root = /^\s*<svg\b([^>]*)>([\s\S]*)<\/svg>\s*$/.exec(svg);
@@ -175,7 +153,7 @@ export function extractPrimitives(svg, where, { requireBoundingBox }) {
   });
 }
 
-// ------------------------------------------------------------------- output
+// ------------------------------------------------------------------- salida
 
 function quote(value) {
   return `'${String(value).replace(/\\/g, '\\\\').replace(/'/g, "\\'")}'`;
@@ -189,7 +167,7 @@ function serialisePrimitive({ type, d }) {
   return `{ type: ${quote(type)}, d: ${quote(d)} }`;
 }
 
-/** Returns the full text of icons.generated.ts and the icon count. Reads, never writes. */
+/** Devuelve el texto completo de icons.generated.ts y la cantidad de iconos. Solo lee. */
 export async function buildIcons() {
   const entries = await readManifest();
   const tabler = JSON.parse(await readFile(path.join(ROOT, TABLER_PACKAGE, 'package.json'), 'utf8'));

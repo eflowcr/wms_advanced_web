@@ -26,12 +26,8 @@ const STATES: readonly MatrixAxis[] = [
 ];
 
 /**
- * The forced states.
- *
- * The track's hover colour depends on whether the switch is on, so the hover
- * utility is chosen per ROW and not per column -- which is itself the thing
- * worth seeing: Off hovers towards a darker border grey, On towards the darker
- * action blue.
+ * El hover de la pista depende de si está encendido, así que se elige por fila: Off
+ * va a un gris de borde más oscuro, On a un azul de acción más oscuro.
  */
 const FOCUS_RING = '[&_input]:shadow-(--focus-ring-shadow)';
 
@@ -46,7 +42,7 @@ const FORCED: Readonly<Record<string, Readonly<Record<string, string>>>> = {
   },
 };
 
-/** VERIFIED AGAINST toggle.ts. */
+/** Verificada contra toggle.ts. */
 const PROPS: readonly PropRow[] = [
   {
     name: 'checked',
@@ -95,7 +91,7 @@ const ANATOMY = [
   { part: 'Radio de la píldora y del pulgar', token: '--radius-full' },
 ] as const;
 
-/** The three numbers the Toggle ficha fixes, in CSS pixels. */
+/** Los tres números que fija la ficha Toggle, en píxeles CSS. */
 const TRACK_WIDTH = 44;
 const TRACK_HEIGHT = 24;
 const THUMB_SIZE = 20;
@@ -106,7 +102,7 @@ interface TrackMeasure {
   readonly matchesSpec: boolean;
 }
 
-/** One row of the preferences demo. Each applies on touch; there is no Save. */
+/** Fila de la demo de preferencias. Se aplica al tocar; no hay Guardar. */
 interface Preference {
   readonly id: string;
   readonly label: string;
@@ -115,12 +111,8 @@ interface Preference {
 }
 
 /**
- * /design-system/components/toggle -- the sheet of `ewms-toggle`.
- *
- * The page has to make one distinction land before anything else: this is not
- * a checkbox that looks different. It APPLIES ON TOUCH. Which is why the demo
- * is a preferences panel with no Save button anywhere near it -- a Save button
- * beside a toggle would be the page contradicting its own first paragraph.
+ * /design-system/components/toggle: ficha de ewms-toggle. No es un checkbox con otro
+ * aspecto: se aplica al tocar, por eso la demo es un panel de preferencias sin Guardar.
  */
 @Component({
   selector: 'ewms-showroom-toggle',
@@ -164,7 +156,7 @@ export class ShowroomToggle {
     },
   ]);
 
-  /** Grows on every flip, which is the proof that nothing waits for a Save. */
+  /** Crece con cada cambio: prueba de que nada espera a un Guardar. */
   protected readonly applied = signal(0);
 
   protected readonly snippet = [
@@ -177,11 +169,8 @@ export class ShowroomToggle {
   ].join('\n');
 
   constructor() {
-    /*
-     * 44 x 24 with a 20 px thumb. The thumb is measured too: 2 + 20 + 2 is the
-     * track's height, and the same 2 px has to be left on the far side after
-     * the travel. All three numbers come off the rendered control.
-     */
+    // 44 x 24 con perilla de 20 px: 2 + 20 + 2 es el alto de la pista, y tras el
+    // recorrido deben quedar los mismos 2 px del otro lado. Todo se mide.
     afterNextRender(() => {
       const root = this.host.nativeElement;
       const track = rectOf(root, '[data-measure-track] input');

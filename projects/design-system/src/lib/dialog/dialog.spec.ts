@@ -28,8 +28,7 @@ describe('DialogService', () => {
     await TestBed.configureTestingModule({ imports: [TestHost, DialogModule] }).compileComponents();
     fixture = TestBed.createComponent(TestHost);
     host = fixture.componentInstance;
-    // The opener has to be in the document for focus restoration to have
-    // somewhere to restore to.
+    // El que abre tiene que estar en el documento para que el foco tenga adónde volver.
     document.body.appendChild(fixture.nativeElement);
     fixture.detectChanges();
     await fixture.whenStable();
@@ -130,8 +129,7 @@ describe('DialogService', () => {
     const CASES: readonly (readonly [DialogTone, string, string])[] = [
       ['danger', 'danger', 'bg-danger'],
       ['warning', 'warning', 'bg-primary'],
-      // Info is painted neutral. The Figma record of this component had it
-      // blue; the brand rule superseded that, and the sheet says so.
+      // Info se pinta neutral: la regla de marca reemplazó el azul de Figma.
       ['info', 'neutral', 'bg-primary'],
     ];
 

@@ -1,25 +1,14 @@
 /**
- * The two claims REQ-FE-DS4-001 makes about the SOURCE, checked rather than
- * promised.
+ * Las dos afirmaciones de REQ-FE-DS4-001 sobre la fuente, comprobadas:
  *
- *   1. RFE-01 / PACQ-01.3 -- the map is the only place a key is named. Every
- *      binding in a `shortcuts.map.ts` is looked for everywhere else. A screen
- *      that wrote `case 'Escape':` to mean "cancel" would be a second place a
- *      key lives, and the day somebody rebinds cancel the screen keeps its old
- *      one, silently.
+ *   1. RFE-01 / PACQ-01.3: solo el mapa nombra una tecla. Una pantalla con
+ *      `case 'Escape':` para cancelar conservaría la tecla vieja el día que se reasigne.
+ *   2. RFE-03 / HG-04: un único listener global de teclado. Uno fuera de `keyboard/` es
+ *      un segundo motor, y con dos motores cada atajo dispara dos veces.
  *
- *   2. RFE-03 / HG-04 -- one global keyboard listener. A `document` keydown
- *      anywhere outside `keyboard/` is a second engine, and two engines mean
- *      every shortcut fires twice.
- *
- * WHY A SOURCE SCAN AND NOT A RUNTIME TEST. Both of these are about code that
- * is NOT running: the second listener nobody mounted yet, the key somebody
- * wrote into a screen they have not finished. A runtime test can only see what
- * a test happens to render. `KeyboardShortcuts.mount` also throws on a second
- * host at runtime, which covers the case this cannot: a host mounted from a
- * template that this scan reads as ordinary markup.
- *
- * Run with `npm run lint:shortcuts`, and asserted by check-shortcuts.test.mjs.
+ * Escaneo de fuente y no prueba en ejecución: ambas tratan de código que todavía no
+ * corre. `KeyboardShortcuts.mount` además lanza ante un segundo host en ejecución.
+ * `npm run lint:shortcuts`; lo afirma check-shortcuts.test.mjs.
  */
 import { readdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
@@ -30,11 +19,8 @@ const SCAN_DIR = 'projects';
 const EXTENSIONS = new Set(['.html', '.ts']);
 
 /**
- * The files allowed to name a key, and the only ones.
- *
- * One per application, which is what RFE-01 means by "a single file": the
- * shell and the showroom are two applications that each provide their own
- * `EWMS_SHORTCUT_MAP`, because the showroom may not import the shell.
+ * Los únicos archivos que pueden nombrar una tecla: uno por aplicación («un solo
+ * archivo» de RFE-01), porque el showroom no puede importar el shell.
  */
 export const MAP_FILES = [
   'projects/shell/src/app/shortcuts.map.ts',
@@ -42,24 +28,15 @@ export const MAP_FILES = [
 ];
 
 /**
- * Where a key may legitimately be spelled for a reason that is NOT the global
- * map, each with the reason.
- *
- * THIS LIST IS THE INTERESTING PART OF THE GATE, because every entry is a
- * judgement somebody has to defend. A component closing its OWN overlay on
- * Escape is not the global cancel shortcut -- it is the component's behaviour,
- * it is specified in that component's sheet, and it runs before the engine
- * sees the event (the engine skips anything already answered). Confusing the
- * two would mean turning off the global cancel binding silently stopped every
- * dropdown from closing.
+ * Dónde se puede escribir una tecla por una razón que no es el mapa global. Cada entrada
+ * es un criterio que alguien defiende: un componente que cierra su propio overlay con
+ * Escape no es el atajo global de cancelar, y corre antes de que el motor vea el evento.
  */
 export const KEY_EXEMPT = [
-  // The engine and its own tests. It compares `event.key` against the map and
-  // never names one -- except in the spec, where the map is written out on
-  // purpose so that changing a binding breaks a test.
+  // El motor y sus pruebas: compara `event.key` contra el mapa sin nombrar teclas,
+  // salvo la spec, que escribe el mapa a propósito para que un cambio rompa una prueba.
   'projects/design-system/src/lib/keyboard/',
-  // Components closing their own overlay, moving their own list, or answering
-  // their own Enter. Behaviour of the component, not the global map.
+  // Componentes que cierran su overlay, recorren su lista o atienden su Enter.
   'projects/design-system/src/lib/dialog/',
   'projects/design-system/src/lib/select/',
   'projects/design-system/src/lib/search-select/',
@@ -71,23 +48,17 @@ export const KEY_EXEMPT = [
   'projects/design-system/src/lib/button/',
   'projects/design-system/src/lib/icon-button/',
   'projects/design-system/src/lib/overlay/',
-  // DS-5: the bottom navigation's sheet closes on Escape and the rail walks
-  // itself with the arrows. Same category as the dialog and the select --
-  // a component answering its OWN keys, specified in its own sheet, and
-  // running before the engine sees the event. Turning the global `cancel`
-  // binding off must not stop a panel from closing.
+  // DS-5: la hoja de la navegación inferior cierra con Escape y el rail se recorre con
+  // flechas. Misma categoría que dialog y select: apagar `cancel` no debe dejar un panel
+  // sin cerrar.
   'projects/design-system/src/lib/navigation/',
-  // The catalogue TALKS about keys -- it is documentation, and a sheet that
-  // could not print the key it documents would be useless.
+  // El catálogo habla de teclas: es documentación y tiene que poder imprimirlas.
   'projects/showroom/src/lib/pages/',
 ];
 
 /**
- * Where a global keydown listener may live.
- *
- * `search-select/` is on the list and the reason is written in the component:
- * a field measures the gaps of what is typed INTO IT, which is not a global
- * listener at all -- it is a handler on its own input.
+ * Dónde puede vivir un listener global de keydown. `search-select/` mide los tiempos de
+ * lo que se tipea en su propio input: no es un listener global (la razón está en el componente).
  */
 export const LISTENER_EXEMPT = [
   'projects/design-system/src/lib/keyboard/',
@@ -98,39 +69,25 @@ export const LISTENER_EXEMPT = [
 ];
 
 /**
- * `document.addEventListener('keydown'`, plus both of Angular's global-target
- * forms: `@HostListener('document:keydown')` and the host binding
- * `'(document:keydown)'`. The optional `(` is what tells the two apart, and
- * leaving it out let the host-binding form through -- which the test below
- * caught, and which is the form somebody is most likely to reach for.
+ * `document.addEventListener('keydown'` y las dos formas de Angular:
+ * `@HostListener('document:keydown')` y el host binding `'(document:keydown)'`. El `(`
+ * opcional las distingue; sin él pasaba el host binding, y la prueba lo atrapó.
  */
 const GLOBAL_LISTENER =
   /(?:document|window|globalThis)\s*\.\s*addEventListener\s*\(\s*['"`]key(?:down|press|up)['"`]|['"`]\(?(?:document|window):key(?:down|press|up)/g;
 
 /**
- * Pull every `key:` value out of a map file.
- *
- * Deliberately a regular expression over the source rather than an import: the
- * point is to read what is WRITTEN, and importing the module would make the
- * gate agree with itself about a map assembled at runtime.
+ * Saca cada valor `key:` de un archivo de mapa. Expresión regular sobre la fuente y no
+ * import: importar el módulo haría que la compuerta coincidiera consigo misma.
  */
 export function bindingKeys(source) {
   return [...source.matchAll(/\bkey:\s*'([^']+)'/g)].map((match) => match[1]);
 }
 
 /**
- * Every place `key` is spelled as a string literal in this source.
- *
- * A SINGLE CHARACTER IS ONLY LOOKED FOR WHERE IT IS BEING TREATED AS A KEY --
- * compared against something called `key`, or in a `case` of a switch. A bare
- * `'s'` is also a CSS unit, a path fragment and half the strings in a
- * template; the first version of this gate matched `=== 's'` in
- * `read-token.ts`, where it means *seconds*, and that false positive is what
- * narrowed the rule. What the gate is actually protecting against is a screen
- * writing `event.key === 'n' && event.altKey` instead of registering `create`,
- * and that always mentions `key`.
- *
- * A named key like `Escape` stays distinctive enough to look for anywhere.
+ * Cada lugar donde `key` aparece como literal. Un carácter suelto solo se busca donde se
+ * trata como tecla (comparado con algo llamado `key`, o en un `case`): la primera versión
+ * atrapó `=== 's'` en `read-token.ts`, donde significa segundos. `Escape` se busca en todas partes.
  */
 export function keyMentions(source, key) {
   const quoted = key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -145,7 +102,7 @@ export function keyMentions(source, key) {
   }));
 }
 
-/** Every global keyboard listener in this source. */
+/** Cada listener global de teclado en esta fuente. */
 export function globalListeners(source) {
   return [...source.matchAll(GLOBAL_LISTENER)].map((match) => ({
     index: match.index,

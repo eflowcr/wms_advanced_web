@@ -2,20 +2,11 @@ import { DOCUMENT } from '@angular/common';
 import { DestroyRef, Injectable, inject, signal, type Signal } from '@angular/core';
 import { readPixels } from '../tokens/read-token';
 
-/** El token que dice dónde cambia de forma la navegación. */
 export const NAV_BOTTOM_BREAKPOINT_TOKEN = '--breakpoint-nav-bottom';
 
 /**
- * DÓNDE CAMBIA DE FORMA EL LAYOUT, LEÍDO DEL TOKEN Y NO DE UN `md:`.
- *
- * Mapear el token al `@theme` de Tailwind emite una media query con `var()`
- * adentro, y una propiedad personalizada no se sustituye en una media feature: la
- * consulta es inválida y falsa a cualquier ancho. Compila, ninguna compuerta se
- * queja, y el layout no cambia nunca. Darle un literal mete un píxel crudo en
- * styles.css, que la compuerta 10 rechaza con razón.
- * Así que el token se lee con `readPixels` y se le pasa a `matchMedia`.
- * SIN TOKEN GANA EL LAYOUT ANCHO, y es decisión: el rail funciona a cualquier
- * ancho y solo cuesta espacio; la barra inferior sería la equivocada en escritorio.
+ * Punto de corte leído del token con `readPixels` + `matchMedia`: con `var()` en el `@theme`
+ * la media query es inválida. Sin token gana el ancho. Ver vault: Navegacion (móvil).
  */
 @Injectable({ providedIn: 'root' })
 export class Viewport {
@@ -23,7 +14,7 @@ export class Viewport {
 
   private readonly wide = signal(true);
 
-  /** Cierto cuando el viewport está en o sobre el punto de corte. */
+  /** En o sobre el punto de corte. */
   readonly isWide: Signal<boolean> = this.wide.asReadonly();
 
   constructor() {

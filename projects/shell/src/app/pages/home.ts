@@ -15,11 +15,11 @@ import { BRAND_NAME } from '../brand';
 export class Home {
   protected readonly brandName = BRAND_NAME;
 
-  // Sample values for the provisional i18n examples.
+  // Valores de los ejemplos provisionales de i18n.
   protected readonly unitCounts = [0, 1, 1250] as const;
   protected readonly today = new Date();
   protected readonly netWeightKg = 12345.678;
   protected readonly amount = 1250000;
-  /** The currency is data of the record, never derived from the language. */
+  /** La moneda es dato del registro, nunca sale del idioma. */
   protected readonly amountCurrency = 'CRC';
 }

@@ -1,31 +1,17 @@
 import { ScanDetector, SCAN_MIN_KEYSTROKES, type ScanVerdict } from './scan-detector';
 
 /**
- * The barcode classifier, on its own, WITH A SIMULATED CLOCK.
- *
- * The threshold and the time are both arguments, so none of this sleeps and
- * none of it is flaky. That is the whole reason the measurement was pulled out
- * of `ewms-search-select`: inside a component it could only be tested by
- * driving a component, and "is 49 ms under the line and 51 ms over it" is a
- * question about arithmetic, not about a field.
- *
- * REQ-FE-DS4-001 RFE-05 and PACQ-03.1 to 03.4.
+ * Reloj simulado: umbral y tiempo son argumentos, así que nada duerme ni es inestable.
+ * REQ-FE-DS4-001 RFE-05 y PACQ-03.1 a 03.4.
  */
 
 const THRESHOLD = 50;
 
-/** A keydown, reduced to the four properties the detector reads. */
 function key(k: string, modifiers: Partial<KeyboardEvent> = {}): KeyboardEvent {
   return { key: k, ctrlKey: false, altKey: false, metaKey: false, ...modifiers } as KeyboardEvent;
 }
 
-/**
- * Feed a whole string at a fixed pace and return every verdict.
- *
- * The clock starts far from zero, because a detector that has never seen a key
- * has `lastKeystroke = 0` and the first gap is therefore enormous -- which is
- * correct, and which a test starting at `now = 0` would hide.
- */
+/** El reloj arranca lejos de cero: empezar en 0 ocultaría el primer hueco enorme, que es correcto. */
 function type(
   detector: ScanDetector,
   text: string,
@@ -51,11 +37,10 @@ describe('ScanDetector', () => {
     });
 
     it('PACQ-03.2: a code CONTAINING a shortcut character never lets it through', () => {
-      // The case the whole requirement exists for. `/` is the search shortcut.
+      // El caso por el que existe el requisito: `/` es el atajo de búsqueda.
       const verdicts = type(detector, 'AB/CD/EF', 5);
 
-      // Everything from the fourth character on is inside a run, so nothing may
-      // act on it -- the two slashes included.
+      // Desde el cuarto carácter todo es ráfaga, las dos barras incluidas.
       expect(verdicts.slice(SCAN_MIN_KEYSTROKES - 1).every((v) => v.kind === 'burst')).toBe(true);
       expect(detector.accept(key('Enter'), THRESHOLD, 10_100)).toEqual({
         kind: 'scan',
@@ -64,13 +49,8 @@ describe('ScanDetector', () => {
     });
 
     it('a code that BEGINS with a shortcut character still arrives whole', () => {
-      /*
-       * The first character of a run cannot be told from a person's keystroke,
-       * and nothing here pretends otherwise: it comes back as `key`. What
-       * stops the shortcut firing is the engine waiting one threshold window
-       * before acting on a single character -- see keyboard-shortcuts.spec.ts.
-       * What this asserts is that the CODE is not damaged by that.
-       */
+      // El primer carácter vuelve como `key`; al atajo lo frena la espera del motor
+      // (keyboard-shortcuts.spec.ts). Acá se prueba que el código llega entero.
       const verdicts = type(detector, '/XY9012', 5);
 
       expect(verdicts[0]).toEqual({ kind: 'key' });
@@ -95,7 +75,7 @@ describe('ScanDetector', () => {
 
   describe('a person', () => {
     it('PACQ-03.3: typing fast and pressing Enter is not a scan', () => {
-      // 150 ms between keys: quick, and nowhere near a gun.
+      // 150 ms entre teclas: rápido, y lejos de una pistola.
       type(detector, 'SKU-881', 150);
 
       expect(detector.accept(key('Enter'), THRESHOLD, 20_000)).toEqual({ kind: 'key' });
@@ -105,14 +85,13 @@ describe('ScanDetector', () => {
       const verdicts = type(detector, 'ABCDEF', 5);
 
       expect(verdicts.some((v) => v.kind === 'scan')).toBe(false);
-      // Tab ends the run, and ends it as an ordinary key.
       expect(detector.accept(key('Tab'), THRESHOLD, 10_100)).toEqual({ kind: 'key' });
       expect(detector.length).toBe(0);
     });
 
     it('one slow gap starts the run over, and the code carries only what came after', () => {
       type(detector, 'XY', 5);
-      // The pause. Everything before it belongs to a different run.
+      // La pausa: lo anterior es otra ráfaga.
       detector.accept(key('Z'), THRESHOLD, 50_000);
       type(detector, 'ABC', 5, 50_005);
 
@@ -123,12 +102,8 @@ describe('ScanDetector', () => {
     });
 
     it('holding an arrow key does not build a run', () => {
-      /*
-       * The regression this class was born with. Key repeat fires every 30 ms
-       * or so, which is gun territory -- and a keyboard user walking a list
-       * fast used to arrive at Enter with a burst behind them, so their "choose
-       * this row" was read as a scan.
-       */
+      // La regresión de origen: la repetición de tecla (~30 ms) armaba una ráfaga y el
+      // Enter de «elegir esta fila» se leía como escaneo. Ver vault: Search-Select.
       for (let i = 0; i < 10; i += 1) {
         expect(detector.accept(key('ArrowDown'), THRESHOLD, 10_000 + i * 30)).toEqual({
           kind: 'key',
@@ -149,8 +124,7 @@ describe('ScanDetector', () => {
 
   describe('with no threshold declared', () => {
     it('classifies nothing as a scan, and says so by returning ordinary keys', () => {
-      // tokens.css not loaded. The surface still works; it just never resolves
-      // a scan. Same contract as every other token read: no fallback number.
+      // Sin tokens.css la superficie anda pero nunca resuelve un escaneo: sin número de reserva.
       const verdicts = type(detector, 'EXP-000123', 5).map((v) => v.kind);
       const withoutThreshold = [...'EXP-000123'].map(
         (char, index) => detector.accept(key(char), null, 20_000 + index * 5).kind,

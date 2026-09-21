@@ -1,22 +1,13 @@
 /**
- * Lists the --color-* token names cited in the documentation vault that
- * tokens.css does not define.
+ * Lista los nombres --color-* citados en el vault que tokens.css no define. No es
+ * compuerta de CI: el vault no está en este repo. Se corre a mano antes de dar por
+ * cerrada una ficha, porque un nombre que no existe se pudre en silencio.
  *
- * NOT A CI GATE. The vault is not in this repository, so the runner cannot
- * see it. This is a tool to run by hand before calling a component spec done:
- * a spec names tokens (it never copies values), and a name that does not exist
- * rots silently. Comparing the two lists catches every one at once.
+ *   npm run vault:check-tokens -- <ruta-al-vault> [--exclude <dir>]...
  *
- *   npm run vault:check-tokens -- <path-to-vault> [--exclude <dir>]...
- *
- * Scans every .md file under the vault, skipping hidden directories
- * (.obsidian, .claude) and 99-Archivo (archived notes are history by
- * definition). `--exclude` skips more directories, relative to the vault.
- *
- * A name inside a sentence that narrates history (a token that was replaced)
- * is still listed: the tool does not read prose. Decide by reading the line.
- *
- * Exit code: 0 when every cited name exists, 1 otherwise, 2 on bad usage.
+ * Recorre los .md salteando carpetas ocultas y 99-Archivo (historia por definición).
+ * Un nombre dentro de una frase que narra historia se lista igual: se decide leyendo.
+ * Salida: 0 si todo existe, 1 si no, 2 ante un uso incorrecto.
  */
 import { readdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
@@ -27,18 +18,17 @@ const TOKENS_FILE = 'projects/design-system/src/styles/tokens.css';
 const ALWAYS_SKIPPED = new Set(['99-Archivo']);
 
 /**
- * A whole --color-* name. The lookbehind keeps Tailwind theme variables such as
- * --background-color-primary out; the lookahead drops wildcards and
- * placeholders (`--color-neutral-*`, `--color-<familia>-solid`).
+ * Un nombre --color-* entero. El lookbehind deja afuera variables del tema de Tailwind
+ * como --background-color-primary; el lookahead, comodines y marcadores.
  */
 const COLOR_TOKEN = /(?<![\w-])--color-[a-z0-9]+(?:-[a-z0-9]+)*(?![\w*<-])/g;
 
-/** Names defined in tokens.css (`--color-x: ...;`). */
+/** Nombres definidos en tokens.css (`--color-x: ...;`). */
 export function definedColorTokens(css) {
   return new Set([...css.matchAll(/^\s*(--color-[\w-]+)\s*:/gm)].map((match) => match[1]));
 }
 
-/** Every --color-* name cited in a Markdown text, with its line. */
+/** Cada nombre --color-* citado en un Markdown, con su línea. */
 export function citedColorTokens(markdown) {
   const cited = [];
   markdown.split('\n').forEach((text, index) => {

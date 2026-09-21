@@ -56,12 +56,7 @@ class ReactiveHost {
   readonly control = new FormControl('');
 }
 
-/**
- * The jsdom equivalent of `getByLabelText`: resolve the <label> whose text is
- * `text`, follow its `for`, and return what it points at. Deliberately goes
- * through the for/id pair rather than querying the control directly -- that
- * pair IS the criterion.
- */
+/** Como `getByLabelText`: pasa por el par for/id a propósito, porque ese par es el criterio. */
 function byLabelText(root: Element, text: string): HTMLElement | null {
   const label = Array.from(root.querySelectorAll('label')).find(
     (element) => element.textContent?.trim().replace(/\*$/, '').trim() === text,
@@ -71,14 +66,8 @@ function byLabelText(root: Element, text: string): HTMLElement | null {
 }
 
 /**
- * Give an element the focus, then take it away, driving the two native events
- * through the DOM methods rather than through a synthesised `FocusEvent`.
- *
- * The reason is gate 10: it reads every string literal in a .ts file as a
- * possible class name, and the name of the second of those two events is also
- * a stock Tailwind filter utility, so spelling it as a literal fails the
- * build. The method call says the same thing and is closer to what a browser
- * actually does. Reported in the PR report.
+ * Por métodos del DOM y no con un `FocusEvent` sintético: el nombre del segundo evento es una
+ * utilidad de Tailwind y, como cadena, rompe la compuerta 10.
  */
 function focusThenLeave(element: HTMLElement): void {
   element.focus();
@@ -145,7 +134,6 @@ describe('Input', () => {
       await settle();
 
       expect(control().required).toBe(true);
-      // The native attribute already announces it; the glyph would say it twice.
       expect(root().querySelector('label span')?.getAttribute('aria-hidden')).toBe('true');
     });
   });
@@ -158,7 +146,7 @@ describe('Input', () => {
       const describedBy = control().getAttribute('aria-describedby');
       expect(describedBy).toBeTruthy();
       expect(root().querySelector(`#${describedBy}`)?.textContent?.trim()).toBe('Formato ABC-123');
-      // The name is still only the label.
+      // El nombre sigue siendo solo la etiqueta.
       expect(byLabelText(root(), 'Codigo de articulo')).toBe(control());
     });
 
@@ -193,14 +181,13 @@ describe('Input', () => {
       host.state.set('readonly');
       await settle();
 
-      // The whole point of the state: not editable, but still focusable,
-      // selectable and NOT announced as unavailable.
+      // No editable, pero enfocable, seleccionable y no anunciado como no disponible.
       expect((control() as HTMLInputElement).readOnly).toBe(true);
       expect(control().disabled).toBe(false);
       expect(control().hasAttribute('aria-disabled')).toBe(false);
       expect(control().classList.contains('cursor-default')).toBe(true);
       expect(control().classList.contains('cursor-not-allowed')).toBe(false);
-      // Read-only text is content someone may need to read: primary, not grey.
+      // Solo lectura es contenido que se lee: color primario, no gris.
       expect(control().classList.contains('text-disabled')).toBe(false);
     });
 
@@ -221,8 +208,7 @@ describe('Input', () => {
       control().focus();
       await settle();
 
-      // One focus colour in the whole system: the ring says "focus", the
-      // border keeps saying "error".
+      // El anillo dice «foco» y el borde sigue diciendo «error».
       expect(control().style.borderColor).toBe(before);
       expect(control().classList.contains('focus-visible:shadow-(--focus-ring-shadow)')).toBe(true);
     });
@@ -242,11 +228,8 @@ describe('Input', () => {
   });
 
   describe('Sizing', () => {
-    // jsdom does no layout: getBoundingClientRect returns zeroes and
-    // getComputedStyle does not resolve var(). The 32/40/48 heights and the
-    // 10/12/14 paddings are asserted as the utilities that carry them, never
-    // as measurements -- a measurement assertion here would pass by comparing
-    // zero with zero. See the PR report.
+    // jsdom no hace layout: alturas 32/40/48 y rellenos 10/12/14 se afirman por la utilidad
+    // que los lleva; medir compararía cero con cero.
     const boxes: readonly (readonly [FieldSize, string, string])[] = [
       ['sm', 'h-8', 'px-2.5'],
       ['md', 'h-10', 'px-3'],
@@ -267,8 +250,6 @@ describe('Input', () => {
 
       expect(control().classList.contains('h-10')).toBe(false);
       expect(control().classList.contains('resize-none')).toBe(true);
-      // Same radius and border as the single-line field: they come from the
-      // one shared base class list.
       expect(control().classList.contains('rounded-control')).toBe(true);
     });
 
@@ -293,8 +274,7 @@ describe('Input', () => {
 
         const icon = fixture.debugElement.query(By.css('ewms-icon'));
         expect(icon).not.toBeNull();
-        // 16 px at every field size, so a Small button and a Large input on the
-        // same row carry the same glyph.
+        // 16 px en todo tamaño: botón chico y campo grande en una fila llevan el mismo glifo.
         expect((icon.componentInstance as { size: () => string }).size()).toBe('sm');
         const svg = (icon.nativeElement as Element).querySelector('svg');
         expect(svg?.getAttribute('aria-hidden')).toBe('true');
@@ -331,7 +311,6 @@ describe('Input', () => {
       await settle();
 
       expect(control().getAttribute('type')).toBe('text');
-      // Nothing in the toggle path calls focus() or swaps the element.
       expect(document.activeElement).toBe(toggle());
 
       toggle().click();
@@ -353,8 +332,7 @@ describe('Input', () => {
       host.hidePasswordLabel.set('');
       await settle();
 
-      // The alternative would be a button with no accessible name. See the
-      // comment on showPasswordLabel and the PR report.
+      // La alternativa sería un botón sin nombre accesible.
       expect(root().querySelector('ewms-icon-button')).toBeNull();
     });
   });
@@ -391,11 +369,7 @@ describe('Input', () => {
 
   describe('Focus outputs', () => {
     it('emits one of each per native event', async () => {
-      // Bound from the host template with the prefixed names. The unprefixed
-      // pair would not compile past ESLint's no-output-native, and one of the
-      // two is also a stock Tailwind utility name, which gate 10 reads as a
-      // dead class when it appears in an inline template. See the comment on
-      // those outputs and the PR report.
+      // Con los nombres prefijados; ver el comentario de esas salidas en input.ts.
       focusThenLeave(control());
       await settle();
 
@@ -413,9 +387,8 @@ describe('Input', () => {
       host.disabled.set(true);
       await settle();
 
-      // The form's half of the decision, called the way Angular calls it.
-      // Neither source can re-enable what the other disabled: a template that
-      // says [disabled]="true" is not undone by form.enable().
+      // Como lo llama Angular. Ninguna fuente rehabilita lo que la otra deshabilitó:
+      // form.enable() no deshace un [disabled]="true" de la plantilla.
       instance().setDisabledState(false);
       await settle();
 

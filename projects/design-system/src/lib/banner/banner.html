@@ -1,21 +1,10 @@
-<!--
-  `role` va atado y no escrito, porque es el único atributo de acá que cambia de
-  significado con la variante: Danger y Warning interrumpen al lector de pantalla,
-  Success e Info esperan su turno. Darles `alert` a los cuatro haría que cada
-  «guardado» cortara lo que se estuviera leyendo.
-  La caja entera es la región viva y no solo el texto: un banner que apareció se
-  anuncia con su severidad, y la severidad es la etiqueta del icono.
--->
+<!-- `role` según la variante (Ver vault: Notificaciones); la caja entera es la región viva. -->
 <div
   [attr.role]="role()"
   class="flex items-start gap-3 rounded-md border p-4"
   [class]="surfaceClasses()"
 >
-  <!--
-  `label` y no aria-hidden: este icono lleva información que ningún texto visible
-  repite -cuál de los cuatro es-, así que es el único icono del sistema que nunca
-  es decorativo.
--->
+  <!-- El único icono nunca decorativo: dice la severidad, que ningún texto repite. -->
   <ewms-icon [name]="iconName()" [size]="iconSize" [label]="severityLabel()" />
 
   <div class="flex min-w-0 flex-1 flex-col gap-1">
@@ -26,13 +15,7 @@
   </div>
 
   @if (dismissible()) {
-    <!--
-  El botón de cierre es un `ewms-icon-button` de verdad y no un `<button>` pelado
-  con una x: el anillo de foco, la caja y el comportamiento deshabilitado ya están
-  decididos ahí.
-  Ghost lo mantiene callado dentro de una superficie de color, y su frente es el
-  azul de acción, que es correcto y no un choque: cerrar el banner ES el clic.
--->
+    <!-- Ghost sobre color: su azul de acción es correcto, porque cerrar es el clic. -->
     <ewms-icon-button
       icon="x"
       size="sm"

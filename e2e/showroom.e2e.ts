@@ -2,17 +2,8 @@ import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
 
 /**
- * The showroom, and the measurements that needed a browser.
- *
- * WHY THESE ASSERTIONS LIVE HERE AND NOT IN A UNIT TEST
- *
- * jsdom does no layout: every box it reports is zero, so none of this could be
- * checked before there was a page to render. Two of the criteria below have
- * been waiting since PR 1 for exactly that reason.
- *
- * The capture rig (playwright.capture.config.ts) is a separate config and does
- * NOT run here: screenshots without a baseline assert nothing. What survived
- * into this file is only what has a pass and a fail.
+ * El showroom y las medidas que necesitan navegador: jsdom no maqueta y toda caja le da cero.
+ * El banco de captura (playwright.capture.config.ts) no corre acá: capturas sin línea base no afirman nada.
  */
 
 import {
@@ -36,7 +27,7 @@ import {
   TOOLTIP,
 } from './routes';
 
-/** Fonts change every width measured, so nothing is measured before they land. */
+/** Las fuentes cambian todo ancho medido: nada se mide antes de que carguen. */
 async function ready(page: Page): Promise<void> {
   await page.evaluate(async () => {
     await Promise.all(
@@ -59,7 +50,7 @@ test.describe('the showroom renders and is reachable', () => {
   }
 
   test('the old Spanish icon route still works', async ({ page }) => {
-    // The URLs were declared stable; a link already shared has to keep opening.
+    // Las URL se declararon estables: un enlace ya compartido tiene que seguir abriendo.
     await page.goto('/design-system/iconografia');
     await expect(page).toHaveURL(/\/design-system\/foundations\/icons$/);
     await expect(page.getByRole('heading', { level: 1, name: 'Iconografía' })).toBeVisible();
@@ -77,22 +68,17 @@ test.describe('the showroom renders and is reachable', () => {
     const search = page.getByLabel('Buscar por nombre o selector');
     const links = page.locator('[data-sidebar] nav li');
 
-    // Settle before counting: `count()` does not retry, and reading it while
-    // the route is still rendering makes every later assertion nonsense.
+    // Esperar antes de contar: count() no reintenta y leerlo a mitad de render arruina lo que sigue.
     await expect(links.first()).toBeVisible();
     const total = await links.count();
     expect(total).toBeGreaterThan(20);
 
-    /*
-     * TWO SINCE DS-5, AND THAT IS THE SEARCH WORKING: «Toggle» matches by NAME
-     * and «Favoritos» by its SELECTOR, `ewms-favorite-toggle`. Narrowing the
-     * query to keep the number at one would test a coincidence instead of the
-     * behaviour.
-     */
+    // Dos desde DS-5, y es la búsqueda funcionando: «Toggle» coincide por nombre y «Favoritos»
+    // por su selector ewms-favorite-toggle.
     await search.fill('toggle');
     await expect(links).toHaveCount(2);
 
-    // The selector is searchable too: it is what you type in a template.
+    // También se busca por selector: es lo que se escribe en una plantilla.
     await search.fill('ewms-select');
     await expect(links).toHaveCount(1);
     await expect(links.first()).toContainText('Select');
@@ -118,34 +104,19 @@ test.describe('the showroom renders and is reachable', () => {
   }
 });
 
-/**
- * FAVOURITES, ACROSS THE SHELL AND THE CATALOGUE (DS-5 closing).
- *
- * Here and not in `smoke`, which is capped at twelve tests: what these defend
- * is a contract -- one list, and a route as the identity -- and every change
- * that can break it touches `design-system/`, `showroom/` or the shell's
- * layout, which is exactly when this project runs.
- *
- * A Spanish browser, so the first name on screen is the Spanish one and the
- * switch to English is the event under test rather than the starting point.
- */
+// Favoritos entre shell y catálogo (cierre de DS-5): acá y no en smoke porque todo lo que puede romperlo
+// toca design-system/, showroom/ o el layout del shell. Navegador en español: pasar a inglés es lo probado.
 test.describe('favourites: one list, and the route as the identity', () => {
   test.use({ locale: 'es-CR' });
 
-  /**
-   * ONE LIST OF FAVOURITES PER APPLICATION.
-   *
-   * The defect this closes: the showroom provided `EWMS_FAVORITES_STORE` a
-   * second time, so a catalogue page had two stars over two lists, and marking
-   * it in one left the other empty. State is provided once, by the shell; the
-   * catalogue reads it by injection, the way it reads `EWMS_SHORTCUT_MAP`.
-   */
+  // Una sola lista por app: el showroom proveía EWMS_FAVORITES_STORE otra vez y había dos estrellas
+  // sobre dos listas. La provee el shell y el catálogo la inyecta, como EWMS_SHORTCUT_MAP.
   test('a catalogue page has ONE star, and the rail and the sidebar agree', async ({ page }) => {
     const route = '/design-system/components/button';
     await page.goto(route);
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
 
-    // Exactly one two-state button on the page, and it is the header's.
+    // Un solo botón de dos estados en la página, y es el de la cabecera.
     const star = page.locator('[aria-pressed]');
     await expect(star).toHaveCount(1);
     await expect(page.locator('[data-app-header] [aria-pressed]')).toHaveCount(1);
@@ -157,7 +128,7 @@ test.describe('favourites: one list, and the route as the identity', () => {
     await expect(star).toHaveAttribute('aria-pressed', 'true');
     await expect(inRail).toHaveCount(1);
     await expect(inSidebar).toHaveCount(1);
-    // Each block names it in its own words, and neither shows a bare path.
+    // Cada bloque la nombra a su manera y ninguno muestra la ruta cruda.
     await expect(inSidebar).toHaveText('Botón');
     await expect(inRail).not.toContainText('/design-system');
 
@@ -167,15 +138,8 @@ test.describe('favourites: one list, and the route as the identity', () => {
     await expect(inSidebar).toHaveCount(0);
   });
 
-  /**
-   * A FAVOURITE IS A ROUTE (REQ-FE-DS4-002 v1.3).
-   *
-   * Until then it stored the name it had when it was marked, already
-   * translated, so «Artículos» stayed «Artículos» in English -- a list half
-   * translated, which is what ADR 0008 exists to prevent. Nothing is reloaded
-   * and nothing is marked again below: the only thing that changes is the
-   * language, and the name is resolved when the block draws.
-   */
+  // Un favorito es una ruta (REQ-FE-DS4-002 v1.3): antes guardaba el nombre ya traducido y quedaba
+  // en español en inglés (ADR 0008). Solo cambia el idioma; el nombre se resuelve al dibujar.
   test('a favourite follows the language, in the rail and in the catalogue', async ({ page }) => {
     await page.goto('/');
     await page.locator('[data-nav-item="catalogs"]').click();
@@ -188,8 +152,8 @@ test.describe('favourites: one list, and the route as the identity', () => {
     await page.locator('#language-switcher').selectOption('en');
     await expect(inRail).toHaveText('Articles');
 
-    // The catalogue's sidebar reads the SAME list and asks the application for
-    // the name, so it follows too -- inside a catalogue that is Spanish only.
+    // La barra del catálogo lee la misma lista y le pide el nombre a la app: sigue el idioma
+    // aunque el catálogo sea solo en español.
     await page.locator('[data-nav-item="design-system"]').click();
     const inSidebar = page.locator('[data-sidebar] [data-favorite="/catalogos/articulos"]');
     await expect(inSidebar).toHaveText('Articles');
@@ -200,21 +164,14 @@ test.describe('favourites: one list, and the route as the identity', () => {
   });
 });
 
-/**
- * PENDING SINCE PR 1, NUMBER ONE.
- *
- * The whole reason the Loading state hides its content with `visibility` and
- * not `display` is that the box must not change. Measured by hand while the
- * Button was built: 83.23 x 40 in both states, and 40 x 40 for the icon
- * button. Nothing was watching it. Now something is.
- */
+// Pendiente desde el PR 1: Loading oculta con visibility y no display para no cambiar la caja
+// (medido a mano: 83.23 x 40 en ambos estados, 40 x 40 el icon button).
 test.describe('Loading does not change the size of the control', () => {
   test('the button keeps its box, with an icon and without', async ({ page }) => {
     await page.goto(BUTTON);
     await ready(page);
 
-    // Default and Loading are rendered side by side in the state matrix, which
-    // is the only place both exist at once with identical content.
+    // Default y Loading conviven solo en la matriz de estados, con el mismo contenido.
     const cells = page.locator('ewms-state-matrix tbody tr').first().locator('td');
     const defaultBox = await cells.nth(0).locator('button').boundingBox();
     const loadingBox = await cells.nth(4).locator('button').boundingBox();
@@ -227,8 +184,7 @@ test.describe('Loading does not change the size of the control', () => {
     );
     expect(round(defaultBox?.height)).toBe(40);
 
-    // With an icon: the demo button carries one, so it is measured across its
-    // own transition rather than against a different button.
+    // Con icono: el botón de la demo se mide contra sí mismo, en su propia transición.
     const submit = page.locator('[data-demo-submit] button');
     const before = await submit.boundingBox();
     await submit.click();
@@ -256,11 +212,9 @@ test.describe('Loading does not change the size of the control', () => {
     await expect(submit).toHaveAttribute('aria-disabled', 'true');
     await expect(counter).toHaveText('Envíos registrados: 1');
 
-    // The accessible name survives `visibility: hidden` through aria-labelledby:
-    // the name is still 'Confirmar recepción' while the content is hidden.
+    // El nombre accesible sobrevive a visibility hidden gracias a aria-labelledby.
     await expect(page.getByRole('button', { name: 'Confirmar recepción' })).toHaveCount(1);
-    // Focus stays put: that is why Loading uses aria-disabled and not the
-    // native attribute, which would drop focus to <body>.
+    // El foco no se mueve: por eso aria-disabled y no el atributo nativo, que lo tiraría a body.
     await expect(submit).toBeFocused();
 
     await submit.click({ force: true });
@@ -272,8 +226,7 @@ test.describe('Loading does not change the size of the control', () => {
     await page.goto(BUTTON);
     await ready(page);
 
-    // Two real instances, one idle and one loading, so the comparison is
-    // between rendered controls and not between a control and an attribute.
+    // Dos instancias reales, una en reposo y otra cargando: se comparan controles renderizados.
     const idle = page.locator('[data-demo-tooltip] button');
     const loading = page.locator('[data-demo-iconbutton-loading] button');
 
@@ -288,15 +241,8 @@ test.describe('Loading does not change the size of the control', () => {
   });
 });
 
-/**
- * PENDING SINCE PR 1, NUMBER TWO.
- *
- * A floating panel has to flip when it does not fit. It was never tested
- * because jsdom does no layout, so the position strategies shipped unproven.
- * The triggers are moved to each edge from the test rather than a page being
- * built to hold them: what is under test is the overlay's behaviour, not a
- * layout somebody would ever ship.
- */
+// Pendiente desde el PR 1: un panel que no cabe se da vuelta. Los disparadores se mueven a cada borde
+// desde la prueba: se prueba el overlay, no un layout que alguien fuera a publicar.
 test.describe('a panel that does not fit flips instead of falling off', () => {
   const CORNERS = [
     { name: 'top-left', top: '0px', left: '0px' },
@@ -323,12 +269,8 @@ test.describe('a panel that does not fit flips instead of falling off', () => {
       );
 
       await host.locator('button').hover();
-      /*
-       * Not `[role="tooltip"]`: the panel only takes that role when the
-       * directive is marked `describes`. Beside a control that already has its
-       * own name it is aria-hidden decoration, so it is found by the id the
-       * directive generates.
-       */
+      // Por id y no por role tooltip: ese rol solo aparece con describes; si el control ya tiene
+      // nombre, el panel es decoración aria-hidden.
       const panel = page.locator('[id^="ewms-tooltip-"]');
       await expect(panel).toBeVisible();
 
@@ -389,25 +331,13 @@ test.describe('a panel that does not fit flips instead of falling off', () => {
     const panelBox = await panel.boundingBox();
     const triggerBox = await trigger.boundingBox();
     expect(round(panelBox!.y)).toBeCloseTo(round(triggerBox!.y + triggerBox!.height), 0);
-    // The panel is sized to the trigger, so the list has to be too: see the
-    // `w-full` note in select.types.ts.
+    // El panel toma el ancho del disparador y la lista también: ver la nota en select.types.ts.
     expect(round(panelBox!.width)).toBeCloseTo(round(triggerBox!.width), 0);
   });
 });
 
-/**
- * The geometry nobody had measured. Every number here is a claim tokens.css or
- * a component sheet makes; a failure means the claim and the code disagree,
- * and that is a defect either way.
- *
- * WHAT THIS BLOCK NO LONGER MEASURES, AND WHERE IT MOVED. The three control
- * heights and the 18x18 selection box and the 44x24 track were each measured
- * twice: once here, off the spacing sheet, and once off the component's own
- * sheet below. The sheet keeps the measurement, because it also reads the
- * verdict the page derives from it; the copy is gone. What is left here is
- * the one claim no single sheet can make -- that three DIFFERENT controls
- * line up.
- */
+// Cada número es algo que afirman tokens.css o una ficha; si falla, uno de los dos miente. Alturas,
+// caja 18x18 y riel 44x24 se miden en la ficha de cada componente; acá, solo que tres controles se alinean.
 test.describe('the fixed geometry of the system', () => {
   test('a field and a button of the same size share the same box', async ({ page }) => {
     await page.goto(SPACING);
@@ -420,20 +350,13 @@ test.describe('the fixed geometry of the system', () => {
     expect(round(input?.height), 'input md').toBe(40);
     expect(round(select?.height), 'select md').toBe(40);
     expect(round(button?.height), 'button md').toBe(40);
-    // The rule the mixed row exists to protect: they line up optically.
+    // La regla que protege la fila mixta: se alinean ópticamente.
     expect(round(input?.y)).toBe(round(button?.y));
     expect(round(select?.y)).toBe(round(button?.y));
   });
 });
 
-/**
- * The claims the new sheets make about themselves, checked in a browser.
- *
- * Every one of these pages reads a number off its own DOM instead of printing
- * one. That is only worth anything if the number it reads is the right one,
- * which is what these assert -- and what jsdom cannot, because it lays nothing
- * out.
- */
+// Cada ficha lee sus números del propio DOM en vez de imprimirlos; acá se comprueba que lea el correcto.
 test.describe('the component sheets measure what they claim', () => {
   test('the icon button is square at the three sizes, over the 2.5.8 minimum', async ({ page }) => {
     await page.goto(ICON_BUTTON);
@@ -448,8 +371,7 @@ test.describe('the component sheets measure what they claim', () => {
       expect(round(box?.width), `icon button ${size} width`).toBe(expected);
       expect(round(box?.height), `icon button ${size} height`).toBe(expected);
     }
-    // The page derives the 2.5.8 verdict from what it measured, so the absence
-    // of the failing badge is the assertion that the derivation agrees.
+    // La página deriva el veredicto 2.5.8 de lo que midió: sin insignia de fallo, la derivación coincide.
     await expect(page.getByText('por debajo de')).toHaveCount(0);
   });
 
@@ -500,27 +422,15 @@ test.describe('the component sheets measure what they claim', () => {
       expect(round(box?.width), `${url} width`).toBe(18);
       expect(round(box?.height), `${url} height`).toBe(18);
 
-      /*
-       * THE DECLARATION IS ASSERTED, NOT THE USED VALUE.
-       *
-       * Chromium floors a sub-pixel border: a literal `border-width: 1.5px`
-       * also reports `1px` from getComputedStyle, at every device pixel
-       * ratio. Asserting the used value would be asserting a browser
-       * rounding rule -- it would fail the day that rule changed and would
-       * say nothing about whether the token reached the control. What the
-       * component owes is the token; what the browser does with it is the
-       * browser's.
-       *
-       * The consequence -- that `--border-width-selection` does not actually
-       * paint 1.5px in Chromium -- is written up in the DS-2 PR 3 report.
-       */
+      // Se afirma la declaración, no el valor usado: Chromium redondea un borde de 1.5px a 1px en todo DPR.
+      // El componente debe el token; que --border-width-selection pinte 1px está en el informe DS-2 PR 3.
       const declared = await page.locator('[data-measure-box] input').evaluate((el) => ({
         inline: (el as HTMLElement).style.borderWidth,
         token: getComputedStyle(el).getPropertyValue('--border-width-selection').trim(),
       }));
       expect(declared.inline, `${url} border declaration`).toBe('var(--border-width-selection)');
       expect(declared.token, `${url} border token`).toBe('1.5px');
-      // And the page prints that same declaration, for the same reason.
+      // Y la página imprime la misma declaración, por la misma razón.
       await expect(page.getByText('var(--border-width-selection)')).toBeVisible();
     }
   });
@@ -585,12 +495,8 @@ test.describe('accessibility', () => {
   for (const { url, heading } of PAGES) {
     test(`${url} has no axe violations`, async ({ page }) => {
       await page.goto(url);
-      /*
-       * Wait for the page, not just for the fonts. The route is lazy, and axe
-       * run against a document that has not rendered yet reports the absence
-       * of the whole application -- sixty-odd violations that say nothing
-       * about the page under test and come and go with the machine's load.
-       */
+      // Esperar la página y no solo las fuentes: la ruta es perezosa y axe sobre un documento sin
+      // renderizar reporta unas sesenta violaciones que van y vienen con la carga de la máquina.
       await expect(page.getByRole('heading', { level: 1, name: heading })).toBeVisible();
       await ready(page);
       const results = await new AxeBuilder({ page }).analyze();
@@ -599,102 +505,51 @@ test.describe('accessibility', () => {
   }
 });
 
-/**
- * THE KEYBOARD WALK -- the exit criterion of DS-2 and step 3 of the comanda.
- *
- * The comanda's "listo cuando" is being able to go through the catalogue end
- * to end with Tab, Enter and the arrow keys. Until now that was a claim
- * nobody had checked: axe covers contrast and semantics and says nothing
- * about whether the tab order reaches everything, or reaches something twice.
- *
- * WHY THE EXPECTED SET IS READ OFF THE DOM AND NOT WRITTEN DOWN HERE.
- * A hand-written list of controls per page goes stale the first time a page
- * gains a button, and goes stale silently -- the test keeps passing while the
- * thing it was written to protect stops being true. So each page is asked
- * what interactive elements it is showing, every one of them is stamped, and
- * the walk has to visit exactly that set: nothing missing, nothing twice, and
- * nothing focused that was not in it.
+/*
+ * Recorrido por teclado (criterio de salida de DS-2): axe no dice si Tab llega a todo o dos veces.
+ * El conjunto esperado se lee del DOM, porque una lista escrita a mano envejece en silencio;
+ * el recorrido debe visitarlo exacto: nada falta, nada repite, nada ajeno.
  */
 
-/** A tab stop, as observed. `kbd` is the stamp put on the element beforehand. */
+/** Una parada de Tab observada; kbd es la marca puesta antes en el elemento. */
 interface TabStop {
   readonly kbd: string | null;
   readonly tag: string;
   readonly label: string;
-  /** The design system's focus ring is a box-shadow; the shell's chrome is unstyled. */
+  /** El anillo de foco del sistema es un box-shadow. */
   readonly boxShadow: string;
   readonly outlineStyle: string;
   readonly outlineWidth: string;
-  /** False only for the shell's provisional header, which DS-5 replaces. */
+  /** Falso solo para el marco del App Shell. */
   readonly inShowroom: boolean;
 }
 
 interface Stamped {
-  /** Stamps of every visible, enabled, focusable element on the page. */
+  /** Marcas de cada elemento visible, habilitado y enfocable. */
   readonly expected: readonly string[];
-  /** Human-readable, so a failure says WHICH control went missing. */
+  /** Legibles, para que el fallo diga qué control faltó. */
   readonly labels: Readonly<Record<string, string>>;
-  /** Stamps of the disabled controls, which must never appear in the walk. */
+  /** Controles deshabilitados: nunca deben aparecer en el recorrido. */
   readonly disabled: readonly string[];
-  /**
-   * The radios of a group that are NOT its tab stop.
-   *
-   * A radio group is ONE stop, not one per option: Tab enters the group at
-   * the checked radio (or the first, when none is checked) and the arrows
-   * move within it. That is native behaviour and it is the behaviour the
-   * comanda asks for -- "flechas mueven un grupo de radios". So these must be
-   * absent from the walk for the same reason a disabled control must: their
-   * presence would mean the group is broken into separate stops.
-   */
+  /** Radios que no son la parada de su grupo: un grupo es una sola parada y las flechas mueven dentro. */
   readonly roving: readonly string[];
 }
 
-/**
- * A walk cannot run for ever. Forty-odd stops is a full page (sixteen in the
- * sidebar plus the content); three hundred means the cycle never closed,
- * which is itself the failure worth reporting.
- */
+/** Una página llena ronda las cuarenta paradas; trescientas significa que el ciclo nunca cerró. */
 const MAX_TABS = 300;
 
 /**
- * How many tabs stand between the top of the DOCUMENT and the catalogue
- * search, and how many stand between the top of the SHOWROOM and it.
- *
- * The rule exists so that the sidebar cannot become a wall of thirty links in
- * front of the search. It is not: the search sits above the catalogue links,
- * so from the showroom's own first stop it is the second one, and that is the
- * number the showroom controls.
- *
- *
- * THE DOCUMENT NUMBER, AND HOW DS-5 CLOSED IT (2026-09-19)
- *
- * DS-2 measured FIVE from the top of the document and reported the gap: the
- * comanda asks for three, and three of the five were the shell's provisional
- * header. DS-5 replaced that header with the real App Shell -- which has MORE
- * chrome, not less: a rail, a tab strip, a trail, a star, a search of its own.
- * Counting raw Tab presses, the catalogue search is now the twelfth stop.
- *
- * What closes the gap is not a shorter header. It is the SKIP LINK, which is
- * the first thing in the document and lands on `<main>`: Tab, Enter, and then
- * the two stops the showroom owns. THREE, which is the comanda's number, and
- * the route a keyboard user actually takes on every screen rather than on this
- * one.
- *
- * The raw count is asserted too, so the chrome cannot grow unnoticed. It is a
- * ceiling, not a target: what has to stay small is the number below.
+ * Tabs hasta el buscador del catálogo: 3 por el enlace de salto (el número de la comanda), 12 desde
+ * el body (techo, para que el marco no crezca sin aviso) y 2 desde el inicio del showroom.
+ * Ver vault: App-Shell (El skip link, y a dónde lleva).
  */
 const TABS_TO_SEARCH_VIA_SKIP_LINK = 3;
 const TABS_TO_SEARCH_IN_DOCUMENT = 12;
 const TABS_TO_SEARCH_IN_SHOWROOM = 2;
 
 /**
- * Stamp every focusable element with `data-kbd`, and hand back what the walk
- * is expected to visit.
- *
- * "Visible" is measured, not assumed: a box with no area, `display:none`,
- * `visibility:hidden`, or an `aria-hidden` / `inert` ancestor is not
- * something a keyboard user can reach, so it is not something the walk owes a
- * stop.
+ * Marca con data-kbd cada enfocable y devuelve lo que el recorrido debe visitar. Visible se mide:
+ * sin área, display none, visibility hidden o bajo aria-hidden / inert no se alcanza con teclado.
  */
 async function stampFocusable(page: Page): Promise<Stamped> {
   return page.evaluate(() => {
@@ -730,11 +585,7 @@ async function stampFocusable(page: Page): Promise<Stamped> {
       return (el.tagName.toLowerCase() + id + ' ' + (aria || text)).trim();
     };
 
-    /**
-     * Which radio of each group is the group's tab stop: the checked one, or
-     * the first when none is checked. Grouping is by form + name, which is
-     * exactly how the browser groups them.
-     */
+    // La parada de cada grupo es el radio marcado, o el primero; se agrupa por form + name, como el navegador.
     const radioTabStop = new Map<string, HTMLInputElement>();
     for (const el of Array.from(document.querySelectorAll('input[type="radio"]'))) {
       const radio = el as HTMLInputElement;
@@ -756,19 +607,13 @@ async function stampFocusable(page: Page): Promise<Stamped> {
     const labels: Record<string, string> = {};
     let n = 0;
 
-    /** Elements the browser puts in the tab order all by themselves. */
+    /** Lo que el navegador pone solo en el orden de Tab. */
     const NATIVELY_FOCUSABLE = ['a', 'area', 'button', 'input', 'select', 'textarea', 'summary'];
 
     for (const el of Array.from(document.querySelectorAll(SELECTOR))) {
       const tabindex = el.getAttribute('tabindex');
-      /*
-       * A negative tabindex on a <div> is a programmatic focus target and a
-       * perfectly ordinary thing. On a BUTTON, an INPUT or a link it is the
-       * bug this whole walk exists to find: the control is still visible,
-       * still enabled, still looks operable -- and the keyboard cannot reach
-       * it. So it is skipped only for the elements that were not in the tab
-       * order to begin with.
-       */
+      // Un tabindex negativo en un div es un destino de foco normal; en botón, input o enlace es el
+      // defecto que se busca (visible, habilitado e inalcanzable). Se salta solo en los no nativos.
       if (
         tabindex !== null &&
         Number(tabindex) < 0 &&
@@ -777,27 +622,9 @@ async function stampFocusable(page: Page): Promise<Stamped> {
         continue;
       }
 
-      /*
-       * A ROVING MEMBER OF A COMPOSITE WIDGET IS NOT A MISSING TAB STOP.
-       *
-       * `tabindex="-1"` on a button is normally the bug this walk exists to
-       * find: visible, enabled, and unreachable. Inside a `tree`, a `tablist`
-       * or a `treegrid` it is the opposite -- it is the APG pattern, where the
-       * whole widget is ONE stop and the arrows do the rest. The rail carries
-       * sixteen destinations; a Tab stop each would cost sixteen presses to
-       * get past the navigation on every screen.
-       *
-       * This does not soften the rule. A `tabindex="-1"` button OUTSIDE a
-       * composite still fails, and the new assertion below is stricter than
-       * what was here before: each composite must have EXACTLY ONE stop.
-       */
-      /*
-       * `tree` and `tablist` ONLY, and not `treegrid`. A grid's keyboard model
-       * is different: its cells legitimately hold controls of their own, and
-       * the Table's sheet has thirty-five of them. Adding it here would have
-       * excused a genuinely unreachable button inside a cell, which is the
-       * defect this walk exists to find.
-       */
+      // Dentro de un tree o tablist, tabindex -1 es el patrón APG (una parada, flechas adentro); fuera
+      // sigue fallando y cada compuesto debe tener exactamente una parada. treegrid no: sus celdas
+      // tienen controles propios (35 en la Tabla) y excusaría un botón inalcanzable.
       const composite = el.closest('[role="tree"],[role="tablist"]');
       if (composite !== null && tabindex !== null && Number(tabindex) < 0) {
         roving.push(String(n));
@@ -817,12 +644,8 @@ async function stampFocusable(page: Page): Promise<Stamped> {
       el.setAttribute('data-kbd', stamp);
       labels[stamp] = name(el);
 
-      /*
-       * `disabled` the ATTRIBUTE, not aria-disabled. The Button in its
-       * Loading state carries aria-disabled precisely so that it KEEPS its
-       * focus (see the note in button.ts), so it stays in the tab order and
-       * the walk owes it a stop. A natively disabled control does not.
-       */
+      // El atributo disabled y no aria-disabled: el Button en Loading usa aria-disabled para conservar
+      // el foco (ver button.ts), así que sigue debiendo parada.
       const isDisabled =
         (el as HTMLButtonElement | HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement)
           .disabled === true;
@@ -844,7 +667,7 @@ async function stampFocusable(page: Page): Promise<Stamped> {
   });
 }
 
-/** Where the focus is right now, with everything the assertions need about it. */
+/** Dónde está el foco ahora, con lo que las aserciones necesitan. */
 async function readFocus(page: Page): Promise<TabStop> {
   return page.evaluate(() => {
     const el = document.activeElement;
@@ -869,12 +692,7 @@ async function readFocus(page: Page): Promise<TabStop> {
       boxShadow: style.boxShadow,
       outlineStyle: style.outlineStyle,
       outlineWidth: style.outlineWidth,
-      /*
-       * The showroom owns the catalogue; the App Shell owns the frame around
-       * it. Before DS-5 the frame was one provisional header with a class of
-       * its own; now it is a header, a rail, a tab strip and a trail, so the
-       * question is asked of all four.
-       */
+      // El showroom es dueño del catálogo; el App Shell, del marco (cabecera, riel, pestañas y migas).
       inShowroom: !el.closest(
         '[data-app-header], [data-skip-link], ewms-nav-rail, ewms-nav-bottom, ewms-tabs, ewms-breadcrumbs',
       ),
@@ -882,15 +700,11 @@ async function readFocus(page: Page): Promise<TabStop> {
   });
 }
 
-/**
- * Tab from the top of the document until the focus comes back round, and
- * report every stop on the way.
- */
+/** Tabula desde el inicio del documento hasta que el foco da la vuelta, y reporta cada parada. */
 async function walkTabCycle(page: Page): Promise<readonly TabStop[]> {
   await page.evaluate(() => {
     (document.activeElement as HTMLElement | null)?.blur();
-    // Start from the very top of the document, so the first Tab lands on the
-    // first focusable element and not wherever a previous action left off.
+    // Desde el inicio del documento, para que el primer Tab caiga en el primer enfocable.
     document.body.setAttribute('tabindex', '-1');
     document.body.focus();
     document.body.removeAttribute('tabindex');
@@ -901,8 +715,7 @@ async function walkTabCycle(page: Page): Promise<readonly TabStop[]> {
     await page.keyboard.press('Tab');
     const stop = await readFocus(page);
     const first = stops[0];
-    // The cycle closed: either the focus fell back to the document, or it
-    // came round to where it started.
+    // El ciclo cerró: el foco volvió al documento o al punto de partida.
     if (stop.tag === 'BODY' || (first !== undefined && stop.kbd === first.kbd)) {
       break;
     }
@@ -911,7 +724,7 @@ async function walkTabCycle(page: Page): Promise<readonly TabStop[]> {
   return stops;
 }
 
-/** Duplicated stamps in the order they were revisited. */
+/** Marcas repetidas, en el orden en que se revisitaron. */
 function duplicates(visited: readonly (string | null)[]): readonly string[] {
   const seen = new Set<string>();
   const twice: string[] = [];
@@ -941,47 +754,34 @@ test.describe('keyboard only', () => {
 
       const visited = stops.map((stop) => stop.kbd);
 
-      // Nothing outside the stamped set: a stop with no stamp is an element
-      // that was not there when the page was measured.
+      // Una parada sin marca es un elemento que no estaba cuando se midió la página.
       expect(
         stops.filter((stop) => stop.kbd === null).map((stop) => stop.label),
         `${url}: focus landed on an unstamped element`,
       ).toEqual([]);
 
-      // Every visible control is reachable.
       expect(
         expected.filter((kbd) => !visited.includes(kbd)).map((kbd) => labels[kbd]),
         `${url}: never reached by Tab`,
       ).toEqual([]);
 
-      // None of them twice in one cycle.
       expect(
         duplicates(visited).map((kbd) => labels[kbd]),
         `${url}: focused twice in one cycle`,
       ).toEqual([]);
 
-      // A disabled control is not a tab stop.
       expect(
         disabled.filter((kbd) => visited.includes(kbd)).map((kbd) => labels[kbd]),
         `${url}: disabled control in the tab order`,
       ).toEqual([]);
 
-      // Neither is a radio that is not its group's entry point: a group is one
-      // stop, and the arrows do the rest.
+      // Tampoco un radio que no es la entrada de su grupo.
       expect(
         roving.filter((kbd) => visited.includes(kbd)).map((kbd) => labels[kbd]),
         `${url}: a radio group was split into several tab stops`,
       ).toEqual([]);
 
-      /*
-       * A COMPOSITE WIDGET IS ONE TAB STOP. NOT TWO, AND NOT NONE.
-       *
-       * The counterpart of treating roving members as expected-not-to-be-
-       * stops: if a `tree` or a `tablist` is on the page, exactly one of its
-       * members must be in the tab order. None means the whole widget is
-       * unreachable; two means the roving tabindex is broken and it has
-       * started costing a stop per member again.
-       */
+      // Cada tree o tablist es exactamente una parada: cero es inalcanzable, dos es el roving tabindex roto.
       const composites = await page.evaluate(() =>
         Array.from(document.querySelectorAll('[role="tree"],[role="tablist"]'))
           .filter((widget) => (widget as HTMLElement).offsetParent !== null)
@@ -995,23 +795,9 @@ test.describe('keyboard only', () => {
         `${url}: a composite widget is not exactly one tab stop`,
       ).toEqual([]);
 
-      /*
-       * WCAG 2.4.7: every stop has to SHOW that it has the focus.
-       *
-       * BOX-SHADOW **OR** OUTLINE, and the difference is deliberate rather
-       * than a loophole. The system's ring is a box-shadow
-       * (--focus-ring-shadow) and that is what almost everything uses, but
-       * the icon grid in /foundations/icons uses `outline-2 outline-focus` on
-       * its seventy tiles -- an outline is drawn outside the box and does not
-       * bleed over the neighbouring tile the way a 3px shadow would. That is
-       * a token-driven indicator and a correct one; demanding a box-shadow
-       * there would break a working grid to satisfy the letter of a rule
-       * whose point is that the focus must be VISIBLE.
-       *
-       * What this does still catch is the case with no indicator at all, and
-       * it caught one: a focusable <span> on the tooltip page that had no
-       * focus styling of its own.
-       */
+      // WCAG 2.4.7: box-shadow (--focus-ring-shadow) o contorno. La grilla de /foundations/icons usa
+      // contorno de token en sus setenta celdas para no invadir la vecina como una sombra de 3px.
+      // Atrapó un span enfocable sin estilo de foco en la página del tooltip.
       expect(
         stops
           .filter((stop) => {
@@ -1024,19 +810,8 @@ test.describe('keyboard only', () => {
         `${url}: focused with no visible focus indicator`,
       ).toEqual([]);
 
-      /*
-       * And the indicator has to be OURS.
-       *
-       * `outline-style: auto` is the browser's own ring, which every focusable
-       * element gets for free. It is visible, so the assertion above lets it
-       * pass -- but a catalogue whose job is to be the one place the system
-       * looks like itself cannot have a control falling back to the browser
-       * default. A token ring is a box-shadow, or an explicit outline
-       * (`solid`, from `outline-2 outline-focus`); never `auto`.
-       *
-       * The shell's provisional header is exempt: it is unstyled on purpose
-       * and DS-5 replaces it, which is out of scope here.
-       */
+      // Y el indicador tiene que ser nuestro: outline-style auto es el anillo del navegador y el catálogo
+      // no puede caer en él. El marco del App Shell queda fuera de esta regla.
       expect(
         stops
           .filter(
@@ -1051,19 +826,8 @@ test.describe('keyboard only', () => {
     });
   }
 
-  /**
-   * THE SKIP LINK IS THE ROUTE TO THE SEARCH, AND IT COSTS THREE.
-   *
-   * The comanda asks for the catalogue search within three Tab presses. Before
-   * DS-5 it was five and the gap was reported; the App Shell has more chrome
-   * than the provisional header did, so the raw count went up rather than
-   * down. The skip link is what makes the number true: first in the document,
-   * lands on `<main>`, and from there the search is the showroom's own two.
-   *
-   * The skip link deliberately targets `main` and NOT the page's `h1`: on this
-   * page the heading sits after the sidebar, so landing on it would take you
-   * PAST the search you were skipping to.
-   */
+  // La comanda pide el buscador en tres Tab: el enlace de salto va primero y aterriza en main (no en
+  // el h1, que acá queda después del buscador). Ver vault: App-Shell.
   test('the skip link puts the catalogue search three Tab presses away', async ({ page }) => {
     await page.goto('/design-system');
     await expect(page.getByRole('heading', { level: 1 }).first()).toBeVisible();
@@ -1071,7 +835,7 @@ test.describe('keyboard only', () => {
 
     await stampFocusable(page);
 
-    // One Tab from the top of the document: the skip link, and nothing before.
+    // Un Tab desde el inicio del documento: el enlace de salto y nada antes.
     await page.evaluate(() => {
       (document.activeElement as HTMLElement | null)?.blur();
       document.body.setAttribute('tabindex', '-1');
@@ -1081,7 +845,6 @@ test.describe('keyboard only', () => {
     await page.keyboard.press('Tab');
     await expect(page.locator('[data-skip-link]')).toBeFocused();
 
-    // Enter, and then count to the search.
     await page.keyboard.press('Enter');
     let presses = 1;
     for (let i = 0; i < 6; i += 1) {
@@ -1100,20 +863,8 @@ test.describe('keyboard only', () => {
     ).toBeLessThanOrEqual(TABS_TO_SEARCH_VIA_SKIP_LINK);
   });
 
-  /**
-   * THE THIRD NUMBER OF THE SHEET: ZERO, WITH `/`.
-   *
-   * App-Shell.md gives three counts for reaching a search from this page --
-   * 12 from the top of the document, 3 by the skip link, 0 with the shortcut
-   * -- and until the DS-5 closing only the first two were asserted here. The
-   * measure the comanda asks for is the one counted FROM THE SKIP LINK, which
-   * is the first focusable element and where a keyboard user really starts;
-   * the other two are what it costs to ignore it and what it costs to know
-   * the shortcut.
-   *
-   * `/` lands in the APPLICATION's search, in the header: the catalogue does
-   * not claim the shortcut, so the shell answers it, on every screen.
-   */
+  // El tercer número de App-Shell.md (12 desde el body, 3 por el salto, 0 con el atajo). La barra lleva
+  // al buscador de la cabecera: el catálogo no reclama el atajo y lo responde el shell.
   test('`/` reaches a search with no Tab at all', async ({ page }) => {
     await page.goto('/design-system');
     await expect(page.getByRole('heading', { level: 1 }).first()).toBeVisible();
@@ -1125,11 +876,7 @@ test.describe('keyboard only', () => {
     await expect(page.locator('[data-shell-search]')).toBeFocused();
   });
 
-  /**
-   * The sidebar must not be a wall you tab through to reach the search. The
-   * search sits ABOVE the catalogue links for exactly this reason, so from the
-   * showroom's own first stop it is the second.
-   */
+  // El buscador va encima de los enlaces del catálogo para que la barra lateral no sea un muro.
   test('the sidebar is not a wall in front of the catalogue search', async ({ page }) => {
     await page.goto('/design-system');
     await expect(page.getByRole('heading', { level: 1 }).first()).toBeVisible();
@@ -1142,9 +889,7 @@ test.describe('keyboard only', () => {
 
     expect(index, `the search was never reached by Tab. Order: ${chain}`).toBeGreaterThanOrEqual(0);
 
-    // From the top of the document, the App Shell's whole chrome included.
-    // A ceiling rather than a target: the route that matters is the skip
-    // link's, asserted above.
+    // Desde el inicio del documento, con todo el App Shell: es techo, no meta.
     expect(
       index + 1,
       `tabs to the search: ${stops
@@ -1153,8 +898,7 @@ test.describe('keyboard only', () => {
         .join(' -> ')}`,
     ).toBeLessThanOrEqual(TABS_TO_SEARCH_IN_DOCUMENT);
 
-    // From the showroom's own first stop -- the part the showroom owns, and
-    // the part the rule is actually about.
+    // Desde la primera parada del showroom: la parte de la que trata la regla.
     const firstInShowroom = stops.findIndex((stop) => stop.inShowroom);
     expect(firstInShowroom, `no showroom stop at all. Order: ${chain}`).toBeGreaterThanOrEqual(0);
     expect(
@@ -1162,8 +906,7 @@ test.describe('keyboard only', () => {
       `tabs from the first showroom stop to the search, within: ${chain}`,
     ).toBeLessThanOrEqual(TABS_TO_SEARCH_IN_SHOWROOM);
 
-    // And the catalogue links really are behind it, which is what makes the
-    // number above stay small as the catalogue grows.
+    // Los enlaces del catálogo van detrás, así el número no crece con el catálogo.
     const firstCatalogueLink = stops.findIndex(
       (stop) =>
         stop.label.startsWith('a ') && stop.inShowroom && !stop.label.includes('Sistema de diseño'),
@@ -1182,8 +925,7 @@ test.describe('keyboard only', () => {
 
     await page.keyboard.press('Space');
     await expect(first).toBeChecked();
-    // The "select all" box above is driven by the group, so a keyboard tick
-    // has to move it to mixed exactly as a click would.
+    // La casilla «seleccionar todo» depende del grupo: el teclado la deja mixta igual que un clic.
     await expect(page.locator('[data-demo-checklist] [role="status"]')).toContainText(
       'indeterminado true',
     );
@@ -1238,25 +980,22 @@ test.describe('keyboard only', () => {
     const panel = page.locator('[role="listbox"]');
     const value = page.locator('[data-demo-value]');
 
-    // Enter opens it.
     await trigger.focus();
     await page.keyboard.press('Enter');
     await expect(panel).toBeVisible();
 
-    // Escape closes WITHOUT choosing, and the focus never left the trigger --
-    // which is the point of the aria-activedescendant pattern in select.ts.
+    // Escape cierra sin elegir y el foco nunca dejó el disparador (aria-activedescendant, ver select.ts).
     const untouched = await value.textContent();
     await page.keyboard.press('Escape');
     await expect(panel).toHaveCount(0);
     await expect(trigger).toBeFocused();
     await expect(value).toHaveText(untouched ?? '');
 
-    // Space opens it too: the trigger is a <button>, so the native activation
-    // key works without a handler of its own.
+    // Espacio también abre: el disparador es un button nativo, sin manejador propio.
     await page.keyboard.press('Space');
     await expect(panel).toBeVisible();
 
-    // The arrows move the ACTIVE row, and the focus still does not move.
+    // Las flechas mueven la fila activa; el foco sigue sin moverse.
     await page.keyboard.press('ArrowDown');
     await expect(trigger).toBeFocused();
     const active = await trigger.getAttribute('aria-activedescendant');
@@ -1283,21 +1022,12 @@ test.describe('keyboard only', () => {
     await expect(host).toBeFocused();
   });
 
-  // Enter on a button, and the busy button refusing the second press, is
-  // asserted where the Loading state is measured -- `the loading button keeps
-  // its name, its focus and refuses a second click`, which does the same walk
-  // and also checks aria-disabled and the accessible name.
+  // Enter en un botón y el botón ocupado que rechaza la segunda pulsación se prueban junto al
+  // estado Loading, arriba.
 });
 
-/**
- * DS-3 LOTE A — the facts that needed a browser.
- *
- * The three sheets built in this lote make claims jsdom cannot judge: an icon
- * that does not grow with the severity, an accent bar four pixels wide, and a
- * group of cards that is one tab stop rather than four. All three are read off
- * the rendered page here, and all three are shown on the page itself, so a
- * failure names the same number a reader would have seen.
- */
+// DS-3 lote A: icono que no crece con la severidad, acento de 4 px y grupo de cards en una parada.
+// Se leen de la página renderizada, que muestra los mismos números.
 test.describe('DS-3 lote A: notificaciones y card', () => {
   test('the banner keeps its icon at 18 px in all four variants', async ({ page }) => {
     await page.goto(BANNER);
@@ -1308,7 +1038,6 @@ test.describe('DS-3 lote A: notificaciones y card', () => {
       expect(round(icon?.width), `banner ${variant} icon width`).toBe(18);
       expect(round(icon?.height), `banner ${variant} icon height`).toBe(18);
     }
-    // The page derives its own verdict from the same read.
     await expect(page.getByText('no son 18 px')).toHaveCount(0);
   });
 
@@ -1322,7 +1051,7 @@ test.describe('DS-3 lote A: notificaciones y card', () => {
     await page.locator('[data-demo-banner] button').click();
 
     await expect(page.locator('[data-dismiss-count]')).toHaveText('1');
-    // Still there: whether it goes away is the consumer's call.
+    // Sigue ahí: quitarlo lo decide quien lo usa.
     await expect(banner).toBeVisible();
   });
 
@@ -1333,7 +1062,7 @@ test.describe('DS-3 lote A: notificaciones y card', () => {
     await ready(page);
 
     const stack = page.locator('[role="status"][aria-live="polite"]');
-    // ONE live region in the whole document, even before anything is in it.
+    // Una sola región viva en todo el documento, aun vacía.
     await expect(stack).toHaveCount(1);
 
     await page.locator('[data-raise-sticky] button').click();
@@ -1345,8 +1074,7 @@ test.describe('DS-3 lote A: notificaciones y card', () => {
     expect(round(accent?.width), 'toast accent width').toBe(4);
     await expect(page.locator('[data-accent-width]')).toHaveText('4 px');
 
-    // A toast that was raised with duration 0 never expires on its own; the
-    // keyboard is the only way out, and it takes the most recent one.
+    // Con duración 0 no vence solo: Escape cierra el más reciente.
     await page.keyboard.press('Escape');
     await expect(toast).toHaveCount(0);
   });
@@ -1359,9 +1087,7 @@ test.describe('DS-3 lote A: notificaciones y card', () => {
     const toast = page.locator('[role="status"][aria-live="polite"] > div');
     await expect(toast).toHaveCount(1);
 
-    // --duration-toast is 3000 ms; the wait is the token's value plus slack,
-    // and the point of the assertion is that SOMETHING expired it -- the
-    // service read the token rather than inventing a number.
+    // --duration-toast es 3000 ms, con margen: lo que importa es que el servicio leyó el token.
     await expect(toast).toHaveCount(0, { timeout: 6000 });
   });
 
@@ -1373,7 +1099,7 @@ test.describe('DS-3 lote A: notificaciones y card', () => {
     await expect(cards).toHaveCount(4);
     await expect(page.locator('[data-tab-stops]')).toHaveText('1');
 
-    // Enter the group at the chosen card, which the form seeded with Central.
+    // Se entra al grupo por la card elegida, que el formulario siembra con Central.
     await cards.nth(1).focus();
     await expect(cards.nth(1)).toHaveAttribute('aria-checked', 'true');
 
@@ -1382,8 +1108,7 @@ test.describe('DS-3 lote A: notificaciones y card', () => {
     await expect(cards.nth(2)).toBeFocused();
     await expect(page.locator('[data-demo-value]')).toHaveText('devoluciones');
 
-    // Sur is unavailable, so the next one round is Norte: the arrows skip a
-    // disabled card and wrap, which is what a radio group does.
+    // Sur no está disponible: las flechas la saltan y dan la vuelta a Norte, como un grupo de radios.
     await page.keyboard.press('ArrowDown');
     await expect(cards.nth(0)).toHaveAttribute('aria-checked', 'true');
     await expect(page.locator('[data-demo-value]')).toHaveText('norte');
@@ -1405,20 +1130,13 @@ test.describe('DS-3 lote A: notificaciones y card', () => {
       };
     });
 
-    // The fill and the border are different colours, and there is a glyph.
+    // Relleno y borde de distinto color, y hay un glifo.
     expect(marks.background).not.toBe(marks.border);
     expect(marks.check).toBeGreaterThan(0);
   });
 });
 
-/**
- * DS-3 LOTE B — the dialog and the search select, in a browser.
- *
- * Both of these are mostly behaviour that jsdom can only approximate: a focus
- * trap, a backdrop, a scan arriving faster than a person can type. The unit
- * specs cover the logic; what is here is the part that needed a real browser
- * and a real keyboard.
- */
+// DS-3 lote B: trampa de foco, fondo y escaneo más rápido que una persona, que jsdom solo aproxima.
 test.describe('DS-3 lote B: dialog', () => {
   test('opens, traps the focus, and gives it back to whoever opened it', async ({ page }) => {
     await page.goto(DIALOG);
@@ -1431,11 +1149,10 @@ test.describe('DS-3 lote B: dialog', () => {
     const dialog = page.locator('[role="dialog"]');
     await expect(dialog).toBeVisible();
 
-    // The focus lands on Cancel: it is first in the DOM so the keyboard
-    // arrives at the safe answer.
+    // El foco cae en Cancelar: va primero en el DOM para que el teclado llegue a la respuesta segura.
     await expect(dialog.getByRole('button', { name: 'Cancelar' })).toBeFocused();
 
-    // It really is a trap: tabbing round the two buttons never leaves.
+    // Es una trampa de verdad: tabular entre los dos botones nunca sale.
     await page.keyboard.press('Tab');
     await expect(dialog.getByRole('button', { name: 'Publicar' })).toBeFocused();
     await page.keyboard.press('Tab');
@@ -1496,7 +1213,7 @@ test.describe('DS-3 lote B: dialog', () => {
       const box = await halo.boundingBox();
       expect(round(box?.width), `${tone} halo width`).toBe(56);
       expect(round(box?.height), `${tone} halo height`).toBe(56);
-      // The documented exception: a shape, and nothing inside it.
+      // La excepción documentada: una forma y nada adentro.
       await expect(halo.locator('svg')).toHaveCount(0);
     }
   });
@@ -1512,7 +1229,7 @@ test.describe('DS-3 lote B: dialog', () => {
       return { background: style.backgroundColor, filter: style.backdropFilter };
     });
 
-    // Navy at 50 %, not black: the overlay tints the scene with the brand.
+    // Azul marino al 50 % y no negro: el overlay tiñe la escena con la marca.
     expect(backdrop.background).toBe('rgba(1, 15, 66, 0.5)');
     expect(backdrop.filter).toContain('blur');
   });
@@ -1539,23 +1256,14 @@ test.describe('DS-3 lote B: selector con búsqueda', () => {
     const field = page.locator(FIELD);
     await field.focus();
 
-    /*
-     * No delay at all: a gun, not a person. REQ-FE-DS3-001's own checkpoint
-     * asks for exactly this simulation -- the threshold is 50 ms and a human
-     * at full speed sits around 120 -- and a real scanner emits faster than
-     * any number written here.
-     *
-     * It USED to ask for 5 ms between keys, which spends a tenth of the
-     * budget on purpose and left the rest to whatever else the machine was
-     * doing. On a loaded runner one of those gaps crossed 50 ms and the burst
-     * read as typing: one red test in a full suite, green on its own. The
-     * delay was the flake, so the delay went.
-     */
+    // Sin demora: una pistola, no una persona (umbral 50 ms, humano ~120; REQ-FE-DS3-001). Con 5 ms,
+    // en un runner cargado un hueco pasó los 50 ms, la ráfaga se leyó como tecleo y la prueba fallaba
+    // solo en la suite completa.
     await page.keyboard.type('SKU-88042', { delay: 0 });
     await page.keyboard.press('Enter');
 
     await expect(page.locator('[data-demo-value]')).toContainText('SKU-88042');
-    // Zero clicks, and the panel never came up.
+    // Cero clics, y el panel nunca apareció.
     await expect(page.locator('[role="listbox"]')).toHaveCount(0);
   });
 
@@ -1584,8 +1292,7 @@ test.describe('DS-3 lote B: selector con búsqueda', () => {
     await expect(alert).toBeVisible();
     await expect(alert).toContainText('No se pudo consultar');
 
-    // Where "no results" would have been, there is nothing: the two states are
-    // different and they are not in the same place.
+    // Donde iría «sin resultados» no hay nada: son estados distintos y en lugares distintos.
     await expect(page.locator('[role="listbox"]')).toHaveCount(0);
 
     await page.locator(FIELD).focus();
@@ -1611,7 +1318,7 @@ test.describe('DS-3 lote B: selector con búsqueda', () => {
 
     await page.locator(FIELD).fill('SKU');
     const options = page.locator('[role="listbox"] [role="option"]');
-    // Twenty results plus the "load more" row.
+    // Veinte resultados más la fila «cargar más».
     await expect(options).toHaveCount(21);
 
     await options.last().click();
@@ -1630,7 +1337,7 @@ test.describe('DS-3 lote B: selector con búsqueda', () => {
 
     await page.locator(FIELD).fill('SKU');
     await expect(page.locator('[role="listbox"] [role="option"]')).toHaveCount(21);
-    // The live region says what it can, without a total.
+    // La región viva dice lo que puede, sin total.
     await expect(page.locator('[data-demo-search] [role="status"]')).toContainText('20 resultados');
   });
 
@@ -1640,12 +1347,7 @@ test.describe('DS-3 lote B: selector con búsqueda', () => {
 
     const field = page.locator(FIELD);
     await field.fill('caja');
-    /*
-     * The panel opens when the QUERY STARTS, not when it answers -- that is
-     * RFE-01, and it is why there is a searching state at all. So waiting for
-     * the panel is not enough: the arrows have nothing to move over until a
-     * row exists.
-     */
+    // El panel abre cuando empieza la consulta, no cuando responde (RFE-01): hay que esperar una fila.
     await expect(page.locator('[role="listbox"] [role="option"]').first()).toBeVisible();
 
     await page.keyboard.press('ArrowDown');
@@ -1658,7 +1360,7 @@ test.describe('DS-3 lote B: selector con búsqueda', () => {
     await expect(page.locator('[data-demo-value]')).toHaveText('(ninguno)');
     await expect(field).toBeFocused();
 
-    // And Enter on an active row chooses the record, not the text.
+    // Enter sobre una fila activa elige el registro, no el texto.
     await page.keyboard.press('ArrowDown');
     await page.keyboard.press('ArrowDown');
     await page.keyboard.press('Enter');
@@ -1680,13 +1382,7 @@ test.describe('DS-3 lote B: selector con búsqueda', () => {
   });
 });
 
-/**
- * DS-3 LOTE C — the table, in a browser.
- *
- * The unit spec covers the logic; what needed a browser is the geometry, the
- * real keyboard, and the claim the whole API was designed against: how many
- * lines the consumer writes.
- */
+// DS-3 lote C: geometría, teclado real y cuántas líneas escribe el consumidor, contra lo que se diseñó la API.
 test.describe('DS-3 lote C: la tabla', () => {
   const DEMO = '[data-demo-table]';
   const ROWS = `${DEMO} tbody tr:not([data-empty-row])`;
@@ -1701,8 +1397,7 @@ test.describe('DS-3 lote C: la tabla', () => {
     const snippet = await page.locator('[data-consumer-template]').innerText();
 
     expect(printed).toBe(snippet.trimEnd().split('\n').length);
-    // The comanda's ceiling for the expediciones demo. If this fails, the API
-    // is what needs fixing, not the page.
+    // El techo de la comanda para la demo de expediciones: si falla, se corrige la API, no la página.
     expect(printed).toBeLessThanOrEqual(40);
     await expect(page.locator('[data-component-lines]')).toHaveText('2');
   });
@@ -1712,8 +1407,7 @@ test.describe('DS-3 lote C: la tabla', () => {
     await ready(page);
 
     const row = await page.locator(ROWS).first().boundingBox();
-    // The Input page's Medium field, measured on its own sheet: the two are
-    // the same token, and a cell has to be able to hold one without growing.
+    // El campo Medium de la ficha del Input: mismo token, una celda tiene que contenerlo sin crecer.
     await page.goto(INPUT);
     await ready(page);
     const input = await page.locator('[data-pair="md"] input').boundingBox();
@@ -1741,15 +1435,14 @@ test.describe('DS-3 lote C: la tabla', () => {
     await expect(page.locator(`${ROWS}[aria-level="2"]`)).toHaveCount(0);
 
     await page.locator(`${DEMO} [data-toggle="0"]`).click();
-    // Retrying assertions throughout: a bare `count()` reads whatever is there
-    // at that instant, which is how the badge assertion below went red once.
+    // Aserciones con reintento: un count() suelto lee el instante, y así falló una vez la de abajo.
     await expect(page.locator(`${ROWS}[aria-level="2"]`).first()).toBeVisible();
 
-    // The first line of that header, opened in turn.
+    // La primera línea de esa cabecera, abierta a su vez.
     await page.locator(`${DEMO} [data-toggle="1"]`).click();
     await expect(page.locator(`${ROWS}[aria-level="3"]`).first()).toBeVisible();
 
-    // Three levels, and still one table: no nesting anywhere.
+    // Tres niveles y una sola tabla: nada anidado.
     await expect(page.locator(`${DEMO} table`)).toHaveCount(1);
   });
 
@@ -1771,15 +1464,8 @@ test.describe('DS-3 lote C: la tabla', () => {
     const parent = await label('1').boundingBox();
     const child = await label('2').boundingBox();
 
-    /*
-     * `aria-level` tells a screen reader where a row sits; the indentation is
-     * what tells everybody else, and it is one token per level. It was zero
-     * for a while: the spacer's width was `calc(level * var(--spacing) * 5)`,
-     * and `--spacing` generates Tailwind's spacing utilities without reaching
-     * the document as a custom property, so the whole calc resolved to
-     * nothing and three levels drew flush. Nothing failed -- the tree was
-     * correct, announced correctly, and looked like a flat list.
-     */
+    // La sangría es un token por nivel y fue cero un tiempo, sin que nada fallara: el árbol se anunciaba
+    // bien y se veía plano. Ver vault: Tabla (9. Sangría y anchos).
     const parentSpacer = page
       .locator(`${ROWS}[aria-level="1"]`)
       .first()
@@ -1794,9 +1480,7 @@ test.describe('DS-3 lote C: la tabla', () => {
     expect(round((await parentSpacer.boundingBox())?.width)).toBe(0);
     expect(round((await childSpacer.boundingBox())?.width)).toBe(20);
 
-    // And it shows: the child's text starts one indent to the right of its
-    // parent's, which is the whole visible difference between a tree and a
-    // list.
+    // Y se ve: el texto del hijo empieza una sangría a la derecha del padre.
     expect(round((child?.x ?? 0) - (parent?.x ?? 0))).toBe(20);
   });
 
@@ -1804,8 +1488,7 @@ test.describe('DS-3 lote C: la tabla', () => {
     await page.goto(TABLE);
     await ready(page);
 
-    // One Tab stop for the whole table: focus the first cell directly and
-    // drive from there, which is what a keyboard user gets after one Tab.
+    // Una sola parada para la tabla: se enfoca la primera celda, como tras un Tab.
     await page.locator(`${DEMO} [data-cell="0-0"]`).focus();
 
     await page.keyboard.press('ArrowRight');
@@ -1815,7 +1498,7 @@ test.describe('DS-3 lote C: la tabla', () => {
     await expect(page.locator(`${DEMO} [data-cell="1-0"]`)).toBeFocused();
 
     await page.keyboard.press('ArrowLeft');
-    // First cell of a child row: up to the parent rather than sideways.
+    // Primera celda de una fila hija: sube al padre en vez de ir al costado.
     await expect(page.locator(`${DEMO} [data-cell="0-0"]`)).toBeFocused();
 
     await page.keyboard.press('ArrowLeft');
@@ -1847,8 +1530,7 @@ test.describe('DS-3 lote C: la tabla', () => {
         cells.map((cell) => Number((cell.textContent ?? '').replace(/\D/g, ''))),
       );
 
-    // Ascending as NUMBERS. The cells show a grouped, localised string, and
-    // sorting by that text is what puts 1.200 before 900.
+    // Ascendente como número: ordenar el texto localizado pone 1.200 antes que 900.
     expect(values).toEqual([...values].sort((a, b) => a - b));
   });
 
@@ -1906,15 +1588,11 @@ test.describe('DS-3 lote C: la tabla', () => {
     await page.goto(TABLE);
     await ready(page);
 
-    /*
-     * `toHaveCount` and not `count()`: the first retries until the table has
-     * rendered and the second reads whatever is there at that instant, which
-     * on a lazily routed page is nothing. It cost a red test to remember.
-     */
+    // toHaveCount y no count(): el primero reintenta hasta que la tabla renderiza; el segundo lee
+    // el instante, que en una ruta perezosa es nada. Costó una prueba roja.
     await expect(page.locator(`${DEMO} ewms-badge`)).toHaveCount(12);
 
-    // Every tinted row carries a badge with an icon and a label: the colour is
-    // never the only signal (WCAG 1.4.1).
+    // Cada fila teñida lleva insignia con icono y texto: el color nunca es la única señal (WCAG 1.4.1).
     const tinted = page.locator(`${ROWS}.bg-danger-surface`).first();
     await expect(tinted.locator('ewms-badge')).toContainText('Con incidencia');
     await expect(tinted.locator('ewms-badge svg')).toBeVisible();
@@ -1934,12 +1612,11 @@ test.describe('DS-3 lote D: detalle, menú, ventana y paginador', () => {
     const panel = page.locator(`${DETALLE} [data-detail="0"]`);
     await expect(panel).toBeVisible();
 
-    // One cell across the whole table, with content of the consumer's own.
+    // Una celda a todo el ancho, con contenido propio del consumidor.
     await expect(panel.locator('td')).toHaveCount(1);
     await expect(panel).toContainText('Bultos totales');
 
-    // The table did not grow: the panel is a row in the DOM, not an
-    // expedición. Counting it would make three read as four out loud.
+    // La tabla no creció: el panel es una fila del DOM, no una expedición, y no se anuncia como tal.
     await expect(page.locator(`${DETALLE} table`)).toHaveAttribute('aria-rowcount', '12');
   });
 
@@ -1966,8 +1643,7 @@ test.describe('DS-3 lote D: detalle, menú, ventana y paginador', () => {
     await page.keyboard.press('Escape');
     await expect(page.locator('[role="menu"]')).toHaveCount(0);
 
-    // A trackpad has no right button and a phone has none either, which is why
-    // the kebab exists; everybody who does have one expects it to work.
+    // El kebab existe porque trackpad y teléfono no tienen botón derecho; quien lo tiene espera que ande.
     await page.locator(`${DETALLE} [data-row="1"]`).click({ button: 'right' });
     await expect(page.locator('[role="menu"]')).toBeVisible();
   });
@@ -1983,10 +1659,8 @@ test.describe('DS-3 lote D: detalle, menú, ventana y paginador', () => {
 
     await page.keyboard.press('ArrowDown');
     await page.keyboard.press('ArrowDown');
-    // Imprimir is disabled, so the second press lands on Duplicar. Asserted
-    // through a retrying locator rather than by reading the attribute: a bare
-    // getAttribute reads whatever is there at that instant, which with
-    // zoneless change detection is the value before the press landed.
+    // Imprimir está deshabilitado, así que la segunda pulsación cae en Duplicar. Con localizador que
+    // reintenta: sin zone.js, un getAttribute suelto lee el valor previo a la pulsación.
     const active = menu.locator('[role="menuitem"].bg-ghost-hover');
     await expect(active).toContainText('Duplicar');
     await expect(menu).toHaveAttribute(
@@ -2015,7 +1689,7 @@ test.describe('DS-3 lote D: detalle, menú, ventana y paginador', () => {
     await ready(page);
 
     const demo = '[data-demo-perezosa]';
-    // The expedición with an incidencia is the one whose children never come.
+    // La expedición con incidencia es la que nunca recibe hijos.
     const failing = page.locator(`${demo} tr.bg-danger-surface`).first();
     const index = await failing.getAttribute('data-row');
 
@@ -2037,13 +1711,12 @@ test.describe('DS-3 lote D: detalle, menú, ventana y paginador', () => {
     const table = page.locator(`${VIRTUAL} table`);
     await expect(table).toHaveAttribute('aria-rowcount', '5000');
 
-    // The window: what is drawn is what fits plus the overscan, and never the
-    // five thousand. This is the whole claim of [virtual].
+    // La ventana dibuja lo que cabe más el overscan, nunca las cinco mil: es toda la promesa de [virtual].
     const drawn = page.locator(`${VIRTUAL} [data-row]`);
     expect(await drawn.count()).toBeLessThan(80);
     expect(await drawn.count()).toBeGreaterThan(0);
 
-    // The spacers hold the scrollbar at the length of the whole table.
+    // Los espaciadores sostienen la barra de desplazamiento al largo de la tabla entera.
     await expect(page.locator(`${VIRTUAL} [data-spacer="after"]`)).toBeAttached();
   });
 
@@ -2059,9 +1732,8 @@ test.describe('DS-3 lote D: detalle, menú, ventana y paginador', () => {
       element.scrollTop = 32 * 1000;
     });
 
-    // Row one thousand, by the sm row height, less the overscan. What matters
-    // is that the first drawn row is nowhere near zero and that its
-    // aria-rowindex is its place in the WHOLE table.
+    // Fila mil menos el overscan: la primera dibujada está lejos de cero y su aria-rowindex es su
+    // lugar en la tabla entera.
     const first = page.locator(`${VIRTUAL} [data-row]`).first();
     await expect(first).not.toHaveAttribute('data-row', '0');
     const index = Number(await first.getAttribute('data-row'));
@@ -2080,7 +1752,7 @@ test.describe('DS-3 lote D: detalle, menú, ventana y paginador', () => {
     await paginator.locator('[data-next-page] button').click();
     await expect(paginator.locator('[data-page-label]')).toContainText('Página 2 de');
 
-    // Twenty-five per page, and the page really changed underneath.
+    // Veinticinco por página, y la página cambió de verdad.
     await expect(page.locator(`${PAGINADA} [data-row]`)).toHaveCount(25);
     await expect(page.locator(`${PAGINADA} [data-row="0"]`)).toContainText('UB-00026');
   });
@@ -2099,54 +1771,35 @@ test.describe('DS-3 lote D: detalle, menú, ventana y paginador', () => {
 
     await expect(page.locator(demo)).toContainText('filas');
     await page.locator('[data-toggle-total]').click();
-    // A source that does not count says nothing about how many there are.
+    // Una fuente que no cuenta no dice cuántas hay.
     await expect(page.locator(demo)).not.toContainText('filas');
   });
 
   test('a filter field IS a compact row tall, and a narrow range stacks', async ({ page }) => {
-    /*
-     * A WIDER VIEWPORT THAN THE DEFAULT, AND THE REASON IS THE APP SHELL.
-     *
-     * What is under test is the COMPONENT's rule: an `md` column fits two
-     * boxes side by side and an `sm` one stacks them. From DS-5 the catalogue
-     * renders inside the App Shell, whose rail takes 232 px of the width, and
-     * at 1280 the date column stopped being wide enough -- so the date range
-     * stacked too and the test failed having proved the component right.
-     *
-     * Giving it the room the assertion is about is not weakening it: the
-     * stacking half is asserted on the SAME page at the SAME width, on a
-     * column that is narrow by declaration rather than by accident.
-     */
+    // 1600 de ancho por el App Shell: su riel ocupa 232 px y a 1280 la columna de fecha también se
+    // apilaba. La mitad que apila se afirma en la misma página y ancho, sobre una columna angosta
+    // por declaración.
     await page.setViewportSize({ width: 1600, height: 900 });
     await page.goto(TABLE);
     await ready(page);
 
     const filterRow = page.locator('[data-demo-table] [data-filter-row]');
 
-    /*
-     * The filter row holds real `ewms-input`s in the Small size, and Small is
-     * the same token as the compact row: `--row-height-sm`. That is the point
-     * of the pair -- a field dropped into a cell is exactly a row tall, so
-     * nothing has to be nudged to make it fit.
-     */
+    // Los filtros son ewms-input Small, mismo token que la fila compacta (--row-height-sm):
+    // un campo en una celda mide exactamente una fila.
     const single = filterRow.locator('[data-filter="cliente"] input');
     await expect(single).toBeVisible();
     expect(round((await single.boundingBox())?.height)).toBe(32);
 
-    // A `md` column is wide enough for two boxes side by side.
+    // Una columna md tiene ancho para dos cajas lado a lado.
     const wideRange = filterRow.locator('[data-filter="fecha"] input');
     await expect(wideRange).toHaveCount(2);
     expect(round((await wideRange.nth(0).boundingBox())?.y)).toBe(
       round((await wideRange.nth(1).boundingBox())?.y),
     );
 
-    /*
-     * A `sm` one is not, and the two boxes STACK rather than shrink. They used
-     * to shrink: in the first capture of the big table the two markers read
-     * "D" and "H", which is a filter nobody can tell apart. The column width
-     * is a preference; legibility is not, and a taller filter row is the
-     * cheaper of the two prices.
-     */
+    // Una sm no, y las cajas se apilan en vez de encogerse: encogidas se leían «D» y «H».
+    // El ancho es preferencia; la legibilidad, no.
     const narrowRange = filterRow.locator('[data-filter="bultos"] input');
     await expect(narrowRange).toHaveCount(2);
     expect(round((await narrowRange.nth(1).boundingBox())?.y)).toBeGreaterThan(

@@ -33,10 +33,7 @@ describe('Badge', () => {
   }
 
   it('always shows the words AND a drawing', () => {
-    // The colour is never the only signal (WCAG 1.4.1), and a badge has no
-    // room for a second line -- so the label IS the text and the icon sits
-    // beside it. There is no icon-only mode on purpose: that would be a colour
-    // with a picture on it.
+    // WCAG 1.4.1: sin modo solo-icono, que sería un color con un dibujo encima.
     expect(fixture.nativeElement.textContent).toContain('Pendiente');
     expect(fixture.nativeElement.querySelector('svg')).not.toBeNull();
   });
@@ -55,8 +52,7 @@ describe('Badge', () => {
     }
 
     it('never uses the solid fill with white on it', async () => {
-      // Badge/Neutral would reach only 4.19:1 that way (Fundamentos de Marca),
-      // and the other three follow it so the four read as one family.
+      // Neutral llegaría a 4.19:1 así (Fundamentos de Marca); las otras tres lo siguen.
       for (const family of FAMILIES) {
         host.variant.set(family);
         await settle();
@@ -77,8 +73,6 @@ describe('Badge', () => {
   });
 
   it('hides the icon from assistive technology, because the label says it', () => {
-    // Announcing the severity twice is noise, not redundancy: the words are
-    // right there.
     expect(fixture.nativeElement.querySelector('svg')?.getAttribute('aria-hidden')).toBe('true');
     expect(fixture.nativeElement.querySelector('[role="img"]')).toBeNull();
   });

@@ -1,20 +1,10 @@
-<!--
-  `role="navigation"` con nombre, porque eso es esto: una forma de ir a otro lado
-  dentro de un conjunto de resultados, y quien aterriza acá fuera de contexto
-  necesita saberlo.
-  Los botones son `ewms-icon-button` de verdad: su anillo, su caja y su
-  comportamiento deshabilitado ya están decididos.
--->
+<!-- Navegación con nombre: quien aterriza acá fuera de contexto necesita saber qué es. -->
 <nav class="flex items-center justify-end gap-3" [attr.aria-label]="label()">
   @if (totalLabel()) {
     <span class="text-caption text-secondary">{{ totalLabel() }}</span>
   }
 
-  <!--
-  Una región viva, para que moverse entre páginas se anuncie. El foco se queda en el
-  botón pulsado -que está bien, porque la próxima pulsación suele ser el mismo-, y
-  sin esto nada avisaría que la página de abajo cambió.
--->
+  <!-- El foco se queda en el botón: sin esta región viva nada avisaría el cambio de página. -->
   <span class="text-caption text-primary" role="status" aria-live="polite" data-page-label>
     {{ label() }}
   </span>

@@ -4,16 +4,8 @@ import type { Translation, TranslocoLoader } from '@jsverse/transloco';
 import type { Observable } from 'rxjs';
 
 /**
- * Loads dictionaries from the shell's public/ folder, same origin, so the CSP
- * (`connect-src 'self'`) already allows it.
- *
- * Transloco passes 'es' for the root dictionary and 'scope/es' for a scope,
- * which maps straight onto the folder convention:
- *
- *   public/i18n/es.json
- *   public/i18n/<scope>/es.json
- *
- * Relative URL on purpose: it resolves against <base href>.
+ * Diccionarios desde public/i18n del shell, mismo origen, que `connect-src 'self'` permite.
+ * 'es' o 'scope/es' mapean a public/i18n/es.json o <scope>/es.json. URL relativa a <base href>.
  */
 @Injectable()
 export class HttpTranslocoLoader implements TranslocoLoader {

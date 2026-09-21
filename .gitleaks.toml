@@ -1,7 +1,7 @@
 title = "eWMS Advance - frontend"
 
-# Start from the upstream rule set; add project-specific rules below as the
-# real secret shapes (API keys, connection strings) become known.
+# Parte de las reglas de fábrica; las propias se agregan abajo cuando se conozca la
+# forma real de los secretos (claves de API, cadenas de conexión).
 [extend]
 useDefault = true
 

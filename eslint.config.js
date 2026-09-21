@@ -4,38 +4,27 @@ const tseslint = require('typescript-eslint');
 const angular = require('angular-eslint');
 
 /**
- * Dependency rules between libraries.
+ * Reglas de dependencia entre bibliotecas: espejo de la regla del backend. Ningún
+ * módulo entra en las entrañas de otro; todo cruce pasa por el alias `@ewms/*`, que
+ * resuelve al `public-api.ts` de la biblioteca (tsconfig.json). Son errores que bloquean CI.
  *
- * This file is the frontend mirror of the backend architecture rule: no module
- * reaches into another module's internals; every crossing goes through a public
- * interface. Here the public interface is the `@ewms/*` alias, which resolves to
- * that library's `public-api.ts` (see tsconfig.json).
- *
- * These are CI-blocking errors, not a good-faith agreement.
- *
- *   library        may import                     never imports
+ *   biblioteca     puede importar                 nunca importa
  *   -------------  -----------------------------  -------------------------
- *   shell          everything                     -
+ *   shell          todo                           -
  *   showroom       design-system, shared          core, api-client, domains
  *   design-system  shared                         core, api-client, domains, @jsverse/*
  *   core           shared, api-client             design-system, domains
- *   shared         nothing from the project       everything
- *   api-client     nothing from the project       everything
- *   testing        everything (dev only)          -
+ *   shared         nada del proyecto              todo
+ *   api-client     nada del proyecto              todo
+ *   testing        todo (solo dev)                -
  */
 
 const DOMAINS = ['@ewms/domains-*', '@ewms/domains/**'];
 
 /**
- * Every workspace library, spelled out.
- *
- * Production configs below use the `@ewms/*` glob, so a new library is fenced
- * off the moment it exists. Spec configs cannot use the glob: they need to
- * subtract exactly one package (`@ewms/testing`), which the glob would swallow.
- * So the glob is expanded against this list for specs only.
- *
- * NOTE: adding a new @ewms/* library means adding it here too, otherwise it
- * stays importable from spec files.
+ * Todas las bibliotecas del workspace. Producción usa el glob `@ewms/*`, que cerca una
+ * biblioteca nueva al nacer; las specs necesitan restar `@ewms/testing` y el glob se
+ * expande contra esta lista. Una biblioteca nueva va acá también, o las specs la importan.
  */
 const LIBS = [
   '@ewms/design-system',
@@ -47,9 +36,8 @@ const LIBS = [
 ];
 
 /**
- * Component stylesheets are injected as inline <style> elements, which the
- * strict CSP (`style-src 'self'`) blocks. Nothing fails at build or test time:
- * the component just ships unstyled. Hence a lint error (ADR 0010).
+ * Las hojas de componente se inyectan como <style> inline y la CSP estricta las bloquea
+ * sin fallar en build ni en pruebas: el componente sale sin estilo. Por eso es error (ADR 0010).
  */
 const COMPONENT_STYLES_MESSAGE =
   'Los estilos de componente se inyectan en línea y la CSP estricta los bloquea (ADR 0010). ' +
@@ -57,11 +45,9 @@ const COMPONENT_STYLES_MESSAGE =
   'Si falta una utilidad, agregá el token — no abras una hoja de estilos.';
 
 /**
- * The design system speaks no language (ADR 0008). Every visible text reaches
- * a component as an input, already translated by the consumer, exactly like
- * the `label` of ewms-icon (ADR 0011). A component that imports the
- * translation library forces its dictionary to load before a button can be
- * drawn, and ties the presentation library to this app.
+ * El sistema de diseño no habla ningún idioma (ADR 0008): el texto llega ya traducido como
+ * input. Importar la biblioteca de traducción obligaría a cargar el diccionario antes de
+ * dibujar un botón y ataría la biblioteca de presentación a esta app.
  */
 const NO_TRANSLATION_LIBRARY = {
   group: ['@jsverse/*'],
@@ -88,17 +74,9 @@ function restrict(project, forbidden, allowedText, extraPatterns) {
 }
 
 /**
- * Build the `no-restricted-imports` overrides for one library.
- *
- * Returns TWO configs, in order:
- *
- *   1. production code  -- the full forbidden set
- *   2. *.spec.ts        -- the same set minus @ewms/testing
- *
- * Specs get exactly one extra privilege: the dev-only testing library. Every
- * other boundary stays live inside a spec. A test file must never be the back
- * door into the architecture -- what a spec is allowed to import is what the
- * code under test will eventually be written against.
+ * Arma los overrides de `no-restricted-imports` de una biblioteca: dos configs, primero
+ * producción con todo lo prohibido y después *.spec.ts con lo mismo menos @ewms/testing.
+ * Una spec no es la puerta trasera de la arquitectura: importa lo que el código probado.
  */
 function boundary(project, forbidden, allowed, extraPatterns = []) {
   const allowedText = allowed.length ? allowed.join(', ') : 'nothing from this workspace';
@@ -134,7 +112,7 @@ function boundary(project, forbidden, allowed, extraPatterns = []) {
 
 module.exports = tseslint.config(
   {
-    // Build output, caches and vendored code are not ours to lint.
+    // Salida de build, cachés y código de terceros: no se lintean.
     ignores: [
       'dist/**',
       'node_modules/**',
@@ -156,8 +134,8 @@ module.exports = tseslint.config(
     ],
     processor: angular.processInlineTemplates,
     rules: {
-      // ------------------------------------------------------- security gates
-      // Gate 9. Each of these is an error, never a warning.
+      // ------------------------------------------------ compuertas de seguridad
+      // Regla 9. Cada una es error, nunca warning.
       'no-restricted-globals': [
         'error',
         {
@@ -184,36 +162,34 @@ module.exports = tseslint.config(
             'Raw innerHTML is forbidden (XSS). Render through a template, or sanitise via DomSanitizer.sanitize().',
         },
         {
-          // Catches `localStorage.setItem(...)`.
+          // Atrapa `localStorage.setItem(...)`.
           selector: 'MemberExpression[object.name=/^(localStorage|sessionStorage)$/]',
           message: 'Web storage must never hold auth tokens. Use the token store from @ewms/core.',
         },
         {
-          // Catches `window.localStorage...` and `globalThis.sessionStorage...`,
-          // which no-restricted-globals cannot see because they are property
-          // accesses rather than bare global references.
+          // Atrapa `window.localStorage...` y `globalThis.sessionStorage...`, que
+          // no-restricted-globals no ve porque son accesos a propiedad.
           selector: 'MemberExpression[property.name=/^(localStorage|sessionStorage)$/]',
           message: 'Web storage must never hold auth tokens. Use the token store from @ewms/core.',
         },
         {
-          // `styles: [...]` or `styles: '...'`, only as a direct key of the
-          // @Component({...}) metadata object. Quoted keys included.
+          // `styles: [...]` o `styles: '...'`, solo como clave directa de los
+          // metadatos de @Component({...}), claves entre comillas incluidas.
           selector:
             "Decorator > CallExpression[callee.name='Component'] > ObjectExpression > Property:matches([key.name='styles'], [key.value='styles'])",
           message: COMPONENT_STYLES_MESSAGE,
         },
         {
-          // `styleUrl: '...'`, plus the older `styleUrls: [...]` form, which
-          // is injected the same way.
+          // `styleUrl: '...'` y la forma vieja `styleUrls: [...]`, que se inyecta igual.
           selector:
             "Decorator > CallExpression[callee.name='Component'] > ObjectExpression > Property:matches([key.name=/^styleUrls?$/], [key.value=/^styleUrls?$/])",
           message: COMPONENT_STYLES_MESSAGE,
         },
       ],
 
-      // --------------------------------------------- cross-project deep imports
-      // Every crossing goes through the @ewms/* alias. Reaching into another
-      // project's src/ by relative path bypasses its public API.
+      // ------------------------------------ imports profundos entre proyectos
+      // Todo cruce pasa por el alias @ewms/*; una ruta relativa hacia el src/ de otro
+      // proyecto saltea su API pública.
       'no-restricted-imports': [
         'error',
         {
@@ -232,15 +208,15 @@ module.exports = tseslint.config(
         },
       ],
 
-      // ------------------------------------------------------------ conventions
+      // ------------------------------------------------------------ convenciones
       '@angular-eslint/prefer-standalone': 'error',
       '@typescript-eslint/consistent-type-definitions': ['error', 'interface'],
       '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
     },
   },
 
-  // Selector prefixes. `ewms-` for the design system and its neighbours,
-  // `app-` for the shell. Domain prefixes (`inv-`, `sec-`) arrive with domains.
+  // Prefijos de selector: `ewms-` para el sistema de diseño y vecinos, `app-` para el
+  // shell. Los de dominio (`inv-`, `sec-`) llegan con los dominios.
   {
     files: ['projects/shell/**/*.ts'],
     rules: {
@@ -275,9 +251,9 @@ module.exports = tseslint.config(
     },
   },
 
-  // ------------------------------------------------------------ the boundaries
-  // Each call emits the production rule followed by the spec rule, so the spec
-  // override always lands after the config it narrows.
+  // ------------------------------------------------------------ las fronteras
+  // Cada llamada emite la regla de producción y después la de specs, así el override
+  // de specs siempre queda detrás de la config que acota.
   ...boundary('shared', ['@ewms/*', ...DOMAINS], []),
   ...boundary('api-client', ['@ewms/*', ...DOMAINS], []),
   ...boundary(
@@ -298,21 +274,13 @@ module.exports = tseslint.config(
   ),
 
   /*
-   * THE ONE DEEP IMPORT ALLOWED INTO projects/ is not configured here: it is a
-   * single disable comment on the import in e2e/click-budget.e2e.ts, with its
-   * reason written beside it. It is noted here so that somebody reading the
-   * boundaries knows the exception exists rather than finding it by surprise.
-   *
-   * The short version: the end-to-end test has to read the four click budgets
-   * from the same file the screen reads them from (REQ-FE-DS4-003 HG-02), and
-   * the @ewms/* alias cannot carry them -- importing a public-api barrel from a
-   * Playwright test loads the whole Angular library into Node and fails before
-   * a test runs. The budgets are four plain numbers in a file with no imports.
-   * What keeps that file the only source of them is a separate gate,
-   * tools/ci/check-click-budget.mjs.
+   * El único import profundo permitido hacia projects/ no se configura acá: es un
+   * disable con su razón en e2e/click-budget.e2e.ts, que lee los presupuestos del mismo
+   * archivo que la pantalla (REQ-FE-DS4-003 HG-02). El barrel público cargaría toda la
+   * biblioteca Angular en Node desde Playwright. La única fuente la cuida check-click-budget.mjs.
    */
 
-  // ------------------------------------------------------------- HTML templates
+  // ------------------------------------------------------------ plantillas HTML
   {
     files: ['**/*.html'],
     extends: [...angular.configs.templateRecommended, ...angular.configs.templateAccessibility],

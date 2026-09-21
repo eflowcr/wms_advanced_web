@@ -16,42 +16,27 @@ import {
 import { Icon } from '../icon/icon';
 import { isGroup, type NavItem } from './navigation.types';
 
-/** Cuántos destinos entran abajo en un teléfono antes de que las etiquetas dejen
- * de leerse: cuatro al ancho más angosto. El quinto lugar es el control «Más». */
+/** Cuatro destinos entran al ancho más angosto; el quinto lugar es «Más». */
 export const BOTTOM_NAV_SLOTS = 4;
 
 /**
- * La navegación en pantalla angosta: una barra inferior. DECISIÓN DEL USUARIO
- * (2026-09-19): el frente proponía un drawer y el usuario eligió la barra.
- *
- * EL COSTO, escrito y no escondido: una barra lleva tres a cinco destinos de
- * primer nivel, y este menú tiene cuatro en el primero y DOCE en el segundo. Esos
- * doce quedan a DOS TOQUES, uno más que en el rail, en el dispositivo donde un
- * toque cuesta más.
- * La hoja usa el `FocusTrap` del CDK y NO `DialogService`: es un panel pegado a la
- * barra, no un modal, y abrirla como diálogo le daría `role="dialog"` y haría de
- * la navegación de la aplicación un diálogo.
+ * Barra inferior (decisión del usuario, 2026-09-19): deja doce destinos a dos toques. La hoja
+ * usa `FocusTrap` del CDK, no `DialogService`: es un panel, no un modal. Ver vault: Navegacion.
  */
 @Component({
   selector: 'ewms-nav-bottom',
   templateUrl: './nav-bottom.html',
   imports: [Icon],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  /*
-   * ESCAPE SE ATIENDE EN EL HOST Y NO EN LA HOJA: un `(keydown)` sobre el `<div>`
-   * de la hoja es un manejador en algo que no es enfocable, que la regla de lint
-   * rechaza con razón. La hoja es un CONTENEDOR -lo enfocado es lo que tiene
-   * adentro-, así que el listener va un nivel arriba, adonde el evento burbujea.
-   */
+  // Escape en el host: la hoja es un contenedor no enfocable y lint rechaza un `(keydown)` ahí.
   host: { class: 'contents', '(keydown)': 'onSheetKeydown($event)' },
 })
 export class NavBottom {
   readonly items = input.required<readonly NavItem[]>();
 
-  /** El nombre del landmark, ya traducido. */
   readonly label = input.required<string>();
 
-  /** El título de la hoja y el nombre del control «Más», ya traducidos. */
+  /** Título de la hoja y nombre del control «Más». */
   readonly moreLabel = input.required<string>();
   readonly closeLabel = input.required<string>();
 
@@ -65,28 +50,23 @@ export class NavBottom {
   private readonly injector = inject(Injector);
 
   private trap: FocusTrap | null = null;
-  /** A quién devolverle el foco. Nunca se adivina: se recuerda. */
+  /** A quién devolver el foco: se recuerda, nunca se adivina. */
   private opener: HTMLElement | null = null;
 
   protected readonly open = signal(false);
 
   constructor() {
-    // UNA VEZ acá y no en cada apertura: registrar el desarme dentro del manejador
-    // de clic suma un callback por apertura y mantiene viva cada trampa.
+    // Una vez acá: registrarlo en cada apertura suma callbacks y mantiene vivas las trampas.
     this.destroyRef.onDestroy(() => this.trap?.destroy());
   }
 
-  /**
-   * Qué muestra la barra y qué guarda la hoja. Un GRUPO de primer nivel nunca va a
-   * la barra: tocarlo tendría que abrir algo igual, o sea «Más» con otro nombre.
-   */
+  // Un grupo de primer nivel nunca va a la barra: sería «Más» con otro nombre.
   protected readonly barItems = computed(() =>
     this.items()
       .filter((item) => !isGroup(item))
       .slice(0, BOTTOM_NAV_SLOTS),
   );
 
-  /** Si sobra algo para la hoja. */
   protected readonly hasMore = computed(
     () => this.barItems().length < this.items().length || this.items().some(isGroup),
   );
@@ -99,7 +79,6 @@ export class NavBottom {
     this.itemSelect.emit(item);
   }
 
-  /** Desde la hoja: elegir un destino y cerrar detrás. */
   protected onSheetSelect(item: NavItem): void {
     if (isGroup(item)) {
       return;
@@ -112,13 +91,8 @@ export class NavBottom {
     this.opener = event.currentTarget as HTMLElement;
     this.open.set(true);
 
-    /*
-     * `afterNextRender` Y NO `queueMicrotask`, y la diferencia es toda la función:
-     * cuando se atiende este clic, `@if (open())` todavía no dibujó la hoja, así
-     * que la trampa nunca se construía. Un microtask tampoco alcanza -Angular
-     * zoneless pinta a su propio ritmo-, y la primera versión no hacía nada en
-     * silencio: el foco se quedaba en «Más». Encontrado abriéndola a 375 px.
-     */
+    // `afterNextRender` y no un microtask: con zoneless la hoja aún no existe y la trampa
+    // no se armaba (el foco quedaba en «Más»). Encontrado a 375 px.
     afterNextRender(
       () => {
         const element = this.sheet()?.nativeElement;
@@ -132,7 +106,7 @@ export class NavBottom {
     );
   }
 
-  /** Escape, el control de cierre o el fondo. Los tres, un solo camino. */
+  /** Escape, cierre o fondo: un solo camino. */
   protected close(): void {
     if (!this.open()) {
       return;

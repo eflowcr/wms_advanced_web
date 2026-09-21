@@ -1,39 +1,18 @@
 /**
- * Gate 12 -- i18n (ADR 0008).
+ * Regla 12: i18n (ADR 0008). Cuatro controles, todos bloqueantes.
  *
- * Four checks, all blocking.
+ *   1. Claves usadas contra definidas (`transloco-keys-manager find`), en los dos
+ *      sentidos. Una clave armada por concatenación aparece como sobrante.
+ *   2. Todo diccionario tiene exactamente las claves del diccionario por defecto.
+ *   3. Formato canónico como un lockfile (claves ordenadas, 2 espacios, LF, salto final;
+ *      lo arregla `npm run i18n:format`), segmentos en camelCase, hojas no vacías e ICU
+ *      válido según el intérprete de @ewms/core, que se importa para no discrepar.
+ *   4. Sin texto humano quemado en plantillas (.html e inline `template:`): texto visible
+ *      fuera de una interpolación y literales de atributos que se leen o se oyen. Se
+ *      saltean <code>, <pre>, atributos técnicos y texto sin letras. La lista EXEMPT no
+ *      crece para callar ruido: el ruido se reporta.
  *
- *   1. Keys used vs. keys defined, via `transloco-keys-manager find`. Both
- *      directions block: a key used but not defined is broken text on screen;
- *      a key defined but used nowhere is dead weight someone will translate
- *      for nothing. It also catches keys built by concatenation indirectly:
- *      the static extractor cannot see them, so their entries show up as
- *      unused.
- *
- *   2. Every dictionary has exactly the same set of keys as the default one.
- *      Without this, English falls behind and nobody notices. The report
- *      names the keys missing and extra on each side.
- *
- *   3. Deterministic format and sound structure, like icons.generated.ts:
- *      keys sorted, 2-space indent, LF, final newline -- so the diff of a
- *      translation PR is readable. Compared against the canonical rewrite,
- *      like a lockfile; `npm run i18n:format` fixes it. Structure: key
- *      segments in camelCase, every leaf a non-empty string, and every
- *      message valid for the ICU interpreter in @ewms/core (the gate imports
- *      that very file, so the two can never disagree on the grammar).
- *
- *   4. No hardcoded human text in templates: Angular templates under
- *      projects/ (.html files, and inline `template:` in non-spec .ts) are
- *      parsed with @angular/compiler and fail on visible text outside an
- *      interpolation, and on literal values of the attributes a person reads
- *      or hears (aria-label, title, placeholder, alt, ...). Deliberately
- *      conservative: text inside <code> and <pre> is not checked, and
- *      technical attributes (class, id, type, routerLink, data-*) are never
- *      looked at. Only text containing a letter counts, so separators such as
- *      "·" or "—" pass. The exclusions are the EXEMPT list below, each with
- *      its reason; do not grow it to silence noise -- report the noise.
- *
- * Run locally with `npm run lint:i18n`.
+ * `npm run lint:i18n`.
  */
 import { spawnSync } from 'node:child_process';
 import { cp, mkdtemp, readdir, readFile, rm, stat, writeFile } from 'node:fs/promises';
@@ -54,10 +33,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '.
 const SCAN_DIR = 'projects';
 export const TRANSLATIONS_DIR = 'projects/shell/public/i18n';
 
-/**
- * Paths gate 12 does not look at. Each entry carries its reason; an entry
- * without a reason written next to it does not belong here.
- */
+/** Rutas que la regla 12 no mira. Cada entrada lleva su razón escrita al lado. */
 const EXEMPT = [
   {
     prefix: 'projects/showroom/',
@@ -73,7 +49,7 @@ const EXEMPT = [
   },
 ];
 
-/** Attributes whose value a person reads or a screen reader speaks. */
+/** Atributos cuyo valor lee una persona o dice un lector de pantalla. */
 const HUMAN_ATTRIBUTES = new Set([
   'alt',
   'aria-description',
@@ -86,13 +62,13 @@ const HUMAN_ATTRIBUTES = new Set([
   'title',
 ]);
 
-/** Elements whose content is code, not prose. */
+/** Elementos cuyo contenido es código, no prosa. */
 const CODE_ELEMENTS = new Set(['code', 'pre']);
 
 const LETTER = /\p{L}/u;
 const KEY_SEGMENT = /^[a-z][a-zA-Z0-9]*$/;
 
-// ------------------------------------------------------------------ utilities
+// ------------------------------------------------------------------ utilidades
 
 function isExempt(file) {
   return EXEMPT.some(({ prefix }) => file.startsWith(prefix));
@@ -130,7 +106,7 @@ function print({ file, line, message }) {
   );
 }
 
-/** Flattens a dictionary into `a.b.c` keys with their leaf values. */
+/** Aplana un diccionario en claves `a.b.c` con el valor de cada hoja. */
 export function flattenKeys(node, prefix = '') {
   if (node === null || typeof node !== 'object' || Array.isArray(node)) {
     return [[prefix, node]];
@@ -140,7 +116,7 @@ export function flattenKeys(node, prefix = '') {
   );
 }
 
-/** The canonical text of a dictionary: keys sorted recursively, 2 spaces, LF. */
+/** Texto canónico de un diccionario: claves ordenadas en profundidad, 2 espacios, LF. */
 export function canonicalJson(dictionary) {
   const sort = (node) =>
     node !== null && typeof node === 'object' && !Array.isArray(node)
@@ -153,9 +129,9 @@ export function canonicalJson(dictionary) {
   return `${JSON.stringify(sort(dictionary), null, 2)}\n`;
 }
 
-// -------------------------------------------------------- check 2: same keys
+// ------------------------------------------------ control 2: mismas claves
 
-/** Keys missing from and extra in `other`, relative to `reference`. */
+/** Claves que faltan y que sobran en `other` respecto de `reference`. */
 export function compareKeySets(reference, other) {
   const referenceKeys = new Set(flattenKeys(reference).map(([key]) => key));
   const otherKeys = new Set(flattenKeys(other).map(([key]) => key));
@@ -165,7 +141,7 @@ export function compareKeySets(reference, other) {
   };
 }
 
-// ---------------------------------------------- check 3: format and structure
+// -------------------------------------------- control 3: formato y estructura
 
 export function checkStructure(dictionary) {
   const problems = [];
@@ -187,7 +163,7 @@ export function checkStructure(dictionary) {
   return problems;
 }
 
-// ------------------------------------------------ check 4: hardcoded template text
+// ------------------------------------ control 4: texto quemado en plantillas
 
 class HardcodedTextVisitor extends TmplAstRecursiveVisitor {
   constructor() {
@@ -246,7 +222,7 @@ class HardcodedTextVisitor extends TmplAstRecursiveVisitor {
   }
 }
 
-/** Returns `{ line, message }` for each piece of hardcoded human text. */
+/** Devuelve `{ line, message }` por cada texto humano quemado. */
 export function findHardcodedText(template, url = 'template.html') {
   const parsed = parseTemplate(template, url, { preserveWhitespaces: false });
   const problems = (parsed.errors ?? []).map((error) => ({
@@ -258,7 +234,7 @@ export function findHardcodedText(template, url = 'template.html') {
   return [...problems, ...visitor.found];
 }
 
-/** Inline `template:` strings in a TypeScript file, with their starting line. */
+/** Los `template:` inline de un archivo TypeScript, con su línea inicial. */
 export function inlineTemplates(source) {
   const found = [];
   const pattern = /\btemplate\s*:\s*(`(?:\\.|[^`\\])*`|'(?:\\.|[^'\\])*'|"(?:\\.|[^"\\])*")/g;
@@ -273,7 +249,7 @@ export function inlineTemplates(source) {
   return found;
 }
 
-/** Each application's host page (index.html) is a document, not a template. */
+/** La página host de cada aplicación (index.html) es un documento, no una plantilla. */
 async function hostPages() {
   const workspace = JSON.parse(
     (await readFile(path.join(ROOT, 'angular.json'), 'utf8')).replace(/^\s*\/\/.*$/gm, ''),
@@ -287,7 +263,7 @@ async function hostPages() {
     });
 }
 
-// ------------------------------------------------------------------------ gate
+// ------------------------------------------------------------------ compuerta
 
 async function readDictionaries() {
   const problems = [];
@@ -311,10 +287,9 @@ async function readDictionaries() {
 }
 
 /**
- * Check 1. keys-manager scans directories and cannot skip spec files, whose
- * keys are fixtures. So the sources are mirrored into a temp directory without
- * specs, test support or exempt paths, and `find` runs on the mirror against
- * the real dictionaries.
+ * Control 1. keys-manager recorre carpetas y no sabe saltear specs, cuyas claves son
+ * fixtures: se copian las fuentes a un temporal sin specs, soporte de pruebas ni rutas
+ * exentas, y `find` corre sobre esa copia contra los diccionarios reales.
  */
 async function checkUsedKeys() {
   const problems = [];
@@ -326,7 +301,7 @@ async function checkUsedKeys() {
     for (const file of sources) {
       await cp(path.join(ROOT, file), path.join(mirror, file));
     }
-    // keys-manager exits 0 on a wrong path; never let that pass for green.
+    // keys-manager sale con 0 ante una ruta errónea: eso nunca cuenta como verde.
     for (const dir of [mirror, path.join(ROOT, TRANSLATIONS_DIR)]) {
       if (!(await stat(dir)).isDirectory()) {
         throw new Error(`${dir} is not a directory`);
