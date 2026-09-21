@@ -1,9 +1,6 @@
 <!--
-  El `<label>` ENVUELVE al control, así no hay par for/id que mantener y la fila
-  entera -caja, hueco y texto- es el blanco. Por eso `cursor-pointer` va en la fila:
-  el texto es parte del control, no adorno al lado.
-  Sin `aria-disabled` junto al `disabled` nativo: el atributo ya lleva el estado y
-  los dos lo anunciarían dos veces (misma regla que el Botón).
+  El `<label>` envuelve: sin for/id, y la fila entera (caja, hueco y texto) es el blanco.
+  Sin `aria-disabled` junto al nativo: se anunciaría dos veces (misma regla que el Botón).
 -->
 <label [class]="rowClasses()">
   <span class="relative inline-flex">
@@ -20,12 +17,7 @@
       (blur)="onBlur()"
     />
 
-    <!--
-  El glifo es un HERMANO puesto encima de la caja y no un hijo: un `<input>` no
-  tiene hijos. `pointer-events-none` deja cada clic en el input de abajo.
-  Los dos glifos son decoración aria-hidden: lo que el estado ES lo dice
-  `aria-checked`, que sabe decir `mixed` donde el dibujo solo dice «azul».
--->
+    <!-- Hermano, porque un `<input>` no tiene hijos; el estado lo dice `aria-checked`. -->
     <span [class]="glyphClasses">
       @if (indeterminate()) {
         <ewms-icon name="minus" size="sm" />

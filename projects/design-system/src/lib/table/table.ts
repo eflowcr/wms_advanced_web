@@ -33,7 +33,6 @@ import { Input as TextInput } from '../input/input';
 import { Pagination } from '../pagination/pagination';
 
 import { readMilliseconds, readPixels } from '../tokens/read-token';
-/** La única espera del sistema para una caja que alguien está tipeando. */
 const DELAY_SEARCH_INPUT_TOKEN = '--delay-search-input';
 import { CellTemplate, TableColumn } from './column';
 import {
@@ -81,7 +80,6 @@ export type { CellContext } from './column';
 export { TableColumn, CellTemplate } from './column';
 export type { FlatRow } from './tree';
 
-/** El panel a todo lo ancho que despliega una fila maestra. */
 @Directive({ selector: '[ewmsDetail]' })
 export class DetailTemplate<T = unknown> {
   readonly template = inject<TemplateRef<{ $implicit: T }>>(TemplateRef);
@@ -94,7 +92,6 @@ export class DetailTemplate<T = unknown> {
   }
 }
 
-/** Lo que llena la tabla cuando no hay nada que mostrar. */
 @Directive({ selector: '[ewmsEmpty]' })
 export class EmptyTemplate {
   readonly template = inject<TemplateRef<unknown>>(TemplateRef);
@@ -102,14 +99,9 @@ export class EmptyTemplate {
 
 let nextTableId = 0;
 
-/** Lo que muestra una consulta que falló: nada, honestamente. */
 const EMPTY_PAGE: TablePage<never> = { rows: [], page: 0, pageSize: 0, total: 0 };
 
-/**
- * La tabla de datos. `flattenTree()` aplana el árbol antes de pintar: un solo
- * bucle en la plantilla, y la ventana virtual sale sin trucos. El estado de una
- * fila es dato, nunca una clase. Ficha: 08-Sistema-de-Diseno/Componentes/Tabla.
- */
+/** La tabla de datos: árbol aplanado, estado de fila como dato. Ver vault: Tabla. */
 @Component({
   selector: 'ewms-table',
   templateUrl: './table.html',
@@ -129,29 +121,20 @@ const EMPTY_PAGE: TablePage<never> = { rows: [], page: 0, pageSize: 0, total: 0 
 export class Table<T> {
   readonly source = input.required<TableSource<T>>();
 
-  /** Nombra la grilla. Una tabla por la que nadie puede preguntar no se encuentra. */
+  /** Obligatorio: una tabla sin nombre no se encuentra. */
   readonly ariaLabel = input.required<string>();
 
-  /**
-   * De dónde salen los hijos: una función, o el NOMBRE de una propiedad.
-   * Con `children` el rol es `treegrid`; sin él, `grid`.
-   */
+  /** Función o nombre de propiedad. Con `children` el rol es `treegrid`; sin él, `grid`. */
   readonly children = input<TableChildren<T> | string | null>(null);
 
-  /**
-   * En qué estado está una fila: una función, o el NOMBRE de una columna con
-   * diccionario `badges`. Un diccionario alimenta el tinte y la insignia.
-   */
+  /** Función o nombre de una columna con `badges`: un diccionario da tinte e insignia. */
   readonly rowState = input<((row: T) => RowState | null) | string | null>(null);
 
   readonly isRowMaster = input<((row: T) => boolean) | null>(null);
 
   readonly menuItems = input<readonly MenuItem[]>([]);
 
-  /**
-   * Pinta solo las filas a la vista. Desde unas 500 filas: cuesta una altura de
-   * fila fija y un contenedor con scroll, y veinte filas lo pagan por nada.
-   */
+  /** Pinta solo las filas visibles; conviene desde unas 500. Ver vault: Tabla §10. */
   readonly virtual = input<boolean>(false);
 
   readonly selectable = input<boolean>(false);
@@ -162,13 +145,9 @@ export class Table<T> {
 
   readonly pageSize = input<number>(50);
 
-  /**
-   * Qué identifica una fila, y también una selección: la selección es un
-   * conjunto de claves, así sobrevive a un cambio de página.
-   */
+  /** Identifica la fila y la selección (conjunto de claves: sobrevive al cambio de página). */
   readonly trackBy = input<(row: T) => unknown>((row) => row);
 
-  /** Pisa el diccionario provisto, para una sola tabla. */
   readonly messages = input<Partial<TableMessages> | null>(null);
   readonly formatters = input<Partial<TableFormatters> | null>(null);
 
@@ -197,7 +176,6 @@ export class Table<T> {
   protected readonly headerCellClasses = HEADER_CELL_CLASSES;
   protected readonly cellClasses = CELL_CLASSES;
 
-  /** Los textos: primero el token, la entrada encima. */
   protected readonly text = computed(() => ({
     ...this.providedMessages,
     ...(this.messages() ?? {}),
@@ -207,8 +185,6 @@ export class Table<T> {
     ...this.providedFormatters,
     ...(this.formatters() ?? {}),
   }));
-
-  // -------------------------------------------------------------- la consulta
 
   private readonly search = signal('');
   private readonly filters = signal<Readonly<Record<string, TableFilterValue>>>({});
@@ -223,10 +199,7 @@ export class Table<T> {
     page: this.pageIndex(),
   }));
 
-  /**
-   * La fuente Y la consulta: sin la fuente, cambiarla dejaba las filas viejas
-   * en pantalla hasta que alguien ordenara o filtrara.
-   */
+  // Con la fuente: sin ella, cambiar de fuente dejaba las filas viejas en pantalla.
   private readonly request = computed(() => ({ source: this.source(), query: this.query() }));
 
   protected readonly page = signal<TablePage<T>>({
@@ -241,15 +214,11 @@ export class Table<T> {
     return total === null ? null : Math.max(1, Math.ceil(total / this.pageSize()));
   });
 
-  // ------------------------------------------------------------------ el arbol
-
   private readonly expanded = signal<ReadonlySet<unknown>>(new Set());
   private readonly loadingChildren = signal<ReadonlySet<unknown>>(new Set());
   private readonly failedChildren = signal<ReadonlySet<unknown>>(new Set());
-  /** Hijos que llegaron de un Observable, por clave de fila. */
   private readonly lazyChildren = signal<ReadonlyMap<unknown, readonly T[]>>(new Map());
 
-  /** El resolvedor de hijos, en la forma que haya usado el consumidor. */
   private readonly resolveChildren = computed<TableChildren<T> | null>(() => {
     const declared = this.children();
     if (declared === null) {
@@ -261,7 +230,6 @@ export class Table<T> {
     return declared;
   });
 
-  /** El resolvedor de estado, en la forma que haya usado el consumidor. */
   private readonly resolveRowState = computed<((row: T) => RowState | null) | null>(() => {
     const declared = this.rowState();
     if (declared === null) {
@@ -279,10 +247,7 @@ export class Table<T> {
 
   protected readonly isTree = computed(() => this.resolveChildren() !== null);
 
-  /**
-   * Los hijos que ya están en mano. `undefined` es «hay hijos y no llegaron»;
-   * `null` es «es una hoja». La diferencia dibuja el toggle.
-   */
+  // `undefined` = hay hijos y no llegaron; `null` = hoja. La diferencia dibuja el toggle.
   private readonly childrenOf = (row: T): readonly T[] | null | undefined => {
     const resolve = this.resolveChildren();
     if (!resolve) {
@@ -307,8 +272,7 @@ export class Table<T> {
     if (resolved === null) {
       return false;
     }
-    // Un padre perezoso tiene hijos por definición: dibujar el toggle recién
-    // cuando llegan dejaría que nadie los pudiera pedir.
+    // Un padre perezoso siempre tiene toggle: si no, nadie podría pedir sus hijos.
     return isObservable(resolved) || resolved.length > 0;
   };
 
@@ -333,8 +297,6 @@ export class Table<T> {
       }).length > 0,
   );
 
-  // -------------------------------------------------------------- selection
-
   private readonly selectedKeys = signal<ReadonlySet<unknown>>(new Set());
 
   protected readonly allSelected = computed(() => {
@@ -346,32 +308,21 @@ export class Table<T> {
     () => !this.allSelected() && this.rows().some((flat) => this.selectedKeys().has(flat.key)),
   );
 
-  // ------------------------------------------------------------------ la grilla
-
-  /** Las columnas que camina el teclado: la casilla y después las declaradas. */
   protected readonly columnCount = computed(
     () => this.columns().length + (this.selectable() ? 1 : 0),
   );
 
-  /** Dónde está el teclado. Un solo tab stop para toda la tabla. */
+  // Un solo tab stop para toda la tabla.
   protected readonly focusRow = signal(0);
   protected readonly focusColumn = signal(0);
 
   constructor() {
-    /*
-     * Un cambio de consulta CANCELA la petición en vuelo: una página 0 lenta que
-     * aterriza después de una página 1 rápida pinta la página equivocada. Sin
-     * debounce: solo una caja que se TIPEA necesita espera, y es suya.
-     */
+    // switchMap cancela la petición en vuelo: una página 0 lenta no pisa a una página 1 rápida.
     toObservable(this.request)
       .pipe(
         tap(({ query }) => this.queryChange.emit(query)),
         switchMap(({ source, query }) =>
-          /*
-           * Un error que escapa del switchMap mata la suscripción de afuera y la
-           * tabla no vuelve a cargar nunca, sin nada que lo diga. Se atrapa por
-           * consulta; el estado de error con reintento es un hueco declarado.
-           */
+          // Atrapado por consulta: un error fuera del switchMap mata la suscripción para siempre.
           source.load(query).pipe(catchError(() => of(EMPTY_PAGE as TablePage<T>))),
         ),
         takeUntilDestroyed(),
@@ -385,11 +336,7 @@ export class Table<T> {
         this.search.set(text);
       });
 
-    /*
-     * La caja se mide una vez, en fase de lectura. Sin esto la primera ventana se
-     * calcula contra una altura de cero y la tabla abre mostrando solo el
-     * overscan. `clientHeight` es lectura de layout: va en afterNextRender.
-     */
+    // Medir en fase de lectura: sin esto la primera ventana se calcula con altura cero.
     afterNextRender({
       read: () => {
         const box = this.scrollBox()?.nativeElement;
@@ -399,10 +346,7 @@ export class Table<T> {
       },
     });
 
-    /*
-     * El overlay vive en el body y no acá: destruir la tabla no se lleva el menú
-     * abierto, que si no quedaría flotando sobre la pantalla siguiente.
-     */
+    // El overlay vive en el body: sin esto el menú abierto sobrevive a la tabla.
     this.destroyRef.onDestroy(() => {
       this.releaseMenuGesture();
       this.menuOverlay?.dispose();
@@ -410,17 +354,11 @@ export class Table<T> {
     });
   }
 
-  /**
-   * La espera entre la última tecla y la consulta. Lee `--delay-search-input`, el
-   * mismo token que el selector con búsqueda. SIN TOKEN NO HAY ESPERA: ningún
-   * número de reserva vive en TypeScript, igual que la duración del Toast.
-   */
+  // Lee `--delay-search-input`; sin token no hay espera (ningún número de reserva en TS).
   private typed(source: Observable<string>): Observable<string> {
     const delay = readMilliseconds(DELAY_SEARCH_INPUT_TOKEN);
     return delay === null || delay <= 0 ? source : source.pipe(debounceTime(delay));
   }
-
-  // ------------------------------------------------------------ appearance
 
   protected readonly rowHeight = computed(() => ROW_HEIGHT[this.density()]);
 
@@ -442,7 +380,7 @@ export class Table<T> {
     return rowClasses(this.isSelected(flat), state ? familyTintClass(state) : '');
   }
 
-  /** El valor que muestra una celda: formateado para ver, nunca para ordenar. */
+  // Formateado para ver, nunca para ordenar.
   protected display(column: TableColumn, row: T): string {
     const value = readCell(row, column.key());
     switch (column.type()) {
@@ -463,17 +401,12 @@ export class Table<T> {
     return column.cell() as CellTemplate<T> | undefined;
   }
 
-  // ----------------------------------------------------------------- sort
-
   protected sortDirection(column: TableColumn): 'asc' | 'desc' | null {
     const sort = this.sort();
     return sort && sort.key === column.key() ? sort.direction : null;
   }
 
-  /**
-   * `aria-sort` solo en la columna ordenada: `none` en las demás es válido y
-   * ruidoso, y ausente es lo que espera un lector de pantalla.
-   */
+  // `aria-sort` solo en la columna ordenada: `none` en las demás es ruido.
   protected ariaSort(column: TableColumn): string | null {
     const direction = this.sortDirection(column);
     if (!direction) {
@@ -482,10 +415,7 @@ export class Table<T> {
     return direction === 'asc' ? 'ascending' : 'descending';
   }
 
-  /**
-   * Ascendente, descendente y NINGUNO. El tercer clic devuelve el orden que dio
-   * la fuente, que suele ser el que significa algo.
-   */
+  // Asc, desc y ninguno: el tercer clic devuelve el orden de la fuente.
   protected toggleSort(column: TableColumn): void {
     if (!column.sortable()) {
       return;
@@ -501,16 +431,11 @@ export class Table<T> {
     }
   }
 
-  // --------------------------------------------------------------- filters
-
   protected readonly anyFilterable = computed(() =>
     this.columns().some((column) => column.filterable()),
   );
 
-  /**
-   * Un `FormControl` por caja de filtro, creado a demanda y memorizado: la
-   * plantilla lo pide en cada ciclo y uno nuevo cada vez borraría lo tipeado.
-   */
+  // Memorizado: la plantilla lo pide en cada ciclo y uno nuevo borraría lo tipeado.
   private readonly filterControls = new Map<string, FormControl<string>>();
 
   protected filterControl(column: TableColumn, bound: FilterBound): FormControl<string> {
@@ -538,10 +463,7 @@ export class Table<T> {
       current === undefined || typeof current === 'string' ? {} : { ...current };
 
     if (raw.trim() === '') {
-      /*
-       * Una caja vacía es SIN LÍMITE, no cero: «hasta 50» es un máximo sin mínimo,
-       * y leerla como 0 tiraría en silencio toda fila por debajo.
-       */
+      // Vacía es sin límite, no cero: leerla como 0 tiraría filas en silencio.
       delete base[bound];
     } else {
       base[bound] = column.type() === 'number' ? Number(raw) : raw;
@@ -570,8 +492,6 @@ export class Table<T> {
 
   protected readonly searchText = this.search as Signal<string>;
 
-  // ------------------------------------------------------------ expansion
-
   protected toggleExpanded(flat: FlatRow<T>): void {
     if (!flat.hasChildren) {
       return;
@@ -587,10 +507,7 @@ export class Table<T> {
     this.loadLazyChildren(flat);
   }
 
-  /**
-   * Una sola vez: volver a pedirlos en cada expansión es cómo una tabla rápida
-   * pasa a pegarle a la red cada vez que alguien navega hacia arriba.
-   */
+  // Una sola vez por fila: pedirlos en cada expansión le pega a la red sin necesidad.
   private loadLazyChildren(flat: FlatRow<T>): void {
     const resolve = this.resolveChildren();
     const resolved = resolve?.(flat.row);
@@ -622,8 +539,6 @@ export class Table<T> {
     this.loadLazyChildren(flat);
   }
 
-  // ------------------------------------------------------------ selection
-
   protected isSelected(flat: FlatRow<T>): boolean {
     return this.selectedKeys().has(flat.key);
   }
@@ -639,10 +554,7 @@ export class Table<T> {
     this.emitSelection();
   }
 
-  /**
-   * La casilla de cabecera selecciona lo que está EN PANTALLA, no todo lo que
-   * tiene la fuente: si no, alguien borra 400 registros queriendo borrar 20.
-   */
+  // Solo lo que está en pantalla: si no, alguien borra 400 registros queriendo borrar 20.
   protected toggleAll(): void {
     const keys = new Set(this.selectedKeys());
     if (this.allSelected()) {
@@ -666,9 +578,6 @@ export class Table<T> {
     this.selectionChange.emit(rows);
   }
 
-  // --------------------------------------------------------------- paging
-
-  /** El paginador se pinta solo cuando la fuente contó. */
   protected readonly showPagination = computed(() => (this.pageCount() ?? 0) > 1);
 
   protected goToPage(page: number): void {
@@ -679,8 +588,6 @@ export class Table<T> {
     this.pageIndex.set(Math.min(pages - 1, Math.max(0, page)));
   }
 
-  // ------------------------------------------------------------- keyboard
-
   protected isFocused(rowIndex: number, columnIndex: number): boolean {
     return this.focusRow() === rowIndex && this.focusColumn() === columnIndex;
   }
@@ -690,14 +597,10 @@ export class Table<T> {
     this.focusColumn.set(columnIndex);
   }
 
-  /**
-   * El teclado del treegrid de las WAI-ARIA APG. En una fila padre las flechas
-   * son del ÁRBOL, y solo cuando no hay nada que expandir o plegar se mueven
-   * entre celdas: así se camina una tabla de tres niveles sin tocar un toggle.
-   */
+  // Teclado treegrid de las WAI-ARIA APG: en una fila padre las flechas expanden y
+  // pliegan antes de moverse entre celdas. Ver vault: Tabla §6.
   protected onKeydown(event: KeyboardEvent, rowIndex: number): void {
-    // La lista aplanada ENTERA y nunca la ventana: las flechas caminan la tabla,
-    // y lo que esté pintado es un detalle.
+    // La lista aplanada entera, nunca la ventana.
     const rows = this.rows();
     const flat = rows[rowIndex];
     if (!flat) {
@@ -731,8 +634,7 @@ export class Table<T> {
           return;
         }
         if (this.focusColumn() === 0 && flat.level > 0) {
-          // Primera celda de una fila hija: al padre, la fila de arriba más
-          // cercana con nivel menor.
+          // Primera celda de una hija: va al padre.
           this.moveFocus(parentIndexOf(rows, rowIndex), 0);
           return;
         }
@@ -756,8 +658,7 @@ export class Table<T> {
 
       case ' ':
         if (this.selectable()) {
-          // Espacio hace scroll por defecto, que es lo último que quiere alguien
-          // tildando filas.
+          // Espacio hace scroll por defecto.
           event.preventDefault();
           this.toggleRow(flat);
         }
@@ -765,11 +666,7 @@ export class Table<T> {
 
       case 'ContextMenu':
       case 'F10':
-        /*
-         * Shift+F10 y la tecla de menú son el clic derecho del teclado. Sin ellas
-         * el menú de fila sería solo de ratón. F10 a secas se deja: es del
-         * navegador.
-         */
+        // Shift+F10 y la tecla de menú abren el menú; F10 a secas es del navegador.
         if (event.key === 'F10' && !event.shiftKey) {
           return;
         }
@@ -782,11 +679,7 @@ export class Table<T> {
     }
   }
 
-  /**
-   * CON VENTANA ABIERTA la fila destino puede no estar en el DOM: primero se
-   * hace scroll y el foco va en el turno siguiente. Si no, bajar con la flecha
-   * pierde el foco al salir de la ventana.
-   */
+  // Con ventana, la fila destino puede no estar en el DOM: scroll primero, foco después.
   private moveFocus(rowIndex: number, columnIndex: number): void {
     this.focusRow.set(rowIndex);
     this.focusColumn.set(columnIndex);
@@ -814,8 +707,6 @@ export class Table<T> {
     });
   }
 
-  // ------------------------------------------------------------ master/detail
-
   private readonly openDetails = signal<ReadonlySet<unknown>>(new Set());
 
   protected isMaster(row: T): boolean {
@@ -830,10 +721,7 @@ export class Table<T> {
     return `${this.tableId}-detail-${String(flat.key)}`;
   }
 
-  /**
-   * Maestro/detalle NO es el árbol. Una fila padre despliega más FILAS en las
-   * mismas columnas; una maestra despliega un PANEL de una celda.
-   */
+  // Maestro/detalle no es el árbol: despliega un panel de una celda, no más filas.
   protected toggleDetail(flat: FlatRow<T>): void {
     const open = new Set(this.openDetails());
     if (open.has(flat.key)) {
@@ -844,16 +732,10 @@ export class Table<T> {
     this.openDetails.set(open);
   }
 
-  // -------------------------------------------------------------------- el menu
-
   private menuOverlay: OverlayRef | null = null;
 
-  /**
-   * Si empezó un gesto NUEVO desde que se abrió el menú. Chromium sobre X11 manda
-   * `contextmenu` en la pulsación y `auxclick` en la suelta, y el `auxclick` del
-   * mismo clic cerraba lo que el `contextmenu` acababa de abrir (defecto 2a88b80).
-   * Un gesto nuevo siempre empieza con `pointerdown`.
-   */
+  // Chromium/X11 manda `contextmenu` al pulsar y `auxclick` al soltar, y cerraba el menú
+  // recién abierto (defecto 2a88b80). Solo un `pointerdown` nuevo lo puede cerrar.
   private menuGestureEnded = false;
 
   private readonly onMenuPointerDown = (): void => {
@@ -884,10 +766,7 @@ export class Table<T> {
     return menuItemClasses(item, index === this.menuIndex());
   }
 
-  /**
-   * DOS ENTRADAS, UN MENÚ: botón derecho y kebab. Un trackpad no tiene clic
-   * derecho; solo el kebab ignoraría la costumbre de quien sí lo tiene.
-   */
+  // Clic derecho y kebab: un trackpad no tiene clic derecho.
   protected openMenu(flat: FlatRow<T>, anchor: HTMLElement): void {
     if (!this.hasMenu()) {
       return;
@@ -926,15 +805,11 @@ export class Table<T> {
     if (!this.hasMenu()) {
       return;
     }
-    // Reemplaza el menú del navegador en vez de sumar uno al lado.
     event.preventDefault();
     this.openMenu(flat, event.target as HTMLElement);
   }
 
-  /**
-   * Devuelve el foco A LA FILA y no al documento: si no, el teclado empieza de
-   * cero y la persona termina usando el ratón para todo.
-   */
+  // Devuelve el foco a la fila, no al documento.
   protected closeMenu(): void {
     if (!this.menuOverlay) {
       return;
@@ -991,12 +866,7 @@ export class Table<T> {
     }
   }
 
-  // ------------------------------------------------------- virtualizacion
-
-  /**
-   * La altura de fila en píxeles, que es lo que pide la aritmética de la ventana.
-   * SIN TOKEN NO HAY VIRTUALIZACIÓN, en vez de un cuarenta inventado.
-   */
+  // Sin token de altura no hay virtualización, en vez de un número inventado.
   protected readonly rowPixels = computed(() =>
     readPixels(this.density() === 'sm' ? '--row-height-sm' : '--row-height-md'),
   );
@@ -1010,11 +880,8 @@ export class Table<T> {
 
   private readonly overscan = 6;
 
-  /**
-   * Qué filas están en el DOM y cuánto hueco queda a cada lado. NO es
-   * `cdk-virtual-scroll-viewport`: su transform mueve la tabla entera y la
-   * cabecera deja de ser pegajosa. Desviación declarada en la ficha Tabla.
-   */
+  // No es `cdk-virtual-scroll-viewport`: su transform rompe la cabecera pegajosa.
+  // Ver vault: Tabla §10.
   protected readonly rowWindow = computed(() => {
     const all = this.rows();
     const px = this.rowPixels();
@@ -1059,10 +926,6 @@ function withoutKey(set: ReadonlySet<unknown>, key: unknown): ReadonlySet<unknow
   return next;
 }
 
-/**
- * La fila de arriba más cercana con nivel menor. Función libre para que la regla
- * de teclado que sirve se lea en un solo lugar.
- */
 function parentIndexOf<T>(rows: readonly FlatRow<T>[], from: number): number {
   const level = rows[from]?.level ?? 0;
   for (let index = from - 1; index >= 0; index -= 1) {
@@ -1073,5 +936,4 @@ function parentIndexOf<T>(rows: readonly FlatRow<T>[], from: number): number {
   return from;
 }
 
-/** De qué caja de un filtro vino un valor. `text` es el filtro entero. */
 type FilterBound = 'text' | 'min' | 'max' | 'from' | 'to';

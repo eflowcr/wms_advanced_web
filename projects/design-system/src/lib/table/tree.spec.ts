@@ -3,7 +3,7 @@ import { expandableKeys, flattenTree, type FlattenOptions } from './tree';
 interface Node {
   readonly id: string;
   readonly hijos?: readonly Node[];
-  /** A lazy parent: it has children, and they are not here. */
+  /** Padre perezoso: tiene hijos y no están acá. */
   readonly lazy?: boolean;
 }
 
@@ -31,13 +31,7 @@ function options(
   };
 }
 
-/**
- * The tree, tested as a function.
- *
- * THIS IS THE PART OF THE TABLE THAT CAN HAVE A SPEC OF ITS OWN, and it is why
- * the flattening lives in a file with no Angular in it: every awkward case is a
- * call with an expected value instead of a fixture, a render and a query.
- */
+// El árbol como función pura: cada caso raro es una llamada con valor esperado.
 describe('flattenTree', () => {
   it('shows only the roots when nothing is expanded', () => {
     const flat = flattenTree(TREE, options());
@@ -46,9 +40,7 @@ describe('flattenTree', () => {
 
   it('A COLLAPSED ROW IS ABSENT, not hidden', () => {
     const flat = flattenTree(TREE, options());
-    // Not "present with a flag": a row that is not here cannot be reached by
-    // Tab, read by a screen reader, or counted into aria-rowcount -- and all
-    // three would be wrong for something the person collapsed.
+    // Ausente y no marcada: fuera del DOM no la alcanza el Tab ni cuenta en aria-rowcount.
     expect(flat.some((row) => row.row.id === 'a1')).toBe(false);
   });
 
@@ -65,8 +57,7 @@ describe('flattenTree', () => {
   it('counts the set and the position among SIBLINGS, not among the visible rows', () => {
     const flat = flattenTree(TREE, options(['a']));
     const a1 = flat.find((row) => row.row.id === 'a1');
-    // Two children of `a`, not seven rows on screen: aria-setsize is about the
-    // branch, which is what tells somebody "2 of 2" rather than "2 of 7".
+    // aria-setsize es de la rama: «2 de 2», no «2 de 7».
     expect(a1?.setSize).toBe(2);
     expect(a1?.posInSet).toBe(1);
     expect(flat.find((row) => row.row.id === 'b')?.posInSet).toBe(2);
@@ -76,9 +67,7 @@ describe('flattenTree', () => {
   it('marks a parent as expandable even when its children have not arrived', () => {
     const flat = flattenTree(TREE, options());
     const lazy = flat.find((row) => row.row.id === 'c');
-    // `undefined` is "there are children, not here yet"; `null` is "leaf". If
-    // the two collapsed, either every leaf would show a toggle or no lazy
-    // parent could ever be opened.
+    // `undefined` = hay hijos, no llegaron; `null` = hoja. Juntarlos rompe el toggle.
     expect(lazy?.hasChildren).toBe(true);
     expect(flat.find((row) => row.row.id === 'b')?.hasChildren).toBe(false);
   });
@@ -100,10 +89,8 @@ describe('flattenTree', () => {
   });
 
   it('WITHHOLDS THEM FROM A ROW THAT IS FOLDED UP', () => {
-    // The two sets outlive the gesture: a load in flight keeps its key and a
-    // failure keeps its key until somebody retries. Read on their own they put
-    // a spinner, or a red row with a retry button, under a parent drawn
-    // collapsed -- which is what the first capture of the lazy demo caught.
+    // Los conjuntos sobreviven al gesto: leídos solos pintan spinner o error bajo un padre
+    // plegado (lo atrapó la primera captura de la demo perezosa).
     const flat = flattenTree(
       TREE,
       options([], { loading: new Set(['c']), failed: new Set(['a']) }),
@@ -130,9 +117,7 @@ describe('flattenTree', () => {
 
 describe('expandableKeys', () => {
   it('walks the WHOLE tree, not just what is visible', () => {
-    // The visible rows of a fully collapsed tree are its roots; expanding only
-    // those would leave their children collapsed, so "expand all" has to know
-    // about rows nobody can see yet.
+    // «Expandir todo» tiene que conocer filas que nadie ve todavía.
     expect(expandableKeys(TREE, options())).toEqual(['a', 'a1', 'c']);
   });
 

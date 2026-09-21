@@ -53,8 +53,7 @@ describe('Pagination', () => {
   }
 
   it('counts pages FROM ONE for a person, while the input is zero-based', () => {
-    // Zero-based everywhere in the code, one-based everywhere a person reads:
-    // the translation happens once, here, instead of at every call site.
+    // Base cero en el código, base uno para quien lee: se traduce una vez, acá.
     expect(fixture.nativeElement.querySelector('[data-page-label]')?.textContent?.trim()).toBe(
       'Página 1 de 5',
     );
@@ -85,9 +84,7 @@ describe('Pagination', () => {
   });
 
   it('disables the ends rather than clamping silently', async () => {
-    // A button that looks pressable and does nothing is worse than one that
-    // says it cannot be pressed: the first teaches people the control is
-    // unreliable.
+    // Un botón que parece pulsable y no hace nada enseña que el control no es confiable.
     expect(button('previous').disabled).toBe(true);
     expect(button('next').disabled).toBe(false);
 
@@ -104,9 +101,6 @@ describe('Pagination', () => {
   });
 
   it('announces the page it moved to', () => {
-    // The focus stays on the button -- the next press is usually the same one
-    // -- so without a live region nothing would say the page underneath
-    // changed.
     const label = fixture.nativeElement.querySelector('[data-page-label]') as HTMLElement;
     expect(label.getAttribute('role')).toBe('status');
     expect(label.getAttribute('aria-live')).toBe('polite');

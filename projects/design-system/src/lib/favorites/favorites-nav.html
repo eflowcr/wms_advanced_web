@@ -1,10 +1,4 @@
-<!--
-  Un `<nav>` propio con nombre, y no parte del `<nav>` del árbol. Dos razones: la
-  lista de landmarks tiene que decir «Favoritos» y «Menú principal» por separado,
-  porque son dos maneras distintas de llegar a algún lado; y el teclado de foco
-  móvil del árbol camina el MENÚ, así que un favorito metido ahí sería una fila que
-  las flechas visitan y el shell nunca puso.
--->
+<!-- `<nav>` propio: landmark «Favoritos» aparte, y las flechas del árbol no visitan filas ajenas. -->
 <nav
   class="border-b px-2 py-3"
   [class]="tone().text + ' ' + tone().border"
@@ -16,31 +10,17 @@
   }
 
   @if (shown().length === 0) {
-    <!--
-  EL ESTADO VACÍO NO ES UN ESPACIO EN BLANCO: es el único lugar que dice cómo
-  llenar el bloque, y un bloque que desapareciera diría que la función no existe.
-  Plegado no hay lugar para una frase, así que una estrella la reemplaza y lleva
-  las palabras como nombre accesible.
--->
+    <!-- Vacío explica cómo llenarlo; plegado, una estrella lleva esas palabras como nombre. -->
     @if (expanded()) {
       <p class="px-2 text-caption" data-favorites-empty>{{ emptyLabel() }}</p>
     } @else {
-      <!--
-  NO ENFOCABLE Y SIN TOOLTIP. Un `tabindex="0"` sobre algo que no es un control para
-  colgarle un tooltip es justo el defecto que la caminata por teclado de DS-2
-  encontró en la propia página del Tooltip: una parada que no hace nada. El icono
-  lleva `label`, así que es `role="img"` con nombre y un lector igual se entera.
--->
+      <!-- Sin foco ni tooltip: `role="img"` con nombre; un `tabindex="0"` sería una parada vacía. -->
       <div class="flex justify-center py-2" data-favorites-empty>
         <ewms-icon name="star" size="lg" [label]="emptyLabel()" />
       </div>
     }
   } @else {
-    <!--
-  `aria-label` solo cuando está plegado, la misma regla que el rail: un tooltip
-  describe y no nombra, y una fila sin texto visible y sin label es un botón que
-  nadie puede identificar.
--->
+    <!-- `aria-label` solo plegado, como en el rail: el tooltip describe, no nombra. -->
     <ul class="list-none">
       @for (row of shown(); track row.favorite.route) {
         <li>

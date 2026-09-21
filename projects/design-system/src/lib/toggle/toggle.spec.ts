@@ -5,9 +5,8 @@ import { By } from '@angular/platform-browser';
 import { expectNoAxeViolations } from '@ewms/testing';
 import { Toggle } from './toggle';
 
-/** The four states of the ficha, each in both positions. */
+/** Los estados de la ficha: nombre, checked, disabled. */
 const STATES: readonly (readonly [string, boolean, boolean])[] = [
-  // name, checked, disabled
   ['off', false, false],
   ['on', true, false],
   ['off and disabled', false, true],
@@ -44,14 +43,8 @@ class ReactiveHost {
 }
 
 /**
- * Give an element the focus, then take it away, driving the two native events
- * through the DOM methods rather than through a synthesised `FocusEvent`.
- *
- * The reason is gate 10: it reads every string literal in a .ts file as a
- * possible class name, and the name of the second of those two events is also
- * a stock Tailwind filter utility, so spelling it as a literal fails the
- * build. The method call says the same thing and is closer to what a browser
- * actually does. Reported in the PR report.
+ * Por métodos del DOM y no con un `FocusEvent` sintético: el nombre del segundo evento es una
+ * utilidad de Tailwind y, como cadena, rompe la compuerta 10.
  */
 function focusThenLeave(element: HTMLElement): void {
   element.focus();
@@ -91,7 +84,7 @@ describe('Toggle', () => {
     return fixture.debugElement.query(By.directive(Toggle)).componentInstance as Toggle;
   }
 
-  /** The jsdom equivalent of `getByRole('switch', { name })`. */
+  /** Como `getByRole` con nombre, en jsdom. */
   function switchByName(name: string): HTMLInputElement | null {
     return (
       Array.from(root().querySelectorAll<HTMLInputElement>('input[role="switch"]')).find(
@@ -104,8 +97,7 @@ describe('Toggle', () => {
 
   describe('Role and name', () => {
     it('is a switch, not a checkbox', () => {
-      // Announced as on/off, which is what it does, rather than
-      // checked/not-checked, which is the vocabulary of a selection.
+      // Se anuncia encendido/apagado, no marcado/no marcado, que es vocabulario de selección.
       expect(track().getAttribute('role')).toBe('switch');
       expect(switchByName('Alertas de stock bajo')).toBe(track());
     });
@@ -135,9 +127,7 @@ describe('Toggle', () => {
       ) as HTMLElement;
       expect(text).toBeDefined();
 
-      // The <label> wrapping the input is what makes this work: the browser
-      // forwards the activation to the control. Key for a gloved finger on a
-      // tablet, where the 44x24 track is a small target.
+      // El <label> que envuelve reenvía la activación: clave con guantes, donde 44x24 es poco.
       text.click();
       await settle();
 
@@ -174,8 +164,7 @@ describe('Toggle', () => {
 
   describe('Track and thumb', () => {
     it('is a 44x24 pill at a single size', () => {
-      // jsdom does no layout, so 44x24 cannot be measured here: the utilities
-      // that carry it are what is asserted. See the PR report.
+      // jsdom no hace layout: se afirman las utilidades, no el 44x24 medido.
       expect(track().classList.contains('w-11')).toBe(true);
       expect(track().classList.contains('h-6')).toBe(true);
       expect(track().classList.contains('rounded-full')).toBe(true);

@@ -41,13 +41,8 @@ export type { SelectOption } from './select.types';
 let nextSelectId = 0;
 
 /**
- * Selector de una opción con panel flotante. El gatillo cerrado es la misma caja
- * que `ewms-input`, por field.types.ts, porque casi siempre van en la misma fila.
- * EL FOCO NUNCA SALE DEL GATILLO: el panel no es enfocable y las flechas mueven
- * una fila activa con `aria-activedescendant` (patrón combobox de las APG), así
- * «el foco vuelve al cerrar» es cierto por construcción y no por un `focus()`.
- * `aria-controls` solo existe mientras existe el panel: un id que no está en el
- * documento es un valor inválido, y eso es peor que ausente.
+ * Misma caja que `ewms-input` (field.types.ts). El foco nunca sale del gatillo: combobox APG
+ * con `aria-activedescendant`, así «el foco vuelve al cerrar» se cumple sin `focus()`.
  */
 @Component({
   selector: 'ewms-select',
@@ -58,27 +53,22 @@ let nextSelectId = 0;
   providers: [provideValueAccessor(() => Select)],
 })
 export class Select extends FormControlBase<unknown> implements OnDestroy {
-  /** Las filas, en orden. Sin tope acá ni en la plantilla: la ficha es explícita. */
+  /** Sin tope, como pide la ficha. */
   readonly options = input<readonly SelectOption[]>([]);
 
   readonly size = input<FieldSize>('md');
 
-  /** El valor elegido. Siembra el control; después manda `writeValue`. */
+  /** Siembra el control; después manda `writeValue`. */
   readonly value = input<unknown>(null);
 
-  /** Se ve cuando no hay nada elegido. Ya traducido. */
   readonly placeholder = input<string>('');
 
-  /**
-   * Obligatoria y visible, como la del Input. Un `<button>` no es etiquetable,
-   * así que se unen con `aria-labelledby` y no con for/id.
-   */
+  /** Un `<button>` no es etiquetable: se une con `aria-labelledby`, no con for/id. */
   readonly label = input.required<string>();
 
-  /** Texto de ayuda bajo el gatillo. Se pinta de peligro con `error`. */
   readonly hint = input<string>('');
 
-  /** Solo visual. Este componente no valida; decide el formulario de arriba. */
+  /** Solo visual: valida el formulario de arriba. */
   readonly error = input<boolean>(false);
 
   private readonly injector = inject(Injector);
@@ -98,7 +88,7 @@ export class Select extends FormControlBase<unknown> implements OnDestroy {
 
   protected readonly isOpen = signal(false);
 
-  /** Dónde está el teclado, como índice. `-1` es «en ningún lado». */
+  /** -1 es «en ningún lado». */
   protected readonly activeIndex = signal(-1);
 
   protected readonly baseClasses = FIELD_BASE_CLASSES;
@@ -106,7 +96,7 @@ export class Select extends FormControlBase<unknown> implements OnDestroy {
   protected readonly selectedWeight = SELECT_SELECTED_WEIGHT;
   protected readonly iconSize = FIELD_ICON_SIZE;
 
-  /** Error, deshabilitado o ninguno: los del Input menos solo-lectura. */
+  /** Los del Input menos solo-lectura. */
   protected readonly effectiveState = computed<FieldState>(() => {
     if (this.isDisabled()) {
       return 'disabled';
@@ -114,7 +104,7 @@ export class Select extends FormControlBase<unknown> implements OnDestroy {
     return this.error() ? 'error' : 'default';
   });
 
-  /** Abierto toma el borde de Foco, que no cuesta nada: el foco está en el gatillo. */
+  /** Abierto toma el borde de foco: el foco está en el gatillo. */
   protected readonly borderColor = computed(() =>
     fieldBorderColor(this.effectiveState(), this.isOpen()),
   );
@@ -140,7 +130,6 @@ export class Select extends FormControlBase<unknown> implements OnDestroy {
 
   protected readonly selectedOption = computed(() => this.options()[this.selectedIndex()] ?? null);
 
-  /** El texto de la fila elegida, o el placeholder mientras no hay ninguna. */
   protected readonly triggerText = computed(
     () => this.selectedOption()?.label ?? this.placeholder(),
   );
@@ -155,7 +144,7 @@ export class Select extends FormControlBase<unknown> implements OnDestroy {
     this.effectiveState() === 'error' ? 'text-danger' : 'text-secondary',
   );
 
-  /** Solo mientras existe el panel: un id fuera del documento es inválido. */
+  /** Solo mientras existe el panel: un id fuera del documento es peor que ninguno. */
   protected readonly controlsId = computed(() => (this.isOpen() ? this.listboxId : null));
 
   protected readonly activeOptionId = computed(() => {
@@ -177,8 +166,6 @@ export class Select extends FormControlBase<unknown> implements OnDestroy {
     this.overlayRef = null;
   }
 
-  // ----------------------------------------------------------- abrir y cerrar
-
   protected toggle(): void {
     if (this.isOpen()) {
       this.close();
@@ -194,37 +181,28 @@ export class Select extends FormControlBase<unknown> implements OnDestroy {
 
     const overlayRef = (this.overlayRef ??= this.createOverlay());
 
-    // El panel es tan ancho como el gatillo, leído al abrir y no guardado: el
-    // ancho del gatillo cambia con el layout de alrededor.
+    // Ancho del gatillo leído al abrir, no guardado: cambia con el layout.
     overlayRef.updateSize({ width: this.trigger().nativeElement.getBoundingClientRect().width });
     overlayRef.attach(new TemplatePortal(this.panelTemplate(), this.viewContainerRef));
 
-    // Abrir siempre deja una fila activa: la elegida, o la primera. Sin eso, un
-    // panel abierto con la flecha abajo necesitaría una segunda pulsación y
-    // `aria-activedescendant` no tendría a qué apuntar mientras tanto.
+    // Siempre hay fila activa al abrir; si no, la flecha abajo pediría otra pulsación.
     this.activeIndex.set(Math.max(0, this.selectedIndex()));
     this.isOpen.set(true);
   }
 
-  /**
-   * El overlay se arma una vez y se reusa, y por eso la suscripción al clic de
-   * afuera vive acá: suscribirse en cada `open()` apilaría un listener más por
-   * apertura, y al décimo un clic afuera llamaría a `close()` diez veces.
-   */
+  /** Se arma una vez: suscribirse en cada `open()` apilaría un listener por apertura. */
   private createOverlay(): OverlayRef {
     const overlayRef = createConnectedOverlay(
       this.injector,
       this.trigger().nativeElement,
       PANEL_POSITIONS,
     );
-    // Un clic en cualquier otro lado cierra y deja el valor. No se llama a
-    // `detach` directo: `close()` es la única salida, así la bandera, la fila
-    // activa y el overlay no pueden discrepar.
+    // Por `close()` y no `detach`: una sola salida, así bandera, fila y overlay no discrepan.
     overlayRef.outsidePointerEvents().subscribe(() => this.close());
     return overlayRef;
   }
 
-  /** Cierra SIN tocar el valor. Toda salida pasa por acá. */
+  /** Cierra sin tocar el valor; toda salida pasa por acá. */
   protected close(): void {
     if (this.overlayRef?.hasAttached()) {
       this.overlayRef.detach();
@@ -232,8 +210,6 @@ export class Select extends FormControlBase<unknown> implements OnDestroy {
     this.isOpen.set(false);
     this.activeIndex.set(-1);
   }
-
-  // ------------------------------------------------------------------ teclado
 
   protected onTriggerKeydown(event: KeyboardEvent): void {
     if (this.isDisabled()) {
@@ -261,7 +237,7 @@ export class Select extends FormControlBase<unknown> implements OnDestroy {
 
       case 'Enter':
         if (this.isOpen()) {
-          // Frena el clic del propio gatillo, que reabriría lo que esto cierra.
+          // Si no, el clic del gatillo reabriría el panel.
           event.preventDefault();
           this.selectActive();
         }
@@ -269,15 +245,13 @@ export class Select extends FormControlBase<unknown> implements OnDestroy {
 
       case 'Escape':
         if (this.isOpen()) {
-          // Solo descarta: el valor que mostraba el panel queda igual, y `close()`
-          // no se acerca a `commit`.
           event.preventDefault();
           this.close();
         }
         return;
 
       case 'Tab':
-        // Salir del control cierra el panel pero no elige nada.
+        // Cierra sin elegir.
         this.close();
         return;
 
@@ -286,11 +260,7 @@ export class Select extends FormControlBase<unknown> implements OnDestroy {
     }
   }
 
-  /**
-   * Mueve la fila activa. La regla -frena en los extremos, no da la vuelta- vive
-   * en `listbox/`, compartida con `ewms-search-select`: HG-04 prohíbe un segundo
-   * teclado, y «¿da la vuelta?» es justo lo que dos copias responderían distinto.
-   */
+  /** La regla (frena en los extremos) vive en `listbox/`, compartida con search-select (HG-04). */
   private moveActive(delta: number): void {
     const count = this.options().length;
     if (count === 0) {
@@ -306,20 +276,14 @@ export class Select extends FormControlBase<unknown> implements OnDestroy {
     }
   }
 
-  // ------------------------------------------------------------------- elegir
-
-  /** Confirma un valor y cierra. El único camino que lo cambia. */
+  /** El único camino que cambia el valor. */
   protected choose(option: SelectOption): void {
     this.commit(option.value);
     this.close();
     this.markTouched();
   }
 
-  /**
-   * Pulsar una opción no puede sacar el foco del gatillo, y el foco se mueve en
-   * mousedown, antes del clic. Prevenirlo acá es lo que hace significativo a
-   * `aria-activedescendant` sin una sola llamada a `focus()`.
-   */
+  /** El foco se mueve en mousedown: prevenirlo lo deja en el gatillo. */
   protected onOptionMousedown(event: MouseEvent): void {
     event.preventDefault();
   }

@@ -5,7 +5,7 @@ import { expectNoAxeViolations } from '@ewms/testing';
 import { Card } from './card';
 import { CardGroup } from './card-group';
 
-/** The warehouse picker of the sheet: four cards, the last one unavailable. */
+/** El selector de depósitos de la ficha: cuatro cards, la última no disponible. */
 const WAREHOUSES = [
   { value: 'norte', name: 'Norte' },
   { value: 'central', name: 'Central' },
@@ -171,7 +171,7 @@ describe('Card', () => {
         radios()[2]?.click();
         await settle();
 
-        // Sur is disabled, so the next one after Devoluciones is Norte again.
+        // Sur está deshabilitada: después de Devoluciones vuelve a Norte.
         press(2, 'ArrowDown');
         await settle();
         expect(radios()[0]?.getAttribute('aria-checked')).toBe('true');

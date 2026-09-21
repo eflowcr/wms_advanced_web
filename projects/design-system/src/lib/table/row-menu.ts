@@ -7,26 +7,16 @@ import type { MenuItem } from './table.types';
 
 export { moveActiveIndex };
 
-/**
- * El menú contextual de una fila, como el poco estado que de verdad es. NO ES UN
- * COMPONENTE: un menú necesita un overlay (ya compartido), una lista con flechas
- * (ya compartida) y dónde recordar a qué fila pertenece. Un componente habría
- * sumado un segundo overlay y un segundo teclado, que es lo que HG-04 evita.
- */
+/** No es un componente: overlay y lista ya compartidos; uno propio duplicaría teclado (HG-04). */
 export interface MenuAnchor {
-  /** Adónde apunta el menú. Una celda en clic derecho, el kebab si se pulsó. */
+  /** Una celda en clic derecho, el kebab si se pulsó. */
   readonly element: HTMLElement;
-  /** A qué fila pertenece, por la clave de `trackBy`. */
+  /** Clave de `trackBy`. */
   readonly key: unknown;
 }
 
-/**
- * Las posiciones de un menú de fila. CUATRO, Y ALINEADAS AL FINAL PRIMERO: no son
- * las del Select. Un panel cuelga de un gatillo que empieza a la izquierda de su
- * campo; un menú de fila cuelga de un kebab que está a la DERECHA, y alineado al
- * inicio se abre hacia afuera -en la primera captura quedó pegado al borde de la
- * ventana-. El par alineado al inicio queda de último recurso.
- */
+// Alineadas al final primero: el kebab está a la derecha y alineado al inicio el menú se sale
+// de la ventana (así salió en la primera captura).
 export const MENU_POSITIONS: ConnectedPositionList = [
   { originX: 'end', originY: 'bottom', overlayX: 'end', overlayY: 'top' },
   { originX: 'end', originY: 'top', overlayX: 'end', overlayY: 'bottom' },
@@ -37,19 +27,13 @@ export const MENU_POSITIONS: ConnectedPositionList = [
 export const MENU_CLASSES =
   'min-w-48 bg-surface rounded-control shadow-md py-1 list-none p-0 border border-default';
 
-/** Todo lo que lleva una entrada en cualquier estado. ACÁ NO HAY COLOR. */
+/** Acá no hay color. */
 export const MENU_ITEM_CLASSES = 'flex w-full items-center gap-2 px-3 py-1.5 text-p';
 
-/**
- * EXACTAMENTE UNA UTILIDAD DE COLOR POR ENTRADA, elegida acá. La forma obvia -una
- * base con `text-primary` y un modificador después- no funciona: las dos son
- * declaraciones de `color` en la misma capa de Tailwind, así que gana la que quede
- * antes en la hoja generada y NO el orden del atributo. En la primera captura la
- * entrada deshabilitada se veía como cualquier otra.
- */
+// Una sola utilidad de color por entrada: dos declaraciones de `color` en la misma capa las
+// decide el orden de la hoja generada, no el del atributo.
 const MENU_ITEM_TONES = {
   normal: 'cursor-pointer text-primary',
-  /** La entrada destructiva, y la única que lleva color. */
   danger: 'cursor-pointer text-danger',
   /** Deshabilitada gana a peligro: una entrada roja que no se puede pulsar engaña. */
   disabled: 'cursor-not-allowed text-disabled',
@@ -66,11 +50,7 @@ export function menuItemClasses(item: MenuItem, active: boolean): string {
   return classes.join(' ');
 }
 
-/**
- * Adónde va el teclado DENTRO DE UN MENÚ, salteando lo que no se puede elegir. Una
- * entrada deshabilitada queda visible -es información- y fuera del recorrido:
- * frenar en ella haría sentir rotas las flechas en las filas donde lo esté.
- */
+/** Saltea las deshabilitadas: siguen visibles pero frenar en ellas rompe las flechas. */
 export function moveMenuIndex(items: readonly MenuItem[], from: number, delta: number): number {
   const enabled = items
     .map((item, index) => ({ item, index }))
@@ -83,7 +63,6 @@ export function moveMenuIndex(items: readonly MenuItem[], from: number, delta: n
   return enabled[next]?.index ?? -1;
 }
 
-/** Arma el overlay donde vive un menú de fila. Un lugar, un juego de posiciones. */
 export function createMenuOverlay(
   injector: Injector,
   origin: HTMLElement,

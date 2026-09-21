@@ -18,12 +18,8 @@ import {
 } from './card.types';
 
 /**
- * Dos usos bajo un nombre, como los describe la ficha: dentro de un
- * `ewms-card-group` es una OPCIÓN -toma rol, posición de tabulación y flechas del
- * grupo-; en cualquier otro lado es un CONTENEDOR sin estado ni interacción.
- * CUÁL ES SALE DE DÓNDE SE ESCRIBE, NO DE UNA ENTRADA: una bandera `selectable`
- * dejaría existir una card seleccionable fuera de un grupo, o sea un `role="radio"`
- * sin `radiogroup` alrededor, que es inválido y que axe reporta.
+ * Opción dentro de `ewms-card-group`, contenedor en cualquier otro lado. Lo decide dónde se
+ * escribe y no una entrada: un `role="radio"` sin `radiogroup` es inválido. Ver vault: Cards.
  */
 @Component({
   selector: 'ewms-card',
@@ -33,25 +29,19 @@ import {
   host: { class: 'block' },
 })
 export class Card implements CardGroupMember, OnDestroy {
-  /**
-   * Cuánto vale esta card al ser la elegida. Sin sentido fuera de un grupo. No se
-   * llama `value`: `value` es del grupo, que es a lo que se ata un formulario, y
-   * dos miembros con ese nombre es cómo alguien ata el que no era.
-   */
+  /** No se llama `value`: ese es del grupo, al que se ata el formulario. */
   readonly optionValue = input<unknown>(null);
 
-  /** La entrada propia de la card. La del grupo se suma con O, nunca se resta. */
+  /** La del grupo se suma con O, nunca se resta. */
   readonly disabled = input<boolean>(false);
 
-  /** El grupo al que pertenece, o null si es un contenedor. `self: false` porque el
-   * grupo es un ancestro; `optional: true` es lo que hace legal el caso contenedor. */
+  /** Null si es contenedor: `optional: true` hace legal ese caso. */
   private readonly group = inject(CardGroup, { optional: true });
 
   private readonly box = viewChild.required<ElementRef<HTMLElement>>('box');
 
   protected readonly inGroup = computed(() => this.group !== null);
 
-  /** Quien deshabilita gana: la entrada de la card, o la del grupo. */
   readonly ownDisabled = this.disabled;
 
   protected readonly isDisabled = computed(() =>
@@ -62,8 +52,7 @@ export class Card implements CardGroupMember, OnDestroy {
     () => this.group !== null && this.group.selectedValue() === this.optionValue(),
   );
 
-  /** Un solo tab stop para todo el grupo, y acá aterriza. El resto se alcanza con
-   * las flechas y con nada más. */
+  /** Un solo tab stop por grupo; el resto, con flechas. */
   protected readonly tabIndex = computed<number | null>(() => {
     if (!this.group || this.isDisabled()) {
       return null;
@@ -101,11 +90,7 @@ export class Card implements CardGroupMember, OnDestroy {
     this.group?.select(this.optionValue());
   }
 
-  /**
-   * Las flechas y la barra espaciadora, como responde un grupo de radios. `Enter`
-   * falta a propósito: en un grupo de radios es del formulario -envía-, y tragarlo
-   * rompería el gesto que hace rápido un formulario manejado con teclado.
-   */
+  // Sin `Enter` a propósito: en un grupo de radios envía el formulario.
   protected onKeydown(event: KeyboardEvent): void {
     if (!this.group || this.isDisabled()) {
       return;
@@ -122,8 +107,7 @@ export class Card implements CardGroupMember, OnDestroy {
         this.group.move(-1);
         return;
       case ' ':
-        // Espacio hace scroll por defecto, lo último que quiere quien elige una
-        // opción.
+        // Espacio hace scroll por defecto.
         event.preventDefault();
         this.group.select(this.optionValue());
         return;

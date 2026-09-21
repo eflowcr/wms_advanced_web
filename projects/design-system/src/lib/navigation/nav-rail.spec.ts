@@ -82,7 +82,7 @@ describe('NavRail', () => {
   });
 
   it('projects what the consumer put above the tree and at its foot', () => {
-    // The rail does not know a favourites block exists; it knows it has slots.
+    // El rail no sabe de favoritos: solo tiene ranuras.
     expect(fixture.nativeElement.querySelector('[data-top]')).not.toBeNull();
     expect(fixture.nativeElement.querySelector('[data-foot]')).not.toBeNull();
   });
@@ -183,7 +183,6 @@ describe('NavRail', () => {
     });
 
     it('Enter is NOT intercepted: every row is a real button', () => {
-      // Re-implementing activation would be a second definition of it.
       const event = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true });
       row('dashboard').dispatchEvent(event);
 
@@ -202,13 +201,8 @@ describe('NavRail', () => {
     });
 
     it('BUT EVERY ROW STILL HAS A NAME, which the tooltip alone does NOT give it', async () => {
-      /*
-       * The defect this test exists for: collapsed, a row has no visible text,
-       * and a tooltip DESCRIBES rather than NAMES. Before DS-5 closed it, the
-       * collapsed rail was sixteen buttons with no accessible name at all --
-       * WCAG 4.1.2 -- and it was invisible to axe because nothing rendered the
-       * collapsed state. Found by collapsing it and looking.
-       */
+      // Plegado no hay texto y el tooltip no nombra: eran dieciséis botones sin nombre
+      // (WCAG 4.1.2), invisibles para axe. Ver vault: Navegacion.
       expect(row('design').textContent?.trim()).toBe('');
       expect(row('design').getAttribute('aria-label')).toBe('Sistema de diseño');
 
@@ -216,9 +210,7 @@ describe('NavRail', () => {
     });
 
     it('and drops the label again when there is room for the text', async () => {
-      // Expanded, the visible text is the name. A second copy in an attribute
-      // would be an override with nothing to override -- and the two would
-      // drift the day one of them was translated and the other was not.
+      // Expandido, el texto visible es el nombre: una copia en atributo derivaría al traducir.
       host.expanded.set(true);
       await settle();
 
@@ -234,7 +226,7 @@ describe('NavRail', () => {
     await settle();
 
     expect(host.askedWidth).toBe(false);
-    // Uncontrolled would be the rail deciding; the consumer owns the width.
+    // El ancho es del consumidor.
     expect(host.expanded()).toBe(true);
   });
 

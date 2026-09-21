@@ -216,8 +216,7 @@ describe('Toast', () => {
   });
 
   it('has no axe violations with the four up at once', async () => {
-    // axe schedules its own work, so it needs the real clock back. Every other
-    // test in this file drives the queue's timers by hand.
+    // axe necesita el reloj real; el resto del archivo maneja los timers a mano.
     vi.useRealTimers();
     toasts.show('success', 'Guardado');
     toasts.show('warning', 'Stock bajo');

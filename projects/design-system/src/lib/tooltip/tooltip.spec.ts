@@ -32,10 +32,7 @@ class TestHost {
   readonly ariaLabel = signal<string | null>(null);
 }
 
-/**
- * The tooltip panel lives in the CDK overlay container, which is appended to
- * document.body -- outside the fixture's own element.
- */
+/** El panel vive en el overlay del CDK, colgado de body y fuera del fixture. */
 function panels(): HTMLElement[] {
   return Array.from(document.querySelectorAll<HTMLElement>('.cdk-overlay-container div[id^="ewms-tooltip-"]'));
 }
@@ -94,7 +91,7 @@ describe('Tooltip', () => {
 
     it('appears on keyboard focus, with no delay', () => {
       trigger.dispatchEvent(new FocusEvent('focusin', { bubbles: true }));
-      // No timer advance at all: focus is deliberate, it does not wait.
+      // Sin avanzar el reloj: el foco no espera.
       expect(panel()?.textContent).toBe('Eliminar');
     });
 
@@ -118,16 +115,12 @@ describe('Tooltip', () => {
     });
 
     it('leaves the host control native [disabled] alone', () => {
-      // The whole reason the directive's own switch is called tooltipDisabled
-      // and not disabled. An input named `disabled` would capture this binding
-      // and the button would render enabled while looking disabled -- silent,
-      // and on the one attribute where silence is worst.
+      // Por esto el interruptor se llama tooltipDisabled. Ver vault: Tooltip.
       host.nativeDisabled.set(true);
       fixture.detectChanges();
 
       expect(trigger.disabled).toBe(true);
 
-      // ...and the two switches stay independent in the other direction too.
       host.nativeDisabled.set(false);
       host.tooltipDisabled.set(true);
       fixture.detectChanges();
@@ -156,9 +149,7 @@ describe('Tooltip', () => {
       showByHover();
       expect(panel()).not.toBeNull();
 
-      // Ten seconds of wall clock with no further interaction. A tooltip that
-      // disappears on a timer fails "Persistent"; this is the assertion that
-      // would catch a setTimeout-based auto-dismiss being added later.
+      // Diez segundos sin tocar nada: un cierre por tiempo fallaría «Persistent».
       vi.advanceTimersByTime(10_000);
       fixture.detectChanges();
 
@@ -170,8 +161,7 @@ describe('Tooltip', () => {
       const open = panel();
       expect(open).not.toBeNull();
 
-      // Pointer leaves the control and lands on the panel within the grace
-      // period, which is travel time and not a lifetime.
+      // Llega al panel dentro de la gracia.
       unhover(trigger);
       hover(open!);
       vi.advanceTimersByTime(TOOLTIP_POINTER_GRACE_MS);
@@ -179,11 +169,9 @@ describe('Tooltip', () => {
 
       expect(panel()).not.toBeNull();
 
-      // It stays open for as long as the pointer is on it.
       vi.advanceTimersByTime(10_000);
       expect(panel()).not.toBeNull();
 
-      // And closes once the pointer leaves the panel too.
       unhover(open!);
       vi.advanceTimersByTime(TOOLTIP_POINTER_GRACE_MS);
       fixture.detectChanges();
@@ -212,7 +200,6 @@ describe('Tooltip', () => {
       fixture.detectChanges();
 
       expect(panel()).toBeNull();
-      // Dismissed without moving the focus: it is still on the control.
       expect(document.activeElement).toBe(trigger);
     });
 
@@ -234,7 +221,7 @@ describe('Tooltip', () => {
 
       expect(panel()?.getAttribute('aria-hidden')).toBe('true');
       expect(panel()?.hasAttribute('role')).toBe(false);
-      // Nothing points at it: the control's own name is announced once.
+      // Nada apunta al panel: el nombre se anuncia una vez.
       expect(trigger.hasAttribute('aria-describedby')).toBe(false);
     });
 
@@ -307,21 +294,9 @@ describe('Tooltip', () => {
 
   describe('Accessibility (axe)', () => {
     /**
-     * axe-core schedules its own work on real timers, so it never resolves
-     * while they are faked. The tooltip is driven to the state under test with
-     * the fake clock, and the clock is handed back before axe runs.
-     *
-     * The fixture and the panel are scanned as two roots rather than scanning
-     * document.body, because the panel is NOT inside the fixture: the CDK
-     * appends its overlay container straight to the body.
-     *
-     * Scanning the body instead would report `region` ("all page content
-     * should be contained by landmarks") against `.cdk-overlay-container`.
-     * That is a page-structure rule -- a component fixture has no <main> or
-     * <nav> to be contained by -- and it is axe best-practice, not WCAG A/AA.
-     * It is worth knowing that a real page WILL report it while a tooltip is
-     * open, since the overlay container is a sibling of the landmarks rather
-     * than a child; that belongs to whoever assembles the page, not here.
+     * axe necesita reloj real. Fixture y panel se escanean aparte: sobre body saltaría `region`
+     * (buena práctica, no WCAG A/AA). Una página real sí la reporta con un tooltip abierto,
+     * porque el overlay es hermano de los landmarks: es de quien arma la página.
      */
     async function axeOnRealTimers(): Promise<void> {
       vi.useRealTimers();

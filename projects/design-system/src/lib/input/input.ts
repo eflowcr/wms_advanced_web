@@ -25,10 +25,8 @@ export type { InputType } from './input.types';
 let nextInputId = 0;
 
 /**
- * Campo de texto de una o varias líneas. Comparte su caja con `ewms-select` por
- * field.types.ts, así una fila de formulario se alinea sin que nadie mida. NO
- * valida: `state="error"` es un dibujo y decide el formulario de arriba.
- * El borde y el anillo de foco van en el control nativo, no en un envoltorio.
+ * Comparte caja con `ewms-select` (field.types.ts) para que una fila se alinee sola. No valida:
+ * `state="error"` es solo dibujo. Borde y anillo de foco van en el control nativo.
  */
 @Component({
   selector: 'ewms-input',
@@ -42,48 +40,34 @@ export class Input extends FormControlBase<string> {
   readonly type = input<InputType>('text');
   readonly size = input<FieldSize>('md');
 
-  /**
-   * Obligatoria, sin excepción, y pintada como un `<label for>` de verdad. Un
-   * placeholder no es un nombre: desaparece al tipear y varios lectores de
-   * pantalla no lo anuncian nunca. Llega ya traducida (ADR 0008).
-   */
+  /** Un `<label for>` real: el placeholder desaparece al tipear y muchos lectores no lo anuncian. */
   readonly label = input.required<string>();
 
   /**
-   * Conserva el nombre para la ayuda técnica y lo saca de la pantalla. Es para la
-   * fila de filtros de la Tabla: seis cajas no pueden llevar etiqueta visible sin
-   * duplicar el alto, y un `<th>` dos filas arriba no es una etiqueta. La
-   * etiqueta se sigue pintando, atando por for/id y leyendo: solo no se ve.
+   * Etiqueta solo para la ayuda técnica (sigue atada por for/id). Para los filtros de la Tabla:
+   * seis etiquetas visibles duplicarían el alto, y un `<th>` dos filas arriba no etiqueta.
    */
   readonly hideLabel = input<boolean>(false);
 
   readonly placeholder = input<string>('');
 
-  /** Texto de ayuda bajo el campo. Se pinta de peligro en `error`. */
   readonly hint = input<string>('');
 
   readonly state = input<FieldState>('default');
 
-  /** Pinta el asterisco junto a la etiqueta y pone el atributo nativo. */
+  /** Asterisco junto a la etiqueta, más el atributo nativo. */
   readonly required = input<boolean>(false);
 
-  /**
-   * El nombre accesible del botón mostrar/ocultar: qué hará al pulsarlo, ya
-   * traducido. Opcional, y sin él el botón NO se pinta: la alternativa era un
-   * botón sin nombre (falla axe, inusable por voz) o una entrada obligatoria en
-   * todo campo de texto que nunca tendrá una clave.
-   */
+  /** Nombre accesible del botón mostrar/ocultar; sin él no se pinta. Ver vault: Input. */
   readonly showPasswordLabel = input<string>('');
   readonly hidePasswordLabel = input<string>('');
 
-  /** Mismo contrato, para el botón que vacía un campo de búsqueda. */
+  /** Igual, para el botón que vacía una búsqueda. */
   readonly clearLabel = input<string>('');
 
   /**
-   * PREFIJADAS, y el prefijo carga peso. Una salida con el nombre de un evento
-   * nativo de foco choca con él -ESLint no-output-native lo prohíbe- y además uno
-   * de esos dos nombres es una utilidad de Tailwind, así que atarlo desde una
-   * plantilla en línea rompía la compuerta 10. Desviación de la ficha, reportada.
+   * Prefijadas: el nombre nativo choca con el evento DOM (no-output-native) y uno de los dos es
+   * utilidad de Tailwind, que rompe la compuerta 10. Ver vault: Input.
    */
   readonly fieldFocus = output<void>();
   readonly fieldBlur = output<void>();
@@ -94,23 +78,14 @@ export class Input extends FormControlBase<string> {
   protected readonly baseClasses = FIELD_BASE_CLASSES;
   protected readonly iconSize = FIELD_ICON_SIZE;
 
-  /**
-   * La base siembra su estado del valor del componente, y el Input no tiene: el
-   * valor llega por `formControlName` o `ngModel`, así que la semilla es la
-   * cadena vacía y solo `writeValue` la cambia desde afuera.
-   */
+  /** Sin entrada de valor: siembra con cadena vacía y la cambia `writeValue`. */
   protected readonly valueSource = signal('');
 
   private readonly focused = signal(false);
 
-  /** Lo mueve el botón mostrar/ocultar; solo se consulta para `password`. */
   private readonly passwordVisible = signal(false);
 
-  /**
-   * El estado que se pinta de verdad. `state="disabled"`, la entrada `disabled` y
-   * `setDisabledState` dicen lo mismo y con cualquiera alcanza: gana la respuesta
-   * restrictiva, igual que en `FormControlBase.isDisabled`.
-   */
+  /** Cualquiera de las tres vías de deshabilitar alcanza, como en `FormControlBase.isDisabled`. */
   protected readonly effectiveState = computed<FieldState>(() =>
     this.isDisabled() ? 'disabled' : this.state(),
   );
@@ -119,11 +94,7 @@ export class Input extends FormControlBase<string> {
   protected readonly isSearch = computed(() => this.type() === 'search');
   protected readonly isPassword = computed(() => this.type() === 'password');
 
-  /**
-   * Lo que cae en el `type` nativo. `textarea` nunca llega (se pinta otro
-   * elemento), y `password` pasa a `text` mientras el valor está a la vista: ese
-   * cambio es todo el mostrar/ocultar.
-   */
+  /** Mostrar la clave es pasar `password` a `text`; `textarea` pinta otro elemento. */
   protected readonly nativeType = computed(() => {
     if (this.isPassword()) {
       return this.passwordVisible() ? 'text' : 'password';
@@ -133,23 +104,19 @@ export class Input extends FormControlBase<string> {
 
   protected readonly hasPrefixIcon = computed(() => this.isSearch());
 
-  /** Solo para `password`, y solo con los dos textos que el consumidor da. */
   protected readonly hasPasswordToggle = computed(
     () =>
       this.isPassword() && Boolean(this.showPasswordLabel()) && Boolean(this.hidePasswordLabel()),
   );
 
-  /**
-   * Solo para `search`, con etiqueta, y solo cuando hay algo que borrar: una `x`
-   * sobre un campo vacío es un control que no hace nada.
-   */
+  /** Solo con algo que borrar: sobre un campo vacío sería un control que no hace nada. */
   protected readonly hasClearButton = computed(
     () => this.isSearch() && Boolean(this.clearLabel()) && this.controlValue().length > 0,
   );
 
   protected readonly hasSuffix = computed(() => this.hasPasswordToggle() || this.hasClearButton());
 
-  /** Mostrar u ocultar, lo que vaya a hacer la próxima pulsación. */
+  /** Lo que hará la próxima pulsación. */
   protected readonly passwordToggleLabel = computed(() =>
     this.passwordVisible() ? this.hidePasswordLabel() : this.showPasswordLabel(),
   );
@@ -163,11 +130,7 @@ export class Input extends FormControlBase<string> {
     () => PREFIX_ICON_OFFSET_CLASSES[this.size()],
   );
 
-  /**
-   * Relleno horizontal: el del campo, pisado del lado que lleva icono. Tailwind
-   * emite `pl-*`/`pr-*` después de `px-*`, así que gana el del lado sin importar
-   * el orden escrito acá.
-   */
+  /** El relleno de un lado pisa al horizontal: Tailwind lo emite después, sin importar el orden. */
   protected readonly paddingClasses = computed(() => {
     const classes = [FIELD_PADDING_CLASSES[this.size()]];
     if (this.hasPrefixIcon()) {
@@ -185,7 +148,7 @@ export class Input extends FormControlBase<string> {
     fieldBorderColor(this.effectiveState(), this.focused()),
   );
 
-  /** Los números se comparan dígito a dígito, así que van alineados a la derecha. */
+  /** Los números se comparan dígito a dígito: a la derecha. */
   protected readonly alignmentClass = computed(() =>
     this.type() === 'number' ? 'text-right' : 'text-left',
   );
@@ -204,7 +167,6 @@ export class Input extends FormControlBase<string> {
   protected readonly isReadonly = computed(() => this.effectiveState() === 'readonly');
   protected readonly isInvalid = computed(() => this.effectiveState() === 'error');
 
-  /** Solo cuando hay hint, para que el campo nunca lo describa la nada. */
   protected readonly describedBy = computed(() => (this.hint() ? this.hintId : null));
 
   protected readonly hintClasses = computed(() =>
@@ -221,30 +183,19 @@ export class Input extends FormControlBase<string> {
     this.fieldFocus.emit();
   }
 
-  /**
-   * `onTouched` dispara acá y en ningún otro lado: un control que alguien tipeó y
-   * todavía no dejó no está «tocado», y marcarlo antes hace aparecer mensajes de
-   * validación en medio de la escritura.
-   */
+  /** Único lugar que marca «tocado»: antes, la validación aparecería en medio de la escritura. */
   protected onBlur(): void {
     this.focused.set(false);
     this.markTouched();
     this.fieldBlur.emit();
   }
 
-  /**
-   * El foco NO se mueve: el botón ya lo tiene -alguien lo pulsó- y nada acá llama
-   * a `focus()` ni cambia el control por otro elemento.
-   */
+  /** El foco no se mueve: ya lo tiene el botón pulsado. */
   protected togglePasswordVisibility(): void {
     this.passwordVisible.update((visible) => !visible);
   }
 
-  /**
-   * Vacía el campo y avisa al formulario en una sola llamada: `commit` y nunca
-   * una escritura suelta, o el formulario se quedaría con el valor viejo mientras
-   * la caja se ve vacía.
-   */
+  /** Con `commit`: una escritura suelta dejaría al formulario con el valor viejo. */
   protected clear(): void {
     this.commit('');
   }

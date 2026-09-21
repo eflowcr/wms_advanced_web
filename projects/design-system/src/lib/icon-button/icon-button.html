@@ -1,13 +1,6 @@
 <!--
-  El área clicable es la caja entera y no el glifo: el icono va centrado en un botón
-  cuadrado, así que hasta el glifo más chico se pulsa en cualquier parte del cuadro.
-  `describes` va atado y no escrito como atributo: `describes="false"` pasaría la
-  cadena «false», que es verdadera, y el tooltip se conectaría por aria-describedby
-  anunciándose encima del aria-label.
-  `[disabled]` es el enlace nativo y queda sin ambigüedad porque la directiva de
-  tooltip llama `tooltipDisabled` a su propio interruptor: si se llamara `disabled`,
-  Angular resolvería este enlace a la directiva y el atributo nativo nunca se
-  escribiría -un botón con cara de deshabilitado y perfectamente clicable-.
+  `[describes]` atado: como atributo pasaría la cadena «false», que es verdadera.
+  `[disabled]` llega al botón nativo porque el tooltip usa `tooltipDisabled`. Ver vault: Tooltip.
 -->
 <button
   type="button"

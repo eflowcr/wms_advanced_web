@@ -1,16 +1,8 @@
 import { isTextEntry } from './text-entry';
 
-/**
- * RFE-04's question, asked of real elements.
- *
- * The rule that gets broken by accident more than any other: somebody types a
- * supplier's name with an `n` in it and a blank creation form opens over their
- * work. So every shape a field can take gets a case, and the two that decide
- * the DIRECTION of the default -- an unknown input type, and a field behind a
- * shadow boundary -- get one each.
- */
+// RFE-04 sobre elementos reales: un caso por forma de campo, y uno por cada lado del default.
 
-/** A keydown whose composed path starts at `target`, as a real event's does. */
+/** Con `composedPath()` empezando en `target`, como un evento real. */
 function keydownOn(target: Element): KeyboardEvent {
   return {
     key: 'n',
@@ -30,7 +22,7 @@ describe('isTextEntry', () => {
     const textarea = document.createElement('textarea');
     const editable = document.createElement('div');
     editable.setAttribute('contenteditable', 'true');
-    // jsdom does not derive isContentEditable from the attribute.
+    // jsdom no deriva isContentEditable del atributo.
     Object.defineProperty(editable, 'isContentEditable', { value: true });
 
     for (const element of [input('text'), input('search'), input('number'), textarea, editable]) {
@@ -55,13 +47,8 @@ describe('isTextEntry', () => {
   });
 
   it('treats an input type it has never heard of as text entry', () => {
-    /*
-     * THE DIRECTION OF THE DEFAULT, ASSERTED. The list of non-text types is a
-     * deny-list precisely so that a new type, a vendor type or a typo lands on
-     * the safe side. Being wrong this way costs a person one press of a key
-     * they can repeat; being wrong the other way opens a form in the middle of
-     * a code being typed.
-     */
+    // La dirección del default: lista de excluidos, así un tipo desconocido cae del lado
+    // seguro. Ver vault: Atajos-de-Teclado.
     expect(isTextEntry(keydownOn(input('some-future-type')))).toBe(true);
   });
 
@@ -73,24 +60,11 @@ describe('isTextEntry', () => {
     }
   });
 
-  /*
-   * THE TITLE AVOIDS ONE PARTICULAR WORD ON PURPOSE, and cannot say which.
-   *
-   * Gate 10 reads every quoted run in a .ts file as a possible class name, and
-   * the word for the boundary described below is also one of the Tailwind
-   * default utilities ADR 0009 deletes -- so a test NAME containing it fails
-   * the build. This note fails it too if it quotes the word to explain itself,
-   * which is how the paragraph ended up phrased like this. The same recursion
-   * is written up in dialog.types.ts, which met it first.
-   */
+  // El título evita a propósito una palabra: es una utilidad de Tailwind que ADR 0009 borra,
+  // y la compuerta 10 falla con ella entre comillas (igual que en dialog.types.ts).
   it('sees a field that event retargeting would otherwise hide', () => {
-    /*
-     * An event crossing a shadow boundary is RETARGETED: `target` reports the
-     * HOST, so an input inside a shadow root looks like a plain element from
-     * outside. Nothing in this system uses shadow DOM today, and that is
-     * exactly why this is tested -- a component that started using it would
-     * otherwise lose the protection silently.
-     */
+    // Al cruzar un shadow root, `target` reporta el host. Hoy nada usa shadow DOM: por eso
+    // se prueba, para que adoptarlo no pierda la protección en silencio.
     const host = document.createElement('div');
     const field = input('text');
     const event = {
@@ -100,7 +74,7 @@ describe('isTextEntry', () => {
     } as unknown as KeyboardEvent;
 
     expect(isTextEntry(event)).toBe(true);
-    // And the naive reading, for contrast: the host says nothing about the field.
+    // Contraste: el host no dice nada del campo.
     expect(isTextEntry(keydownOn(host))).toBe(false);
   });
 

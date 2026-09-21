@@ -1,12 +1,8 @@
 import { pixels } from '@ewms/testing';
 import { readMilliseconds, readPixels } from './read-token';
 
-/**
- * The only place in the library that reads a token from TypeScript, so the
- * only place where "the stylesheet is not there" is a case with a behaviour
- * rather than an impossibility. Both arms are exercised here because in a real
- * browser only one of them ever runs.
- */
+// «Sin hoja de estilos» solo tiene comportamiento acá; se prueban los dos brazos porque en un
+// navegador real corre uno solo.
 describe('readMilliseconds', () => {
   const TOKEN = '--duration-test';
 
@@ -48,12 +44,7 @@ describe('readMilliseconds', () => {
   });
 });
 
-/**
- * The row height, which the table's windowing needs as a number.
- *
- * Same contract, and the same reason for the null: a virtualised table that
- * guessed forty would be half a screen out the day the token moved.
- */
+// La altura de fila que la tabla virtual necesita como número; null en vez de adivinar cuarenta.
 describe('readPixels', () => {
   const TOKEN = '--length-test';
 
@@ -80,9 +71,7 @@ describe('readPixels', () => {
   });
 
   it('refuses rem rather than multiplying by sixteen', () => {
-    // A row height in rem follows the browser's font size, which is a
-    // reasonable thing to want and is not what this system does. Pretending
-    // otherwise is how a windowed list ends up scrolled off its own rows.
+    // En rem, la altura sigue la fuente del navegador; fingir píxeles desfasa la lista virtual.
     declare('2.5rem');
     expect(readPixels(TOKEN)).toBeNull();
   });

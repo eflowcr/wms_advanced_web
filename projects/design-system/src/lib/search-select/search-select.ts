@@ -56,21 +56,17 @@ export type { SearchSelectMessages, SearchStatus } from './search-select.types';
 
 let nextSearchSelectId = 0;
 
-/** Una consulta, con todo lo que hace falta para correrla y para reintentarla. */
 interface SearchRequest {
   readonly query: string;
   readonly page: number;
-  /** Agrega a lo que ya está en pantalla en vez de reemplazarlo. */
   readonly append: boolean;
   /** Vino de una ráfaga de escáner: resuelve sin abrir el panel si puede. */
   readonly scan: boolean;
 }
 
 /**
- * Un campo que se tipea y filtra contra una fuente. NO es un `ewms-select`
- * mejor, es el caso opuesto: un depósito tiene decenas de miles de SKU y abrir
- * un panel para caminarlo con las flechas es imposible, no lento. El valor es el
- * REGISTRO, nunca el texto. Ficha: 08-Sistema-de-Diseno/Componentes/Search-Select.
+ * Campo que filtra contra una fuente mientras se tipea; el valor es el registro, no el texto.
+ * Es el caso opuesto a `ewms-select` (decenas de miles de SKU). Ver vault: Search-Select.
  */
 @Component({
   selector: 'ewms-search-select',
@@ -81,44 +77,33 @@ interface SearchRequest {
   providers: [provideValueAccessor(() => SearchSelect)],
 })
 export class SearchSelect<T> extends FormControlBase<T | null> implements OnDestroy {
-  /**
-   * De dónde salen los registros. Una INTERFAZ, nunca un endpoint: pasar de la
-   * fuente de demo a un backend real cambia un `SearchSource` y nada más.
-   */
+  /** Una interfaz, no un endpoint: pasar a un backend real cambia solo el `SearchSource`. */
   readonly source = input.required<SearchSource<T>>();
 
-  /** Cómo un registro se vuelve texto, y contra qué se compara un código escaneado. */
   readonly display = input.required<SearchDisplay<T>>();
 
-  /** El registro elegido. Siembra el control; después manda `writeValue`. */
+  /** Siembra el control; después manda `writeValue`. */
   readonly value = input<T | null>(null);
 
   readonly size = input<FieldSize>('md');
 
-  /** Obligatoria y visible, como la de cualquier otro campo. */
   readonly label = input.required<string>();
 
   readonly placeholder = input<string>('');
 
-  /** Texto de ayuda bajo el campo. Se pinta de peligro cuando hay `error`. */
   readonly hint = input<string>('');
 
-  /** Solo visual. Este componente no valida nada; decide el formulario de arriba. */
+  /** Solo visual: valida el formulario de arriba. */
   readonly error = input<boolean>(false);
 
-  /**
-   * Los textos de los estados, YA PROVISTOS por `EWMS_SEARCH_SELECT_MESSAGES`;
-   * esta entrada los pisa para una instancia. El sistema de diseño no habla
-   * ningún idioma y no importa i18n (ADR 0008): pide una interfaz.
-   */
+  /** Pisa, en esta instancia, los textos de `EWMS_SEARCH_SELECT_MESSAGES` (ADR 0008). */
   readonly messages = input<Partial<SearchSelectMessages> | null>(null);
 
   private readonly providedMessages = inject(EWMS_SEARCH_SELECT_MESSAGES);
 
   /**
-   * El diccionario provisto, con lo de esta instancia encima. Se llama `words` y
-   * no `text` porque `text` ya es LO QUE ALGUIEN TIPEÓ, y dos miembros a una
-   * letra que significan lo opuesto es cómo la caja termina diciendo «Buscando…».
+   * Se llama `words` y no `text` porque `text` es lo tipeado: dos nombres casi
+   * iguales con sentido opuesto ya hicieron que la caja dijera «Buscando…».
    */
   protected readonly words = computed<SearchSelectMessages>(() => ({
     ...this.providedMessages,
@@ -150,10 +135,10 @@ export class SearchSelect<T> extends FormControlBase<T | null> implements OnDest
   protected readonly isOpen = signal(false);
   protected readonly activeIndex = signal(-1);
 
-  /** La consulta que muestra el panel, para el mensaje «sin resultados para X». */
+  /** Para el mensaje «sin resultados para X». */
   protected readonly searchedText = signal('');
 
-  /** La última petición, para que el reintento la repita igual (RFE-04). */
+  /** RFE-04: el reintento repite esta petición tal cual. */
   private lastRequest: SearchRequest | null = null;
 
   protected readonly baseClasses = FIELD_BASE_CLASSES;
@@ -162,36 +147,27 @@ export class SearchSelect<T> extends FormControlBase<T | null> implements OnDest
   protected readonly moreClasses = SEARCH_MORE_CLASSES;
   protected readonly selectedWeight = LISTBOX_SELECTED_WEIGHT;
 
-  /** Texto tipeado, antes de la espera. */
   private readonly typed = new Subject<string>();
-  /** Consultas, después de la espera o directo desde un escaneo. */
+  /** Después de la espera, o directo desde un escaneo. */
   private readonly requests = new Subject<SearchRequest>();
 
-  // ------------------------------------------------------ deteccion de escaneo
-
   /**
-   * EL DETECTOR COMPARTIDO, no una segunda implementación. Dos respuestas a «¿es
-   * una pistola?» derivan, y la mitad que deriva dispara un atajo en medio de un
-   * escaneo. Una INSTANCIA por campo: dos campos son dos ráfagas independientes.
+   * El detector compartido, no una copia: dos respuestas a «¿es una pistola?» derivan.
+   * Una instancia por campo, porque cada campo es una ráfaga aparte.
    */
   private readonly detector = new ScanDetector();
 
   /**
-   * Un escaneo ya buscó este texto, así que la consulta demorada detrás nace
-   * vieja. Sin esto el escaneo resuelve, elige, y el timer que dejaron las
-   * teclas de la ráfaga reabre el panel sobre un campo ya terminado.
+   * El escaneo ya buscó este texto: sin esta marca, el timer de las teclas de la
+   * ráfaga reabre el panel sobre un campo ya resuelto.
    */
   private scanHandled = false;
 
   constructor() {
     super();
 
-    /*
-     * RFE-01: entre la última tecla y la consulta hay una espera, y es un token.
-     * `debounce` con timer y no `debounceTime`, porque el token se lee por
-     * emisión. Sin token la espera es cero -una consulta por tecla, ruidosa pero
-     * correcta- y no una constante inventada acá.
-     */
+    // RFE-01: la espera es un token leído por emisión (por eso `debounce` y no
+    // `debounceTime`). Sin token es cero: una consulta por tecla, no una constante inventada.
     this.typed
       .pipe(
         debounce(() => timer(readMilliseconds(DELAY_SEARCH_INPUT_TOKEN) ?? 0)),
@@ -205,11 +181,8 @@ export class SearchSelect<T> extends FormControlBase<T | null> implements OnDest
         this.request({ query, page: 0, append: false, scan: false });
       });
 
-    /*
-     * RFE-01, la mitad que importa: `switchMap` CANCELA la consulta en vuelo. Sin
-     * él una página 0 lenta aterriza después de una rápida de otro texto y pinta
-     * resultados viejos sobre frescos (PACQ-01.2).
-     */
+    // RFE-01: `switchMap` cancela la consulta en vuelo; si no, una respuesta lenta
+    // de otro texto pinta resultados viejos sobre frescos (PACQ-01.2).
     this.requests
       .pipe(
         tap((request) => this.onRequestStart(request)),
@@ -218,11 +191,8 @@ export class SearchSelect<T> extends FormControlBase<T | null> implements OnDest
       )
       .subscribe();
 
-    /*
-     * LO QUE HAY EN LA CAJA SIGUE AL VALOR, con una sola fuente de verdad. Atar el
-     * campo a `chosen ?? typed` parece más simple y está mal: después de elegir
-     * una vez, cada tecla siguiente la pisaría la etiqueta vieja.
-     */
+    // La caja sigue al valor. Atarla a `chosen ?? typed` falla: tras elegir una vez,
+    // la etiqueta vieja pisaría cada tecla siguiente.
     effect(() => {
       const chosen = this.controlValue();
       this.text.set(chosen === null ? '' : this.display().label(chosen));
@@ -234,8 +204,6 @@ export class SearchSelect<T> extends FormControlBase<T | null> implements OnDest
     this.overlayRef?.dispose();
     this.overlayRef = null;
   }
-
-  // ------------------------------------------------------------------ aspecto
 
   protected readonly effectiveState = computed<FieldState>(() => {
     if (this.isDisabled()) {
@@ -281,11 +249,7 @@ export class SearchSelect<T> extends FormControlBase<T | null> implements OnDest
     return this.isOpen() && index >= 0 ? this.optionId(index) : null;
   });
 
-  /**
-   * Cuántas filas alcanzan las flechas: los resultados más la de «cargar más».
-   * Esa fila se alcanza con el teclado PORQUE se cuenta acá: es una fila de la
-   * lista, no un botón al lado.
-   */
+  /** Filas que alcanzan las flechas; «cargar más» cuenta, por eso es alcanzable con teclado. */
   protected readonly rowCount = computed(() => this.items().length + (this.hasMore() ? 1 : 0));
 
   protected isMoreRow(index: number): boolean {
@@ -304,10 +268,7 @@ export class SearchSelect<T> extends FormControlBase<T | null> implements OnDest
     return this.display().label(item);
   }
 
-  /**
-   * Lo que dice la región viva. RFE-08: un lector de pantalla tiene que enterarse
-   * de que la lista cambió sin que el foco se mueva, porque nunca se mueve.
-   */
+  /** RFE-08: la región viva anuncia el cambio de lista, porque el foco nunca se mueve. */
   protected readonly announcement = computed(() => {
     const messages = this.words();
     switch (this.status()) {
@@ -324,8 +285,6 @@ export class SearchSelect<T> extends FormControlBase<T | null> implements OnDest
     }
   });
 
-  // --------------------------------------------------------------- consultas
-
   private request(request: SearchRequest): void {
     this.requests.next(request);
   }
@@ -335,28 +294,20 @@ export class SearchSelect<T> extends FormControlBase<T | null> implements OnDest
     this.searchedText.set(request.query);
     this.status.set('searching');
     if (!request.append) {
-      /*
-       * SE VA TODO lo de la respuesta anterior, no solo las filas: un `hasMore`
-       * viejo dejaba la fila «cargar más» ofreciendo la página 2 de una búsqueda
-       * que ya no existe (PACQ-04.2).
-       */
+      // Se limpia todo, no solo las filas: un `hasMore` viejo ofrecía la página 2
+      // de una búsqueda que ya no existe (PACQ-04.2).
       this.items.set([]);
       this.hasMore.set(false);
       this.total.set(null);
       this.activeIndex.set(-1);
     }
-    // Un escaneo resuelve sin panel cuando puede, así que no abre uno de paso.
-    // Todo lo demás abre: RFE-01 dice que la persona nunca tiene que hacerlo.
+    // RFE-01: se abre solo, salvo un escaneo, que intenta resolver sin panel.
     if (!request.scan) {
       this.open();
     }
   }
 
-  /**
-   * Corre una petición. NUNCA FALLA: un error se vuelve el ESTADO de error,
-   * porque uno que escape de la tubería mata la suscripción y deja al componente
-   * sin poder volver a buscar.
-   */
+  /** Nunca emite error: uno que escape mata la suscripción y el campo ya no busca más. */
   private run(request: SearchRequest) {
     const waited = readMilliseconds(TIMEOUT_SEARCH_TOKEN);
     const query = this.source().search(request.query, request.page);
@@ -371,25 +322,18 @@ export class SearchSelect<T> extends FormControlBase<T | null> implements OnDest
         this.afterResults(request);
         return page;
       }),
-      /*
-       * RFE-02: un timeout es un ERROR DEL SERVICIO, no una ausencia de registros.
-       * Nunca comparten rama: confundirlos hace que una caída parezca un depósito
-       * vacío.
-       */
+      // RFE-02: un timeout es error del servicio, no «sin resultados»; mezclarlos
+      // hace que una caída parezca un depósito vacío.
       catchError(() => {
         this.status.set('error');
-        // El panel no tiene nada que mostrar, y el error se pinta bajo el campo,
-        // donde un Tab alcanza su botón de reintento (PACQ-03.2).
+        // El error va bajo el campo, donde Tab alcanza el reintento (PACQ-03.2).
         this.close();
         return EMPTY;
       }),
     );
   }
 
-  /**
-   * RFE-06: un escaneo que identificó exactamente un registro lo elige sin haber
-   * abierto el panel. Cualquier otra cosa se comporta como una búsqueda común.
-   */
+  /** RFE-06: un escaneo con un único registro exacto lo elige sin abrir el panel. */
   private afterResults(request: SearchRequest): void {
     if (!request.scan) {
       return;
@@ -402,8 +346,6 @@ export class SearchSelect<T> extends FormControlBase<T | null> implements OnDest
     }
     this.open();
   }
-
-  // ----------------------------------------------------------- abrir y cerrar
 
   protected open(): void {
     if (this.isDisabled() || this.isOpen()) {
@@ -425,7 +367,7 @@ export class SearchSelect<T> extends FormControlBase<T | null> implements OnDest
     return overlayRef;
   }
 
-  /** Cierra SIN tocar el valor. Toda salida pasa por acá. */
+  /** Cierra sin tocar el valor; toda salida pasa por acá. */
   protected close(): void {
     if (this.overlayRef?.hasAttached()) {
       this.overlayRef.detach();
@@ -434,14 +376,11 @@ export class SearchSelect<T> extends FormControlBase<T | null> implements OnDest
     this.activeIndex.set(-1);
   }
 
-  // ------------------------------------------------------------------ tipeo
-
   protected onInput(event: Event): void {
     const value = (event.target as HTMLInputElement).value;
     this.text.set(value);
     if (value === '') {
-      // Vaciar la caja no es buscar. RFE-03: tampoco borra el valor elegido; eso
-      // solo lo hace elegir otro registro.
+      // RFE-03: vaciar la caja no busca ni borra el valor elegido.
       this.status.set('idle');
       this.items.set([]);
       this.hasMore.set(false);
@@ -451,11 +390,7 @@ export class SearchSelect<T> extends FormControlBase<T | null> implements OnDest
     this.typed.next(value);
   }
 
-  /**
-   * RFE-06, primera mitad: reconocer una ráfaga. La medición es local y el umbral
-   * es un token, y el REQ lo permite: el sistema de diseño no puede importar
-   * `core/keyboard/`.
-   */
+  /** RFE-06: la ráfaga se mide acá, con umbral en token; el DS no puede importar `core/keyboard/`. */
   protected onKeydown(event: KeyboardEvent): void {
     if (this.isDisabled()) {
       return;
@@ -483,11 +418,7 @@ export class SearchSelect<T> extends FormControlBase<T | null> implements OnDest
 
       case 'Enter':
         if (isScan) {
-          /*
-           * Una ráfaga que cierra con Enter busca YA, sin la espera: esperar 300 ms
-           * después de que la pistola entregó el código entero son 300 ms de un
-           * operario parado.
-           */
+          // Busca ya, sin la espera: 300 ms tras un código completo son un operario parado.
           event.preventDefault();
           this.scanHandled = true;
           this.request({ query: this.text(), page: 0, append: false, scan: true });
@@ -497,14 +428,11 @@ export class SearchSelect<T> extends FormControlBase<T | null> implements OnDest
           event.preventDefault();
           this.activate(this.activeIndex());
         }
-        // Si no, el Enter es del formulario alrededor. Tragárselo rompería enviar
-        // un formulario desde el teclado.
+        // Si no, el Enter es del formulario: tragarlo rompe enviar con teclado.
         return;
 
       case 'Escape':
         if (this.isOpen()) {
-          // Solo descarta: el valor no cambia, y el foco ya está en el campo y se
-          // queda.
           event.preventDefault();
           this.close();
         }
@@ -519,9 +447,6 @@ export class SearchSelect<T> extends FormControlBase<T | null> implements OnDest
     }
   }
 
-  // ---------------------------------------------------------------- elegir
-
-  /** Se activó una fila: un resultado, o la de «cargar más». */
   protected activate(index: number): void {
     if (this.isMoreRow(index)) {
       this.loadMore();
@@ -533,17 +458,14 @@ export class SearchSelect<T> extends FormControlBase<T | null> implements OnDest
     }
   }
 
-  /**
-   * Confirma un registro y cierra. El único camino que cambia el valor: Escape,
-   * Tab y un clic afuera terminan todos en `close()`.
-   */
+  /** El único camino que cambia el valor; Escape, Tab y clic afuera van a `close()`. */
   protected choose(item: T): void {
     this.commit(item);
     this.close();
     this.markTouched();
   }
 
-  /** RFE-05: la página siguiente se AGREGA, nunca reemplaza. */
+  /** RFE-05: la página siguiente se agrega, nunca reemplaza. */
   protected loadMore(): void {
     const request = this.lastRequest;
     if (!request || !this.hasMore()) {
@@ -568,21 +490,14 @@ export class SearchSelect<T> extends FormControlBase<T | null> implements OnDest
     this.activeIndex.set(index);
   }
 
-  /**
-   * Salir del campo repone lo que se eligió de verdad. Texto a medio tipear con
-   * el formulario guardando otro registro es un campo que miente sobre su valor,
-   * y vaciar la caja NO es borrar el valor (RFE-03).
-   */
+  /** Repone la etiqueta del valor real: texto a medio tipear mentiría sobre él (RFE-03). */
   protected onBlur(): void {
     const chosen = this.controlValue();
     this.text.set(chosen === null ? '' : this.display().label(chosen));
     this.markTouched();
   }
 
-  /**
-   * RFE-01: el panel aparece solo. Hacer clic en el campo lo reabre cuando hay
-   * algo que mostrar, así quien se fue y volvió no tiene que retipear.
-   */
+  /** RFE-01: volver al campo reabre el panel si hay resultados, sin retipear. */
   protected onFocus(): void {
     if (this.text() && this.items().length > 0) {
       this.open();
@@ -591,9 +506,8 @@ export class SearchSelect<T> extends FormControlBase<T | null> implements OnDest
 }
 
 /**
- * Coincidencia exacta sin distinguir mayúsculas, que es la definición de código
- * escaneado de REQ-FE-DS3-001 §8. Nada más se normaliza: los caracteres de
- * control que anteponen algunos lectores son una decisión abierta (§15).
+ * REQ-FE-DS3-001 §8: exacta sin mayúsculas, nada más. Los caracteres de control que
+ * anteponen algunos lectores son decisión abierta (§15).
  */
 function equalsIgnoringCase(a: string, b: string): boolean {
   return a.toLowerCase() === b.toLowerCase();

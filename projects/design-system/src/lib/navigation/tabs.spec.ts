@@ -84,10 +84,8 @@ describe('Tabs', () => {
   });
 
   it('the close glyph is NOT a second tab stop, and Delete is announced instead', () => {
-    // A `tablist` may own only `tab`s, so a real button here is a critical axe
-    // violation. The APG's deletable-tabs answer: a non-focusable glyph for
-    // the mouse, `Delete` for the keyboard, and `aria-keyshortcuts` so the key
-    // is discoverable rather than folklore.
+    // Un `tablist` solo tiene `tab`s: un botón acá es violación crítica de axe. Glifo no
+    // enfocable, `Delete` y `aria-keyshortcuts`, como las APG.
     const glyph = closeGlyphs()[0]!;
 
     expect(glyph.getAttribute('aria-hidden')).toBe('true');
@@ -119,7 +117,7 @@ describe('Tabs', () => {
     await settle();
     expect(host.chosen).toBeNull();
 
-    // The arrows skip it too, rather than landing on something inert.
+    // Las flechas también la saltean.
     press('pinned', 'ArrowRight');
     await settle();
     expect(host.chosen).toBe('articles');
@@ -133,7 +131,7 @@ describe('Tabs', () => {
 
       press('articles', 'ArrowLeft');
       await settle();
-      // Wrapping backwards from the first lands on the last enabled tab.
+      // Hacia atrás desde la primera cae en la última habilitada.
       expect(host.chosen).toBe('pinned');
     });
 
@@ -181,7 +179,7 @@ describe('Tabs', () => {
     await settle();
 
     expect(host.closed).toBe('articles');
-    // Still there: the list is an input, and the shell owns it.
+    // Sigue ahí: la lista es una entrada y es del shell.
     expect(tab('articles')).not.toBeNull();
   });
 

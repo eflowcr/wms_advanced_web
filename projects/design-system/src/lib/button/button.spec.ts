@@ -41,14 +41,7 @@ class TestHost {
   }
 }
 
-/**
- * A REAL `<form>` AROUND A REAL BUTTON (DS-5).
- *
- * What `type="submit"` buys cannot be checked by reading an attribute: the
- * claim is that the BROWSER submits the form, `Enter` in a field included,
- * and that only happens with a form, a field and a submit button in the same
- * document. So the host is all three.
- */
+/** Formulario, campo y botón reales (DS-5): el envío es del navegador, no de un atributo. */
 @Component({
   template: `
     <form data-form (ngSubmit)="submits = submits + 1">
@@ -99,13 +92,7 @@ describe('Button, inside a form', () => {
   });
 
   it('AND `Enter` IN A FIELD SUBMITS IT, which is the whole point', async () => {
-    /*
-     * The defect this input closed, found by building the example screen of
-     * DS-4: the browser's implicit submission needs a submit button to EXIST.
-     * With every button rendering `type="button"`, a form with several fields
-     * could not be saved with `Enter` at all -- and `Enter` in a field is what
-     * everybody does.
-     */
+    // El envío implícito necesita un botón submit; sin él, Enter no guardaba. Ver vault: Boton.
     const field = fixture.nativeElement.querySelector('[data-field]') as HTMLInputElement;
     field.focus();
     fixture.nativeElement.querySelector('[data-form]').requestSubmit();
@@ -115,8 +102,7 @@ describe('Button, inside a form', () => {
   });
 
   it('and does NOT submit while the default is left alone', async () => {
-    // `'button'` is the default, and it stays the default: nothing that
-    // existed before DS-5 starts submitting because this input arrived.
+    // `button` sigue siendo el default: nada anterior a DS-5 empieza a enviar.
     host.type.set('button');
     await settle();
 
@@ -251,12 +237,9 @@ describe('Button', () => {
       await fixture.whenStable();
 
       const button = fixture.debugElement.query(By.css('button')).nativeElement as HTMLButtonElement;
-      // `disabled` and `loading` are independent: an explicitly disabled button
-      // stays disabled while it loads. Only `aria-busy` is added on top.
+      // Independientes: deshabilitado sigue así mientras carga; solo se suma `aria-busy`.
       expect(button.disabled).toBe(true);
       expect(button.getAttribute('aria-busy')).toBe('true');
-      // The native attribute already conveys the state; aria-disabled too would
-      // announce it twice.
       expect(button.hasAttribute('aria-disabled')).toBe(false);
 
       button.click();
@@ -269,10 +252,8 @@ describe('Button', () => {
     it('draws the ring from CSS on :focus-visible, with no inline box-shadow', () => {
       const button = fixture.debugElement.query(By.css('button')).nativeElement as HTMLButtonElement;
 
-      // The ring is a `:focus-visible` utility backed by --focus-ring-shadow.
-      // jsdom resolves neither var() nor :focus-visible, so what is asserted
-      // here is the contract that puts the decision in the browser's hands:
-      // the class is present and nothing writes box-shadow from TypeScript.
+      // jsdom no resuelve var() ni :focus-visible: se afirma la clase y que TypeScript no
+      // escribe la sombra.
       expect(button.classList.contains('focus-visible:shadow-(--focus-ring-shadow)')).toBe(true);
       expect(button.style.boxShadow).toBe('');
 
@@ -288,13 +269,12 @@ describe('Button', () => {
       fixture.detectChanges();
       await fixture.whenStable();
 
-      // Angular inputs are not reflected as HTML attributes; query by directive instead.
+      // Las entradas de Angular no se reflejan como atributos: se busca por directiva.
       const icons = fixture.debugElement.queryAll(By.directive(Icon));
       expect(icons.length).toBeGreaterThan(0);
       const firstIcon = icons[0];
       if (!firstIcon) throw new Error('No ewms-icon found in template');
       const iconEl = firstIcon.nativeElement as Element;
-      // The icon's inner svg carries aria-hidden; the host ewms-icon passes it down.
       expect(iconEl.querySelector('svg')?.getAttribute('aria-hidden')).toBe('true');
     });
   });

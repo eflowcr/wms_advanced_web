@@ -34,12 +34,8 @@ const MESSAGES: SearchSelectMessages = {
 };
 
 /**
- * A source under the test's control: nothing resolves until the test says so.
- *
- * EVERY CALL KEEPS ITS OWN SUBJECT, which is what lets a test answer an OLD
- * query after a newer one has started -- the whole point of PACQ-01.2. A
- * single shared subject would have the stale answer and the fresh one arrive
- * down the same pipe, and the test would pass without proving anything.
+ * Nada resuelve hasta que la prueba lo dice. Un subject por llamada: así se puede responder
+ * una consulta vieja después de una nueva (PACQ-01.2); uno compartido no probaría nada.
  */
 class ControlledSource implements SearchSource<Article> {
   readonly calls: { query: string; page: number }[] = [];
@@ -52,7 +48,7 @@ class ControlledSource implements SearchSource<Article> {
     return subject;
   }
 
-  /** Answer a call. `index` counts from the end: 0 is the most recent. */
+  /** `fromEnd` cuenta desde el final: 0 es la más reciente. */
   resolve(items: readonly Article[], extra: Partial<SearchPage<Article>> = {}, fromEnd = 0): void {
     const subject = this.pending[this.pending.length - 1 - fromEnd];
     subject?.next({
@@ -71,14 +67,13 @@ class ControlledSource implements SearchSource<Article> {
   }
 }
 
-/** A source that never answers -- for the timeout. */
+/** Nunca responde: para el timeout. */
 class SilentSource implements SearchSource<Article> {
   search(): Observable<SearchPage<Article>> {
     return new Subject<SearchPage<Article>>();
   }
 }
 
-/** A source that takes a while and then answers. */
 class SlowSource implements SearchSource<Article> {
   constructor(private readonly delay: number) {}
 
@@ -131,9 +126,7 @@ describe('SearchSelect', () => {
 
     await TestBed.configureTestingModule({
       imports: [TestHost, SearchSelect, ReactiveFormsModule],
-      // The words are PROVIDED, not passed: that is the library's one pattern
-      // for a dictionary of texts, and a spec that passed them by input would
-      // no longer be testing the component as it is used.
+      // Los textos se proveen, no se pasan por entrada: así se usa el componente.
       providers: [{ provide: EWMS_SEARCH_SELECT_MESSAGES, useValue: MESSAGES }],
     }).compileComponents();
     fixture = TestBed.createComponent(TestHost);
@@ -172,7 +165,7 @@ describe('SearchSelect', () => {
     return [...document.querySelectorAll<HTMLElement>('[role="listbox"] [role="option"]')];
   }
 
-  /** Type, driving the real events, with a gap between keystrokes. */
+  /** Eventos reales, con una pausa entre teclas. */
   async function type(value: string, gap = 200): Promise<void> {
     for (const character of value) {
       vi.advanceTimersByTime(gap);
@@ -194,8 +187,6 @@ describe('SearchSelect', () => {
     vi.advanceTimersByTime(300);
     await settle();
   }
-
-  // --------------------------------------------------- RFE-01, typing
 
   describe('RFE-01 — it filters while you type, with nothing opened first', () => {
     it('PACQ-01.1: three characters open the panel by themselves', async () => {
@@ -224,13 +215,11 @@ describe('SearchSelect', () => {
       await type('SKU');
       await waitForDelay();
 
-      // A second search starts before the first has answered.
       await type('-8');
       await waitForDelay();
       expect(source.calls.length).toBe(2);
 
-      // The FIRST one answers now. switchMap unsubscribed it, so nothing it
-      // says reaches the screen.
+      // Responde la primera: switchMap ya la desuscribió y no llega a pantalla.
       source.resolve([CATALOGUE[0]!], {}, 1);
       await settle();
       expect(rows().length).toBe(0);
@@ -258,8 +247,6 @@ describe('SearchSelect', () => {
       expect(host.control.value?.code).toBe('SKU-88213');
     });
   });
-
-  // --------------------------------------------------- RFE-02, the contract
 
   describe('RFE-02 — the data contract', () => {
     it('PACQ-02.1: total null with hasMore true works, and offers more', async () => {
@@ -314,8 +301,6 @@ describe('SearchSelect', () => {
     });
   });
 
-  // --------------------------------------------------- RFE-03 / RFE-04
-
   describe('RFE-03 and RFE-04 — nothing found, and the service failing', () => {
     it('PACQ-03.1: no results repeats the text searched, and keeps the value', async () => {
       await type('ZZZ');
@@ -339,8 +324,7 @@ describe('SearchSelect', () => {
       expect(retry).not.toBeNull();
       expect(retry.textContent?.trim()).toBe('Reintentar');
 
-      // In the flow, next to the field -- not inside the overlay, which a Tab
-      // from the field would walk straight past.
+      // En el flujo, no en el overlay, que un Tab desde el campo saltaría.
       expect(fixture.nativeElement.contains(retry)).toBe(true);
       expect(retry.tabIndex).toBe(0);
     });
@@ -372,8 +356,6 @@ describe('SearchSelect', () => {
       expect(field().value).toBe('SKU');
     });
   });
-
-  // --------------------------------------------------- RFE-05, paging
 
   describe('RFE-05 — more results', () => {
     it('PACQ-04.1: the next page is APPENDED, not a replacement', async () => {
@@ -429,10 +411,8 @@ describe('SearchSelect', () => {
     });
   });
 
-  // --------------------------------------------------- RFE-06, scanning
-
   describe('RFE-06 — a scanned code', () => {
-    /** A gun: every keystroke under the threshold, ending in Enter. */
+    /** Una pistola: todas las teclas bajo el umbral, y Enter. */
     async function scan(code: string): Promise<void> {
       await type(code, 5);
       await press('Enter');
@@ -451,7 +431,6 @@ describe('SearchSelect', () => {
 
     it('searches immediately, without waiting out the input delay', async () => {
       await scan('SKU-90001');
-      // No timer advanced between the burst and the query.
       expect(source.calls.length).toBe(1);
       expect(source.calls[0]).toEqual({ query: 'SKU-90001', page: 0 });
     });
@@ -478,8 +457,7 @@ describe('SearchSelect', () => {
       await type('SKU-90001', 150);
       await press('Enter');
 
-      // Nothing was searched immediately: the query is still waiting out the
-      // delay, exactly as it would for any other typing.
+      // No buscó al instante: espera el retardo como cualquier tipeo.
       expect(source.calls.length).toBe(0);
       await waitForDelay();
       expect(source.calls.length).toBe(1);
@@ -504,8 +482,7 @@ describe('SearchSelect', () => {
       source.resolve(CATALOGUE, { hasMore: true });
       await settle();
 
-      // Four navigation keys, back to back, with no time between them -- which
-      // is what holding the down arrow does. Then Enter.
+      // Cuatro teclas de navegación sin pausa, como mantener la flecha abajo.
       await press('ArrowDown');
       await press('ArrowDown');
       await press('Escape');
@@ -513,7 +490,7 @@ describe('SearchSelect', () => {
       await press('ArrowDown');
       await press('Enter');
 
-      // It chose the active row. It did NOT fire a scan search.
+      // Eligió la fila activa; no disparó una búsqueda de escaneo.
       expect(host.control.value).toEqual(CATALOGUE[0]);
       expect(source.calls.length).toBe(1);
     });
@@ -524,8 +501,6 @@ describe('SearchSelect', () => {
       expect(source.calls.length).toBe(0);
     });
   });
-
-  // --------------------------------------------------- RFE-07 / RFE-08
 
   describe('RFE-07 and RFE-08 — the form and the keyboard', () => {
     it('PACQ-06.1: the value is the RECORD, not the text', async () => {
@@ -589,7 +564,6 @@ describe('SearchSelect', () => {
     it('is a combobox that says whether its list is open, and what is active', async () => {
       expect(field().getAttribute('role')).toBe('combobox');
       expect(field().getAttribute('aria-expanded')).toBe('false');
-      // aria-controls points at nothing while the panel is not in the document.
       expect(field().getAttribute('aria-controls')).toBeNull();
 
       await type('SKU');
@@ -622,10 +596,8 @@ describe('SearchSelect', () => {
       field().dispatchEvent(new Event('input'));
       await settle();
 
-      // The DOM method, not a synthesised event: gate 10 reads every string
-      // literal in a .ts file as a possible class name, and the name of that
-      // event is also a stock Tailwind utility. Same trap the Checkbox spec
-      // documents, same way out -- and it is closer to what a browser does.
+      // Método del DOM y no un evento sintético: la compuerta 10 toma toda cadena
+      // como clase, y el nombre de ese evento es una utilidad de Tailwind.
       field().focus();
       field().blur();
       await settle();
@@ -658,22 +630,11 @@ describe('SearchSelect', () => {
       await settle();
       expect(rows().length).toBe(4);
 
-      // axe schedules its own work, so the real clock goes back only now --
-      // after the page is in the state being checked.
+      // axe agenda su propio trabajo: el reloj real vuelve recién ahora.
       vi.useRealTimers();
 
-      /*
-       * THE FIELD AND THE PANEL ARE CHECKED SEPARATELY, and not as one run
-       * over <body>, because the panel lives in the CDK's overlay container at
-       * the end of the document -- outside this fixture.
-       *
-       * Passing <body> would also turn on axe's page-level rules, and one of
-       * them ("all page content should be contained by landmarks") is a fact
-       * about a PAGE. A test fixture is not a page: it has no header, no main
-       * and no nav, and it should not: the landmarks belong to the showroom
-       * page and to the shell, where e2e/showroom.e2e.ts checks them on the
-       * real document.
-       */
+      // Campo y panel por separado: el panel vive en el overlay, fuera del fixture. Sobre
+      // <body> correrían las reglas de landmarks, que son de página y valida e2e/showroom.e2e.ts.
       await expectNoAxeViolations(fixture.nativeElement);
       await expectNoAxeViolations(document.querySelector('.cdk-overlay-container')!);
     });

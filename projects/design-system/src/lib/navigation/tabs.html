@@ -1,8 +1,4 @@
-<!--
-  UNA TIRA, DOS PIELES. El ARIA es idéntico en los dos modos porque el control es
-  idéntico: un `tablist` cuyos `tab` dicen cuál está elegido. Lo que cambia es la
-  pintura, y la pintura es una clase.
--->
+<!-- Mismo ARIA en los dos modos; solo cambia la clase de pintura. -->
 <div
   class="flex min-w-0 items-end gap-1"
   [class.border-b]="!isDocument()"
@@ -26,17 +22,7 @@
     [attr.aria-label]="label()"
   >
     @for (tab of tabs(); track tab.id) {
-      <!--
-  LA PESTAÑA ES HIJA DIRECTA DEL TABLIST, SIN NADA EN MEDIO. Un `tablist` solo
-  puede tener `tab`. El primer intento puso la pestaña y un `ewms-icon-button` de
-  verdad dentro de una caja `role="presentation"`: se lee bien y es una violación
-  crítica de axe, que atraviesa la caja y encuentra un `button` donde solo cabe un
-  `tab`.
-  Así que el cierre es la respuesta de las APG para pestañas borrables: un glifo NO
-  enfocable para el ratón y `Delete` para el teclado, anunciado con
-  `aria-keyshortcuts` para que se descubra. Lo que no hay es un segundo tab stop
-  por pestaña, y en una tira de doce documentos eso se gana.
--->
+      <!-- Tab hijo directo del tablist (axe: aria-required-children). Cierre con glifo no enfocable y `Delete`. Ver vault: Navegacion. -->
       <button
         type="button"
         role="tab"
@@ -61,12 +47,7 @@
         <span class="max-w-60 truncate">{{ tab.label }}</span>
 
         @if (isClosable(tab)) {
-          <!--
-  `aria-hidden`, y no esconde nada de nadie: esconde un DUPLICADO de una acción que
-  el teclado ya tiene por `Delete`, y que un lector anunciaría como parte del
-  nombre de la pestaña («Artículos Cerrar Artículos»).
-  `stopPropagation` porque está dentro de la pestaña: sin él, cerrar seleccionaría.
--->
+          <!-- `aria-hidden`: duplica `Delete` y se leería dentro del nombre de la pestaña. -->
           <span
             class="flex items-center rounded-sm p-1 hover:bg-secondary-hover"
             [attr.data-tab-close]="tab.id"

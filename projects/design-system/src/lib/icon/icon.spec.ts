@@ -34,8 +34,7 @@ describe('Icon', () => {
       const { svg } = await render({ name: 'package' });
 
       const paths = [...svg.querySelectorAll('path')];
-      // Literal Tabler geometry, not read back from the generated table: the
-      // test must fail if the generator mangles the data.
+      // Geometría de Tabler literal, no leída de la tabla generada: falla si el generador la rompe.
       expect(paths.map((path) => path.getAttribute('d'))).toEqual([
         'M12 3l8 4.5l0 9l-8 4.5l-8 -4.5l0 -9l8 -4.5',
         'M12 12l8 -4.5',
@@ -132,11 +131,8 @@ describe('Icon', () => {
       expect([...svg.classList].sort()).toEqual(['block', 'size-icon-md', 'stroke-icon-md']);
     });
 
-    // The class pair is what reaches the stylesheet: size-icon-* maps to
-    // --size-icon-* (width and height) and stroke-icon-* to --stroke-icon-*
-    // (stroke-width) in styles.css. jsdom has no Tailwind, so the computed
-    // 16/2.25, 18/2, 20/2, 24/1.75 values are asserted in the browser by
-    // e2e/iconography.e2e.ts.
+    // jsdom no tiene Tailwind: los valores calculados (16/2.25, 18/2, 20/2, 24/1.75) los
+    // afirma e2e/iconography.e2e.ts en el navegador.
     it.each<IconSize>(['sm', 'md', 'lg', 'xl'])(
       'applies the width and stroke-width pair for %s',
       async (size) => {

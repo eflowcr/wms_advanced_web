@@ -4,7 +4,7 @@ import { expectNoAxeViolations } from '@ewms/testing';
 import { NavBottom } from './nav-bottom';
 import type { NavItem } from './navigation.types';
 
-/** The real shape of the menu: four at the first level, twelve at the second. */
+/** La forma real del menú: cuatro en primer nivel, doce en segundo. */
 const TREE: readonly NavItem[] = [
   { id: 'dashboard', label: 'Dashboard', icon: 'dashboard', route: '/' },
   {
@@ -64,14 +64,8 @@ describe('NavBottom', () => {
     fixture.nativeElement.remove();
   });
 
-  /**
-   * The sheet is drawn, and THEN the focus trap runs.
-   *
-   * `afterNextRender` needs a render to have happened, and the CDK's
-   * `focusFirstTabbableElementWhenReady` waits a macrotask of its own before
-   * it moves anything. Draining both here is what lets the tests below talk
-   * about the panel instead of about Angular's schedule.
-   */
+  // Dibuja la hoja y después corre la trampa: `afterNextRender` más la macrotarea propia de
+  // `focusFirstTabbableElementWhenReady`.
   async function settle(): Promise<void> {
     fixture.detectChanges();
     await fixture.whenStable();
@@ -134,9 +128,8 @@ describe('NavBottom', () => {
     });
 
     it('THE COST OF THE BOTTOM BAR, ASSERTED: a second-level screen takes TWO taps', async () => {
-      // On the rail «Artículos» is one click. Here it is «Más» and then the
-      // entry. The user chose the bottom bar (2026-09-19) and this is the
-      // price, written as a test so it cannot be forgotten.
+      // En el rail «Artículos» es un clic; acá «Más» y la entrada. Es el precio de la barra
+      // inferior (decisión del usuario, 2026-09-19), escrito como prueba.
       const articles = fixture.nativeElement.querySelector(
         '[data-nav-sheet-item="articles"]',
       ) as HTMLElement;
@@ -160,28 +153,14 @@ describe('NavBottom', () => {
     });
 
     it('a GROUP heading in the sheet is not a control: it opens nothing', () => {
-      // Every group is already expanded here, so a group that could be pressed
-      // would be a control with nothing to do.
+      // Todo grupo ya está expandido: un grupo pulsable no tendría nada que hacer.
       expect(fixture.nativeElement.querySelector('[data-nav-sheet-item="catalogs"]')).toBeNull();
     });
 
     it('IS TRAPPED, and the trap really was built around THIS element', () => {
-      /*
-       * The defect: the first version built the trap in a microtask, before
-       * `@if` had drawn the sheet. `viewChild` was undefined, no trap was ever
-       * created, and the focus simply stayed on «Más». Nothing failed -- the
-       * panel was still usable, because Escape is answered on the host -- which
-       * is what made it worth a test rather than a quiet fix. Found by opening
-       * it at 375 px and asking where the focus was.
-       *
-       * WHAT IS ASSERTED IS THE CDK'S ANCHORS, not `document.activeElement`.
-       * `FocusTrapFactory.create` inserts one anchor before and one after the
-       * element it guards, and they are the trap: with them the focus cannot
-       * leave, without them there is no trap. Where the focus actually LANDS
-       * goes through `focusFirstTabbableElementWhenReady`, which asks the
-       * browser about visibility -- a question jsdom answers by guessing. That
-       * half is asserted in a real browser, in `e2e/smoke.e2e.ts`.
-       */
+      // La primera versión armaba la trampa en un microtask, antes del `@if`: no había trampa.
+      // Se afirman las anclas del CDK, no `document.activeElement` (jsdom adivina visibilidad);
+      // dónde cae el foco lo prueba `e2e/smoke.e2e.ts`.
       const anchors = sheet()?.parentElement?.querySelectorAll('.cdk-focus-trap-anchor');
 
       expect(anchors?.length).toBe(2);
@@ -194,8 +173,7 @@ describe('NavBottom', () => {
       await settle();
 
       expect(sheet()).toBeNull();
-      // A panel that drops the focus on the body makes somebody tab through
-      // the whole page to get back to where they were.
+      // Soltar el foco en el body obliga a tabular toda la página para volver.
       expect(document.activeElement).toBe(more());
     });
 

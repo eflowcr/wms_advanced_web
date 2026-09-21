@@ -77,7 +77,7 @@ describe('IconButton', () => {
   describe('Accessible name', () => {
     it('names the button with label, not with the icon', () => {
       expect(button().getAttribute('aria-label')).toBe('Eliminar');
-      // The icon is decoration: the name comes from the label.
+      // El icono es decoración: el nombre sale de `label`.
       const icon = fixture.debugElement.query(By.directive(Icon));
       expect((icon.nativeElement as Element).querySelector('svg')?.getAttribute('aria-hidden')).toBe(
         'true',
@@ -91,7 +91,7 @@ describe('IconButton', () => {
       fixture.detectChanges();
       await fixture.whenStable();
 
-      // The jsdom equivalent of getByRole('button', { name: 'Eliminar' }).
+      // Como getByRole con nombre, en jsdom.
       const root = fixture.nativeElement as Element;
       const found = Array.from(root.querySelectorAll('button')).filter(
         (element) => element.getAttribute('aria-label') === 'Eliminar',
@@ -113,25 +113,22 @@ describe('IconButton', () => {
 
   describe('Defaults', () => {
     it('defaults to the ghost variant, the lowest emphasis', async () => {
-      // A default of `primary` would fill every table row with blue boxes.
+      // Con `primary` por defecto, cada fila de tabla se llenaría de cajas azules.
       const classes = button().classList;
       expect(classes.contains('hover:bg-ghost-hover')).toBe(true);
       expect(classes.contains('bg-primary')).toBe(false);
     });
 
     it('defaults to the md square box', () => {
-      // Angular renders the class list sorted, so each utility is checked on
-      // its own rather than as a contiguous string.
+      // Angular ordena las clases: se comprueba cada utilidad por separado.
       expect(button().classList.contains('h-10')).toBe(true);
       expect(button().classList.contains('w-10')).toBe(true);
     });
   });
 
   describe('Sizing', () => {
-    // The box classes are square by construction: one utility sets both
-    // dimensions from the same scale step. jsdom does no layout, so the
-    // RENDERED box cannot be measured here -- see the note in the PR report;
-    // that criterion is covered by nothing in this PR.
+    // Cuadrada por construcción (mismo paso de escala en ambos ejes). jsdom no hace layout:
+    // la caja pintada no la cubre ninguna prueba.
     const boxes: readonly (readonly [ButtonSize, string, string])[] = [
       ['sm', 'h-8', 'w-8'],
       ['md', 'h-10', 'w-10'],
@@ -145,7 +142,6 @@ describe('IconButton', () => {
         fixture.detectChanges();
         await fixture.whenStable();
 
-        // Same scale step on both axes is what makes the box square.
         expect(button().classList.contains(height)).toBe(true);
         expect(button().classList.contains(width)).toBe(true);
         expect(height.replace('h-', '')).toBe(width.replace('w-', ''));
@@ -156,8 +152,7 @@ describe('IconButton', () => {
       const iconSizes: readonly (readonly [ButtonSize, string])[] = [
         ['sm', 'sm'],
         ['md', 'md'],
-        // Deliberately md and not a larger one: two icons of different sizes
-        // side by side in a toolbar read as a mistake.
+        // md a propósito: dos tamaños de icono en una barra se leen como un error.
         ['lg', 'md'],
       ];
 
@@ -180,7 +175,7 @@ describe('IconButton', () => {
 
       expect(button().getAttribute('aria-busy')).toBe('true');
       expect(button().getAttribute('aria-disabled')).toBe('true');
-      // No native `disabled`, so the button keeps the focus while it loads.
+      // Sin `disabled` nativo: conserva el foco mientras carga.
       expect(button().hasAttribute('disabled')).toBe(false);
       expect(button().getAttribute('aria-label')).toBe('Eliminar');
     });
@@ -297,8 +292,7 @@ describe('IconButton', () => {
       button().dispatchEvent(new FocusEvent('focusin', { bubbles: true }));
       fixture.detectChanges();
 
-      // aria-label already says "Eliminar". Connecting the panel with
-      // aria-describedby would announce it a second time.
+      // aria-label ya dice «Eliminar»; atar el panel lo anunciaría dos veces.
       expect(tooltipPanel()?.getAttribute('aria-hidden')).toBe('true');
       expect(button().hasAttribute('aria-describedby')).toBe(false);
     });

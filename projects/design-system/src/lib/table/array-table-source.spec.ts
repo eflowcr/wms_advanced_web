@@ -36,8 +36,7 @@ describe('ArrayTableSource', () => {
 
     const second = await firstValueFrom(source.load(query({ pageSize: 2, page: 1 })));
     expect(second.rows.map((row) => row.codigo)).toEqual(['EXP-0003', 'EXP-0004']);
-    // The total is of the MATCH, not of the page: without it a paginator
-    // cannot know there is a second page.
+    // El total es de lo que coincide, no de la página: si no, no hay segunda página.
     expect(second.total).toBe(4);
   });
 
@@ -60,13 +59,7 @@ describe('ArrayTableSource', () => {
   });
 });
 
-/**
- * The three filter shapes.
- *
- * They are tested through `matchesFilter` rather than through a source,
- * because what is being pinned down is THE CONTRACT -- the same three shapes
- * the backend will be asked to honour.
- */
+// Las tres formas de filtro vía `matchesFilter`: se fija el contrato que honrará el backend.
 describe('matchesFilter', () => {
   describe('text', () => {
     it('matches a substring, ignoring case', () => {
@@ -92,17 +85,14 @@ describe('matchesFilter', () => {
     });
 
     it('A MISSING BOUND IS UNBOUNDED, NOT ZERO', () => {
-      // "Up to 50" is a max with no min. Reading the empty box as 0 would
-      // silently drop every row below it -- including the negative ones, which
-      // is how an adjustment column starts lying.
+      // «Hasta 50» es máximo sin mínimo: leer la caja vacía como 0 tiraría los negativos.
       expect(matchesFilter(-40, { max: 50 })).toBe(true);
       expect(matchesFilter(0, { max: 50 })).toBe(true);
       expect(matchesFilter(9000, { min: 50 })).toBe(true);
     });
 
     it('excludes a row whose value is not a number at all', () => {
-      // Keeping it would make "between 100 and 900" quietly include the rows
-      // with no value.
+      // Si no, «entre 100 y 900» incluiría las filas sin valor.
       expect(matchesFilter('sin dato', { min: 100 })).toBe(false);
       expect(matchesFilter(null, { min: 100 })).toBe(false);
     });
@@ -135,11 +125,7 @@ describe('sortRows', () => {
   });
 
   it('SORTS NUMBERS NUMERICALLY, not as the text somebody would see', () => {
-    /*
-     * This is the test the formatters exist for. A source that sorted by the
-     * formatted string would put `1.200` before `900`, and nobody reports that
-     * as a bug -- they just stop trusting the column.
-     */
+    // Ordenar por el texto formateado pondría «1.200» antes de «900».
     const sorted = sortRows(ROWS, query({ sort: { key: 'bultos', direction: 'asc' } }));
     expect(sorted.map((row) => row.bultos)).toEqual([0, 40, 900, 1200]);
   });
@@ -151,12 +137,7 @@ describe('sortRows', () => {
 
   it('sorts text by collation, so an accent is not a different letter', () => {
     const sorted = sortRows(ROWS, query({ sort: { key: 'cliente', direction: 'asc' } }));
-    /*
-     * `localeCompare` reads "Ñandú" as an N with a mark on it and compares the
-     * base letters first, so it lands between "Andes" and "Norte". A codepoint
-     * comparison would put it after "Valle" -- after Z, in fact -- which is
-     * the kind of ordering that makes somebody conclude the column is broken.
-     */
+    // `localeCompare` pone «Ñandú» entre «Andes» y «Norte»; por punto de código iría tras la Z.
     expect(sorted.map((row) => row.cliente)).toEqual(['Andes', 'Ñandú', 'Norte', 'Valle']);
   });
 
@@ -171,8 +152,7 @@ describe('sortRows', () => {
     expect(ascending.map((row) => row.codigo)).toEqual(['c', 'a', 'b']);
 
     const descending = sortRows(withGaps, query({ sort: { key: 'cliente', direction: 'desc' } }));
-    // Still last. Sorting the blanks to the top on the descending pass would
-    // make the first screenful of a descending sort a screenful of nothing.
+    // Siguen al final: descendente no puede abrir con una pantalla de blancos.
     expect(descending.map((row) => row.codigo)).toEqual(['a', 'c', 'b']);
   });
 

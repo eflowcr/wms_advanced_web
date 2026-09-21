@@ -1,39 +1,19 @@
 /*
- * TOKENS DEL DESIGN SYSTEM — FUENTE DE VERDAD (ADR 0005).
- *
- * Se edita a mano y se revisa en un PR como cualquier código: no lo genera nada
- * y no hay tokens.json ni Style Dictionary. Ningún valor de color, espaciado,
- * radio, sombra o tipografía puede escribirse dentro de un componente; si falta
- * un token se agrega acá primero. Figma es referencia archivada: si no coincide
- * con este archivo, gana este archivo.
- *
- * Se importa desde el mismo archivo que hace @import 'tailwindcss': Tailwind v4
- * solo convierte un bloque @theme en utilidades si lo resuelve en esa hoja.
+ * Tokens del design system: fuente de verdad, editada a mano (ADR 0005). Ningún valor visual
+ * vive en un componente. Se importa junto a tailwindcss: v4 solo lee el @theme de esa hoja.
  */
 
 /*
- * Un solo :root y un solo tema claro (ADR 0007).
- * Capa 1, PRIMITIVOS: los valores crudos. Es el único lugar del repositorio donde
- * un hex, un rgb() o un px son legítimos, y ningún componente los consume.
- * Capa 2, SEMÁNTICOS: nombrados por su rol, aliasando primitivos. Re-marcar es
- * cambiar a qué primitivo apunta un semántico, sin tocar componentes.
- * La compuerta trata como primitivo a todo token cuyo valor no lleva var(), y
- * falla si alguno se referencia fuera de acá.
- * Valores: 08-Sistema-de-Diseno/Fundamentos de Marca y Escalas.
+ * Un :root, un tema claro (ADR 0007). Capa 1: primitivos, único lugar con hex/px (sin var();
+ * la compuerta falla si se usan fuera de acá). Capa 2: semánticos que los alias.
+ * Ver vault: Fundamentos de Marca, Escalas.
  */
 
 :root {
-  /* ======================================================================
-   * CAPA 1 — PRIMITIVOS
-   * ====================================================================== */
+  /* ===== Capa 1 — primitivos ===== */
 
-  /*
-   * Color: <familia>-<tono>. El tono es la luminosidad CIE L* del hex redondeada
-   * (0 negro, 100 blanco), como Material 3: sale del valor, así que el contraste
-   * se lee de un vistazo.
-   */
+  /* Color <familia>-<tono>: el tono es la luminosidad CIE L* redondeada (0 negro, 100 blanco). */
 
-  /* navy — la marca y los neutros tenidos con ella */
   --navy-7: #010f42;
   --navy-28: #343f68;
   --navy-46: #646b87;
@@ -48,23 +28,19 @@
   --navy-97: #f6f7f8;
   --navy-100: #ffffff;
 
-  /* Translúcidos: <matiz>-a<alfa>. UN ALFA DE UN PRIMITIVO QUE YA EXISTE SE
-   * AGREGA LIBREMENTE; UN MATIZ NUEVO NO, es decisión de marca y se reporta
-   * (decisión del usuario, 2026-09-19; regla en Fundamentos de Marca). */
+  /* Translúcidos <matiz>-a<alfa>: un alfa nuevo se agrega libre; un matiz nuevo es decisión
+   * de marca (decisión del usuario, 2026-09-19). */
 
-  /* navy translucido — sombras y overlay. Navy, no negro: tine con la marca */
   --navy-7-a06: rgb(1 15 66 / 0.06);
   --navy-7-a08: rgb(1 15 66 / 0.08);
   --navy-7-a10: rgb(1 15 66 / 0.1);
   --navy-7-a50: rgb(1 15 66 / 0.5);
 
-  /* El halo del Dialog, al 35 % del `-solid` de cada familia (ficha Modal v1.1).
-   * No hay `info`: lo informativo es neutral, así que su halo es el del navy. */
+  /* Halo del Dialog: 35 % del `-solid` de cada familia (ficha Modal v1.1). Info usa el navy. */
   --red-48-a35: rgb(217 45 32 / 0.35);
   --orange-49-a35: rgb(189 89 3 / 0.35);
   --navy-52-a35: rgb(115 123 151 / 0.35);
 
-  /* blue — el azul de marca y sus derivados */
   --blue-35: #3149aa;
   --blue-41: #3a56c9;
   --blue-48: #4465ec;
@@ -73,7 +49,6 @@
   --blue-93: #e5e9fc;
   --blue-96: #f0f3fd;
 
-  /* red */
   --red-34: #9c2017;
   --red-41: #b8261b;
   --red-48: #d92d20;
@@ -81,19 +56,16 @@
   --red-91: #f9e0de;
   --red-95: #fceeed;
 
-  /* orange */
   --orange-42: #a14c03;
   --orange-49: #bd5903;
   --orange-80: #e6c09f;
   --orange-96: #faf2eb;
 
-  /* green */
   --green-42: #037341;
   --green-49: #03874c;
   --green-80: #9fd1bb;
   --green-96: #ebf5f1;
 
-  /* Longitudes: size-<px> */
   --size-1-5: 1.5px;
   --size-4: 4px;
   --size-6: 6px;
@@ -110,101 +82,76 @@
   --size-40: 40px;
   --size-48: 48px;
   --size-56: 56px;
-  /* Geometría del App Shell (DS-5): 64 el header y la barra inferior, 72 el rail
-   * plegado, 232 el panel. Salen de la hoja de Figma y no de la escala de
-   * controles, porque miden un marco y no un control. */
+  /* App Shell (DS-5): miden un marco, no un control. */
   --size-64: 64px;
   --size-72: 72px;
   --size-232: 232px;
-  /* El unico ancho de viewport del sistema. Ver --breakpoint-nav-bottom. */
   --size-768: 768px;
-  /* Anchos de columna de la Tabla. Más grandes que el resto de la escala porque
-   * miden una columna, no un control (DS-3 lote C). */
+  /* Anchos de columna de la Tabla (DS-3 lote C). */
   --size-96: 96px;
   --size-160: 160px;
   --size-240: 240px;
   --size-pill: 9999px;
 
-  /* Pesos. Montserrat es variable 100–900: el @font-face declara el rango */
+  /* Montserrat es variable 100–900. */
   --weight-regular: 400;
   --weight-medium: 500;
   --weight-semibold: 600;
   --weight-bold: 700;
 
-  /* Interlineados */
   --ratio-1-2: 1.2;
   --ratio-1-25: 1.25;
   --ratio-1-3: 1.3;
   --ratio-1-5: 1.5;
 
-  /* Grosores de trazo SVG, en unidades del viewBox (sin unidad CSS) */
+  /* Trazo SVG en unidades del viewBox, sin unidad CSS. */
   --stroke-1-75: 1.75;
   --stroke-2: 2;
   --stroke-2-25: 2.25;
 
-  /* Desenfoque. Un solo valor, el del backdrop del Dialog (DS-3, lote B). */
   --blur-8: 8px;
 
-  /* Duraciones: ms-<milisegundos>. Un tiempo es un valor de diseño como un color:
-   * cuánto dura un mensaje se decide una vez y en un solo lugar. */
   --ms-50: 50ms;
   --ms-300: 300ms;
   --ms-3000: 3000ms;
   --ms-5000: 5000ms;
 
-  /* Familias tipograficas. 'Montserrat' es la cara auto-hospedada en
-   * projects/shell/public/fonts (ver @font-face en styles.css). */
+  /* 'Montserrat' se auto-hospeda en projects/shell/public/fonts (@font-face en styles.css). */
   --typeface-montserrat: 'Montserrat', ui-sans-serif, system-ui, sans-serif;
-  /* JetBrains Mono entra con su primer consumidor (la Tabla). */
   --typeface-system-mono: ui-monospace, SFMono-Regular, monospace;
 
-  /* ======================================================================
-   * CAPA 2 — SEMANTICOS
-   * ====================================================================== */
+  /* ===== Capa 2 — semánticos ===== */
 
-  /* ---------------------------------------------------------------- marca */
   --color-brand-navy: var(--navy-7);
-  /* El azul significa «se hace clic»: solo acción, nunca informativo ni de estado.
-   * SIN UTILIDAD EN EL TEMA A PROPÓSITO — no borrar por parecer muerto. Su único
-   * uso previsto (iconos de KPI) choca con esa regla y está diferido. */
+  /* El azul es solo acción. Sin utilidad en el tema a propósito: no borrar por parecer
+   * muerto (su uso previsto, iconos de KPI, está diferido). */
   --color-brand-blue: var(--blue-48);
 
-  /* ---------------------------------------------------- texto y superficies */
   --color-text-primary: var(--navy-7);
   --color-text-secondary: var(--navy-46);
   --color-text-disabled: var(--navy-79);
-  /* Texto e iconos sobre superficies navy (barra superior, rail). 17.05:1 contra
-   * navy. Vale lo mismo que el canvas y significa otra cosa; no colapsar en
-   * --navy-97, que es un primitivo y la compuerta 10 lo rechaza fuera de acá. */
+  /* Sobre navy (17.05:1). Mismo valor que el canvas, otro significado: no colapsar. */
   --color-text-on-dark: var(--navy-97);
 
-  /* Divisores decorativos UNICAMENTE (1.15:1). Nunca el borde de un control. */
+  /* Solo divisores decorativos (1.15:1), nunca el borde de un control. */
   --color-border: var(--navy-92);
-  /* Bordes que definen un control (3.16:1, WCAG 1.4.11). */
+  /* Borde de control (3.16:1, WCAG 1.4.11). */
   --color-border-strong: var(--navy-57);
-  /* Hover de un borde de control (track apagado del Toggle). Derivado de
-   * border-strong con la regla de hover (15 % negro): 4.71:1 sobre surface,
-   * 4.39:1 sobre canvas, 4.17:1 sobre bg-secondary. Reemplaza al #aeb2c1 de
-   * Figma, que derivaba del border-strong viejo y daba 2.11:1 sobre blanco. */
+  /* Hover de borde de control: border-strong + 15 % negro. Ver vault: Fundamentos de Marca. */
   --color-border-strong-hover: var(--navy-49);
 
   --color-canvas: var(--navy-97);
-  /* Lo que se apoya sobre el canvas: campo, panel, Card, Modal. Blanco, un paso
-   * más claro que el canvas (1.07:1: la separación la dan borde y sombra). Sobre
-   * blanco, texto primario 18.29:1, secundario 5.26:1, border-strong 3.56:1. */
+  /* Campo, panel, Card, Modal: 1.07:1 contra el canvas, separan borde y sombra. */
   --color-surface: var(--navy-100);
   --color-bg-secondary: var(--navy-95);
   --color-bg-secondary-hover: var(--navy-91);
 
-  /* --------------------------------------------------------------- accion */
   --color-bg-primary: var(--blue-48);
   --color-bg-primary-hover: var(--blue-41);
   --color-bg-primary-active: var(--blue-35);
   --color-bg-primary-disabled: var(--blue-90);
   --color-ghost-hover: var(--blue-96);
-  /* Texto e iconos sobre el azul de acción y sobre el botón de peligro. Blanco:
-   * 4.86:1 sobre bg-primary y 4.83:1 sobre bg-danger. No es --color-text-on-dark,
-   * que vale navy-97 y sobre bg-danger queda en 4.50:1, sin margen. */
+  /* Blanco: 4.86:1 sobre bg-primary, 4.83:1 sobre bg-danger (text-on-dark daría 4.50:1). */
   --color-text-on-primary: var(--navy-100);
 
   --color-bg-danger: var(--red-48);
@@ -212,11 +159,8 @@
   --color-bg-danger-active: var(--red-34);
   --color-bg-danger-disabled: var(--red-91);
 
-  /* Familias semánticas: cuatro tokens por familia (fondo, borde, icono, texto).
-   * No existe familia info: lo informativo usa neutral. Badge/Neutral usa surface
-   * + text y no solid + blanco (4.19:1).
-   * --color-danger-solid NO duplica a --color-bg-danger aunque hoy valgan igual:
-   * aquel es la severidad, este el fondo del botón de peligro. */
+  /* Familias: fondo, borde, icono, texto. Sin familia info (usa neutral). danger-solid no
+   * duplica a bg-danger: severidad contra botón. Ver vault: Fundamentos de Marca. */
   --color-danger-solid: var(--red-48);
   --color-danger-surface: var(--red-95);
   --color-danger-border: var(--red-77);
@@ -237,194 +181,136 @@
   --color-neutral-border: var(--navy-81);
   --color-neutral-text: var(--navy-28);
 
-  /* --------------------------------------------------- estados y superficies */
   --color-focus-ring: var(--blue-48);
-  /* Sobre el rail navy: el azul de marca queda en 3.76:1, este en 6.37:1. */
+  /* Sobre el rail navy: 6.37:1 (el azul de marca da 3.76:1). */
   --color-focus-ring-on-dark: var(--blue-63);
-  /* Anillo de foco de 3px con separacion de 2px respecto del control */
+  /* Anillo de 3px separado 2px del control. */
   --focus-ring-shadow: 0 0 0 2px var(--color-surface), 0 0 0 5px var(--color-focus-ring);
-  /* Siempre acompañado de una barra de acento: el tinte solo es frágil.
-   *
-   * blue-96 desde DS-4 (decisión del equipo, 19/09). Era blue-93, donde
-   * text-secondary quedaba en 4.35:1 y no llegaba al 4.5:1 de WCAG 1.4.3 -lo
-   * encontró axe sobre la ficha de la Card-. Sobre blue-96: primario 16.50:1,
-   * secundario 4.74:1.
-   * LO QUE NINGÚN PELDAÑO ARREGLA: texto en --color-bg-primary sobre la fila
-   * queda en 4.39:1. blue-48 sobre blanco puro mide 4.86:1, así que llegar a
-   * 4.5:1 pediría un fondo de luminancia >= 0.9217, y ahí la fila contrasta
-   * 1.08:1 contra la superficie: invisible. El azul es relleno, no texto.
-   * Coincide con --color-ghost-hover a sabiendas: la separación contra surface
-   * baja de 1.21:1 a 1.11:1, y la selección nunca fue solo color. */
+  /* Siempre con barra de acento. blue-96 desde DS-4 (blue-93 dejaba el secundario en 4.35:1).
+   * Texto azul sobre la fila nunca llega a 4.5:1. Ver vault: Fundamentos de Marca. */
   --color-row-selected: var(--blue-96);
   --color-overlay: var(--navy-7-a50);
 
-  /* ------------------------------------------------------------- elevacion
-   * sm: card en reposo · md: dropdown, popover, Select abierto · lg: modal.
-   * Sin nivel superior. */
+  /* Elevación: sm card, md dropdown/popover/Select, lg modal. Sin nivel superior. */
   --shadow-sm: 0 1px 2px var(--navy-7-a06);
   --shadow-md: 0 4px 8px var(--navy-7-a08), 0 1px 2px var(--navy-7-a06);
   --shadow-lg: 0 12px 24px var(--navy-7-a10), 0 2px 4px var(--navy-7-a06);
 
-  /* El Modal es el único componente con geometría y elevación propias, y los tres
-   * tokens son ALIAS de cosas que ya existen. `--shadow-dialog` no es
-   * `--shadow-lg` con otro nombre: la escala de elevación termina en el modal y
-   * este es el único nivel que pide una tercera capa y más difusión. */
+  /* Modal: único con geometría y elevación propias. `--shadow-dialog` es el único nivel
+   * con tercera capa. Ver vault: Modal. */
   --radius-dialog: var(--size-20);
   --shadow-dialog:
     0 24px 48px var(--navy-7-a10), 0 8px 16px var(--navy-7-a08), 0 2px 4px var(--navy-7-a06);
   --backdrop-blur: var(--blur-8);
 
-  /* El halo de la zona de icono del Dialog, por tono: 0 0 48 6 al 35 % del
-   * `-solid` de la familia, que es lo que fija la ficha del Modal desde su v1.1.
-   * No hay halo `info` porque no hay familia info. */
+  /* Halo de la zona de icono: 0 0 48 6 al 35 % del `-solid` (ficha Modal v1.1). */
   --shadow-halo-danger: 0 0 var(--size-48) var(--size-6) var(--red-48-a35);
   --shadow-halo-warning: 0 0 var(--size-48) var(--size-6) var(--orange-49-a35);
   --shadow-halo-neutral: 0 0 var(--size-48) var(--size-6) var(--navy-52-a35);
 
-  /* El circulo de la zona de icono. 56x56, de la ficha (v1.1, 27/08). */
+  /* Círculo de la zona de icono: 56x56 (ficha v1.1). */
   --size-dialog-icon: var(--size-56);
 
-  /* Geometría del marco (DS-5). SON TOKENS Y NO NÚMEROS EN LA PLANTILLA: un
-   * `h-[64px]` es un valor crudo que la compuerta 10 rechaza, y además el día que
-   * el header cambie de alto hay que encontrar todo lo que lo suponía. */
+  /* Marco (DS-5): tokens y no números sueltos, que la compuerta 10 rechaza. */
   --shell-header-height: var(--size-64);
   --nav-rail-width: var(--size-72);
   --nav-panel-width: var(--size-232);
 
-  /* Alto de la barra inferior. El mismo 64 del header, y no por simetría: es lo
-   * que deja un objetivo táctil cómodo sobre el mínimo 24x24 de WCAG 2.5.8 con la
-   * etiqueta debajo del icono. */
+  /* Barra inferior: 64 deja un objetivo táctil holgado sobre el 24x24 de WCAG 2.5.8. */
   --nav-bottom-height: var(--size-64);
 
-  /* EL ÚNICO PUNTO DE CORTE DEL SISTEMA, Y ES UN TOKEN. Bajo 768 px la navegación
-   * deja de ser rail y pasa a barra inferior (decisión del usuario, 2026-09-19).
-   * Vive acá y no como un `md:` porque el @theme borra el tema por defecto,
-   * breakpoints incluidos (ADR 0009): un punto de corte es una decisión de diseño. */
+  /* El único punto de corte: bajo 768 px el rail pasa a barra inferior (decisión del usuario,
+   * 2026-09-19). Es token porque el @theme borra los breakpoints por defecto (ADR 0009). */
   --breakpoint-nav-bottom: var(--size-768);
 
-  /* Alto de una pestaña de documento: la altura de control `md`, para que pestaña
-   * y botón del mismo tamaño midan igual en la misma barra. */
+  /* Igual a la altura de control `md`: pestaña y botón miden lo mismo en la barra. */
   --tab-height: var(--size-40);
 
-  /* Alto de fila por densidad. `--row-height-md` ES EXACTAMENTE la altura del
-   * control `md`, y no por casualidad: una celda tiene que contener un
-   * `ewms-input` sin que la fila crezca, y el E2E lo afirma midiendo los dos. */
+  /* `--row-height-md` es la altura de control `md`: una celda contiene un `ewms-input` sin
+   * crecer (el E2E lo mide). */
   --row-height-md: var(--size-40);
   --row-height-sm: var(--size-32);
 
-  /* Anchos de columna. El consumidor elige un nombre y no escribe CSS: una cadena
-   * de ancho en la plantilla es un valor crudo. `fill` no es un token: es flex 1. */
+  /* `fill` no es token: es flex 1. */
   --col-width-sm: var(--size-96);
   --col-width-md: var(--size-160);
   --col-width-lg: var(--size-240);
 
-  /* Sangría de un nivel del árbol. Token propio y no el `--spacing` de Tailwind:
-   * ese genera las utilidades y no llega al documento como propiedad, así que un
-   * calc() con él dentro de un `style` resolvía a 0 y el árbol salía sin sangrar.
-   * Lo encontró la captura de los hijos perezosos. */
+  /* Token propio: el `--spacing` de Tailwind no llega al documento y un calc() inline daba 0.
+   * Ver vault: Tabla §9. */
   --tree-indent: var(--size-20);
 
-  /* Ancho mínimo de cada caja de un filtro de rango. Una columna `sm` mide 96 px y
-   * dos cajas dentro quedan en unos 34: en la primera captura «Desde» y «Hasta» se
-   * leían «D» y «H». Con un mínimo se apilan en vez de encogerse. */
+  /* Mínimo por caja de rango: en una columna `sm` se apilan en vez de leerse «D» y «H».
+   * Ver vault: Tabla §9. */
   --col-filter-min-width: var(--size-56);
 
-  /* Cuánto vive un toast antes de irse solo: 3000 ms, de la ficha Notificaciones.
-   * ES EL PRIMER TOKEN QUE UN COMPONENTE LEE DESDE TYPESCRIPT, y la consecuencia
-   * es que `ToastService` lo lee con getComputedStyle y no lo copia: sin esta hoja
-   * no inventa un número, deja el toast fijo hasta que alguien lo cierre. */
+  /* 3000 ms (ficha Notificaciones). `ToastService` lo lee de la hoja; sin ella el toast
+   * queda fijo en vez de inventar un número. */
   --duration-toast: var(--ms-3000);
 
-  /* Lo que el selector espera entre la última tecla y la consulta (RFE-01), y
-   * cuánto tolera que tarde la fuente antes de tratarla como error (RFE-02). */
+  /* Espera tras la última tecla (RFE-01) y tolerancia de la fuente antes del error (RFE-02). */
   --delay-search-input: var(--ms-300);
   --timeout-search: var(--ms-5000);
 
-  /* EL UMBRAL DE RÁFAGA DE ESCÁNER. Lo declara REQ-FE-DS4-001 RFE-06, que es el
-   * documento dueño: 50 ms por tecla como valor inicial -un humano muy rápido
-   * sostiene unos 120 ms y un lector industrial ronda 5-20-, y calibrarlo contra
-   * el hardware real es un pendiente de ese requerimiento.
-   * La comanda de DS-3 pedía llamarlo `--scanner-burst-ms`; se conserva este
-   * nombre porque es el que DS-4 ya tiene escrito. Discrepancia reportada. */
+  /* Ráfaga de escáner: 50 ms por tecla (REQ-FE-DS4-001 RFE-06; humano rápido ~120, lector
+   * 5-20). DS-3 pedía `--scanner-burst-ms`; se conserva el nombre de DS-4. */
   --threshold-scan-keystroke: var(--ms-50);
 
-  /* Espaciado base 4px. Tailwind deriva la escala entera de este multiplicador. */
+  /* Base 4px: Tailwind deriva de acá la escala de espaciado. */
   --spacing-base: var(--size-4);
 
-  /* ---------------------------------------------------------------- radios */
   --radius-sm: var(--size-4);
-  /* Boton, Input, Select. El 6px es firma visual del sistema. */
+  /* Botón, Input, Select: el 6px es firma del sistema. */
   --radius-control: var(--size-6);
   --radius-md: var(--size-8);
   --radius-lg: var(--size-12);
   --radius-full: var(--size-pill);
 
-  /* El borde de Checkbox y Radio es 1.5px y no 1px: a 18x18 un borde de 1px se
-   * pierde y a 2px la caja se ve pesada al lado del Input. Es el único grosor del
-   * sistema fuera de la escala entera, así que necesita token propio. */
+  /* 1.5px: a 18x18 1px se pierde y 2px pesa junto al Input. Único grosor fuera de la escala. */
   --border-width-selection: var(--size-1-5);
 
-  /* ------------------------------------------------------------ tipografia */
   --font-family-sans: var(--typeface-montserrat);
   --font-family-mono: var(--typeface-system-mono);
 
-  /* Text/H1 — titulo de pagina */
   --text-h1-size: var(--size-32);
   --text-h1-weight: var(--weight-bold);
   --text-h1-line-height: var(--ratio-1-2);
 
-  /* Text/H2 — titulo de seccion */
   --text-h2-size: var(--size-24);
   --text-h2-weight: var(--weight-semibold);
   --text-h2-line-height: var(--ratio-1-25);
 
-  /* Text/H3 — subseccion o encabezado de card */
   --text-h3-size: var(--size-18);
   --text-h3-weight: var(--weight-semibold);
   --text-h3-line-height: var(--ratio-1-3);
 
-  /* Text/H4 — etiqueta destacada en mayúsculas (la transformación la aplica el
-   * componente). Interlineado (pendiente): no definido. */
+  /* H4: mayúsculas las aplica el componente. Interlineado (pendiente). */
   --text-h4-size: var(--size-14);
   --text-h4-weight: var(--weight-semibold);
 
-  /* Text/P — cuerpo de texto */
   --text-p-size: var(--size-14);
   --text-p-weight: var(--weight-regular);
   --text-p-line-height: var(--ratio-1-5);
 
-  /* Text/Caption — metadatos, timestamps; color text-secondary.
-   * Interlineado (pendiente): no definido. */
+  /* Caption: color text-secondary. Interlineado (pendiente). */
   --text-caption-size: var(--size-12);
   --text-caption-weight: var(--weight-medium);
 
-  /* Text/Mono — codigos, SKUs, lotes, IDs.
-   * Peso e interlineado (pendiente): no definidos. */
+  /* Mono: códigos, SKUs, lotes. Peso e interlineado (pendiente). */
   --text-mono-size: var(--size-13);
 
-  /* Tipografía de controles. Los tres tamaños salen de la ficha del Botón
-   * (Small 13 / Medium 14 / Large 15). */
+  /* Tamaños de la ficha del Botón (13 / 14 / 15). */
   --text-control-sm-size: var(--size-13);
   --text-control-md-size: var(--size-14);
   --text-control-lg-size: var(--size-15);
-  /* SIN CONFIRMAR: la ficha del Botón no fija peso. El 500 lo eligió quien
-   * implementó el componente y no sale de ninguna especificación; cambiarlo mueve
-   * los cuatro controles a la vez. */
+  /* Sin confirmar: la ficha no fija peso; el 500 lo eligió la implementación. */
   --text-control-weight: var(--weight-medium);
-  /* Peso de la opción elegida en el panel del Select. La ficha pide «negrita» y el
-   * tema no tiene utilidades de peso, así que el componente lo lee como var().
-   * Semántico y no --weight-semibold directo: un primitivo fuera de acá se rechaza. */
+  /* Opción elegida del Select: el tema no tiene utilidades de peso y se lee como var().
+   * Semántico porque un primitivo fuera de acá se rechaza. */
   --text-control-selected-weight: var(--weight-semibold);
 
-  /* Set: Tabler outline, grid 24x24, trazo 2 (ADR 0011).
-   *
-   * EL TRAZO NO ES CONSTANTE Y ES A PROPÓSITO: NO «ARREGLARLO». El SVG escala el
-   * trazo con el dibujo, así que las 2 unidades de Tabler sobre un grid de 24
-   * rinden 1.33px a 16px -el icono se ve lavado al lado de Montserrat- y 2px a
-   * 24px, que pesa más que un título. Se compensa por tamaño:
-   *   sm 16px trazo 2.25 -> 1.50px · md 18px trazo 2 -> 1.50px
-   *   lg 20px trazo 2    -> 1.67px · xl 24px trazo 1.75 -> 1.75px
-   * El grosor visible queda casi constante en toda la escala. */
+  /* Tabler outline 24x24 (ADR 0011). El trazo varía por tamaño a propósito, no arreglarlo:
+   * compensa el escalado del SVG. Ver vault: Iconografía. */
   --size-icon-sm: var(--size-16);
   --stroke-icon-sm: var(--stroke-2-25);
   --size-icon-md: var(--size-18);

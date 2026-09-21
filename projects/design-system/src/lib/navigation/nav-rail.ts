@@ -17,14 +17,8 @@ import { isGroup, parentOf, visibleItems, type NavItem } from './navigation.type
 let nextRailId = 0;
 
 /**
- * EL ÁRBOL DE NAVEGACIÓN Y NADA MÁS: dibuja items, dice cuál es el actual, abre
- * y cierra grupos y reporta lo elegido. No conoce el router, el menú real ni los
- * permisos; eso es del shell.
- * Dos anchos, un componente: rail de iconos (`--nav-rail-width`) o panel
- * (`--nav-panel-width`). CADA ICONO LLEVA TOOLTIP CUANDO ESTÁ PLEGADO: un rail de
- * glifos sin nombre es inusable para quien no conoce el producto, y `aria-label`
- * solo sirve al lector de pantalla. El teclado es el treeview de las APG: un solo
- * Tab para todo el rail. Ficha: 08-Sistema-de-Diseno/Componentes/Navegacion.
+ * Árbol de navegación: no conoce router, menú real ni permisos. Rail o panel por token; plegado,
+ * cada icono lleva tooltip. Teclado treeview de las APG. Ver vault: Navegacion.
  */
 @Component({
   selector: 'ewms-nav-rail',
@@ -36,46 +30,35 @@ let nextRailId = 0;
 export class NavRail {
   readonly items = input.required<readonly NavItem[]>();
 
-  /**
-   * El nombre del landmark, ya traducido. Obligatorio: una página puede tener más
-   * de un `<nav>` -este y las migas- y dos sin nombre son indistinguibles en la
-   * lista de landmarks de un lector de pantalla.
-   */
+  /** Obligatorio: dos `<nav>` sin nombre son indistinguibles para un lector de pantalla. */
   readonly label = input.required<string>();
 
-  /** Qué item es la página donde estás. Null mientras nada coincide. */
+  /** Null mientras nada coincide. */
   readonly activeId = input<string | null>(null);
 
   /** Rail plegado (72) o panel abierto (232). */
   readonly expanded = input<boolean>(true);
 
-  /** Se eligió un destino. Un grupo nunca emite: se abre. */
+  /** Un grupo nunca emite: se abre. */
   readonly itemSelect = output<NavItem>();
 
-  /** Alguien pidió el otro ancho, desde el control del propio rail. */
   readonly expandedChange = output<boolean>();
 
-  /** Etiqueta del control de plegar/desplegar, ya traducida. */
   readonly toggleLabel = input.required<string>();
 
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
 
   protected readonly treeId = `ewms-nav-rail-${++nextRailId}`;
 
-  /** Qué grupos están abiertos. No controlado: el rail es dueño de su apertura. */
+  /** No controlado: el rail es dueño de su apertura. */
   private readonly open = signal<ReadonlySet<string>>(new Set());
 
-  /** El único item en el orden de tabulación (tabindex móvil de las APG). */
+  /** Tabindex móvil de las APG. */
   private readonly focusedId = signal<string | null>(null);
 
   protected readonly visible = computed(() => visibleItems(this.items(), this.open()));
 
-  /**
-   * EL GRUPO DEL ITEM ACTIVO SE ABRE ACÁ Y NO EN EL CONSUMIDOR: aterrizar en
-   * /catalogos/articulos con «Catálogos» plegado muestra un rail que no contiene
-   * la página donde estás, y hacerlo en el shell pondría estado de árbol donde el
-   * árbol no está.
-   */
+  // El grupo del item activo se abre acá: si no, el rail no mostraría la página donde estás.
   constructor() {
     effect(() => {
       const active = this.activeId();
@@ -89,7 +72,7 @@ export class NavRail {
     });
   }
 
-  /** El item que lleva `tabindex="0"`. Exactamente uno, siempre. */
+  /** Exactamente un item con `tabindex="0"`. */
   protected readonly focusTarget = computed(() => {
     const focused = this.focusedId();
     const visible = this.visible();
@@ -115,7 +98,6 @@ export class NavRail {
     this.expandedChange.emit(!this.expanded());
   }
 
-  /** Clic en una fila: un grupo abre, un destino se reporta. */
   protected onActivate(item: NavItem): void {
     this.focusedId.set(item.id);
     if (isGroup(item)) {
@@ -125,10 +107,7 @@ export class NavRail {
     this.itemSelect.emit(item);
   }
 
-  /**
-   * El teclado del treeview (WAI-ARIA APG). `Enter` y `Space` no se atienden acá:
-   * cada fila es un `<button>` de verdad y el navegador ya los vuelve un clic.
-   */
+  // `Enter` y `Space` no se atienden: cada fila es un `<button>` y el navegador ya hace el clic.
   protected onKeydown(event: KeyboardEvent, item: NavItem): void {
     const visible = this.visible();
     const index = visible.findIndex((candidate) => candidate.id === item.id);
@@ -150,7 +129,7 @@ export class NavRail {
         if (isGroup(item) && !this.isOpen(item)) {
           this.toggle(item);
         } else if (isGroup(item)) {
-          // Ya abierto: entrar, que es lo que piden las APG.
+          // Ya abierto: entrar, como piden las APG.
           this.moveTo(visible[index + 1]);
         }
         break;
@@ -181,11 +160,7 @@ export class NavRail {
     });
   }
 
-  /**
-   * Mueve el foco móvil y el foco real con él. La consulta al DOM es el camino
-   * honesto: la lista la pinta un `@for`, así que el elemento de un id existe solo
-   * después de dibujarse.
-   */
+  // Consulta al DOM: el elemento existe solo después de que el `@for` lo dibuja.
   private moveTo(item: NavItem | undefined): void {
     if (item === undefined) {
       return;

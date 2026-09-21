@@ -69,14 +69,13 @@ describe('Select', () => {
     await fixture.whenStable();
   }
 
-  /** The jsdom equivalent of `getByRole('combobox')`. */
   function trigger(): HTMLButtonElement {
     return (fixture.nativeElement as Element).querySelector(
       '[role="combobox"]',
     ) as HTMLButtonElement;
   }
 
-  /** The panel is portalled into the CDK container at the end of <body>. */
+  /** El panel vive en el contenedor del CDK, al final de <body>. */
   function listbox(): HTMLElement | null {
     return document.querySelector<HTMLElement>('.cdk-overlay-container [role="listbox"]');
   }
@@ -123,7 +122,6 @@ describe('Select', () => {
         (fixture.nativeElement as Element).querySelector(`#${labelId}`)?.textContent?.trim(),
       ).toBe('Bodega');
 
-      // Nothing chosen yet: the content is the placeholder.
       expect(trigger().textContent?.trim()).toContain('Elegir bodega');
 
       host.value.set('BN');
@@ -132,8 +130,6 @@ describe('Select', () => {
     });
 
     it('points aria-controls at the listbox only while it exists', async () => {
-      // An id that is not in the document is an invalid attribute value, which
-      // is worse than no attribute at all.
       expect(trigger().hasAttribute('aria-controls')).toBe(false);
 
       await openPanel();
@@ -179,8 +175,7 @@ describe('Select', () => {
 
       trigger().dispatchEvent(key('ArrowUp'));
       await settle();
-      // Already at the top: holding the key must not loop back to the bottom
-      // with no signal that the list has ended.
+      // Ya arriba: mantener la tecla no da la vuelta sin aviso de fin de lista.
       expect(trigger().getAttribute('aria-activedescendant')).toBe(option(0).id);
 
       for (let i = 0; i < 10; i += 1) {
@@ -221,7 +216,7 @@ describe('Select', () => {
       trigger().dispatchEvent(key('ArrowDown'));
       trigger().dispatchEvent(key('ArrowDown'));
       await settle();
-      // The active row is now a DIFFERENT option from the selected one.
+      // La fila activa ya no es la elegida.
       expect(trigger().getAttribute('aria-activedescendant')).toBe(option(1).id);
 
       trigger().dispatchEvent(key('Escape'));
@@ -293,8 +288,7 @@ describe('Select', () => {
     it('keeps the focus on the trigger when an option is clicked', async () => {
       await openPanel();
 
-      // The focus moves on mousedown, before the click: the component prevents
-      // that default, which is what keeps aria-activedescendant meaningful.
+      // El foco se mueve en mousedown; el componente lo previene.
       const mousedown = new MouseEvent('mousedown', { bubbles: true, cancelable: true });
       option(1).dispatchEvent(mousedown);
       expect(mousedown.defaultPrevented).toBe(true);
@@ -343,9 +337,7 @@ describe('Select', () => {
   });
 
   describe('Sizing and states', () => {
-    // jsdom does no layout: the 32/40/48 heights and the 10/12/14 paddings are
-    // asserted as the utilities that carry them, never as measurements. See
-    // the PR report.
+    // jsdom no hace layout: alturas y rellenos se afirman por la utilidad, no midiendo.
     const boxes: readonly (readonly [FieldSize, string, string])[] = [
       ['sm', 'h-8', 'px-2.5'],
       ['md', 'h-10', 'px-3'],
@@ -356,7 +348,7 @@ describe('Select', () => {
       host.size.set(size);
       await settle();
 
-      // The same constants the Input reads, so a mixed form row lines up.
+      // Las mismas constantes que el Input: una fila mixta se alinea.
       expect(trigger().classList.contains(height)).toBe(true);
       expect(trigger().classList.contains(padding)).toBe(true);
       expect(trigger().classList.contains('rounded-control')).toBe(true);
@@ -401,8 +393,7 @@ describe('Select', () => {
       const errorBorder = trigger().style.borderColor;
 
       await openPanel();
-      // One focus colour in the whole system: the ring says "focus", the
-      // border keeps saying "error".
+      // El anillo dice «foco» y el borde sigue diciendo «error».
       expect(trigger().style.borderColor).toBe(errorBorder);
     });
 
@@ -413,7 +404,7 @@ describe('Select', () => {
       expect(trigger().disabled).toBe(true);
       expect(trigger().classList.contains('cursor-not-allowed')).toBe(true);
 
-      // The click and the keyboard are the only ways in, and both are refused.
+      // Clic y teclado son las únicas entradas, y las dos se rechazan.
       trigger().click();
       trigger().dispatchEvent(key('ArrowDown'));
       await settle();
@@ -454,11 +445,7 @@ describe('Select', () => {
       host.value.set('BN');
       await openPanel();
 
-      // The panel is portalled out of the component, so it is scanned where it
-      // actually lives. The scope is the overlay container rather than
-      // <body>: at body level axe also applies its page-level rules (every
-      // region inside a landmark, and so on), which are about a document and
-      // not about a component rendered on its own in a test.
+      // Se escanea el overlay, donde vive el panel, y no <body>: ahí axe aplicaría reglas de página.
       const container = document.querySelector('.cdk-overlay-container');
       expect(container).not.toBeNull();
       await expectNoAxeViolations(container as Element);

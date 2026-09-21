@@ -1,17 +1,10 @@
-<!--
-  Un `<nav>` con nombre alrededor de un `<ol>`. Los chevrones son decorativos y lo
-  dicen: «chevron derecha» leído entre cada paso es ruido, y la lista ya lleva el
-  orden.
--->
+<!-- Chevrones decorativos: la lista ya lleva el orden. -->
 <nav class="min-w-0" [attr.aria-label]="label()">
   <ol class="flex min-w-0 list-none flex-wrap items-center gap-2">
     @for (crumb of visible(); track $index) {
       <li class="flex min-w-0 items-center gap-2">
         @if (isLast(crumb)) {
-          <!--
-  La página donde estás: actual y NO un enlace. Un enlace a acá es un enlace que no
-  hace nada, y se anuncia como destino.
--->
+          <!-- Actual y no enlace: un enlace a acá se anuncia como destino. -->
           <span class="truncate text-h4 text-primary" aria-current="page">
             {{ crumb.label }}
           </span>
@@ -29,10 +22,7 @@
         }
 
         @if (showsFoldAfter(crumb)) {
-          <!--
-  EL PLIEGUE ES UN BOTÓN, no unos puntos dibujados en la página: tres puntos que no
-  se pueden pulsar avisan que el camino se acortó y no dan forma de volver a verlo.
--->
+          <!-- El pliegue es un botón: tres puntos sin acción no dan forma de volver. -->
           <button
             type="button"
             class="rounded-sm px-1 text-p text-secondary outline-none hover:text-primary focus-visible:shadow-(--focus-ring-shadow)"

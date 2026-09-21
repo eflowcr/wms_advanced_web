@@ -1,10 +1,4 @@
-<!--
-  El `<label>` envuelve al input, así el blanco es la fila entera y no la pista de
-  44x24. Es el requisito de la ficha, y sobre una tablet en un depósito es la
-  diferencia entre un control que anda con guantes puestos y uno que no.
-  El pulgar es un hermano encima de la pista con `pointer-events-none`: un `<input>`
-  no tiene hijos y cada evento de puntero es del input de abajo.
--->
+<!-- El `<label>` hace blanco a la fila entera; el pulgar es hermano (un `<input>` no tiene hijos). -->
 <label [class]="rowClasses()">
   <span class="relative inline-flex">
     <input

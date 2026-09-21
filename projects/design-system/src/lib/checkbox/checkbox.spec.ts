@@ -4,9 +4,8 @@ import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { expectNoAxeViolations } from '@ewms/testing';
 import { Checkbox } from './checkbox';
 
-/** The seven states of the ficha, as the inputs that produce them. */
+/** Los siete estados de la ficha: nombre, checked, indeterminate, disabled. */
 const STATES: readonly (readonly [string, boolean, boolean, boolean])[] = [
-  // name, checked, indeterminate, disabled
   ['default', false, false, false],
   ['checked', true, false, false],
   ['indeterminate', false, true, false],
@@ -48,14 +47,8 @@ class ReactiveHost {
 }
 
 /**
- * Give an element the focus, then take it away, driving the two native events
- * through the DOM methods rather than through a synthesised `FocusEvent`.
- *
- * The reason is gate 10: it reads every string literal in a .ts file as a
- * possible class name, and the name of the second of those two events is also
- * a stock Tailwind filter utility, so spelling it as a literal fails the
- * build. The method call says the same thing and is closer to what a browser
- * actually does. Reported in the PR report.
+ * Por métodos del DOM y no con un `FocusEvent` sintético: el nombre del segundo evento es una
+ * utilidad de Tailwind y, como cadena, rompe la compuerta 10.
  */
 function focusThenLeave(element: HTMLElement): void {
   element.focus();
@@ -87,7 +80,7 @@ describe('Checkbox', () => {
     return root().querySelector('input[type="checkbox"]') as HTMLInputElement;
   }
 
-  /** The jsdom equivalent of `getByRole('checkbox', { name })`. */
+  /** Como `getByRole` con nombre, en jsdom. */
   function byRoleAndName(name: string): HTMLInputElement | null {
     return (
       Array.from(root().querySelectorAll<HTMLInputElement>('input[type="checkbox"]')).find(
@@ -101,7 +94,6 @@ describe('Checkbox', () => {
   describe('Accessible name', () => {
     it('is named by the wrapping label text', () => {
       expect(byRoleAndName('Reetiquetar')).toBe(box());
-      // The label wraps the control, so there is no for/id pair to go stale.
       expect(box().closest('label')).not.toBeNull();
     });
 
@@ -120,8 +112,7 @@ describe('Checkbox', () => {
       host.indeterminate.set(true);
       await settle();
 
-      // This is the whole trap: there is no `indeterminate` content attribute,
-      // so asserting on the attribute would pass while the box rendered blank.
+      // La trampa: no hay atributo; afirmarlo pasaría con la caja en blanco.
       expect(box().indeterminate).toBe(true);
       expect(box().hasAttribute('indeterminate')).toBe(false);
     });
@@ -179,8 +170,7 @@ describe('Checkbox', () => {
       host.indeterminate.set(true);
       await settle();
 
-      // Same treatment on purpose; only the glyph tells them apart, which is
-      // exactly why aria-checked has to carry `mixed`.
+      // Mismo tratamiento a propósito: solo el glifo los distingue, por eso aria-checked lleva mixed.
       expect(box().className).toBe(checkedClasses);
       expect(box().classList.contains('bg-primary')).toBe(true);
     });
@@ -190,14 +180,11 @@ describe('Checkbox', () => {
 
       host.disabled.set(true);
       await settle();
-      // A control that cannot be operated must not light up under the pointer.
       expect(box().classList.contains('hover:border-(--color-bg-primary)')).toBe(false);
     });
 
     it('uses the single 18 px box and the 1.5 px border token', () => {
-      // jsdom does no layout, so the rendered 18x18 cannot be measured here.
-      // The utility and the token reference are what is asserted; see the PR
-      // report for what that leaves unverified.
+      // jsdom no hace layout: se afirman la utilidad y el token, no el 18x18 medido.
       expect(box().classList.contains('size-4.5')).toBe(true);
       expect(box().style.borderWidth).toBe('var(--border-width-selection)');
       expect(box().classList.contains('rounded-sm')).toBe(true);
@@ -209,10 +196,8 @@ describe('Checkbox', () => {
       box().focus();
       expect(document.activeElement).toBe(box());
 
-      // jsdom does not synthesise the native Space activation, so the click it
-      // would produce is dispatched directly. What is being asserted is that
-      // the control is a real <input type="checkbox"> -- the browser's own
-      // Space handling comes with that and is not re-implemented here.
+      // jsdom no sintetiza la barra espaciadora: se despacha el clic. Lo que se afirma es que
+      // el control es un checkbox nativo, que trae ese manejo del navegador.
       box().click();
       await settle();
 

@@ -3,8 +3,7 @@ import { ICONS, type IconName } from '../../icons/icons.generated';
 
 export type IconSize = 'sm' | 'md' | 'lg' | 'xl';
 
-/** Ancho/alto y grosor de trazo viajan juntos: el trazo se compensa por tamaño en
- * tokens.css (--size-icon-* / --stroke-icon-*). */
+/** Tamaño y trazo juntos: el trazo se compensa por tamaño en tokens.css. */
 const SIZE_CLASSES: Readonly<Record<IconSize, string>> = {
   sm: 'size-icon-sm stroke-icon-sm',
   md: 'size-icon-md stroke-icon-md',
@@ -13,14 +12,8 @@ const SIZE_CLASSES: Readonly<Record<IconSize, string>> = {
 };
 
 /**
- * La única forma de poner un icono en pantalla (ADR 0011).
- *
- * La geometría es dato: la plantilla recorre las primitivas y ata cada atributo.
- * Sin innerHTML y sin DomSanitizer, así que un icono no puede llevar marcado.
- * El color siempre es `currentColor`: hereda del contenedor y nunca pone uno.
- * La accesibilidad la decide si el icono lleva información: sin `label` es
- * decorativo -aria-hidden y fuera del foco-, con `label` es `role="img"` con ese
- * nombre, que viene del consumidor y por eso se traduce donde se usa.
+ * Única vía para un icono (ADR 0011): geometría como dato, sin innerHTML; color por
+ * `currentColor`. Sin `label` es decorativo; con `label`, `role="img"` con ese nombre.
  */
 @Component({
   selector: 'ewms-icon',

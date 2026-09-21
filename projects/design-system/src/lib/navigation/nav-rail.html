@@ -1,20 +1,10 @@
-<!--
-  Un `<nav>` con nombre, una cabeza proyectada, el árbol y un pie proyectado.
-  EL ANCHO ES UN TOKEN Y EL CAMBIO ES UNA CLASE, no dos componentes: el rail y el
-  panel son el mismo árbol a dos anchos, y dos componentes serían dos teclados.
-  EL MARCADO ES UN ÁRBOL `ul`/`li` DE VERDAD CON ROLES DE ÁRBOL: la lista es lo que
-  el documento realmente es, y `role="tree"` es lo que avisa que acá andan las
-  flechas y no el Tab.
--->
+<!-- Rail y panel son el mismo árbol a dos anchos (token). `ul`/`li` reales con roles de árbol: acá andan las flechas. -->
 <nav
   class="flex h-full flex-col bg-brand-navy text-on-dark"
   [class]="expanded() ? 'w-(--nav-panel-width)' : 'w-(--nav-rail-width)'"
   [attr.aria-label]="label()"
 >
-  <!--
-  Acá va el bloque de favoritos (REQ-FE-DS4-002 RFE-04). El rail no lo sabe: sabe
-  que hay un hueco sobre el árbol, y el consumidor sabe qué va en él.
--->
+  <!-- Favoritos (REQ-FE-DS4-002 RFE-04): el rail solo ofrece el hueco. -->
   <div class="shrink-0">
     <ng-content select="[navRailTop]" />
   </div>
@@ -48,19 +38,12 @@
     }
   </ul>
 
-  <!--
-  Credenciales y logo del cliente. El rail no sabe qué es una credencial; sabe que
-  hay un pie.
--->
+  <!-- Credenciales y logo del cliente. -->
   <div class="shrink-0 border-t border-strong">
     <ng-content select="[navRailFooter]" />
   </div>
 
-  <!--
-  El control de ancho vive DENTRO del rail y no en la cabecera, porque el ancho es
-  estado del rail: `expanded` entra, el cambio sale, y el consumidor decide si lo
-  recuerda.
--->
+  <!-- El ancho es estado del rail: `expanded` entra, el cambio sale. -->
   <div class="flex shrink-0 p-2" [class.justify-center]="!expanded()">
     <button
       type="button"
@@ -76,16 +59,7 @@
   </div>
 </nav>
 
-<!--
-  UNA FILA, ESCRITA UNA VEZ: un grupo y un destino difieren en lo que hacen, no en
-  cómo se ven, y dos copias de este marcado derivan en quince días.
-  UN TOOLTIP NO ES UN NOMBRE ACCESIBLE, y por eso `aria-label` está Y es
-  condicional: plegada, la fila no tiene texto visible -el tooltip sirve a quien ve
-  y `aria-label` al resto-; abierta, la etiqueta ES el texto visible y una segunda
-  copia derivaría el día que se tradujera una sola.
-  Encontrado plegando el rail y mirando: dieciséis botones sin nombre accesible
-  (WCAG 4.1.2), invisibles para axe porque nada había pintado el estado plegado.
--->
+<!-- `aria-label` solo plegada: el tooltip no es nombre accesible (WCAG 4.1.2). Ver vault: Navegacion. -->
 <ng-template #row let-item let-child="child">
   <button
     type="button"
@@ -111,10 +85,7 @@
       <span class="min-w-0 flex-1 truncate">{{ item.label }}</span>
 
       @if (item.badge !== undefined) {
-        <!--
-  El número se dibuja; la palabra que lo hace significar algo la pone el consumidor
-  dentro de `label`. El sistema de diseño no habla ningún idioma (ADR 0008).
--->
+        <!-- El número; la palabra la pone el consumidor en `label` (ADR 0008). -->
         <span class="rounded-full bg-primary px-2 text-caption text-on-primary">
           {{ item.badge }}
         </span>

@@ -20,12 +20,7 @@ export type { ButtonIconPosition, ButtonSize, ButtonVariant } from './button.typ
 
 let nextButtonId = 0;
 
-/**
- * El botón de acción del sistema. Estado de carga accesible -conserva foco y
- * nombre-, estilo por token y supresión estricta de eventos mientras carga o está
- * deshabilitado. La implementación visual se comparte con `ewms-icon-button` por
- * button.types.ts: dos APIs públicas, un estilo.
- */
+/** Cargando conserva foco y nombre y suprime eventos. Estilo compartido con `ewms-icon-button`. */
 @Component({
   selector: 'ewms-button',
   templateUrl: './button.html',
@@ -41,18 +36,7 @@ export class Button {
   readonly disabled = input<boolean>(false);
   readonly loading = input<boolean>(false);
 
-  /**
-   * SI ESTE BOTÓN ENVÍA EL FORMULARIO EN QUE ESTÁ. Por defecto `'button'`, así que
-   * nada de lo que existe cambia.
-   *
-   * Hasta DS-5 el Botón pintaba `type="button"` siempre, y era deliberado. También
-   * tenía un costo, encontrado construyendo la pantalla de ejemplo de DS-4: UN
-   * FORMULARIO SIN BOTÓN DE ENVÍO TAMPOCO SE ENVÍA CON `Enter`, porque el envío
-   * implícito del navegador necesita que exista uno. Cada formulario de varios
-   * campos solo se podía guardar con clic o con Ctrl+S.
-   * Enviar sigue siendo algo que alguien escribe a propósito; ahora se puede
-   * escribir, y el patrón anti doble envío no cambia.
-   */
+  /** `submit` habilita el envío con Enter, que necesita un botón de envío. Ver vault: Boton. */
   readonly type = input<'button' | 'submit'>('button');
 
   protected readonly contentId = `ewms-btn-content-${++nextButtonId}`;
@@ -78,8 +62,7 @@ export class Button {
 
   protected readonly spinnerColor = computed(() => buttonSpinnerColor(this.variant()));
 
-  /** `aria-disabled` marca la carga solo mientras falta el atributo nativo: con
-   * `disabled` puesto el nativo ya lo dice, y los dos lo anunciarían dos veces. */
+  /** Solo mientras falta el atributo nativo, para no anunciar el estado dos veces. */
   protected readonly ariaDisabled = computed(() =>
     this.loading() && !this.disabled() ? 'true' : null,
   );

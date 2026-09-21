@@ -1,8 +1,4 @@
-<!--
-  Un `<button>` no es un elemento etiquetable, así que la etiqueta visible se une al
-  gatillo con aria-labelledby y no con for/id. El texto del gatillo es entonces el
-  VALOR, que es lo que espera el patrón combobox.
--->
+<!-- Etiqueta por aria-labelledby (un botón no es etiquetable); el texto del gatillo es el valor. -->
 <span [id]="labelId" class="block text-caption text-secondary mb-1">{{ label() }}</span>
 
 <button
@@ -27,10 +23,7 @@
 >
   <span class="truncate" [class]="triggerTextClasses()">{{ triggerText() }}</span>
 
-  <!--
-  Decorativo: el botón ya dice qué es y qué contiene. El chevron es `sm` (16 px) en
-  todos los tamaños de campo, la misma regla que el icono de prefijo del Input.
--->
+  <!-- Decorativo; `sm` (16 px) en todo tamaño, como el prefijo del Input. -->
   <ewms-icon name="chevron-down" [size]="iconSize" />
 </button>
 
@@ -39,13 +32,8 @@
 }
 
 <!--
-  El panel, pintado en un overlay del CDK. Nada adentro es enfocable: el foco se
-  queda en el gatillo y `aria-activedescendant` apunta a la fila activa, que es el
-  patrón de las APG para un combobox de solo selección.
-  Por eso las filas no llevan manejador de teclas ni parada de tabulación, y por eso
-  hay dos reglas de accesibilidad apagadas abajo: las dos suponen un widget donde
-  cada elemento maneja su teclado, y ninguna puede ver desde acá el contrato
-  (abajo, arriba, Enter, Escape), que está implementado una vez, en el gatillo.
+  Nada es enfocable: el teclado vive una vez, en el gatillo (combobox APG). Por eso las dos
+  reglas apagadas abajo, que suponen un teclado por fila.
 -->
 <ng-template #panel>
   <ul [id]="listboxId" role="listbox" [class]="panelClasses" [attr.aria-labelledby]="labelId">
