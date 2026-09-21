@@ -1,13 +1,9 @@
 /**
- * Tests for the shortcut source scan, AND the scan itself over this repository.
+ * Pruebas del escaneo de atajos, y el escaneo mismo sobre este repo. Los casos unitarios
+ * fijan qué hacen los patrones (una regex que deja de coincidir pasa en vacío un año);
+ * correr el escaneo real acá lo mete en `npm test`, que ya bloquea.
  *
- * Both halves matter. The unit cases pin down what the patterns do -- a gate
- * whose regular expression quietly stops matching is a gate that passes
- * vacuously for a year. Running the real scan here rather than as a ninth CI
- * step keeps it inside `npm test`, which is already blocking, and keeps the
- * eight gates eight.
- *
- * Plain node:test, no Angular. Run with `npm run test:tools` (part of `npm test`).
+ * node:test sin Angular. `npm run test:tools` (parte de `npm test`).
  */
 import assert from 'node:assert/strict';
 import { execFile } from 'node:child_process';
@@ -48,11 +44,8 @@ describe('keyMentions', () => {
   });
 
   it('does NOT flag a single character used as anything but a key', () => {
-    /*
-     * The false positive that narrowed this rule: read-token.ts compares a CSS
-     * unit against 's' to mean SECONDS. A gate that cried about that would be
-     * turned off within a week, which is worse than not having it.
-     */
+    // El falso positivo que acotó la regla: read-token.ts compara una unidad CSS con
+    // 's' (segundos). Una compuerta que se quejara de eso se apagaría en una semana.
     assert.deepEqual(keyMentions("return match[2] === 's' ? value * 1000 : value;", 's'), []);
     assert.deepEqual(keyMentions("const sep = '/';\nreturn parts.join('/');", '/'), []);
   });
@@ -81,7 +74,7 @@ describe('globalListeners', () => {
   });
 
   it('leaves a listener on the component`s own element alone', () => {
-    // A field measuring what is typed INTO IT is not a global listener.
+    // Un campo que mide lo que se tipea en él no es un listener global.
     assert.deepEqual(globalListeners("<input (keydown)=\"onKeydown($event)\" />"), []);
     assert.deepEqual(globalListeners("this.field().nativeElement.addEventListener('keydown', f);"), []);
   });
@@ -89,12 +82,8 @@ describe('globalListeners', () => {
 
 describe('the repository itself', () => {
   it('names every shortcut key only in the map files, and mounts one listener', async () => {
-    /*
-     * THE GATE, RUN FOR REAL. Everything above proves the patterns work; this
-     * proves they were pointed at the source. It runs the script as a child
-     * process so a failure carries the same output a developer sees from
-     * `npm run lint:shortcuts`.
-     */
+    // La compuerta de verdad, como proceso hijo: un fallo trae la misma salida que ve
+    // quien corre `npm run lint:shortcuts`. Lo de arriba prueba los patrones; esto, la fuente.
     const { stdout } = await run(process.execPath, [path.join(HERE, 'check-shortcuts.mjs')], {
       cwd: ROOT,
     });
@@ -104,7 +93,7 @@ describe('the repository itself', () => {
   });
 
   it('the map files it trusts actually exist and carry bindings', async () => {
-    // Otherwise the scan passes because it found nothing to look for.
+    // Si no, el escaneo pasa porque no encontró nada que buscar.
     const { readFile } = await import('node:fs/promises');
     for (const mapFile of MAP_FILES) {
       const source = await readFile(path.join(ROOT, mapFile), 'utf8');

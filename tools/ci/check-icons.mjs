@@ -1,24 +1,14 @@
 /**
- * Gate 11 -- icons (ADR 0011).
+ * Regla 11: iconos (ADR 0011). Dos controles, los dos bloqueantes.
  *
- * Two checks, both blocking.
+ *   1. icons.generated.ts está al día: se regenera en memoria con build-icons.mjs y se
+ *      compara byte a byte con el versionado, como un lockfile. Se arregla con
+ *      `npm run icons:build`, nunca a mano.
+ *   2. Ningún <svg> escrito a mano en una plantilla (.html y .ts bajo projects/): todo
+ *      icono pasa por <ewms-icon>. Solo se permiten las fuentes de iconos y el componente
+ *      que los pinta. Los .svg estáticos (logos) no son plantillas y no se escanean.
  *
- *   1. icons.generated.ts is in sync. The file is regenerated in memory with
- *      tools/icons/build-icons.mjs and compared byte for byte with the
- *      committed one. A difference means the manifest, a custom SVG or the
- *      @tabler/icons version changed without regenerating -- exactly like a
- *      lockfile out of sync. The fix is `npm run icons:build`, never an edit
- *      by hand.
- *
- *   2. No hand-written <svg> in a template. Every icon goes through
- *      <ewms-icon>; a loose <svg> pasted into a template is how an icon
- *      system comes apart. Scans .html templates and .ts files (inline
- *      templates) under projects/. The only places allowed to contain one are
- *      the icon sources (design-system/src/icons/) and the component that
- *      renders them (design-system/src/lib/icon/). Static image files (.svg
- *      assets such as the brand logos) are not templates and are not scanned.
- *
- * Run locally with `npm run lint:icons`.
+ * `npm run lint:icons`.
  */
 import { readdir, readFile } from 'node:fs/promises';
 import path from 'node:path';

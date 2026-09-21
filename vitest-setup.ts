@@ -1,6 +1,5 @@
 /**
- * Global test setup, shared by every project's unit tests.
- * Wired from vitest.shared.ts, which every vitest.<project>.config.ts builds
- * on and angular.json references as `runnerConfig`.
+ * Setup global de las pruebas unitarias de todos los proyectos. Lo carga vitest.shared.ts,
+ * base de cada vitest.<proyecto>.config.ts, que angular.json referencia como `runnerConfig`.
  */
 export {};

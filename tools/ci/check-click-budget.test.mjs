@@ -1,11 +1,8 @@
 /**
- * Tests for the click-budget scan, AND the scan itself over this repository.
+ * Pruebas del escaneo del presupuesto de clics, y el escaneo mismo sobre este repo:
+ * correrlo acá lo mete en `npm test`, que ya bloquea, sin sumar un paso de CI.
  *
- * Same shape and same reason as check-shortcuts.test.mjs: the unit cases pin
- * down what the rule does, and running the real scan here keeps it inside
- * `npm test`, which is already blocking, without adding a ninth CI step.
- *
- * Plain node:test, no Angular. Run with `npm run test:tools` (part of `npm test`).
+ * node:test sin Angular. `npm run test:tools` (parte de `npm test`).
  */
 import assert from 'node:assert/strict';
 import { execFile } from 'node:child_process';
@@ -38,17 +35,14 @@ describe('statedBudgets', () => {
   });
 
   it('leaves a budget that is READ alone', () => {
-    // What the screen actually does. The digit never appears in the source.
+    // Lo que hace la pantalla de verdad: el dígito nunca aparece en la fuente.
     assert.deepEqual(statedBudgets("Máximo {{ budgetFor('edit') }}."), []);
     assert.deepEqual(statedBudgets('<td>{{ budget.max }}</td>'), []);
   });
 
   it('leaves prose that spells the figure in words alone', () => {
-    /*
-     * Deliberate. A word cannot drift silently -- nobody greps for "dos" and
-     * changes it -- and a rule wide enough to catch it would catch every other
-     * number on the page and be switched off within a week.
-     */
+    // A propósito: una palabra no deriva en silencio, y una regla que la atrapara
+    // atraparía todo número de la página y se apagaría en una semana.
     assert.deepEqual(statedBudgets('Buscar no debería costar más de dos clics.'), []);
   });
 
@@ -75,7 +69,7 @@ describe('importsBudgets', () => {
       'const SEARCH_MAX_CLICKS = 2;',
       "test.describe('x', () => { expect(n).toBe(2); });",
     ].join('\n');
-    // One name, and it is its own. Two short of the three the rule asks for.
+    // Un solo nombre, y es propio. Faltan dos para los tres que pide la regla.
     assert.equal(importsBudgets(source, NAMES), false);
   });
 });
@@ -91,13 +85,9 @@ describe('the repository itself', () => {
   });
 
   it('the file it trusts really holds the numbers', async () => {
-    // Otherwise the scan passes because it found nothing to look for.
-    //
-    // FIVE SINCE DS-5. «Abrir un favorito · 1» joined the four of DS-4 the day
-    // favourites were built, and it is the one budget that is not about a
-    // single screen: the star is in the App Shell's header and the block is in
-    // its rail, so the flow crosses the application. REQ-FE-DS4-003 §2.2 owns
-    // the figure, as it owns the other four.
+    // Si no, el escaneo pasa porque no encontró nada que buscar. Cinco desde DS-5:
+    // «Abrir un favorito · 1» cruza la aplicación (estrella en el header, bloque en el
+    // rail). La cifra es de REQ-FE-DS4-003 §2.2, como las otras cuatro.
     const source = await readFile(path.join(ROOT, BUDGET_FILE), 'utf8');
     const declared = [...source.matchAll(/export const (\w+_MAX_CLICKS) = (\d+);/g)].map(
       ([, name]) => name,

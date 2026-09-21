@@ -1,29 +1,13 @@
 /**
- * HG-02 of REQ-FE-DS4-003: THE CLICK BUDGET IS NOT WRITTEN TWICE.
+ * REQ-FE-DS4-003 HG-02: el presupuesto de clics no se escribe dos veces.
  *
- * The standard lives in the vault. `click-budget.ts` holds the one copy the
- * code is allowed, and both the example screen and the end-to-end test import
- * from it. This gate is what stops a third copy appearing, because a screen
- * and a test that agree with each other while both drift from the standard is
- * the exact failure the requirement is written to prevent.
+ * `click-budget.ts` guarda la única copia del estándar del vault que el código puede
+ * tener, y la pantalla de ejemplo y la prueba e2e la importan. Dos controles: ningún
+ * consumidor imprime un presupuesto como literal, y la prueba e2e importa las constantes.
+ * Es un escaneo de fuente porque un `2` renderizado es idéntico venga de la constante o
+ * de la plantilla; la spec de la página cubre la mitad que el DOM sí puede responder.
  *
- * Two checks, from the two sides:
- *
- *   1. No consumer PRINTS a budget as a literal. That is how the screen would
- *      come to advertise a figure nothing verifies.
- *   2. The end-to-end test IMPORTS the constants. That is how the test would
- *      come to verify a figure the standard no longer says.
- *
- *
- * WHY A SOURCE SCAN AND NOT AN ASSERTION IN THE PAGE'S SPEC
- *
- * A rendered `2` looks the same whether it came from the constant or from the
- * template, so a unit test cannot tell the two apart. The page's own spec
- * asserts the half a DOM can answer -- that what is on screen equals what the
- * constants hold. This answers the other half.
- *
- * Run with `npm run lint:click-budget`, and asserted by
- * check-click-budget.test.mjs, which `npm test` runs.
+ * `npm run lint:click-budget`; lo afirma check-click-budget.test.mjs.
  */
 import { readdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
@@ -31,38 +15,23 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 
-/** The one file allowed to hold the numbers. */
+/** El único archivo que puede tener los números. */
 export const BUDGET_FILE = 'projects/showroom/src/lib/pages/patterns/click-budget.ts';
 
-/** Everything that consumes the budget and must therefore only read it. */
+/** Lo que consume el presupuesto y por eso solo puede leerlo. */
 export const CONSUMERS = ['projects/showroom/src/lib/pages/patterns'];
 
 /**
- * The end-to-end test, which must IMPORT the budgets rather than restate them.
- *
- * Checked by looking for the imported NAMES rather than by hunting for stray
- * digits: a test file is full of numbers that are not budgets -- how many
- * rows, which index, how long to wait -- and a rule broad enough to catch a
- * restated budget in there would catch all of those too, and be switched off
- * within a week. Proving it reads the constants is the claim that matters.
- *
- * It reaches them through `@ewms/showroom` and not by a relative path, because
- * the boundary rules are right to stop a test file from being the back door
- * into the architecture. Which spelling of the import is used does not matter
- * here; that the names arrive from somewhere else does.
+ * La prueba e2e. Se buscan los nombres importados y no dígitos sueltos: una prueba está
+ * llena de números que no son presupuestos, y una regla que los atrapara se apagaría en
+ * una semana. Llega por `@ewms/showroom`, no por ruta relativa: lo exigen las fronteras.
  */
 export const BUDGET_TEST = 'e2e/click-budget.e2e.ts';
 
 /**
- * A budget PRINTED as a literal, which is the way it would actually happen:
- * somebody writes "Máximo 2" into a template because it is quicker than
- * reaching for the constant, and from then on the screen advertises a figure
- * nothing verifies.
- *
- * Prose that spells the figure in words ("dos clics") is not matched and is
- * not meant to be. It cannot drift silently -- nobody greps for a word and
- * changes it -- and a rule wide enough to catch it would catch every other
- * number in the page.
+ * Un presupuesto impreso como literal («Máximo 2» en una plantilla). La prosa con la
+ * cifra en palabras («dos clics») no se atrapa a propósito: no deriva en silencio, y una
+ * regla tan amplia atraparía todo otro número de la página.
  */
 const STATED_BUDGET = [{ pattern: /M[áa]ximo:?\s+\d/g, what: 'a budget printed as a literal' }];
 
@@ -77,11 +46,8 @@ export function statedBudgets(source) {
 }
 
 /**
- * Whether this source imports the budget constants by name.
- *
- * At least three of the four, so that a test covering only some of the flows
- * still passes -- and so that adding a fifth flow to the standard does not
- * fail the gate before anybody has written its test.
+ * Si la fuente importa las constantes por nombre. Alcanza con tres de las cuatro: una
+ * prueba que cubra parte de los flujos pasa, y un quinto flujo no rompe antes de su prueba.
  */
 export function importsBudgets(source, names) {
   const imported = source.slice(0, source.indexOf('test.describe'));
@@ -148,10 +114,7 @@ async function main() {
     }
   }
 
-  /*
-   * And the test reads them. Without this the gate would pass over a test that
-   * asserted a hand-typed 2, which is the same drift seen from the other side.
-   */
+  // Y la prueba las lee: si no, pasaría una prueba que afirma un 2 tipeado a mano.
   let testSource = '';
   try {
     testSource = await readFile(path.join(ROOT, BUDGET_TEST), 'utf8');

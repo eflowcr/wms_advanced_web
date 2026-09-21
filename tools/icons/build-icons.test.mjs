@@ -1,8 +1,6 @@
 /**
- * Tests for the icon generator's SVG extraction (ADR 0011).
- *
- * Plain node:test, no Angular: the generator is a Node script. Run with
- * `npm run test:tools` (also part of `npm test`).
+ * Pruebas de la extracción de SVG del generador de iconos (ADR 0011). node:test sin
+ * Angular. `npm run test:tools` (parte de `npm test`).
  */
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';

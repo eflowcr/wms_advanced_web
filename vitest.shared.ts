@@ -1,35 +1,13 @@
 import { defineConfig } from 'vitest/config';
 
 /**
- * Base runner configuration for `@angular/build:unit-test`, shared by every
- * project's own `vitest.<project>.config.ts`.
+ * Configuración base del runner de `@angular/build:unit-test`, compartida por cada
+ * `vitest.<proyecto>.config.ts`, que solo aporta sus umbrales medidos.
  *
- * ONE CONFIG PER PROJECT, AND THAT IS THE POINT (DS-2, 2026-09-18).
- *
- * Until DS-2 every test target pointed at a single `vitest.config.ts`, so
- * there was one set of coverage thresholds for all of them. A single number
- * has to be the weakest project's -- today the shell's 79 -- and under it the
- * design system could have lost fifteen points and core sixteen without
- * anything complaining.
- *
- * The first attempt at fixing that was a per-path threshold
- * (`'projects/core/**': {...}`) inside the one config. It does not work, and
- * the way it fails is worth writing down so nobody tries it again: A PATH
- * THRESHOLD IS NOT EVALUATED IN ITS PROJECT'S RUN, IT IS EVALUATED IN EVERY
- * RUN THAT TOUCHES THOSE FILES. The shell depends on core, so `ng test shell`
- * covers `projects/core/**` in passing -- at 74.73 %, because it exercises
- * what the shell uses and not what core tests -- and a core threshold of 95
- * fails on the first of the five commands in `npm test`. The only number that
- * would have passed was 74, weaker than the global 79: loosening the gate
- * rather than tightening it.
- *
- * A config per project has neither problem. Each project's thresholds are
- * evaluated only in that project's own run, over what that run actually
- * covers, so every number means one thing.
- *
- * WHAT GOES WHERE: everything a runner needs and every project agrees on lives
- * here. The only thing a project config carries is its own measured
- * thresholds.
+ * Un config por proyecto, a propósito (DS-2): un umbral por ruta dentro de un solo config
+ * no se evalúa en la corrida de su proyecto sino en toda corrida que toque esos archivos,
+ * y `ng test shell` cubre core de paso al 74.73 %. No los vuelvas a juntar.
+ * Ver vault: 02-Arquitectura/Integracion Continua.md §8.
  */
 
 export interface CoverageThresholds {
@@ -40,62 +18,25 @@ export interface CoverageThresholds {
 }
 
 /**
- * `alsoExclude` drops another project's files out of this project's report.
- *
- * It exists for the same reason the note above exists, seen from the other
- * side. A run covers every file it loads, including the libraries the project
- * under test imports -- and it covers them as that project happens to use
- * them, which is never how their own tests cover them. The showroom is the
- * extreme case: its pages render nine design-system components, so without
- * this its number is mostly a measurement of the design system, taken badly,
- * while those same files are already measured properly by
- * `ng test design-system`.
- *
- * It is `exclude` and not `include` because `include` does not work here: the
- * builder hands Vitest modules whose paths do not match a source glob, so an
- * include narrows the denominator to the right files and then attributes no
- * coverage to any of them -- a confident 0 %. Exclude is matched against the
- * same paths the report already uses, and works.
- *
- * Excluding does not weaken anything. Every project's own files stay measured
- * by its own run at its own threshold; what goes away is the double count.
- * Added in DS-2 PR 3, when the showroom pages started importing real
- * components -- see that PR's report.
- *
- * Only pass it where the pollution is real. A project whose number means what
- * it says does not need it.
+ * `alsoExclude` saca del reporte los archivos de otro proyecto, que la corrida cubre solo
+ * como este los usa (caso extremo: showroom sobre el design-system). Es `exclude` y no
+ * `include`: con `include` el builder no atribuye cobertura a nada, un 0 % seguro de sí.
+ * No debilita nada: cada proyecto se mide en su propia corrida. Se pasa solo donde la
+ * contaminación es real (desde DS-2 PR 3).
  */
 
 /**
- * The runner configuration for one project.
- *
- * `thresholds` is the coverage MEASURED for that project, truncated to the
- * integer -- never a round number chosen because it looks demanding, and never
- * a low one left as slack. Each project config says when its numbers were
- * measured and what they were.
- *
- * From there a threshold only ever goes up. If a change lowers coverage, the
- * change is what gets fixed.
+ * Config del runner para un proyecto. `thresholds` es la cobertura medida, truncada al
+ * entero: nunca un número redondo que suene exigente ni uno bajo de colchón. Desde ahí solo
+ * sube: si un cambio baja la cobertura, se arregla el cambio.
  */
 export function projectRunner(thresholds: CoverageThresholds, alsoExclude: string[] = []) {
   return defineConfig({
     test: {
       setupFiles: ['./vitest-setup.ts'],
-      /*
-       * THE TIMEZONE IS PINNED, AND WEST OF UTC ON PURPOSE.
-       *
-       * `new Date('2026-03-15')` is parsed as UTC midnight, so anything that
-       * formats it in local time is a day early everywhere west of UTC -- and
-       * exactly right in UTC. A suite that runs in UTC therefore cannot see
-       * that class of bug at all, which is how one shipped in the table's date
-       * formatter and was only found by looking at a screen in Costa Rica.
-       *
-       * Pinning it here makes every run agree, whatever machine it is on, and
-       * makes the offset non-zero so the bug has somewhere to show. It is set
-       * as an environment variable rather than in a setup file because Node
-       * caches the zone at startup: `process.env.TZ = ...` from inside a test
-       * has no effect (verified on Node 24).
-       */
+      // Zona horaria fija y al oeste de UTC: `new Date('2026-03-15')` es medianoche UTC y
+      // en hora local cae un día antes; en UTC ese error no se ve (así se escapó uno en la
+      // tabla). Variable de entorno y no setup: Node cachea la zona al arrancar (Node 24).
       env: { TZ: 'America/Costa_Rica' },
       coverage: {
         provider: 'v8',

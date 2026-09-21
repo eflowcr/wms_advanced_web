@@ -1,6 +1,6 @@
-# See https://docs.github.com/get-started/getting-started-with-git/ignoring-files for more about ignoring files.
+# Ver https://docs.github.com/get-started/getting-started-with-git/ignoring-files
 
-# Compiled output
+# Salida compilada
 /dist
 /tmp
 /out-tsc
@@ -11,7 +11,7 @@
 npm-debug.log
 yarn-error.log
 
-# IDEs and editors
+# IDEs y editores
 .idea/
 .project
 .classpath
@@ -29,7 +29,7 @@ yarn-error.log
 !.vscode/mcp.json
 .history/*
 
-# Miscellaneous
+# Varios
 /.angular/cache
 .sass-cache/
 /connect.lock
@@ -40,34 +40,27 @@ testem.log
 __screenshots__/
 
 # Claude Code
-# La configuracion local del agente es de la maquina, no del proyecto: rutas y
-# permisos que valen solo aca. Hasta ahora quedaba fuera por el gitignore
-# global del usuario (~/.config/git/ignore), que es por maquina; anotada aca
-# la regla vale para cualquiera que clone el repo.
-# Un `.claude/settings.json` compartido por el equipo SI se versiona, por eso
-# se ignora el archivo y no la carpeta entera.
+# La config local del agente es de la máquina (rutas y permisos de acá). Se ignora el
+# archivo y no la carpeta: un `.claude/settings.json` compartido sí se versiona.
 .claude/settings.local.json
 
-# System files
+# Archivos del sistema
 .DS_Store
 Thumbs.db
 
-# Test artefacts
+# Artefactos de prueba
 /playwright-report
 /test-results
 /blob-report
 /playwright/.cache
 
 # Scripts locales de mantenimiento
-# Utilidades de una sola vez que viven en la maquina del desarrollador.
-# No son parte del proyecto. Un script que SI lo sea va versionado en una
-# carpeta propia y se agrega con `git add -f`.
+# Utilidades de una sola vez de la máquina del desarrollador, fuera del proyecto. Un
+# script que sí sea del proyecto va en una carpeta propia, con `git add -f`.
 /*.ps1
 limpieza-ewms.ps1
 commit-unico.ps1
 
-# Salida del arnes visual del showroom (npm run showroom:capture).
-# Son capturas y mediciones para mirar mientras se construye una pagina, no
-# lineas base: versionarlas convertiria cada cambio visual deliberado en una
-# revision de diff binario. Ver playwright.capture.config.ts.
+# Salida del arnés visual del showroom (npm run showroom:capture): capturas para mirar,
+# no líneas base. Ver playwright.capture.config.ts.
 /showroom-captures

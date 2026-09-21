@@ -1,43 +1,15 @@
 name: CI
 
-# Every job below FAILS the build. Nothing here is advisory.
-# If a rule is too strict, the rule changes deliberately -- it is never demoted
-# to a warning to get a branch green.
+# Todo job de acá rompe el build: nada es aviso. Una regla demasiado estricta se
+# cambia a propósito en un PR, nunca se degrada a warning para poner verde una rama.
 #
-# FOUR JOBS, AND THEIR NAMES ARE DICTATED BY THE BRANCH RULE.
-#
-#   Types, lint, tests, budgets   types, lint, tokens, icons, i18n, shortcuts,
-#                                 clicks, unit tests with coverage and axe,
-#                                 production build with budgets, npm audit
-#   Playwright smoke              the end-to-end floor
-#   Playwright showroom           the catalogue's suite -- ALWAYS REPORTS,
-#                                 runs only when needed
-#   Gitleaks                      secrets, history and working tree
-#
-# THE NAME IS THE CONTRACT, AND WE ARE NOT THE ONES WHO HOLD IT. The ruleset
-# «Protect» requires checks BY NAME, letter for letter, and GitHub takes the
-# name from a job's `name:`. A required check whose name no job reports does
-# not fail: it WAITS FOREVER, and the pull request is blocked with nothing red
-# to look at. It happened in DS-5 (3dab2a3) and again on the DS-5 closing PR.
-#
-# The ruleset lives in GitHub, not in this repository, and editing it needs
-# admin rights that this team does not have (verified 2026-09-20: `push`, no
-# `admin`, no `maintain`). So the three names it already knows are FIXED
-# INPUTS, copied here exactly:
-#
-#     Types, lint, tests, budgets · Playwright smoke · Gitleaks
-#
-# Do not "improve" them. Renaming one does not rename the requirement; it
-# orphans it. `Playwright showroom` is the only free name -- the ruleset does
-# not ask for it yet -- and it follows the same style so the family reads as
-# one set the day somebody with admin rights can add it.
-#
-# What the DS-5 closing DID fix, and keeps: no job or step carries a «Gate N»
-# any more. The FOURTEEN RULES are numbered in the vault (Integracion
-# Continua.md), where a number can be cited, rather than here, where
-# renumbering a rule used to mean renaming a check.
-# `tools/ci/e2e-levels.test.mjs` asserts the names and the absence of numbers,
-# so this comment is not the only guard.
+# Los `name:` de los jobs son el contrato con el ruleset «Protect», que exige checks
+# por nombre letra por letra y vive en GitHub (sin permiso de admin para editarlo).
+# Fijos: `Types, lint, tests, budgets` · `Playwright smoke` · `Gitleaks`. Un
+# renombrado no falla: deja la PR esperando para siempre (pasó en 3dab2a3 y en el
+# cierre de DS-5). `Playwright showroom` es el único libre. Ningún nombre lleva
+# «Gate N»: los números de regla viven en el vault. Lo guarda
+# tools/ci/e2e-levels.test.mjs. Ver vault: 02-Arquitectura/Integracion Continua.md §4.
 
 on:
   push:
@@ -45,12 +17,8 @@ on:
   pull_request:
     branches: [main, development]
 
-# LEAST PRIVILEGE, DECLARED ONCE FOR EVERY JOB. Without this block the
-# GITHUB_TOKEN takes the repository's default, which may be read-write. No job
-# here writes to the repository: they check out, run, and upload artifacts --
-# and artifacts go through the runner's own token, not this one. A job that
-# one day needs more asks for it in a `permissions:` of its own, where the
-# exception is visible. Same block as codeql.yml.
+# Mínimo privilegio para todos los jobs: ninguno escribe en el repo (los artefactos
+# usan el token del runner). Un job que necesite más lo pide en su propio bloque.
 permissions:
   contents: read
 
@@ -59,13 +27,12 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  # Pinned once here; every job reuses it.
   GITLEAKS_VERSION: '8.30.1'
 
 jobs:
   # ---------------------------------------------------------------------- verify
   verify:
-    # Required by the ruleset under EXACTLY this name. See the header.
+    # Nombre exigido por el ruleset, letra por letra. Ver la cabecera.
     name: Types, lint, tests, budgets
     runs-on: ubuntu-latest
     steps:
@@ -74,25 +41,22 @@ jobs:
       - name: Set up Node
         uses: actions/setup-node@v5
         with:
-          # Single source of truth: the same file fnm reads locally.
-          # package.json `engines` + `.npmrc` engine-strict make a mismatch fail loudly.
+          # Única fuente de verdad, la misma que lee fnm en local; `engines` +
+          # engine-strict en .npmrc hacen fallar un desajuste.
           node-version-file: .node-version
           cache: npm
 
       - name: Install dependencies
         run: npm ci
 
-      # Any type error fails the build.
       - name: TypeScript (strict)
         run: npm run typecheck
 
-      # Boundary rules and security rules are both ESLint errors.
-      # --max-warnings=0 means a warning is a failure too.
+      # --max-warnings=0: un warning también rompe.
       - name: ESLint (boundaries, security, zero warnings)
         run: npm run lint
 
-      # The template half of the security rule: ESLint covers .innerHTML in
-      # TypeScript; this covers the [innerHTML] binding in Angular templates.
+      # Mitad de plantillas de la regla de seguridad: ESLint solo ve .innerHTML en TypeScript.
       - name: No [innerHTML] bindings in templates
         run: |
           if grep -rn '\[innerHTML\]' projects --include='*.html'; then
@@ -101,86 +65,43 @@ jobs:
           fi
           echo "No [innerHTML] bindings found."
 
-      # Every visual value comes from a design token (ADR 0005, ADR 0009).
-      # Fails on raw hex / rgb() / rgba() / hsl() / px, on Tailwind default utilities
-      # (bg-blue-500 carries no hex and still bypasses the system), and on primitive
-      # tokens used outside tokens.css -- the single file where raw values are legitimate.
+      # Todo valor visual sale de un token (ADR 0005, ADR 0009).
       - name: Design tokens (no raw values, no Tailwind defaults)
         run: npm run lint:tokens
 
-      # Icons (ADR 0011). icons.generated.ts must match a fresh regeneration
-      # byte for byte (like a lockfile), and no template may hold a
-      # hand-written <svg>: every icon goes through <ewms-icon>.
+      # ADR 0011: la tabla generada coincide byte a byte con una regeneración.
       - name: Icons (generated table in sync, no loose <svg>)
         run: npm run lint:icons
 
-      # i18n (ADR 0008). Keys used vs. defined in both directions
-      # (transloco-keys-manager), identical key sets in every dictionary,
-      # canonical dictionary format with valid ICU, and no hardcoded human
-      # text in templates. The showroom is exempt; the reason lives in the script.
+      # ADR 0008. El showroom está exento; la razón vive en el script.
       - name: i18n (keys in sync, same keys per language, no hardcoded text)
         run: npm run lint:i18n
 
-      # The shortcut map (REQ-FE-DS4-001 RFE-01). Every key is named in a map
-      # file and nowhere else, and exactly one global keyboard listener
-      # exists. Built in DS-4 and, until DS-5, never wired here: the script
-      # existed, `npm run lint:shortcuts` ran it, and nothing in CI called it.
-      # A rule that only runs when somebody remembers is not a rule.
+      # REQ-FE-DS4-001 RFE-01. Escrito en DS-4 y sin cablear hasta DS-5.
       - name: Shortcut map (one map, one listener)
         run: npm run lint:shortcuts
 
-      # The click budget (REQ-FE-DS4-003 HG-02). The numbers are declared
-      # once, and both the screen and the end-to-end test import them rather
-      # than restating them. Same history as the shortcut map: written in
-      # DS-4, wired in DS-5.
+      # REQ-FE-DS4-003 HG-02. Misma historia que el mapa de atajos.
       - name: Click budget (declared once, imported twice)
         run: npm run lint:click-budget
 
-      # Unit tests, coverage thresholds, and the axe-core accessibility
-      # harness all run in this one Vitest suite.
       - name: Vitest, coverage thresholds, axe-core
         run: npm test
 
-      # Bundle budgets live in angular.json; exceeding maximumError fails here.
+      # Los presupuestos viven en angular.json; pasar maximumError rompe acá.
       - name: Production build and bundle budgets
         run: npm run build
 
-      # Dependency vulnerabilities.
       - name: npm audit
         run: npm run audit:ci
 
   # -------------------------------------------------------------- smoke, showroom
-  #
-  # THE SUITE RUNS IN LEVELS, AND THE NUMBER THAT FORCED IT IS 183 x 1 WORKER.
-  #
-  # Until DS-5 this was ONE job running every end-to-end test with a single
-  # Playwright worker. That is 183 tests in a queue on a two-core runner, and
-  # the direction of travel was the problem rather than the minutes: every
-  # domain of DS-6 adds screens, every screen adds tests, and all of them would
-  # have joined the same queue.
-  #
-  #   smoke     the application boots, every route answers, the three patterns
-  #             still work on the keyboard. EVERY pull request and every push,
-  #             no exceptions, under two minutes.
-  #
-  #   showroom  the catalogue's own documentation -- the component sheets, the
-  #             icon table, the dictionaries, the click budget. On a pull
-  #             request it runs only when something it documents changed; on a
-  #             push to development or main it always runs. One machine.
-  #
-  # `smoke` and `showroom` above are the PLAYWRIGHT PROJECT names, in
-  # playwright.config.ts. The jobs that run them are named for the ruleset.
-  #
-  # ONE VERDICT, ONE EXECUTION. Until this commit the showroom spent SIX jobs
-  # to report one check: a path filter, three shards, a report merger and a
-  # job that read the shards' result. Four of the six reported a check name
-  # nobody could ever require, and three of them paid the same ~40 s of Node,
-  # dependencies and browser. It is one job now, and the path filter is its
-  # first step: it always runs, so it always reports, and it exits green in
-  # seconds when nothing it documents changed.
+  # Niveles de la suite E2E (proyectos de Playwright en playwright.config.ts). smoke:
+  # todo PR y todo push, menos de dos minutos. showroom: en un PR solo si cambió lo
+  # que documenta; en push, siempre. Ver vault: Integracion Continua.md §4.1.
 
   smoke:
-    # Required by the ruleset under EXACTLY this name. See the header.
+    # Nombre exigido por el ruleset, letra por letra. Ver la cabecera.
     name: Playwright smoke
     runs-on: ubuntu-latest
     steps:
@@ -198,8 +119,6 @@ jobs:
       - name: Install Playwright browser
         run: npx playwright install chromium --with-deps
 
-      # Boots the real app, walks every route, and runs one flow per pattern
-      # on the keyboard alone.
       - name: Playwright smoke suite
         run: npm run e2e:smoke
 
@@ -212,28 +131,18 @@ jobs:
           retention-days: 7
 
   showroom:
-    # THE ONE NAME THAT IS OURS TO CHOOSE: the ruleset does not ask for this
-    # check yet, because adding it needs admin rights this team does not have.
-    # It is shaped like a required check anyway -- ONE JOB, NO `needs:`, NO
-    # `if:`, so it always runs and always reports -- and the day somebody can
-    # add it, nothing here has to change.
+    # Sin `needs:` ni `if:` a propósito: siempre corre y siempre reporta, listo para
+    # el día que el ruleset lo exija. El filtro es un paso, no un job.
     name: Playwright showroom
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
         with:
-          # The base of the pull request has to be in the history to diff it.
+          # Hace falta la base del PR en la historia para el diff.
           fetch-depth: 0
 
-      # Plain git, and no third-party action. A path filter is four lines of
-      # shell; a marketplace action for it would be one more dependency inside
-      # the pipeline's own security perimeter (PLN-WMS-003 section 8), bought
-      # for nothing.
-      #
-      # A STEP AND NOT A JOB OF ITS OWN. As a job it answered a question for
-      # three other jobs and reported a check nobody could require; here it
-      # answers the same question for the steps below it, in the same
-      # workspace, and costs one checkout instead of four.
+      # Git pelado y ninguna acción de terceros: una más del marketplace ampliaría
+      # el perímetro de seguridad del pipeline (PLN-WMS-003 §8) a cambio de nada.
       - name: Decide whether the showroom suite has to run
         id: filter
         env:
@@ -248,10 +157,8 @@ jobs:
           CHANGED=$(git diff --name-only "$BASE_SHA" HEAD)
           echo "Changed files:"
           echo "$CHANGED"
-          # What the showroom suite actually defends: the library, the
-          # catalogue, the shell's layout (which its axe and keyboard walks
-          # cross on every page), the specs themselves, and the Playwright
-          # configuration.
+          # Lo que defiende la suite: biblioteca, catálogo, layout del shell, las
+          # specs y la config de Playwright. La prueba e2e-levels lee esta expresión.
           if printf '%s\n' "$CHANGED" | grep -Eq '^(projects/design-system/|projects/showroom/|projects/shell/src/app/layout/|e2e/|playwright[^/]*\.ts$)'; then
             echo "showroom=true" >> "$GITHUB_OUTPUT"
           else
@@ -259,12 +166,8 @@ jobs:
             echo "showroom=false" >> "$GITHUB_OUTPUT"
           fi
 
-      # EVERYTHING BELOW IS GUARDED BY THE FILTER, WHICH IS WHY THE JOB IS
-      # CHEAP WHEN IT HAS NOTHING TO DO: a pull request that touches only
-      # `core/` pays one checkout and a git diff, reports green, and says on
-      # the log why. A step skipped inside a job does not skip the job, so the
-      # check is reported either way -- which is the shape branch protection
-      # requires and the one an `if:` on the job could never promise.
+      # Un paso saltado no salta el job: el check se reporta igual, cosa que un
+      # `if:` en el job nunca garantiza.
       - name: Set up Node
         if: steps.filter.outputs.showroom == 'true'
         uses: actions/setup-node@v5
@@ -280,18 +183,8 @@ jobs:
         if: steps.filter.outputs.showroom == 'true'
         run: npx playwright install chromium --with-deps
 
-      # ONE MACHINE AND NOT THREE, AND THE MEASUREMENT IS WHY.
-      #
-      # Until this commit the suite ran as a three-way matrix whose blobs a
-      # fourth job merged. Measured on one machine at four workers: the whole
-      # project takes 2 min 18 s, and the same tests split three ways take
-      # 56 s + 1 min 30 s + 1 min 12 s = 3 min 38 s of machine time. Splitting
-      # costs 58% more work for 48 s of wall clock, and on CI those 48 s are
-      # spent twice over installing Node, the dependencies and the browser on
-      # two extra runners (~40 s each, measured).
-      #
-      # The `html` reporter writes one report because there is one run: no
-      # blobs, and no `merge-reports`.
+      # Una máquina y no tres: el sharding medido costó 58 % más de máquina por
+      # 48 s de reloj. Una corrida, un reporte html. Ver vault: Integracion Continua.md.
       - name: Playwright showroom suite
         if: steps.filter.outputs.showroom == 'true'
         run: npm run e2e:showroom
@@ -305,17 +198,16 @@ jobs:
           retention-days: 7
 
   secrets:
-    # Required by the ruleset under EXACTLY this name. See the header.
+    # Nombre exigido por el ruleset, letra por letra. Ver la cabecera.
     name: Gitleaks
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
         with:
-          # Full history so the scan covers every commit on the branch, not just the tip.
+          # Historia completa: el escaneo cubre cada commit de la rama.
           fetch-depth: 0
 
-      # The binary is used directly rather than gitleaks-action, which requires a
-      # licence key for organisation-owned repositories.
+      # El binario directo: gitleaks-action pide licencia en repos de organización.
       - name: Install gitleaks
         run: |
           curl -sSL -o /tmp/gitleaks.tar.gz \
@@ -324,7 +216,6 @@ jobs:
           sudo mv /tmp/gitleaks /usr/local/bin/gitleaks
           gitleaks version
 
-      # Any detected secret fails the build.
       - name: Scan git history for secrets
         run: gitleaks git . --config .gitleaks.toml --redact --no-banner
 
