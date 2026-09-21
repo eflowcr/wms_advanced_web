@@ -22,6 +22,7 @@ import { ShowroomPagination } from './components/pagination';
 import { ShowroomRadio } from './components/radio';
 import { ShowroomSelect } from './components/select';
 import { ShowroomSplitButton } from './components/split-button';
+import { ShowroomDatePicker } from './components/date-picker';
 import { ShowroomTable } from './components/table';
 import { ShowroomText } from './components/text';
 import { ShowroomToast } from './components/toast';
@@ -534,6 +535,7 @@ const SHEETS: readonly { name: string; component: Type<unknown>; heading: string
   { name: 'ShowroomTable', component: ShowroomTable, heading: 'Tabla de datos' },
   { name: 'ShowroomPagination', component: ShowroomPagination, heading: 'Paginación' },
   { name: 'ShowroomSplitButton', component: ShowroomSplitButton, heading: 'Split button' },
+  { name: 'ShowroomDatePicker', component: ShowroomDatePicker, heading: 'Date picker' },
   { name: 'ShowroomNavigation', component: ShowroomNavigation, heading: 'Navegación' },
 ];
 
@@ -1154,6 +1156,22 @@ describe('ShowroomDialog', () => {
     expect(page.isGlyph('glyph')).toBe(true);
     expect(page.isGlyph('confirm')).toBe(false);
     expect(page.glyphFor('no-such-tone')).toBeNull();
+  });
+});
+
+describe('ShowroomDatePicker', () => {
+  it('prints the value the form holds: an ISO date, or the table DateRange', async () => {
+    const { fixture, element } = await render(ShowroomDatePicker);
+    expect(element.querySelector('[data-demo-date-value]')?.textContent).toBe('null');
+    expect(element.querySelector('[data-demo-range-value]')?.textContent).toContain(
+      '"from":"2026-09-01"',
+    );
+    const page = fixture.componentInstance as unknown as {
+      form: { controls: { entrega: { setValue(value: string): void } } };
+    };
+    page.form.controls.entrega.setValue('2099-01-02');
+    await fixture.whenStable();
+    expect(element.querySelector('[data-demo-date-value]')?.textContent).toContain('2099-01-02');
   });
 });
 

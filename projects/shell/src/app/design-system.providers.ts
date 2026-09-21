@@ -1,6 +1,7 @@
 import { computed, inject, type Provider } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import {
+  EWMS_DATE_PICKER_MESSAGES,
   EWMS_FAVORITE_LABELS,
   EWMS_FAVORITES_STORE,
   EWMS_SELECT_MESSAGES,
@@ -12,6 +13,7 @@ import {
   Favorites,
   InMemoryFavoritesStore,
   parseTableDate,
+  type DatePickerMessages,
   type FavoriteLabelResolver,
   type SelectMessages,
   type ShortcutHelpMessages,
@@ -68,6 +70,10 @@ export function provideEwmsDesignSystem(): Provider[] {
     {
       provide: EWMS_SPLIT_BUTTON_MESSAGES,
       useFactory: splitButtonMessages,
+    },
+    {
+      provide: EWMS_DATE_PICKER_MESSAGES,
+      useFactory: datePickerMessages,
     },
   ];
 }
@@ -237,6 +243,26 @@ function splitButtonMessages(): SplitButtonMessages {
   return {
     get moreActions() {
       return transloco.translate('ds.splitButton.moreActions');
+    },
+  };
+}
+
+/** `locale` también es getter: el calendario sigue al idioma activo sin recargar. */
+function datePickerMessages(): DatePickerMessages {
+  const transloco = inject(TranslocoService);
+  const locale = inject(TranslocoLocaleService);
+  return {
+    get chooseDate() {
+      return transloco.translate('ds.datePicker.chooseDate');
+    },
+    get previousMonth() {
+      return transloco.translate('ds.datePicker.previousMonth');
+    },
+    get nextMonth() {
+      return transloco.translate('ds.datePicker.nextMonth');
+    },
+    get locale() {
+      return locale.getLocale();
     },
   };
 }

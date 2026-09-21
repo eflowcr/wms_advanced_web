@@ -19,11 +19,12 @@ export const DIALOG = '/design-system/components/dialog';
 export const TABLE = '/design-system/components/table';
 export const PAGINATION = '/design-system/components/pagination';
 export const SPLIT_BUTTON = '/design-system/components/split-button';
+export const DATE_PICKER = '/design-system/components/date-picker';
 export const KEYBOARD = '/design-system/patterns/keyboard';
 export const SEARCH_CREATE_EDIT = '/design-system/patterns/search-create-edit';
 
 /**
- * Las 23 rutas navegables (21 componentes y fundamentos más dos patrones). Sumarla acá la somete a las cuatro
+ * Las 24 rutas navegables (22 componentes y fundamentos más dos patrones). Sumarla acá la somete a las cuatro
  * pruebas de showroom: título, sin desborde a 1440 y 1280, axe limpio y Tab una vez por control.
  */
 export const PAGES = [
@@ -48,6 +49,7 @@ export const PAGES = [
   { url: TABLE, heading: 'Tabla de datos' },
   { url: PAGINATION, heading: 'Paginación' },
   { url: SPLIT_BUTTON, heading: 'Split button' },
+  { url: DATE_PICKER, heading: 'Date picker' },
   { url: KEYBOARD, heading: 'Atajos de teclado' },
   { url: SEARCH_CREATE_EDIT, heading: 'Buscar, crear, editar' },
 ] as const;

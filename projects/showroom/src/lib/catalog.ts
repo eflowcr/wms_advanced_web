@@ -228,10 +228,10 @@ const COMPONENTS: readonly CatalogEntry[] = [
   {
     id: 'date-picker',
     name: 'Date picker',
-    selector: null,
-    route: null,
-    status: 'gap',
-    note: 'Hueco reservado, sin ficha.',
+    selector: 'ewms-date-picker',
+    route: `${SHOWROOM_BASE}/components/date-picker`,
+    status: 'ready',
+    note: 'Fecha o período en el idioma de la app, escrita o elegida con el teclado. Valor ISO.',
   },
 ];
 

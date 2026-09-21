@@ -6,6 +6,11 @@
     }
   },
   "ds": {
+    "datePicker": {
+      "chooseDate": "Choose date",
+      "nextMonth": "Next month",
+      "previousMonth": "Previous month"
+    },
     "select": {
       "error": "The catalogue could not be reached.",
       "more": "Show more results",

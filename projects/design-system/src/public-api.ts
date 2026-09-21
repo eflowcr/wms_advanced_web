@@ -108,6 +108,15 @@ export {
 } from './lib/split-button/split-button';
 export { EWMS_SPLIT_BUTTON_MESSAGES } from './lib/split-button/split-button.types';
 
+// Date picker (2026-09-21): calendario propio en el idioma de la app; valor ISO o `DateRange`.
+export {
+  DatePicker,
+  type DatePickerMessages,
+  type DatePickerMode,
+  type DatePickerValue,
+} from './lib/date-picker/date-picker';
+export { EWMS_DATE_PICKER_MESSAGES } from './lib/date-picker/date-picker.types';
+
 // Pagination (DS-3): aparte de la tabla, porque cards, logs y colas de picking también paginan.
 export { Pagination, type PaginationMessages } from './lib/pagination/pagination';
 

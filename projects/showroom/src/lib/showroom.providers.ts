@@ -1,5 +1,6 @@
 import { inject, signal, type Provider } from '@angular/core';
 import {
+  EWMS_DATE_PICKER_MESSAGES,
   EWMS_FAVORITE_LABELS,
   EWMS_SELECT_MESSAGES,
   EWMS_SHORTCUT_HELP_MESSAGES,
@@ -29,6 +30,15 @@ export function provideShowroomDesignSystem(): Provider[] {
     { provide: EWMS_SHORTCUT_MAP, useValue: SHOWROOM_SHORTCUT_MAP },
     { provide: EWMS_SHORTCUT_HELP_MESSAGES, useValue: SHORTCUT_HELP_MESSAGES },
     { provide: EWMS_SPLIT_BUTTON_MESSAGES, useValue: { moreActions: 'Más opciones' } },
+    {
+      provide: EWMS_DATE_PICKER_MESSAGES,
+      useValue: {
+        chooseDate: 'Elegir fecha',
+        previousMonth: 'Mes anterior',
+        nextMonth: 'Mes siguiente',
+        locale: 'es-CR',
+      },
+    },
 
     // Nombres de rutas, no el almacén: `EWMS_FAVORITES_STORE` y `Favorites` vienen de la aplicación.
     // Proveerlos otra vez dio una página con dos estrellas y dos listas en desacuerdo.

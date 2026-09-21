@@ -96,6 +96,11 @@ export const showroomRoutes: Routes = [
         pathMatch: 'full',
       },
       {
+        path: 'components/date-picker',
+        loadComponent: async () =>
+          (await import('./pages/components/date-picker')).ShowroomDatePicker,
+      },
+      {
         path: 'components/split-button',
         loadComponent: async () =>
           (await import('./pages/components/split-button')).ShowroomSplitButton,
