@@ -3,7 +3,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import {
   EWMS_FAVORITE_LABELS,
   EWMS_FAVORITES_STORE,
-  EWMS_SEARCH_SELECT_MESSAGES,
+  EWMS_SELECT_MESSAGES,
   EWMS_SHORTCUT_HELP_MESSAGES,
   EWMS_SHORTCUT_MAP,
   EWMS_TABLE_FORMATTERS,
@@ -12,7 +12,7 @@ import {
   InMemoryFavoritesStore,
   parseTableDate,
   type FavoriteLabelResolver,
-  type SearchSelectMessages,
+  type SelectMessages,
   type ShortcutHelpMessages,
   type TableFormatters,
   type TableMessages,
@@ -38,8 +38,8 @@ export function provideEwmsDesignSystem(): Provider[] {
       useFactory: tableFormatters,
     },
     {
-      provide: EWMS_SEARCH_SELECT_MESSAGES,
-      useFactory: searchSelectMessages,
+      provide: EWMS_SELECT_MESSAGES,
+      useFactory: selectMessages,
     },
     // El mapa es valor y las palabras son fábrica (DS-4): las teclas no cambian con
     // el idioma. El showroom provee su propio par para registrar `create` sin el shell.
@@ -151,26 +151,26 @@ function tableMessages(): TableMessages {
  * Getters: `translate()` lee el idioma activo al llamarse, y con cadenas planas la
  * interfaz quedaría en el idioma del arranque.
  */
-function searchSelectMessages(): SearchSelectMessages {
+function selectMessages(): SelectMessages {
   const transloco = inject(TranslocoService);
   return {
     get searching() {
-      return transloco.translate('ds.searchSelect.searching');
+      return transloco.translate('ds.select.searching');
     },
     get error() {
-      return transloco.translate('ds.searchSelect.error');
+      return transloco.translate('ds.select.error');
     },
     get retry() {
-      return transloco.translate('ds.searchSelect.retry');
+      return transloco.translate('ds.select.retry');
     },
     get more() {
-      return transloco.translate('ds.searchSelect.more');
+      return transloco.translate('ds.select.more');
     },
-    noResults: (query) => transloco.translate('ds.searchSelect.noResults', { query }),
+    noResults: (query) => transloco.translate('ds.select.noResults', { query }),
     results: (count, total) =>
       total === null
-        ? transloco.translate('ds.searchSelect.results', { count })
-        : transloco.translate('ds.searchSelect.resultsOf', { count, total }),
+        ? transloco.translate('ds.select.results', { count })
+        : transloco.translate('ds.select.resultsOf', { count, total }),
   };
 }
 

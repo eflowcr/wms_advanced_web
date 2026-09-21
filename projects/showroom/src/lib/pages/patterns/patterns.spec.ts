@@ -41,7 +41,7 @@ function cleanUpOverlays(): void {
 }
 
 // Umbral declarado a mano: jsdom no carga tokens.css, y sin `--threshold-scan-keystroke` nada
-// se clasifica como escaneo y esos casos pasarían en vacío. Igual que search-select.spec.ts.
+// se clasifica como escaneo y esos casos pasarían en vacío. Igual que select.spec.ts.
 const THRESHOLD_MS = 50;
 
 describe('the DS-4 pattern pages, driven', () => {

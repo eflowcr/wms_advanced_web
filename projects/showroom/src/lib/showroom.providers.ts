@@ -1,14 +1,14 @@
 import { inject, signal, type Provider } from '@angular/core';
 import {
   EWMS_FAVORITE_LABELS,
-  EWMS_SEARCH_SELECT_MESSAGES,
+  EWMS_SELECT_MESSAGES,
   EWMS_SHORTCUT_HELP_MESSAGES,
   EWMS_SHORTCUT_MAP,
   EWMS_TABLE_FORMATTERS,
   EWMS_TABLE_MESSAGES,
   parseTableDate,
   type FavoriteLabelResolver,
-  type SearchSelectMessages,
+  type SelectMessages,
   type ShortcutHelpMessages,
   type TableFormatters,
   type TableMessages,
@@ -24,7 +24,7 @@ export function provideShowroomDesignSystem(): Provider[] {
   return [
     { provide: EWMS_TABLE_MESSAGES, useValue: TABLE_MESSAGES },
     { provide: EWMS_TABLE_FORMATTERS, useValue: TABLE_FORMATTERS },
-    { provide: EWMS_SEARCH_SELECT_MESSAGES, useValue: SEARCH_SELECT_MESSAGES },
+    { provide: EWMS_SELECT_MESSAGES, useValue: SELECT_MESSAGES },
     { provide: EWMS_SHORTCUT_MAP, useValue: SHOWROOM_SHORTCUT_MAP },
     { provide: EWMS_SHORTCUT_HELP_MESSAGES, useValue: SHORTCUT_HELP_MESSAGES },
 
@@ -118,7 +118,7 @@ export const TABLE_FORMATTERS: TableFormatters = {
   },
 };
 
-export const SEARCH_SELECT_MESSAGES: SearchSelectMessages = {
+export const SELECT_MESSAGES: SelectMessages = {
   searching: 'Buscando…',
   noResults: (query) => `Sin resultados para «${query}»`,
   error: 'No se pudo consultar el catálogo.',

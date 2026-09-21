@@ -16,7 +16,6 @@ import {
   INPUT,
   PAGINATION,
   RADIO,
-  SEARCH_SELECT,
   SELECT,
   SPACING,
   TABLE,
@@ -53,6 +52,7 @@ test.describe('the showroom renders and is reachable', () => {
     for (const [old, now, heading] of [
       ['/design-system/iconografia', /\/foundations\/icons$/, 'Iconografía'],
       ['/design-system/components/icon-button', /\/components\/button$/, 'Botón'],
+      ['/design-system/components/search-select', /\/components\/select$/, 'Select'],
     ] as const) {
       await page.goto(old);
       await expect(page).toHaveURL(now);
@@ -1239,11 +1239,11 @@ test.describe('DS-3 lote B: dialog', () => {
   });
 });
 
-test.describe('DS-3 lote B: selector con búsqueda', () => {
+test.describe('DS-3 lote B: el select con una fuente remota', () => {
   const FIELD = '[data-demo-search] input[role="combobox"]';
 
   test('filters as you type, with nothing opened first', async ({ page }) => {
-    await page.goto(SEARCH_SELECT);
+    await page.goto(SELECT);
     await ready(page);
 
     await expect(page.locator('[role="listbox"]')).toHaveCount(0);
@@ -1254,7 +1254,7 @@ test.describe('DS-3 lote B: selector con búsqueda', () => {
   });
 
   test('a scan resolves without the panel ever opening', async ({ page }) => {
-    await page.goto(SEARCH_SELECT);
+    await page.goto(SELECT);
     await ready(page);
 
     const field = page.locator(FIELD);
@@ -1266,13 +1266,13 @@ test.describe('DS-3 lote B: selector con búsqueda', () => {
     await page.keyboard.type('SKU-88042', { delay: 0 });
     await page.keyboard.press('Enter');
 
-    await expect(page.locator('[data-demo-value]')).toContainText('SKU-88042');
+    await expect(page.locator('[data-demo-search-value]')).toContainText('SKU-88042');
     // Cero clics, y el panel nunca apareció.
     await expect(page.locator('[role="listbox"]')).toHaveCount(0);
   });
 
   test('typing the same code at human speed opens the panel instead', async ({ page }) => {
-    await page.goto(SEARCH_SELECT);
+    await page.goto(SELECT);
     await ready(page);
 
     const field = page.locator(FIELD);
@@ -1280,13 +1280,13 @@ test.describe('DS-3 lote B: selector con búsqueda', () => {
     await page.keyboard.type('SKU-88042', { delay: 150 });
 
     await expect(page.locator('[role="listbox"]')).toBeVisible();
-    await expect(page.locator('[data-demo-value]')).toHaveText('(ninguno)');
+    await expect(page.locator('[data-demo-search-value]')).toHaveText('(ninguno)');
   });
 
   test('the error is in the flow, and one Tab from the field reaches its retry', async ({
     page,
   }) => {
-    await page.goto(SEARCH_SELECT);
+    await page.goto(SELECT);
     await ready(page);
 
     await page.locator('[data-behaviour="failing"] button').click();
@@ -1305,7 +1305,7 @@ test.describe('DS-3 lote B: selector con búsqueda', () => {
   });
 
   test('a source slower than the timeout is an error, not an empty warehouse', async ({ page }) => {
-    await page.goto(SEARCH_SELECT);
+    await page.goto(SELECT);
     await ready(page);
 
     await page.locator('[data-behaviour="slow"] button').click();
@@ -1317,7 +1317,7 @@ test.describe('DS-3 lote B: selector con búsqueda', () => {
   });
 
   test('pages: the next page is appended, and changing the text starts over', async ({ page }) => {
-    await page.goto(SEARCH_SELECT);
+    await page.goto(SELECT);
     await ready(page);
 
     await page.locator(FIELD).fill('SKU');
@@ -1333,7 +1333,7 @@ test.describe('DS-3 lote B: selector con búsqueda', () => {
   });
 
   test('works when the source declines to count', async ({ page }) => {
-    await page.goto(SEARCH_SELECT);
+    await page.goto(SELECT);
     await ready(page);
 
     await page.locator('[data-toggle-counts] button').click();
@@ -1346,7 +1346,7 @@ test.describe('DS-3 lote B: selector con búsqueda', () => {
   });
 
   test('the arrows walk the list and Escape gives nothing away', async ({ page }) => {
-    await page.goto(SEARCH_SELECT);
+    await page.goto(SELECT);
     await ready(page);
 
     const field = page.locator(FIELD);
@@ -1361,28 +1361,14 @@ test.describe('DS-3 lote B: selector con búsqueda', () => {
 
     await page.keyboard.press('Escape');
     await expect(page.locator('[role="listbox"]')).toHaveCount(0);
-    await expect(page.locator('[data-demo-value]')).toHaveText('(ninguno)');
+    await expect(page.locator('[data-demo-search-value]')).toHaveText('(ninguno)');
     await expect(field).toBeFocused();
 
     // Enter sobre una fila activa elige el registro, no el texto.
     await page.keyboard.press('ArrowDown');
     await page.keyboard.press('ArrowDown');
     await page.keyboard.press('Enter');
-    await expect(page.locator('[data-demo-value]')).toContainText('SKU-');
-  });
-
-  test('the three sizes are the system scale: 32 / 40 / 48', async ({ page }) => {
-    await page.goto(SEARCH_SELECT);
-    await ready(page);
-
-    for (const [size, expected] of [
-      ['sm', 32],
-      ['md', 40],
-      ['lg', 48],
-    ] as const) {
-      const box = await page.locator(`[data-size-sample="${size}"] input`).boundingBox();
-      expect(round(box?.height), `search select ${size}`).toBe(expected);
-    }
+    await expect(page.locator('[data-demo-search-value]')).toContainText('SKU-');
   });
 });
 

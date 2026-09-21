@@ -1,43 +1,106 @@
-<!-- Etiqueta por aria-labelledby (un botón no es etiquetable); el texto del gatillo es el valor. -->
-<span [id]="labelId" class="block text-caption text-secondary mb-1">{{ label() }}</span>
+@if (searching()) {
+  <!-- RFE-01: un `<input>` que se tipea ya; es etiquetable, así que for/id. -->
+  <label [id]="labelId" [attr.for]="fieldId" class="block text-caption text-secondary mb-1">
+    {{ label() }}
+  </label>
+  <div #anchor class="relative">
+    <input
+      type="text"
+      role="combobox"
+      autocomplete="off"
+      [id]="fieldId"
+      [class]="fieldClasses()"
+      [style.borderColor]="borderColor()"
+      [style.fontSize]="fontSize()"
+      [disabled]="isDisabled()"
+      [placeholder]="placeholder()"
+      [value]="text()"
+      [attr.aria-expanded]="isOpen()"
+      aria-haspopup="listbox"
+      aria-autocomplete="list"
+      [attr.aria-controls]="controlsId()"
+      [attr.aria-activedescendant]="activeOptionId()"
+      [attr.aria-invalid]="effectiveState() === 'error' ? 'true' : null"
+      [attr.aria-describedby]="describedBy()"
+      (input)="onInput($event)"
+      (keydown)="onKeydown($event)"
+      (click)="onFieldClick()"
+      (focus)="onFocus()"
+      (blur)="onBlur()"
+    />
+    @if (hasChevron()) {
+      <span class="pointer-events-none absolute inset-y-0 right-3 flex items-center text-secondary">
+        <ewms-icon name="chevron-down" [size]="iconSize" />
+      </span>
+    }
+  </div>
 
-<button
-  #trigger
-  type="button"
-  role="combobox"
-  [id]="triggerId"
-  [class]="triggerClasses()"
-  [style.borderColor]="borderColor()"
-  [style.fontSize]="fontSize()"
-  [disabled]="isDisabled()"
-  [attr.aria-labelledby]="labelId"
-  [attr.aria-expanded]="isOpen()"
-  aria-haspopup="listbox"
-  [attr.aria-controls]="controlsId()"
-  [attr.aria-activedescendant]="activeOptionId()"
-  [attr.aria-invalid]="error() ? 'true' : null"
-  [attr.aria-describedby]="describedBy()"
-  (click)="toggle()"
-  (keydown)="onTriggerKeydown($event)"
-  (blur)="onTriggerBlur()"
->
-  <span class="truncate" [class]="triggerTextClasses()">{{ triggerText() }}</span>
-
-  <!-- Decorativo; `sm` (16 px) en todo tamaño, como el prefijo del Input. -->
-  <ewms-icon name="chevron-down" [size]="iconSize" />
-</button>
+  <!--
+    RFE-08: el foco no sale del campo; esta región anuncia la búsqueda. `polite`, porque
+    `assertive` pisaría a quien tipea. Siempre presente: una que aparece con su primer mensaje se anuncia mal.
+  -->
+  <p [id]="statusId" class="sr-only" role="status" aria-live="polite">{{ announcement() }}</p>
+} @else {
+  <!-- Un botón no es etiquetable: aria-labelledby; el texto del gatillo es el valor. -->
+  <span [id]="labelId" class="block text-caption text-secondary mb-1">{{ label() }}</span>
+  <button
+    #anchor
+    type="button"
+    role="combobox"
+    [id]="fieldId"
+    [class]="fieldClasses()"
+    [style.borderColor]="borderColor()"
+    [style.fontSize]="fontSize()"
+    [disabled]="isDisabled()"
+    [attr.aria-labelledby]="labelId"
+    [attr.aria-expanded]="isOpen()"
+    aria-haspopup="listbox"
+    [attr.aria-controls]="controlsId()"
+    [attr.aria-activedescendant]="activeOptionId()"
+    [attr.aria-invalid]="error() ? 'true' : null"
+    [attr.aria-describedby]="describedBy()"
+    (click)="onTriggerClick()"
+    (keydown)="onKeydown($event)"
+    (blur)="onBlur()"
+  >
+    <span class="truncate" [class.text-secondary]="selectedLabel() === null">
+      {{ selectedLabel() ?? placeholder() }}
+    </span>
+    <!-- Decorativo; `sm` (16 px) en todo tamaño, como el prefijo del Input. -->
+    <ewms-icon name="chevron-down" [size]="iconSize" />
+  </button>
+}
 
 @if (hint()) {
   <p [id]="hintId" class="mt-1 text-caption" [class]="hintClasses()">{{ hint() }}</p>
 }
 
+<!-- En el flujo y no en el panel: Tab alcanza el reintento (PACQ-03.2). -->
+@if (status() === 'error') {
+  <div
+    [id]="errorId"
+    role="alert"
+    class="mt-1 flex items-center gap-2 rounded-md border border-danger bg-danger-surface p-2 text-caption text-danger"
+  >
+    <ewms-icon name="circle-x" size="sm" />
+    <span class="flex-1">{{ words().error }}</span>
+    <button
+      type="button"
+      class="rounded-sm px-2 py-1 cursor-pointer outline-none focus-visible:shadow-(--focus-ring-shadow) text-(color:--color-bg-primary) hover:text-(color:--color-bg-primary-hover)"
+      (click)="retry()"
+    >
+      {{ words().retry }}
+    </button>
+  </div>
+}
+
 <!--
-  Nada es enfocable: el teclado vive una vez, en el gatillo (combobox APG). Por eso las dos
-  reglas apagadas abajo, que suponen un teclado por fila.
+  Combobox APG: el foco queda en el campo y `aria-activedescendant` marca la fila. Las dos
+  reglas apagadas abajo pondrían cada fila en el orden de tabulación.
 -->
 <ng-template #panel>
   <ul [id]="listboxId" role="listbox" [class]="panelClasses" [attr.aria-labelledby]="labelId">
-    @for (option of options(); track $index) {
+    @for (row of rows(); track $index) {
       <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -->
       <li
         [id]="optionId($index)"
@@ -47,14 +110,41 @@
         [style.fontWeight]="$index === selectedIndex() ? selectedWeight : null"
         [attr.aria-selected]="$index === selectedIndex()"
         (mousedown)="onOptionMousedown($event)"
-        (click)="choose(option)"
+        (click)="choose(row)"
         (mouseenter)="onOptionEnter($index)"
       >
-        <span class="truncate">{{ option.label }}</span>
-
+        <span class="truncate">{{ labelOf(row) }}</span>
         @if ($index === selectedIndex()) {
           <ewms-icon name="check" [size]="iconSize" />
         }
+      </li>
+    }
+
+    @if (status() === 'searching') {
+      <li [class]="noteClasses" aria-hidden="true">
+        <ewms-icon name="spinner" size="sm" />
+        <span>{{ words().searching }}</span>
+      </li>
+    }
+
+    @if (status() === 'empty') {
+      <!-- RFE-03: repite el texto buscado, para no tener que volver a mirar el campo. -->
+      <li [class]="noteClasses" aria-hidden="true">{{ words().noResults(searchedText()) }}</li>
+    }
+
+    @if (hasMore()) {
+      <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -->
+      <li
+        [id]="optionId(rows().length)"
+        role="option"
+        [class]="moreClasses"
+        [class.bg-ghost-hover]="activeIndex() === rows().length"
+        [attr.aria-selected]="false"
+        (mousedown)="onOptionMousedown($event)"
+        (click)="loadMore()"
+        (mouseenter)="onOptionEnter(rows().length)"
+      >
+        {{ words().more }}
       </li>
     }
   </ul>

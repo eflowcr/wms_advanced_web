@@ -6,7 +6,7 @@
     }
   },
   "ds": {
-    "searchSelect": {
+    "select": {
       "error": "No se pudo consultar el catálogo.",
       "more": "Ver más resultados",
       "noResults": "Sin resultados para «{{ query }}»",

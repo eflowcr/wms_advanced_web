@@ -28,7 +28,6 @@ const ROUTES = [
   { name: '17-components-toast', url: '/design-system/components/toast' },
   { name: '18-components-card', url: '/design-system/components/card' },
   { name: '19-components-dialog', url: '/design-system/components/dialog' },
-  { name: '20-components-search-select', url: '/design-system/components/search-select' },
   { name: '21-components-table', url: '/design-system/components/table' },
   { name: '22-components-pagination', url: '/design-system/components/pagination' },
 ] as const;

@@ -6,7 +6,7 @@
     }
   },
   "ds": {
-    "searchSelect": {
+    "select": {
       "error": "The catalogue could not be reached.",
       "more": "Show more results",
       "noResults": "No results for “{{ query }}”",

@@ -3,7 +3,7 @@
   <!-- ============================================================ 1. Encabezado -->
   <header class="flex flex-col gap-2" data-block="1-encabezado">
     <div class="flex flex-wrap items-baseline gap-3">
-      <h1 class="text-h1">Select / Dropdown</h1>
+      <h1 class="text-h1">Select</h1>
       <code class="font-mono text-primary">&lt;ewms-select&gt;</code>
     </div>
     <ul class="flex flex-wrap gap-2 text-caption">
@@ -12,7 +12,7 @@
       </li>
       <li class="rounded-sm bg-success-surface px-2 py-1 text-success">Construido y en verde</li>
       <li class="rounded-sm bg-secondary px-2 py-1 text-secondary">
-        Ficha: <span class="font-mono">08-Sistema-de-Diseno/Componentes/Select-Dropdown.md</span>
+        Ficha: <span class="font-mono">08-Sistema-de-Diseno/Componentes/Select.md</span>
       </li>
     </ul>
   </header>
@@ -24,14 +24,16 @@
       <div class="flex flex-col gap-2 rounded-md border border-default bg-surface p-4">
         <h3 class="text-h3">Qué resuelve</h3>
         <p>
-          Elección <strong>única</strong> sobre una lista cerrada, con panel flotante. El trigger
-          cerrado es la misma caja que <code class="font-mono">&lt;ewms-input&gt;</code> —mismas
-          alturas, padding, escala tipográfica, radio y colores de borde— porque un select casi
-          siempre está en una fila con un input y un botón, y los tres tienen que alinearse.
+          Elección <strong>única</strong>, con panel flotante, y es <strong>el único selector del
+          sistema</strong>: sirve para tres estados, para veinte ubicaciones y para decenas de miles
+          de artículos del backend. Con {{ threshold }} opciones o menos es un botón que despliega;
+          con más, o con una fuente remota, <strong>busca</strong>.
         </p>
         <p class="text-caption text-secondary">
-          El panel se posiciona con un overlay del <strong>CDK de Angular</strong>, con volteo
-          automático cuando no entra abajo.
+          La caja es la de <code class="font-mono">&lt;ewms-input&gt;</code> —mismas alturas,
+          padding, radio y bordes— porque un select casi siempre está en una fila con un input y un
+          botón. El panel es un overlay del <strong>CDK de Angular</strong>, con volteo cuando no
+          entra abajo.
         </p>
       </div>
       <div class="flex flex-col gap-2 rounded-md border border-danger bg-danger-surface p-4">
@@ -42,8 +44,8 @@
             tres opciones detrás de un click es trabajo de más para quien completa el formulario.
           </li>
           <li>
-            <strong>Si el valor se puede escribir libre, va Input.</strong> Este componente no tiene
-            typeahead ni filtrado — está declarado pendiente en la ficha, y no está construido.
+            <strong>Si el valor se puede escribir libre, va Input.</strong> Buscar filtra una lista;
+            no acepta un texto que no esté en ella.
           </li>
           <li>
             <strong>Si hay que elegir varias, todavía no existe.</strong> El multi-select con chips
@@ -97,16 +99,134 @@
   <!-- =============================================================== 4. Variantes -->
   <section class="flex flex-col gap-4" aria-labelledby="se-variants" data-block="4-variantes">
     <h2 id="se-variants" class="text-h2">Variantes</h2>
-    <div class="flex flex-col gap-2 rounded-md border border-strong bg-secondary p-4">
-      <h3 class="text-h4">No aplica — un solo tipo de select</h3>
-      <p>
-        No hay <code class="font-mono">variant</code>, y la ficha lo dice explícitamente. Un select
-        no tiene jerarquía de énfasis: no existe «el select primario de la pantalla».
-      </p>
-      <p class="text-caption">
-        Lo que sí varía es el <strong>panel</strong>, y ahí hay dos cosas distintas que suelen
-        confundirse. Van abajo.
-      </p>
+    <p class="text-secondary">
+      No hay <code class="font-mono">variant</code> de énfasis. Lo que cambia es <strong>de dónde
+      salen las opciones</strong>, y con eso la forma: la lista corta de arriba, una lista larga que
+      se filtra en memoria, y una fuente remota que pagina y reconoce un escaneo.
+    </p>
+
+    <h3 class="text-h3">Lista larga: más de {{ threshold }} opciones, busca</h3>
+    <ewms-demo-frame ground="canvas" label="Veinticuatro racks en memoria, sin fuente">
+      <div class="flex max-w-120 flex-col gap-3" [formGroup]="form" data-demo-long>
+        <ewms-select
+          formControlName="rack"
+          label="Rack de destino"
+          placeholder="Escribí «C» o «rack 04»"
+          hint="Al abrirlo se ven todos; al escribir se filtran, sin esperar a nadie."
+          [options]="locations"
+        />
+        <p class="text-caption text-secondary">
+          Valor del control: <span class="font-mono text-primary" data-demo-long-value>{{ rack() ?? '(ninguno)' }}</span>
+        </p>
+      </div>
+    </ewms-demo-frame>
+    <p class="text-caption text-secondary">
+      Con {{ threshold }} o menos no busca, a propósito: escribir para elegir entre tres estados es un
+      paso de más, y la lista corta ya se recorre con flechas o tecleando la primera letra.
+      <code class="font-mono">searchable</code> fuerza cualquiera de las dos formas.
+    </p>
+
+    <h3 class="text-h3">Fuente remota: busca, pagina y resuelve un escaneo</h3>
+    <p class="text-secondary">
+      <strong>Escribí <span class="font-mono">caja</span>, o pegá un código completo y apretá
+      Enter.</strong> El catálogo es sintético: {{ catalogueSize }} artículos generados con semilla,
+      siempre los mismos. Ningún dato real de ningún cliente, nunca.
+    </p>
+    <ewms-demo-frame ground="canvas" label="Contra una SearchSource, dentro de un formulario reactivo">
+      <div [formGroup]="form" class="flex flex-col gap-4" data-demo-search>
+        <ewms-select
+          formControlName="articulo"
+          [source]="source()"
+          [display]="display"
+          label="Artículo"
+          placeholder="Escaneá o escribí el código"
+          hint="Probá «caja», «film», o un código entero terminado en Enter."
+        />
+
+        <dl class="flex flex-col gap-1 rounded-md border border-default bg-surface p-3 text-caption">
+          <div class="flex flex-wrap gap-2">
+            <dt class="text-secondary">Valor del control:</dt>
+            <dd class="text-primary" data-demo-search-value>{{ articleLabel() }}</dd>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <dt class="text-secondary">Tipo del valor:</dt>
+            <dd class="font-mono text-primary">
+              {{ article() ? 'el registro entero, no su texto' : 'null' }}
+            </dd>
+          </div>
+        </dl>
+
+        <div class="flex flex-col gap-2 rounded-md border border-strong bg-secondary p-3">
+          <p class="text-h4">Cómo se porta la fuente</p>
+          <div class="flex flex-wrap gap-2">
+            <ewms-button variant="secondary" size="sm" data-behaviour="normal" (click)="setBehaviour('normal')">
+              Normal
+            </ewms-button>
+            <ewms-button variant="secondary" size="sm" data-behaviour="slow" (click)="setBehaviour('slow')">
+              Más lenta que el tiempo de espera
+            </ewms-button>
+            <ewms-button variant="secondary" size="sm" data-behaviour="failing" (click)="setBehaviour('failing')">
+              Que falle
+            </ewms-button>
+            <!-- Secondary y no Ghost: el Ghost sobre el fondo secundario da 4.31:1, bajo AA (axe). -->
+            <ewms-button variant="secondary" size="sm" data-toggle-counts (click)="toggleCounts()">
+              {{ counts() ? 'Que deje de contar (total: null)' : 'Que vuelva a contar' }}
+            </ewms-button>
+          </div>
+          <p class="text-caption text-secondary">
+            Comportamiento actual:
+            <span class="font-mono" data-behaviour-value>{{ behaviour() }}</span> ·
+            <span class="font-mono" data-counts-value>{{ counts() ? 'total: número' : 'total: null' }}</span>
+          </p>
+        </div>
+
+        <div class="flex flex-col gap-2 rounded-md border border-default bg-surface p-3">
+          <div class="flex items-baseline justify-between gap-2">
+            <p class="text-h4">Lo que la fuente recibió</p>
+            <ewms-button variant="secondary" size="sm" data-clear-queries (click)="clearQueries()">
+              Limpiar
+            </ewms-button>
+          </div>
+          @if (queries().length === 0) {
+            <p class="text-caption text-secondary">Todavía nada.</p>
+          } @else {
+            <ol class="flex flex-col gap-1 text-caption" data-queries>
+              @for (query of queries(); track $index) {
+                <li class="font-mono text-primary">{{ query }}</li>
+              }
+            </ol>
+          }
+          <p class="text-caption text-secondary">
+            Escribí cinco letras seguidas rápido y mirá: <strong>una sola consulta</strong>, no cinco.
+            Ese es el retardo de entrada, y es un token. Páginas de {{ pageSize }}.
+          </p>
+        </div>
+      </div>
+    </ewms-demo-frame>
+
+    <div class="grid grid-cols-[repeat(auto-fit,minmax(20rem,1fr))] gap-4">
+      <div class="flex flex-col gap-2 rounded-md border border-default bg-surface p-4">
+        <h4 class="text-h4">Qué pasa con una pistola</h4>
+        <p class="text-caption">
+          Una ráfaga de teclas por debajo del umbral, terminada en
+          <kbd class="font-mono">Enter</kbd>, se reconoce como escaneo y <strong>busca de
+          inmediato</strong>. Si vuelve <strong>un único registro que coincide exacto</strong>, se
+          elige <strong>sin abrir el panel</strong>. Cero clics.
+        </p>
+        <p class="text-caption text-secondary">
+          Probalo pegando <span class="font-mono">{{ sampleCode }}</span> y apretando Enter: un pegado
+          llega como una ráfaga, que es justo lo que se está detectando.
+        </p>
+      </div>
+      <div class="flex flex-col gap-2 rounded-md border border-warning bg-warning-surface p-4">
+        <h4 class="text-h4">Y qué pasa cuando no es exacto</h4>
+        <p class="text-caption">
+          Si coinciden varios, ninguno, o la coincidencia no es exacta, el panel se abre con lo que
+          haya y no se elige nada. Una persona escribiendo rápido <strong>no</strong> es una pistola:
+          el umbral está en 50 ms por tecla, y <strong>es una propuesta a calibrar contra el lector
+          real</strong>, no una medición.
+        </p>
+      </div>
     </div>
 
     <h3 class="text-h3">Seleccionada y activa son independientes</h3>
@@ -169,6 +289,27 @@
     <p class="text-caption text-secondary">
       Open recibe además <strong>el mismo tratamiento visual que Focus</strong>, y eso no cuesta
       nada: mientras el panel está arriba, el foco no se movió del trigger.
+    </p>
+
+    <h3 class="text-h3">Los estados de la búsqueda</h3>
+    <ewms-demo-frame ground="canvas">
+      <ewms-state-matrix
+        [variants]="searchVariants"
+        [states]="searchColumns"
+        rowHeader="Estado"
+        caption="Los cinco estados de la búsqueda, y qué hace cada uno"
+      >
+        <ng-template let-variant="variant" let-state="state">
+          <span class="text-caption text-primary">{{ fact(variant.id, state.id) }}</span>
+        </ng-template>
+      </ewms-state-matrix>
+    </ewms-demo-frame>
+    <p class="text-caption text-secondary">
+      Una tabla de hechos y no componentes vivos: cinco selectores en una grilla comparten un único
+      overlay y ninguno se queda quieto. Se rompen de verdad con los botones de la fuente remota.
+      <strong>«Sin resultados» y «error del servicio» no comparten ni la rama ni el lugar</strong>:
+      confundirlos hace que una caída parezca un almacén vacío. El error va en el flujo, bajo el
+      campo, donde un <kbd class="font-mono">Tab</kbd> alcanza el reintento.
     </p>
   </section>
 
@@ -287,8 +428,23 @@
 
     <h3 class="text-h3">Entradas</h3>
     <p class="text-secondary">
-      Las ocho de la tabla del bloque 3. <code class="font-mono">label</code> es la única requerida
-      en el tipo.
+      Las de la tabla del bloque 3. <code class="font-mono">label</code> es la única requerida en
+      el tipo; <code class="font-mono">options</code> y <code class="font-mono">source</code> juntos
+      son un error en modo desarrollo.
+    </p>
+    <p class="text-caption text-secondary">
+      Los textos de la búsqueda (buscando, sin resultados, error, reintentar, más) no son entradas:
+      se proveen una vez con <code class="font-mono">EWMS_SELECT_MESSAGES</code>, que el shell llena
+      con transloco y el showroom en español. La lista corta no los usa.
+    </p>
+    <pre
+      class="overflow-x-auto rounded-md border border-default bg-secondary p-4 font-mono text-mono text-primary outline-none focus-visible:shadow-(--focus-ring-shadow)"
+      tabindex="0"
+    ><code>{{ sourceSnippet }}</code></pre>
+    <p class="text-caption text-secondary">
+      <code class="font-mono">SearchSource&lt;T&gt;</code> no es una abstracción sobre un endpoint:
+      es el contrato que el endpoint de catálogo tiene que cumplir (REQ-FE-DS3-001 RFE-02). Pasar a
+      un backend real cambia esa clase y nada más.
     </p>
 
     <h3 class="text-h3">Salidas</h3>
@@ -359,6 +515,13 @@
             </td>
           </tr>
           <tr>
+            <th scope="row" class="border-b border-default p-2 text-left text-primary">Letras</th>
+            <td class="border-b border-default p-2 text-primary" colspan="2">
+              Lista corta: abre y lleva a la primera opción que empieza así; seguir tecleando afina,
+              y una pausa de medio segundo empieza otra palabra. Cuando busca, escriben en el campo.
+            </td>
+          </tr>
+          <tr>
             <th scope="row" class="border-b border-default p-2 text-left text-primary">Tab</th>
             <td class="border-b border-default p-2 text-primary">Sale del control.</td>
             <td class="border-b border-default p-2 text-primary">
@@ -369,12 +532,11 @@
       </table>
     </div>
     <div class="flex flex-col gap-2 rounded-md border border-warning bg-warning-surface p-4">
-      <h4 class="text-h4">Lo que NO hay, y la ficha lo declara pendiente</h4>
+      <h4 class="text-h4">Lo que NO hay</h4>
       <p class="text-caption">
-        <strong>No hay Home / End</strong> y <strong>no hay tipeo para buscar</strong>. El typeahead
-        está escrito como pendiente en la ficha —«búsqueda / typeahead dentro del panel (filtrar
-        opciones al escribir)»— y Home/End nunca estuvo en el contrato. Se documenta el hueco en vez
-        de describir un teclado que el componente no tiene.
+        <strong>No hay Home / End</strong>: nunca estuvo en el contrato. Se documenta el hueco en vez
+        de describir un teclado que el componente no tiene. Cuando busca, <kbd class="font-mono">Enter</kbd>
+        sin fila activa es del formulario: tragarlo rompería enviar con teclado.
       </p>
     </div>
     <ul class="flex flex-col gap-2">
@@ -420,8 +582,8 @@
         porque cerrar no pasa ni cerca del commit.
       </li>
       <li>
-        <strong>Ponerle un tope de opciones.</strong> La plantilla las renderiza todas; el
-        <code class="font-mono">max-h</code> del panel es scroll, no un límite.
+        <strong>Cargar miles de opciones en memoria.</strong> Filtran, pero se renderizan todas al
+        abrir: una lista de cientos va con <code class="font-mono">source</code>, que pagina.
       </li>
       <li>
         <strong>Pasar el <code class="font-mono">label</code> como
@@ -438,8 +600,8 @@
 
     <h3 class="text-h3">Bloques que no aplican</h3>
     <p class="text-secondary">
-      Uno: <strong>variantes</strong>, porque hay un solo tipo de select. Está escrito arriba en
-      lugar de borrado.
+      Ninguno. Variantes de énfasis no hay, pero el bloque 4 muestra las tres formas que toma según
+      de dónde salen las opciones.
     </p>
   </section>
 </article>

@@ -90,9 +90,10 @@ export const showroomRoutes: Routes = [
         loadComponent: async () => (await import('./pages/components/dialog')).ShowroomDialog,
       },
       {
+        // Un solo selector desde 2026-09-21: la búsqueda es parte del Select. La URL sigue andando.
         path: 'components/search-select',
-        loadComponent: async () =>
-          (await import('./pages/components/search-select')).ShowroomSearchSelect,
+        redirectTo: 'components/select',
+        pathMatch: 'full',
       },
       {
         path: 'components/table',

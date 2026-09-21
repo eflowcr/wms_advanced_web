@@ -18,7 +18,7 @@ import {
   DESIGN_SYSTEM_VERSION,
   DialogService,
   KeyboardShortcuts,
-  SearchSelect,
+  Select,
   Table,
   TableColumn,
   ToastService,
@@ -49,7 +49,7 @@ const FLOW_CONTROLS =
 // del CDK); la regla de oyente global único es del teclado, y ese sigue siendo del motor.
 @Component({
   selector: 'ewms-showroom-search-create-edit',
-  imports: [Banner, Button, DemoFrame, FormsModule, SearchSelect, Table, TableColumn],
+  imports: [Banner, Button, DemoFrame, FormsModule, Select, Table, TableColumn],
   templateUrl: './search-create-edit.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

@@ -126,7 +126,7 @@ export class KeyboardShortcuts {
     }
 
     // Ya atendida, pero el detector se alimenta igual (defecto de DS-5): tras un escaneo en
-    // search-select la ráfaga quedaba abierta y el Enter siguiente no activaba un botón
+    // select la ráfaga quedaba abierta y el Enter siguiente no activaba un botón
     // (WCAG 2.1.1). Ver vault: Atajos-de-Teclado.
     if (event.defaultPrevented) {
       this.detector.accept(event, readMilliseconds(SCAN_THRESHOLD_TOKEN));

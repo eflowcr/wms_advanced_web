@@ -139,19 +139,11 @@ const COMPONENTS: readonly CatalogEntry[] = [
   },
   {
     id: 'select',
-    name: 'Select / Dropdown',
+    name: 'Select',
     selector: 'ewms-select',
     route: `${SHOWROOM_BASE}/components/select`,
     status: 'ready',
-    note: 'Panel en overlay del CDK, con el teclado y el volteo que jsdom no podía probar.',
-  },
-  {
-    id: 'search-select',
-    name: 'Selector con búsqueda',
-    selector: 'ewms-search-select',
-    route: `${SHOWROOM_BASE}/components/search-select`,
-    status: 'ready',
-    note: 'Se escribe y filtra; un código escaneado se resuelve sin abrir el panel. No reemplaza al Select.',
+    note: 'El único selector: lista corta, lista larga que filtra y fuente remota que resuelve un escaneo.',
   },
   {
     id: 'table',

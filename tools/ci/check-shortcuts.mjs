@@ -39,7 +39,6 @@ export const KEY_EXEMPT = [
   // Componentes que cierran su overlay, recorren su lista o atienden su Enter.
   'projects/design-system/src/lib/dialog/',
   'projects/design-system/src/lib/select/',
-  'projects/design-system/src/lib/search-select/',
   'projects/design-system/src/lib/listbox/',
   'projects/design-system/src/lib/table/',
   'projects/design-system/src/lib/tooltip/',
@@ -56,12 +55,12 @@ export const KEY_EXEMPT = [
 ];
 
 /**
- * Dónde puede vivir un listener global de keydown. `search-select/` mide los tiempos de
+ * Dónde puede vivir un listener global de keydown. `select/` mide los tiempos de
  * lo que se tipea en su propio input: no es un listener global (la razón está en el componente).
  */
 export const LISTENER_EXEMPT = [
   'projects/design-system/src/lib/keyboard/',
-  'projects/design-system/src/lib/search-select/',
+  'projects/design-system/src/lib/select/',
   'projects/design-system/src/lib/dialog/',
   'projects/design-system/src/lib/toast/',
   'projects/design-system/src/lib/tooltip/',
