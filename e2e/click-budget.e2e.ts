@@ -1,22 +1,10 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
 /*
- * THE ONE DEEP IMPORT INTO projects/ IN THE WHOLE REPOSITORY, and the reason
- * it is not the @ewms/* alias.
- *
- * REQ-FE-DS4-003 HG-02 requires this test and the example screen to read the
- * four budgets from ONE file -- a test with the number typed into it agrees
- * with itself rather than with the standard. The alias resolves to the
- * showroom's public-api barrel, and importing that barrel from a Playwright
- * test loads the whole Angular library into Node: it fails before a single
- * test runs, with `PlatformLocation needs to be compiled using the JIT
- * compiler`. The budgets are four plain numbers in a file that imports
- * nothing; the barrel is the wrong road for them.
- *
- * The exception is this line and nothing else, and it does not weaken the
- * boundary it names: what stops a second copy of the numbers appearing is
- * tools/ci/check-click-budget.mjs, which also fails if this import goes away.
+ * Único import profundo a projects/ del repo: el alias carga el barril de Angular en Node y falla con
+ * «PlatformLocation needs to be compiled using the JIT compiler». HG-02 pide leer los presupuestos de un
+ * solo archivo; tools/ci/check-click-budget.mjs falla si este import desaparece.
  */
-// eslint-disable-next-line no-restricted-imports -- see the note above
+// eslint-disable-next-line no-restricted-imports -- ver la nota de arriba
 import {
   CANCEL_MAX_CLICKS,
   CREATE_MAX_CLICKS,
@@ -25,31 +13,20 @@ import {
   SEARCH_MAX_CLICKS,
 } from '../projects/showroom/src/lib/pages/patterns/click-budget';
 
-/**
- * THE TEST THAT COUNTS (REQ-FE-DS4-003 RFE-03), and the keyboard rules that
- * only a real browser can answer (REQ-FE-DS4-001).
- *
- * THE NUMBERS ARE IMPORTED, NOT TYPED. They come from the same file the screen
- * reads, which is the whole of HG-02: a test with `toBeLessThanOrEqual(2)`
- * written into it agrees with itself rather than with the standard, and the
- * day §2.2 of the REQ changes, it would keep passing.
- *
- * WHY THE CLICKS ARE COUNTED BY A WRAPPER AND NOT READ OFF THE SCREEN. The
- * page counts its own clicks and shows the total, and reading that would be
- * the test trusting the thing under test. So `clicks()` wraps Playwright's own
- * `click` and counts the calls, and the two numbers are compared at the end --
- * if the page's counter and the test's disagree, one of them is lying and the
- * test says so.
+/*
+ * Cuenta clics (REQ-FE-DS4-003 RFE-03) y prueba reglas de teclado (REQ-FE-DS4-001). Los clics los cuenta
+ * un envoltorio de click y no el contador de la pantalla, que es lo que se prueba; al final se comparan:
+ * si difieren, uno miente.
  */
 
 const SCREEN = '/design-system/patterns/search-create-edit';
 const SCREEN_HEADING = 'Buscar, crear, editar';
 const KEYBOARD = '/design-system/patterns/keyboard';
 
-/** A shipment the seeded demo really holds, used by the scan and search cases. */
+/** Expedición que existe en los datos de la demo. */
 const KNOWN_CODE = 'EXP-2026-0403';
 
-/** A counter around `locator.click()`. Keyboard actions deliberately never touch it. */
+/** Las acciones de teclado no pasan por este contador, a propósito. */
 function clicker(): { click: (locator: Locator) => Promise<void>; total: () => number } {
   let total = 0;
   return {
@@ -61,11 +38,8 @@ function clicker(): { click: (locator: Locator) => Promise<void>; total: () => n
   };
 }
 
-/** Zero the page's own counter without spending a click on doing so. */
 async function resetPageCounter(page: Page): Promise<void> {
-  // The button is marked `data-not-a-flow-click`, so it is not counted by the
-  // page either -- but the test's own counter has no such marking, so the
-  // reset goes through evaluate rather than through `clicks.click`.
+  // Por evaluate y no por clicks.click: la pantalla ignora este botón, el contador de la prueba no.
   await page.locator('[data-reset-clicks]').evaluate((button: HTMLElement) => button.click());
   await expect(page.locator('[data-click-count]')).toHaveText('0');
 }
@@ -80,38 +54,17 @@ async function open(page: Page): Promise<void> {
   await resetPageCounter(page);
 }
 
-/**
- * The results of the SEARCH SELECT, and not every option in the document.
- *
- * `getByRole('option')` on its own also matches the shell's language
- * `<select>`, whose options are hidden -- so the bare locator waited five
- * seconds for a Spanish/English picker to become visible and then failed
- * talking about the wrong control. Scoping to the listbox is what makes the
- * failure message point at the thing under test.
- */
+/** Acotado al listbox: getByRole('option') también toma las opciones ocultas del selector de idioma. */
 function results(page: Page): Locator {
   return page.locator('[role="listbox"] [role="option"]');
 }
 
-/**
- * Put the focus somewhere harmless inside the screen, without spending a click
- * on a control.
- *
- * The heading is not a control, so the page's own counter ignores it -- which
- * is what lets a scan case start from "the focus is nowhere in particular",
- * the state a gun is actually fired in.
- */
+/** Deja el foco en el título, que no es control ni cuenta: el estado real en que se dispara la pistola. */
 async function clickNeutral(page: Page): Promise<void> {
   await page.getByRole('heading', { level: 1, name: SCREEN_HEADING }).click();
 }
 
-/**
- * Type at the speed of a barcode reader and close with Enter.
- *
- * 5 ms a character, which is where an industrial gun actually sits, and well
- * under the 50 ms the token allows. This is the closest thing to a reader that
- * can be written down, and it is what every scan case below uses.
- */
+/** Teclea como un lector industrial (5 ms por carácter, bajo los 50 ms del token) y cierra con Enter. */
 async function scan(page: Page, code: string): Promise<void> {
   await page.keyboard.type(code, { delay: 5 });
   await page.keyboard.press('Enter');
@@ -141,7 +94,7 @@ test.describe('the click budget, counted', () => {
 
     await clicks.click(page.locator('[data-new-button] button'));
     await expect(page.locator('[data-expedicion-form]')).toBeVisible();
-    // Typing into the field the dialog already focused is zero, by §2.1.
+    // Teclear en el campo que el diálogo ya enfocó cuesta cero (§2.1).
     await page.keyboard.type('EXP-2026-0900');
     await clicks.click(page.locator('[data-form-save] button'));
 
@@ -185,20 +138,14 @@ test.describe('the click budget, counted', () => {
     await clicks.click(page.locator('[data-form-cancel] button'));
 
     await expect(page.locator('[data-expedicion-form]')).toHaveCount(0);
-    // §2.2: a screen that asks you to confirm cancelling something never saved
-    // is spending the budget on a question.
+    // §2.2: pedir confirmación para cancelar algo nunca guardado gasta el presupuesto en una pregunta.
     await expect(page.locator('ewms-confirm-dialog')).toHaveCount(0);
     await expect(page.locator('[data-last-saved]')).toHaveText('—');
     expect(clicks.total()).toBeLessThanOrEqual(CANCEL_MAX_CLICKS);
   });
 });
 
-/**
- * The same four flows, on the keyboard. EVERY ONE OF THEM MUST COST ZERO.
- *
- * Not an accounting trick: it is the point of the standard. The operator has
- * gloves on and a gun in one hand, and §2.1 rewards exactly that.
- */
+// Los mismos flujos por teclado cuestan cero: el operario tiene guantes y la pistola en una mano (§2.1).
 test.describe('the same flows on the keyboard cost nothing', () => {
   test('searching: / then type then Enter', async ({ page }) => {
     await open(page);
@@ -231,35 +178,16 @@ test.describe('the same flows on the keyboard cost nothing', () => {
   });
 
   test('creating: Alt+N, type, and ENTER -- the limitation DS-5 closed', async ({ page }) => {
-    /*
-     * DS-4 reported this against the Button and could not fix it there: every
-     * `ewms-button` rendered `type="button"`, so this form had no submit
-     * button, and a form with several fields and no submit button is not sent
-     * by `Enter` either. Saving was the click or Ctrl+S; `Enter` in a field --
-     * what everybody actually does -- did nothing.
-     *
-     * DS-5 added `type` with `'button'` as the default, so nothing that
-     * existed changed, and this form asked for `submit`. Still zero clicks.
-     */
+    // Hasta DS-5 todo ewms-button era de tipo button, así que Enter no enviaba el formulario.
+    // DS-5 agregó la entrada type (por defecto button) y este formulario pide submit.
     await open(page);
     const clicks = clicker();
 
     await page.keyboard.press('Alt+n');
     await expect(page.locator('[data-expedicion-form]')).toBeVisible();
-    /*
-     * AT A PERSON'S PACE, AND THE DELAY IS THE TEST AS MUCH AS THE ENTER IS.
-     *
-     * Typed at full speed the code is a BURST, and a burst closed by Enter is
-     * a scan (RFE-05) -- so the engine cancels that Enter and the form is not
-     * submitted. That is the protection working, not a defect: it is the same
-     * rule that stops a barcode from firing a shortcut in the middle of
-     * receiving. 60 ms a character is above the threshold and below anything a
-     * person notices; a real typist is nearer 120.
-     *
-     * It is worth knowing, because `Enter` in a form is a NEW interaction as
-     * of DS-5: the trade-off RFE-05 accepted now has a second place where it
-     * shows.
-     */
+    // A ritmo de persona: a toda velocidad es una ráfaga, y ráfaga + Enter es un escaneo (RFE-05) que el
+    // motor cancela. 60 ms supera el umbral; una persona real anda por 120. El costo de RFE-05 ahora
+    // también se ve en el Enter de un formulario.
     await page.keyboard.type('EXP-2026-0902', { delay: 60 });
     await page.keyboard.press('Enter');
 
@@ -282,45 +210,25 @@ test.describe('the same flows on the keyboard cost nothing', () => {
 
     await expect(page.locator('[data-expedicion-form]')).toHaveCount(0);
     await expect(page.locator('[data-last-saved]')).toHaveText('—');
-    // The focus goes back where it came from, which is what makes Escape one
-    // gesture rather than one gesture plus finding your place again.
+    // El foco vuelve al origen: si no, Escape sería un gesto más buscar dónde estabas.
     await expect(opener).toBeFocused();
     expect(clicks.total()).toBe(0);
     expect(await pageCount(page)).toBe(0);
   });
 });
 
-/**
- * THE FLOW FAVOURITES EXIST FOR (DS-5, REQ-FE-DS4-002 + REQ-FE-DS4-003 §2.2).
- *
- * It is the only one of the budgets that is NOT about this screen: the star is
- * in the App Shell's header and the block is in its rail, so the flow crosses
- * the whole application rather than one page. That is the point -- "from
- * anywhere" is a claim about the navigation, and it could not be made at all
- * until the navigation existed.
- */
+// Favoritos (DS-5, REQ-FE-DS4-002 + REQ-FE-DS4-003 §2.2): el único presupuesto que cruza la app entera,
+// con la estrella en la cabecera del App Shell y la lista en su riel.
 test.describe('opening a favourite', () => {
   test(`costs at most ${OPEN_FAVORITE_MAX_CLICKS} click, from another screen`, async ({ page }) => {
     await open(page);
 
-    /*
-     * THE SHELL'S STAR, NOT THE CATALOGUE'S, AND THERE ARE BOTH.
-     *
-     * A showroom page renders inside the App Shell, so two favourite toggles
-     * are on screen: the application's, in the header, and the catalogue's own
-     * in its chrome -- backed by a different store, which is precisely what
-     * RFE-02's interface buys and what the showroom exists to demonstrate.
-     * What is under test here is the APPLICATION's flow, so every locator is
-     * scoped to the shell.
-     */
+    // Hay dos estrellas en pantalla, la del shell y la del catálogo (otro almacén, gracias a RFE-02).
+    // Se prueba el flujo de la aplicación, así que todo localizador se acota al shell.
     await page.locator('[data-app-header] [data-favorite-toggle] button').click();
     await expect(page.locator('ewms-nav-rail [data-favorite]')).toHaveCount(1);
 
-    /*
-     * Somewhere else, WITHIN the application. `page.goto` would be a full
-     * reload, and the list lives in memory until the Security Core exists --
-     * which is its own assertion, in `e2e/smoke.e2e.ts`, and not this one's.
-     */
+    // Navegando dentro de la app: page.goto recargaría y la lista vive en memoria (lo afirma smoke.e2e.ts).
     await page.locator('[data-nav-item="dashboard"]').click();
     await expect(page).toHaveURL(/\/$/);
 
@@ -348,13 +256,7 @@ test.describe('opening a favourite', () => {
   });
 });
 
-/**
- * RFE-05, on every surface, with a real gun's timing.
- *
- * This is the requirement whose failure costs a wrong inventory movement, so
- * it is asked on each surface separately rather than once somewhere
- * convenient.
- */
+// RFE-05 en cada superficie por separado: si falla, cuesta un movimiento de inventario equivocado.
 test.describe('a scan never fires a shortcut', () => {
   test('on the screen: it chooses the shipment without opening the panel', async ({ page }) => {
     await open(page);
@@ -364,7 +266,6 @@ test.describe('a scan never fires a shortcut', () => {
     await scan(page, KNOWN_CODE);
 
     await expect(page.locator('[data-chosen]')).toContainText(KNOWN_CODE);
-    // Without the panel, and without a form having opened behind it.
     await expect(page.locator('[data-search-host] input')).toHaveAttribute(
       'aria-expanded',
       'false',
@@ -377,7 +278,7 @@ test.describe('a scan never fires a shortcut', () => {
     await open(page);
     await clickNeutral(page);
 
-    // `/` is the search shortcut and `?` opens the help. Both inside one code.
+    // Barra (buscar) y signo de pregunta (ayuda), los dos dentro del código.
     await scan(page, 'AB/CD?EF12');
 
     await expect(page.locator('ewms-shortcut-help')).toHaveCount(0);
@@ -386,11 +287,7 @@ test.describe('a scan never fires a shortcut', () => {
   });
 
   test('a code BEGINNING with a shortcut character fires nothing either', async ({ page }) => {
-    /*
-     * The case the length of the run cannot catch: at the first character
-     * there is no run yet. What saves it is the engine waiting one threshold
-     * window before acting on a single character.
-     */
+    // Con el primer carácter aún no hay ráfaga: lo salva que el motor espere una ventana de umbral.
     await open(page);
     await clickNeutral(page);
 
@@ -418,24 +315,22 @@ test.describe('a scan never fires a shortcut', () => {
 
     await scan(page, 'EXP-000123');
 
-    // Read off the engine's own classification rather than inferred from a
-    // side effect -- which is what `KeyboardShortcuts.events` exists for.
+    // Se lee la clasificación del motor (KeyboardShortcuts.events), no un efecto secundario.
     await expect(page.locator('[data-demo-last-scan]')).toHaveText('EXP-000123');
     await expect(page.locator('[data-demo-log]')).toContainText('scan');
     await expect(page.locator('[data-demo-log]')).toContainText('burst');
-    // Nothing was classified as a shortcut on the way through.
     await expect(page.locator('[data-demo-search-hits]')).toHaveText('0');
   });
 });
 
-/** RFE-04 and RFE-07, where they can only be answered by a real focus. */
+// RFE-04 y RFE-07, que solo un foco real puede responder.
 test.describe('the shortcut rules, in a browser', () => {
   test('no shortcut fires inside a text field, and Escape still does', async ({ page }) => {
     await open(page);
     const field = page.locator('[data-search-host] input');
     await field.click();
 
-    // Typed at human speed, so nothing here can be mistaken for a gun.
+    // A velocidad humana, para que nada se confunda con la pistola.
     await page.keyboard.type('hola / n ?', { delay: 90 });
     await page.keyboard.press('Alt+n');
 
@@ -451,7 +346,7 @@ test.describe('the shortcut rules, in a browser', () => {
     await page.locator('[data-form-codigo] input').click();
     await page.keyboard.type('EXP-2026-0902');
 
-    // From INSIDE the field, which is where the focus is when somebody saves.
+    // Desde dentro del campo, donde está el foco cuando alguien guarda.
     const prevented = await page.evaluate(() => {
       const event = new KeyboardEvent('keydown', {
         key: 's',
@@ -476,7 +371,6 @@ test.describe('the shortcut rules, in a browser', () => {
     const help = page.locator('ewms-shortcut-help');
     await expect(help).toBeVisible();
 
-    // Every chord of the map, read off the map by the dialog itself.
     await expect(help.locator('kbd')).toHaveText(['/', 'Alt', 'N', 'Ctrl', 'S', 'Esc', '?']);
 
     await page.keyboard.press('Escape');
@@ -499,7 +393,7 @@ test.describe('the shortcut rules, in a browser', () => {
     await page.keyboard.press('?');
     await expect(page.locator('ewms-shortcut-help')).toHaveCount(0);
 
-    // The ones with a modifier are untouched: 2.1.4 is about single characters.
+    // Los que llevan modificador siguen: 2.1.4 trata de teclas de un solo carácter.
     await page.keyboard.press('Alt+n');
     await expect(page.locator('[data-expedicion-form]')).toBeVisible();
   });

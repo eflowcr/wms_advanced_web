@@ -2,18 +2,15 @@ import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
 
 /**
- * What the user sees when a dictionary does not load (i18n.md, "Cuando el
- * diccionario no carga"). The rule: they always find out, and never get a
- * silent screen.
- *
- * Aborting the request stands in for every real cause: a deploy that did not
- * copy public/, a 404, a network drop.
+ * Qué ve el usuario si un diccionario no carga (i18n.md, «Cuando el diccionario no carga»): siempre
+ * se entera, nunca una pantalla muda. Abortar la petición representa cualquier causa real
+ * (un despliegue sin public/, un 404, un corte de red).
  */
 
 const ES_DICTIONARY = '**/i18n/es.json';
 const EN_DICTIONARY = '**/i18n/en.json';
 
-/** CSP violations: anything inline in the host page would be dropped silently. */
+/** Violaciones de CSP: todo lo inline en la página anfitriona se descartaría sin aviso. */
 function collectCspViolations(page: Page): string[] {
   const violations: string[] = [];
   page.on('console', (message) => {
@@ -45,11 +42,11 @@ test.describe('case B: the default dictionary does not load', () => {
     const retry = page.getByRole('button', { name: 'Reintentar / Try again' });
     await expect(retry).toBeVisible();
 
-    // Not a blank page: Angular rendered nothing, and the notice is what fills it.
+    // No es una página en blanco: Angular no renderizó nada y el aviso la llena.
     await expect(page.locator('app-root')).toBeEmpty();
     expect((await page.locator('body').innerText()).trim()).not.toBe('');
 
-    // Styled: startup-failure.css loaded, independently of the bundle, and the CSP let it.
+    // Con estilo: startup-failure.css cargó aparte del bundle y la CSP lo dejó pasar.
     await expect(retry).toHaveCSS('background-color', 'rgb(68, 101, 236)');
     await expect(notice).toHaveCSS('color', 'rgb(1, 15, 66)');
     expect(cspViolations).toEqual([]);
@@ -98,13 +95,13 @@ test.describe('case A: a dictionary other than the default does not load', () =>
     await expect(page.getByLabel('Idioma', { exact: true })).toHaveValue('es');
     await expect(page.locator('[data-sample="plural"]').first()).toHaveText('Sin bultos');
 
-    // Still working: navigation and rendering in Spanish carry on.
+    // Sigue funcionando: la navegación y el render en español continúan.
     await page.getByRole('treeitem', { name: 'Sistema de diseño' }).click();
     await expect(page).toHaveURL(/\/design-system$/);
     await page.getByRole('treeitem', { name: 'Dashboard' }).click();
     await expect(page.getByText('Sin bultos')).toBeVisible();
 
-    // The whole storage state of the context, serialized: the failed choice is not in it.
+    // Todo el estado de almacenamiento del contexto, serializado: la elección fallida no está.
     expect(JSON.stringify(await page.context().storageState())).not.toContain('ewms.lang');
   });
 

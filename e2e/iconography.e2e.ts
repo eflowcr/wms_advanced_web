@@ -1,9 +1,8 @@
 import { expect, test } from '@playwright/test';
 
 /**
- * The icon tokens only exist in the real stylesheet, so the per-size
- * width / stroke-width pair (tokens.css, ADR 0011) is asserted here, in a
- * browser, rather than in jsdom.
+ * Los tokens de icono solo existen en la hoja real: el par ancho / grosor de trazo por tamaño
+ * (tokens.css, ADR 0011) se afirma acá, en navegador, y no en jsdom.
  */
 const EXPECTED = {
   sm: { width: 16, strokeWidth: 2.25 },
@@ -24,7 +23,7 @@ test.describe('/design-system/foundations/icons', () => {
       const box = await svg.boundingBox();
       expect(box?.width, size).toBe(expected.width);
       expect(box?.height, size).toBe(expected.width);
-      // Chromium serialises the computed stroke-width in user units as "2.25px".
+      // Chromium serializa el stroke-width calculado en unidades de usuario, como "2.25px".
       const strokeWidth = await svg.evaluate((el) => parseFloat(getComputedStyle(el).strokeWidth));
       expect(strokeWidth, size).toBe(expected.strokeWidth);
     }
@@ -46,6 +45,5 @@ test.describe('/design-system/foundations/icons', () => {
     expect(colours[0]?.[0]).not.toBe(colours[1]?.[0]);
   });
 
-  // axe runs over this route in showroom.e2e.ts, with the other twenty-three:
-  // same route, same tool, same run. It was scanned twice.
+  // Sin axe acá: esta ruta ya se escanea en showroom.e2e.ts con las otras veintitrés.
 });
