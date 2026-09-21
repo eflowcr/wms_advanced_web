@@ -7,7 +7,7 @@ function format(message: string, params: Record<string, unknown>, locale: string
   return formatIcu(parseIcu(message), params, locale);
 }
 
-/** Intl separates thousands with a no-break space in es-CR; compare with plain spaces. */
+/** En es-CR Intl separa miles con espacio de no separación; se compara con espacios comunes. */
 function plain(text: string): string {
   return text.replace(/\s/g, ' ');
 }

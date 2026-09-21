@@ -1,14 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { SessionContext } from './session-context';
 
-/**
- * The seat of the Security Core.
- *
- * There is almost nothing to test here, and that IS the test: what this class
- * has to be is a shape with signals in it, holding nothing that outlives the
- * tab, so that the App Shell can read credentials as DATA today and the
- * Security Core can fill them tomorrow without the layout changing.
- */
+/** Casi no hay qué probar, y esa es la prueba: signals que no sobreviven a la pestaña. */
 describe('SessionContext', () => {
   let session: SessionContext;
 
@@ -18,8 +11,7 @@ describe('SessionContext', () => {
   });
 
   it('carries the synthetic company, warehouse and user the design draws', () => {
-    // «ePrac / 0001 - CEDI_ePRAC» is data here, not text in a template, which
-    // is the whole point of the seat existing before the backend does.
+    // «ePrac / 0001 - CEDI_ePRAC» es dato, no texto en una plantilla.
     expect(session.company().code).toBe('ePrac');
     expect(session.warehouse().code).toBe('0001');
     expect(session.warehouse().name).toBe('CEDI_ePRAC');
@@ -27,12 +19,11 @@ describe('SessionContext', () => {
   });
 
   it('switches warehouse WITHOUT anything resembling a re-authentication', () => {
-    // PLN-WMS-001 §6's phase-0 criterion, in the only form available before
-    // there is a backend: the state moves, and every consumer reads a signal.
+    // Criterio de fase 0 de PLN-WMS-001 §6, en la única forma posible sin backend.
     session.setWarehouse({ code: '0002', name: 'CEDI_NORTE' });
 
     expect(session.warehouse()).toEqual({ code: '0002', name: 'CEDI_NORTE' });
-    // The company did not move with it: they are separate facts.
+    // La empresa no se movió: son hechos separados.
     expect(session.company().code).toBe('ePrac');
   });
 
@@ -43,10 +34,7 @@ describe('SessionContext', () => {
   });
 
   it('IS A SEAT AND NOT AUTHENTICATION: no token, no permissions, no login', () => {
-    // Asserted rather than assumed, because the next person to touch this file
-    // will be building the real thing and should find the boundary written
-    // down. A token here before there is a backend would be an invented
-    // contract.
+    // Afirmado y no supuesto: un token antes de que haya backend sería un contrato inventado.
     const surface = Object.keys(Object.getPrototypeOf(session) as object).concat(
       Object.keys(session),
     );

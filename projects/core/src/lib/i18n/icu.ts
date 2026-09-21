@@ -1,34 +1,10 @@
 /**
- * ICU MessageFormat, the subset this project uses, without eval.
- *
- * WHY THIS EXISTS. `@jsverse/transloco-messageformat` compiles every message
- * through `@messageformat/core`, which builds a function with
- * `new Function(...)`. The CSP in index.html has `script-src 'self'` without
- * `'unsafe-eval'`, so the browser throws EvalError on the first plural.
- * Loosening the CSP is not an option (PLN-WMS-003 §4). This file interprets
- * the message instead of compiling it (ADR 0008).
- *
- * SUPPORTED
- *   {count, plural, =0 {...} one {# item} other {# items}}
- *   {count, plural, offset:1 ...}
- *   {place, selectordinal, one {#st} two {#nd} few {#rd} other {#th}}
- *   {role, select, admin {...} other {...}}
- *   #          inside plural/selectordinal: the number, formatted for the locale
- *   '{' '}' '#' ''   ICU apostrophe quoting (a lone apostrophe, as in "don't", is literal)
- *   {{ name }} Transloco interpolation: left untouched here, resolved afterwards
- *
- * NOT SUPPORTED, on purpose, and rejected loudly
- *   {name}            a bare ICU argument. Parameters are {{ name }}, one syntax only.
- *   {n, number}, {d, date}, {t, time}
- *                     formatting goes through the transloco-locale pipes, never
- *                     inside the message.
- *
- * Every plural, selectordinal and select must have an `other` branch.
- *
- * Dependency-free and erasable-syntax only: tools/ci/check-i18n.mjs imports
- * this very file with Node's type stripping to validate every dictionary
- * message, so the gate and the runtime can never disagree on the grammar.
+ * Intérprete ICU sin eval (ADR 0008): transloco-messageformat usa `new Function` y la CSP sin
+ * 'unsafe-eval' lo rompe. Soporta plural (=N, offset), selectordinal, select, `#` y escapes con
+ * apóstrofo; rechaza argumentos sueltos, number y date. Ver vault: 08-Sistema-de-Diseno/i18n.
  */
+// Sin dependencias y solo sintaxis borrable: check-i18n.mjs importa este archivo con el type
+// stripping de Node, así la compuerta y la ejecución no discrepan sobre la gramática.
 
 export class IcuError extends Error {
   constructor(message: string) {
@@ -56,12 +32,12 @@ const SELECT_KEY = /[\w-]+/y;
 const EXACT_KEY = /=-?\d+(?:\.\d+)?/y;
 const OFFSET = /offset:\s*(\d+)/y;
 
-/** Parses a message into literal text, `#` markers and choice blocks. */
+/** Parte un mensaje en texto literal, marcas `#` y bloques de elección. */
 export function parseIcu(message: string): readonly IcuPart[] {
   return new Parser(message).parse();
 }
 
-/** True when the message has something for the ICU interpreter to do. */
+/** Si el mensaje tiene algo para el intérprete ICU. */
 export function hasIcuSyntax(message: string): boolean {
   return /[{}'#]/.test(message.replace(/\{\{[^{}]*\}\}/g, ''));
 }
@@ -267,10 +243,7 @@ class Parser {
 const numberFormats = new Map<string, Intl.NumberFormat>();
 const pluralRules = new Map<string, Intl.PluralRules>();
 
-/**
- * Renders parsed parts. `#` uses the locale's number format; the plural
- * category comes from Intl.PluralRules for that locale.
- */
+/** `#` usa el formato numérico del locale; la categoría plural sale de Intl.PluralRules. */
 export function formatIcu(
   parts: readonly IcuPart[],
   params: Readonly<Record<string, unknown>>,

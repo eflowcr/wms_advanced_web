@@ -11,24 +11,18 @@ import { TranslocoService } from '@jsverse/transloco';
 import { firstValueFrom } from 'rxjs';
 import { DEFAULT_LANGUAGE, isLanguage, LANGUAGES, type Language } from './language.types';
 
-/** localStorage key of the saved preference. */
+/** Clave de localStorage de la preferencia. */
 export const LANGUAGE_STORAGE_KEY = 'ewms.lang';
 
-/**
- * Where the preference is saved. Internal to @ewms/core: specs replace it with
- * an in-memory Storage, so no test ever touches localStorage directly and the
- * lint exception below stays the only one.
- */
+/** Interno: las specs lo cambian por un Storage en memoria, así la excepción de lint es única. */
 export const LANGUAGE_STORAGE = new InjectionToken<Storage | null>('LANGUAGE_STORAGE', {
   providedIn: 'root',
   factory: preferenceStorage,
 });
 
 /**
- * Startup could not load the default dictionary, so there is nothing to paint
- * with. The app initializer rejects with this error and Angular aborts the
- * bootstrap; the shell catches it and reveals the static notice in index.html,
- * which does not depend on i18n (i18n.md, "Cuando el diccionario no carga").
+ * No cargó el diccionario por defecto: Angular aborta el arranque y el shell revela el aviso
+ * estático de index.html (caso B de i18n.md).
  */
 export class DictionaryUnavailableError extends Error {
   constructor(readonly language: Language) {
@@ -37,16 +31,12 @@ export class DictionaryUnavailableError extends Error {
   }
 }
 
-/** What happened to one request to apply a language. */
+/** Resultado de un pedido de aplicar un idioma. */
 type Outcome = 'applied' | 'overtaken' | 'failed';
 
 /**
- * The active interface language: resolution at startup, hot switching,
- * persistence and `<html lang>` (ADR 0008).
- *
- * Nothing else in the app calls TranslocoService.setActiveLang: every change
- * of language goes through `use()`, so the dictionary, the locale, the
- * document language and the saved preference can never drift apart.
+ * Idioma activo: resolución al arrancar, cambio en caliente, persistencia y `<html lang>`
+ * (ADR 0008). Todo cambio pasa por `use()`: diccionario, locale y preferencia no se separan.
  */
 @Injectable({ providedIn: 'root' })
 export class LanguageService {
@@ -64,19 +54,14 @@ export class LanguageService {
   });
 
   /**
-   * The language whose dictionary failed to load on the last attempt, while
-   * the interface stayed in `active()`. Null once a change succeeds. The UI
-   * reads it to tell the user; it is never a reason to render nothing.
+   * El idioma que no cargó en el último intento (la interfaz sigue en `active()`); null tras
+   * un cambio exitoso. Sirve para avisar, nunca para no pintar.
    */
   readonly unavailable: Signal<Language | null> = this.failed.asReadonly();
 
   /**
-   * Startup. Resolves and applies the initial language without saving it: a
-   * user who never chose keeps following their browser.
-   *
-   * If the resolved language fails to load, startup falls back to the default
-   * one and flags `unavailable()`. Only when the default dictionary fails too
-   * does it reject, with DictionaryUnavailableError.
+   * Aplica el idioma inicial sin guardarlo: quien nunca eligió sigue a su navegador. Si falla,
+   * cae al por defecto y marca `unavailable()`; si ese también falla, lanza.
    */
   async init(): Promise<void> {
     const initial = this.resolveInitial();
@@ -92,12 +77,7 @@ export class LanguageService {
     throw new DictionaryUnavailableError(DEFAULT_LANGUAGE);
   }
 
-  /**
-   * An explicit choice by the user: applied without reloading, and saved.
-   *
-   * If its dictionary fails to load, the current language stays on screen,
-   * nothing is saved, and `unavailable()` names the language that failed.
-   */
+  /** Elección del usuario: se aplica sin recargar y se guarda. Si falla, no cambia nada. */
   async use(language: Language): Promise<void> {
     const outcome = await this.apply(language);
     if (outcome === 'applied') {
@@ -109,17 +89,9 @@ export class LanguageService {
   }
 
   /**
-   * In this exact order:
-   *   1. the saved preference (`ewms.lang`), only if it is a known language;
-   *   2. the browser language, prefix only (`es-ES` -> `es`);
-   *   3. `es`.
-   *
-   * Whatever is in localStorage is untrusted: an unknown value is ignored and
-   * resolution moves on, it is never passed to Transloco.
-   *
-   * EXTENSION POINT, when login exists: the preference saved on the server
-   * wins over everything below and goes first here. There is no such API yet;
-   * do not invent one. Until then, localStorage is the only store (ADR 0008).
+   * Preferencia guardada (solo si es un idioma conocido: localStorage no es de fiar), prefijo del
+   * navegador (`es-ES` -> `es`), `es`. Punto de extensión: con login, la preferencia del servidor
+   * va primero; esa API todavía no existe.
    */
   resolveInitial(): Language {
     const saved = this.readSaved();
@@ -136,12 +108,8 @@ export class LanguageService {
   }
 
   /**
-   * Loads the dictionary BEFORE switching, so the screen goes from one
-   * complete language to the other with no frame of missing text.
-   *
-   * A call overtaken by a later one reports 'overtaken' even if its load
-   * failed: only the last request speaks for what is on screen. A failed load
-   * changes nothing, so the language already shown keeps working.
+   * Carga antes de cambiar, sin un cuadro con texto faltante. Una llamada adelantada dice
+   * 'overtaken' aunque haya fallado: solo la última habla por lo que hay en pantalla.
    */
   private async apply(language: Language): Promise<Outcome> {
     const request = ++this.request;
@@ -149,8 +117,7 @@ export class LanguageService {
     try {
       await firstValueFrom(this.transloco.load(language));
     } catch {
-      // Transloco's own fallback is disabled (NoFallbackStrategy), so this is
-      // the only place a failed load is handled.
+      // Con el fallback de Transloco apagado, este es el único lugar que maneja el fallo.
       loaded = false;
     }
     if (request !== this.request) {
@@ -160,8 +127,7 @@ export class LanguageService {
       return 'failed';
     }
     this.transloco.setActiveLang(language);
-    // Not cosmetic: without it a screen reader reads Spanish with English
-    // phonetics, and axe flags the page.
+    // Sin esto un lector de pantalla pronuncia el español con fonética inglesa, y axe lo marca.
     this.document.documentElement.lang = language;
     return 'applied';
   }
@@ -178,19 +144,15 @@ export class LanguageService {
     try {
       this.storage?.setItem(LANGUAGE_STORAGE_KEY, language);
     } catch {
-      // Storage full or disabled (private mode): the choice still applies for
-      // this session, it just is not remembered.
+      // Almacenamiento lleno o deshabilitado: la elección vale en esta sesión, sin recordarse.
     }
   }
 }
 
-/**
- * The single place in the codebase that touches localStorage for the language.
- * Accessing it can throw when storage is disabled, hence the try/catch.
- */
+/** El único lugar que toca localStorage por el idioma; acceder lanza si está deshabilitado. */
 function preferenceStorage(): Storage | null {
   try {
-    // eslint-disable-next-line no-restricted-globals -- ADR 0008: the interface language is a non-sensitive UI preference, not a token. It moves to the server-side user profile once login exists.
+    // eslint-disable-next-line no-restricted-globals -- ADR 0008: el idioma de interfaz es una preferencia no sensible, no un token. Pasa al perfil del usuario en el servidor cuando exista login.
     return localStorage;
   } catch {
     return null;

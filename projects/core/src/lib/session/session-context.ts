@@ -1,47 +1,28 @@
 import { Injectable, signal, type Signal } from '@angular/core';
 
-/** Who is looking at the application. */
+/** Quién está usando la aplicación. */
 export interface SessionUser {
   readonly name: string;
-  /** Short form for the avatar. Two letters at most. */
+  /** Para el avatar; dos letras como máximo. */
   readonly initials: string;
 }
 
-/** The customer the console is running for. */
+/** El cliente para el que corre la consola. */
 export interface SessionCompany {
   readonly code: string;
   readonly name: string;
 }
 
-/** The warehouse the operator is working in right now (SEC-MUL-002). */
+/** El almacén donde trabaja ahora el operario (SEC-MUL-002). */
 export interface SessionWarehouse {
   readonly code: string;
   readonly name: string;
 }
 
 /**
- * THE SEAT OF THE SECURITY CORE, AND NOTHING MORE THAN A SEAT.
- *
- * PLN-WMS-002 §5 asks for explicit shared state for the SESSION and the ACTIVE
- * WAREHOUSE from phase 0 of the product, and PLN-WMS-001 §6 puts *"a user
- * authenticates, switches active warehouse without authenticating again, and
- * sees their permissions recalculated at once"* in that phase's exit criteria.
- * None of that can be built yet: it depends on the backend's Security Core,
- * which starts in Sprint 1 (PLN-WMS-005 §5) and has not started.
- *
- * WHAT THIS IS: the shape of that state, with SYNTHETIC values, IN MEMORY, so
- * that the App Shell can draw the credentials block the design asks for
- * without inventing a place to keep them. «ePrac / 0001 - CEDI_ePRAC» is DATA
- * here, not text in a template -- which is the whole point. The day the
- * Security Core exists, this class is filled from it and NO LAYOUT CHANGES.
- *
- * WHAT THIS IS NOT: authentication. There is no token, no login, no guard and
- * no permission here, and adding one before there is a backend to answer would
- * be inventing a contract. ADR 0012 already reserved the route layer that a
- * guard will attach to.
- *
- * NOTHING IS PERSISTED. The same rule as everywhere else in this repository:
- * no browser storage, no exceptions (PLN-WMS-003 §4).
+ * Asiento del Security Core: el estado de sesión y almacén activo de PLN-WMS-002 §5, sintético,
+ * en memoria y sin persistir (PLN-WMS-003 §4). No es autenticación: ni token ni login ni guard
+ * hasta que haya backend. Ver vault: 08-Sistema-de-Diseno/Componentes/App-Shell.
  */
 @Injectable({ providedIn: 'root' })
 export class SessionContext {
@@ -57,16 +38,14 @@ export class SessionContext {
   readonly warehouse: Signal<SessionWarehouse> = this.currentWarehouse.asReadonly();
 
   /**
-   * Switching warehouse WITHOUT re-authenticating is the phase-0 criterion
-   * this seat exists for. It moves a signal today; when the Security Core
-   * exists it will also ask the backend to recalculate permissions, and every
-   * consumer already reads a signal, so no consumer changes.
+   * Cambiar de almacén sin reautenticarse es el criterio de fase 0 (PLN-WMS-001 §6). Hoy mueve
+   * una signal; con Security Core también pedirá recalcular permisos, sin tocar consumidores.
    */
   setWarehouse(warehouse: SessionWarehouse): void {
     this.currentWarehouse.set(warehouse);
   }
 
-  /** Filled by the Security Core when it exists. Synthetic until then. */
+  /** Lo llenará el Security Core; sintético hasta entonces. */
   setUser(user: SessionUser): void {
     this.currentUser.set(user);
   }

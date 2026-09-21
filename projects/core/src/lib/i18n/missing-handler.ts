@@ -2,12 +2,8 @@ import { Injectable, isDevMode } from '@angular/core';
 import type { TranslocoMissingHandler, TranslocoMissingHandlerData } from '@jsverse/transloco';
 
 /**
- * What a missing key does.
- *
- * - Development (ng serve, unit tests, e2e): throws, so it shows up in the
- *   test that renders it and not in front of a user.
- * - Production: returns the key path (`inventory.title`), never an empty
- *   string. Odd text on screen is a visible bug; a blank is an invisible one.
+ * Clave faltante: en desarrollo lanza, para que aparezca en la prueba y no ante un usuario.
+ * En producción devuelve la ruta de la clave, nunca vacío: un hueco es un bug que nadie ve.
  */
 export function resolveMissingKey(key: string, lang: string, devMode: boolean): string {
   if (devMode) {

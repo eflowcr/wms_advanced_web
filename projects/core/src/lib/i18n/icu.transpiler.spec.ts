@@ -7,7 +7,7 @@ describe('IcuTranspiler', () => {
   let transloco: TranslocoService;
 
   beforeEach(async () => {
-    // Startup never saves, so the language comes from the browser here.
+    // El arranque no guarda nada: acá el idioma sale del navegador.
     vi.spyOn(window.navigator, 'language', 'get').mockReturnValue('es-CR');
     TestBed.configureTestingModule({
       providers: [

@@ -4,17 +4,8 @@ import { formatIcu, hasIcuSyntax, parseIcu, type IcuPart } from './icu';
 import { DEFAULT_LANGUAGE, isLanguage, LANGUAGE_LOCALES } from './language.types';
 
 /**
- * Transloco transpiler: ICU first, then Transloco's own `{{ }}` interpolation.
- *
- * The order is deliberate. ICU runs on the dictionary text only; parameter
- * values are inserted afterwards by DefaultTranspiler, so user data such as a
- * location named "A{1}" is never parsed as ICU.
- *
- * A malformed message or a missing plural parameter throws in development,
- * like a missing key (see missing-handler.ts). In production the raw text is
- * shown instead: odd text is a visible bug, a blank is an invisible one.
- * tools/ci/check-i18n.mjs parses every message, so a malformed one should not
- * reach production at all.
+ * ICU primero y después la interpolación: así un valor como la ubicación "A{1}" nunca se
+ * interpreta como ICU. Un mensaje roto lanza en desarrollo; en producción se muestra crudo.
  */
 @Injectable()
 export class IcuTranspiler extends DefaultTranspiler {
@@ -40,7 +31,7 @@ export class IcuTranspiler extends DefaultTranspiler {
   }
 
   onLangChanged(lang: string): void {
-    // Scoped loads report 'scope/lang'; the locale follows the language part.
+    // Las cargas con scope llegan como 'scope/lang'; el locale sigue a la parte del idioma.
     const language = lang.split('/').pop();
     this.locale = LANGUAGE_LOCALES[isLanguage(language) ? language : DEFAULT_LANGUAGE];
   }

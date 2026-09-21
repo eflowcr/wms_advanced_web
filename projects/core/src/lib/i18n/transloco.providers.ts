@@ -20,13 +20,8 @@ import { NoFallbackStrategy } from './no-fallback.strategy';
 import { HttpTranslocoLoader } from './transloco.loader';
 
 /**
- * Every i18n provider, in one place (ADR 0008). Requires HttpClient: the
- * application must also call provideHttpClient().
- *
- * The app does not render until the initial dictionary is loaded, so the
- * first paint is already in the right language. If no dictionary loads at
- * all, the initializer rejects with DictionaryUnavailableError and the app
- * does not start; the application decides what the user sees then.
+ * Todos los providers de i18n (ADR 0008); requiere provideHttpClient(). No se pinta sin el
+ * diccionario inicial; si ninguno carga, rechaza con DictionaryUnavailableError.
  */
 export function provideEwmsI18n(): EnvironmentProviders {
   return makeEnvironmentProviders([
@@ -34,25 +29,22 @@ export function provideEwmsI18n(): EnvironmentProviders {
       config: {
         availableLangs: [...LANGUAGES],
         defaultLang: DEFAULT_LANGUAGE,
-        // No fallbackLang: a dictionary that fails to load is handled by
-        // LanguageService, not by Transloco (see NoFallbackStrategy).
+        // Sin fallbackLang: el diccionario que no carga lo maneja LanguageService.
         reRenderOnLangChange: true,
         prodMode: !isDevMode(),
         missingHandler: {
-          // A key missing in en.json must not silently show the Spanish text:
-          // it is a bug, and the missing handler reports it as one.
+          // Una clave que falta en en.json no cae al español en silencio: es un bug.
           useFallbackTranslation: false,
           allowEmpty: false,
         },
       },
       loader: HttpTranslocoLoader,
     }),
-    // Registered after provideTransloco so they replace its defaults.
+    // Después de provideTransloco, para reemplazar sus valores por defecto.
     provideTranslocoTranspiler(IcuTranspiler),
     provideTranslocoMissingHandler(EwmsMissingHandler),
     provideTranslocoFallbackStrategy(NoFallbackStrategy),
-    // The language decides the locale. No currency mapping, on purpose: the
-    // currency code is data of the record, never derived from the language.
+    // Sin mapeo de moneda a propósito: el código de moneda es dato del registro.
     ...provideTranslocoLocale({ langToLocaleMapping: { ...LANGUAGE_LOCALES } }),
     provideAppInitializer(() => inject(LanguageService).init()),
   ]);
