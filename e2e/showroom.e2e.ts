@@ -1788,35 +1788,38 @@ test.describe('DS-3 lote D: detalle, menú, ventana y paginador', () => {
     await expect(page.locator(demo)).not.toContainText('filas');
   });
 
-  test('a filter field IS a compact row tall, and a narrow range stacks', async ({ page }) => {
-    // 1600 de ancho por el App Shell: su riel ocupa 232 px y a 1280 la columna de fecha también se
-    // apilaba. La mitad que apila se afirma en la misma página y ancho, sobre una columna angosta
-    // por declaración.
-    await page.setViewportSize({ width: 1600, height: 900 });
+  test('the filter row is one compact field tall, and no placeholder is cut', async ({ page }) => {
     await page.goto(TABLE);
     await ready(page);
 
     const filterRow = page.locator('[data-demo-table] [data-filter-row]');
 
-    // Los filtros son ewms-input Small, mismo token que la fila compacta (--row-height-sm):
-    // un campo en una celda mide exactamente una fila.
-    const single = filterRow.locator('[data-filter="cliente"] input');
-    await expect(single).toBeVisible();
-    expect(round((await single.boundingBox())?.height)).toBe(32);
+    // Los filtros son Small, mismo token que la fila compacta (--row-height-sm): un campo en una
+    // celda mide exactamente una fila, y la fecha es un solo campo de rango (2026-09-21).
+    for (const key of ['cliente', 'fecha']) {
+      const field = filterRow.locator(`[data-filter="${key}"] input`);
+      await expect(field).toHaveCount(1);
+      expect(round((await field.boundingBox())?.height), key).toBe(32);
+    }
 
-    // Una columna md tiene ancho para dos cajas lado a lado.
-    const wideRange = filterRow.locator('[data-filter="fecha"] input');
-    await expect(wideRange).toHaveCount(2);
-    expect(round((await wideRange.nth(0).boundingBox())?.y)).toBe(
-      round((await wideRange.nth(1).boundingBox())?.y),
+    // Las dos cajas numéricas van lado a lado y la columna crece antes que cortarlas: encogidas
+    // se leían «Desc» y «Hast». El ancho es preferencia; la legibilidad, no.
+    const numbers = filterRow.locator('[data-filter="bultos"] input');
+    await expect(numbers).toHaveCount(2);
+    expect(round((await numbers.nth(0).boundingBox())?.y)).toBe(
+      round((await numbers.nth(1).boundingBox())?.y),
     );
-
-    // Una sm no, y las cajas se apilan en vez de encogerse: encogidas se leían «D» y «H».
-    // El ancho es preferencia; la legibilidad, no.
-    const narrowRange = filterRow.locator('[data-filter="bultos"] input');
-    await expect(narrowRange).toHaveCount(2);
-    expect(round((await narrowRange.nth(1).boundingBox())?.y)).toBeGreaterThan(
-      round((await narrowRange.nth(0).boundingBox())?.y) ?? 0,
-    );
+    for (const index of [0, 1]) {
+      // scrollWidth no cuenta el placeholder: se mide con la fuente real del campo.
+      const fits = await numbers.nth(index).evaluate((input: HTMLInputElement) => {
+        const style = getComputedStyle(input);
+        const context = document.createElement('canvas').getContext('2d')!;
+        context.font = [style.fontWeight, style.fontSize, style.fontFamily].join(' ');
+        const room =
+          input.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
+        return context.measureText(input.placeholder).width <= room;
+      });
+      expect(fits, `box ${index} fits its placeholder`).toBe(true);
+    }
   });
 });

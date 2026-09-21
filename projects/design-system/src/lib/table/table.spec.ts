@@ -3,6 +3,7 @@ import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { expectNoAxeViolations, pixels } from '@ewms/testing';
 import { By } from '@angular/platform-browser';
 import { defer, Observable, of, Subject, throwError } from 'rxjs';
+import { EWMS_DATE_PICKER_MESSAGES } from '../date-picker/date-picker.types';
 import { ArrayTableSource } from './array-table-source';
 import { TableColumn } from './column';
 import { DetailTemplate, EmptyTemplate, Table } from './table';
@@ -64,6 +65,13 @@ const MESSAGES: TableMessages = {
   nextPage: 'Siguiente',
   pageOf: (page, pages) => `Página ${page} de ${pages}`,
   rowsTotal: (total) => `${total} filas`,
+};
+
+const DATE_WORDS = {
+  chooseDate: 'Elegir fecha',
+  previousMonth: 'Mes anterior',
+  nextMonth: 'Mes siguiente',
+  locale: 'es-CR',
 };
 
 // Invierte el orden del texto frente al número: solo así la prueba distingue orden crudo de
@@ -135,6 +143,7 @@ describe('Table', () => {
       imports: [TestHost, Table, TableColumn, EmptyTemplate],
       providers: [
         { provide: EWMS_TABLE_MESSAGES, useValue: MESSAGES },
+        { provide: EWMS_DATE_PICKER_MESSAGES, useValue: DATE_WORDS },
         { provide: EWMS_TABLE_FORMATTERS, useValue: FORMATTERS },
       ],
     }).compileComponents();
@@ -328,10 +337,11 @@ describe('Table', () => {
       input.dispatchEvent(new Event('input'));
     }
 
-    it('THE SHAPE COMES FROM THE COLUMN TYPE: one box for text, two for a range', () => {
+    it('THE SHAPE COMES FROM THE COLUMN TYPE: one box for text and dates, two for numbers', () => {
       expect(boxes('codigo').length).toBe(1);
       expect(boxes('bultos').length).toBe(2);
-      expect(boxes('fecha').length).toBe(2);
+      // La fecha es un date picker de rango: un campo, la fila queda en una altura.
+      expect(boxes('fecha').length).toBe(1);
     });
 
     it('filters text by substring', async () => {
@@ -365,13 +375,21 @@ describe('Table', () => {
       expect(bodyRows().length).toBe(2);
     });
 
-    it('filters a date range', async () => {
-      const [from, to] = boxes('fecha');
-      type(from!, '2026-02-01');
-      type(to!, '2026-02-28');
+    it('filters a date range, written in the language of the app', async () => {
+      const [range] = boxes('fecha');
+      type(range!, '1/2/2026 – 28/2/2026');
+      range!.focus();
+      range!.blur();
       await settle();
       expect(bodyRows().length).toBe(1);
       expect(textOf(0)).toContain('EXP-0002');
+      expect(host.lastQuery?.filters).toEqual({ fecha: { from: '2026-02-01', to: '2026-02-28' } });
+
+      type(range!, '');
+      range!.focus();
+      range!.blur();
+      await settle();
+      expect(bodyRows().length).toBe(3);
     });
 
     it('sends the whole query out, which is what a saved view will persist', async () => {
@@ -579,6 +597,7 @@ describe('Table with a failing source', () => {
       imports: [TestHost, Table, TableColumn, EmptyTemplate],
       providers: [
         { provide: EWMS_TABLE_MESSAGES, useValue: MESSAGES },
+        { provide: EWMS_DATE_PICKER_MESSAGES, useValue: DATE_WORDS },
         { provide: EWMS_TABLE_FORMATTERS, useValue: FORMATTERS },
       ],
     }).compileComponents();
@@ -644,6 +663,7 @@ describe('Table with lazy children', () => {
       imports: [LazyHost, Table, TableColumn],
       providers: [
         { provide: EWMS_TABLE_MESSAGES, useValue: MESSAGES },
+        { provide: EWMS_DATE_PICKER_MESSAGES, useValue: DATE_WORDS },
         { provide: EWMS_TABLE_FORMATTERS, useValue: FORMATTERS },
       ],
     }).compileComponents();
@@ -781,6 +801,7 @@ describe('Table paging', () => {
       imports: [PagedHost, Table, TableColumn],
       providers: [
         { provide: EWMS_TABLE_MESSAGES, useValue: MESSAGES },
+        { provide: EWMS_DATE_PICKER_MESSAGES, useValue: DATE_WORDS },
         { provide: EWMS_TABLE_FORMATTERS, useValue: FORMATTERS },
       ],
     }).compileComponents();
@@ -826,6 +847,7 @@ describe('Table paging', () => {
       imports: [PagedHost, Table, TableColumn],
       providers: [
         { provide: EWMS_TABLE_MESSAGES, useValue: MESSAGES },
+        { provide: EWMS_DATE_PICKER_MESSAGES, useValue: DATE_WORDS },
         { provide: EWMS_TABLE_FORMATTERS, useValue: FORMATTERS },
       ],
     }).compileComponents();
@@ -898,6 +920,7 @@ describe('Table master/detail', () => {
       imports: [DetailHost, Table, TableColumn, DetailTemplate],
       providers: [
         { provide: EWMS_TABLE_MESSAGES, useValue: MESSAGES },
+        { provide: EWMS_DATE_PICKER_MESSAGES, useValue: DATE_WORDS },
         { provide: EWMS_TABLE_FORMATTERS, useValue: FORMATTERS },
       ],
     }).compileComponents();
@@ -1219,6 +1242,7 @@ async function hugeFixture(rows: readonly Big[]): Promise<ComponentFixture<HugeH
     imports: [HugeHost, Table, TableColumn],
     providers: [
       { provide: EWMS_TABLE_MESSAGES, useValue: MESSAGES },
+        { provide: EWMS_DATE_PICKER_MESSAGES, useValue: DATE_WORDS },
       { provide: EWMS_TABLE_FORMATTERS, useValue: FORMATTERS },
     ],
   }).compileComponents();

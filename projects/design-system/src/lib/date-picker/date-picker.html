@@ -1,4 +1,10 @@
-<label [attr.for]="fieldId" class="block text-caption text-secondary mb-1">{{ label() }}</label>
+<label
+  [attr.for]="fieldId"
+  class="block text-caption text-secondary mb-1"
+  [class.sr-only]="hideLabel()"
+>
+  {{ label() }}
+</label>
 
 <!-- La caja de `ewms-input` con el botón del calendario como sufijo, igual que el ojo de la clave. -->
 <div #anchor class="relative">

@@ -32,18 +32,16 @@
     <thead class="sticky top-0 z-10">
       <tr role="row">
         @if (selectable()) {
-          <th
-            scope="col"
-            role="columnheader"
-            [class]="headerCellClasses"
-            [style.width]="'var(--col-width-sm)'"
-          >
-            <ewms-checkbox
-              [checked]="allSelected()"
-              [indeterminate]="someSelected()"
-              [ariaLabel]="text().selectAll"
-              (checkedChange)="toggleAll()"
-            />
+          <!-- w-0: la columna del checkbox mide lo que el checkbox, sin hueco hasta el chevron. -->
+          <th scope="col" role="columnheader" class="w-0" [class]="headerCellClasses">
+            <span class="flex items-center">
+              <ewms-checkbox
+                [checked]="allSelected()"
+                [indeterminate]="someSelected()"
+                [ariaLabel]="text().selectAll"
+                (checkedChange)="toggleAll()"
+              />
+            </span>
           </th>
         }
 
@@ -93,7 +91,8 @@
               @if (column.filterable()) {
                 @switch (column.type()) {
                   @case ('number') {
-                    <span class="flex flex-wrap gap-1" [attr.data-filter]="column.key()">
+                    <!-- Lado a lado con un mínimo legible: la columna crece antes que cortar «Desde». -->
+                    <span class="flex gap-1" [attr.data-filter]="column.key()">
                       <ewms-input
                         class="flex-1 min-w-(--col-filter-min-width)"
                         type="number"
@@ -115,22 +114,16 @@
                     </span>
                   }
                   @case ('date') {
-                    <span class="flex flex-wrap gap-1" [attr.data-filter]="column.key()">
-                      <ewms-input
-                        class="flex-1 min-w-(--col-filter-min-width)"
+                    <!-- Un campo de rango, no dos apilados: la fila de filtros queda en una altura. -->
+                    <span class="block" [attr.data-filter]="column.key()">
+                      <ewms-date-picker
+                        class="min-w-(--col-width-md)"
+                        mode="range"
                         size="sm"
-                        [label]="text().filterFrom"
+                        [label]="column.header() || column.key()"
                         [hideLabel]="true"
-                        [placeholder]="text().filterFrom"
-                        [formControl]="filterControl(column, 'from')"
-                      />
-                      <ewms-input
-                        class="flex-1 min-w-(--col-filter-min-width)"
-                        size="sm"
-                        [label]="text().filterTo"
-                        [hideLabel]="true"
-                        [placeholder]="text().filterTo"
-                        [formControl]="filterControl(column, 'to')"
+                        [placeholder]="text().filterFrom + ' – ' + text().filterTo"
+                        [formControl]="dateFilterControl(column)"
                       />
                     </span>
                   }
@@ -188,11 +181,14 @@
               (focus)="onCellFocus(rowIndex, 0)"
               (keydown)="onKeydown($event, rowIndex)"
             >
-              <ewms-checkbox
-                [checked]="isSelected(flat)"
-                [ariaLabel]="text().selectRow"
-                (checkedChange)="toggleRow(flat)"
-              />
+              <!-- En flex: suelto, el checkbox se alineaba a la línea de base y quedaba alto. -->
+              <span class="flex items-center">
+                <ewms-checkbox
+                  [checked]="isSelected(flat)"
+                  [ariaLabel]="text().selectRow"
+                  (checkedChange)="toggleRow(flat)"
+                />
+              </span>
             </td>
           }
 
@@ -207,7 +203,8 @@
               (focus)="onCellFocus(rowIndex, selectable() ? columnIndex + 1 : columnIndex)"
               (keydown)="onKeydown($event, rowIndex)"
             >
-              <span class="flex items-center gap-1">
+              <!-- El td alinea texto, no a los hijos de un flex: el número se corre con justify-end. -->
+              <span class="flex items-center gap-1" [class.justify-end]="column.type() === 'number'">
                 @if ($first && isTree()) {
                   <!-- El toggle vive en la primera columna; una hoja lleva un espaciador del mismo ancho. -->
                   <span

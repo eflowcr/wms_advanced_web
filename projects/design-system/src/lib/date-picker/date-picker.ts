@@ -80,6 +80,8 @@ export class DatePicker extends FormControlBase<DatePickerValue> implements OnDe
   readonly placeholder = input<string>('');
   readonly hint = input<string>('');
   readonly error = input<boolean>(false);
+  /** Solo para lectores: el filtro de la tabla ya tiene la cabecera de la columna encima. */
+  readonly hideLabel = input<boolean>(false);
 
   /** Siembra el control; después manda `writeValue`. */
   readonly value = input<DatePickerValue>(null);

@@ -229,7 +229,7 @@
 
   /* Mínimo por caja de rango: en una columna `sm` se apilan en vez de leerse «D» y «H».
    * Ver vault: Tabla §9. */
-  --col-filter-min-width: var(--size-56);
+  --col-filter-min-width: var(--size-72);
 
   /* 3000 ms (ficha Notificaciones). `ToastService` lo lee de la hoja; sin ella el toast
    * queda fijo en vez de inventar un número. */
