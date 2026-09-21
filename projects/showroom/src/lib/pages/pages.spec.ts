@@ -1124,16 +1124,16 @@ describe('ShowroomDialog', () => {
     element.remove();
   });
 
-  it('draws the three halos with the component own tokens, and none of them blue', async () => {
+  it('draws the three glyphs in their family colour, and none of them blue', async () => {
     const { element } = await render(ShowroomDialog);
-    const halos = [...element.querySelectorAll<HTMLElement>('[data-halo]')];
-    expect(halos.length).toBe(3);
-    expect(halos[0]?.className).toContain('shadow-(--shadow-halo-danger)');
-    expect(halos[2]?.className).toContain('bg-neutral-surface');
-    for (const halo of halos) {
-      expect(halo.className).not.toContain('primary');
-      // La excepción que documenta la ficha: una forma sin nada adentro.
-      expect(halo.querySelector('svg')).toBeNull();
+    const glyphs = [...element.querySelectorAll<HTMLElement>('[data-glyph]')];
+    expect(glyphs.map((glyph) => glyph.className)).toEqual([
+      'inline-flex text-danger',
+      'inline-flex text-warning',
+      'inline-flex text-neutral',
+    ]);
+    for (const glyph of glyphs) {
+      expect(glyph.querySelector('svg')).not.toBeNull();
     }
   });
 
@@ -1142,16 +1142,16 @@ describe('ShowroomDialog', () => {
     const page = fixture.componentInstance as unknown as {
       rowFor(tone: string): { name: string };
       fact(tone: string, stateId: string): string;
-      isHalo(stateId: string): boolean;
-      haloClasses(tone: string): string;
+      isGlyph(stateId: string): boolean;
+      glyphFor(tone: string): unknown;
     };
     expect(page.rowFor('no-such-tone').name).toBe('Info');
     expect(page.fact('danger', 'confirm')).toBe('Danger');
     expect(page.fact('danger', 'backdrop')).toBe('No cierra');
-    expect(page.fact('danger', 'halo')).toBe('');
-    expect(page.isHalo('halo')).toBe(true);
-    expect(page.isHalo('confirm')).toBe(false);
-    expect(page.haloClasses('no-such-tone')).toBe('');
+    expect(page.fact('danger', 'glyph')).toBe('');
+    expect(page.isGlyph('glyph')).toBe(true);
+    expect(page.isGlyph('confirm')).toBe(false);
+    expect(page.glyphFor('no-such-tone')).toBeNull();
   });
 });
 

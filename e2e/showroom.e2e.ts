@@ -1208,17 +1208,32 @@ test.describe('DS-3 lote B: dialog', () => {
     await expect(page.locator('[data-last-answer]')).toContainText('no confirmado');
   });
 
-  test('the icon zone is 56 px of shape with no glyph in it', async ({ page }) => {
+  test('each tone is a glyph with no shadow, on the left margin of the form dialog', async ({
+    page,
+  }) => {
     await page.goto(DIALOG);
     await ready(page);
 
     for (const tone of ['danger', 'warning', 'info'] as const) {
-      const halo = page.locator(`[data-halo="${tone}"]`);
-      const box = await halo.boundingBox();
-      expect(round(box?.width), `${tone} halo width`).toBe(56);
-      expect(round(box?.height), `${tone} halo height`).toBe(56);
-      // La excepción documentada: una forma y nada adentro.
-      await expect(halo.locator('svg')).toHaveCount(0);
+      await page.locator(`[data-open="${tone}"] button`).click();
+      const dialog = page.locator('[role="dialog"]');
+      const glyph = dialog.locator('[data-dialog-icon]');
+      await expect(glyph.locator('svg')).toHaveCount(1);
+      expect(await glyph.evaluate((element) => getComputedStyle(element).boxShadow)).toBe('none');
+
+      // Como el de formulario (p-6 y borde): todo arranca en el borde interior del relleno.
+      const container = dialog.locator('div').first();
+      const box = await container.boundingBox();
+      const inset = await container.evaluate((element) => {
+        const style = getComputedStyle(element);
+        return parseFloat(style.paddingLeft) + parseFloat(style.borderLeftWidth);
+      });
+      for (const part of [glyph, dialog.locator('p').first()]) {
+        const left = (await part.boundingBox())!.x - box!.x;
+        expect(round(left), `${tone} left margin`).toBe(round(inset));
+      }
+      await page.keyboard.press('Escape');
+      await expect(dialog).toHaveCount(0);
     }
   });
 

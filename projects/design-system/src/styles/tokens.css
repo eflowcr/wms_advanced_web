@@ -36,11 +36,6 @@
   --navy-7-a10: rgb(1 15 66 / 0.1);
   --navy-7-a50: rgb(1 15 66 / 0.5);
 
-  /* Halo del Dialog: 35 % del `-solid` de cada familia (ficha Modal v1.1). Info usa el navy. */
-  --red-48-a35: rgb(217 45 32 / 0.35);
-  --orange-49-a35: rgb(189 89 3 / 0.35);
-  --navy-52-a35: rgb(115 123 151 / 0.35);
-
   --blue-35: #3149aa;
   --blue-41: #3a56c9;
   --blue-48: #4465ec;
@@ -202,14 +197,6 @@
   --shadow-dialog:
     0 24px 48px var(--navy-7-a10), 0 8px 16px var(--navy-7-a08), 0 2px 4px var(--navy-7-a06);
   --backdrop-blur: var(--blur-8);
-
-  /* Halo de la zona de icono: 0 0 48 6 al 35 % del `-solid` (ficha Modal v1.1). */
-  --shadow-halo-danger: 0 0 var(--size-48) var(--size-6) var(--red-48-a35);
-  --shadow-halo-warning: 0 0 var(--size-48) var(--size-6) var(--orange-49-a35);
-  --shadow-halo-neutral: 0 0 var(--size-48) var(--size-6) var(--navy-52-a35);
-
-  /* Círculo de la zona de icono: 56x56 (ficha v1.1). */
-  --size-dialog-icon: var(--size-56);
 
   /* Marco (DS-5): tokens y no números sueltos, que la compuerta 10 rechaza. */
   --shell-header-height: var(--size-64);

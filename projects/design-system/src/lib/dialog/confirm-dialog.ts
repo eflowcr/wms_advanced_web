@@ -1,10 +1,11 @@
 import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { Button } from '../button/button';
+import { Icon } from '../icon/icon';
 import {
   confirmButtonVariant,
   DIALOG_BOX_CLASSES,
-  dialogIconClasses,
+  dialogIcon,
   type ConfirmDialogData,
 } from './dialog.types';
 
@@ -15,7 +16,7 @@ import {
 @Component({
   selector: 'ewms-confirm-dialog',
   templateUrl: './confirm-dialog.html',
-  imports: [Button],
+  imports: [Button, Icon],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { class: 'contents' },
 })
@@ -26,7 +27,7 @@ export class ConfirmDialog {
 
   protected readonly boxClasses = DIALOG_BOX_CLASSES;
 
-  protected readonly iconClasses = computed(() => dialogIconClasses(this.options.tone));
+  protected readonly icon = computed(() => dialogIcon(this.options.tone));
 
   protected readonly confirmVariant = computed(() => confirmButtonVariant(this.options.tone));
 

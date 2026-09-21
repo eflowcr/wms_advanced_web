@@ -1,5 +1,12 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
-import { Button, DESIGN_SYSTEM_VERSION, DialogService, type DialogTone } from '@ewms/design-system';
+import {
+  Button,
+  DESIGN_SYSTEM_VERSION,
+  DialogService,
+  Icon,
+  type DialogTone,
+  type IconName,
+} from '@ewms/design-system';
 import { DemoFrame } from '../../ui/demo-frame';
 import { PropTable, type PropRow } from '../../ui/prop-table';
 import { StateMatrix, type MatrixAxis } from '../../ui/state-matrix';
@@ -55,16 +62,16 @@ const MATRIX_VARIANTS: readonly MatrixAxis[] = TONES.map((row) => ({
 }));
 
 const MATRIX_STATES: readonly MatrixAxis[] = [
-  { id: 'halo', label: 'Zona de icono' },
+  { id: 'glyph', label: 'Glifo' },
   { id: 'confirm', label: 'Botón de confirmar' },
   { id: 'backdrop', label: 'Click en el backdrop' },
 ];
 
-/** Muestras del halo escritas completas para que Tailwind vea cada clase. */
-const HALO_SAMPLES: Readonly<Record<string, string>> = {
-  danger: 'bg-danger-surface border-danger shadow-(--shadow-halo-danger)',
-  warning: 'bg-warning-surface border-warning shadow-(--shadow-halo-warning)',
-  info: 'bg-neutral-surface border-neutral shadow-(--shadow-halo-neutral)',
+/** Muestras del glifo escritas completas para que Tailwind vea cada clase. */
+const GLYPH_SAMPLES: Readonly<Record<string, { name: IconName; color: string }>> = {
+  danger: { name: 'alert-triangle', color: 'text-danger' },
+  warning: { name: 'alert-triangle', color: 'text-warning' },
+  info: { name: 'info-circle', color: 'text-neutral' },
 };
 
 /**
@@ -97,7 +104,7 @@ const PROPS: readonly PropRow[] = [
     type: "'danger' | 'warning' | 'info'",
     default: '— (requerido)',
     description:
-      'Elige el halo, la variante del botón de confirmar y si el backdrop cierra. Info se pinta neutral.',
+      'Elige el glifo, la variante del botón de confirmar y si el backdrop cierra. Info se pinta neutral.',
   },
   {
     name: '· confirmLabel',
@@ -144,10 +151,10 @@ const ANATOMY = [
   { part: 'Elevación de la caja', token: '--shadow-dialog' },
   { part: 'Backdrop', token: '--color-overlay' },
   { part: 'Desenfoque del backdrop', token: '--backdrop-blur' },
-  { part: 'Diámetro de la zona de icono', token: '--size-dialog-icon' },
-  { part: 'Halo de Danger', token: '--shadow-halo-danger' },
-  { part: 'Halo de Warning', token: '--shadow-halo-warning' },
-  { part: 'Halo de Info — neutral, nunca azul', token: '--shadow-halo-neutral' },
+  { part: 'Tamaño del glifo', token: '--size-icon-lg' },
+  { part: 'Glifo de Danger', token: '--color-danger-text' },
+  { part: 'Glifo de Warning', token: '--color-warning-text' },
+  { part: 'Glifo de Info — neutral, nunca azul', token: '--color-neutral-text' },
   { part: 'Título', token: '--text-h3-size' },
   { part: 'Cuerpo', token: '--text-p-size' },
 ] as const;
@@ -158,7 +165,7 @@ const ANATOMY = [
  */
 @Component({
   selector: 'ewms-showroom-dialog',
-  imports: [Button, DemoFrame, PropTable, StateMatrix, TokenValue],
+  imports: [Button, Icon, DemoFrame, PropTable, StateMatrix, TokenValue],
   templateUrl: './dialog.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -193,8 +200,8 @@ export class ShowroomDialog {
     '}',
   ].join('\n');
 
-  protected haloClasses(tone: string): string {
-    return HALO_SAMPLES[tone] ?? '';
+  protected glyphFor(tone: string): { name: IconName; color: string } | null {
+    return GLYPH_SAMPLES[tone] ?? null;
   }
 
   protected rowFor(tone: string): ToneRow {
@@ -213,8 +220,8 @@ export class ShowroomDialog {
     }
   }
 
-  protected isHalo(stateId: string): boolean {
-    return stateId === 'halo';
+  protected isGlyph(stateId: string): boolean {
+    return stateId === 'glyph';
   }
 
   protected async ask(tone: DialogTone): Promise<void> {

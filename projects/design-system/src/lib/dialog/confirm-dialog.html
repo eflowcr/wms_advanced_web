@@ -1,18 +1,15 @@
 <!-- Rol, trampa de foco y `aria-modal` son del contenedor del CDK: acá no va un segundo `dialog`. -->
 <div [class]="boxClasses">
-  <!-- Forma con halo y sin glifo a propósito: no «arreglarla». `aria-hidden`: nada que leer. Ver vault: Modal. -->
-  <span
-    class="shrink-0 rounded-full border border-solid"
-    [class]="iconClasses()"
-    [style.width]="'var(--size-dialog-icon)'"
-    [style.height]="'var(--size-dialog-icon)'"
-    aria-hidden="true"
-  ></span>
-
-  <h2 [id]="options.titleId" class="text-h3 text-primary">{{ options.title }}</h2>
+  <!-- A la izquierda, como el diálogo de formulario. El glifo repite el tono del título: decorativo. -->
+  <div class="flex items-center gap-3">
+    <span class="flex shrink-0" [class]="icon().color" data-dialog-icon>
+      <ewms-icon [name]="icon().name" size="lg" />
+    </span>
+    <h2 [id]="options.titleId" class="text-h3 text-primary">{{ options.title }}</h2>
+  </div>
   <p [id]="options.bodyId" class="text-p text-secondary">{{ options.body }}</p>
 
-  <!-- Pie a la derecha (ficha v1.1). Cancelar primero en el DOM: el CDK enfoca el primer tabulable. -->
+  <!-- Pie a la derecha. Cancelar primero en el DOM: el CDK enfoca el primer tabulable. -->
   <div class="flex w-full justify-end gap-2">
     <ewms-button variant="secondary" (click)="cancel()">{{ options.cancelLabel }}</ewms-button>
     <ewms-button [variant]="confirmVariant()" (click)="confirm()">
