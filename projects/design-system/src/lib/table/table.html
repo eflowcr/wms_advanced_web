@@ -183,7 +183,8 @@
                           [label]="text().filterFrom"
                           [hideLabel]="true"
                           [placeholder]="text().filterFrom"
-                          [formControl]="filtering.control(column, 'min')"
+                          [value]="filtering.boxValue(column, 'min')"
+                          (valueChange)="filtering.typeInto(column, 'min', $event)"
                         />
                         <ewms-input
                           class="flex-1 min-w-(--col-filter-min-width) [&_input]:[appearance:textfield] [&_input::-webkit-inner-spin-button]:appearance-none"
@@ -192,7 +193,8 @@
                           [label]="text().filterTo"
                           [hideLabel]="true"
                           [placeholder]="text().filterTo"
-                          [formControl]="filtering.control(column, 'max')"
+                          [value]="filtering.boxValue(column, 'max')"
+                          (valueChange)="filtering.typeInto(column, 'max', $event)"
                         />
                       </span>
                     }
@@ -233,7 +235,8 @@
                           [label]="column.header() || column.key()"
                           [hideLabel]="true"
                           [placeholder]="text().filterFrom + ' – ' + text().filterTo"
-                          [formControl]="filtering.dateControl(column)"
+                          [value]="filtering.dateValue(column)"
+                          (valueChange)="filtering.pickDate(column, $event)"
                         />
                       </span>
                     }
@@ -245,7 +248,8 @@
                           [label]="column.header() || column.key()"
                           [hideLabel]="true"
                           [placeholder]="text().filterPlaceholder"
-                          [formControl]="filtering.control(column, 'text')"
+                          [value]="filtering.boxValue(column, 'text')"
+                          (valueChange)="filtering.typeInto(column, 'text', $event)"
                         />
                       </span>
                     }

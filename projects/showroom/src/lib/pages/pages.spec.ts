@@ -705,11 +705,11 @@ describe('ShowroomInput', () => {
   it('drives the demo from a real reactive form, not from a local copy', async () => {
     const { fixture, element } = await render(ShowroomInput);
     const page = fixture.componentInstance as unknown as {
-      form: { controls: { sku: { setValue(value: string): void } } };
+      model: { set(value: { sku: string; clave: string; busqueda: string }): void };
     };
 
     // Escribir en el control debe cambiar la lectura: prueba de que es un ControlValueAccessor real.
-    page.form.controls.sku.setValue('SKU-99999-Z');
+    page.model.set({ sku: 'SKU-99999-Z', clave: '', busqueda: '' });
     await fixture.whenStable();
     expect(element.querySelector('[data-demo-value]')?.textContent).toContain('SKU-99999-Z');
 
@@ -792,10 +792,12 @@ describe('ShowroomSelect', () => {
   it('says so when the form holds a value no option carries', async () => {
     const { fixture } = await render(ShowroomSelect);
     const page = fixture.componentInstance as unknown as {
-      form: { controls: { estado: { setValue(value: unknown): void } } };
+      model: {
+        set(value: { estado: string | null; rack: null; articulo: null }): void;
+      };
       chosenLabel(): string;
     };
-    page.form.controls.estado.setValue('una-que-no-existe');
+    page.model.set({ estado: 'una-que-no-existe', rack: null, articulo: null });
     await fixture.whenStable();
     expect(page.chosenLabel()).toBe('(sin elegir)');
   });
@@ -878,26 +880,25 @@ describe('ShowroomRadio', () => {
   });
 
   it('gives every matrix cell its own group, so one click cannot light up the rest', async () => {
-    const { fixture } = await render(ShowroomRadio);
-    const page = fixture.componentInstance as unknown as {
-      cellName(value: string, state: string): string;
-    };
-    expect(page.cellName('off', 'hover')).not.toBe(page.cellName('on', 'hover'));
+    const { element } = await render(ShowroomRadio);
+    const names = [
+      ...element.querySelectorAll<HTMLInputElement>('[data-block="5-matriz"] input[type="radio"]'),
+    ].map((radio) => radio.name);
+    expect(names.length).toBeGreaterThan(1);
+    expect(new Set(names).size).toBe(names.length);
   });
 
-  it('caches one control per cell, and forces only hover and focus', async () => {
+  it('caches one value signal per cell, and forces only hover and focus', async () => {
     const { fixture } = await render(ShowroomRadio);
     const page = fixture.componentInstance as unknown as {
-      controlFor(value: string, state: string): { value: unknown; disabled: boolean };
+      cellFor(value: string, state: string): () => unknown;
       forced(state: string): string;
     };
 
-    // Misma celda, mismo control: uno nuevo por detección de cambios reiniciaría el punto.
-    expect(page.controlFor('on', 'default')).toBe(page.controlFor('on', 'default'));
-    expect(page.controlFor('on', 'default').value).not.toBeNull();
-    expect(page.controlFor('off', 'default').value).toBeNull();
-    // La columna Disabled se deshabilita por el formulario: la mitad del OR que nada más ejercita.
-    expect(page.controlFor('on', 'disabled').disabled).toBe(true);
+    // Misma celda, misma señal: una nueva por detección de cambios reiniciaría el punto.
+    expect(page.cellFor('on', 'default')).toBe(page.cellFor('on', 'default'));
+    expect(page.cellFor('on', 'default')()).not.toBeNull();
+    expect(page.cellFor('off', 'default')()).toBeNull();
 
     expect(page.forced('hover')).toContain('border-(--color-bg-primary)');
     expect(page.forced('disabled')).toBe('');
@@ -906,10 +907,10 @@ describe('ShowroomRadio', () => {
   it('says so when the form holds a value no option carries', async () => {
     const { fixture } = await render(ShowroomRadio);
     const page = fixture.componentInstance as unknown as {
-      form: { controls: { tipo: { setValue(value: unknown): void } } };
+      model: { set(value: { tipo: string | null }): void };
       chosenLabel(): string;
     };
-    page.form.controls.tipo.setValue('una-que-no-existe');
+    page.model.set({ tipo: 'una-que-no-existe' });
     await fixture.whenStable();
     expect(page.chosenLabel()).toBe('(ninguno)');
   });
@@ -1099,10 +1100,10 @@ describe('ShowroomCard', () => {
   it('says so when the form holds a warehouse no card carries', async () => {
     const { fixture } = await render(ShowroomCard);
     const page = fixture.componentInstance as unknown as {
-      form: { controls: { almacen: { setValue(value: unknown): void } } };
+      model: { set(value: { almacen: string }): void };
       chosenLabel(): string;
     };
-    page.form.controls.almacen.setValue('una-que-no-existe');
+    page.model.set({ almacen: 'una-que-no-existe' });
     await fixture.whenStable();
     expect(page.chosenLabel()).toBe('(ninguno)');
   });
@@ -1193,9 +1194,9 @@ describe('ShowroomDatePicker', () => {
       '"from":"2026-09-01"',
     );
     const page = fixture.componentInstance as unknown as {
-      form: { controls: { entrega: { setValue(value: string): void } } };
+      model: { set(value: { entrega: string; periodo: null }): void };
     };
-    page.form.controls.entrega.setValue('2099-01-02');
+    page.model.set({ entrega: '2099-01-02', periodo: null });
     await fixture.whenStable();
     expect(element.querySelector('[data-demo-date-value]')?.textContent).toContain('2099-01-02');
   });
@@ -1787,21 +1788,21 @@ describe('ShowroomForm', () => {
       fixture.detectChanges();
     };
     const page = fixture.componentInstance as unknown as {
-      form: { setValue(value: Record<string, unknown>): void };
+      model: { set(value: Record<string, unknown>): void };
     };
 
     form.requestSubmit();
     await settle();
     expect(element.querySelector('[data-form-saved]')?.textContent).toBe('(todavía nada)');
 
-    page.form.setValue({
+    page.model.set({
       codigo: 'EXP-2026-0001',
       cliente: 'Distribuidora Andes',
       correo: '',
       almacen: 'central',
       fecha: null,
       estado: 'pendiente',
-      bultos: 3,
+      bultos: '3',
       urgente: false,
       etiquetas: true,
     });

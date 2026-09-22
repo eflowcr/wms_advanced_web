@@ -4,6 +4,7 @@ import {
   Checkbox,
   Input,
   Radio,
+  RadioGroup,
   Select,
   Toggle,
   type ButtonSize,
@@ -94,7 +95,7 @@ const ELEVATIONS = [
  */
 @Component({
   selector: 'ewms-showroom-spacing',
-  imports: [Button, Checkbox, Input, Radio, Select, Toggle, DemoFrame, TokenValue],
+  imports: [Button, Checkbox, Input, Radio, RadioGroup, Select, Toggle, DemoFrame, TokenValue],
   templateUrl: './spacing.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

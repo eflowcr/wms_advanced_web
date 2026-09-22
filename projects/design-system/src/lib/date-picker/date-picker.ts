@@ -144,6 +144,14 @@ export class DatePicker implements FormValueControl<DatePickerValue>, OnDestroy 
     this.overlayRef = null;
   }
 
+  /**
+   * Del contrato `FormUiControl`: la caja y no el host, que no es enfocable. De acá entra el foco
+   * cuando el resumen de errores llama a `focusBoundControl()`.
+   */
+  focus(options?: FocusOptions): void {
+    this.field().nativeElement.focus(options);
+  }
+
   /** Se valida al salir del campo y al enviar, nunca mientras se escribe. */
   protected readonly showError = computed(() => this.invalid() && this.touched());
 

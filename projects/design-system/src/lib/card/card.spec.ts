@@ -1,6 +1,6 @@
 import { Component, signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
-import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { disabled, form, FormField } from '@angular/forms/signals';
 import { expectNoAxeViolations } from '@ewms/testing';
 import { Card } from './card';
 import { CardGroup } from './card-group';
@@ -58,15 +58,19 @@ class ContentHost {}
 
 @Component({
   template: `
-    <ewms-card-group label="Almacén" [formControl]="control">
+    <ewms-card-group label="Almacén" [formField]="form.almacen">
       <ewms-card optionValue="norte"><span>Norte</span></ewms-card>
       <ewms-card optionValue="central"><span>Central</span></ewms-card>
     </ewms-card-group>
   `,
-  imports: [Card, CardGroup, ReactiveFormsModule],
+  imports: [Card, CardGroup, FormField],
 })
-class ReactiveHost {
-  readonly control = new FormControl<unknown>('central');
+class FormHost {
+  readonly locked = signal(false);
+  readonly model = signal<{ almacen: string | null }>({ almacen: 'central' });
+  readonly form = form(this.model, (path) => {
+    disabled(path.almacen, () => this.locked());
+  });
 }
 
 describe('Card', () => {
@@ -258,14 +262,12 @@ describe('Card', () => {
   });
 
   describe('as a form control', () => {
-    let fixture: ComponentFixture<ReactiveHost>;
-    let host: ReactiveHost;
+    let fixture: ComponentFixture<FormHost>;
+    let host: FormHost;
 
     beforeEach(async () => {
-      await TestBed.configureTestingModule({
-        imports: [ReactiveHost, Card, CardGroup, ReactiveFormsModule],
-      }).compileComponents();
-      fixture = TestBed.createComponent(ReactiveHost);
+      await TestBed.configureTestingModule({ imports: [FormHost] }).compileComponents();
+      fixture = TestBed.createComponent(FormHost);
       host = fixture.componentInstance;
       fixture.detectChanges();
       await fixture.whenStable();
@@ -285,15 +287,15 @@ describe('Card', () => {
     });
 
     it('writes the chosen value back to the form and marks it touched', async () => {
-      expect(host.control.touched).toBe(false);
+      expect(host.form.almacen().touched()).toBe(false);
       radios()[0]?.click();
       await settle();
-      expect(host.control.value).toBe('norte');
-      expect(host.control.touched).toBe(true);
+      expect(host.form.almacen().value()).toBe('norte');
+      expect(host.form.almacen().touched()).toBe(true);
     });
 
-    it('follows the form when the form disables it', async () => {
-      host.control.disable();
+    it('follows the schema when the schema disables it', async () => {
+      host.locked.set(true);
       await settle();
       expect(radios()[0]?.getAttribute('aria-disabled')).toBe('true');
     });

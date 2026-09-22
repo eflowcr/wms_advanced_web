@@ -203,6 +203,14 @@ export class Select<T = unknown>
     this.overlayRef = null;
   }
 
+  /**
+   * Del contrato `FormUiControl`: el combobox y no el host, que no es enfocable. De acá entra el
+   * foco cuando el resumen de errores llama a `focusBoundControl()`.
+   */
+  focus(options?: FocusOptions): void {
+    this.anchor().nativeElement.querySelector<HTMLElement>('input')?.focus(options);
+  }
+
   protected labelOf(item: unknown): string {
     const display = this.display();
     return display ? display.label(item as T) : (item as SelectOption).label;

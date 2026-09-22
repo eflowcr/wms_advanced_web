@@ -4,22 +4,19 @@ import {
   Component,
   computed,
   DestroyRef,
-  effect,
   ElementRef,
   inject,
   signal,
 } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { Button } from '../button/button';
 import { Checkbox } from '../checkbox/checkbox';
 import { FilterChips } from '../filters/filter-chips';
 import { Input as TextInput } from '../input/input';
 import { Radio } from '../radio/radio';
+import { RadioGroup } from '../radio/radio-group';
 import { SplitButton, type SplitAction } from '../split-button/split-button';
 import { TABLE_CONTEXT } from './table-context';
 import { TablePopover } from './table-popover';
-import type { TableDensity } from './table.types';
 
 /**
  * La barra propia de la Tabla: buscar · Filtros · Vista · Exportar, y los chips de los filtros
@@ -33,7 +30,7 @@ import type { TableDensity } from './table.types';
     Checkbox,
     FilterChips,
     Radio,
-    ReactiveFormsModule,
+    RadioGroup,
     SplitButton,
     TablePopover,
     TextInput,
@@ -59,9 +56,10 @@ export class TableToolbar {
     this.table.runExport(id === 'copy' ? 'copy' : 'csv-selected');
   }
 
-  protected readonly densityControl = new FormControl<TableDensity>(this.table.densityChoice(), {
-    nonNullable: true,
-  });
+  /** El valor vive en el contexto de la tabla; el grupo solo lo muestra y lo escribe. */
+  protected chooseDensity(value: unknown): void {
+    this.table.setDensity(value === 'sm' ? 'sm' : 'md');
+  }
 
   /** Los botones con texto no entran en una fila: Filtros y Vista quedan en solo ícono. */
   protected readonly compact = signal(false);
@@ -98,10 +96,5 @@ export class TableToolbar {
         this.destroyRef.onDestroy(() => observer.disconnect());
       }
     });
-    this.densityControl.valueChanges
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((density) => this.table.setDensity(density));
-    // La entrada `density` puede cambiar desde afuera: el radio la sigue sin reemitir.
-    effect(() => this.densityControl.setValue(this.table.densityChoice(), { emitEvent: false }));
   }
 }

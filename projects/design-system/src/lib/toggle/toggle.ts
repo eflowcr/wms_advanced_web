@@ -1,5 +1,15 @@
-import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
-import { FormControlBase, provideValueAccessor } from '../forms/control-value-accessor';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  ElementRef,
+  inject,
+  input,
+  model,
+  output,
+} from '@angular/core';
+import type { FormCheckboxControl, ValidationError } from '@angular/forms/signals';
+import { fieldErrorText, fieldNoteId } from '../forms/field-note';
 import { SELECTION_ROW_CLASSES, selectionRowStateClasses } from '../selection/selection.types';
 
 /**
@@ -11,22 +21,37 @@ import { SELECTION_ROW_CLASSES, selectionRowStateClasses } from '../selection/se
   templateUrl: './toggle.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { class: 'inline-flex' },
-  providers: [provideValueAccessor(() => Toggle)],
 })
-export class Toggle extends FormControlBase<boolean> {
-  readonly checked = input<boolean>(false);
+export class Toggle implements FormCheckboxControl {
+  /** Con `[formField]` lo llena el formulario; fuera de uno, `[(checked)]`. */
+  readonly checked = model<boolean>(false);
 
   readonly label = input<string>('');
 
   readonly ariaLabel = input<string>('');
 
-  readonly checkedChange = output<boolean>();
+  // Del contrato `FormCheckboxControl`: el `[formField]` las llena solo.
+  readonly errors = input<readonly ValidationError[]>([]);
+  readonly invalid = input<boolean>(false);
+  readonly touched = input<boolean>(false);
+  readonly required = input<boolean>(false);
+  readonly disabled = input<boolean>(false);
 
-  protected readonly valueSource = this.checked;
+  /** Al perder el foco, nunca al ganarlo: el formulario marca «tocado» con esto. */
+  readonly touch = output<void>();
+
+  /** `checkedChange` no se declara: lo emite `model()`. */
+  protected readonly noteId = fieldNoteId('ewms-toggle');
+
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
+
+  protected readonly showError = computed(() => this.invalid() && this.touched());
+
+  protected readonly fieldError = fieldErrorText(this.errors, this.showError);
 
   /** El blanco es la fila: 44x24 es difícil de acertar con guantes en una tablet. */
   protected readonly rowClasses = computed(
-    () => `${SELECTION_ROW_CLASSES} ${selectionRowStateClasses(this.isDisabled())}`,
+    () => `${SELECTION_ROW_CLASSES} ${selectionRowStateClasses(this.disabled())}`,
   );
 
   /** La pista es el input nativo; deshabilitado va sin hover. */
@@ -35,10 +60,10 @@ export class Toggle extends FormControlBase<boolean> {
       'appearance-none relative shrink-0 w-11 h-6 rounded-full outline-none ' +
       'focus-visible:shadow-(--focus-ring-shadow)';
 
-    if (this.isDisabled()) {
-      return `${base} ${this.controlValue() ? 'bg-(--color-bg-primary-disabled)' : 'bg-secondary'}`;
+    if (this.disabled()) {
+      return `${base} ${this.checked() ? 'bg-(--color-bg-primary-disabled)' : 'bg-secondary'}`;
     }
-    return this.controlValue()
+    return this.checked()
       ? `${base} bg-primary hover:bg-(--color-bg-primary-hover)`
       : `${base} bg-(--color-border-strong) hover:bg-(--color-border-strong-hover)`;
   });
@@ -48,18 +73,24 @@ export class Toggle extends FormControlBase<boolean> {
     () =>
       'absolute top-0.5 left-0.5 size-5 rounded-full pointer-events-none ' +
       'bg-(--color-text-on-primary) ' +
-      (this.controlValue() ? 'translate-x-5' : 'translate-x-0'),
+      (this.checked() ? 'translate-x-5' : 'translate-x-0'),
   );
 
+
+  /**
+   * Del contrato `FormUiControl`: el control real y no el host, que no es enfocable. De acá entra
+   * el foco cuando el resumen de errores llama a `focusBoundControl()`.
+   */
+  focus(options?: FocusOptions): void {
+    this.host.nativeElement.querySelector<HTMLElement>('input')?.focus(options);
+  }
   /** Se frena como en `Checkbox`: el `<input>` es un detalle interno. */
   protected onNativeChange(event: Event): void {
     event.stopPropagation();
-    const value = (event.target as HTMLInputElement).checked;
-    this.commit(value);
-    this.checkedChange.emit(value);
+    this.checked.set((event.target as HTMLInputElement).checked);
   }
 
   protected onBlur(): void {
-    this.markTouched();
+    this.touch.emit();
   }
 }

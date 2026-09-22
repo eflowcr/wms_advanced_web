@@ -16,6 +16,7 @@ export { type FieldSize, type FieldState } from './lib/field/field.types';
 export { Input, type InputType } from './lib/input/input';
 export { Checkbox } from './lib/checkbox/checkbox';
 export { Radio } from './lib/radio/radio';
+export { RadioGroup } from './lib/radio/radio-group';
 export { Toggle } from './lib/toggle/toggle';
 export { ICON_CATEGORIES, type IconCategory, type IconName } from './icons/icons.generated';
 

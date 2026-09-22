@@ -1,4 +1,5 @@
-<!-- Como la casilla. El punto es un span y no un icono: un SVG entero para ocho píxeles sobra. -->
+<!-- Como la casilla. El punto es un span y no un icono: un SVG entero para ocho píxeles sobra.
+     El mensaje y el asterisco los pone el grupo: son del campo, no de cada opción. -->
 <label [class]="rowClasses()">
   <span class="relative inline-flex">
     <input
@@ -8,10 +9,9 @@
       [name]="name()"
       [checked]="isChecked()"
       [disabled]="isDisabled()"
+      [required]="required()"
       [attr.aria-checked]="isChecked() ? 'true' : 'false'"
       [attr.aria-label]="ariaLabel() || null"
-      [attr.aria-invalid]="fieldError() ? 'true' : null"
-      [attr.aria-describedby]="fieldError() ? fieldErrorId : null"
       (change)="onNativeChange($event)"
       (blur)="onBlur()"
     />
@@ -24,11 +24,6 @@
   </span>
 
   @if (label()) {
-    <span>{{ label() }}{{ requiredByForm() ? ' *' : '' }}</span>
-  }
-
-  <!-- En la misma fila: el host es `inline-flex` y una línea debajo rompería toda la maqueta. -->
-  @if (fieldError()) {
-    <span [id]="fieldErrorId" class="text-caption text-danger">{{ fieldError() }}</span>
+    <span>{{ label() }}</span>
   }
 </label>

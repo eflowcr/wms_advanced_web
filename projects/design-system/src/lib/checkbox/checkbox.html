@@ -9,12 +9,12 @@
       type="checkbox"
       [class]="boxClasses()"
       [style.borderWidth]="borderWidth"
-      [checked]="controlValue()"
-      [disabled]="isDisabled()"
+      [checked]="checked()"
+      [disabled]="disabled()"
       [attr.aria-checked]="ariaChecked()"
       [attr.aria-label]="ariaLabel() || null"
-      [attr.aria-invalid]="fieldError() ? 'true' : null"
-      [attr.aria-describedby]="fieldError() ? fieldErrorId : null"
+      [attr.aria-invalid]="showError() ? 'true' : null"
+      [attr.aria-describedby]="fieldError() ? noteId : null"
       (change)="onNativeChange($event)"
       (blur)="onBlur()"
     />
@@ -23,18 +23,18 @@
     <span [class]="glyphClasses">
       @if (indeterminate()) {
         <ewms-icon name="minus" size="sm" />
-      } @else if (controlValue()) {
+      } @else if (checked()) {
         <ewms-icon name="check" size="sm" />
       }
     </span>
   </span>
 
   @if (label()) {
-    <span>{{ label() }}{{ requiredByForm() ? ' *' : '' }}</span>
+    <span>{{ label() }}{{ required() ? ' *' : '' }}</span>
   }
 
   <!-- En la misma fila: el host es `inline-flex` y una línea debajo rompería toda la maqueta. -->
   @if (fieldError()) {
-    <span [id]="fieldErrorId" class="text-caption text-danger">{{ fieldError() }}</span>
+    <span [id]="noteId" data-field-note class="text-caption text-danger">{{ fieldError() }}</span>
   }
 </label>

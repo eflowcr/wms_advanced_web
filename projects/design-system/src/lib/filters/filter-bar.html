@@ -8,7 +8,8 @@
             size="sm"
             [label]="field.label"
             [options]="selectOptions(field)"
-            [formControl]="$any(control(field))"
+            [value]="boxValue(field)"
+            (valueChange)="change(field, $any($event))"
           />
         }
         @case ('date-range') {
@@ -16,7 +17,8 @@
             mode="range"
             size="sm"
             [label]="field.label"
-            [formControl]="$any(control(field))"
+            [value]="$any(boxValue(field))"
+            (valueChange)="change(field, $event)"
           />
         }
         @default {
@@ -24,7 +26,8 @@
             type="search"
             size="sm"
             [label]="field.label"
-            [formControl]="$any(control(field))"
+            [value]="$any(boxValue(field))"
+            (valueChange)="change(field, $event)"
           />
         }
       }

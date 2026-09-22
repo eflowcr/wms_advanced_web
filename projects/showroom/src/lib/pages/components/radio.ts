@@ -2,13 +2,14 @@ import {
   afterNextRender,
   ChangeDetectionStrategy,
   Component,
+  computed,
   ElementRef,
   inject,
   signal,
+  type WritableSignal,
 } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
-import { DESIGN_SYSTEM_VERSION, Radio } from '@ewms/design-system';
+import { form, FormField } from '@angular/forms/signals';
+import { DESIGN_SYSTEM_VERSION, Radio, RadioGroup } from '@ewms/design-system';
 import { DemoFrame } from '../../ui/demo-frame';
 import { PropTable, type PropRow } from '../../ui/prop-table';
 import { StateMatrix, type MatrixAxis } from '../../ui/state-matrix';
@@ -66,11 +67,11 @@ const PROPS: readonly PropRow[] = [
       'Lo que el valor del GRUPO pasa a ser cuando se elige esta opción. No es el valor del grupo: es lo que esta opción aporta al ser la elegida.',
   },
   {
-    name: 'name',
-    type: 'string',
-    default: '— (requerido)',
+    name: 'disabled',
+    type: 'boolean',
+    default: 'false',
     description:
-      'El grupo. Requerido porque el name compartido ES la agrupación: sin él queda un radio en un grupo de uno, que es un checkbox que no se puede apagar.',
+      'Se suma con OR al del grupo, nunca se resta: el grupo deshabilitado apaga a todas sus opciones.',
   },
   {
     name: 'label',
@@ -84,18 +85,41 @@ const PROPS: readonly PropRow[] = [
     default: "''",
     description: 'El nombre accesible cuando no hay texto visible.',
   },
+];
+
+/** Verificada contra radio-group.ts. */
+const GROUP_PROPS: readonly PropRow[] = [
   {
-    name: 'disabled',
-    type: 'boolean',
-    default: 'false',
-    description: 'De FormControlBase, combinado con el del formulario por OR — ver el bloque 8.',
+    name: 'value',
+    type: 'model<unknown>',
+    default: 'null',
+    description:
+      'El valor del campo: el value de la opción elegida. Con [formField] lo llena el formulario; fuera de uno, [(value)].',
   },
   {
-    name: '(valueChange)',
-    type: 'output<unknown>',
-    default: '—',
+    name: 'label',
+    type: 'string',
+    default: '— (requerido)',
+    description: 'El legend del fieldset. El grupo es lo que tiene nombre, no cada opción.',
+  },
+  {
+    name: 'hideLabel · hint',
+    type: 'boolean · string',
+    default: "false · ''",
+    description: 'Como en el Input. El mensaje del validador reemplaza al hint.',
+  },
+  {
+    name: 'name',
+    type: 'string',
+    default: "'' (uno propio)",
     description:
-      'NO se llama (change): ese nombre es nativo y burbujea. Emite el value de esta opción. Ver el bloque 8.',
+      'El name que comparten los radios nativos, que ES la agrupación. Sin él, uno por instancia: nunca quedan dos grupos mezclados.',
+  },
+  {
+    name: 'disabled · required · invalid · touched · errors',
+    type: 'Del contrato FormValueControl',
+    default: '—',
+    description: 'Las llena el [formField]. Ninguna que el componente no lea.',
   },
 ];
 
@@ -105,7 +129,7 @@ const PROPS: readonly PropRow[] = [
  */
 @Component({
   selector: 'ewms-showroom-radio',
-  imports: [ReactiveFormsModule, Radio, DemoFrame, PropTable, StateMatrix, TokenValue],
+  imports: [FormField, Radio, RadioGroup, DemoFrame, PropTable, StateMatrix, TokenValue],
   templateUrl: './radio.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -117,17 +141,15 @@ export class ShowroomRadio {
   protected readonly states = STATES;
   protected readonly options = RECEPTION_TYPES;
   protected readonly props = PROPS;
+  protected readonly groupProps = GROUP_PROPS;
   protected readonly anatomy = SELECTION_ANATOMY;
 
   protected readonly box = signal<SelectionBox>(SELECTION_BOX);
 
-  protected readonly form = new FormGroup({
-    tipo: new FormControl<unknown>('proveedor'),
-  });
+  protected readonly model = signal<{ tipo: string | null }>({ tipo: 'proveedor' });
+  protected readonly form = form(this.model);
 
-  protected readonly chosen = toSignal(this.form.controls.tipo.valueChanges, {
-    initialValue: this.form.controls.tipo.value,
-  });
+  protected readonly chosen = computed(() => this.form.tipo().value());
 
   protected readonly snippet = [
     '<fieldset>',
@@ -154,34 +176,23 @@ export class ShowroomRadio {
   }
 
   /**
-   * Un FormControl y un name por celda: checked es derivado, así que cada celda es su
-   * propio grupo de uno. Con un control compartido, un clic en una celda «Sin elegir»
-   * las encendía todas.
+   * Una señal por celda: `checked` es derivado, así que cada celda es su propio grupo de uno.
+   * Con un valor compartido, un clic en una celda «Sin elegir» las encendía todas.
    */
-  private readonly cellControls = new Map<string, FormControl<unknown>>();
+  private readonly cellValues = new Map<string, WritableSignal<unknown>>();
 
-  protected controlFor(value: string, state: string): FormControl<unknown> {
+  protected cellFor(value: string, state: string): WritableSignal<unknown> {
     const key = `${value}-${state}`;
-    let control = this.cellControls.get(key);
-    if (!control) {
-      control = new FormControl<unknown>(value === 'on' ? CELL_VALUE : null);
-      // Se deshabilita por el formulario, no por la entrada: ejercita setDisabledState
-      // (la otra mitad del OR del bloque 8) y evita el aviso de Angular por
-      // enlazar [disabled] junto a una directiva de formularios reactivos.
-      if (state === 'disabled') {
-        control.disable();
-      }
-      this.cellControls.set(key, control);
+    let cell = this.cellValues.get(key);
+    if (!cell) {
+      cell = signal<unknown>(value === 'on' ? CELL_VALUE : null);
+      this.cellValues.set(key, cell);
     }
-    return control;
+    return cell;
   }
 
   /** Valor que aporta cada celda: «elegido» significa igual a este. */
   protected readonly cellValue = CELL_VALUE;
-
-  protected cellName(value: string, state: string): string {
-    return `matriz-${value}-${state}`;
-  }
 
   protected chosenLabel(): string {
     return RECEPTION_TYPES.find((option) => option.value === this.chosen())?.label ?? '(ninguno)';

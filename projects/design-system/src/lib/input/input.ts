@@ -2,6 +2,8 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  ElementRef,
+  inject,
   input,
   model,
   output,
@@ -98,6 +100,8 @@ export class Input implements FormValueControl<string> {
 
   protected readonly baseClasses = FIELD_BASE_CLASSES;
   protected readonly iconSize = FIELD_ICON_SIZE;
+
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
 
   private readonly focused = signal(false);
 
@@ -205,6 +209,14 @@ export class Input implements FormValueControl<string> {
     this.isInvalid() ? 'text-danger' : 'text-secondary',
   );
 
+
+  /**
+   * Del contrato `FormUiControl`: el control real y no el host, que no es enfocable. De acá entra
+   * el foco cuando el resumen de errores llama a `focusBoundControl()`.
+   */
+  focus(options?: FocusOptions): void {
+    this.host.nativeElement.querySelector<HTMLElement>('input, textarea')?.focus(options);
+  }
   protected onInput(event: Event): void {
     const target = event.target as HTMLInputElement | HTMLTextAreaElement;
     this.value.set(target.value);

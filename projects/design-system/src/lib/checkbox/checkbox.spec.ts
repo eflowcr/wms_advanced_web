@@ -1,6 +1,6 @@
 import { Component, signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
-import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { disabled as disabledRule, form, FormField } from '@angular/forms/signals';
 import { expectNoAxeViolations } from '@ewms/testing';
 import { Checkbox } from './checkbox';
 
@@ -39,11 +39,15 @@ class TestHost {
 }
 
 @Component({
-  template: ` <ewms-checkbox [label]="'Reetiquetar'" [formControl]="control" /> `,
-  imports: [Checkbox, ReactiveFormsModule],
+  template: ` <ewms-checkbox label="Reetiquetar" [formField]="form.reetiquetar" /> `,
+  imports: [Checkbox, FormField],
 })
-class ReactiveHost {
-  readonly control = new FormControl(false);
+class FormHost {
+  readonly locked = signal(false);
+  readonly model = signal({ reetiquetar: false });
+  readonly form = form(this.model, (path) => {
+    disabledRule(path.reetiquetar, () => this.locked());
+  });
 }
 
 /**
@@ -247,14 +251,12 @@ describe('Checkbox', () => {
   });
 });
 
-describe('Checkbox with a reactive form', () => {
-  let fixture: ComponentFixture<ReactiveHost>;
+describe('Checkbox inside a signal form', () => {
+  let fixture: ComponentFixture<FormHost>;
 
   beforeEach(async () => {
-    await TestBed.configureTestingModule({
-      imports: [ReactiveHost, Checkbox, ReactiveFormsModule],
-    }).compileComponents();
-    fixture = TestBed.createComponent(ReactiveHost);
+    await TestBed.configureTestingModule({ imports: [FormHost] }).compileComponents();
+    fixture = TestBed.createComponent(FormHost);
     fixture.detectChanges();
     await fixture.whenStable();
   });
@@ -268,35 +270,33 @@ describe('Checkbox with a reactive form', () => {
     return (fixture.nativeElement as Element).querySelector('input') as HTMLInputElement;
   }
 
-  it('writes the form value into the box', async () => {
-    fixture.componentInstance.control.setValue(true);
+  it('writes the form value into the box, and a click back into the form', async () => {
+    fixture.componentInstance.model.set({ reetiquetar: true });
     await settle();
     expect(box().checked).toBe(true);
-  });
 
-  it('reports a click back to the form', async () => {
     box().click();
     await settle();
-    expect(fixture.componentInstance.control.value).toBe(true);
+    expect(fixture.componentInstance.form.reetiquetar().value()).toBe(false);
   });
 
-  it('follows setDisabledState in both directions', async () => {
-    fixture.componentInstance.control.disable();
+  it('follows the disabled rule of the schema in both directions', async () => {
+    fixture.componentInstance.locked.set(true);
     await settle();
     expect(box().disabled).toBe(true);
 
-    fixture.componentInstance.control.enable();
+    fixture.componentInstance.locked.set(false);
     await settle();
     expect(box().disabled).toBe(false);
   });
 
-  it('marks the control touched when the focus leaves, not on the click', async () => {
+  it('marks the field touched when the focus leaves, not on the click', async () => {
     box().click();
     await settle();
-    expect(fixture.componentInstance.control.touched).toBe(false);
+    expect(fixture.componentInstance.form.reetiquetar().touched()).toBe(false);
 
     focusThenLeave(box());
     await settle();
-    expect(fixture.componentInstance.control.touched).toBe(true);
+    expect(fixture.componentInstance.form.reetiquetar().touched()).toBe(true);
   });
 });

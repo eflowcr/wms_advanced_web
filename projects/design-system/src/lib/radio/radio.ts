@@ -1,5 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, input, output, signal } from '@angular/core';
-import { FormControlBase, provideValueAccessor } from '../forms/control-value-accessor';
+import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
 import {
   SELECTION_BORDER_WIDTH,
   SELECTION_CONTROL_BASE_CLASSES,
@@ -8,36 +7,38 @@ import {
   selectionBoxClasses,
   selectionRowStateClasses,
 } from '../selection/selection.types';
+import { RadioGroup } from './radio-group';
 
 /**
- * Como `ewms-checkbox`, con círculo y punto. Agrupa el navegador por `name`. `value` es lo
- * que aporta esta opción, no el valor del grupo: por eso `checked` se deriva.
+ * Una opción de `ewms-radio-group`, con la caja de `ewms-checkbox` en círculo. `value` es lo que
+ * aporta esta opción, no el valor del grupo: por eso `checked` se deriva y no se guarda.
  */
 @Component({
   selector: 'ewms-radio',
   templateUrl: './radio.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { class: 'inline-flex' },
-  providers: [provideValueAccessor(() => Radio)],
 })
-export class Radio extends FormControlBase<unknown> {
+export class Radio {
   readonly value = input.required<unknown>();
-
-  /** Sin `name` compartido sale un radio que se enciende y nunca se apaga. */
-  readonly name = input.required<string>();
 
   readonly label = input<string>('');
 
   readonly ariaLabel = input<string>('');
 
-  /** No se llama `change`, como en `Checkbox.checkedChange`. */
-  readonly valueChange = output<unknown>();
+  /** La del grupo se suma con O, nunca se resta. */
+  readonly disabled = input<boolean>(false);
 
-  /** Nada la siembra: `value` es la identidad de la opción, no el valor del grupo. */
-  protected readonly valueSource = signal<unknown>(null);
+  /** Sin `optional`: un radio fuera de un grupo se enciende y nunca se apaga. */
+  private readonly group = inject(RadioGroup);
+
+  protected readonly name = this.group.groupName;
+  protected readonly required = this.group.required;
 
   /** Derivado, nunca guardado: dos fuentes de verdad dejan un grupo con dos puntos. */
-  protected readonly isChecked = computed(() => this.controlValue() === this.value());
+  protected readonly isChecked = computed(() => this.group.value() === this.value());
+
+  protected readonly isDisabled = computed(() => this.group.memberDisabled(this.disabled()));
 
   protected readonly rowClasses = computed(
     () => `${SELECTION_ROW_CLASSES} ${selectionRowStateClasses(this.isDisabled())}`,
@@ -56,11 +57,10 @@ export class Radio extends FormControlBase<unknown> {
   /** Se frena como en el Checkbox: el `<input>` es un detalle interno. */
   protected onNativeChange(event: Event): void {
     event.stopPropagation();
-    this.commit(this.value());
-    this.valueChange.emit(this.value());
+    this.group.select(this.value());
   }
 
   protected onBlur(): void {
-    this.markTouched();
+    this.group.markTouched();
   }
 }

@@ -129,7 +129,9 @@
             <ewms-checkbox label="Seleccionar fila" [checked]="true" />
           </span>
           <span data-measure="radio-row">
-            <ewms-radio name="demo-geometria" value="a" label="Una opción" />
+            <ewms-radio-group label="Geometría" [hideLabel]="true" name="demo-geometria">
+              <ewms-radio value="a" label="Una opción" />
+            </ewms-radio-group>
           </span>
           <p class="max-w-64 text-caption text-secondary">
             Caja de 18×18, una sola talla. Un checkbox no se dimensiona para alinear con un botón: se
