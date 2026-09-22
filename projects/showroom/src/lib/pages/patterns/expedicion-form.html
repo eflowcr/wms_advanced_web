@@ -1,15 +1,14 @@
 <!--
   Sin role: el contenedor del CDK pone role="dialog", aria-modal y la trampa de foco.
-  `ewmsForm` junta las tres puertas de envío (Enter, «Guardar» y Ctrl+S) en un solo `(formSubmit)`,
-  que solo llega si el formulario es válido. Ver vault: Patron-Formulario.
+  `[ewmsForm]` junta las tres puertas de envío (Enter, «Guardar» y Ctrl+S) en un solo `submit()`,
+  que solo corre la acción si el formulario es válido. Ver vault: Patron-Formulario.
 -->
 <form
-  ewmsForm
-  #alta="ewmsForm"
-  [formGroup]="form"
+  [ewmsForm]="alta"
+  [ewmsFormAction]="save"
+  #pattern="ewmsForm"
   class="flex w-full max-w-120 flex-col gap-4 rounded-dialog border border-default border-solid bg-surface p-6 shadow-dialog"
   data-expedicion-form
-  (formSubmit)="save()"
 >
   <h2 [id]="titleId" class="text-h3 text-primary">
     {{ isNew ? 'Nueva expedición' : 'Editar la expedición' }}
@@ -19,24 +18,24 @@
     label="Código"
     placeholder="EXP-2026-0000"
     hint="El código que llevará la etiqueta."
-    formControlName="codigo"
+    [formField]="alta.codigo"
     data-form-codigo
   />
 
   <ewms-input
     label="Cliente"
     placeholder="Distribuidora Andes"
-    formControlName="cliente"
+    [formField]="alta.cliente"
     data-form-cliente
   />
 
-  <ewms-select label="Estado" [options]="estados" formControlName="estado" data-form-estado />
+  <ewms-select label="Estado" [options]="estados" [formField]="alta.estado" data-form-estado />
 
   <!--
     Toggle y no Checkbox aunque haya Guardar: «urgente» no cambia nada hasta guardar igual,
     y el interruptor se lee como propiedad de la expedición, no como orden al formulario.
   -->
-  <ewms-toggle label="Urgente" formControlName="urgente" data-form-urgente />
+  <ewms-toggle label="Urgente" [formField]="alta.urgente" data-form-urgente />
 
   <p class="text-caption text-secondary">
     <kbd class="font-mono">Ctrl</kbd> + <kbd class="font-mono">S</kbd> guarda sin soltar el teclado
@@ -48,7 +47,7 @@
   <div class="flex w-full justify-end gap-2">
     <ewms-button variant="secondary" data-form-cancel (click)="cancel()"> Cancelar </ewms-button>
     <!-- Guardar nunca se deshabilita: al enviar con errores se muestra el resumen y se enfoca. -->
-    <ewms-button variant="primary" type="submit" [loading]="alta.busy()" data-form-save>
+    <ewms-button variant="primary" type="submit" [loading]="pattern.busy()" data-form-save>
       Guardar
     </ewms-button>
   </div>

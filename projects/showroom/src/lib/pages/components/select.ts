@@ -7,8 +7,7 @@ import {
   inject,
   signal,
 } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { form as signalForm, FormField } from '@angular/forms/signals';
 import {
   Button,
   DESIGN_SYSTEM_VERSION,
@@ -210,7 +209,7 @@ interface ChevronSample {
  */
 @Component({
   selector: 'ewms-showroom-select',
-  imports: [Button, ReactiveFormsModule, Select, DemoFrame, PropTable, StateMatrix, TokenValue],
+  imports: [Button, FormField, Select, DemoFrame, PropTable, StateMatrix, TokenValue],
   templateUrl: './select.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -230,23 +229,19 @@ export class ShowroomSelect {
   protected readonly pageSize = SEARCH_PAGE_SIZE;
   protected readonly catalogueSize = CATALOGUE.length;
 
-  protected readonly form = new FormGroup({
-    estado: new FormControl<unknown>('preparacion'),
-    rack: new FormControl<unknown>(null),
-    articulo: new FormControl<Article | null>(null),
-  });
+  protected readonly model = signal<{
+    estado: string | null;
+    rack: string | null;
+    articulo: Article | null;
+  }>({ estado: 'preparacion', rack: null, articulo: null });
 
-  protected readonly chosen = toSignal(this.form.controls.estado.valueChanges, {
-    initialValue: this.form.controls.estado.value,
-  });
+  protected readonly form = signalForm(this.model);
 
-  protected readonly rack = toSignal(this.form.controls.rack.valueChanges, {
-    initialValue: this.form.controls.rack.value,
-  });
+  protected readonly chosen = computed(() => this.form.estado().value());
 
-  protected readonly article = toSignal(this.form.controls.articulo.valueChanges, {
-    initialValue: this.form.controls.articulo.value,
-  });
+  protected readonly rack = computed(() => this.form.rack().value());
+
+  protected readonly article = computed(() => this.form.articulo().value());
 
   /** Comportamiento de la fuente, para ver los estados de falla. */
   protected readonly behaviour = signal<SourceBehaviour>('normal');

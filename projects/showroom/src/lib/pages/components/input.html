@@ -62,26 +62,25 @@
     <p class="text-secondary">
       Dentro de un <strong>formulario reactivo de verdad</strong>. El componente es un
       <code class="font-mono">ControlValueAccessor</code>: lo que debe demostrarse es que
-      <code class="font-mono">formControlName</code> le llega, que tipear actualiza el control y que
+      <code class="font-mono">[formField]</code> le llega, que tipear actualiza el campo y que
       salir del campo lo marca como tocado. Un input suelto no prueba ninguna de las tres.
     </p>
     <div class="grid grid-cols-[repeat(auto-fit,minmax(min(24rem,100%),1fr))] gap-6">
       <ewms-demo-frame ground="canvas" label="Un formulario real, con su valor en vivo">
-        <form [formGroup]="form" class="flex flex-col gap-4" data-demo-form>
+        <div class="flex flex-col gap-4" data-demo-form>
           <span data-focus-canvas>
             <ewms-input
-              formControlName="sku"
+              [formField]="form.sku"
               label="SKU del artículo"
               placeholder="ABC-12345-X"
               hint="Formato ABC-00000-X. Enfocame con Tab para ver el anillo."
-              [required]="true"
               (fieldFocus)="onFocus()"
               (fieldBlur)="onBlur()"
             />
           </span>
 
           <ewms-input
-            formControlName="clave"
+            [formField]="form.clave"
             type="password"
             label="Clave de operario"
             showPasswordLabel="Mostrar la clave"
@@ -90,7 +89,7 @@
           />
 
           <ewms-input
-            formControlName="busqueda"
+            [formField]="form.busqueda"
             type="search"
             label="Buscar ubicación"
             placeholder="Pasillo, estante o bulto"
@@ -115,7 +114,7 @@
               <dd class="font-mono text-primary">{{ focusCount() }} / {{ blurCount() }}</dd>
             </div>
           </dl>
-        </form>
+        </div>
       </ewms-demo-frame>
       <ewms-prop-table [rows]="props" caption="Propiedades de <ewms-input>" />
     </div>

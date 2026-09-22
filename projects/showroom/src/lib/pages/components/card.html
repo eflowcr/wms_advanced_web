@@ -61,10 +61,10 @@
     <h2 id="ca-demo" class="text-h2">Demo principal</h2>
     <div class="grid grid-cols-[repeat(auto-fit,minmax(min(24rem,100%),1fr))] gap-6">
       <ewms-demo-frame ground="canvas" label="Selector de almacén, en un formulario reactivo real">
-        <form [formGroup]="form" class="flex flex-col gap-4">
+        <div class="flex flex-col gap-4">
           <p class="text-caption text-secondary" id="ca-warehouse-label">Almacén de destino</p>
           <div data-demo-warehouses>
-            <ewms-card-group formControlName="almacen" label="Almacén de destino">
+            <ewms-card-group [formField]="form.almacen" label="Almacén de destino">
               @for (warehouse of warehouses; track warehouse.value) {
                 <!--
                   El meta no lleva el gris secundario: sobre el tinte de la card elegida da
@@ -100,7 +100,7 @@
               </dd>
             </div>
           </dl>
-        </form>
+        </div>
       </ewms-demo-frame>
       <ewms-prop-table [rows]="props" caption="Propiedades de <ewms-card> y <ewms-card-group>" />
     </div>
@@ -370,7 +370,7 @@
       <p>
         <strong>Ninguna.</strong> El valor viaja por
         <code class="font-mono">ControlValueAccessor</code> —o sea por
-        <code class="font-mono">formControlName</code> o
+        <code class="font-mono">[formField]</code> o
         <code class="font-mono">ngModel</code>— y se escucha con
         <code class="font-mono">valueChanges</code> del control. Como en el Select, y por la misma
         razón: acá no hay ningún <code class="font-mono">&lt;input&gt;</code> nativo cuyo

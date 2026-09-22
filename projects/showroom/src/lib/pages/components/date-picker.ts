@@ -1,6 +1,5 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { ChangeDetectionStrategy, Component, computed, signal } from '@angular/core';
+import { form as signalForm, FormField } from '@angular/forms/signals';
 import { DatePicker, DESIGN_SYSTEM_VERSION, type DatePickerValue } from '@ewms/design-system';
 import { DemoFrame } from '../../ui/demo-frame';
 import { PropTable, type PropRow } from '../../ui/prop-table';
@@ -56,7 +55,7 @@ function today(): string {
 @Component({
   selector: 'ewms-showroom-date-picker',
   templateUrl: './date-picker.html',
-  imports: [DatePicker, ReactiveFormsModule, DemoFrame, PropTable, TokenValue],
+  imports: [DatePicker, FormField, DemoFrame, PropTable, TokenValue],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ShowroomDatePicker {
@@ -65,29 +64,27 @@ export class ShowroomDatePicker {
   protected readonly anatomy = ANATOMY;
   protected readonly today = today();
 
-  protected readonly form = new FormGroup({
-    entrega: new FormControl<DatePickerValue>(null),
-    periodo: new FormControl<DatePickerValue>({ from: '2026-09-01', to: '2026-09-15' }),
+  protected readonly model = signal<{ entrega: DatePickerValue; periodo: DatePickerValue }>({
+    entrega: null,
+    periodo: { from: '2026-09-01', to: '2026-09-15' },
   });
 
-  protected readonly delivery = toSignal(this.form.controls.entrega.valueChanges, {
-    initialValue: this.form.controls.entrega.value,
-  });
+  protected readonly form = signalForm(this.model);
 
-  protected readonly period = toSignal(this.form.controls.periodo.valueChanges, {
-    initialValue: this.form.controls.periodo.value,
-  });
+  protected readonly delivery = computed(() => this.form.entrega().value());
+
+  protected readonly period = computed(() => this.form.periodo().value());
 
   protected readonly snippet = [
     '<ewms-date-picker',
     "  [label]=\"'expediciones.entrega' | transloco\"",
-    '  formControlName="entrega"',
+    '  [formField]="alta.entrega"',
     '  [minDate]="hoy"',
     '/>',
     '<ewms-date-picker',
     "  [label]=\"'reportes.periodo' | transloco\"",
     '  mode="range"',
-    '  formControlName="periodo"',
+    '  [formField]="alta.periodo"',
     '/>',
   ].join('\n');
 

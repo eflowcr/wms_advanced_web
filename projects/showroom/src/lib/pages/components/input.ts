@@ -2,12 +2,12 @@ import {
   afterNextRender,
   ChangeDetectionStrategy,
   Component,
+  computed,
   ElementRef,
   inject,
   signal,
 } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { form as signalForm, FormField, required } from '@angular/forms/signals';
 import {
   Button,
   DESIGN_SYSTEM_VERSION,
@@ -135,7 +135,7 @@ const PROPS: readonly PropRow[] = [
     type: 'boolean',
     default: 'false',
     description:
-      'Heredado de FormControlBase. Se combina con el disabled del formulario con OR: quien deshabilita gana.',
+      'Dentro de un formulario lo pone la regla disabled() del esquema: Angular prohíbe enlazar [disabled] en el mismo nodo que [formField].',
   },
   {
     name: 'showPasswordLabel',
@@ -206,7 +206,7 @@ interface SizeSample {
 @Component({
   selector: 'ewms-showroom-input',
   imports: [
-    ReactiveFormsModule,
+    FormField,
     Button,
     Input,
     DemoFrame,
@@ -227,17 +227,19 @@ export class ShowroomInput {
   protected readonly props = PROPS;
   protected readonly anatomy = ANATOMY;
 
-  /** FormGroup real; el Input se enlaza solo por formControlName. */
-  protected readonly form = new FormGroup({
-    sku: new FormControl('SKU-04871-B', { nonNullable: true }),
-    clave: new FormControl('', { nonNullable: true }),
-    busqueda: new FormControl('', { nonNullable: true }),
+  /** Un form() real; el Input se enlaza solo por [formField]. */
+  protected readonly model = signal({ sku: 'SKU-04871-B', clave: '', busqueda: '' });
+
+  /**
+   * `required` va en el esquema y no en la plantilla: Angular prohíbe enlazar `[required]` en el
+   * mismo nodo que `[formField]`, para que el campo tenga un solo dueño.
+   */
+  protected readonly form = signalForm(this.model, (path) => {
+    required(path.sku);
   });
 
   /** Valor tomado del formulario, no de una copia local. */
-  protected readonly skuValue = toSignal(this.form.controls.sku.valueChanges, {
-    initialValue: this.form.controls.sku.value,
-  });
+  protected readonly skuValue = computed(() => this.form.sku().value());
 
   /** Lo cambia el blur de la demo, que es donde se dispara onTouched. */
   protected readonly touched = signal(false);
@@ -295,6 +297,6 @@ export class ShowroomInput {
 
   protected onBlur(): void {
     this.blurCount.update((count) => count + 1);
-    this.touched.set(this.form.controls.sku.touched);
+    this.touched.set(this.form.sku().touched());
   }
 }

@@ -222,6 +222,8 @@ export const FORM_MESSAGES: FormMessages = {
     maxDate: (limit) => `La fecha máxima es ${DATE_LIMIT_FORMAT.format(limit as Date)}`,
     pattern: () => 'El formato no es el esperado',
     email: () => 'Escribí un correo válido',
+    // `kind` del proyecto: el validador de `expedicion.rules.ts` no lleva su texto encima.
+    shipmentCode: () => 'El código va como EXP-2026-0000',
   },
   customError: () => 'Revisá este campo',
   errorSummary: (count) => (count === 1 ? 'Revisá 1 campo' : `Revisá ${count} campos`),

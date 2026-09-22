@@ -1,6 +1,6 @@
 import { Component, signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
-import { disabled, form, FormField, minLength, required } from '@angular/forms/signals';
+import { disabled, form, FormField, minLength, required, validate } from '@angular/forms/signals';
 import { By } from '@angular/platform-browser';
 import { expectNoAxeViolations } from '@ewms/testing';
 import { EWMS_FORM_MESSAGES, NO_FORM_MESSAGES, type FormMessages } from '../forms/form.types';
@@ -15,6 +15,7 @@ const SIZES: readonly FieldSize[] = ['sm', 'md', 'lg'];
 const MESSAGES: FormMessages = {
   ...NO_FORM_MESSAGES,
   errors: { ...NO_FORM_MESSAGES.errors, minLength: (limit) => `Mínimo ${limit} caracteres` },
+  customError: () => 'Revisá este campo',
 };
 
 @Component({
@@ -59,12 +60,21 @@ class TestHost {
   imports: [Input, FormField],
 })
 class FormHost {
+  /** Dos validadores propios: uno trae su texto, el otro no. El `kind` decide cuál corre. */
+  readonly own = signal<'none' | 'withMessage' | 'withoutMessage'>('none');
+
   readonly locked = signal(false);
   readonly model = signal({ lote: '' });
   readonly form = form(this.model, (path) => {
     required(path.lote);
     minLength(path.lote, 3);
     disabled(path.lote, () => this.locked());
+    validate(path.lote, () => {
+      if (this.own() === 'withMessage') {
+        return { kind: 'shipmentCode', message: 'El código de expedición es EXP-0000' };
+      }
+      return this.own() === 'withoutMessage' ? { kind: 'unaCosaRara' } : undefined;
+    });
   });
   readonly lote = this.form.lote;
 }
@@ -498,6 +508,20 @@ describe('Input inside a signal form', () => {
     expect(note()).toBe('Mínimo 3 caracteres');
     expect(field().getAttribute('aria-invalid')).toBe('true');
     expect(field().getAttribute('aria-describedby')).toBeTruthy();
+  });
+
+  it('prefers the message of the validator, and falls back to the token by kind', async () => {
+    host.model.set({ lote: 'ABC' });
+    host.own.set('withMessage');
+    focusThenLeave(field());
+    await settle();
+    // El texto del validador gana sobre la tabla del token (§2.1).
+    expect(note()).toBe('El código de expedición es EXP-0000');
+
+    host.own.set('withoutMessage');
+    await settle();
+    // Un `kind` que la tabla no nombra y sin `message`: queda el texto de `customError`.
+    expect(note()).toBe('Revisá este campo');
   });
 
   it('takes the asterisk and the native required from the schema', () => {

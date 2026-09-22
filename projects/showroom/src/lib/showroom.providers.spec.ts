@@ -121,18 +121,20 @@ describe("the showroom's favourite labels", () => {
 });
 
 describe('los mensajes del formulario', () => {
-  it('escribe un mensaje por validador, con lo que el validador puso', () => {
+  it('escribe un mensaje por kind, con el límite que puso el validador', () => {
     const write = FORM_MESSAGES.errors;
-    expect(write.required(null, 'required')).toBe('Este campo es obligatorio');
-    expect(write.minlength({ requiredLength: 3 }, 'minlength')).toBe('Mínimo 3 caracteres');
-    expect(write.maxlength({ requiredLength: 8 }, 'maxlength')).toBe('Máximo 8 caracteres');
-    expect(write.min({ min: 1 }, 'min')).toBe('El mínimo es 1');
-    expect(write.max({ max: 999 }, 'max')).toBe('El máximo es 999');
-    expect(write.pattern(null, 'pattern')).toBe('El formato no es el esperado');
-    expect(write.email(null, 'email')).toBe('Escribí un correo válido');
-    // Un validador propio pasa su texto; cualquier otra cosa cae en el genérico.
-    expect(write.custom('Ese código ya existe', 'codigoDuplicado')).toBe('Ese código ya existe');
-    expect(write.custom({ algo: 1 }, 'raro')).toBe('Revisá este campo');
+    expect(write.required(null)).toBe('Este campo es obligatorio');
+    expect(write.minLength(3)).toBe('Mínimo 3 caracteres');
+    expect(write.maxLength(8)).toBe('Máximo 8 caracteres');
+    expect(write.min(1)).toBe('El mínimo es 1');
+    expect(write.max(999)).toBe('El máximo es 999');
+    expect(write.minDate(new Date(2026, 2, 16))).toBe('La fecha mínima es 16/03/2026');
+    expect(write.maxDate(new Date(2026, 2, 16))).toBe('La fecha máxima es 16/03/2026');
+    expect(write.pattern(null)).toBe('El formato no es el esperado');
+    expect(write.email(null)).toBe('Escribí un correo válido');
+    // Los nueve de Angular más el del proyecto; cualquier otro cae en el genérico.
+    expect(write['shipmentCode']?.(null)).toBe('El código va como EXP-2026-0000');
+    expect(FORM_MESSAGES.customError(null)).toBe('Revisá este campo');
     expect(FORM_MESSAGES.errorSummary(1)).toBe('Revisá 1 campo');
     expect(FORM_MESSAGES.errorSummary(3)).toBe('Revisá 3 campos');
   });

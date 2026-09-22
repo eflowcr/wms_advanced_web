@@ -64,11 +64,11 @@
       abajo abre la lista, escribir la filtra, las flechas eligen y Enter confirma. Lo único que cambia
       es de dónde salen las opciones.
     </p>
-    <div class="grid grid-cols-[repeat(auto-fit,minmax(min(20rem,100%),1fr))] gap-6" [formGroup]="form">
+    <div class="grid grid-cols-[repeat(auto-fit,minmax(min(20rem,100%),1fr))] gap-6">
       <ewms-demo-frame ground="canvas" label="Lista corta: tres estados">
         <div class="flex flex-col gap-3" data-demo-select>
           <ewms-select
-            formControlName="estado"
+            [formField]="form.estado"
             label="Estado de la expedición"
             placeholder="Elegí un estado"
             hint="Flecha abajo abre, flecha elige, Enter confirma."
@@ -84,7 +84,7 @@
       <ewms-demo-frame ground="canvas" label="Lista larga: veinticuatro racks en memoria">
         <div class="flex flex-col gap-3" data-demo-long>
           <ewms-select
-            formControlName="rack"
+            [formField]="form.rack"
             label="Rack de destino"
             placeholder="Escribí «C» o «rack 04»"
             hint="Al abrirlo se ven todos; al escribir se filtran, sin esperar a nadie."
@@ -100,7 +100,7 @@
       <ewms-demo-frame ground="canvas" label="Fuente remota: busca, pagina y resuelve un escaneo">
         <div class="flex flex-col gap-3" data-demo-search>
           <ewms-select
-            formControlName="articulo"
+            [formField]="form.articulo"
             [source]="source()"
             [display]="display"
             label="Artículo"
@@ -432,7 +432,7 @@
         <strong>Ninguna.</strong>&ngsp;<code class="font-mono">&lt;ewms-select&gt;</code> no declara
         ningún <code class="font-mono">output()</code>: el valor viaja por
         <code class="font-mono">ControlValueAccessor</code>, es decir por
-        <code class="font-mono">formControlName</code> o <code class="font-mono">ngModel</code>, y se
+        <code class="font-mono">[formField]</code>, y se
         escucha con <code class="font-mono">valueChanges</code> del control.
       </p>
       <p class="text-caption">

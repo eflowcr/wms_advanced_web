@@ -25,7 +25,7 @@
         <h3 class="text-h3">Qué resuelve</h3>
         <p>
           <strong>Las reglas en un solo lugar</strong>, sobre
-          <code class="font-mono">ReactiveForms</code> y sin reescribir los campos: se valida
+          <code class="font-mono">Signal Forms</code>: se valida
           <strong>al salir del campo y al enviar</strong>, nunca mientras se escribe; al enviar con
           errores aparece el resumen y se enfoca; <kbd class="font-mono">Ctrl</kbd>+<kbd
             class="font-mono"
@@ -64,17 +64,16 @@
     <p class="text-secondary">
       <strong>Pulsá «Guardar» sin llenar nada:</strong> aparece el resumen, cada campo dice qué le
       falta y el foco cae en el resumen. Con todo bien, «Guardar» queda en carga hasta que el
-      consumidor responde.
+      acción del envío termina.
     </p>
 
     <ewms-demo-frame ground="surface" label="Un formulario con secciones, validación y envío">
       <form
-        ewmsForm
-        #alta="ewmsForm"
-        [formGroup]="form"
+        [ewmsForm]="alta"
+        [ewmsFormAction]="guardar"
+        #pattern="ewmsForm"
         class="flex max-w-160 flex-col gap-4"
         data-demo-form
-        (formSubmit)="guardar()"
       >
         <p class="text-caption text-secondary" data-required-legend>* obligatorio</p>
 
@@ -84,15 +83,15 @@
             label="Código"
             placeholder="EXP-2026-0000"
             hint="El código que llevará la etiqueta."
-            formControlName="codigo"
+            [formField]="alta.codigo"
             data-form-codigo
           />
-          <ewms-input label="Cliente" formControlName="cliente" data-form-cliente />
+          <ewms-input label="Cliente" [formField]="alta.cliente" data-form-cliente />
           <!-- `type="text"`: la caja del sistema no tiene tipo email; el validador sí. -->
           <ewms-input
             label="Correo de aviso"
             hint="Opcional; si se escribe, tiene que ser un correo."
-            formControlName="correo"
+            [formField]="alta.correo"
             data-form-correo
           />
           <!-- Dos columnas solo para campos cortos emparentados, y solo en pantalla ancha. -->
@@ -100,20 +99,20 @@
             <ewms-select
               label="Almacén"
               [options]="almacenes"
-              formControlName="almacen"
+              [formField]="alta.almacen"
               data-form-almacen
             />
-            <ewms-date-picker label="Fecha comprometida" formControlName="fecha" data-form-fecha />
+            <ewms-date-picker label="Fecha comprometida" [formField]="alta.fecha" data-form-fecha />
             <ewms-select
               label="Estado"
               [options]="estados"
-              formControlName="estado"
+              [formField]="alta.estado"
               data-form-estado
             />
             <ewms-input
               label="Bultos"
               type="number"
-              formControlName="bultos"
+              [formField]="alta.bultos"
               data-form-bultos
             />
           </div>
@@ -121,10 +120,10 @@
 
         <fieldset class="flex flex-col gap-3 rounded-md border border-default p-4">
           <legend class="px-1 text-caption text-secondary">Preparación</legend>
-          <ewms-toggle label="Urgente" formControlName="urgente" data-form-urgente />
+          <ewms-toggle label="Urgente" [formField]="alta.urgente" data-form-urgente />
           <ewms-checkbox
             label="Confirmo que las etiquetas están impresas"
-            formControlName="etiquetas"
+            [formField]="alta.etiquetas"
             data-form-etiquetas
           />
         </fieldset>
@@ -134,7 +133,7 @@
           <ewms-button variant="secondary" data-form-leave (click)="salir()">
             Salir de la pantalla
           </ewms-button>
-          <ewms-button variant="primary" type="submit" [loading]="alta.busy()" data-form-save>
+          <ewms-button variant="primary" type="submit" [loading]="pattern.busy()" data-form-save>
             Guardar
           </ewms-button>
         </div>
@@ -211,7 +210,7 @@
           <tr class="border-t border-default">
             <th scope="row" class="p-2 text-left text-primary">Al enviar válido</th>
             <td class="p-2">sin mensajes</td>
-            <td class="p-2">Guardar en carga hasta que el consumidor responda</td>
+            <td class="p-2">Guardar en carga mientras la acción del envío corre</td>
           </tr>
         </tbody>
       </table>
@@ -241,8 +240,9 @@
       </li>
       <li>
         <strong>Dónde vive:</strong> <code class="font-mono">lib/forms/</code> — la directiva, el
-        token de mensajes y <code class="font-mono">confirmDiscard</code>. El error por campo lo
-        dibuja cada control desde la base de <code class="font-mono">ControlValueAccessor</code>.
+        token de mensajes, <code class="font-mono">confirmDiscard</code> y
+        <code class="font-mono">field-note.ts</code>, que es de donde cada campo saca el texto del
+        validador que falló.
       </li>
     </ul>
   </section>
