@@ -37,9 +37,11 @@
         (click)="choose(item)"
         (mouseenter)="onItemEnter(index)"
       >
-        @if (item.icon) {
-          <ewms-icon [name]="item.icon" size="sm" />
-        }
+        <span [class]="iconSlotClasses" aria-hidden="true">
+          @if (item.icon) {
+            <ewms-icon [name]="item.icon" size="sm" />
+          }
+        </span>
         <span class="truncate">{{ item.label }}</span>
       </li>
     }

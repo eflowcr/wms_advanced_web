@@ -20,6 +20,7 @@ import { Icon } from '../icon/icon';
 import {
   createMenuOverlay,
   MENU_CLASSES,
+  MENU_ICON_SLOT_CLASSES,
   MENU_POSITIONS,
   menuItemClasses,
   moveMenuIndex,
@@ -69,6 +70,7 @@ export class SplitButton implements OnDestroy {
 
   protected readonly menuId = `ewms-split-button-${++nextSplitButtonId}-menu`;
   protected readonly menuClasses = MENU_CLASSES;
+  protected readonly iconSlotClasses = MENU_ICON_SLOT_CLASSES;
   protected readonly mainClasses = SPLIT_MAIN_CLASSES;
   protected readonly triggerClasses = SPLIT_TRIGGER_CLASSES;
   protected readonly isOpen = signal(false);

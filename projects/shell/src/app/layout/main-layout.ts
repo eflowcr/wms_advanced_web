@@ -90,6 +90,9 @@ export class MainLayout {
   /** Lo que anuncia la región viva tras un cambio de ruta. */
   protected readonly routeAnnouncement = signal('');
 
+  /** `null` hasta la primera carga, que no mueve el foco. */
+  private previousUrl: string | null = null;
+
   /** Leída por cada etiqueta de abajo para redibujarse al cambiar de idioma. */
   private readonly activeLang = toSignal(this.transloco.langChanges$, {
     initialValue: this.transloco.getActiveLang(),
@@ -171,7 +174,12 @@ export class MainLayout {
           this.tabsService.relabel(url, title);
         }
 
-        this.focusPage();
+        // Solo al navegar: en la primera carga Chrome pinta el `h1` como `:focus-visible`
+        // porque aún no hubo puntero, y un cambio de idioma no es una navegación.
+        if (this.previousUrl !== null && this.previousUrl !== url) {
+          this.focusPage();
+        }
+        this.previousUrl = url;
         this.routeAnnouncement.set(title);
       });
     });

@@ -71,6 +71,7 @@ import {
   createMenuOverlay,
   menuItemClasses,
   MENU_CLASSES,
+  MENU_ICON_SLOT_CLASSES,
   MENU_SEPARATOR_CLASSES,
   MENU_POSITIONS,
   moveMenuIndex,
@@ -774,6 +775,7 @@ export class Table<T> {
   protected readonly menuIndex = signal(-1);
   protected readonly menuClasses = MENU_CLASSES;
   protected readonly menuSeparatorClasses = MENU_SEPARATOR_CLASSES;
+  protected readonly menuIconSlotClasses = MENU_ICON_SLOT_CLASSES;
   protected readonly menuId = `${this.tableId}-menu`;
 
   protected readonly hasMenu = computed(() => this.menuItems().length > 0);

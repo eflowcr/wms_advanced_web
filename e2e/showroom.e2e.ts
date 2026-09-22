@@ -1010,8 +1010,10 @@ test.describe('keyboard only', () => {
     // Las flechas mueven la fila activa; el foco sigue sin moverse.
     await page.keyboard.press('ArrowDown');
     await expect(trigger).toBeFocused();
-    const active = await trigger.getAttribute('aria-activedescendant');
-    expect(active, 'the arrows must mark an active option').not.toBeNull();
+    await expect(trigger, 'the arrows must mark an active option').toHaveAttribute(
+      'aria-activedescendant',
+      /.+/,
+    );
 
     await page.keyboard.press('ArrowDown');
     await page.keyboard.press('Enter');
@@ -1183,13 +1185,9 @@ test.describe('DS-3 lote B: dialog', () => {
     const dialog = page.locator('[role="dialog"]');
     await expect(dialog).toBeVisible();
 
-    const labelledBy = await dialog.getAttribute('aria-labelledby');
-    const describedBy = await dialog.getAttribute('aria-describedby');
-    expect(labelledBy).toBeTruthy();
-    expect(describedBy).toBeTruthy();
-
-    await expect(page.locator(`#${labelledBy}`)).toContainText('Eliminar la expedición');
-    await expect(page.locator(`#${describedBy}`)).toContainText('34 bultos');
+    // El nombre y la descripción accesibles se calculan de aria-labelledby y aria-describedby.
+    await expect(dialog).toHaveAccessibleName(/Eliminar la expedición/);
+    await expect(dialog).toHaveAccessibleDescription(/34 bultos/);
     await expect(dialog).toHaveAttribute('aria-modal', 'true');
   });
 
@@ -1643,8 +1641,17 @@ test.describe('DS-3 lote D: detalle, menú, ventana y paginador', () => {
     await button.click();
     await expect(button).toHaveAttribute('aria-expanded', 'true');
 
-    const id = await page.locator(`${DETALLE} [data-detail="0"] td`).getAttribute('id');
-    await expect(button).toHaveAttribute('aria-controls', id ?? '');
+    // Lo que nombra aria-controls es la celda del panel de la fila 0.
+    await expect
+      .poll(() =>
+        button.evaluate(
+          (element) =>
+            document
+              .getElementById(element.getAttribute('aria-controls') ?? '')
+              ?.closest('[data-detail="0"]') != null,
+        ),
+      )
+      .toBe(true);
   });
 
   test('the row menu opens from the kebab and from the right button', async ({ page }) => {
@@ -1676,10 +1683,11 @@ test.describe('DS-3 lote D: detalle, menú, ventana y paginador', () => {
     // reintenta: sin zone.js, un getAttribute suelto lee el valor previo a la pulsación.
     const active = menu.locator('[role="menuitem"].bg-ghost-hover');
     await expect(active).toContainText('Duplicar');
-    await expect(menu).toHaveAttribute(
-      'aria-activedescendant',
-      (await active.getAttribute('id')) ?? '',
-    );
+    await expect
+      .poll(() =>
+        menu.evaluate((list) => list.getAttribute('aria-activedescendant') === list.querySelector('.bg-ghost-hover')?.id),
+      )
+      .toBe(true);
 
     await page.keyboard.press('Escape');
     await expect(page.locator(`${DETALLE} [data-cell="0-0"]`)).toBeFocused();
@@ -1703,13 +1711,11 @@ test.describe('DS-3 lote D: detalle, menú, ventana y paginador', () => {
 
     const demo = '[data-demo-perezosa]';
     // La expedición con incidencia es la que nunca recibe hijos.
-    const failing = page.locator(`${demo} tr.bg-danger-surface`).first();
-    const index = await failing.getAttribute('data-row');
-
-    await page.locator(`${demo} [data-toggle="${index}"]`).click();
-    await expect(page.locator(`${demo} [data-loading="${index}"]`)).toBeVisible();
-    await expect(page.locator(`${demo} [data-failed="${index}"]`)).toBeVisible();
-    await expect(page.locator(`${demo} [data-retry="${index}"]`)).toBeVisible();
+    // Una sola fila abierta: sus filas de carga y de error son las únicas de la tabla.
+    await page.locator(`${demo} tr.bg-danger-surface`).first().locator('[data-toggle]').click();
+    await expect(page.locator(`${demo} [data-loading]`)).toBeVisible();
+    await expect(page.locator(`${demo} [data-failed]`)).toBeVisible();
+    await expect(page.locator(`${demo} [data-retry]`)).toBeVisible();
   });
 
   test('FIVE THOUSAND ROWS, A HANDFUL IN THE DOM, and the count is still five thousand', async ({
@@ -1749,8 +1755,11 @@ test.describe('DS-3 lote D: detalle, menú, ventana y paginador', () => {
     // lugar en la tabla entera.
     const first = page.locator(`${VIRTUAL} [data-row]`).first();
     await expect(first).not.toHaveAttribute('data-row', '0');
-    const index = Number(await first.getAttribute('data-row'));
-    await expect(first).toHaveAttribute('aria-rowindex', String(index + 1));
+    await expect
+      .poll(() =>
+        first.evaluate((row) => Number(row.getAttribute('aria-rowindex')) - Number(row.getAttribute('data-row'))),
+      )
+      .toBe(1);
   });
 
   test('the paginator appears because the source counts, and moves a page', async ({ page }) => {

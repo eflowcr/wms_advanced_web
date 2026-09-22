@@ -381,9 +381,11 @@
         [attr.data-menu-item]="item.id"
         (click)="chooseMenuItem(item)"
       >
-        @if (item.icon) {
-          <ewms-icon [name]="item.icon" size="sm" />
-        }
+        <span [class]="menuIconSlotClasses" aria-hidden="true">
+          @if (item.icon) {
+            <ewms-icon [name]="item.icon" size="sm" />
+          }
+        </span>
         <span class="truncate">{{ item.label }}</span>
       </li>
     }
