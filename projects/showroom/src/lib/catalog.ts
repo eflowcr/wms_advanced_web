@@ -255,26 +255,26 @@ const PATTERNS: readonly CatalogEntry[] = [
   {
     id: 'pattern-form',
     name: 'Formulario',
-    selector: null,
-    route: null,
-    status: 'gap',
-    note: 'Composición pendiente.',
+    selector: 'ewmsForm',
+    route: `${SHOWROOM_BASE}/patterns/form`,
+    status: 'ready',
+    note: 'Validar al salir y al enviar, resumen de errores, Ctrl+S y cambios sin guardar. Guardar nunca se deshabilita.',
   },
   {
     id: 'pattern-filters',
     name: 'Filtros',
-    selector: null,
-    route: null,
-    status: 'gap',
-    note: 'Composición pendiente.',
+    selector: 'ewms-filter-bar',
+    route: `${SHOWROOM_BASE}/patterns/filters`,
+    status: 'ready',
+    note: 'Filtros de pantalla que van a la fuente y viven en la URL; los chips son los de la tabla.',
   },
   {
     id: 'pattern-empty',
     name: 'Estado vacío',
-    selector: null,
-    route: null,
-    status: 'gap',
-    note: 'Composición pendiente.',
+    selector: 'ewms-empty-state',
+    route: `${SHOWROOM_BASE}/patterns/empty-state`,
+    status: 'ready',
+    note: 'Un componente, cuatro casos: no hay, no coincide, falló, sin permiso. La tabla y el select lo eligen solos.',
   },
 ];
 
@@ -314,4 +314,16 @@ export function filterCatalog(query: string): readonly CatalogSection[] {
 /** Cantidad de entradas de un catálogo filtrado, para el conteo de resultados. */
 export function countEntries(sections: readonly CatalogSection[]): number {
   return sections.reduce((total, section) => total + section.entries.length, 0);
+}
+
+/**
+ * El nombre de una página por su ruta, para quien la nombra desde afuera (el favorito del riel).
+ * Fuera del catálogo devuelve null, y la portada del showroom también: esa la nombra el menú.
+ */
+export function catalogNameFor(route: string): string | null {
+  const path = route.split('?')[0];
+  return (
+    CATALOG.flatMap((section) => section.entries).find((entry) => entry.route === path)?.name ??
+    null
+  );
 }

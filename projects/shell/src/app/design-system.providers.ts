@@ -2,6 +2,8 @@ import { computed, inject, type Provider } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import {
   EWMS_DATE_PICKER_MESSAGES,
+  EWMS_FILTER_BAR_MESSAGES,
+  EWMS_FORM_MESSAGES,
   EWMS_FAVORITE_LABELS,
   EWMS_FAVORITES_STORE,
   EWMS_SELECT_MESSAGES,
@@ -15,12 +17,15 @@ import {
   parseTableDate,
   type DatePickerMessages,
   type FavoriteLabelResolver,
+  type FilterBarMessages,
+  type FormMessages,
   type SelectMessages,
   type ShortcutHelpMessages,
   type SplitButtonMessages,
   type TableFormatters,
   type TableMessages,
 } from '@ewms/design-system';
+import { catalogNameFor } from '@ewms/showroom';
 import { TranslocoService } from '@jsverse/transloco';
 import { TranslocoLocaleService } from '@jsverse/transloco-locale';
 import { menuEntryFor } from './layout/menu';
@@ -44,6 +49,14 @@ export function provideEwmsDesignSystem(): Provider[] {
     {
       provide: EWMS_SELECT_MESSAGES,
       useFactory: selectMessages,
+    },
+    {
+      provide: EWMS_FILTER_BAR_MESSAGES,
+      useFactory: filterBarMessages,
+    },
+    {
+      provide: EWMS_FORM_MESSAGES,
+      useFactory: formMessages,
     },
     // El mapa es valor y las palabras son fábrica (DS-4): las teclas no cambian con
     // el idioma. El showroom provee su propio par para registrar `create` sin el shell.
@@ -90,8 +103,11 @@ function favoriteLabels(): FavoriteLabelResolver {
     labelFor: (route) =>
       computed(() => {
         lang();
+        // Una página del showroom se llama como en su catálogo: el menú solo sabe decir
+        // «Sistema de diseño», y trece favoritos con el mismo nombre no son favoritos.
+        const page = catalogNameFor(route);
         const entry = menuEntryFor(route);
-        return entry === undefined ? '' : transloco.translate(entry.labelKey);
+        return page ?? (entry === undefined ? '' : transloco.translate(entry.labelKey));
       }),
     iconFor: (route) => menuEntryFor(route)?.icon ?? null,
   };
@@ -161,6 +177,18 @@ function tableMessages(): TableMessages {
       return transloco.translate('ds.table.clearFilters');
     },
     removeFilter: (column) => transloco.translate('ds.table.removeFilter', { column }),
+    get view() {
+      return transloco.translate('ds.table.view');
+    },
+    get resetView() {
+      return transloco.translate('ds.table.resetView');
+    },
+    get expandAll() {
+      return transloco.translate('ds.table.expandAll');
+    },
+    get collapseAll() {
+      return transloco.translate('ds.table.collapseAll');
+    },
     get density() {
       return transloco.translate('ds.table.density');
     },
@@ -184,6 +212,46 @@ function tableMessages(): TableMessages {
       return transloco.translate('ds.table.columns');
     },
     resizeColumn: (column) => transloco.translate('ds.table.resizeColumn', { column }),
+    moveEarlier: (column) => transloco.translate('ds.table.moveEarlier', { column }),
+    moveLater: (column) => transloco.translate('ds.table.moveLater', { column }),
+    columnMoved: (column, position, total) =>
+      transloco.translate('ds.table.columnMoved', { column, position, total }),
+    columnMenu: (column) => transloco.translate('ds.table.columnMenu', { column }),
+    // Un getter por acción con la clave literal, por la regla de arriba.
+    columnActions: {
+      get sortAsc() {
+        return transloco.translate('ds.table.columnActions.sortAsc');
+      },
+      get sortDesc() {
+        return transloco.translate('ds.table.columnActions.sortDesc');
+      },
+      get sortClear() {
+        return transloco.translate('ds.table.columnActions.sortClear');
+      },
+      get pinStart() {
+        return transloco.translate('ds.table.columnActions.pinStart');
+      },
+      get pinEnd() {
+        return transloco.translate('ds.table.columnActions.pinEnd');
+      },
+      get unpin() {
+        return transloco.translate('ds.table.columnActions.unpin');
+      },
+      get fit() {
+        return transloco.translate('ds.table.columnActions.fit');
+      },
+      get moveLeft() {
+        return transloco.translate('ds.table.columnActions.moveLeft');
+      },
+      get moveRight() {
+        return transloco.translate('ds.table.columnActions.moveRight');
+      },
+      get hide() {
+        return transloco.translate('ds.table.columnActions.hide');
+      },
+    },
+    sortPriority: (sorted, priority) =>
+      transloco.translate('ds.table.sortPriority', { sorted, priority }),
     selectedCount: (count) => transloco.translate('ds.table.selectedCount', { count }),
     get clearSelection() {
       return transloco.translate('ds.table.clearSelection');
@@ -194,6 +262,15 @@ function tableMessages(): TableMessages {
     },
     get loadFailed() {
       return transloco.translate('ds.table.loadFailed');
+    },
+    get noData() {
+      return transloco.translate('ds.table.noData');
+    },
+    get noResults() {
+      return transloco.translate('ds.table.noResults');
+    },
+    get noResultsHint() {
+      return transloco.translate('ds.table.noResultsHint');
     },
     get export() {
       return transloco.translate('ds.table.export');
@@ -218,6 +295,50 @@ function tableMessages(): TableMessages {
       } as const;
       return transloco.translate(keys[kind][scope], { column });
     },
+  };
+}
+
+/**
+ * Un mensaje por validador, con las claves literales (transloco-keys-manager lee la fuente).
+ * `custom` recibe lo que puso el validador propio: una cadena ya traducida pasa tal cual.
+ */
+function formMessages(): FormMessages {
+  const transloco = inject(TranslocoService);
+  const length = (detail: unknown): number => (detail as { requiredLength: number }).requiredLength;
+  return {
+    errors: {
+      required: () => transloco.translate('ds.form.required'),
+      minlength: (detail) => transloco.translate('ds.form.minlength', { length: length(detail) }),
+      maxlength: (detail) => transloco.translate('ds.form.maxlength', { length: length(detail) }),
+      min: (detail) => transloco.translate('ds.form.min', { min: (detail as { min: number }).min }),
+      max: (detail) => transloco.translate('ds.form.max', { max: (detail as { max: number }).max }),
+      pattern: () => transloco.translate('ds.form.pattern'),
+      email: () => transloco.translate('ds.form.email'),
+      custom: (detail) =>
+        typeof detail === 'string' ? detail : transloco.translate('ds.form.custom'),
+    },
+    errorSummary: (count) => transloco.translate('ds.form.errorSummary', { count }),
+    get errorSummaryLabel() {
+      return transloco.translate('ds.form.errorSummaryLabel');
+    },
+    get requiredLegend() {
+      return transloco.translate('ds.form.requiredLegend');
+    },
+  };
+}
+
+/** Los chips repiten las palabras de la tabla: una sola forma de decir «Limpiar filtros». */
+function filterBarMessages(): FilterBarMessages {
+  const transloco = inject(TranslocoService);
+  return {
+    moreFilters: (active) => transloco.translate('ds.filterBar.moreFilters', { active }),
+    get fewerFilters() {
+      return transloco.translate('ds.filterBar.fewerFilters');
+    },
+    get clearFilters() {
+      return transloco.translate('ds.table.clearFilters');
+    },
+    removeFilter: (field) => transloco.translate('ds.table.removeFilter', { column: field }),
   };
 }
 
@@ -295,6 +416,12 @@ function shortcutHelpMessages(): ShortcutHelpMessages {
       },
       get filters() {
         return transloco.translate('shell.shortcuts.actions.filters');
+      },
+      get moveColumnLeft() {
+        return transloco.translate('shell.shortcuts.actions.moveColumnLeft');
+      },
+      get moveColumnRight() {
+        return transloco.translate('shell.shortcuts.actions.moveColumnRight');
       },
       get help() {
         return transloco.translate('shell.shortcuts.actions.help');

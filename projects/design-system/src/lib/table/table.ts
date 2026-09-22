@@ -24,17 +24,22 @@ import {
 } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
-import { isObservable, of, type Observable } from 'rxjs';
+import { of, type Observable } from 'rxjs';
 import { catchError, debounceTime, map, skip, switchMap, tap } from 'rxjs/operators';
 import { Badge } from '../badge/badge';
 import { Checkbox } from '../checkbox/checkbox';
-import { familyTintClass } from '../feedback/feedback.types';
 import { Icon } from '../icon/icon';
 import { Button } from '../button/button';
 import { DatePicker } from '../date-picker/date-picker';
+import {
+  EmptyState,
+  type EmptyStateAction,
+  type EmptyStateKind,
+} from '../empty-state/empty-state';
 import { KeyboardShortcuts } from '../keyboard/keyboard-shortcuts';
 import { Input as TextInput } from '../input/input';
 import { Pagination } from '../pagination/pagination';
+import { Tooltip } from '../tooltip/tooltip';
 
 import { readMilliseconds } from '../tokens/read-token';
 const DELAY_SEARCH_INPUT_TOKEN = '--delay-search-input';
@@ -46,7 +51,8 @@ import { TableStatus } from './table-status';
 import { TableToolbar } from './table-toolbar';
 import { downloadCsv, exportMatrix, toCsv, toTsv } from './table-export';
 import { TableSelection } from './table-selection';
-import { TableViewState } from './table-view';
+import { TableColumnDrag } from './table-column-drag';
+import { TableViewState, type ColumnPosition } from './table-view';
 import {
   emptyQuery,
   readCell,
@@ -68,6 +74,8 @@ import {
   columnCellClasses,
   columnHeaderClasses,
   rowClasses,
+  rowMarkClasses,
+  type RowException,
   type BadgeDescriptor,
   type BulkActionEvent,
   type ExportRequest,
@@ -79,9 +87,13 @@ import {
   type TableDensity,
   type TableView,
 } from './table.types';
-import { TableRowMenu } from './table-row-menu';
+import { TableColumnMenu, type ColumnAction } from './table-column-menu';
+import { TableKeyboard } from './table-keyboard';
+import { TableMenu } from './table-menu';
+import { TableSortState } from './table-sort';
 import { TableWindow } from './table-window';
-import { expandableKeys, flattenTree, type FlatRow } from './tree';
+import { TableTreeState } from './table-tree-state';
+import type { FlatRow } from './tree';
 
 export type { CellContext } from './column';
 export { TableColumn, CellTemplate } from './column';
@@ -90,6 +102,9 @@ export type { FlatRow } from './tree';
 @Directive({ selector: '[ewmsDetail]' })
 export class DetailTemplate<T = unknown> {
   readonly template = inject<TemplateRef<{ $implicit: T }>>(TemplateRef);
+
+  /** No configura nada: con `[rowsFrom]="fuente"` la plantilla infiere la fila de `let-row`. */
+  readonly rowsFrom = input<TableSource<T> | null>(null);
 
   static ngTemplateContextGuard<T>(
     _directive: DetailTemplate<T>,
@@ -108,9 +123,6 @@ let nextTableId = 0;
 
 const EMPTY_PAGE: TablePage<never> = { rows: [], page: 0, pageSize: 0, total: 0 };
 
-/** Tinte solo en excepción: con todas teñidas, ninguna llama la atención (decisión del usuario). */
-const TINTED_STATES: readonly RowState[] = ['danger', 'warning'];
-
 /** La tabla de datos: árbol aplanado, estado de fila como dato. Ver vault: Tabla. */
 @Component({
   selector: 'ewms-table',
@@ -119,11 +131,13 @@ const TINTED_STATES: readonly RowState[] = ['danger', 'warning'];
     Badge,
     Checkbox,
     DatePicker,
+    EmptyState,
     Icon,
     Button,
     NgTemplateOutlet,
     Pagination,
     ReactiveFormsModule,
+    Tooltip,
     TablePopover,
     TableStatus,
     TableToolbar,
@@ -159,6 +173,9 @@ export class Table<T> implements TableContext {
 
   readonly quickFilter = input<boolean>(false);
 
+  /** Cuántos filtros de pantalla hay puestos: con alguno, vacío es «sin resultados». */
+  readonly screenFilters = input<number>(0);
+
   /** Selector de columnas en la barra: mostrar y ocultar. `hideable="false"` no se ofrece. */
   readonly columnChooser = input<boolean>(false);
 
@@ -182,11 +199,13 @@ export class Table<T> implements TableContext {
   /** Con una fuente remota la tabla no descarga: dice qué pidió el usuario, y lo hace el servicio. */
   readonly exportRequest = output<ExportRequest>();
   readonly queryChange = output<TableQuery>();
+  /** «Limpiar filtros» del estado vacío: la pantalla limpia además los suyos. */
+  readonly filtersCleared = output<void>();
   /** Columnas ocultas, anchos, fijadas y densidad: en memoria, para quien quiera guardarlos. */
   readonly viewChange = output<TableView>();
 
   private readonly viewContainerRef = inject(ViewContainerRef);
-  private readonly menuTemplate = viewChild<TemplateRef<unknown>>('rowMenuPanel');
+  private readonly menuTemplate = viewChild<TemplateRef<unknown>>('menuPanel');
 
   protected readonly detail = contentChild(DetailTemplate);
   protected readonly empty = contentChild(EmptyTemplate);
@@ -217,14 +236,15 @@ export class Table<T> implements TableContext {
   }));
 
   private readonly search = signal('');
-  private readonly sort = signal<TableQuery['sort']>(null);
+  /** Una lista: clic ordena por una columna, Shift+clic suma otra. Ver `table-sort.ts`. */
+  readonly sorting = new TableSortState(() => this.pageIndex.set(0));
   private readonly pageIndex = signal(0);
 
   protected readonly query = computed<TableQuery>(() => ({
     ...emptyQuery(this.pageSize()),
     search: this.search(),
     filters: this.filtering.values(),
-    sort: this.sort(),
+    sort: this.sorting.list(),
     page: this.pageIndex(),
   }));
 
@@ -241,8 +261,31 @@ export class Table<T> implements TableContext {
   /** Cargando no vacía la tabla: las filas quedan, atenuadas, y el alto no se mueve. */
   protected readonly loadState = signal<'loading' | 'ready' | 'error'>('loading');
 
-  protected retryLoad(): void {
-    this.reload.update((attempt) => attempt + 1);
+  protected readonly retryAction = computed<EmptyStateAction>(() => ({
+    label: this.text().retry,
+    icon: 'refresh',
+    run: () => this.reload.update((attempt) => attempt + 1),
+  }));
+
+  /** Con búsqueda o filtros —de columna o de pantalla—, vacío es «sin resultados». */
+  protected readonly emptyKind = computed<EmptyStateKind>(() =>
+    this.search() !== '' || this.filtering.count() > 0 || this.screenFilters() > 0
+      ? 'no-results'
+      : 'no-data',
+  );
+
+  protected readonly clearAction = computed<EmptyStateAction>(() => ({
+    label: this.text().clearFilters,
+    run: () => this.clearQuery(),
+  }));
+
+  /** Búsqueda y filtros de columna; los de pantalla los limpia quien los tiene. */
+  clearQuery(): void {
+    this.searchControl.setValue('', { emitEvent: false });
+    this.search.set('');
+    this.pageIndex.set(0);
+    this.filtering.clearAll();
+    this.filtersCleared.emit();
   }
 
   protected readonly page = signal<TablePage<T>>({
@@ -265,22 +308,6 @@ export class Table<T> implements TableContext {
     return total === null ? null : Math.max(1, Math.ceil(total / this.pageSize()));
   });
 
-  private readonly expanded = signal<ReadonlySet<unknown>>(new Set());
-  private readonly loadingChildren = signal<ReadonlySet<unknown>>(new Set());
-  private readonly failedChildren = signal<ReadonlySet<unknown>>(new Set());
-  private readonly lazyChildren = signal<ReadonlyMap<unknown, readonly T[]>>(new Map());
-
-  private readonly resolveChildren = computed<TableChildren<T> | null>(() => {
-    const declared = this.children();
-    if (declared === null) {
-      return null;
-    }
-    if (typeof declared === 'string') {
-      return (row) => (readCell(row, declared) as readonly T[] | undefined) ?? null;
-    }
-    return declared;
-  });
-
   private readonly resolveRowState = computed<((row: T) => RowState | null) | null>(() => {
     const declared = this.rowState();
     if (declared === null) {
@@ -296,57 +323,10 @@ export class Table<T> implements TableContext {
     return (row) => dictionary[String(readCell(row, declared))]?.variant ?? null;
   });
 
-  protected readonly isTree = computed(() => this.resolveChildren() !== null);
-
-  // `undefined` = hay hijos y no llegaron; `null` = hoja. La diferencia dibuja el toggle.
-  private readonly childrenOf = (row: T): readonly T[] | null | undefined => {
-    const resolve = this.resolveChildren();
-    if (!resolve) {
-      return null;
-    }
-    const resolved = resolve(row);
-    if (resolved === null) {
-      return null;
-    }
-    if (isObservable(resolved)) {
-      return this.lazyChildren().get(this.trackBy()(row));
-    }
-    return resolved;
-  };
-
-  private readonly hasChildrenOf = (row: T): boolean => {
-    const resolve = this.resolveChildren();
-    if (!resolve) {
-      return false;
-    }
-    const resolved = resolve(row);
-    if (resolved === null) {
-      return false;
-    }
-    // Un padre perezoso siempre tiene toggle: si no, nadie podría pedir sus hijos.
-    return isObservable(resolved) || resolved.length > 0;
-  };
-
-  protected readonly rows = computed<readonly FlatRow<T>[]>(() =>
-    flattenTree(this.page().rows, {
-      children: this.childrenOf,
-      hasChildren: this.hasChildrenOf,
-      key: this.trackBy(),
-      expanded: this.expanded(),
-      loading: this.loadingChildren(),
-      failed: this.failedChildren(),
-    }),
-  );
-
-  protected readonly anyExpandable = computed(
-    () =>
-      this.isTree() &&
-      expandableKeys(this.page().rows, {
-        children: this.childrenOf,
-        hasChildren: this.hasChildrenOf,
-        key: this.trackBy(),
-      }).length > 0,
-  );
+  /** Abiertas, hijos perezosos y la lista aplanada: ver `table-tree-state.ts`. */
+  readonly tree = new TableTreeState<T>(this.children, this.trackBy, computed(() => this.page().rows));
+  protected readonly isTree = this.tree.isTree;
+  protected readonly rows = this.tree.rows;
 
   protected readonly selection = new TableSelection<T>();
   readonly selectedCount = this.selection.count;
@@ -375,9 +355,6 @@ export class Table<T> implements TableContext {
     () => this.visibleColumns().length + (this.selectable() ? 1 : 0),
   );
 
-  // Un solo tab stop para toda la tabla.
-  protected readonly focusRow = signal(0);
-  protected readonly focusColumn = signal(0);
 
   constructor() {
     // switchMap cancela la petición en vuelo: una página 0 lenta no pisa a una página 1 rápida.
@@ -418,6 +395,8 @@ export class Table<T> implements TableContext {
         this.visibleColumns();
         this.layout.view();
         this.selectable();
+        // Las filas dibujadas también: cuáles cortan su texto depende de ellas.
+        this.viewport.rows();
         this.measurePins();
       },
     });
@@ -438,17 +417,25 @@ export class Table<T> implements TableContext {
       },
     });
 
-    // `filters` del mapa de atajos, sin listener propio: lo contesta la tabla que tiene el foco,
-    // o la primera filtrable si el foco no está en ninguna. Ver vault: Tabla §12.
+    // Atajos del mapa, sin listener propio: `filters` lo contesta la tabla con el foco (o la primera
+    // filtrable); mover columna, la de la cabecera enfocada. Ver vault: Tabla §12 y §20.
     inject(KeyboardShortcuts)
       .events.pipe(takeUntilDestroyed())
-      .subscribe((event) => {
-        if (event.action === 'filters' && event.outcome === 'unregistered' && this.ownsShortcut()) {
+      .subscribe(({ action, outcome }) => {
+        if (outcome !== 'unregistered') {
+          return;
+        }
+        if (action === 'filters' && this.ownsShortcut()) {
           this.toggleFilters();
+        } else if (action === 'moveColumnLeft' || action === 'moveColumnRight') {
+          this.moveFocusedColumn(action === 'moveColumnLeft' ? -1 : 1);
         }
       });
 
-    this.destroyRef.onDestroy(() => this.menu.dispose());
+    this.destroyRef.onDestroy(() => {
+      this.menu.dispose();
+      this.columnMenu.dispose();
+    });
   }
 
   private measurePins(): void {
@@ -470,6 +457,54 @@ export class Table<T> implements TableContext {
 
   readonly layout = new TableViewState(this.columns, this.densityChoice, this.selectable);
 
+  /** «Restablecer vista» solo se habilita si algo cambió, densidad incluida. */
+  readonly viewChanged = computed(
+    () => this.layout.customised() || this.densityChoice() !== this.density(),
+  );
+
+  resetView(): void {
+    this.layout.reset();
+    this.densityChoice.set(this.density());
+  }
+
+  protected readonly drag = new TableColumnDrag({
+    layout: this.layout,
+    columnOf: (key) => this.columns().find((column) => column.key() === key),
+    moved: (column, where) => this.announceMove(column, where),
+  });
+
+  /** Subir/Bajar del selector y el menú de columna: una posición, dentro de su grupo. */
+  moveColumn(column: TableColumn, delta: 1 | -1): void {
+    const where = this.layout.move(column, delta);
+    if (where) {
+      this.announceMove(column, where);
+    }
+  }
+
+  private announceMove(column: TableColumn, where: ColumnPosition): void {
+    const name = column.header() || column.key();
+    this.announcement.set(this.text().columnMoved(name, where.position, where.total));
+  }
+
+  /** Alt+Shift+←/→ con el foco en una cabecera; el foco sigue a la columna movida. */
+  private moveFocusedColumn(delta: 1 | -1): void {
+    const active = this.host.nativeElement.ownerDocument.activeElement as HTMLElement | null;
+    const cell = active?.closest<HTMLElement>('th[data-col]');
+    const column = this.columns().find((candidate) => candidate.key() === cell?.dataset['col']);
+    if (!cell || !column || !this.host.nativeElement.contains(cell)) {
+      return;
+    }
+    const focusable = active?.dataset['resize'] !== undefined ? '[data-resize]' : 'button';
+    this.moveColumn(column, delta);
+    afterNextRender(
+      () =>
+        this.host.nativeElement
+          .querySelector<HTMLElement>(`th[data-col="${column.key()}"] ${focusable}`)
+          ?.focus(),
+      { injector: this.injector },
+    );
+  }
+
   /** Las columnas que se dibujan: visibles, con las fijadas en los bordes. */
   readonly visibleColumns = this.layout.visibleColumns;
 
@@ -479,14 +514,24 @@ export class Table<T> implements TableContext {
     return `${CELL_CLASSES} ${columnCellClasses(column.type())}`;
   }
 
+  /** La columna ordenada se lee en primario; las demás, en secundario (el de la cabecera). */
   protected headerClassesFor(column: TableColumn): string {
-    return columnHeaderClasses(column.type());
+    const sorted = this.sorting.direction(column) !== null ? ' text-primary' : '';
+    return columnHeaderClasses(column.type()) + sorted;
+  }
+
+  private exceptionOf(flat: FlatRow<T>): RowException | null {
+    const state = this.resolveRowState()?.(flat.row) ?? null;
+    return state === 'danger' || state === 'warning' ? state : null;
   }
 
   protected rowClassesFor(flat: FlatRow<T>): string {
-    const state = this.resolveRowState()?.(flat.row) ?? null;
-    const tinted = state !== null && TINTED_STATES.includes(state);
-    return rowClasses(this.isSelected(flat), tinted ? familyTintClass(state) : '');
+    return rowClasses(this.isSelected(flat), this.exceptionOf(flat));
+  }
+
+  /** La marca va en la primera celda de la fila, sea la casilla o la primera columna. */
+  protected markFor(flat: FlatRow<T>, first: boolean): string {
+    return first ? rowMarkClasses(this.exceptionOf(flat)) : '';
   }
 
   // Formateado para ver, nunca para ordenar.
@@ -510,35 +555,66 @@ export class Table<T> implements TableContext {
     return column.cell() as CellTemplate<T> | undefined;
   }
 
-  protected sortDirection(column: TableColumn): 'asc' | 'desc' | null {
-    const sort = this.sort();
-    return sort && sort.key === column.key() ? sort.direction : null;
+  /** Shift+clic y Shift+Enter suman la columna al orden en vez de reemplazarlo. */
+  protected toggleSort(column: TableColumn, event: MouseEvent | KeyboardEvent): void {
+    this.sorting.toggle(column, event.shiftKey);
   }
 
-  // `aria-sort` solo en la columna ordenada: `none` en las demás es ruido.
-  protected ariaSort(column: TableColumn): string | null {
-    const direction = this.sortDirection(column);
-    if (!direction) {
-      return null;
+  /** Shift+F10, la tecla de menú y Shift+Enter, con el foco en una cabecera. */
+  protected onHeaderKeydown(event: KeyboardEvent, column: TableColumn): void {
+    const target = event.target as HTMLElement;
+    if (event.key === 'Enter' && event.shiftKey && target.dataset['sort'] !== undefined) {
+      event.preventDefault();
+      this.toggleSort(column, event);
+    } else if (event.key === 'ContextMenu' || (event.key === 'F10' && event.shiftKey)) {
+      event.preventDefault();
+      this.columnMenu.open(column, target);
     }
-    return direction === 'asc' ? 'ascending' : 'descending';
   }
 
-  // Asc, desc y ninguno: el tercer clic devuelve el orden de la fuente.
-  protected toggleSort(column: TableColumn): void {
-    if (!column.sortable()) {
-      return;
-    }
-    const current = this.sortDirection(column);
-    this.pageIndex.set(0);
-    if (current === null) {
-      this.sort.set({ key: column.key(), direction: 'asc' });
-    } else if (current === 'asc') {
-      this.sort.set({ key: column.key(), direction: 'desc' });
-    } else {
-      this.sort.set(null);
-    }
+  /** «Orden ascendente», y con dos o más órdenes «…, prioridad 2». */
+  protected sortLabel(column: TableColumn): string {
+    const text = this.text();
+    const sorted =
+      this.sorting.direction(column) === 'asc' ? text.sortedAscending : text.sortedDescending;
+    const priority = this.sorting.priority(column);
+    return priority === null ? sorted : text.sortPriority(sorted, priority);
   }
+
+  protected fitColumn(column: TableColumn): void {
+    this.layout.fit(column, this.host.nativeElement);
+  }
+
+  /** ⋮, clic derecho y Shift+F10 sobre una cabecera: todo lo de esa columna. Ver vault: Tabla §21. */
+  protected readonly columnActions = new TableColumnMenu({
+    sort: this.sorting,
+    layout: this.layout,
+    words: () => this.text().columnActions,
+    fit: (column) => this.fitColumn(column),
+    move: (column, delta) => this.moveColumn(column, delta),
+  });
+
+  protected readonly columnMenu = new TableMenu<TableColumn>({
+    id: `${this.tableId}-column-menu`,
+    items: (column) => this.columnActions.items(column),
+    label: (column) => this.text().columnMenu(column.header() || column.key()),
+    template: () => this.menuTemplate(),
+    injector: this.injector,
+    viewContainerRef: this.viewContainerRef,
+    document: this.host.nativeElement.ownerDocument,
+    // Tras pintar: fijar u ocultar mueve la cabecera, y mover un nodo le quita el foco. Oculta, el
+    // foco va a la cabecera vecina que quedó en su lugar.
+    closed: (column, anchor) =>
+      afterNextRender(
+        () =>
+          (anchor?.isConnected
+            ? anchor
+            : this.host.nativeElement.querySelector<HTMLElement>('th[data-col] [data-sort], th[data-col] [data-resize]')
+          )?.focus(),
+        { injector: this.injector },
+      ),
+    chosen: (column, item) => this.columnActions.run(item.id as ColumnAction, column),
+  });
 
   readonly anyFilterable = computed(() => this.columns().some((column) => column.filterable()));
 
@@ -598,50 +674,11 @@ export class Table<T> implements TableContext {
   protected readonly searchText = this.search as Signal<string>;
 
   protected toggleExpanded(flat: FlatRow<T>): void {
-    if (!flat.hasChildren) {
-      return;
-    }
-    const open = new Set(this.expanded());
-    if (open.has(flat.key)) {
-      open.delete(flat.key);
-      this.expanded.set(open);
-      return;
-    }
-    open.add(flat.key);
-    this.expanded.set(open);
-    this.loadLazyChildren(flat);
-  }
-
-  // Una sola vez por fila: pedirlos en cada expansión le pega a la red sin necesidad.
-  private loadLazyChildren(flat: FlatRow<T>): void {
-    const resolve = this.resolveChildren();
-    const resolved = resolve?.(flat.row);
-    if (!resolved || !isObservable(resolved) || this.lazyChildren().has(flat.key)) {
-      return;
-    }
-
-    this.failedChildren.update((current) => withoutKey(current, flat.key));
-    this.loadingChildren.update((current) => withKey(current, flat.key));
-
-    resolved.subscribe({
-      next: (children) => {
-        this.lazyChildren.update((current) => new Map(current).set(flat.key, children));
-        this.loadingChildren.update((wip) => withoutKey(wip, flat.key));
-      },
-      error: () => {
-        this.loadingChildren.update((wip) => withoutKey(wip, flat.key));
-        this.failedChildren.update((current) => withKey(current, flat.key));
-      },
-    });
+    this.tree.toggle(flat);
   }
 
   protected retryChildren(flat: FlatRow<T>): void {
-    this.lazyChildren.update((current) => {
-      const next = new Map(current);
-      next.delete(flat.key);
-      return next;
-    });
-    this.loadLazyChildren(flat);
+    this.tree.retry(flat);
   }
 
   protected isSelected(flat: FlatRow<T>): boolean {
@@ -730,118 +767,19 @@ export class Table<T> implements TableContext {
     this.pageIndex.set(Math.min(pages - 1, Math.max(0, page)));
   }
 
-  protected isFocused(rowIndex: number, columnIndex: number): boolean {
-    return this.focusRow() === rowIndex && this.focusColumn() === columnIndex;
-  }
-
-  protected onCellFocus(rowIndex: number, columnIndex: number): void {
-    this.focusRow.set(rowIndex);
-    this.focusColumn.set(columnIndex);
-  }
-
-  // Teclado treegrid de las WAI-ARIA APG: en una fila padre las flechas expanden y
-  // pliegan antes de moverse entre celdas. Ver vault: Tabla §6.
-  protected onKeydown(event: KeyboardEvent, rowIndex: number): void {
-    // La lista aplanada entera, nunca la ventana.
-    const rows = this.rows();
-    const flat = rows[rowIndex];
-    if (!flat) {
-      return;
-    }
-
-    switch (event.key) {
-      case 'ArrowDown':
-        event.preventDefault();
-        this.moveFocus(Math.min(rows.length - 1, rowIndex + 1), this.focusColumn());
-        return;
-
-      case 'ArrowUp':
-        event.preventDefault();
-        this.moveFocus(Math.max(0, rowIndex - 1), this.focusColumn());
-        return;
-
-      case 'ArrowRight':
-        event.preventDefault();
-        if (flat.hasChildren && !flat.expanded) {
-          this.toggleExpanded(flat);
-          return;
-        }
-        this.moveFocus(rowIndex, Math.min(this.columnCount() - 1, this.focusColumn() + 1));
-        return;
-
-      case 'ArrowLeft':
-        event.preventDefault();
-        if (flat.hasChildren && flat.expanded) {
-          this.toggleExpanded(flat);
-          return;
-        }
-        if (this.focusColumn() === 0 && flat.level > 0) {
-          // Primera celda de una hija: va al padre.
-          this.moveFocus(parentIndexOf(rows, rowIndex), 0);
-          return;
-        }
-        this.moveFocus(rowIndex, Math.max(0, this.focusColumn() - 1));
-        return;
-
-      case 'Home':
-        event.preventDefault();
-        this.moveFocus(event.ctrlKey ? 0 : rowIndex, 0);
-        return;
-
-      case 'End':
-        event.preventDefault();
-        this.moveFocus(event.ctrlKey ? rows.length - 1 : rowIndex, this.columnCount() - 1);
-        return;
-
-      case 'Enter':
-        event.preventDefault();
-        this.rowActivate.emit({ row: flat.row });
-        return;
-
-      case ' ':
-        if (this.selectable()) {
-          // Espacio hace scroll por defecto.
-          event.preventDefault();
-          this.toggleRow(flat, event.shiftKey);
-        }
-        return;
-
-      case 'c':
-      case 'C':
-        if (event.ctrlKey || event.metaKey) {
-          event.preventDefault();
-          this.copy(flat);
-        }
-        return;
-
-      case 'ContextMenu':
-      case 'F10':
-        // Shift+F10 y la tecla de menú abren el menú; F10 a secas es del navegador.
-        if (event.key === 'F10' && !event.shiftKey) {
-          return;
-        }
-        event.preventDefault();
-        this.menu.open(flat, event.currentTarget as HTMLElement);
-        return;
-
-      default:
-        return;
-    }
-  }
-
-  // Con ventana, la fila destino puede no estar en el DOM: scroll primero, foco después.
-  private moveFocus(rowIndex: number, columnIndex: number): void {
-    this.focusRow.set(rowIndex);
-    this.focusColumn.set(columnIndex);
-
-    this.viewport.reveal(this.scrollBox()?.nativeElement ?? null, rowIndex);
-
-    queueMicrotask(() => {
-      this.host.nativeElement
-        .querySelector<HTMLElement>(`[data-cell="${rowIndex}-${columnIndex}"]`)
-        ?.focus();
-    });
-  }
+  /** Una parada de Tab y el teclado treegrid: ver `table-keyboard.ts`. */
+  protected readonly keys = new TableKeyboard<T>({
+    element: this.host.nativeElement,
+    rows: () => this.rows(),
+    columnCount: () => this.columnCount(),
+    selectable: () => this.selectable(),
+    toggle: (flat) => this.toggleExpanded(flat),
+    activate: (flat) => this.rowActivate.emit({ row: flat.row }),
+    select: (flat, range) => this.toggleRow(flat, range),
+    copy: (flat) => this.copy(flat),
+    openMenu: (flat, anchor) => this.menu.open(flat, anchor),
+    reveal: (rowIndex) => this.viewport.reveal(this.scrollBox()?.nativeElement ?? null, rowIndex),
+  });
 
   private readonly openDetails = signal<ReadonlySet<unknown>>(new Set());
 
@@ -868,9 +806,10 @@ export class Table<T> implements TableContext {
     this.openDetails.set(open);
   }
 
-  protected readonly menu = new TableRowMenu<T>({
-    tableId: this.tableId,
+  protected readonly menu = new TableMenu<FlatRow<T>>({
+    id: `${this.tableId}-menu`,
     items: () => this.menuItems(),
+    label: () => this.text().rowMenu,
     template: () => this.menuTemplate(),
     injector: this.injector,
     viewContainerRef: this.viewContainerRef,
@@ -878,11 +817,16 @@ export class Table<T> implements TableContext {
     closed: (row) => {
       const index = this.rows().findIndex((flat) => flat.key === row.key);
       if (index >= 0) {
-        this.moveFocus(index, this.focusColumn());
+        this.keys.moveFocus(index, this.keys.focusColumn());
       }
     },
     chosen: (row, item) => this.rowMenu.emit({ row: row.row, item }),
   });
+
+  /** Un solo panel para los dos menús: el que esté abierto. */
+  protected readonly activeMenu = computed(() =>
+    this.columnMenu.target() !== null ? this.columnMenu : this.menu,
+  );
 
   /** La ventana de `[virtual]`: qué filas se dibujan. */
   protected readonly viewport = new TableWindow(this.rows, this.virtual, this.densityChoice);
@@ -892,26 +836,4 @@ export class Table<T> implements TableContext {
   protected onRowDblclick(flat: FlatRow<T>): void {
     this.rowActivate.emit({ row: flat.row });
   }
-}
-
-function withKey(set: ReadonlySet<unknown>, key: unknown): ReadonlySet<unknown> {
-  const next = new Set(set);
-  next.add(key);
-  return next;
-}
-
-function withoutKey(set: ReadonlySet<unknown>, key: unknown): ReadonlySet<unknown> {
-  const next = new Set(set);
-  next.delete(key);
-  return next;
-}
-
-function parentIndexOf<T>(rows: readonly FlatRow<T>[], from: number): number {
-  const level = rows[from]?.level ?? 0;
-  for (let index = from - 1; index >= 0; index -= 1) {
-    if ((rows[index]?.level ?? 0) < level) {
-      return index;
-    }
-  }
-  return from;
 }

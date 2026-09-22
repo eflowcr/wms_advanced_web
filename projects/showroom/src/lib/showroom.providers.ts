@@ -1,6 +1,8 @@
 import { inject, signal, type Provider } from '@angular/core';
 import {
   EWMS_DATE_PICKER_MESSAGES,
+  EWMS_FILTER_BAR_MESSAGES,
+  EWMS_FORM_MESSAGES,
   EWMS_FAVORITE_LABELS,
   EWMS_SELECT_MESSAGES,
   EWMS_SHORTCUT_HELP_MESSAGES,
@@ -10,6 +12,8 @@ import {
   EWMS_TABLE_MESSAGES,
   parseTableDate,
   type FavoriteLabelResolver,
+  type FilterBarMessages,
+  type FormMessages,
   type SelectMessages,
   type ShortcutHelpMessages,
   type TableFormatters,
@@ -27,6 +31,8 @@ export function provideShowroomDesignSystem(): Provider[] {
     { provide: EWMS_TABLE_MESSAGES, useValue: TABLE_MESSAGES },
     { provide: EWMS_TABLE_FORMATTERS, useValue: TABLE_FORMATTERS },
     { provide: EWMS_SELECT_MESSAGES, useValue: SELECT_MESSAGES },
+    { provide: EWMS_FILTER_BAR_MESSAGES, useValue: FILTER_BAR_MESSAGES },
+    { provide: EWMS_FORM_MESSAGES, useValue: FORM_MESSAGES },
     { provide: EWMS_SHORTCUT_MAP, useValue: SHOWROOM_SHORTCUT_MAP },
     { provide: EWMS_SHORTCUT_HELP_MESSAGES, useValue: SHORTCUT_HELP_MESSAGES },
     { provide: EWMS_SPLIT_BUTTON_MESSAGES, useValue: { moreActions: 'Más opciones' } },
@@ -86,6 +92,8 @@ export const SHORTCUT_HELP_MESSAGES: ShortcutHelpMessages = {
     save: 'Guardar el formulario activo',
     cancel: 'Cancelar lo que esté en curso, o cerrar lo que esté abierto',
     filters: 'Mostrar u ocultar los filtros de la tabla',
+    moveColumnLeft: 'Mover la columna enfocada a la izquierda',
+    moveColumnRight: 'Mover la columna enfocada a la derecha',
     help: 'Abrir esta lista',
   },
 };
@@ -112,6 +120,10 @@ export const TABLE_MESSAGES: TableMessages = {
   filters: (active) => (active === 0 ? 'Filtros' : `Filtros (${active})`),
   clearFilters: 'Limpiar filtros',
   removeFilter: (column) => `Quitar el filtro ${column}`,
+  view: 'Vista',
+  resetView: 'Restablecer vista',
+  expandAll: 'Expandir todo',
+  collapseAll: 'Contraer todo',
   density: 'Densidad',
   densityMd: 'Media',
   densitySm: 'Compacta',
@@ -125,11 +137,31 @@ export const TABLE_MESSAGES: TableMessages = {
   },
   columns: 'Columnas',
   resizeColumn: (column) => `Ancho de la columna ${column}`,
+  moveEarlier: (column) => `Subir ${column}`,
+  moveLater: (column) => `Bajar ${column}`,
+  columnMoved: (column, position, total) => `${column}, posición ${position} de ${total}`,
+  columnMenu: (column) => `Opciones de la columna ${column}`,
+  columnActions: {
+    sortAsc: 'Ordenar ascendente',
+    sortDesc: 'Ordenar descendente',
+    sortClear: 'Quitar orden',
+    pinStart: 'Fijar a la izquierda',
+    pinEnd: 'Fijar a la derecha',
+    unpin: 'Soltar',
+    fit: 'Ajustar al contenido',
+    moveLeft: 'Mover a la izquierda',
+    moveRight: 'Mover a la derecha',
+    hide: 'Ocultar columna',
+  },
+  sortPriority: (sorted, priority) => `${sorted}, prioridad ${priority}`,
   selectedCount: (count) => (count === 1 ? '1 seleccionada' : `${count} seleccionadas`),
   clearSelection: 'Quitar selección',
   copied: (rows) => (rows === 1 ? '1 fila copiada' : `${rows} filas copiadas`),
   loading: 'Cargando…',
   loadFailed: 'No se pudieron cargar las filas.',
+  noData: 'Todavía no hay filas.',
+  noResults: 'Ninguna fila coincide.',
+  noResultsHint: 'Probá con otra búsqueda o limpiá los filtros.',
   export: 'Exportar',
   exportSelected: 'CSV de lo seleccionado',
   copyAll: 'Copiar al portapapeles',
@@ -169,6 +201,31 @@ export const TABLE_FORMATTERS: TableFormatters = {
     const parsed = Number(value);
     return Number.isFinite(parsed) ? new Intl.NumberFormat('es').format(parsed) : String(value);
   },
+};
+
+/** Un mensaje por validador: el campo muestra el del que falló, en lugar de su hint. */
+export const FORM_MESSAGES: FormMessages = {
+  errors: {
+    required: () => 'Este campo es obligatorio',
+    minlength: (detail) => `Mínimo ${(detail as { requiredLength: number }).requiredLength} caracteres`,
+    maxlength: (detail) => `Máximo ${(detail as { requiredLength: number }).requiredLength} caracteres`,
+    min: (detail) => `El mínimo es ${(detail as { min: number }).min}`,
+    max: (detail) => `El máximo es ${(detail as { max: number }).max}`,
+    pattern: () => 'El formato no es el esperado',
+    email: () => 'Escribí un correo válido',
+    custom: (detail) => (typeof detail === 'string' ? detail : 'Revisá este campo'),
+  },
+  errorSummary: (count) => (count === 1 ? 'Revisá 1 campo' : `Revisá ${count} campos`),
+  errorSummaryLabel: 'Error',
+  requiredLegend: '* obligatorio',
+};
+
+/** Los chips comparten `clearFilters` y `removeFilter` con la tabla: una sola forma de decirlo. */
+export const FILTER_BAR_MESSAGES: FilterBarMessages = {
+  moreFilters: (active) => (active === 0 ? 'Más filtros' : `Más filtros (${active})`),
+  fewerFilters: 'Menos filtros',
+  clearFilters: 'Limpiar filtros',
+  removeFilter: (field) => `Quitar el filtro ${field}`,
 };
 
 export const SELECT_MESSAGES: SelectMessages = {

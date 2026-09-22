@@ -1,13 +1,16 @@
 import { provideZonelessChangeDetection, signal, type Type } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { provideRouter, Router } from '@angular/router';
 import {
   EWMS_FAVORITE_LABELS,
   EWMS_FAVORITES_STORE,
   Favorites,
+  FilterBar,
   InMemoryFavoritesStore,
   Viewport,
   type FavoriteLabelResolver,
+  type FilterValues,
 } from '@ewms/design-system';
 import { expectNoAxeViolations } from '@ewms/testing';
 import { ShowroomLayout } from '../layout/showroom-layout';
@@ -30,6 +33,9 @@ import { ShowroomToast } from './components/toast';
 import { ShowroomToggle } from './components/toggle';
 import { ShowroomTooltip } from './components/tooltip';
 import { FLOW_BUDGETS } from './patterns/click-budget';
+import { ShowroomEmptyState } from './patterns/empty-state';
+import { ShowroomFilters } from './patterns/filters';
+import { ShowroomForm } from './patterns/form';
 import { ShowroomKeyboard } from './patterns/keyboard';
 import { ShowroomSearchCreateEdit } from './patterns/search-create-edit';
 import { ShowroomBrand } from './foundations/brand';
@@ -93,13 +99,11 @@ describe('ShowroomLayout', () => {
     expect(element.querySelector('[data-sidebar]')?.textContent).toMatch(/v\d+\.\d+\.\d+/);
   });
 
-  it('links only the pages that exist, and labels the rest as pending', async () => {
+  it('links every page: no entry is pending any more', async () => {
     const { element } = await render(ShowroomLayout);
-    const pending = [...element.querySelectorAll('[data-sidebar] nav li span')];
-    expect(pending.length).toBeGreaterThan(0);
-    for (const item of pending) {
-      expect(item.textContent).toContain('(pendiente)');
-    }
+    // Un `span` en vez de un enlace es una entrada sin página; desde el 2026-09-22 no queda ninguna.
+    expect([...element.querySelectorAll('[data-sidebar] nav li span')]).toEqual([]);
+    expect(element.querySelectorAll('[data-sidebar] nav li a').length).toBeGreaterThan(20);
   });
 
   it('filters the catalogue as you type, by name and by selector', async () => {
@@ -267,16 +271,14 @@ describe('ShowroomLayout', () => {
 });
 
 describe('ShowroomHome', () => {
-  it('indexes the catalogue and marks what does not exist yet', async () => {
+  it('indexes the catalogue, and NOTHING IS PENDING ANY MORE', async () => {
     const { element } = await render(ShowroomHome);
     expect(element.querySelectorAll('[data-entry]').length).toBeGreaterThan(20);
     expect(element.querySelector('[data-entry="button"] a')).not.toBeNull();
-    // Un patrón y no un componente: los dos últimos huecos (split button y date picker) se
-    // cerraron el 2026-09-21. Importa que un hueco siga visible, no cuál.
-    expect(element.querySelector('[data-entry="pattern-form"] a')).toBeNull();
-    expect(element.querySelector('[data-entry="pattern-form"]')?.textContent).toContain(
-      '(pendiente)',
-    );
+    // Los tres últimos huecos (formulario, filtros y estado vacío) se cerraron el 2026-09-22:
+    // toda entrada enlaza su página y ninguna dice «(pendiente)».
+    expect(element.querySelector('[data-entry="pattern-form"] a')).not.toBeNull();
+    expect(element.textContent).not.toContain('(pendiente)');
     expect(element.querySelector('[data-entry="navigation"] a')).not.toBeNull();
     expect(element.querySelector('[data-entry="table"] a')).not.toBeNull();
   });
@@ -571,6 +573,9 @@ const PATTERNS: readonly { name: string; component: Type<unknown>; heading: stri
     component: ShowroomSearchCreateEdit,
     heading: 'Buscar, crear, editar',
   },
+  { name: 'ShowroomEmptyState', component: ShowroomEmptyState, heading: 'Estado vacío' },
+  { name: 'ShowroomFilters', component: ShowroomFilters, heading: 'Filtros' },
+  { name: 'ShowroomForm', component: ShowroomForm, heading: 'Formulario' },
 ];
 
 describe.each([...SHEETS, ...PATTERNS])('$name', ({ component, heading }) => {
@@ -1123,12 +1128,12 @@ describe('ShowroomDialog', () => {
     element.querySelector<HTMLButtonElement>('[data-open="danger"] button')!.click();
     await fixture.whenStable();
 
-    const dialog = document.querySelector('cdk-dialog-container');
+    const dialog = document.querySelector('.cdk-dialog-container');
     expect(dialog).not.toBeNull();
     expect(dialog?.textContent).toContain('Eliminar la expedición');
 
     // Cancelar: tres de las cuatro salidas responden false.
-    document.querySelectorAll<HTMLButtonElement>('cdk-dialog-container button')[0]!.click();
+    document.querySelectorAll<HTMLButtonElement>('.cdk-dialog-container button')[0]!.click();
     await fixture.whenStable();
 
     expect(element.querySelector('[data-last-answer]')?.textContent).toContain('no confirmado');
@@ -1142,7 +1147,7 @@ describe('ShowroomDialog', () => {
     element.querySelector<HTMLButtonElement>('[data-open="info"] button')!.click();
     await fixture.whenStable();
 
-    document.querySelectorAll<HTMLButtonElement>('cdk-dialog-container button')[1]!.click();
+    document.querySelectorAll<HTMLButtonElement>('.cdk-dialog-container button')[1]!.click();
     await fixture.whenStable();
 
     expect(element.querySelector('[data-last-answer]')?.textContent).toContain('confirmado (true)');
@@ -1366,7 +1371,19 @@ describe('ShowroomTable', () => {
       tint.getAttribute('data-tint'),
     );
     expect(tints).toEqual(['neutral', 'warning', 'success', 'danger']);
-    expect(element.querySelectorAll('[data-block="5-matriz"] ewms-badge').length).toBe(4);
+    expect(element.querySelectorAll('[data-block="5-matriz"] ewms-state-matrix ewms-badge').length).toBe(4);
+    // Y la matriz de fila: siete estados, con la marca lateral donde hay excepción.
+    const states = [...element.querySelectorAll('[data-row-state]')];
+    expect(states.map((row) => row.getAttribute('data-row-state'))).toEqual([
+      'normal',
+      'hover',
+      'focus',
+      'selected',
+      'danger',
+      'warning',
+      'selected-danger',
+    ]);
+    expect(states[6]?.querySelector('.shadow-row-mark-danger')).not.toBeNull();
   });
 
   it('falls back to nothing for a variant no state carries', async () => {
@@ -1401,8 +1418,20 @@ describe('ShowroomTable', () => {
     );
 
     element.querySelector<HTMLButtonElement>('[data-demo-table] [data-sort="bultos"]')!.click();
+    element
+      .querySelector('[data-demo-table] [data-sort="codigo"]')!
+      .dispatchEvent(new MouseEvent('click', { bubbles: true, shiftKey: true }));
     await fixture.whenStable();
-    expect(element.querySelector('[data-query]')?.textContent).toContain('bultos asc');
+    expect(element.querySelector('[data-query]')?.textContent).toContain('bultos asc, codigo asc');
+
+    // Mover una columna se anuncia con las palabras del showroom.
+    element.querySelector<HTMLButtonElement>('[data-demo-table] [data-view-menu] button')!.click();
+    await fixture.whenStable();
+    document.querySelector<HTMLButtonElement>('[data-column-row="cliente"] [data-column-down] button')!.click();
+    await fixture.whenStable();
+    expect(element.querySelector('[data-demo-table] [data-table-announce]')?.textContent).toBe(
+      'Cliente / artículo, posición 3 de 5',
+    );
   });
 });
 
@@ -1743,5 +1772,120 @@ describe('ShowroomKeyboard', () => {
       'Ningún layout raíz montó el motor',
     );
     expect(element.querySelectorAll('[data-demo-bindings] tr').length).toBe(0);
+  });
+});
+
+describe('ShowroomForm', () => {
+  // El resumen y el foco se prueban en el design-system (form-pattern.spec.ts) y en e2e, donde hay
+  // navegador: acá, que la página no guarda con el formulario inválido y sí con el válido.
+  it('does not save an empty form, and saves a filled one after its loading', async () => {
+    const { fixture, element } = await render(ShowroomForm);
+    const form = element.querySelector('form') as HTMLFormElement;
+    const settle = async (): Promise<void> => {
+      fixture.detectChanges();
+      await fixture.whenStable();
+      fixture.detectChanges();
+    };
+    const page = fixture.componentInstance as unknown as {
+      form: { setValue(value: Record<string, unknown>): void };
+    };
+
+    form.requestSubmit();
+    await settle();
+    expect(element.querySelector('[data-form-saved]')?.textContent).toBe('(todavía nada)');
+
+    page.form.setValue({
+      codigo: 'EXP-2026-0001',
+      cliente: 'Distribuidora Andes',
+      correo: '',
+      almacen: 'central',
+      fecha: null,
+      estado: 'pendiente',
+      bultos: 3,
+      urgente: false,
+      etiquetas: true,
+    });
+    await settle();
+    form.requestSubmit();
+    await settle();
+    expect(element.querySelector('[data-form-save] button')?.getAttribute('aria-busy')).toBe('true');
+
+    await new Promise((resolve) => setTimeout(resolve, 700));
+    await settle();
+    expect(element.querySelector('[data-form-saved]')?.textContent).toContain('EXP-2026-0001');
+    expect(element.querySelector('[data-form-save] button')?.getAttribute('aria-busy')).toBeNull();
+
+    // Guardado y limpio: salir no pregunta nada (`confirmDiscard` solo pregunta si está sucio).
+    await (fixture.componentInstance as unknown as { salir(): Promise<void> }).salir();
+    await settle();
+    expect(element.querySelector('[data-form-left]')?.textContent).toBe('salió sin guardar');
+  });
+});
+
+describe('ShowroomFilters', () => {
+  it('FILTERS GO TO THE SOURCE, and the table says «no results» with what is left empty', async () => {
+    const { fixture, element } = await render(ShowroomFilters);
+    const rows = (): number => element.querySelectorAll('[data-demo-filters] tbody tr[data-row]').length;
+    expect(rows()).toBe(12);
+
+    const bar = fixture.debugElement.query(By.directive(FilterBar)).componentInstance as {
+      valueChange: { emit(value: FilterValues): void };
+    };
+    bar.valueChange.emit({ almacen: 'central' });
+    await fixture.whenStable();
+    fixture.detectChanges();
+    expect(rows()).toBe(6);
+    expect(element.querySelector('[data-active-filters]')?.textContent).toBe('1');
+
+    // Un período recorta por cualquiera de sus extremos.
+    bar.valueChange.emit({ fecha: { from: '2026-03-01' } });
+    await fixture.whenStable();
+    fixture.detectChanges();
+    expect(rows()).toBe(2);
+    bar.valueChange.emit({ fecha: { to: '2026-01-31' } });
+    await fixture.whenStable();
+    fixture.detectChanges();
+    expect(rows()).toBe(5);
+
+    // Sin resultados, «Limpiar filtros» de la tabla limpia también los de pantalla.
+    bar.valueChange.emit({ almacen: 'central', texto: 'no-existe' });
+    await fixture.whenStable();
+    fixture.detectChanges();
+    expect(rows()).toBe(0);
+    const empty = element.querySelector('[data-empty-state]');
+    expect(empty?.getAttribute('data-empty-state')).toBe('no-results');
+    element.querySelector<HTMLButtonElement>('[data-empty-action] button')!.click();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    expect(rows()).toBe(12);
+    expect(element.querySelector('[data-active-filters]')?.textContent).toBe('0');
+  });
+});
+
+describe('ShowroomEmptyState', () => {
+  it('draws the four cases in both sizes, and its demo action runs', async () => {
+    const { fixture, element } = await render(ShowroomEmptyState);
+    const matrix = [...element.querySelectorAll('[data-block="5-matriz"] [data-empty-state]')];
+    expect(matrix.map((box) => box.getAttribute('data-empty-state'))).toEqual([
+      'no-data',
+      'no-data',
+      'no-results',
+      'no-results',
+      'error',
+      'error',
+      'no-access',
+      'no-access',
+    ]);
+    // Sin permiso no hay acción: el texto dice a quién pedirlo.
+    expect(matrix[6]?.querySelector('[data-empty-action]')).toBeNull();
+
+    const ran: string[] = [];
+    for (const button of element.querySelectorAll<HTMLButtonElement>('[data-empty-action] button')) {
+      button.click();
+      fixture.detectChanges();
+      ran.push(element.querySelector('[data-demo-last]')?.textContent ?? '');
+    }
+    // La demo y las seis de la matriz que tienen acción (no-access no tiene).
+    expect(ran).toEqual(['Crear', 'Crear', 'Crear', 'Limpiar filtros', 'Limpiar filtros', 'Reintentar', 'Reintentar']);
   });
 });

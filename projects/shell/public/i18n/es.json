@@ -11,6 +11,23 @@
       "nextMonth": "Mes siguiente",
       "previousMonth": "Mes anterior"
     },
+    "filterBar": {
+      "fewerFilters": "Menos filtros",
+      "moreFilters": "{active, plural, =0 {Más filtros} other {Más filtros (#)}}"
+    },
+    "form": {
+      "custom": "Revisá este campo",
+      "email": "Escribí un correo válido",
+      "errorSummary": "{count, plural, =1 {Revisá 1 campo} other {Revisá # campos}}",
+      "errorSummaryLabel": "Error",
+      "max": "El máximo es {{ max }}",
+      "maxlength": "Máximo {{ length }} caracteres",
+      "min": "El mínimo es {{ min }}",
+      "minlength": "Mínimo {{ length }} caracteres",
+      "pattern": "El formato no es el esperado",
+      "required": "Este campo es obligatorio",
+      "requiredLegend": "* obligatorio"
+    },
     "select": {
       "error": "No se pudo consultar el catálogo.",
       "more": "Ver más resultados",
@@ -30,6 +47,21 @@
       "clearFilters": "Limpiar filtros",
       "clearSelection": "Quitar selección",
       "collapse": "Contraer la fila",
+      "collapseAll": "Contraer todo",
+      "columnActions": {
+        "fit": "Ajustar al contenido",
+        "hide": "Ocultar columna",
+        "moveLeft": "Mover a la izquierda",
+        "moveRight": "Mover a la derecha",
+        "pinEnd": "Fijar a la derecha",
+        "pinStart": "Fijar a la izquierda",
+        "sortAsc": "Ordenar ascendente",
+        "sortClear": "Quitar orden",
+        "sortDesc": "Ordenar descendente",
+        "unpin": "Soltar"
+      },
+      "columnMenu": "Opciones de la columna {{ column }}",
+      "columnMoved": "{{ column }}, posición {{ position }} de {{ total }}",
       "columns": "Columnas",
       "copied": "{rows, plural, one {# fila copiada} other {# filas copiadas}}",
       "copyAll": "Copiar al portapapeles",
@@ -39,6 +71,7 @@
       "densityMd": "Media",
       "densitySm": "Compacta",
       "expand": "Expandir la fila",
+      "expandAll": "Expandir todo",
       "export": "Exportar",
       "exportSelected": "CSV de lo seleccionado",
       "filterFrom": "Desde",
@@ -48,10 +81,16 @@
       "loadFailed": "No se pudieron cargar las filas.",
       "loading": "Cargando…",
       "loadingChildren": "Cargando las líneas…",
+      "moveEarlier": "Subir {{ column }}",
+      "moveLater": "Bajar {{ column }}",
       "nextPage": "Página siguiente",
+      "noData": "Todavía no hay filas.",
+      "noResults": "Ninguna fila coincide.",
+      "noResultsHint": "Probá con otra búsqueda o limpiá los filtros.",
       "pageOf": "Página {{ page }} de {{ pages }}",
       "previousPage": "Página anterior",
       "removeFilter": "Quitar el filtro {{ column }}",
+      "resetView": "Restablecer vista",
       "resizeColumn": "Ancho de la columna {{ column }}",
       "retry": "Reintentar",
       "rowMenu": "Acciones de la fila",
@@ -66,10 +105,12 @@
       "setNone": "Ninguno",
       "setSummary": "{chosen, plural, =0 {{{ column }}: ninguno} other {{{ column }}: # de {{ total }}}}",
       "setSummaryAll": "{{ column }}: todos",
+      "sortPriority": "{{ sorted }}, prioridad {{ priority }}",
       "sortedAscending": "Orden ascendente",
       "sortedDescending": "Orden descendente",
       "sumSelected": "{{ column }} seleccionados",
-      "sumShown": "{{ column }} en pantalla"
+      "sumShown": "{{ column }} en pantalla",
+      "view": "Vista"
     }
   },
   "shell": {
@@ -139,6 +180,8 @@
         "create": "Crear un registro nuevo",
         "filters": "Mostrar u ocultar los filtros de la tabla",
         "help": "Abrir esta lista",
+        "moveColumnLeft": "Mover la columna enfocada a la izquierda",
+        "moveColumnRight": "Mover la columna enfocada a la derecha",
         "save": "Guardar el formulario activo",
         "search": "Llevar el foco al campo de búsqueda"
       },

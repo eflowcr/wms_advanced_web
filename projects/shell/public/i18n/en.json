@@ -11,6 +11,23 @@
       "nextMonth": "Next month",
       "previousMonth": "Previous month"
     },
+    "filterBar": {
+      "fewerFilters": "Fewer filters",
+      "moreFilters": "{active, plural, =0 {More filters} other {More filters (#)}}"
+    },
+    "form": {
+      "custom": "Check this field",
+      "email": "Write a valid email",
+      "errorSummary": "{count, plural, =1 {Check 1 field} other {Check # fields}}",
+      "errorSummaryLabel": "Error",
+      "max": "The maximum is {{ max }}",
+      "maxlength": "At most {{ length }} characters",
+      "min": "The minimum is {{ min }}",
+      "minlength": "At least {{ length }} characters",
+      "pattern": "The format is not the expected one",
+      "required": "This field is required",
+      "requiredLegend": "* required"
+    },
     "select": {
       "error": "The catalogue could not be reached.",
       "more": "Show more results",
@@ -30,6 +47,21 @@
       "clearFilters": "Clear filters",
       "clearSelection": "Clear selection",
       "collapse": "Collapse the row",
+      "collapseAll": "Collapse all",
+      "columnActions": {
+        "fit": "Fit to content",
+        "hide": "Hide column",
+        "moveLeft": "Move left",
+        "moveRight": "Move right",
+        "pinEnd": "Pin to the right",
+        "pinStart": "Pin to the left",
+        "sortAsc": "Sort ascending",
+        "sortClear": "Clear sort",
+        "sortDesc": "Sort descending",
+        "unpin": "Unpin"
+      },
+      "columnMenu": "{{ column }} column options",
+      "columnMoved": "{{ column }}, position {{ position }} of {{ total }}",
       "columns": "Columns",
       "copied": "{rows, plural, one {# row copied} other {# rows copied}}",
       "copyAll": "Copy to clipboard",
@@ -39,6 +71,7 @@
       "densityMd": "Comfortable",
       "densitySm": "Compact",
       "expand": "Expand the row",
+      "expandAll": "Expand all",
       "export": "Export",
       "exportSelected": "CSV of the selection",
       "filterFrom": "From",
@@ -48,10 +81,16 @@
       "loadFailed": "The rows could not be loaded.",
       "loading": "Loading…",
       "loadingChildren": "Loading the lines…",
+      "moveEarlier": "Move {{ column }} up",
+      "moveLater": "Move {{ column }} down",
       "nextPage": "Next page",
+      "noData": "There are no rows yet.",
+      "noResults": "No rows match.",
+      "noResultsHint": "Try another search or clear the filters.",
       "pageOf": "Page {{ page }} of {{ pages }}",
       "previousPage": "Previous page",
       "removeFilter": "Remove the {{ column }} filter",
+      "resetView": "Reset view",
       "resizeColumn": "{{ column }} column width",
       "retry": "Retry",
       "rowMenu": "Row actions",
@@ -66,10 +105,12 @@
       "setNone": "None",
       "setSummary": "{chosen, plural, =0 {{{ column }}: none} other {{{ column }}: # of {{ total }}}}",
       "setSummaryAll": "{{ column }}: all",
+      "sortPriority": "{{ sorted }}, priority {{ priority }}",
       "sortedAscending": "Ascending order",
       "sortedDescending": "Descending order",
       "sumSelected": "Selected {{ column }}",
-      "sumShown": "{{ column }} on screen"
+      "sumShown": "{{ column }} on screen",
+      "view": "View"
     }
   },
   "shell": {
@@ -139,6 +180,8 @@
         "create": "Create a new record",
         "filters": "Show or hide the table filters",
         "help": "Open this list",
+        "moveColumnLeft": "Move the focused column left",
+        "moveColumnRight": "Move the focused column right",
         "save": "Save the active form",
         "search": "Move the focus to the search field"
       },

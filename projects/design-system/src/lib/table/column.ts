@@ -7,6 +7,7 @@ import {
   input,
   TemplateRef,
 } from '@angular/core';
+import type { TableSource } from './table-source';
 import type {
   BadgeDictionary,
   TableAggregate,
@@ -24,6 +25,9 @@ export interface CellContext<T> {
 @Directive({ selector: '[ewmsCell]' })
 export class CellTemplate<T = unknown> {
   readonly template = inject<TemplateRef<CellContext<T>>>(TemplateRef);
+
+  /** No configura nada: con `[rowsFrom]="fuente"` la plantilla infiere la fila de `let-row`. */
+  readonly rowsFrom = input<TableSource<T> | null>(null);
 
   /** Tipa `let-row` y `value` dentro de la plantilla. */
   static ngTemplateContextGuard<T>(

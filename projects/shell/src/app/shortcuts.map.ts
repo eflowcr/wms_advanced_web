@@ -41,6 +41,13 @@ export const SHORTCUT_MAP: ShortcutMap = {
    */
   filters: { key: 'r', alt: true, chord: ['Alt', 'R'] },
 
+  /**
+   * Con la cabecera de una columna enfocada. Con Shift: Alt+← solo es «atrás» del navegador,
+   * y un atajo sin handler no previene nada (lo dejaría pasar).
+   */
+  moveColumnLeft: { key: 'ArrowLeft', alt: true, shift: true, chord: ['Alt', 'Shift', '←'] },
+  moveColumnRight: { key: 'ArrowRight', alt: true, shift: true, chord: ['Alt', 'Shift', '→'] },
+
   /** `?` es Shift+/ y llega como un solo carácter: va sin modificador, como `/`. */
   help: { key: '?', chord: ['?'] },
 };

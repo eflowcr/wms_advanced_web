@@ -84,6 +84,10 @@ const MESSAGES: TableMessages = {
   filters: (active) => (active === 0 ? 'Filtros' : `Filtros (${active})`),
   clearFilters: 'Limpiar filtros',
   removeFilter: (column) => `Quitar el filtro ${column}`,
+  view: 'Vista',
+  resetView: 'Restablecer vista',
+  expandAll: 'Expandir todo',
+  collapseAll: 'Contraer todo',
   density: 'Densidad',
   densityMd: 'Media',
   densitySm: 'Compacta',
@@ -93,11 +97,31 @@ const MESSAGES: TableMessages = {
     chosen === total ? `${column}: todos` : `${column}: ${chosen} de ${total}`,
   columns: 'Columnas',
   resizeColumn: (column) => `Ancho de la columna ${column}`,
+  moveEarlier: (column) => `Subir ${column}`,
+  moveLater: (column) => `Bajar ${column}`,
+  columnMoved: (column, position, total) => `${column}, posición ${position} de ${total}`,
+  columnMenu: (column) => `Opciones de la columna ${column}`,
+  columnActions: {
+    sortAsc: 'Ordenar ascendente',
+    sortDesc: 'Ordenar descendente',
+    sortClear: 'Quitar orden',
+    pinStart: 'Fijar a la izquierda',
+    pinEnd: 'Fijar a la derecha',
+    unpin: 'Soltar',
+    fit: 'Ajustar al contenido',
+    moveLeft: 'Mover a la izquierda',
+    moveRight: 'Mover a la derecha',
+    hide: 'Ocultar columna',
+  },
+  sortPriority: (sorted, priority) => `${sorted}, prioridad ${priority}`,
   selectedCount: (count) => `${count} seleccionadas`,
   clearSelection: 'Quitar selección',
   copied: (rows) => `${rows} filas copiadas`,
   loading: 'Cargando…',
   loadFailed: 'No se pudo cargar la tabla.',
+  noData: 'Todavía no hay filas.',
+  noResults: 'Ninguna fila coincide.',
+  noResultsHint: 'Probá con otra búsqueda.',
   export: 'Exportar',
   exportSelected: 'CSV de lo seleccionado',
   copyAll: 'Copiar al portapapeles',
@@ -251,18 +275,15 @@ describe('Table', () => {
       expect(grid().getAttribute('role')).toBe('grid');
     });
 
-    it('is named, and says how many rows and columns it has', () => {
+    it('is named, says how many rows and columns it has, and draws one row per root', () => {
       expect(grid().getAttribute('aria-label')).toBe('Expediciones');
       expect(grid().getAttribute('aria-rowcount')).toBe('3');
       // Cuatro columnas declaradas más la casilla.
       expect(grid().getAttribute('aria-colcount')).toBe('5');
-    });
-
-    it('draws one row per root while everything is collapsed', () => {
       expect(bodyRows().length).toBe(3);
     });
 
-    it('shows the projected empty state when nothing matches', async () => {
+    it('with a search nothing matches: no-results, and its action clears search and filters', async () => {
       const search = fixture.nativeElement.querySelector(
         '[data-quick-filter] input',
       ) as HTMLInputElement;
@@ -270,12 +291,32 @@ describe('Table', () => {
       search.dispatchEvent(new Event('input'));
       await settle();
 
-      expect(emptyRow()?.textContent).toContain('Ninguna expedición coincide');
+      // `ewmsEmpty` es el «todavía no hay»: con búsqueda activa habla la tabla.
+      const empty = emptyRow()?.querySelector('[data-empty-state]') as HTMLElement;
+      expect(empty.dataset['emptyState']).toBe('no-results');
+      expect(empty.getAttribute('role')).toBe('status');
       expect(bodyRows().length).toBe(0);
+
+      (empty.querySelector('[data-empty-action] button') as HTMLButtonElement).click();
+      await settle();
+      expect(search.value).toBe('');
+      expect(bodyRows().length).toBe(3);
     });
   });
 
   describe('the tree', () => {
+    it('Vista expands everything that needs no request, and folds it all back', async () => {
+      (fixture.nativeElement.querySelector('[data-view-menu] button') as HTMLElement).click();
+      await settle();
+      (document.querySelector('[data-expand-all] button') as HTMLButtonElement).click();
+      await settle();
+      expect(bodyRows().length).toBe(5);
+      (document.querySelector('[data-collapse-all] button') as HTMLButtonElement).click();
+      await settle();
+      expect(bodyRows().length).toBe(3);
+      clearOverlays();
+    });
+
     function toggle(rowIndex: number): void {
       (
         fixture.nativeElement.querySelector(`[data-toggle="${rowIndex}"]`) as HTMLButtonElement
@@ -287,28 +328,18 @@ describe('Table', () => {
       expect(fixture.nativeElement.querySelector('[data-toggle="1"]')).toBeNull();
     });
 
-    it('expands into the SAME loop, one level deeper', async () => {
+    it('expands into the SAME loop one level deeper, says where each row sits, and collapses', async () => {
       toggle(0);
       await settle();
-
       expect(bodyRows().length).toBe(5);
       expect(bodyRows()[0]?.getAttribute('aria-expanded')).toBe('true');
       expect(bodyRows()[1]?.getAttribute('aria-level')).toBe('2');
       expect(bodyRows()[1]?.classList.contains('is-child')).toBe(true);
       expect(fixture.nativeElement.querySelectorAll('table').length).toBe(1);
-    });
-
-    it('says where each row sits among its siblings', async () => {
-      toggle(0);
-      await settle();
       expect(bodyRows()[1]?.getAttribute('aria-setsize')).toBe('2');
       expect(bodyRows()[1]?.getAttribute('aria-posinset')).toBe('1');
       expect(bodyRows()[3]?.getAttribute('aria-setsize')).toBe('3');
-    });
 
-    it('collapses again, and the children leave the DOM', async () => {
-      toggle(0);
-      await settle();
       toggle(0);
       await settle();
       expect(bodyRows().length).toBe(3);
@@ -321,24 +352,37 @@ describe('Table', () => {
       expect(textOf(0)).toContain('d:2026-01-15');
     });
 
-    it('draws a badge from the dictionary, with words and an icon', () => {
+    it('draws a badge from the dictionary; tints the row from THE SAME one, ONLY AN EXCEPTION', () => {
       const badge = bodyRows()[1]?.querySelector('ewms-badge');
       expect(badge?.textContent).toContain('Con incidencia');
       expect(badge?.querySelector('svg')).not.toBeNull();
-    });
-
-    it('tints the row from THE SAME dictionary, and ONLY AN EXCEPTION', () => {
       // `rowState="estado"` lee los badges de la columna `estado`: no pueden discrepar.
-      expect(bodyRows()[1]?.className).toContain('bg-danger-surface');
+      expect(bodyRows()[1]?.className).toContain('bg-row-danger');
+      // La barra lateral va en la primera celda (la casilla), no en la fila.
+      expect(cellsOf(1)[0]?.className).toContain('shadow-row-mark-danger');
       // Pendiente es `neutral`: solo el badge; con todas teñidas ninguna llama la atención.
-      expect(bodyRows()[0]?.className).not.toContain('neutral');
-      expect(bodyRows()[0]?.className).toContain('bg-surface');
+      expect(bodyRows()[0]?.className).toContain('hover:bg-row-hover');
+      expect(cellsOf(0)[0]?.className).not.toContain('shadow-row-mark');
     });
 
-    it('aligns numbers to the end, in mono', () => {
+    it('A CUT TEXT SHOWS WHOLE on focus; one that fits has no tooltip', async () => {
+      const cut = cellsOf(0)[1]!.querySelector('.truncate') as HTMLElement;
+      Object.defineProperty(cut, 'scrollWidth', { configurable: true, value: 300 });
+      host.density.set('sm');
+      await settle();
+      const overlay = (): string => document.querySelector('.cdk-overlay-container')?.textContent ?? '';
+      cellsOf(0)[1]!.dispatchEvent(new FocusEvent('focusin'));
+      expect(overlay()).toContain('EXP-0001');
+      cellsOf(0)[1]!.dispatchEvent(new FocusEvent('focusout'));
+      cellsOf(1)[1]!.dispatchEvent(new FocusEvent('focusin'));
+      expect(overlay()).not.toContain('EXP-0002');
+      clearOverlays();
+    });
+
+    it('aligns numbers to the end with even digits, in the body font', () => {
       const numberCell = cellsOf(0)[2];
-      expect(numberCell?.className).toContain('text-end');
-      expect(numberCell?.className).toContain('font-mono');
+      expect(numberCell?.className).toContain('tabular-nums');
+      expect(numberCell?.className).not.toContain('font-mono');
     });
   });
 
@@ -379,10 +423,27 @@ describe('Table', () => {
       expect(ariaSortOf('bultos')).toBeNull();
     });
 
-    it('marks only the sorted column, never the others', async () => {
+    it('SHIFT ADDS A COLUMN TO THE SORT, with its priority; aria-sort stays on the first', async () => {
       header('bultos').click();
+      header('codigo').dispatchEvent(new MouseEvent('click', { bubbles: true, shiftKey: true }));
       await settle();
+      expect(host.lastQuery?.sort.map((sort) => sort.key)).toEqual(['bultos', 'codigo']);
       expect(ariaSortOf('codigo')).toBeNull();
+      expect(header('codigo').querySelector('[data-sort-priority]')?.textContent?.trim()).toBe('2');
+      // Ordenadas en primario; las demás, en el secundario de la cabecera.
+      expect(header('codigo').className).toContain('text-primary');
+      expect(header('codigo').querySelector('svg[aria-label]')?.getAttribute('aria-label')).toBe(
+        'Orden ascendente, prioridad 2',
+      );
+
+      // Shift+Enter la cicla en su lugar; un clic simple deja solo esa (y la tercera vez, ninguna).
+      const shiftEnter = { key: 'Enter', shiftKey: true, bubbles: true };
+      header('codigo').dispatchEvent(new KeyboardEvent('keydown', shiftEnter));
+      await settle();
+      expect(host.lastQuery?.sort[1]).toEqual({ key: 'codigo', direction: 'desc' });
+      header('codigo').click();
+      await settle();
+      expect(host.lastQuery?.sort).toEqual([]);
     });
   });
 
@@ -405,14 +466,15 @@ describe('Table', () => {
       expect(boxes('fecha').length).toBe(1);
     });
 
-    it('filters text by substring', async () => {
+    it('filters text by substring (the whole query goes out), and a number range', async () => {
       type(boxes('codigo')[0]!, '0002');
       await settle();
       expect(bodyRows().length).toBe(1);
-      expect(textOf(0)).toContain('EXP-0002');
-    });
-
-    it('filters a number range on both bounds', async () => {
+      expect(host.lastQuery?.filters).toEqual({ codigo: '0002' });
+      expect(host.lastQuery?.page).toBe(0);
+      // Un control reconstruido en cada ciclo borraría lo tipeado.
+      expect(boxes('codigo')[0]?.value).toBe('0002');
+      type(boxes('codigo')[0]!, '');
       const [min, max] = boxes('bultos');
       type(min!, '100');
       type(max!, '1000');
@@ -453,20 +515,6 @@ describe('Table', () => {
       expect(bodyRows().length).toBe(3);
     });
 
-    it('sends the whole query out, which is what a saved view will persist', async () => {
-      type(boxes('codigo')[0]!, '0002');
-      await settle();
-      expect(host.lastQuery?.filters).toEqual({ codigo: '0002' });
-      expect(host.lastQuery?.page).toBe(0);
-    });
-
-    it('keeps the filter boxes across change detection', async () => {
-      // Un control reconstruido en cada ciclo borraría lo tipeado.
-      const box = boxes('codigo')[0]!;
-      type(box, 'EXP');
-      await settle();
-      expect(boxes('codigo')[0]?.value).toBe('EXP');
-    });
   });
 
   describe('selection', () => {
@@ -487,19 +535,16 @@ describe('Table', () => {
       box.dispatchEvent(new Event('change'));
     }
 
-    it('emits the chosen rows', async () => {
+    it('emits the chosen rows, and SELECTED WINS OVER THE STATE TINT', async () => {
       tick(checkboxes()[1]!);
       await settle();
       expect(host.selection.map((row) => row.codigo)).toEqual(['EXP-0002']);
       expect(bodyRows()[1]?.getAttribute('aria-selected')).toBe('true');
-    });
-
-    it('SELECTED WINS OVER THE STATE TINT', async () => {
-      tick(checkboxes()[1]!);
-      await settle();
       // El estado ya lo dice el badge (ícono y texto); la selección, solo tinte y casilla.
       expect(bodyRows()[1]?.className).toContain('bg-row-selected');
-      expect(bodyRows()[1]?.className).not.toContain('bg-danger-surface');
+      expect(bodyRows()[1]?.className).not.toContain('bg-row-danger');
+      // …y la excepción conserva su marca lateral.
+      expect(cellsOf(1)[0]?.className).toContain('shadow-row-mark-danger');
     });
 
     it('the header box ticks what is on screen, and goes mixed in between', async () => {
@@ -628,30 +673,26 @@ describe('Table', () => {
       );
     }
 
-    it('is ONE tab stop for the whole table', () => {
+    it('is ONE tab stop; moves down a column, and stops at the ends instead of wrapping', async () => {
       expect(tabbable()).toEqual(['0-0']);
-    });
-
-    it('moves down and up a column', async () => {
       press(0, 1, 'ArrowDown');
       await settle();
       expect(tabbable()).toEqual(['1-0']);
+      press(1, 0, 'ArrowUp');
+      press(0, 0, 'ArrowUp');
+      await settle();
+      expect(tabbable()).toEqual(['0-0']);
     });
 
-    it('ARROW RIGHT EXPANDS A PARENT before it moves between cells', async () => {
+    it('ARROW RIGHT EXPANDS A PARENT before moving; left goes to the parent, then collapses', async () => {
       press(0, 0, 'ArrowRight');
       await settle();
       expect(bodyRows().length).toBe(5);
-
       press(0, 0, 'ArrowRight');
       await settle();
       expect(tabbable()).toEqual(['0-1']);
-    });
 
-    it('arrow left collapses, and from a child it goes to the parent', async () => {
-      press(0, 0, 'ArrowRight');
-      await settle();
-
+      press(1, 1, 'ArrowLeft');
       press(1, 0, 'ArrowLeft');
       await settle();
       expect(tabbable()).toEqual(['0-0']);
@@ -675,7 +716,7 @@ describe('Table', () => {
       expect(tabbable()).toEqual(['2-4']);
     });
 
-    it('Enter activates the row, and so does a double click', async () => {
+    it('Enter activates the row, and so does a double click; Space ticks it', async () => {
       press(1, 0, 'Enter');
       await settle();
       expect(host.activated).toBe('EXP-0002');
@@ -684,9 +725,8 @@ describe('Table', () => {
       bodyRows()[2]?.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
       await settle();
       expect(host.activated).toBe('EXP-0003');
-    });
 
-    it('Space ticks the row, and stops the page scrolling', async () => {
+      // Espacio marca la fila, y no desplaza la página.
       const cell = fixture.nativeElement.querySelector('[data-cell="1-0"]') as HTMLElement;
       const event = new KeyboardEvent('keydown', { key: ' ', bubbles: true, cancelable: true });
       cell.dispatchEvent(event);
@@ -696,35 +736,30 @@ describe('Table', () => {
       expect(event.defaultPrevented).toBe(true);
     });
 
-    it('stops at the ends instead of wrapping', async () => {
-      press(0, 0, 'ArrowUp');
-      await settle();
-      expect(tabbable()).toEqual(['0-0']);
-    });
   });
 
   describe('density', () => {
-    it('takes its height from a token, per density', async () => {
+    it('takes its height from a token; chosen in Vista, «Restablecer vista» brings it back', async () => {
       expect(bodyRows()[0]?.style.height).toBe('var(--row-height-md)');
-
-      host.density.set('sm');
+      (fixture.nativeElement.querySelector('[data-view-menu] button') as HTMLElement).click();
+      await settle();
+      const reset = (): HTMLButtonElement =>
+        document.querySelector('[data-reset-view] button') as HTMLButtonElement;
+      expect(reset().disabled).toBe(true);
+      (document.querySelector('[data-density="sm"] input') as HTMLInputElement).click();
       await settle();
       expect(bodyRows()[0]?.style.height).toBe('var(--row-height-sm)');
-    });
-
-    it('is chosen from the toolbar, starting at the declared one', async () => {
-      (fixture.nativeElement.querySelector('[data-density-menu] button') as HTMLElement).click();
+      expect(reset().disabled).toBe(false);
+      reset().click();
       await settle();
-      const compact = document.querySelector('[data-density="sm"] input') as HTMLInputElement;
-      compact.click();
-      await settle();
-      expect(bodyRows()[0]?.style.height).toBe('var(--row-height-sm)');
+      expect(bodyRows()[0]?.style.height).toBe('var(--row-height-md)');
+      expect(reset().disabled).toBe(true);
       clearOverlays();
     });
 
     it('the panel closes on Escape back to its button, on a click outside and on Tab away', async () => {
       const button = fixture.nativeElement.querySelector(
-        '[data-density-menu] button',
+        '[data-view-menu] button',
       ) as HTMLButtonElement;
       const panel = (): HTMLElement | null => document.querySelector('[role="dialog"]');
       const open = async (): Promise<void> => {
@@ -776,7 +811,7 @@ describe('Table', () => {
       await settle();
     }
 
-    it('hides the filter row by default, and the button says what it controls', async () => {
+    it('hides the filter row by default, says what it controls, and HIDING NEVER HIDES A FILTER', async () => {
       expect(filterRow().hidden).toBe(true);
       expect(toggle().getAttribute('aria-expanded')).toBe('false');
       expect(toggle().getAttribute('aria-controls')).toBe(filterRow().id);
@@ -785,9 +820,7 @@ describe('Table', () => {
       await settle();
       expect(filterRow().hidden).toBe(false);
       expect(toggle().getAttribute('aria-expanded')).toBe('true');
-    });
-
-    it('HIDING NEVER HIDES THAT IT FILTERS: the chips stay, and the button counts', async () => {
+      toggle().click();
       await filterCodigo('0002');
       expect(toggle().textContent?.trim()).toBe('Filtros (1)');
       expect(chips().map((chip) => chip.textContent?.replace(/\s+/g, ' ').trim())).toEqual([
@@ -897,7 +930,12 @@ describe('Table', () => {
       });
     });
 
-    it('has no axe violations with the filters open and a chip showing', async () => {
+    // Expandida, con selección, filtros abiertos y un chip: todo lo que la barra suma, junto.
+    it('has no axe violations expanded, with a selection, the filters open and a chip', async () => {
+      (fixture.nativeElement.querySelector('[data-toggle="0"]') as HTMLButtonElement).click();
+      const box = fixture.nativeElement.querySelector('tbody input[type="checkbox"]');
+      box.checked = true;
+      box.dispatchEvent(new Event('change'));
       toggle().click();
       await filterCodigo('EXP');
       await expectNoAxeViolations(fixture.nativeElement);
@@ -940,37 +978,21 @@ describe('Table', () => {
   });
 
   describe('a source that misbehaves', () => {
-    it('shows the empty state rather than breaking when a page comes back empty', async () => {
+    it('an empty page is the projected no-data; with no total it keeps working', async () => {
       host.source.set({ load: () => of({ rows: [], page: 0, pageSize: 50, total: 0 }) });
       await settle();
       expect(fixture.nativeElement.textContent).toContain('Ninguna expedición coincide');
-    });
-
-    it('keeps working when the source has no total to report', async () => {
       host.source.set(new LazySource());
       await settle();
       expect(bodyRows().length).toBe(3);
     });
   });
-
-  it('has no axe violations, expanded and with a selection', async () => {
-    (fixture.nativeElement.querySelector('[data-toggle="0"]') as HTMLButtonElement).click();
-    await settle();
-    const box = fixture.nativeElement.querySelector(
-      'tbody input[type="checkbox"]',
-    ) as HTMLInputElement;
-    box.checked = true;
-    box.dispatchEvent(new Event('change'));
-    await settle();
-
-    await expectNoAxeViolations(fixture.nativeElement);
-  });
 });
 
 describe('Table with a failing source', () => {
-  it('says the table failed and offers a retry, instead of an empty page', async () => {
+  async function mount(source: TableSource<Row>): Promise<ComponentFixture<TestHost>> {
     await TestBed.configureTestingModule({
-      imports: [TestHost, Table, TableColumn, EmptyTemplate],
+      imports: [TestHost],
       providers: [
         { provide: EWMS_TABLE_MESSAGES, useValue: MESSAGES },
         { provide: EWMS_DATE_PICKER_MESSAGES, useValue: DATE_WORDS },
@@ -978,23 +1000,29 @@ describe('Table with a failing source', () => {
       ],
     }).compileComponents();
     const fixture = TestBed.createComponent(TestHost);
+    fixture.componentInstance.source.set(source);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    return fixture;
+  }
+
+  // El reintento pasa por el mismo switchMap: prueba también que el error no mató la suscripción.
+  it('says the table failed and offers a retry, instead of an empty page', async () => {
     let calls = 0;
-    fixture.componentInstance.source.set({
+    const fixture = await mount({
       // La primera falla; el reintento contesta.
       load: () =>
         (calls += 1) === 1
           ? throwError(() => new Error('boom'))
           : of({ rows: ROWS, page: 0, pageSize: 50, total: 3 }),
     });
-    fixture.detectChanges();
-    await fixture.whenStable();
-    fixture.detectChanges();
 
     const failure = fixture.nativeElement.querySelector('[data-load-error]') as HTMLElement;
     expect(failure.textContent).toContain('No se pudo cargar la tabla.');
     expect(fixture.nativeElement.querySelector('[data-empty-row]')).toBeNull();
 
-    (failure.querySelector('[data-load-retry] button') as HTMLElement).click();
+    (failure.querySelector('[data-empty-action] button') as HTMLElement).click();
     fixture.detectChanges();
     await fixture.whenStable();
     fixture.detectChanges();
@@ -1004,20 +1032,8 @@ describe('Table with a failing source', () => {
   });
 
   it('LOADING NEVER EMPTIES THE TABLE: the rows stay, dimmed, and it says it is busy', async () => {
-    await TestBed.configureTestingModule({
-      imports: [TestHost, Table, TableColumn, EmptyTemplate],
-      providers: [
-        { provide: EWMS_TABLE_MESSAGES, useValue: MESSAGES },
-        { provide: EWMS_DATE_PICKER_MESSAGES, useValue: DATE_WORDS },
-        { provide: EWMS_TABLE_FORMATTERS, useValue: FORMATTERS },
-      ],
-    }).compileComponents();
-    const fixture = TestBed.createComponent(TestHost);
     const pending = new Subject<TablePage<Row>>();
-    fixture.componentInstance.source.set({ load: () => pending });
-    fixture.detectChanges();
-    await fixture.whenStable();
-    fixture.detectChanges();
+    const fixture = await mount({ load: () => pending });
 
     const table = fixture.nativeElement.querySelector('table') as HTMLElement;
     expect(table.getAttribute('aria-busy')).toBe('true');
@@ -1037,34 +1053,6 @@ describe('Table with a failing source', () => {
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelectorAll('tbody tr:not([data-empty-row])').length).toBe(3);
     expect(fixture.nativeElement.querySelector('tbody').className).toContain('opacity-60');
-  });
-
-  it('survives a source that errors, and can load again afterwards', async () => {
-    await TestBed.configureTestingModule({
-      imports: [TestHost, Table, TableColumn, EmptyTemplate],
-      providers: [
-        { provide: EWMS_TABLE_MESSAGES, useValue: MESSAGES },
-        { provide: EWMS_DATE_PICKER_MESSAGES, useValue: DATE_WORDS },
-        { provide: EWMS_TABLE_FORMATTERS, useValue: FORMATTERS },
-      ],
-    }).compileComponents();
-
-    const fixture = TestBed.createComponent(TestHost);
-    fixture.componentInstance.source.set({
-      load: () => throwError(() => new Error('boom')),
-    });
-    fixture.detectChanges();
-    await fixture.whenStable();
-
-    expect(fixture.nativeElement.querySelector('[data-load-error]')).not.toBeNull();
-
-    // El pipeline sigue vivo: un error fuera del switchMap habría matado la suscripción.
-    fixture.componentInstance.source.set(new ArrayTableSource(ROWS, ['codigo']));
-    fixture.detectChanges();
-    await fixture.whenStable();
-    fixture.detectChanges();
-
-    expect(fixture.nativeElement.querySelectorAll('tbody tr:not([data-empty-row])').length).toBe(3);
   });
 });
 
@@ -1131,24 +1119,14 @@ describe('Table with lazy children', () => {
     (fixture.nativeElement.querySelector('[data-toggle="0"]') as HTMLButtonElement).click();
   }
 
-  it('draws the toggle before any child exists', () => {
+  it('draws the toggle before any child exists, a busy row on the way, then the children', async () => {
     // Devolver un Observable ya afirma que hay hijos: si no, nadie podría pedirlos.
     expect(fixture.nativeElement.querySelector('[data-toggle="0"]')).not.toBeNull();
-  });
-
-  it('shows a busy row while they are on their way', async () => {
     toggle();
     await settle();
-
     const loading = fixture.nativeElement.querySelector('[data-loading="0"]');
-    expect(loading).not.toBeNull();
     expect(loading?.getAttribute('aria-busy')).toBe('true');
     expect(loading?.textContent).toContain('Cargando…');
-  });
-
-  it('replaces the busy row with the children when they land', async () => {
-    toggle();
-    await settle();
 
     host.pending.next(KIDS);
     host.pending.complete();
@@ -1156,24 +1134,16 @@ describe('Table with lazy children', () => {
 
     expect(fixture.nativeElement.querySelector('[data-loading="0"]')).toBeNull();
     expect(fixture.nativeElement.querySelectorAll('tbody tr:not([data-empty-row])').length).toBe(3);
-  });
 
-  it('asks only ONCE, however often the row is opened', async () => {
-    toggle();
-    await settle();
-    host.pending.next(KIDS);
-    host.pending.complete();
-    await settle();
-
+    // Pide una sola vez, por más que se abra la fila.
     toggle();
     await settle();
     toggle();
     await settle();
-
     expect(host.subscriptions).toBe(1);
   });
 
-  it('shows the failure in line, with a retry, and keeps the row expanded', async () => {
+  it('shows the failure in line, expanded; folded it goes away; the retry can succeed', async () => {
     toggle();
     await settle();
 
@@ -1186,29 +1156,16 @@ describe('Table with lazy children', () => {
     expect(fixture.nativeElement.querySelector('tbody tr')?.getAttribute('aria-expanded')).toBe(
       'true',
     );
-  });
-
-  it('takes the failure away when the row is folded back up', async () => {
-    toggle();
-    await settle();
-    host.pending.error(new Error('boom'));
-    await settle();
-    expect(fixture.nativeElement.querySelector('[data-failed="0"]')).not.toBeNull();
 
     toggle();
     await settle();
-
     // El fallo se recuerda (el reintento sigue andando), pero no se pinta bajo un padre plegado.
     expect(fixture.nativeElement.querySelector('[data-failed="0"]')).toBeNull();
     expect(fixture.nativeElement.querySelector('[data-loading="0"]')).toBeNull();
-  });
 
-  it('retries, and the second attempt can succeed', async () => {
+    // Reabierta, reintenta, y el segundo intento puede salir bien.
     toggle();
     await settle();
-    host.pending.error(new Error('boom'));
-    await settle();
-
     host.pending = new Subject<readonly Lazy[]>();
     (fixture.nativeElement.querySelector('[data-retry="0"]') as HTMLButtonElement).click();
     await settle();
@@ -1243,75 +1200,40 @@ describe('Table paging', () => {
     readonly byId = (row: Small): unknown => row.id;
   }
 
-  it('asks for one page at a time, and can be moved between them', async () => {
+  it('asks for one page at a time, moves between them, and without a total has no count', async () => {
     await TestBed.configureTestingModule({
-      imports: [PagedHost, Table, TableColumn],
+      imports: [PagedHost],
       providers: [
         { provide: EWMS_TABLE_MESSAGES, useValue: MESSAGES },
         { provide: EWMS_DATE_PICKER_MESSAGES, useValue: DATE_WORDS },
         { provide: EWMS_TABLE_FORMATTERS, useValue: FORMATTERS },
       ],
     }).compileComponents();
-
     const fixture = TestBed.createComponent(PagedHost);
-    fixture.detectChanges();
-    await fixture.whenStable();
-    fixture.detectChanges();
-
-    const rows = (): number =>
-      fixture.nativeElement.querySelectorAll('tbody tr:not([data-empty-row])').length;
-    expect(rows()).toBe(3);
-
     const table = fixture.debugElement.query(By.directive(Table)).componentInstance as {
       goToPage(page: number): void;
       pageCount(): number | null;
-    };
-
-    expect(table.pageCount()).toBe(3);
-
-    table.goToPage(2);
-    fixture.detectChanges();
-    await fixture.whenStable();
-    fixture.detectChanges();
-    expect(rows()).toBe(1);
-
-    // Fuera de rango se acota: una página inalcanzable es una pantalla vacía sin salida.
-    table.goToPage(99);
-    fixture.detectChanges();
-    await fixture.whenStable();
-    fixture.detectChanges();
-    expect(rows()).toBe(1);
-
-    table.goToPage(-5);
-    fixture.detectChanges();
-    await fixture.whenStable();
-    fixture.detectChanges();
-    expect(rows()).toBe(3);
-  });
-
-  it('has no page count when the source declines to total', async () => {
-    await TestBed.configureTestingModule({
-      imports: [PagedHost, Table, TableColumn],
-      providers: [
-        { provide: EWMS_TABLE_MESSAGES, useValue: MESSAGES },
-        { provide: EWMS_DATE_PICKER_MESSAGES, useValue: DATE_WORDS },
-        { provide: EWMS_TABLE_FORMATTERS, useValue: FORMATTERS },
-      ],
-    }).compileComponents();
-
-    const fixture = TestBed.createComponent(PagedHost);
-    fixture.detectChanges();
-    await fixture.whenStable();
-
-    const table = fixture.debugElement.query(By.directive(Table)).componentInstance as {
       page: { set(value: TablePage<Small>): void };
-      pageCount(): number | null;
-      goToPage(page: number): void;
     };
-    table.page.set({ rows: MANY.slice(0, 3), page: 0, pageSize: 3, total: null });
-    fixture.detectChanges();
+    const rows = async (page?: number): Promise<number> => {
+      if (page !== undefined) {
+        table.goToPage(page);
+      }
+      fixture.detectChanges();
+      await fixture.whenStable();
+      fixture.detectChanges();
+      return fixture.nativeElement.querySelectorAll('tbody tr:not([data-empty-row])').length;
+    };
+    expect(await rows()).toBe(3);
+    expect(table.pageCount()).toBe(3);
+    expect(await rows(2)).toBe(1);
+    // Fuera de rango se acota: una página inalcanzable es una pantalla vacía sin salida.
+    expect(await rows(99)).toBe(1);
+    expect(await rows(-5)).toBe(3);
 
     // Sin total no hay paginador: no puede prometer una última página.
+    table.page.set({ rows: MANY.slice(0, 3), page: 0, pageSize: 3, total: null });
+    fixture.detectChanges();
     expect(table.pageCount()).toBeNull();
     table.goToPage(2);
     expect(table.pageCount()).toBeNull();
@@ -1392,14 +1314,10 @@ describe('Table master/detail', () => {
     return [...fixture.nativeElement.querySelectorAll('[data-detail]')] as HTMLElement[];
   }
 
-  it('offers the panel only on the rows that have one', () => {
-    expect(toggle(0)).not.toBeNull();
+  it('offers the panel only where there is one; it unfolds one cell spanning the table', async () => {
     expect(toggle(1)).not.toBeNull();
     // Sin control, ni siquiera deshabilitado: prometería algo que la fila no hace.
     expect(toggle(2)).toBeNull();
-  });
-
-  it('unfolds one cell spanning the whole table, with the projected panel', async () => {
     toggle(0)?.click();
     await settle();
 
@@ -1410,15 +1328,7 @@ describe('Table master/detail', () => {
     expect(cell.textContent).toContain('Detalle de EXP-0001');
   });
 
-  it('gives the panel the row it belongs to, not the first one', async () => {
-    toggle(1)?.click();
-    await settle();
-    expect(fixture.nativeElement.querySelector('[data-detail-body]')?.textContent).toContain(
-      'EXP-0002',
-    );
-  });
-
-  it('says on the BUTTON that it is open, and what it opened', async () => {
+  it('says on the BUTTON that it is open and what it opened; panels open and fold alone', async () => {
     const button = toggle(0) as HTMLButtonElement;
     expect(button.getAttribute('aria-expanded')).toBe('false');
     expect(button.getAttribute('aria-controls')).toBeNull();
@@ -1431,11 +1341,8 @@ describe('Table master/detail', () => {
     expect(opened.getAttribute('aria-expanded')).toBe('true');
     const cell = panels()[0]?.querySelector('td') as HTMLElement;
     expect(opened.getAttribute('aria-controls')).toBe(cell.id);
-  });
 
-  it('opens as many panels as somebody asks for, and folds each back alone', async () => {
-    toggle(0)?.click();
-    await settle();
+    // Abre tantos paneles como se pidan, cada uno con su fila, y pliega cada uno solo.
     toggle(1)?.click();
     await settle();
     expect(panels().length).toBe(2);
@@ -1448,17 +1355,11 @@ describe('Table master/detail', () => {
     );
   });
 
-  it('adds rows to the DOM without pretending the table grew', async () => {
+  it('has no axe violations with a panel open, which is no row of the table', async () => {
+    toggle(0)?.click();
+    await settle();
     // Fila del DOM, no de la tabla: contarla leería cuatro expediciones donde hay tres.
-    toggle(0)?.click();
-    await settle();
-    const table = fixture.nativeElement.querySelector('table') as HTMLElement;
-    expect(table.getAttribute('aria-rowcount')).toBe('3');
-  });
-
-  it('has no axe violations with a panel open', async () => {
-    toggle(0)?.click();
-    await settle();
+    expect(fixture.nativeElement.querySelector('table').getAttribute('aria-rowcount')).toBe('3');
     await expectNoAxeViolations(fixture.nativeElement);
   });
 
@@ -1503,7 +1404,7 @@ describe('Table master/detail', () => {
     expect(menu()).not.toBeNull();
   });
 
-  it('survives the auxclick that follows its own right click', async () => {
+  it('survives the auxclick of its own right click, and closes on a new gesture', async () => {
     // Orden X11 de Chromium (el de CI): `contextmenu` al pulsar, `auxclick` al soltar; el CDK
     // tomaba ese `auxclick` como clic afuera. Costó nueve pruebas rojas solo en CI.
     rowOf(1).dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true }));
@@ -1515,14 +1416,8 @@ describe('Table master/detail', () => {
     );
     await settle();
     expect(menu(), 'the menu closed itself on the tail of its own click').not.toBeNull();
-  });
 
-  it('still closes on a pointer gesture that is not the one that opened it', async () => {
     // La guarda no puede volverse «nunca cierra»: un gesto nuevo afuera cierra el menú.
-    kebab(0)?.click();
-    await settle();
-    expect(menu()).not.toBeNull();
-
     document.body.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true }));
     document.body.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     await settle();
@@ -1542,7 +1437,7 @@ describe('Table master/detail', () => {
     expect(menu()).toBeNull();
   });
 
-  it('takes the focus itself, and points at the active entry', async () => {
+  it('takes the focus, points at the active entry, and walks past what cannot be chosen', async () => {
     kebab(0)?.click();
     await settle();
     await Promise.resolve();
@@ -1552,15 +1447,15 @@ describe('Table master/detail', () => {
     press('ArrowDown');
     await settle();
     expect(menu()?.getAttribute('aria-activedescendant')).toBe(entries()[0]?.id);
-  });
 
-  it('walks past what cannot be chosen', async () => {
-    kebab(0)?.click();
+    // Salta lo que no se puede elegir, y un clic en eso no emite nada.
+    entries()[1]?.click();
     await settle();
-    press('ArrowDown');
+    expect(host.chosen).toBe('');
+    expect(menu()).not.toBeNull();
     press('ArrowDown');
     await settle();
-    // Imprimir está deshabilitado: la segunda pulsación cae en Duplicar.
+    // Imprimir está deshabilitado: desde Ver, la flecha cae en Duplicar.
     expect(menu()?.getAttribute('aria-activedescendant')).toBe(entries()[2]?.id);
 
     press('ArrowUp');
@@ -1578,23 +1473,13 @@ describe('Table master/detail', () => {
 
     expect(host.chosen).toBe('ver:EXP-0002');
     expect(menu()).toBeNull();
-  });
 
-  it('emits on a click, too', async () => {
+    // Y con un clic.
     kebab(0)?.click();
     await settle();
     entries()[3]?.click();
     await settle();
     expect(host.chosen).toBe('anular:EXP-0001');
-  });
-
-  it('emits nothing for a disabled entry, however it is pressed', async () => {
-    kebab(0)?.click();
-    await settle();
-    entries()[1]?.click();
-    await settle();
-    expect(host.chosen).toBe('');
-    expect(menu()).not.toBeNull();
   });
 
   it('gives the focus back to the row on Escape', async () => {
@@ -1760,15 +1645,13 @@ describe('Table virtualisation', () => {
     expect(table.getAttribute('aria-rowcount')).toBe('5000');
     expect(drawn().length).toBeGreaterThan(0);
     expect(drawn().length).toBeLessThan(60);
-  });
-
-  it('holds the scrollbar at the length of the whole table', () => {
+    // La barra de desplazamiento mide la tabla entera.
     expect(spacerHeight('before') + drawn().length * ROW_PIXELS + spacerHeight('after')).toBe(
       5000 * ROW_PIXELS,
     );
   });
 
-  it('moves the window when the box is scrolled, keeping the absolute index', async () => {
+  it('moves the window when scrolled, keeping the absolute index, never past the last', async () => {
     scrollTo(4000, 400);
     await settle();
 
@@ -1781,9 +1664,8 @@ describe('Table virtualisation', () => {
 
     // Diez filas a la vista, más 6 de overscan a cada lado.
     expect(drawn().length).toBe(22);
-  });
 
-  it('never draws past the last row', async () => {
+    // Y nunca dibuja más allá de la última.
     scrollTo(5000 * ROW_PIXELS, 400);
     await settle();
     expect(spacerHeight('after')).toBe(0);
@@ -1823,6 +1705,8 @@ describe('Table and the `filters` shortcut', () => {
     save: { key: 's', ctrl: true, chord: ['Ctrl', 'S'] },
     cancel: { key: 'Escape', insideTextFields: true, chord: ['Esc'] },
     filters: { key: 'r', alt: true, chord: ['Alt', 'R'] },
+    moveColumnLeft: { key: 'ArrowLeft', alt: true, shift: true, chord: ['Alt', 'Shift', '←'] },
+    moveColumnRight: { key: 'ArrowRight', alt: true, shift: true, chord: ['Alt', 'Shift', '→'] },
     help: { key: '?', chord: ['?'] },
   };
 
@@ -1835,6 +1719,7 @@ describe('Table and the `filters` shortcut', () => {
         </ewms-table>
         <ewms-table id="filtered" [source]="source" [quickFilter]="true" ariaLabel="Con filtros">
           <ewms-column key="codigo" header="Código" [filterable]="true" />
+          <ewms-column key="bultos" header="Bultos" type="number" />
         </ewms-table>
       </div>
     `,
@@ -1904,6 +1789,24 @@ describe('Table and the `filters` shortcut', () => {
     await pressFrom(fixture.nativeElement.querySelector('#filtered [data-quick-filter] input'));
     expect(filterRow().hidden).toBe(false);
   });
+
+  it('Alt+Shift+→ moves the column whose header has the focus, and the focus follows it', async () => {
+    const handle = fixture.nativeElement.querySelector('#filtered [data-resize="codigo"]');
+    handle.focus();
+    handle.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'ArrowRight', altKey: true, shiftKey: true, bubbles: true }),
+    );
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const keys = [...fixture.nativeElement.querySelectorAll('#filtered th[data-col]')].map(
+      (th) => (th as HTMLElement).dataset['col'],
+    );
+    expect(keys).toEqual(['bultos', 'codigo']);
+    expect(document.activeElement?.getAttribute('data-resize')).toBe('codigo');
+    expect(fixture.nativeElement.querySelector('#filtered [data-table-announce]').textContent).toBe(
+      'Código, posición 2 de 2',
+    );
+  });
 });
 
 // Columnas que el usuario configura: mostrar, fijar y redimensionar. Todo sale por (viewChange).
@@ -1911,6 +1814,7 @@ describe('Table columns', () => {
   /** Los dos tokens, con valores de prueba: el paso y el mínimo que la tabla lee al redimensionar. */
   const STEP = 16;
   const MIN = 72;
+  const FIT = 400;
 
   @Component({
     template: `
@@ -1956,6 +1860,7 @@ describe('Table columns', () => {
     );
     document.documentElement.style.setProperty('--col-resize-step', pixels(STEP));
     document.documentElement.style.setProperty('--col-filter-min-width', pixels(MIN));
+    document.documentElement.style.setProperty('--col-fit-max-width', pixels(FIT));
     await TestBed.configureTestingModule({
       imports: [ColumnsHost],
       providers: [
@@ -1972,6 +1877,7 @@ describe('Table columns', () => {
     vi.unstubAllGlobals();
     document.documentElement.style.removeProperty('--col-resize-step');
     document.documentElement.style.removeProperty('--col-filter-min-width');
+    document.documentElement.style.removeProperty('--col-fit-max-width');
     fixture.nativeElement.remove();
     clearOverlays();
   });
@@ -1994,18 +1900,22 @@ describe('Table columns', () => {
     document.querySelector(`[data-column-option="${key}"] input`) as HTMLInputElement;
 
   async function openChooser(): Promise<void> {
-    (fixture.nativeElement.querySelector('[data-column-chooser] button') as HTMLElement).click();
+    (fixture.nativeElement.querySelector('[data-view-menu] button') as HTMLElement).click();
     await settle();
   }
 
-  it('re-measures when the table changes size: it observes the table itself', () => {
-    expect(observed).toEqual([fixture.nativeElement.querySelector('table')]);
-  });
-
-  it('PINNED GOES TO THE EDGES: start first, end last, sticky, with a separator', () => {
+  it('PINNED GOES TO THE EDGES, sticky; the separator only with something under it', async () => {
+    // Vuelve a medir cuando la tabla cambia de tamaño (y la barra, para compactarse).
+    expect(observed).toContain(fixture.nativeElement.querySelector('table'));
+    expect(observed).toContain(fixture.nativeElement.querySelector('ewms-table-toolbar'));
     expect(headers()).toEqual(['codigo', 'bultos', 'fecha', 'acciones']);
     expect(header('codigo').className).toContain('sticky');
-    expect(header('codigo').className).toContain('border-e');
+    expect(header('codigo').className).not.toContain('border-e');
+    const box = fixture.nativeElement.querySelector('[data-scroll-box]') as HTMLElement;
+    box.scrollLeft = 40;
+    box.dispatchEvent(new Event('scroll'));
+    await settle();
+    expect(header('codigo').className).toContain('after:shadow-pin-start');
     expect(header('acciones').className).toContain('sticky');
     expect(header('acciones').style.right).toBe(pixels(0));
     // La casilla se queda con ellas, a la izquierda.
@@ -2016,9 +1926,9 @@ describe('Table columns', () => {
     expect(firstRow.querySelector('[data-cell="0-1"]')?.className).toContain('bg-inherit');
   });
 
-  it('hides and shows from the chooser, and never offers one that says no', async () => {
+  it('hides and shows from the chooser, and never lets go of one that says no', async () => {
     await openChooser();
-    expect(option('codigo')).toBeNull();
+    expect(option('codigo').disabled).toBe(true);
 
     option('bultos').click();
     await settle();
@@ -2048,7 +1958,7 @@ describe('Table columns', () => {
     document.body.appendChild(two.nativeElement);
     two.detectChanges();
     await two.whenStable();
-    (two.nativeElement.querySelector('[data-column-chooser] button') as HTMLElement).click();
+    (two.nativeElement.querySelector('[data-view-menu] button') as HTMLElement).click();
     two.detectChanges();
     await two.whenStable();
 
@@ -2062,7 +1972,87 @@ describe('Table columns', () => {
     two.nativeElement.remove();
   });
 
-  it('is a window splitter: named, vertical, with its width; arrows step by token', async () => {
+  it('THE COLUMN MENU: ⋮ or Shift+F10, what is done disabled; it pins and hides', async () => {
+    const entry = (id: string): HTMLElement =>
+      document.querySelector(`[data-menu-item="${id}"]`) as HTMLElement;
+    const open = header('bultos').querySelector('[data-column-menu] button') as HTMLElement;
+    open.click();
+    await settle();
+    expect(document.querySelector('[role="menu"]')?.getAttribute('aria-label')).toBe(
+      'Opciones de la columna Bultos',
+    );
+    // No ordena: sin entradas de orden. Suelta ya, y no se mueve a la izquierda de la fijada.
+    expect(entry('sortAsc')).toBeNull();
+    expect(entry('unpin').getAttribute('aria-disabled')).toBe('true');
+    expect(entry('moveLeft').getAttribute('aria-disabled')).toBe('true');
+    entry('pinStart').click();
+    await settle();
+    expect(headers()).toEqual(['bultos', 'codigo', 'fecha', 'acciones']);
+    expect(fixture.componentInstance.view?.pinned).toEqual({
+      bultos: 'start',
+      codigo: 'start',
+      acciones: 'end',
+    });
+    expect(document.activeElement).toBe(open);
+
+    separator('fecha').dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'F10', shiftKey: true, bubbles: true }),
+    );
+    await settle();
+    entry('hide').click();
+    await settle();
+    expect(fixture.componentInstance.view?.hidden).toEqual(['fecha']);
+
+    // «Restablecer vista» vuelve a lo declarado: orden, visibles y fijadas.
+    await openChooser();
+    (document.querySelector('[data-reset-view] button') as HTMLButtonElement).click();
+    await settle();
+    expect(headers()).toEqual(['codigo', 'bultos', 'fecha', 'acciones']);
+    expect(fixture.componentInstance.view?.pinned).toEqual({ codigo: 'start', acciones: 'end' });
+  });
+
+  it('REORDERS INSIDE ITS PIN GROUP, from the chooser and by dragging, and says where', async () => {
+    const dataTransfer = { setData: () => undefined, effectAllowed: 'none' };
+    const drag = (type: string, key: string, clientX = 0): void => {
+      const event = new MouseEvent(type, { bubbles: true, cancelable: true, clientX });
+      header(key).dispatchEvent(Object.assign(event, { dataTransfer }));
+    };
+    await openChooser();
+    const row = (key: string, button: string): HTMLButtonElement =>
+      document.querySelector(`[data-column-row="${key}"] ${button} button`) as HTMLButtonElement;
+    // Bultos es la primera normal: no sube por encima de la fijada.
+    expect(row('bultos', '[data-column-up]').disabled).toBe(true);
+    row('bultos', '[data-column-down]').click();
+    await settle();
+    expect(headers()).toEqual(['codigo', 'fecha', 'bultos', 'acciones']);
+    expect(fixture.componentInstance.view?.order).toEqual(['codigo', 'fecha', 'bultos', 'acciones']);
+    expect(fixture.nativeElement.querySelector('[data-table-announce]').textContent).toBe(
+      'Bultos, posición 3 de 4',
+    );
+    // jsdom mide cero: a la izquierda del centro es «antes»; la línea marca el lado.
+    drag('dragstart', 'bultos');
+    drag('dragover', 'fecha', -1);
+    drag('dragover', 'fecha', -1);
+    await settle();
+    expect(header('fecha').className).toContain('before:start-0');
+    drag('drop', 'fecha', -1);
+    await settle();
+    expect(headers()).toEqual(['codigo', 'bultos', 'fecha', 'acciones']);
+
+    // Desde el separador se redimensiona; una normal no cae entre las fijadas.
+    separator('bultos').dispatchEvent(new MouseEvent('pointerdown', { bubbles: true }));
+    drag('dragstart', 'bultos');
+    drag('drop', 'fecha', -1);
+    header('bultos').dispatchEvent(new MouseEvent('pointerdown', { bubbles: true }));
+    drag('dragstart', 'bultos');
+    drag('dragover', 'codigo', -1);
+    drag('drop', 'codigo', -1);
+    await settle();
+    expect(header('codigo').className).not.toContain('before:');
+    expect(headers()).toEqual(['codigo', 'bultos', 'fecha', 'acciones']);
+  });
+
+  it('is a window splitter: named, vertical, with its width; arrows step by token; it drags', async () => {
     const handle = separator('fecha');
     expect(handle.getAttribute('role')).toBe('separator');
     expect(handle.getAttribute('aria-orientation')).toBe('vertical');
@@ -2084,23 +2074,23 @@ describe('Table columns', () => {
     await settle();
     expect(header('fecha').style.width).toBe(pixels(MIN));
 
-    // Doble clic: vuelve al ancho declarado, que en una `fill` es ninguno.
+    // Doble clic: ajusta a lo que pide la celda más ancha, con el tope del token.
+    const widest = fixture.nativeElement.querySelector('td[data-col="fecha"] .truncate');
+    Object.defineProperty(widest, 'scrollWidth', { configurable: true, value: 900 });
     handle.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
     await settle();
-    expect(header('fecha').style.width).toBe('');
-    expect(fixture.componentInstance.view?.widths).toEqual({});
-  });
+    expect(fixture.componentInstance.view?.widths).toEqual({ fecha: FIT });
 
-  it('drags with the pointer, and never below the minimum', async () => {
-    const handle = separator('bultos');
-    handle.dispatchEvent(new MouseEvent('pointerdown', { clientX: 100, bubbles: true }));
-    handle.dispatchEvent(new MouseEvent('pointermove', { clientX: 260, bubbles: true }));
-    handle.dispatchEvent(new MouseEvent('pointerup', { clientX: 260, bubbles: true }));
+    // Con el puntero, y nunca bajo el mínimo.
+    const grip = separator('bultos');
+    grip.dispatchEvent(new MouseEvent('pointerdown', { clientX: 100, bubbles: true }));
+    grip.dispatchEvent(new MouseEvent('pointermove', { clientX: 260, bubbles: true }));
+    grip.dispatchEvent(new MouseEvent('pointerup', { clientX: 260, bubbles: true }));
     await settle();
     expect(header('bultos').style.width).toBe(pixels(160));
 
-    handle.dispatchEvent(new MouseEvent('pointerdown', { clientX: 100, bubbles: true }));
-    handle.dispatchEvent(new MouseEvent('pointermove', { clientX: 0, bubbles: true }));
+    grip.dispatchEvent(new MouseEvent('pointerdown', { clientX: 100, bubbles: true }));
+    grip.dispatchEvent(new MouseEvent('pointermove', { clientX: 0, bubbles: true }));
     await settle();
     expect(header('bultos').style.width).toBe(pixels(MIN));
   });

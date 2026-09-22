@@ -7,6 +7,8 @@ import { expect, test, type Page } from '@playwright/test';
  */
 
 import {
+  FILTERS,
+  FORM,
   PAGES,
   BANNER,
   BUTTON,
@@ -1252,6 +1254,35 @@ test.describe('DS-3 lote B: dialog', () => {
     expect(backdrop.background).toBe('rgba(1, 15, 66, 0.5)');
     expect(backdrop.filter).toContain('blur');
   });
+
+  // El CDK inyectaba <style> al abrirse el primer overlay y `style-src 'self'` lo bloqueaba,
+  // sin fallar ninguna compuerta: el componente salía sin estilo (ADR 0010).
+  test('NO OVERLAY BREAKS THE POLICY: neither the first tooltip nor the first dialog', async ({
+    page,
+  }) => {
+    await page.addInitScript(() => {
+      (window as unknown as { violations: string[] }).violations = [];
+      document.addEventListener('securitypolicyviolation', (event) => {
+        (window as unknown as { violations: string[] }).violations.push(
+          `${event.effectiveDirective}: ${event.target instanceof Element ? event.target.outerHTML.slice(0, 80) : ''}`,
+        );
+      });
+    });
+    await page.goto(TOOLTIP);
+    await ready(page);
+    await page.locator('[data-demo-tooltip] button').first().hover();
+    await expect(page.locator('[id^="ewms-tooltip-"]')).toBeVisible();
+
+    await page.goto(DIALOG);
+    await ready(page);
+    await page.locator('[data-open="info"] button').click();
+    await expect(page.locator('[role="dialog"]')).toBeVisible();
+
+    const violations = await page.evaluate(
+      () => (window as unknown as { violations: string[] }).violations,
+    );
+    expect(violations, violations.join(' · ')).toEqual([]);
+  });
 });
 
 test.describe('DS-3 lote B: el select con una fuente remota', () => {
@@ -1387,6 +1418,67 @@ test.describe('DS-3 lote B: el select con una fuente remota', () => {
   });
 });
 
+// El patrón Formulario: validar al enviar, el resumen que enfoca, y el envío que no se repite.
+test.describe('el patrón Formulario', () => {
+  const DEMO = '[data-demo-form]';
+
+  test('SUBMITTING EMPTY writes a summary that takes the focus, and each link goes to its field', async ({
+    page,
+  }) => {
+    await page.goto(FORM);
+    await ready(page);
+
+    await page.locator(`${DEMO} [data-form-save] button`).click();
+    const summary = page.locator('[data-form-errors]');
+    await expect(summary).toContainText('Revisá 4 campos');
+    await expect(page.locator('ewms-form-errors')).toBeFocused();
+    // Cada campo dice qué le falta, en lugar de su hint.
+    await expect(page.locator(`${DEMO} [data-form-codigo] p`)).toHaveText('Este campo es obligatorio');
+
+    await summary.getByRole('button', { name: 'Cliente' }).click();
+    await expect(page.locator(`${DEMO} [data-form-cliente] input`)).toBeFocused();
+
+    // Con todo bien: Ctrl+S envía desde el campo, «Guardar» queda en carga y después vuelve.
+    await page.locator(`${DEMO} [data-form-codigo] input`).fill('EXP-2026-0001');
+    await page.locator(`${DEMO} [data-form-cliente] input`).fill('Distribuidora Andes');
+    await page.locator(`${DEMO} [data-form-almacen] input`).click();
+    await page.getByRole('option', { name: 'Central' }).click();
+    await page.locator(`${DEMO} [data-form-etiquetas] input`).check();
+    await page.locator(`${DEMO} [data-form-codigo] input`).press('Control+s');
+    await expect(page.locator(`${DEMO} [data-form-save] button`)).toHaveAttribute('aria-busy', 'true');
+    await expect(page.locator('[data-form-saved]')).toContainText('EXP-2026-0001');
+  });
+});
+
+// El patrón Filtros: los filtros de pantalla viven en la URL, no en la tabla.
+test.describe('el patrón Filtros', () => {
+  const DEMO = '[data-demo-filters]';
+
+  test('A FILTERED LINK IS SHAREABLE: the URL carries it, reload keeps it, back undoes it', async ({
+    page,
+  }) => {
+    await page.goto(FILTERS);
+    await ready(page);
+    const rows = page.locator(`${DEMO} tbody tr[data-row]`);
+    await expect(rows).toHaveCount(12);
+
+    await page.locator(`${DEMO} [data-field="almacen"] input`).click();
+    await page.getByRole('option', { name: 'Central' }).click();
+    await expect(page).toHaveURL(/almacen=central/);
+    await expect(rows).toHaveCount(6);
+    await expect(page.locator(`${DEMO} [data-chip="almacen"]`)).toContainText('Almacén: Central');
+
+    // El mismo enlace, abierto de nuevo: lo mismo.
+    await page.reload();
+    await ready(page);
+    await expect(rows).toHaveCount(6);
+
+    // «Atrás» deshace el último filtro.
+    await page.goBack();
+    await expect(rows).toHaveCount(12);
+  });
+});
+
 // DS-3 lote C: geometría, teclado real y cuántas líneas escribe el consumidor, contra lo que se diseñó la API.
 test.describe('DS-3 lote C: la tabla', () => {
   const DEMO = '[data-demo-table]';
@@ -1425,8 +1517,8 @@ test.describe('DS-3 lote C: la tabla', () => {
     await page.goto(TABLE);
     await ready(page);
 
-    // La densidad es de la barra de la tabla: un panel con dos opciones.
-    await page.locator(`${DEMO} [data-density-menu] button`).click();
+    // La densidad vive en Vista, el panel de la barra con columnas y «Restablecer vista».
+    await page.locator(`${DEMO} [data-view-menu] button`).click();
     await page.locator('[data-density="sm"]').click();
     await expect(page.locator('[data-density="sm"] input')).toBeChecked();
 
@@ -1649,9 +1741,32 @@ test.describe('DS-3 lote C: la tabla', () => {
     await expect(handle).toHaveAttribute('aria-valuenow', String(before + 16));
 
     // El selector oculta una columna y la tabla se lo cuenta a quien escucha.
-    await page.locator(`${DEMO} [data-column-chooser] button`).click();
-    await page.getByRole('dialog', { name: 'Columnas' }).getByRole('checkbox', { name: 'Fecha' }).uncheck();
+    await page.locator(`${DEMO} [data-view-menu] button`).click();
+    const view = page.getByRole('dialog', { name: 'Vista' });
+    await view.getByRole('checkbox', { name: 'Fecha' }).uncheck();
     await expect(page.locator(`${DEMO} th[data-col="fecha"]`)).toHaveCount(0);
+
+    // «Restablecer vista» solo se habilita con algo cambiado, y vuelve a lo declarado.
+    const reset = view.locator('[data-reset-view] button');
+    await expect(reset).toBeEnabled();
+    await reset.click();
+    await expect(page.locator(`${DEMO} th[data-col="fecha"]`)).toHaveCount(1);
+    await expect(reset).toBeDisabled();
+  });
+
+  test('THE TOOLBAR IS FOUR CONTROLS, and at 390 px it takes two rows at most', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto(TABLE);
+    await ready(page);
+
+    const controls = page.locator(
+      `${DEMO} [data-table-toolbar] :is([data-quick-filter], [data-filters-toggle], [data-view-menu], [data-export])`,
+    );
+    await expect(controls).toHaveCount(4);
+    const rows = await controls.evaluateAll(
+      (elements) => new Set(elements.map((element) => Math.round(element.getBoundingClientRect().top))).size,
+    );
+    expect(rows).toBeLessThanOrEqual(2);
   });
 
   test('selection with intent: Shift marks a range, the bar acts on it, Ctrl+C pastes into Excel', async ({
@@ -1737,7 +1852,7 @@ test.describe('DS-3 lote C: la tabla', () => {
     }
   });
 
-  test('the quick filter narrows the table, and the empty state is the projected one', async ({
+  test('the quick filter narrows the table; empty, the table says no-results and clears it', async ({
     page,
   }) => {
     await page.goto(TABLE);
@@ -1749,8 +1864,69 @@ test.describe('DS-3 lote C: la tabla', () => {
 
     await search.fill('no-existe-nada');
     await expect(page.locator(ROWS)).toHaveCount(0);
-    await expect(page.locator(`${DEMO} [data-empty-row]`)).toContainText(
-      'Ninguna expedición coincide',
+    const empty = page.locator(`${DEMO} [data-empty-row] [data-empty-state]`);
+    await expect(empty).toHaveAttribute('data-empty-state', 'no-results');
+    await expect(empty).toHaveAttribute('role', 'status');
+
+    // Con teclado: la acción es un botón real y limpia la búsqueda que dejó la tabla vacía.
+    await empty.locator('[data-empty-action] button').focus();
+    await page.keyboard.press('Enter');
+    await expect(search).toHaveValue('');
+    await expect(page.locator(ROWS)).toHaveCount(12);
+  });
+
+  test('REORDERS A COLUMN by dragging its header, or with Alt+Shift+arrows, and says where', async ({
+    page,
+  }) => {
+    await page.goto(TABLE);
+    await ready(page);
+
+    const heads = page.locator(`${DEMO} thead tr:first-child th[data-col]`);
+    const said = page.locator(`${DEMO} [data-table-announce]`);
+    // Desde el relleno, lejos del separador vecino; cae en la mitad izquierda de Cliente.
+    await page
+      .locator(`${DEMO} th[data-col="bultos"]`)
+      .dragTo(page.locator(`${DEMO} th[data-col="cliente"]`), {
+        sourcePosition: { x: 16, y: 8 },
+        targetPosition: { x: 8, y: 8 },
+      });
+    await expect(heads.nth(1)).toHaveAttribute('data-col', 'bultos');
+    await expect(said).toHaveText('Bultos, posición 2 de 5');
+
+    await page.locator(`${DEMO} [data-sort="bultos"]`).focus();
+    await page.keyboard.press('Alt+Shift+ArrowRight');
+    await expect(heads.nth(2)).toHaveAttribute('data-col', 'bultos');
+    await expect(page.locator(`${DEMO} [data-sort="bultos"]`)).toBeFocused();
+    await expect(said).toHaveText('Bultos, posición 3 de 5');
+  });
+
+  test('THE COLUMN MENU opens with Shift+F10 and pins; Shift+click sorts by a second column', async ({
+    page,
+  }) => {
+    await page.goto(TABLE);
+    await ready(page);
+
+    await page.locator(`${DEMO} [data-sort="fecha"]`).focus();
+    await page.keyboard.press('Shift+F10');
+    const menu = page.locator('[role="menu"]');
+    await expect(menu).toHaveAttribute('aria-label', 'Opciones de la columna Fecha');
+    // Ordenar ↑, ↓, (Quitar orden, deshabilitada), Fijar a la izquierda, Fijar a la derecha.
+    await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('Enter');
+    await expect(page.locator(`${DEMO} th[data-col="fecha"]`)).toHaveAttribute('data-pin', 'end');
+    await expect(page.locator(`${DEMO} th[data-col]`).last()).toHaveAttribute('data-col', 'fecha');
+    // El foco vuelve a quien lo abrió: la cabecera, que se movió con la columna.
+    await expect(page.locator(`${DEMO} [data-sort="fecha"]`)).toBeFocused();
+
+    await page.locator(`${DEMO} [data-sort="bultos"]`).click();
+    await page.locator(`${DEMO} [data-sort="codigo"]`).click({ modifiers: ['Shift'] });
+    await expect(page.locator(`${DEMO} [data-sort="codigo"] [data-sort-priority]`)).toHaveText('2');
+    await expect(page.locator(`${DEMO} th[data-col="bultos"]`)).toHaveAttribute(
+      'aria-sort',
+      'ascending',
     );
   });
 
@@ -1771,6 +1947,33 @@ test.describe('DS-3 lote C: la tabla', () => {
     await expect(page.locator('[data-selection-count]')).toHaveText('12');
   });
 
+  test('THE ROW MATRIX: hover is not the selected blue, a selected exception keeps its mark, digits line up', async ({
+    page,
+  }) => {
+    await page.goto(TABLE);
+    await ready(page);
+
+    const background = (row: string) =>
+      page.locator(row).evaluate((element) => getComputedStyle(element).backgroundColor);
+    const plain = `${ROWS}:not(.bg-row-danger):not(.bg-row-warning)`;
+    await page.locator(plain).first().hover();
+    const hover = await background(`${plain} >> nth=0`);
+
+    // Anclada por índice: al seleccionarla pierde el tinte, y un selector por clase saltaría a otra.
+    const index = await page.locator(`${ROWS}.bg-row-danger`).first().getAttribute('data-row');
+    const exception = page.locator(`${ROWS}[data-row="${index}"]`);
+    await exception.locator('input[type="checkbox"]').check();
+    await expect(exception).toHaveClass(/bg-row-selected/);
+    expect(await exception.evaluate((row) => getComputedStyle(row).backgroundColor)).not.toBe(hover);
+    // La barra lateral sigue en la primera celda: la excepción no se pierde al seleccionar.
+    await expect(exception.locator('td').first()).toHaveCSS('box-shadow', /inset/);
+
+    // Números en la fuente del cuerpo, con dígitos de ancho fijo.
+    const number = page.locator(`${ROWS} td[data-col="bultos"]`).first();
+    await expect(number).toHaveCSS('font-variant-numeric', 'tabular-nums');
+    await expect(number).toHaveCSS('font-family', /Montserrat/);
+  });
+
   test('a coloured row also says its state in words', async ({ page }) => {
     await page.goto(TABLE);
     await ready(page);
@@ -1780,7 +1983,7 @@ test.describe('DS-3 lote C: la tabla', () => {
     await expect(page.locator(`${DEMO} ewms-badge`)).toHaveCount(12);
 
     // Cada fila teñida lleva insignia con icono y texto: el color nunca es la única señal (WCAG 1.4.1).
-    const tinted = page.locator(`${ROWS}.bg-danger-surface`).first();
+    const tinted = page.locator(`${ROWS}.bg-row-danger`).first();
     await expect(tinted.locator('ewms-badge')).toContainText('Con incidencia');
     await expect(tinted.locator('ewms-badge svg')).toBeVisible();
   });
@@ -1888,7 +2091,7 @@ test.describe('DS-3 lote D: detalle, menú, ventana y paginador', () => {
     const demo = '[data-demo-perezosa]';
     // La expedición con incidencia es la que nunca recibe hijos.
     // Una sola fila abierta: sus filas de carga y de error son las únicas de la tabla.
-    await page.locator(`${demo} tr.bg-danger-surface`).first().locator('[data-toggle]').click();
+    await page.locator(`${demo} tr.bg-row-danger`).first().locator('[data-toggle]').click();
     await expect(page.locator(`${demo} [data-loading]`)).toBeVisible();
     await expect(page.locator(`${demo} [data-failed]`)).toBeVisible();
     await expect(page.locator(`${demo} [data-retry]`)).toBeVisible();
@@ -2038,7 +2241,7 @@ test.describe('DS-3 lote D: detalle, menú, ventana y paginador', () => {
           rows
             .filter(
               (row) =>
-                /bg-(danger|warning)-surface/.test(row.className) !==
+                /bg-row-(danger|warning)/.test(row.className) !==
                 /Con incidencia|En proceso/.test(row.querySelector('ewms-badge')?.textContent ?? ''),
             )
             .map((row) => row.textContent?.trim()),

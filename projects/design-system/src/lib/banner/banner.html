@@ -12,6 +12,8 @@
     @if (description()) {
       <p class="text-p">{{ description() }}</p>
     }
+    <!-- Lo proyectado va bajo el texto: la lista de errores del patrón Formulario, por ejemplo. -->
+    <ng-content />
   </div>
 
   @if (dismissible()) {

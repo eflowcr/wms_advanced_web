@@ -8,7 +8,7 @@ import {
   effect,
   ElementRef,
   inject,
-  Injector,
+
   input,
   LOCALE_ID,
   signal,
@@ -89,7 +89,6 @@ export class DatePicker extends FormControlBase<DatePickerValue> implements OnDe
 
   protected readonly words = inject(EWMS_DATE_PICKER_MESSAGES);
   private readonly localeId = inject(LOCALE_ID);
-  private readonly injector = inject(Injector);
   private readonly viewContainerRef = inject(ViewContainerRef);
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly anchor = viewChild.required<ElementRef<HTMLElement>>('anchor');
@@ -131,8 +130,11 @@ export class DatePicker extends FormControlBase<DatePickerValue> implements OnDe
   }
 
   protected readonly effectiveState = computed<FieldState>(() =>
-    this.isDisabled() ? 'disabled' : this.error() ? 'error' : 'default',
+    this.isDisabled() ? 'disabled' : this.error() || this.fieldError() ? 'error' : 'default',
   );
+
+  /** El mensaje del validador reemplaza al hint, como en el Input. */
+  protected readonly note = computed(() => this.fieldError() || this.hint());
 
   protected readonly borderColor = computed(() =>
     fieldBorderColor(this.effectiveState(), this.isOpen()),

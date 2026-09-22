@@ -1,7 +1,10 @@
 import {
   computed,
+  DestroyRef,
   Directive,
   forwardRef,
+  inject,
+  Injector,
   input,
   linkedSignal,
   signal,
@@ -10,7 +13,16 @@ import {
   type Type,
   type WritableSignal,
 } from '@angular/core';
-import { NG_VALUE_ACCESSOR, type ControlValueAccessor } from '@angular/forms';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import {
+  NG_VALUE_ACCESSOR,
+  NgControl,
+  Validators,
+  type ControlValueAccessor,
+} from '@angular/forms';
+import { EWMS_FORM_MESSAGES, type FormErrorKey } from './form.types';
+
+let nextFieldId = 0;
 
 /** `forwardRef` obligatorio: los providers se evalúan antes que la clase y fallaría en silencio. */
 export function provideValueAccessor(resolve: () => Type<ControlValueAccessor>): Provider {
@@ -37,6 +49,52 @@ export abstract class FormControlBase<TValue> implements ControlValueAccessor {
 
   private onChange: (value: TValue) => void = () => undefined;
   private onTouched: () => void = () => undefined;
+
+  /** Id del mensaje de error para los controles que no tienen uno propio (casilla, radio, toggle). */
+  readonly fieldErrorId = `ewms-field-error-${++nextFieldId}`;
+
+  /** Protegido: Select y Date picker ya tenían el suyo para crear su overlay. */
+  protected readonly injector = inject(Injector);
+  private readonly formMessages = inject(EWMS_FORM_MESSAGES, { optional: true });
+  private readonly control = signal<NgControl | null>(null);
+  /** Los errores de `ReactiveForms` no son señales: cada evento del control repinta el campo. */
+  private readonly revision = signal(0);
+
+  constructor() {
+    const destroyRef = inject(DestroyRef);
+    // Tarde a propósito: pedir `NgControl` en el constructor, proveyendo NG_VALUE_ACCESSOR, es
+    // una dependencia circular; y el control de la directiva todavía no existe.
+    queueMicrotask(() => {
+      const ngControl = this.injector.get(NgControl, null, { optional: true, self: true });
+      this.control.set(ngControl);
+      ngControl?.control?.events
+        .pipe(takeUntilDestroyed(destroyRef))
+        .subscribe(() => this.revision.update((count) => count + 1));
+    });
+  }
+
+  /**
+   * El mensaje del validador que falló, ya traducido, **una vez que el campo fue tocado**: se
+   * valida al salir del campo y al enviar, nunca mientras se escribe. Ver vault: Patron-Formulario.
+   */
+  readonly fieldError = computed<string>(() => {
+    this.revision();
+    const control = this.control()?.control;
+    const errors = control?.errors;
+    if (!control?.touched || !errors) {
+      return '';
+    }
+    const [key, detail] = Object.entries(errors)[0] ?? [];
+    const write =
+      this.formMessages?.errors[key as FormErrorKey] ?? this.formMessages?.errors.custom;
+    return key === undefined || write === undefined ? '' : write(detail, key);
+  });
+
+  /** Obligatorio según el formulario: el asterisco no se escribe a mano en cada campo. */
+  readonly requiredByForm = computed(() => {
+    this.revision();
+    return this.control()?.control?.hasValidator(Validators.required) ?? false;
+  });
 
   writeValue(value: TValue): void {
     this.controlValue.set(value);

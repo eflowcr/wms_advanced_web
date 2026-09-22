@@ -11,6 +11,9 @@
  */
 @import '@angular/cdk/overlay-prebuilt.css';
 
+/* La trampa de foco y el anuncio del CDK esconden nodos con `.cdk-visually-hidden`. */
+@import '@angular/cdk/a11y-prebuilt.css';
+
 /* Los íconos son geometría y nombres, no clases: escaneados, sus nombres emitían utilidades. */
 @source not '../../design-system/src/icons';
 
@@ -87,6 +90,10 @@
   --shadow-md: var(--shadow-md);
   --shadow-lg: var(--shadow-lg);
   --shadow-dialog: var(--shadow-dialog);
+  --shadow-row-mark-danger: var(--shadow-row-mark-danger);
+  --shadow-row-mark-warning: var(--shadow-row-mark-warning);
+  --shadow-pin-start: var(--shadow-pin-start);
+  --shadow-pin-end: var(--shadow-pin-end);
 
   --background-color-canvas: var(--color-canvas);
   --background-color-surface: var(--color-surface);
@@ -112,6 +119,9 @@
   --background-color-neutral-solid: var(--color-neutral-solid);
   --background-color-neutral-surface: var(--color-neutral-surface);
   --background-color-row-selected: var(--color-row-selected);
+  --background-color-row-hover: var(--color-row-hover);
+  --background-color-row-danger: var(--color-row-danger);
+  --background-color-row-warning: var(--color-row-warning);
   --background-color-overlay: var(--color-overlay);
 
   --text-color-primary: var(--color-text-primary);

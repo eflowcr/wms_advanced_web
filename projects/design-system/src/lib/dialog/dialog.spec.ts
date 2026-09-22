@@ -47,11 +47,11 @@ describe('DialogService', () => {
   }
 
   function box(): HTMLElement | null {
-    return document.querySelector('cdk-dialog-container');
+    return document.querySelector('.cdk-dialog-container');
   }
 
   function buttons(): HTMLButtonElement[] {
-    return [...document.querySelectorAll<HTMLButtonElement>('cdk-dialog-container button')];
+    return [...document.querySelectorAll<HTMLButtonElement>('.cdk-dialog-container button')];
   }
 
   function backdrop(): HTMLElement | null {

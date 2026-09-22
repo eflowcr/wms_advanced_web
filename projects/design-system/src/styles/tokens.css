@@ -62,6 +62,7 @@
   --green-96: #ebf5f1;
 
   --size-1-5: 1.5px;
+  --size-3: 3px;
   --size-4: 4px;
   --size-6: 6px;
   --size-8: 8px;
@@ -86,6 +87,7 @@
   --size-96: 96px;
   --size-160: 160px;
   --size-240: 240px;
+  --size-480: 480px;
   --size-pill: 9999px;
 
   /* Montserrat es variable 100–900. */
@@ -185,12 +187,24 @@
   /* Siempre con barra de acento. blue-96 desde DS-4 (blue-93 dejaba el secundario en 4.35:1).
    * Texto azul sobre la fila nunca llega a 4.5:1. Ver vault: Fundamentos de Marca. */
   --color-row-selected: var(--blue-96);
+  /* Matriz de fila de la Tabla (AA medido en Tabla §23). Hover y foco: un paso sobre la
+   * superficie, no el azul de la seleccionada (antes eran iguales y no se distinguían). */
+  --color-row-hover: var(--navy-97);
+  --color-row-danger: var(--color-danger-surface);
+  --color-row-warning: var(--color-warning-surface);
+  /* La excepción conserva su marca lateral aunque la fila esté seleccionada. */
+  --row-mark-width: var(--size-3);
+  --shadow-row-mark-danger: inset var(--row-mark-width) 0 0 var(--color-danger-solid);
+  --shadow-row-mark-warning: inset var(--row-mark-width) 0 0 var(--color-warning-solid);
   --color-overlay: var(--navy-7-a50);
 
   /* Elevación: sm card, md dropdown/popover/Select, lg modal. Sin nivel superior. */
   --shadow-sm: 0 1px 2px var(--navy-7-a06);
   --shadow-md: 0 4px 8px var(--navy-7-a08), 0 1px 2px var(--navy-7-a06);
   --shadow-lg: 0 12px 24px var(--navy-7-a10), 0 2px 4px var(--navy-7-a06);
+  /* Columna fijada con contenido desplazado debajo: la sombra cae hacia lo que se mueve. */
+  --shadow-pin-start: 4px 0 6px -2px var(--navy-7-a10);
+  --shadow-pin-end: -4px 0 6px -2px var(--navy-7-a10);
 
   /* Modal: único con geometría y elevación propias. `--shadow-dialog` es el único nivel
    * con tercera capa. Ver vault: Modal. */
@@ -235,6 +249,8 @@
   --table-max-height: var(--vh-70);
   /* Paso del teclado al redimensionar una columna: el space-4 de la escala. */
   --col-resize-step: var(--size-16);
+  /* Tope de «Ajustar al contenido»: un texto larguísimo no se lleva la tabla entera. */
+  --col-fit-max-width: var(--size-480);
 
   /* 3000 ms (ficha Notificaciones). `ToastService` lo lee de la hoja; sin ella el toast
    * queda fijo en vez de inventar un número. */

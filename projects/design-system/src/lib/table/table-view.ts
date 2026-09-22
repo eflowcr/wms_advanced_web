@@ -6,24 +6,125 @@ import { COLUMN_WIDTH, type TableDensity, type TablePin, type TableView } from '
 /** El paso del teclado al redimensionar y el mínimo de una columna, por token. */
 const RESIZE_STEP_TOKEN = '--col-resize-step';
 const MIN_WIDTH_TOKEN = '--col-filter-min-width';
+/** Tope de «Ajustar al contenido»: un texto larguísimo no se lleva la tabla entera. */
+const FIT_MAX_TOKEN = '--col-fit-max-width';
+
+/** Dónde cae una columna movida, para anunciarlo: «Cliente, posición 2 de 5». */
+export interface ColumnPosition {
+  readonly position: number;
+  readonly total: number;
+}
 
 /**
- * Lo que el usuario configura de las columnas —ocultas, anchos— y cómo se fijan y miden. Vive en
- * memoria y sale por `(viewChange)`; nunca va al navegador. Interna. Ver vault: Tabla §14.
+ * Lo que el usuario configura de las columnas —orden, ocultas, anchos— y cómo se fijan y miden.
+ * Vive en memoria y sale por `(viewChange)`; nunca va al navegador. Interna. Ver vault: Tabla §14.
  */
 export class TableViewState {
   private readonly hidden = signal<ReadonlySet<string>>(new Set());
   private readonly widths = signal<Readonly<Record<string, number>>>({});
+  /** Claves en el orden del usuario; null es el declarado. */
+  private readonly order = signal<readonly string[] | null>(null);
+  /** Lo que el usuario fijó o soltó; `pinned` de la columna es solo el valor inicial. */
+  private readonly pins = signal<Readonly<Record<string, TablePin | null>>>({});
+
+  /** El fijado vigente: el del usuario si lo cambió, si no el declarado. */
+  pinnedOf(column: TableColumn): TablePin | null {
+    const pins = this.pins();
+    return column.key() in pins ? (pins[column.key()] ?? null) : column.pinned();
+  }
+
+  /** Fijar a un borde o soltar; volver al declarado borra la marca. */
+  pin(column: TableColumn, pin: TablePin | null): void {
+    this.pins.update((current) => {
+      const next = { ...current };
+      if (pin === column.pinned()) {
+        delete next[column.key()];
+      } else {
+        next[column.key()] = pin;
+      }
+      return next;
+    });
+  }
+
+  /** Todas, en el orden del usuario; una columna que no estaba en él cae al final. */
+  readonly orderedColumns = computed(() => {
+    const order = this.order();
+    if (order === null) {
+      return this.columns();
+    }
+    const rank = (column: TableColumn): number => {
+      const index = order.indexOf(column.key());
+      return index < 0 ? order.length : index;
+    };
+    return [...this.columns()].sort((a, b) => rank(a) - rank(b));
+  });
 
   /** Las visibles, con las fijadas al inicio y al final: el `sticky` solo pega en los bordes. */
   readonly visibleColumns = computed(() => {
-    const visible = this.columns().filter((column) => !this.hidden().has(column.key()));
-    const at = (pin: TablePin | null) => visible.filter((column) => column.pinned() === pin);
+    const visible = this.orderedColumns().filter((column) => !this.hidden().has(column.key()));
+    const at = (pin: TablePin | null) => visible.filter((column) => this.pinnedOf(column) === pin);
     return [...at('start'), ...at(null), ...at('end')];
   });
 
-  /** Lo que ofrece el selector de columnas: las que se pueden ocultar. */
-  readonly hideable = computed(() => this.columns().filter((column) => column.hideable()));
+  /** Una posición a la izquierda (-1) o a la derecha (1), sin salir de su grupo de fijado. */
+  move(column: TableColumn, delta: 1 | -1): ColumnPosition | null {
+    const group = this.groupOf(column);
+    const neighbour = group[group.indexOf(column) + delta];
+    return neighbour ? this.place(column, neighbour, delta > 0 ? 'after' : 'before') : null;
+  }
+
+  /** Suelta `column` junto a `target`. Una normal no cae entre las fijadas, ni al revés. */
+  place(column: TableColumn, target: TableColumn, side: 'before' | 'after'): ColumnPosition | null {
+    if (column === target || this.pinnedOf(column) !== this.pinnedOf(target)) {
+      return null;
+    }
+    const keys = this.orderedColumns()
+      .map((candidate) => candidate.key())
+      .filter((key) => key !== column.key());
+    keys.splice(keys.indexOf(target.key()) + (side === 'after' ? 1 : 0), 0, column.key());
+    this.order.set(keys);
+    return this.positionOf(column);
+  }
+
+  /** Deshabilita Subir/Bajar en el borde de su grupo, o si está oculta. */
+  canMove(column: TableColumn, delta: 1 | -1): boolean {
+    const group = this.groupOf(column);
+    const index = group.indexOf(column);
+    return index >= 0 && group[index + delta] !== undefined;
+  }
+
+  /** Algo difiere de lo declarado: habilita «Restablecer vista». */
+  readonly customised = computed(() => {
+    const order = this.order();
+    const declared = this.columns().map((column) => column.key());
+    return (
+      this.hidden().size > 0 ||
+      Object.keys(this.widths()).length > 0 ||
+      Object.keys(this.pins()).length > 0 ||
+      (order !== null && this.orderedColumns().some((column, i) => column.key() !== declared[i]))
+    );
+  });
+
+  /** Orden, visibles, anchos y fijadas vuelven a lo declarado. La densidad la vuelve la tabla. */
+  reset(): void {
+    this.order.set(null);
+    this.hidden.set(new Set());
+    this.widths.set({});
+    this.pins.set({});
+  }
+
+  /** Posición entre las visibles, base 1. */
+  positionOf(column: TableColumn): ColumnPosition {
+    const visible = this.visibleColumns();
+    return { position: visible.indexOf(column) + 1, total: visible.length };
+  }
+
+  /** Las visibles con el mismo fijado: una columna se mueve dentro de ellas. */
+  groupOf(column: TableColumn): readonly TableColumn[] {
+    return this.visibleColumns().filter(
+      (candidate) => this.pinnedOf(candidate) === this.pinnedOf(column),
+    );
+  }
 
   constructor(
     private readonly columns: Signal<readonly TableColumn[]>,
@@ -75,13 +176,18 @@ export class TableViewState {
     }
   }
 
-  /** Doble clic: vuelve al ancho del token. */
-  reset(column: TableColumn): void {
-    this.widths.update((current) => {
-      const next = { ...current };
-      delete next[column.key()];
-      return next;
-    });
+  /**
+   * Ajustar al contenido (doble clic y menú de columna): lo que piden la cabecera y las filas
+   * dibujadas, con tope por token. Sin token de tope no se ajusta: un número inventado sería copia.
+   */
+  fit(column: TableColumn, host: HTMLElement): void {
+    const max = readPixels(FIT_MAX_TOKEN);
+    const cells = host.querySelectorAll<HTMLElement>(`[data-col="${column.key()}"]`);
+    if (max === null || cells.length === 0) {
+      return;
+    }
+    const widest = Math.max(...[...cells].map(naturalWidth));
+    this.resize(column, Math.min(max, widest));
   }
 
   /** Desplazamiento de cada celda fijada, medido en el DOM: depende de lo que mide cada columna. */
@@ -91,7 +197,7 @@ export class TableViewState {
   private readonly measuredWidths = signal<Readonly<Record<string, number>>>({});
 
   private readonly anyStartPin = computed(() =>
-    this.visibleColumns().some((column) => column.pinned() === 'start'),
+    this.visibleColumns().some((column) => this.pinnedOf(column) === 'start'),
   );
 
   /**
@@ -100,8 +206,37 @@ export class TableViewState {
    */
   private readonly pinning = signal(true);
 
+  /** Hay contenido debajo de las fijadas al inicio (desplazado) o al final (por desplazar). */
+  private readonly scrolled = signal({ start: false, end: false });
+
+  /** Al desplazar y al medir: las fijadas muestran el separador solo si tapan algo. */
+  onScroll(box: HTMLElement): void {
+    const start = box.scrollLeft > 0;
+    const end = box.scrollLeft + box.clientWidth < box.scrollWidth - 1;
+    const current = this.scrolled();
+    if (current.start !== start || current.end !== end) {
+      this.scrolled.set({ start, end });
+    }
+  }
+
+  /** Celdas cuyo texto no entra: solo esas llevan tooltip con el texto completo. */
+  readonly clipped = signal<ReadonlySet<string>>(new Set());
+
+  measureClipped(host: HTMLElement): void {
+    const next = new Set<string>();
+    for (const span of host.querySelectorAll<HTMLElement>('tbody td[data-cell] .truncate')) {
+      if (span.scrollWidth > span.clientWidth) {
+        next.add(span.closest<HTMLElement>('td')?.dataset['cell'] ?? '');
+      }
+    }
+    const current = this.clipped();
+    if (next.size !== current.size || [...next].some((cell) => !current.has(cell))) {
+      this.clipped.set(next);
+    }
+  }
+
   private pinOf(column: TableColumn): TablePin | null {
-    return this.pinning() ? column.pinned() : null;
+    return this.pinning() ? this.pinnedOf(column) : null;
   }
 
   pinClasses(column: TableColumn, header: boolean): string {
@@ -111,12 +246,15 @@ export class TableViewState {
     }
     const columns = this.visibleColumns().filter((candidate) => this.pinOf(candidate) === pin);
     const edge = pin === 'start' ? columns.at(-1) === column : columns[0] === column;
-    // Separador por token en el borde que da a lo que desplaza.
-    const separator = edge
-      ? pin === 'start'
-        ? 'border-e border-e-(color:--color-border-strong)'
-        : 'border-s border-s-(color:--color-border-strong)'
-      : '';
+    // Separador y sombra solo con contenido desplazado debajo; la sombra en un seudoelemento,
+    // porque la de la celda es de la marca de excepción.
+    const covering = pin === 'start' ? this.scrolled().start : this.scrolled().end;
+    const separator =
+      edge && covering
+        ? pin === 'start'
+          ? 'border-e border-e-(color:--color-border-strong) after:absolute after:inset-y-0 after:end-0 after:w-px after:shadow-pin-start'
+          : 'border-s border-s-(color:--color-border-strong) after:absolute after:inset-y-0 after:start-0 after:w-px after:shadow-pin-end'
+        : '';
     // En la cabecera las no fijadas son `relative` (por el separador) y se pintarían encima.
     return `sticky ${header ? 'z-3' : 'z-1 bg-inherit'} ${separator}`.trim();
   }
@@ -161,6 +299,10 @@ export class TableViewState {
         end += width(cell);
       }
     }
+    if (box) {
+      this.onScroll(box);
+    }
+    this.measureClipped(host);
     const room = box?.clientWidth ?? 0;
     const fits = start + end <= room / 2;
     if (fits !== this.pinning()) {
@@ -209,20 +351,47 @@ export class TableViewState {
   }
 
   onResizeKey(event: KeyboardEvent, column: TableColumn): void {
-    if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+    // Con Alt es el atajo de mover columna, no un paso de ancho.
+    if (!event.altKey && (event.key === 'ArrowLeft' || event.key === 'ArrowRight')) {
       event.preventDefault();
       this.step(column, this.widthNow(column), event.key === 'ArrowRight' ? 1 : -1);
     }
   }
 
   readonly view = computed<TableView>(() => ({
+    order: this.orderedColumns().map((column) => column.key()),
     hidden: [...this.hidden()],
     widths: this.widths(),
     pinned: Object.fromEntries(
       this.columns()
-        .filter((column) => column.pinned() !== null)
-        .map((column) => [column.key(), column.pinned() as TablePin]),
+        .filter((column) => this.pinnedOf(column) !== null)
+        .map((column) => [column.key(), this.pinnedOf(column) as TablePin]),
     ),
     density: this.density(),
   }));
+}
+
+/**
+ * Lo que pide una celda sin recortar: el texto con elipsis cuenta entero (`scrollWidth`), el resto
+ * lo que mide, más huecos y relleno. Sumado a mano: la celda ya tiene el ancho de la columna.
+ */
+function naturalWidth(cell: HTMLElement): number {
+  const style = getComputedStyle(cell);
+  const padding = (parseFloat(style.paddingLeft) || 0) + (parseFloat(style.paddingRight) || 0);
+  return padding + contentWidth(cell.firstElementChild as HTMLElement | null);
+}
+
+function contentWidth(element: HTMLElement | null): number {
+  if (element === null) {
+    return 0;
+  }
+  if (element.classList.contains('truncate')) {
+    return element.scrollWidth;
+  }
+  const children = [...element.children] as HTMLElement[];
+  if (children.length === 0 || !element.classList.contains('flex')) {
+    return element.getBoundingClientRect().width;
+  }
+  const gap = parseFloat(getComputedStyle(element).columnGap) || 0;
+  return children.reduce((sum, child) => sum + contentWidth(child), gap * (children.length - 1));
 }

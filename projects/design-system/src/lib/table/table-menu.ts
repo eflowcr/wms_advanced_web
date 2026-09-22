@@ -16,34 +16,47 @@ import {
   moveMenuIndex,
 } from '../menu/menu';
 import type { MenuItem } from './table.types';
-import type { FlatRow } from './tree';
 
-interface RowMenuHost<T> {
-  readonly tableId: string;
-  readonly items: () => readonly MenuItem[];
+interface MenuHost<Target> {
+  /** Único en el documento: `aria-activedescendant` apunta a ids de este prefijo. */
+  readonly id: string;
+  readonly items: (target: Target) => readonly MenuItem[];
+  /** Nombre de la lista: «Acciones de la fila», «Opciones de la columna Fecha». */
+  readonly label: (target: Target) => string;
   readonly template: () => TemplateRef<unknown> | undefined;
   readonly injector: Injector;
   readonly viewContainerRef: ViewContainerRef;
   readonly document: Document;
-  /** Al cerrar, el foco vuelve a la fila, no al documento. */
-  readonly closed: (row: FlatRow<T>) => void;
-  readonly chosen: (row: FlatRow<T>, item: MenuItem) => void;
+  /** Al cerrar, el foco vuelve a quien lo abrió (la fila, la cabecera), no al documento. */
+  readonly closed: (target: Target, anchor: HTMLElement | null) => void;
+  readonly chosen: (target: Target, item: MenuItem) => void;
 }
 
 /**
- * El menú de fila: kebab, clic derecho, Shift+F10 y la tecla de menú. Foco en la lista y
- * `aria-activedescendant`, como el Select. Interna; salió de `table.ts` sin cambiar nada.
+ * Un menú de la Tabla —el de fila y el de columna—: botón, clic derecho, Shift+F10 y la tecla de
+ * menú. Foco en la lista y `aria-activedescendant`, como el Select. Interna.
  */
-export class TableRowMenu<T> {
-  readonly row = signal<FlatRow<T> | null>(null);
+export class TableMenu<Target> {
+  readonly target = signal<Target | null>(null);
   readonly index = signal(-1);
   readonly classes = MENU_CLASSES;
   readonly separatorClasses = MENU_SEPARATOR_CLASSES;
   readonly iconSlotClasses = MENU_ICON_SLOT_CLASSES;
   readonly id: string;
-  readonly enabled = computed(() => this.host.items().length > 0);
+  /** Sin nada que ofrecer no hay botón ni se abre (el menú de fila sin `menuItems`). */
+  readonly enabled: (target: Target) => boolean;
+  readonly items = computed(() => {
+    const target = this.target();
+    return target === null ? [] : this.host.items(target);
+  });
+  readonly label = computed(() => {
+    const target = this.target();
+    return target === null ? '' : this.host.label(target);
+  });
 
   private overlay: OverlayRef | null = null;
+  /** Quien lo abrió: el foco vuelve ahí (la cabecera con Shift+F10, el ⋮ con un clic). */
+  private anchor: HTMLElement | null = null;
 
   // Chromium/X11 manda `contextmenu` al pulsar y `auxclick` al soltar, y cerraba el menú
   // recién abierto (defecto 2a88b80). Solo un `pointerdown` nuevo lo puede cerrar.
@@ -53,8 +66,9 @@ export class TableRowMenu<T> {
     this.gestureEnded = true;
   };
 
-  constructor(private readonly host: RowMenuHost<T>) {
-    this.id = `${host.tableId}-menu`;
+  constructor(private readonly host: MenuHost<Target>) {
+    this.id = host.id;
+    this.enabled = (target) => host.items(target).length > 0;
   }
 
   optionId(index: number): string {
@@ -65,9 +79,9 @@ export class TableRowMenu<T> {
     return menuItemClasses(item, index === this.index());
   }
 
-  // Clic derecho y kebab: un trackpad no tiene clic derecho.
-  open(flat: FlatRow<T>, anchor: HTMLElement): void {
-    if (!this.enabled()) {
+  // Clic derecho y botón: un trackpad no tiene clic derecho.
+  open(target: Target, anchor: HTMLElement): void {
+    if (!this.enabled(target)) {
       return;
     }
     this.close();
@@ -75,7 +89,8 @@ export class TableRowMenu<T> {
     if (!template) {
       return;
     }
-    this.row.set(flat);
+    this.target.set(target);
+    this.anchor = anchor;
     this.index.set(-1);
     this.overlay = createMenuOverlay(
       this.host.injector,
@@ -94,12 +109,12 @@ export class TableRowMenu<T> {
     queueMicrotask(() => this.host.document.querySelector<HTMLElement>(`#${this.id}`)?.focus());
   }
 
-  onContextMenu(event: MouseEvent, flat: FlatRow<T>): void {
-    if (!this.enabled()) {
+  onContextMenu(event: MouseEvent, target: Target): void {
+    if (!this.enabled(target)) {
       return;
     }
     event.preventDefault();
-    this.open(flat, event.target as HTMLElement);
+    this.open(target, event.target as HTMLElement);
   }
 
   close(): void {
@@ -107,27 +122,27 @@ export class TableRowMenu<T> {
       return;
     }
     this.host.document.removeEventListener('pointerdown', this.onPointerDown, true);
-    const row = this.row();
+    const target = this.target();
     this.overlay.dispose();
     this.overlay = null;
-    this.row.set(null);
+    this.target.set(null);
     this.index.set(-1);
-    if (row) {
-      this.host.closed(row);
+    if (target !== null) {
+      this.host.closed(target, this.anchor);
     }
   }
 
   choose(item: MenuItem): void {
-    const row = this.row();
-    if (!row || item.disabled) {
+    const target = this.target();
+    if (target === null || item.disabled) {
       return;
     }
     this.close();
-    this.host.chosen(row, item);
+    this.host.chosen(target, item);
   }
 
   onKeydown(event: KeyboardEvent): void {
-    const items = this.host.items();
+    const items = this.items();
     switch (event.key) {
       case 'ArrowDown':
         event.preventDefault();

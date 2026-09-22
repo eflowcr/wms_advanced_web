@@ -48,6 +48,36 @@ export {
 export { EWMS_SELECT_MESSAGES } from './lib/select/select.types';
 export { SEARCH_PAGE_SIZE } from './lib/select/search-source';
 
+// Estado vacío (2026-09-22): uno para tabla, select y pantalla, con cuatro casos.
+export {
+  EmptyState,
+  type EmptyStateAction,
+  type EmptyStateKind,
+  type EmptyStateSize,
+} from './lib/empty-state/empty-state';
+
+// Formulario (2026-09-22): las reglas en un solo lugar, sobre ReactiveForms.
+export {
+  EWMS_FORM_MESSAGES,
+  NO_FORM_MESSAGES,
+  type FormErrorKey,
+  type FormErrorWriter,
+  type FormMessages,
+} from './lib/forms/form.types';
+export { FormPattern } from './lib/forms/form-pattern';
+export { confirmDiscard } from './lib/forms/confirm-discard';
+
+// Filtros (2026-09-22): los chips son de la tabla y de la barra de pantalla, la misma pieza.
+export { FilterChips, type FilterChip, type FilterChipsMessages } from './lib/filters/filter-chips';
+export {
+  EWMS_FILTER_BAR_MESSAGES,
+  FilterBar,
+  type FilterBarMessages,
+  type FilterField,
+  type FilterFieldValue,
+  type FilterValues,
+} from './lib/filters/filter-bar';
+
 // Badge (DS-3): fuera de la Tabla para que detalle, card y lista digan «con incidencia» igual.
 export { Badge } from './lib/badge/badge';
 export { type SemanticFamily } from './lib/feedback/feedback.types';
@@ -104,6 +134,7 @@ export {
   type TableView,
 } from './lib/table/table.types';
 export { expandableKeys, flattenTree, type FlattenOptions } from './lib/table/tree';
+export { type ColumnAction } from './lib/table/table-column-menu';
 export { menuItemClasses, moveMenuIndex } from './lib/menu/menu';
 
 // Split button (2026-09-21): acción principal y alternativas, sobre el menú de la Tabla.

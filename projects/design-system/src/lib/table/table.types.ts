@@ -44,6 +44,8 @@ export type TableAggregate = 'sum' | 'avg' | 'count';
  * navegador. Guardar vistas llega con backend. Anchos en píxeles CSS medidos.
  */
 export interface TableView {
+  /** Todas las claves, visibles u ocultas, en el orden del usuario. */
+  readonly order: readonly string[];
   readonly hidden: readonly string[];
   readonly widths: Readonly<Record<string, number>>;
   readonly pinned: Readonly<Record<string, TablePin>>;
@@ -74,13 +76,16 @@ export const COLUMN_WIDTH: Readonly<Record<Exclude<TableColumnWidth, 'fill'>, st
   lg: 'var(--col-width-lg)',
 };
 
-/** Números al final y en mono: las cantidades se comparan con los dígitos alineados. */
+/**
+ * Números al final y con dígitos de ancho fijo: se comparan alineados. La fuente y el peso del
+ * cuerpo: en mono negrita pesaban más que el código de la fila. Ver vault: Tabla §23.
+ */
 export function columnCellClasses(type: TableColumnType): string {
   switch (type) {
     case 'number':
-      return 'text-end font-mono';
+      return 'text-end tabular-nums';
     case 'date':
-      return 'text-start font-mono';
+      return 'text-start tabular-nums';
     case 'actions':
       return 'text-end';
     default:
@@ -103,21 +108,43 @@ export const HEADER_CELL_CLASSES =
   'border-b border-strong bg-secondary px-3 text-caption text-secondary';
 
 /**
- * Anillo de foco como outline, no la sombra: en borde colapsado pisa las celdas vecinas.
- * Sin la utilidad que anula el outline: en Tailwind v4 fija una variable que apaga el anillo.
+ * Anillo de foco interior: afuera lo tapaba la celda vecina, y la sombra es de la marca de
+ * excepción. Sin la utilidad que anula el outline: en Tailwind v4 apaga el anillo.
  */
 export const CELL_CLASSES =
   'border-b border-default px-3 align-middle text-primary ' +
-  'focus-visible:outline-2 focus-visible:outline-focus';
+  'focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-focus';
+
+/** Las dos excepciones que tiñen (decisión del usuario): con todas teñidas, ninguna destaca. */
+export type RowException = 'danger' | 'warning';
+
+/** Escritas enteras: Tailwind escanea texto y no ve una clase armada con plantilla. */
+const EXCEPTION_TINT: Readonly<Record<RowException, string>> = {
+  danger: 'bg-row-danger',
+  warning: 'bg-row-warning',
+};
+
+const EXCEPTION_MARK: Readonly<Record<RowException, string>> = {
+  danger: 'shadow-row-mark-danger',
+  warning: 'shadow-row-mark-warning',
+};
 
 /**
- * Seleccionada gana al tinte de estado: el estado ya lo dice el badge. Siempre con fondo: una
- * celda fijada lo hereda, y transparente dejaría ver lo que pasa por debajo al desplazar.
+ * La matriz de fila (Tabla §23). Seleccionada gana al tinte; la excepción sigue en el badge y en
+ * la marca lateral. Siempre con fondo: una celda fijada lo hereda y transparente dejaría ver lo
+ * que pasa por debajo al desplazar. Hover y foco: un paso sobre la superficie.
  */
-export function rowClasses(selected: boolean, tint: string): string {
+export function rowClasses(selected: boolean, exception: RowException | null): string {
   // Un solo fondo por fila: dos utilidades de color las decide el orden de la hoja, no el atributo.
   if (selected) {
     return 'group bg-row-selected';
   }
-  return tint ? `group ${tint}` : 'group bg-surface hover:bg-ghost-hover';
+  return exception
+    ? `group ${EXCEPTION_TINT[exception]}`
+    : 'group bg-surface hover:bg-row-hover focus-within:bg-row-hover';
+}
+
+/** La barra lateral de la excepción, en la primera celda: sobrevive a la selección. */
+export function rowMarkClasses(exception: RowException | null): string {
+  return exception ? EXCEPTION_MARK[exception] : '';
 }

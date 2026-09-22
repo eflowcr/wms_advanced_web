@@ -10,6 +10,8 @@
       [disabled]="isDisabled()"
       [attr.aria-checked]="isChecked() ? 'true' : 'false'"
       [attr.aria-label]="ariaLabel() || null"
+      [attr.aria-invalid]="fieldError() ? 'true' : null"
+      [attr.aria-describedby]="fieldError() ? fieldErrorId : null"
       (change)="onNativeChange($event)"
       (blur)="onBlur()"
     />
@@ -22,6 +24,11 @@
   </span>
 
   @if (label()) {
-    <span>{{ label() }}</span>
+    <span>{{ label() }}{{ requiredByForm() ? ' *' : '' }}</span>
+  }
+
+  <!-- En la misma fila: el host es `inline-flex` y una línea debajo rompería toda la maqueta. -->
+  @if (fieldError()) {
+    <span [id]="fieldErrorId" class="text-caption text-danger">{{ fieldError() }}</span>
   }
 </label>

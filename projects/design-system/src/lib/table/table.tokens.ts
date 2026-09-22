@@ -1,4 +1,5 @@
 import { InjectionToken } from '@angular/core';
+import type { ColumnAction } from './table-column-menu';
 
 // Textos y formatos se proveen una vez, no por tabla (ADR 0008): la biblioteca define los
 // tokens y el shell o el showroom los llenan. Ver vault: Tabla §2.
@@ -30,6 +31,12 @@ export interface TableMessages {
   readonly clearFilters: string;
   /** Nombre del botón × de un chip: «Quitar el filtro Estado». */
   readonly removeFilter: (column: string) => string;
+  /** El botón que agrupa columnas, densidad y «Restablecer vista». */
+  readonly view: string;
+  readonly resetView: string;
+  /** En Vista, solo si la tabla tiene árbol. */
+  readonly expandAll: string;
+  readonly collapseAll: string;
   readonly density: string;
   readonly densityMd: string;
   readonly densitySm: string;
@@ -44,6 +51,18 @@ export interface TableMessages {
   readonly columns: string;
   /** Nombre del separador: «Ancho de la columna Código». */
   readonly resizeColumn: (column: string) => string;
+  /** Botones del selector de columnas: «Subir Cliente», «Bajar Cliente». */
+  readonly moveEarlier: (column: string) => string;
+  readonly moveLater: (column: string) => string;
+  /** Lo que se anuncia al mover una columna: «Cliente, posición 2 de 5». */
+  readonly columnMoved: (column: string, position: number, total: number) => string;
+
+  // Menú de columna (⋮, clic derecho, Shift+F10). Ver vault: Tabla §21.
+  /** Nombre del botón ⋮ y de la lista: «Opciones de la columna Fecha». */
+  readonly columnMenu: (column: string) => string;
+  readonly columnActions: Readonly<Record<ColumnAction, string>>;
+  /** Con dos o más órdenes, el nombre de la flecha suma la prioridad: «…, prioridad 2». */
+  readonly sortPriority: (sorted: string, priority: number) => string;
 
   // Selección: la barra de acciones masivas y lo que se anuncia.
   /** «1 seleccionada», «3 seleccionadas». */
@@ -60,6 +79,11 @@ export interface TableMessages {
   // Estados de la tabla entera.
   readonly loading: string;
   readonly loadFailed: string;
+  /** Estado vacío sin filtros: «Todavía no hay filas». `ewmsEmpty` lo sobrescribe. */
+  readonly noData: string;
+  /** Con búsqueda o filtros activos, y su pista de una línea. */
+  readonly noResults: string;
+  readonly noResultsHint: string;
 
   // Barra de estado.
   /** «12 de 340 filas», o «12 filas» con `total` null. */

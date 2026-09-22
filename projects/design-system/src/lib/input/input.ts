@@ -86,9 +86,18 @@ export class Input extends FormControlBase<string> {
   private readonly passwordVisible = signal(false);
 
   /** Cualquiera de las tres vías de deshabilitar alcanza, como en `FormControlBase.isDisabled`. */
-  protected readonly effectiveState = computed<FieldState>(() =>
-    this.isDisabled() ? 'disabled' : this.state(),
-  );
+  protected readonly effectiveState = computed<FieldState>(() => {
+    if (this.isDisabled()) {
+      return 'disabled';
+    }
+    // El validador que falló manda sobre `state`: el error es del formulario, no del dibujo.
+    return this.fieldError() ? 'error' : this.state();
+  });
+
+  /** El mensaje del validador reemplaza al hint: dos líneas debajo del campo se pisan. */
+  protected readonly note = computed(() => this.fieldError() || this.hint());
+
+  protected readonly showRequired = computed(() => this.required() || this.requiredByForm());
 
   protected readonly isTextarea = computed(() => this.type() === 'textarea');
   protected readonly isSearch = computed(() => this.type() === 'search');
@@ -167,7 +176,7 @@ export class Input extends FormControlBase<string> {
   protected readonly isReadonly = computed(() => this.effectiveState() === 'readonly');
   protected readonly isInvalid = computed(() => this.effectiveState() === 'error');
 
-  protected readonly describedBy = computed(() => (this.hint() ? this.hintId : null));
+  protected readonly describedBy = computed(() => (this.note() ? this.hintId : null));
 
   protected readonly hintClasses = computed(() =>
     this.isInvalid() ? 'text-danger' : 'text-secondary',

@@ -10,7 +10,7 @@
     class="max-h-(--table-max-height) overflow-auto"
     #scrollBox
     data-scroll-box
-    (scroll)="viewport.measure($any($event).target)"
+    (scroll)="viewport.measure($any($event).target); layout.onScroll($any($event).target)"
   >
     <table
       [id]="tableId"
@@ -48,39 +48,90 @@
           }
 
           @for (column of visibleColumns(); track column.key()) {
+            <!-- Se arrastra para reordenar, dentro de su grupo de fijado; la línea marca dónde cae. -->
             <th
               scope="col"
               role="columnheader"
-              [class]="headerCellClasses + ' ' + layout.pinClasses(column, true)"
+              draggable="true"
+              [class]="
+                'group/head ' +
+                headerCellClasses +
+                ' ' +
+                layout.pinClasses(column, true) +
+                ' ' +
+                drag.lineClasses(column)
+              "
               [style.width]="layout.headerWidth(column)"
               [style.left.px]="layout.pinStart(column)"
               [style.right.px]="layout.pinEnd(column)"
-              [attr.aria-sort]="ariaSort(column)"
+              [attr.aria-sort]="sorting.ariaSort(column)"
               [attr.data-col]="column.key()"
-              [attr.data-pin]="column.pinned()"
+              [attr.data-pin]="layout.pinnedOf(column)"
+              (keydown)="onHeaderKeydown($event, column)"
+              (contextmenu)="columnMenu.onContextMenu($event, column)"
+              (pointerdown)="drag.press($event)"
+              (dragstart)="drag.start($event, column)"
+              (dragover)="drag.over($event, column)"
+              (drop)="drag.drop($event, column)"
+              (dragend)="drag.end()"
             >
-              @if (column.sortable()) {
-                <button
-                  type="button"
-                  class="flex w-full cursor-pointer items-center gap-1 rounded-sm py-2 outline-none focus-visible:shadow-(--focus-ring-shadow)"
-                  [class]="headerClassesFor(column)"
-                  [attr.data-sort]="column.key()"
-                  (click)="toggleSort(column)"
-                >
-                  <span class="truncate">{{ column.header() }}</span>
-                  @if (sortDirection(column) === 'asc') {
-                    <ewms-icon name="chevron-up" size="sm" [label]="text().sortedAscending" />
-                  } @else if (sortDirection(column) === 'desc') {
-                    <ewms-icon name="chevron-down" size="sm" [label]="text().sortedDescending" />
-                  } @else {
-                    <ewms-icon name="arrows-sort" size="sm" aria-hidden="true" />
-                  }
-                </button>
-              } @else {
-                <span class="flex items-center py-2" [class]="headerClassesFor(column)">
-                  <span class="truncate">{{ column.header() }}</span>
-                </span>
-              }
+              @let name = column.header() || column.key();
+              <div class="flex items-center gap-1">
+                @if (column.sortable()) {
+                  <!-- Clic ordena por esta sola; Shift+clic (y Shift+Enter) la suma al orden. -->
+                  <button
+                    type="button"
+                    class="flex min-w-0 flex-1 cursor-pointer items-center gap-1 rounded-sm py-2 outline-none focus-visible:shadow-(--focus-ring-shadow)"
+                    [class]="headerClassesFor(column)"
+                    [attr.data-sort]="column.key()"
+                    (click)="toggleSort(column, $event)"
+                  >
+                    <span class="truncate">{{ column.header() }}</span>
+                    @switch (sorting.direction(column)) {
+                      @case ('asc') {
+                        <ewms-icon
+                          class="text-(color:--color-bg-primary)"
+                          name="chevron-up"
+                          size="sm"
+                          [label]="sortLabel(column)"
+                        />
+                      }
+                      @case ('desc') {
+                        <ewms-icon
+                          class="text-(color:--color-bg-primary)"
+                          name="chevron-down"
+                          size="sm"
+                          [label]="sortLabel(column)"
+                        />
+                      }
+                      @default {
+                        <ewms-icon name="arrows-sort" size="sm" aria-hidden="true" />
+                      }
+                    }
+                    @if (sorting.priority(column); as priority) {
+                      <span class="text-caption" aria-hidden="true" data-sort-priority>{{
+                        priority
+                      }}</span>
+                    }
+                  </button>
+                } @else {
+                  <span class="flex min-w-0 flex-1 items-center py-2" [class]="headerClassesFor(column)">
+                    <span class="truncate">{{ column.header() }}</span>
+                  </span>
+                }
+                <!-- ⋮ al pasar el mouse o con el foco en la cabecera; en pantallas táctiles, siempre. -->
+                <ewms-button
+                  class="opacity-0 group-hover/head:opacity-100 group-focus-within/head:opacity-100 pointer-coarse:opacity-100"
+                  variant="ghost"
+                  size="sm"
+                  icon="more"
+                  [iconOnly]="true"
+                  [label]="text().columnMenu(name)"
+                  [expanded]="columnMenu.target() === column"
+                  data-column-menu
+                  (click)="columnMenu.open(column, $any($event).target.closest('button'))"
+                />
+              </div>
               @if (column.type() !== 'actions') {
                 <!-- Separador de ancho (APG window splitter): arrastre, flechas por token, doble clic. -->
                 <span
@@ -94,7 +145,7 @@
                   [attr.data-resize]="column.key()"
                   (pointerdown)="layout.startResize($event, column)"
                   (keydown)="layout.onResizeKey($event, column)"
-                  (dblclick)="layout.reset(column)"
+                  (dblclick)="fitColumn(column)"
                 ></span>
               }
             </th>
@@ -235,16 +286,16 @@
             @if (selectable()) {
               <td
                 role="gridcell"
-                [class]="cellClasses"
+                [class]="cellClasses + ' ' + markFor(flat, true)"
                 [class.sticky]="layout.selectionPinned()"
                 [class.z-1]="layout.selectionPinned()"
                 [class.bg-inherit]="layout.selectionPinned()"
                 [style.left.px]="layout.selectionPinned() ? 0 : null"
                 [attr.data-cell]="rowIndex + '-0'"
-                [attr.tabindex]="isFocused(rowIndex, 0) ? 0 : -1"
+                [attr.tabindex]="keys.isFocused(rowIndex, 0) ? 0 : -1"
                 (click)="onSelectClick($event)"
-                (focus)="onCellFocus(rowIndex, 0)"
-                (keydown)="onKeydown($event, rowIndex)"
+                (focus)="keys.onCellFocus(rowIndex, 0)"
+                (keydown)="keys.onKeydown($event, rowIndex)"
               >
                 <!-- En flex: suelto, el checkbox se alineaba a la línea de base y quedaba alto. -->
                 <span class="flex items-center">
@@ -260,15 +311,24 @@
             @for (column of visibleColumns(); track column.key(); let columnIndex = $index) {
               <td
                 role="gridcell"
-                [class]="cellClassesFor(column) + ' ' + layout.pinClasses(column, false)"
+                [class]="
+                  cellClassesFor(column) +
+                  ' ' +
+                  layout.pinClasses(column, false) +
+                  ' ' +
+                  markFor(flat, $first && !selectable())
+                "
+                [ewmsTooltip]="display(column, flat.row)"
+                [tooltipDisabled]="!layout.clipped().has(rowIndex + '-' + (selectable() ? columnIndex + 1 : columnIndex))"
                 [style.left.px]="layout.pinStart(column)"
                 [style.right.px]="layout.pinEnd(column)"
+                [attr.data-col]="column.key()"
                 [attr.data-cell]="rowIndex + '-' + (selectable() ? columnIndex + 1 : columnIndex)"
                 [attr.tabindex]="
-                  isFocused(rowIndex, selectable() ? columnIndex + 1 : columnIndex) ? 0 : -1
+                  keys.isFocused(rowIndex, selectable() ? columnIndex + 1 : columnIndex) ? 0 : -1
                 "
-                (focus)="onCellFocus(rowIndex, selectable() ? columnIndex + 1 : columnIndex)"
-                (keydown)="onKeydown($event, rowIndex)"
+                (focus)="keys.onCellFocus(rowIndex, selectable() ? columnIndex + 1 : columnIndex)"
+                (keydown)="keys.onKeydown($event, rowIndex)"
               >
                 <!-- El td alinea texto, no a los hijos de un flex: el número se corre con justify-end. -->
                 <span
@@ -324,7 +384,7 @@
                           (click)="toggleDetail(flat)"
                         />
                       }
-                      @if (menu.enabled()) {
+                      @if (menu.enabled(flat)) {
                         <ewms-button
                           [iconOnly]="true"
                           variant="ghost"
@@ -403,34 +463,36 @@
 
         @if (loadState() === 'error') {
           <!-- La fuente falló: se dice y se ofrece reintentar, no una tabla vacía que miente. -->
-          <tr role="row" data-load-error>
-            <td role="gridcell" [attr.colspan]="columnCount()" class="p-8">
-              <span class="flex items-center justify-center gap-2 text-p text-danger">
-                <ewms-icon name="circle-x" size="sm" />
-                {{ text().loadFailed }}
-                <ewms-button
-                  variant="secondary"
-                  size="sm"
-                  icon="refresh"
-                  data-load-retry
-                  (click)="retryLoad()"
-                >
-                  {{ text().retry }}
-                </ewms-button>
-              </span>
+          <tr role="row" class="bg-surface" data-load-error>
+            <td role="gridcell" [attr.colspan]="columnCount()">
+              <ewms-empty-state
+                size="compact"
+                kind="error"
+                [title]="text().loadFailed"
+                [action]="retryAction()"
+              />
             </td>
           </tr>
         } @else if (rows().length === 0) {
-          <tr role="row" data-empty-row>
-            <td role="gridcell" [attr.colspan]="columnCount()" class="p-8 text-center">
+          <tr role="row" class="bg-surface" data-empty-row>
+            <td role="gridcell" [attr.colspan]="columnCount()">
               @if (loadState() === 'loading') {
-                <span class="inline-flex items-center gap-2 text-secondary" data-loading-table>
+                <span class="flex items-center justify-center gap-2 p-8 text-secondary" data-loading-table>
                   <ewms-icon name="spinner" size="sm" />
                   {{ text().loading }}
                 </span>
-              } @else if (empty(); as template) {
-                <!-- Se proyecta: el texto vacío es de la pantalla, no de la biblioteca (ADR 0008). -->
+              } @else if (emptyKind() === 'no-data' && empty(); as template) {
+                <!-- `ewmsEmpty` sobrescribe solo el «todavía no hay»: sin resultados lo dice la tabla. -->
                 <ng-container [ngTemplateOutlet]="template.template" />
+              } @else {
+                <!-- La tabla elige el caso: sin filtros, `no-data`; con alguno, `no-results` que limpia. -->
+                <ewms-empty-state
+                  size="compact"
+                  [kind]="emptyKind()"
+                  [title]="emptyKind() === 'no-data' ? text().noData : text().noResults"
+                  [description]="emptyKind() === 'no-data' ? '' : text().noResultsHint"
+                  [action]="emptyKind() === 'no-data' ? null : clearAction()"
+                />
               }
             </td>
           </tr>
@@ -458,31 +520,32 @@
   </div>
 }
 
-<!-- Menú con foco en la lista y `aria-activedescendant`, como el Select. Una entrada deshabilitada se ve pero las flechas la saltan. -->
-<ng-template #rowMenuPanel>
+<!-- Un panel para el menú de fila y el de columna: foco en la lista y `aria-activedescendant`, como el Select. Una entrada deshabilitada se ve pero las flechas la saltan. -->
+<ng-template #menuPanel>
+  @let panel = activeMenu();
   <ul
-    [id]="menu.id"
+    [id]="panel.id"
     role="menu"
     tabindex="-1"
-    [class]="menu.classes"
-    [attr.aria-label]="text().rowMenu"
-    [attr.aria-activedescendant]="menu.index() >= 0 ? menu.optionId(menu.index()) : null"
-    (keydown)="menu.onKeydown($event)"
+    [class]="panel.classes"
+    [attr.aria-label]="panel.label()"
+    [attr.aria-activedescendant]="panel.index() >= 0 ? panel.optionId(panel.index()) : null"
+    (keydown)="panel.onKeydown($event)"
   >
-    @for (item of menuItems(); track item.id; let itemIndex = $index) {
+    @for (item of panel.items(); track item.id; let itemIndex = $index) {
       @if (item.separatorBefore) {
-        <li [class]="menu.separatorClasses" role="separator"></li>
+        <li [class]="panel.separatorClasses" role="separator"></li>
       }
       <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -->
       <li
-        [id]="menu.optionId(itemIndex)"
+        [id]="panel.optionId(itemIndex)"
         role="menuitem"
-        [class]="menu.itemClasses(item, itemIndex)"
+        [class]="panel.itemClasses(item, itemIndex)"
         [attr.aria-disabled]="item.disabled ? 'true' : null"
         [attr.data-menu-item]="item.id"
-        (click)="menu.choose(item)"
+        (click)="panel.choose(item)"
       >
-        <span [class]="menu.iconSlotClasses" aria-hidden="true">
+        <span [class]="panel.iconSlotClasses" aria-hidden="true">
           @if (item.icon) {
             <ewms-icon [name]="item.icon" size="sm" />
           }

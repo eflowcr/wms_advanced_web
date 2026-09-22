@@ -1,13 +1,15 @@
 <!--
   Sin role: el contenedor del CDK pone role="dialog", aria-modal y la trampa de foco.
-  Desde DS-5 (botón con type="submit") Enter, «Guardar» y Ctrl+S van por un solo `ngSubmit`.
-  Antes, sin botón de envío, Enter en un campo no hacía nada. Ver vault: REQ-FE-DS4-003 - Minimo de clics.
+  `ewmsForm` junta las tres puertas de envío (Enter, «Guardar» y Ctrl+S) en un solo `(formSubmit)`,
+  que solo llega si el formulario es válido. Ver vault: Patron-Formulario.
 -->
 <form
-  #form
+  ewmsForm
+  #alta="ewmsForm"
+  [formGroup]="form"
   class="flex w-full max-w-120 flex-col gap-4 rounded-dialog border border-default border-solid bg-surface p-6 shadow-dialog"
   data-expedicion-form
-  (ngSubmit)="save()"
+  (formSubmit)="save()"
 >
   <h2 [id]="titleId" class="text-h3 text-primary">
     {{ isNew ? 'Nueva expedición' : 'Editar la expedición' }}
@@ -17,40 +19,24 @@
     label="Código"
     placeholder="EXP-2026-0000"
     hint="El código que llevará la etiqueta."
-    [ngModel]="codigo()"
-    (ngModelChange)="codigo.set($event)"
-    name="codigo"
+    formControlName="codigo"
     data-form-codigo
   />
 
   <ewms-input
     label="Cliente"
     placeholder="Distribuidora Andes"
-    [ngModel]="cliente()"
-    (ngModelChange)="cliente.set($event)"
-    name="cliente"
+    formControlName="cliente"
     data-form-cliente
   />
 
-  <ewms-select
-    label="Estado"
-    [options]="estados"
-    [ngModel]="estado()"
-    (ngModelChange)="estado.set($event)"
-    name="estado"
-    data-form-estado
-  />
+  <ewms-select label="Estado" [options]="estados" formControlName="estado" data-form-estado />
 
   <!--
     Toggle y no Checkbox aunque haya Guardar: «urgente» no cambia nada hasta guardar igual,
     y el interruptor se lee como propiedad de la expedición, no como orden al formulario.
   -->
-  <ewms-toggle
-    label="Urgente"
-    [checked]="urgente()"
-    (checkedChange)="urgente.set($event)"
-    data-form-urgente
-  />
+  <ewms-toggle label="Urgente" formControlName="urgente" data-form-urgente />
 
   <p class="text-caption text-secondary">
     <kbd class="font-mono">Ctrl</kbd> + <kbd class="font-mono">S</kbd> guarda sin soltar el teclado
@@ -61,7 +47,9 @@
   <!-- Cancelar primero en el DOM: el CDK enfoca el primer tabulable y debe ser la respuesta segura. -->
   <div class="flex w-full justify-end gap-2">
     <ewms-button variant="secondary" data-form-cancel (click)="cancel()"> Cancelar </ewms-button>
-    <!-- Sin `(click)` a propósito: el botón envía y el formulario guarda; dos caminos terminarían divergiendo. -->
-    <ewms-button variant="primary" type="submit" data-form-save>Guardar</ewms-button>
+    <!-- Guardar nunca se deshabilita: al enviar con errores se muestra el resumen y se enfoca. -->
+    <ewms-button variant="primary" type="submit" [loading]="alta.busy()" data-form-save>
+      Guardar
+    </ewms-button>
   </div>
 </form>

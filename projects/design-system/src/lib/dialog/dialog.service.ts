@@ -2,6 +2,7 @@ import { Dialog, type DialogConfig, type DialogRef } from '@angular/cdk/dialog';
 import type { ComponentType } from '@angular/cdk/portal';
 import { inject, Injectable } from '@angular/core';
 import { ConfirmDialog } from './confirm-dialog';
+import { DialogContainer } from './dialog-container';
 import {
   backdropDismisses,
   DIALOG_BACKDROP_CLASSES,
@@ -71,6 +72,8 @@ export class DialogService {
   // `disableClose` siempre: el único interruptor del CDK no distingue Escape de fondo.
   private baseConfig<D, R>(dismissOnBackdrop: boolean): DialogConfig<D, R> {
     return {
+      // El contenedor propio, sin hoja de componente: la del CDK choca con la CSP (ADR 0010).
+      container: DialogContainer,
       disableClose: true,
       hasBackdrop: true,
       ariaModal: true,

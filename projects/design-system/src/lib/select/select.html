@@ -1,6 +1,9 @@
 <!-- RFE-01: un `<input>` que se tipea ya; es etiquetable, así que for/id. -->
 <label [id]="labelId" [attr.for]="fieldId" class="block text-caption text-secondary mb-1">
   {{ label() }}
+  @if (requiredByForm()) {
+    <span aria-hidden="true">*</span>
+  }
 </label>
 <div #anchor class="relative">
   <input
@@ -39,13 +42,13 @@
 -->
 <p [id]="statusId" class="sr-only" role="status" aria-live="polite">{{ announcement() }}</p>
 
-@if (hint()) {
+@if (note()) {
   <p
     [id]="hintId"
     class="mt-1 text-caption"
     [class]="effectiveState() === 'error' ? 'text-danger' : 'text-secondary'"
   >
-    {{ hint() }}
+    {{ note() }}
   </p>
 }
 
@@ -102,9 +105,13 @@
     }
 
     @if (search.status() === 'empty') {
-      <!-- RFE-03: repite el texto buscado, para no tener que volver a mirar el campo. -->
-      <li [class]="noteClasses" aria-hidden="true">
-        {{ words().noResults(search.searchedText()) }}
+      <!-- RFE-03: repite el texto buscado. Oculto al lector: ya lo dice la región viva del campo. -->
+      <li aria-hidden="true" data-select-empty>
+        <ewms-empty-state
+          size="compact"
+          kind="no-results"
+          [title]="words().noResults(search.searchedText())"
+        />
       </li>
     }
 
