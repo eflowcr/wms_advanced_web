@@ -1202,7 +1202,9 @@ describe('ShowroomSplitButton', () => {
   it('reports which output each gesture fired: the main action, then a menu choice', async () => {
     const { fixture, element } = await render(ShowroomSplitButton);
     const last = () => element.querySelector('[data-demo-last]')?.textContent;
-    const [main, trigger] = [...element.querySelectorAll<HTMLButtonElement>('[data-demo-split] button')];
+    const [main, trigger] = [
+      ...element.querySelectorAll<HTMLButtonElement>('[data-demo-split] button'),
+    ];
 
     main!.click();
     await fixture.whenStable();
@@ -1309,9 +1311,9 @@ describe('ShowroomTable', () => {
     expect(snippet.trimEnd().split('\n').length).toBe(lines);
   });
 
-  it('shows the whole component behind it, and it is two lines', async () => {
+  it('shows the whole component behind it, and it is four lines: source, row id, bulk actions and their handler', async () => {
     const { element } = await render(ShowroomTable);
-    expect(element.querySelector('[data-component-lines]')?.textContent).toBe('2');
+    expect(element.querySelector('[data-component-lines]')?.textContent).toBe('4');
   });
 
   it('the snippet is what the page actually renders', async () => {
@@ -1402,7 +1404,6 @@ describe('ShowroomTable', () => {
     await fixture.whenStable();
     expect(element.querySelector('[data-query]')?.textContent).toContain('bultos asc');
   });
-
 });
 
 /*

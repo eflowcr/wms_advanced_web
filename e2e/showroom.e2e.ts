@@ -1404,7 +1404,7 @@ test.describe('DS-3 lote C: la tabla', () => {
     expect(printed).toBe(snippet.trimEnd().split('\n').length);
     // El techo de la comanda para la demo de expediciones: si falla, se corrige la API, no la página.
     expect(printed).toBeLessThanOrEqual(40);
-    await expect(page.locator('[data-component-lines]')).toHaveText('2');
+    await expect(page.locator('[data-component-lines]')).toHaveText('4');
   });
 
   test('a row is exactly as tall as an input of the same size', async ({ page }) => {

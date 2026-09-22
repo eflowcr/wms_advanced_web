@@ -76,6 +76,8 @@ const CONSUMER_TEMPLATE = [
 const CONSUMER_COMPONENT = [
   'protected readonly expediciones = new ArrayTableSource(EXPEDICIONES);',
   'protected readonly porId = (row: ExpedicionRow) => row.id;',
+  'protected readonly masivas = ACCIONES_MASIVAS;',
+  'protected masiva(event: BulkActionEvent<ExpedicionRow>) { /* imprimir, anular… */ }',
 ].join('\n');
 
 const MATRIX_VARIANTS: readonly MatrixAxis[] = [
@@ -151,7 +153,31 @@ const PROPS: readonly PropRow[] = [
     name: 'density',
     type: "'md' | 'sm'",
     default: "'md'",
-    description: 'Alto de fila por token: 40 px o 32 px.',
+    description: 'Con qué densidad arranca; después se elige en la barra. Alto de fila por token.',
+  },
+  {
+    name: 'columnChooser',
+    type: 'boolean',
+    default: 'false',
+    description: 'Selector de columnas en la barra. La última visible no se oculta.',
+  },
+  {
+    name: 'exportable',
+    type: 'boolean',
+    default: 'false',
+    description: 'Exportar: CSV en el cliente con ArrayTableSource; con fuente remota, (exportRequest).',
+  },
+  {
+    name: 'bulkActions',
+    type: 'readonly MenuItem[]',
+    default: '[]',
+    description: 'Acciones sobre lo seleccionado; la barra las muestra con «3 seleccionadas».',
+  },
+  {
+    name: 'ewms-column: pinned · hideable · aggregate',
+    type: "'start' | 'end' · boolean · 'sum' | 'avg' | 'count'",
+    default: 'null · true · null',
+    description: 'Fija la columna al borde, la saca del selector, o la suma al pie (solo number).',
   },
   {
     name: 'trackBy',
@@ -179,6 +205,24 @@ const PROPS: readonly PropRow[] = [
     description: 'La selección. Una salida, no un valor de formulario: la tabla no es un CVA.',
   },
   {
+    name: '(viewChange)',
+    type: 'TableView',
+    default: '—',
+    description: 'Columnas ocultas, anchos, fijadas y densidad: en memoria, para quien quiera guardarlas.',
+  },
+  {
+    name: '(bulkAction)',
+    type: '{ item, rows }',
+    default: '—',
+    description: 'La acción masiva elegida, con las filas seleccionadas de cualquier página.',
+  },
+  {
+    name: '(exportRequest)',
+    type: '{ query, columns, selectedOnly }',
+    default: '—',
+    description: 'Solo con fuente remota: la tabla no descarga, dice qué pidió el usuario.',
+  },
+  {
     name: '(queryChange)',
     type: 'TableQuery',
     default: '—',
@@ -199,6 +243,8 @@ const ANATOMY = [
   { part: 'Tinte de fila «Con incidencia»', token: '--color-danger-surface' },
   { part: 'Tinte de fila «En proceso»', token: '--color-warning-surface' },
   { part: 'Anillo de foco de la celda', token: '--focus-ring-shadow' },
+  { part: 'Alto máximo: la cabecera queda fija', token: '--table-max-height' },
+  { part: 'Paso de las flechas al redimensionar', token: '--col-resize-step' },
 ] as const;
 
 /**
