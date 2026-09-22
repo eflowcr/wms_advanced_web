@@ -1,7 +1,7 @@
 <!-- Asterisco `aria-hidden`: el `required` nativo ya lo anuncia; el glifo lo diría dos veces. -->
 <label [for]="fieldId" [class]="hideLabel() ? 'sr-only' : 'block text-caption text-secondary mb-1'">
   {{ label() }}
-  @if (required()) {
+  @if (showRequired()) {
     <span aria-hidden="true">*</span>
   }
 </label>
@@ -28,7 +28,7 @@
       [value]="controlValue()"
       [disabled]="isNativeDisabled()"
       [readOnly]="isReadonly()"
-      [required]="required()"
+      [required]="showRequired()"
       [attr.aria-invalid]="isInvalid() ? 'true' : null"
       [attr.aria-describedby]="describedBy()"
       (input)="onInput($event)"
@@ -50,7 +50,7 @@
       [value]="controlValue()"
       [disabled]="isNativeDisabled()"
       [readOnly]="isReadonly()"
-      [required]="required()"
+      [required]="showRequired()"
       [attr.aria-invalid]="isInvalid() ? 'true' : null"
       [attr.aria-describedby]="describedBy()"
       (input)="onInput($event)"
@@ -85,7 +85,8 @@
   }
 </div>
 
-<!-- El hint describe, no nombra: nadie pregunta por un campo «SKU Formato ABC-123». -->
-@if (hint()) {
-  <p [id]="hintId" class="mt-1 text-caption" [class]="hintClasses()">{{ hint() }}</p>
+<!-- El hint describe, no nombra: nadie pregunta por un campo «SKU Formato ABC-123». Con el campo
+     en error, el mensaje del validador ocupa su lugar. -->
+@if (note()) {
+  <p [id]="hintId" class="mt-1 text-caption" [class]="hintClasses()">{{ note() }}</p>
 }

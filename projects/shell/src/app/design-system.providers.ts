@@ -3,6 +3,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import {
   EWMS_DATE_PICKER_MESSAGES,
   EWMS_FILTER_BAR_MESSAGES,
+  EWMS_FORM_MESSAGES,
   EWMS_FAVORITE_LABELS,
   EWMS_FAVORITES_STORE,
   EWMS_SELECT_MESSAGES,
@@ -17,6 +18,7 @@ import {
   type DatePickerMessages,
   type FavoriteLabelResolver,
   type FilterBarMessages,
+  type FormMessages,
   type SelectMessages,
   type ShortcutHelpMessages,
   type SplitButtonMessages,
@@ -50,6 +52,10 @@ export function provideEwmsDesignSystem(): Provider[] {
     {
       provide: EWMS_FILTER_BAR_MESSAGES,
       useFactory: filterBarMessages,
+    },
+    {
+      provide: EWMS_FORM_MESSAGES,
+      useFactory: formMessages,
     },
     // El mapa es valor y las palabras son fábrica (DS-4): las teclas no cambian con
     // el idioma. El showroom provee su propio par para registrar `create` sin el shell.
@@ -284,6 +290,35 @@ function tableMessages(): TableMessages {
         count: { selected: 'ds.table.countSelected', shown: 'ds.table.countShown' },
       } as const;
       return transloco.translate(keys[kind][scope], { column });
+    },
+  };
+}
+
+/**
+ * Un mensaje por validador, con las claves literales (transloco-keys-manager lee la fuente).
+ * `custom` recibe lo que puso el validador propio: una cadena ya traducida pasa tal cual.
+ */
+function formMessages(): FormMessages {
+  const transloco = inject(TranslocoService);
+  const length = (detail: unknown): number => (detail as { requiredLength: number }).requiredLength;
+  return {
+    errors: {
+      required: () => transloco.translate('ds.form.required'),
+      minlength: (detail) => transloco.translate('ds.form.minlength', { length: length(detail) }),
+      maxlength: (detail) => transloco.translate('ds.form.maxlength', { length: length(detail) }),
+      min: (detail) => transloco.translate('ds.form.min', { min: (detail as { min: number }).min }),
+      max: (detail) => transloco.translate('ds.form.max', { max: (detail as { max: number }).max }),
+      pattern: () => transloco.translate('ds.form.pattern'),
+      email: () => transloco.translate('ds.form.email'),
+      custom: (detail) =>
+        typeof detail === 'string' ? detail : transloco.translate('ds.form.custom'),
+    },
+    errorSummary: (count) => transloco.translate('ds.form.errorSummary', { count }),
+    get errorSummaryLabel() {
+      return transloco.translate('ds.form.errorSummaryLabel');
+    },
+    get requiredLegend() {
+      return transloco.translate('ds.form.requiredLegend');
     },
   };
 }

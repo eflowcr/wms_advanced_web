@@ -8,6 +8,7 @@ import { expect, test, type Page } from '@playwright/test';
 
 import {
   FILTERS,
+  FORM,
   PAGES,
   BANNER,
   BUTTON,
@@ -1385,6 +1386,38 @@ test.describe('DS-3 lote B: el select con una fuente remota', () => {
     await page.keyboard.press('ArrowDown');
     await page.keyboard.press('Enter');
     await expect(page.locator('[data-demo-search-value]')).toContainText('SKU-');
+  });
+});
+
+// El patrón Formulario: validar al enviar, el resumen que enfoca, y el envío que no se repite.
+test.describe('el patrón Formulario', () => {
+  const DEMO = '[data-demo-form]';
+
+  test('SUBMITTING EMPTY writes a summary that takes the focus, and each link goes to its field', async ({
+    page,
+  }) => {
+    await page.goto(FORM);
+    await ready(page);
+
+    await page.locator(`${DEMO} [data-form-save] button`).click();
+    const summary = page.locator('[data-form-errors]');
+    await expect(summary).toContainText('Revisá 4 campos');
+    await expect(page.locator('ewms-form-errors')).toBeFocused();
+    // Cada campo dice qué le falta, en lugar de su hint.
+    await expect(page.locator(`${DEMO} [data-form-codigo] p`)).toHaveText('Este campo es obligatorio');
+
+    await summary.getByRole('button', { name: 'Cliente' }).click();
+    await expect(page.locator(`${DEMO} [data-form-cliente] input`)).toBeFocused();
+
+    // Con todo bien: Ctrl+S envía desde el campo, «Guardar» queda en carga y después vuelve.
+    await page.locator(`${DEMO} [data-form-codigo] input`).fill('EXP-2026-0001');
+    await page.locator(`${DEMO} [data-form-cliente] input`).fill('Distribuidora Andes');
+    await page.locator(`${DEMO} [data-form-almacen] input`).click();
+    await page.getByRole('option', { name: 'Central' }).click();
+    await page.locator(`${DEMO} [data-form-etiquetas] input`).check();
+    await page.locator(`${DEMO} [data-form-codigo] input`).press('Control+s');
+    await expect(page.locator(`${DEMO} [data-form-save] button`)).toHaveAttribute('aria-busy', 'true');
+    await expect(page.locator('[data-form-saved]')).toContainText('EXP-2026-0001');
   });
 });
 

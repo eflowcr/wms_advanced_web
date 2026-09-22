@@ -15,6 +15,19 @@
       "fewerFilters": "Fewer filters",
       "moreFilters": "{active, plural, =0 {More filters} other {More filters (#)}}"
     },
+    "form": {
+      "custom": "Check this field",
+      "email": "Write a valid email",
+      "errorSummary": "{count, plural, =1 {Check 1 field} other {Check # fields}}",
+      "errorSummaryLabel": "Error",
+      "max": "The maximum is {{ max }}",
+      "maxlength": "At most {{ length }} characters",
+      "min": "The minimum is {{ min }}",
+      "minlength": "At least {{ length }} characters",
+      "pattern": "The format is not the expected one",
+      "required": "This field is required",
+      "requiredLegend": "* required"
+    },
     "select": {
       "error": "The catalogue could not be reached.",
       "more": "Show more results",

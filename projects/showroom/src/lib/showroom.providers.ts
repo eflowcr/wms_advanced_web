@@ -2,6 +2,7 @@ import { inject, signal, type Provider } from '@angular/core';
 import {
   EWMS_DATE_PICKER_MESSAGES,
   EWMS_FILTER_BAR_MESSAGES,
+  EWMS_FORM_MESSAGES,
   EWMS_FAVORITE_LABELS,
   EWMS_SELECT_MESSAGES,
   EWMS_SHORTCUT_HELP_MESSAGES,
@@ -12,6 +13,7 @@ import {
   parseTableDate,
   type FavoriteLabelResolver,
   type FilterBarMessages,
+  type FormMessages,
   type SelectMessages,
   type ShortcutHelpMessages,
   type TableFormatters,
@@ -30,6 +32,7 @@ export function provideShowroomDesignSystem(): Provider[] {
     { provide: EWMS_TABLE_FORMATTERS, useValue: TABLE_FORMATTERS },
     { provide: EWMS_SELECT_MESSAGES, useValue: SELECT_MESSAGES },
     { provide: EWMS_FILTER_BAR_MESSAGES, useValue: FILTER_BAR_MESSAGES },
+    { provide: EWMS_FORM_MESSAGES, useValue: FORM_MESSAGES },
     { provide: EWMS_SHORTCUT_MAP, useValue: SHOWROOM_SHORTCUT_MAP },
     { provide: EWMS_SHORTCUT_HELP_MESSAGES, useValue: SHORTCUT_HELP_MESSAGES },
     { provide: EWMS_SPLIT_BUTTON_MESSAGES, useValue: { moreActions: 'Más opciones' } },
@@ -198,6 +201,23 @@ export const TABLE_FORMATTERS: TableFormatters = {
     const parsed = Number(value);
     return Number.isFinite(parsed) ? new Intl.NumberFormat('es').format(parsed) : String(value);
   },
+};
+
+/** Un mensaje por validador: el campo muestra el del que falló, en lugar de su hint. */
+export const FORM_MESSAGES: FormMessages = {
+  errors: {
+    required: () => 'Este campo es obligatorio',
+    minlength: (detail) => `Mínimo ${(detail as { requiredLength: number }).requiredLength} caracteres`,
+    maxlength: (detail) => `Máximo ${(detail as { requiredLength: number }).requiredLength} caracteres`,
+    min: (detail) => `El mínimo es ${(detail as { min: number }).min}`,
+    max: (detail) => `El máximo es ${(detail as { max: number }).max}`,
+    pattern: () => 'El formato no es el esperado',
+    email: () => 'Escribí un correo válido',
+    custom: (detail) => (typeof detail === 'string' ? detail : 'Revisá este campo'),
+  },
+  errorSummary: (count) => (count === 1 ? 'Revisá 1 campo' : `Revisá ${count} campos`),
+  errorSummaryLabel: 'Error',
+  requiredLegend: '* obligatorio',
 };
 
 /** Los chips comparten `clearFilters` y `removeFilter` con la tabla: una sola forma de decirlo. */

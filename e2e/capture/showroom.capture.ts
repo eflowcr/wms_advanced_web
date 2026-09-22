@@ -35,6 +35,7 @@ const ROUTES = [
   { name: '40-patterns-search-create-edit', url: '/design-system/patterns/search-create-edit' },
   { name: '41-patterns-empty-state', url: '/design-system/patterns/empty-state' },
   { name: '42-patterns-filters', url: '/design-system/patterns/filters' },
+  { name: '43-patterns-form', url: '/design-system/patterns/form' },
 ] as const;
 
 /** A 390 px, una pasada por las páginas que más cambian con el ancho. */
@@ -43,6 +44,7 @@ const NARROW = [
   '40-patterns-search-create-edit',
   '41-patterns-empty-state',
   '42-patterns-filters',
+  '43-patterns-form',
 ];
 
 /**

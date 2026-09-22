@@ -120,6 +120,16 @@ describe('FilterBar', () => {
     await settle();
     expect(chips()).toEqual(['Almacén: Central', 'Período: 01/03/2026 – 31/03/2026']);
 
+    // Un solo extremo, y una opción que ya no está en la lista: el valor crudo.
+    host.value.set({ fecha: { from: '2026-03-01' }, almacen: 'sur' });
+    await settle();
+    expect(chips()).toEqual(['Almacén: sur', 'Período: 01/03/2026']);
+    host.value.set({ fecha: { to: '2026-03-31' }, texto: 'EXP' });
+    await settle();
+    expect(chips()).toEqual(['Período: 31/03/2026', 'Buscar: EXP']);
+    host.value.set({ almacen: 'central', fecha: { from: '2026-03-01', to: '2026-03-31' } });
+    await settle();
+
     // El × de un chip quita ese filtro; «Limpiar filtros», todos.
     (root().querySelector('[data-chip="almacen"] button') as HTMLButtonElement).click();
     await settle();

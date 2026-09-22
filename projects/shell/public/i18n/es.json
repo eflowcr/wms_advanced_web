@@ -15,6 +15,19 @@
       "fewerFilters": "Menos filtros",
       "moreFilters": "{active, plural, =0 {Más filtros} other {Más filtros (#)}}"
     },
+    "form": {
+      "custom": "Revisá este campo",
+      "email": "Escribí un correo válido",
+      "errorSummary": "{count, plural, =1 {Revisá 1 campo} other {Revisá # campos}}",
+      "errorSummaryLabel": "Error",
+      "max": "El máximo es {{ max }}",
+      "maxlength": "Máximo {{ length }} caracteres",
+      "min": "El mínimo es {{ min }}",
+      "minlength": "Mínimo {{ length }} caracteres",
+      "pattern": "El formato no es el esperado",
+      "required": "Este campo es obligatorio",
+      "requiredLegend": "* obligatorio"
+    },
     "select": {
       "error": "No se pudo consultar el catálogo.",
       "more": "Ver más resultados",

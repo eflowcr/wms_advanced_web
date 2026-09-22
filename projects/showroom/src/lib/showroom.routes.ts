@@ -129,6 +129,10 @@ export const showroomRoutes: Routes = [
           (await import('./pages/patterns/search-create-edit')).ShowroomSearchCreateEdit,
       },
       {
+        path: 'patterns/form',
+        loadComponent: async () => (await import('./pages/patterns/form')).ShowroomForm,
+      },
+      {
         path: 'patterns/filters',
         loadComponent: async () => (await import('./pages/patterns/filters')).ShowroomFilters,
       },

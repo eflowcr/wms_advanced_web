@@ -35,6 +35,7 @@ import { ShowroomTooltip } from './components/tooltip';
 import { FLOW_BUDGETS } from './patterns/click-budget';
 import { ShowroomEmptyState } from './patterns/empty-state';
 import { ShowroomFilters } from './patterns/filters';
+import { ShowroomForm } from './patterns/form';
 import { ShowroomKeyboard } from './patterns/keyboard';
 import { ShowroomSearchCreateEdit } from './patterns/search-create-edit';
 import { ShowroomBrand } from './foundations/brand';
@@ -98,13 +99,11 @@ describe('ShowroomLayout', () => {
     expect(element.querySelector('[data-sidebar]')?.textContent).toMatch(/v\d+\.\d+\.\d+/);
   });
 
-  it('links only the pages that exist, and labels the rest as pending', async () => {
+  it('links every page: no entry is pending any more', async () => {
     const { element } = await render(ShowroomLayout);
-    const pending = [...element.querySelectorAll('[data-sidebar] nav li span')];
-    expect(pending.length).toBeGreaterThan(0);
-    for (const item of pending) {
-      expect(item.textContent).toContain('(pendiente)');
-    }
+    // Un `span` en vez de un enlace es una entrada sin página; desde el 2026-09-22 no queda ninguna.
+    expect([...element.querySelectorAll('[data-sidebar] nav li span')]).toEqual([]);
+    expect(element.querySelectorAll('[data-sidebar] nav li a').length).toBeGreaterThan(20);
   });
 
   it('filters the catalogue as you type, by name and by selector', async () => {
@@ -272,16 +271,14 @@ describe('ShowroomLayout', () => {
 });
 
 describe('ShowroomHome', () => {
-  it('indexes the catalogue and marks what does not exist yet', async () => {
+  it('indexes the catalogue, and NOTHING IS PENDING ANY MORE', async () => {
     const { element } = await render(ShowroomHome);
     expect(element.querySelectorAll('[data-entry]').length).toBeGreaterThan(20);
     expect(element.querySelector('[data-entry="button"] a')).not.toBeNull();
-    // Un patrón y no un componente: los dos últimos huecos (split button y date picker) se
-    // cerraron el 2026-09-21. Importa que un hueco siga visible, no cuál.
-    expect(element.querySelector('[data-entry="pattern-form"] a')).toBeNull();
-    expect(element.querySelector('[data-entry="pattern-form"]')?.textContent).toContain(
-      '(pendiente)',
-    );
+    // Los tres últimos huecos (formulario, filtros y estado vacío) se cerraron el 2026-09-22:
+    // toda entrada enlaza su página y ninguna dice «(pendiente)».
+    expect(element.querySelector('[data-entry="pattern-form"] a')).not.toBeNull();
+    expect(element.textContent).not.toContain('(pendiente)');
     expect(element.querySelector('[data-entry="navigation"] a')).not.toBeNull();
     expect(element.querySelector('[data-entry="table"] a')).not.toBeNull();
   });
@@ -578,6 +575,7 @@ const PATTERNS: readonly { name: string; component: Type<unknown>; heading: stri
   },
   { name: 'ShowroomEmptyState', component: ShowroomEmptyState, heading: 'Estado vacío' },
   { name: 'ShowroomFilters', component: ShowroomFilters, heading: 'Filtros' },
+  { name: 'ShowroomForm', component: ShowroomForm, heading: 'Formulario' },
 ];
 
 describe.each([...SHEETS, ...PATTERNS])('$name', ({ component, heading }) => {
@@ -1774,6 +1772,53 @@ describe('ShowroomKeyboard', () => {
       'Ningún layout raíz montó el motor',
     );
     expect(element.querySelectorAll('[data-demo-bindings] tr').length).toBe(0);
+  });
+});
+
+describe('ShowroomForm', () => {
+  // El resumen y el foco se prueban en el design-system (form-pattern.spec.ts) y en e2e, donde hay
+  // navegador: acá, que la página no guarda con el formulario inválido y sí con el válido.
+  it('does not save an empty form, and saves a filled one after its loading', async () => {
+    const { fixture, element } = await render(ShowroomForm);
+    const form = element.querySelector('form') as HTMLFormElement;
+    const settle = async (): Promise<void> => {
+      fixture.detectChanges();
+      await fixture.whenStable();
+      fixture.detectChanges();
+    };
+    const page = fixture.componentInstance as unknown as {
+      form: { setValue(value: Record<string, unknown>): void };
+    };
+
+    form.requestSubmit();
+    await settle();
+    expect(element.querySelector('[data-form-saved]')?.textContent).toBe('(todavía nada)');
+
+    page.form.setValue({
+      codigo: 'EXP-2026-0001',
+      cliente: 'Distribuidora Andes',
+      correo: '',
+      almacen: 'central',
+      fecha: null,
+      estado: 'pendiente',
+      bultos: 3,
+      urgente: false,
+      etiquetas: true,
+    });
+    await settle();
+    form.requestSubmit();
+    await settle();
+    expect(element.querySelector('[data-form-save] button')?.getAttribute('aria-busy')).toBe('true');
+
+    await new Promise((resolve) => setTimeout(resolve, 700));
+    await settle();
+    expect(element.querySelector('[data-form-saved]')?.textContent).toContain('EXP-2026-0001');
+    expect(element.querySelector('[data-form-save] button')?.getAttribute('aria-busy')).toBeNull();
+
+    // Guardado y limpio: salir no pregunta nada (`confirmDiscard` solo pregunta si está sucio).
+    await (fixture.componentInstance as unknown as { salir(): Promise<void> }).salir();
+    await settle();
+    expect(element.querySelector('[data-form-left]')?.textContent).toBe('salió sin guardar');
   });
 });
 

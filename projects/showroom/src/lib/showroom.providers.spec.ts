@@ -1,6 +1,7 @@
 import { Injector, signal } from '@angular/core';
 import { EWMS_FAVORITE_LABELS, type FavoriteLabelResolver } from '@ewms/design-system';
 import {
+  FORM_MESSAGES,
   provideShowroomDesignSystem,
   SELECT_MESSAGES,
   TABLE_FORMATTERS,
@@ -116,5 +117,23 @@ describe("the showroom's favourite labels", () => {
     const labels = resolverUnder();
     expect(labels.labelFor('/no-existe')()).toBe('');
     expect(labels.iconFor('/no-existe')).toBeNull();
+  });
+});
+
+describe('los mensajes del formulario', () => {
+  it('escribe un mensaje por validador, con lo que el validador puso', () => {
+    const write = FORM_MESSAGES.errors;
+    expect(write.required(null, 'required')).toBe('Este campo es obligatorio');
+    expect(write.minlength({ requiredLength: 3 }, 'minlength')).toBe('Mínimo 3 caracteres');
+    expect(write.maxlength({ requiredLength: 8 }, 'maxlength')).toBe('Máximo 8 caracteres');
+    expect(write.min({ min: 1 }, 'min')).toBe('El mínimo es 1');
+    expect(write.max({ max: 999 }, 'max')).toBe('El máximo es 999');
+    expect(write.pattern(null, 'pattern')).toBe('El formato no es el esperado');
+    expect(write.email(null, 'email')).toBe('Escribí un correo válido');
+    // Un validador propio pasa su texto; cualquier otra cosa cae en el genérico.
+    expect(write.custom('Ese código ya existe', 'codigoDuplicado')).toBe('Ese código ya existe');
+    expect(write.custom({ algo: 1 }, 'raro')).toBe('Revisá este campo');
+    expect(FORM_MESSAGES.errorSummary(1)).toBe('Revisá 1 campo');
+    expect(FORM_MESSAGES.errorSummary(3)).toBe('Revisá 3 campos');
   });
 });

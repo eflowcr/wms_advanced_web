@@ -56,6 +56,17 @@ export {
   type EmptyStateSize,
 } from './lib/empty-state/empty-state';
 
+// Formulario (2026-09-22): las reglas en un solo lugar, sobre ReactiveForms.
+export {
+  EWMS_FORM_MESSAGES,
+  NO_FORM_MESSAGES,
+  type FormErrorKey,
+  type FormErrorWriter,
+  type FormMessages,
+} from './lib/forms/form.types';
+export { FormPattern } from './lib/forms/form-pattern';
+export { confirmDiscard } from './lib/forms/confirm-discard';
+
 // Filtros (2026-09-22): los chips son de la tabla y de la barra de pantalla, la misma pieza.
 export { FilterChips, type FilterChip, type FilterChipsMessages } from './lib/filters/filter-chips';
 export {

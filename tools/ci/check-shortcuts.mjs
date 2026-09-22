@@ -36,6 +36,9 @@ export const KEY_EXEMPT = [
   // El motor y sus pruebas: compara `event.key` contra el mapa sin nombrar teclas,
   // salvo la spec, que escribe el mapa a propósito para que un cambio rompa una prueba.
   'projects/design-system/src/lib/keyboard/',
+  // El patrón Formulario: su spec escribe el mapa entero a propósito, como la de la Tabla, para
+  // que un cambio de teclas rompa una prueba.
+  'projects/design-system/src/lib/forms/',
   // Componentes que cierran su overlay, recorren su lista o atienden su Enter.
   'projects/design-system/src/lib/dialog/',
   'projects/design-system/src/lib/select/',

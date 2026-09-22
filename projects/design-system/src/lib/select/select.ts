@@ -7,7 +7,7 @@ import {
   effect,
   ElementRef,
   inject,
-  Injector,
+
   input,
   isDevMode,
   signal,
@@ -105,7 +105,6 @@ export class Select<T = unknown> extends FormControlBase<unknown> implements OnI
     ...(this.messages() ?? {}),
   }));
 
-  private readonly injector = inject(Injector);
   private readonly viewContainerRef = inject(ViewContainerRef);
   private readonly anchor = viewChild.required<ElementRef<HTMLElement>>('anchor');
   private readonly panelTemplate = viewChild.required<TemplateRef<unknown>>('panel');
@@ -223,8 +222,14 @@ export class Select<T = unknown> extends FormControlBase<unknown> implements OnI
     if (this.isDisabled()) {
       return 'disabled';
     }
-    return this.error() || this.search.status() === 'error' ? 'error' : 'default';
+    // El validador que falló manda: el error es del formulario, no del dibujo.
+    return this.error() || this.fieldError() || this.search.status() === 'error'
+      ? 'error'
+      : 'default';
   });
+
+  /** El mensaje del validador reemplaza al hint, como en el Input. */
+  protected readonly note = computed(() => this.fieldError() || this.hint());
 
   /** Abierto toma el borde de foco: el foco está en el campo. */
   protected readonly borderColor = computed(() =>
@@ -247,7 +252,7 @@ export class Select<T = unknown> extends FormControlBase<unknown> implements OnI
   protected readonly describedBy = computed(() =>
     [
       this.statusId,
-      this.hint() ? this.hintId : null,
+      this.note() ? this.hintId : null,
       this.search.status() === 'error' ? this.errorId : null,
     ]
       .filter((id) => id !== null)

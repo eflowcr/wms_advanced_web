@@ -1,17 +1,10 @@
 import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
-import {
-  ChangeDetectionStrategy,
-  Component,
-  ElementRef,
-  inject,
-  signal,
-  viewChild,
-} from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import {
   Button,
   Input as EwmsInput,
-  KeyboardShortcuts,
+  FormPattern,
   Select,
   Toggle,
   type SelectOption,
@@ -36,21 +29,19 @@ export const ESTADO_OPTIONS: readonly SelectOption[] = [
 
 /**
  * Formulario de crear y editar: uno solo para ambos flujos, porque el presupuesto lo garantiza
- * el patrón (REQ-FE-DS4-003 RFE-05) y dos formularios terminan con clics distintos.
+ * el patrón (REQ-FE-DS4-003 RFE-05) y dos formularios terminan con clics distintos. Desde el
+ * 2026-09-22 sigue el patrón Formulario: `ewmsForm` valida al salir del campo y al enviar, y
+ * Ctrl+S sale del mapa de atajos sin que este componente registre nada.
  */
-// Toma `save` mientras está abierto; el registro muere con el inyector del diálogo y la pantalla
-// de atrás lo recupera. `cancel` no se registra: el diálogo del CDK ya cierra con Escape y marca
-// el evento como atendido, y el motor saltea lo atendido.
 @Component({
   selector: 'ewms-expedicion-form',
-  imports: [Button, EwmsInput, FormsModule, Select, Toggle],
+  imports: [Button, EwmsInput, FormPattern, ReactiveFormsModule, Select, Toggle],
   templateUrl: './expedicion-form.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { class: 'contents' },
 })
 export class ExpedicionForm {
   private readonly dialogRef = inject<DialogRef<ExpedicionDraft | undefined>>(DialogRef);
-  private readonly shortcuts = inject(KeyboardShortcuts);
 
   protected readonly titleId = 'ewms-expedicion-form-title';
   protected readonly estados = ESTADO_OPTIONS;
@@ -58,27 +49,31 @@ export class ExpedicionForm {
   private readonly initial = inject<ExpedicionDraft>(DIALOG_DATA);
 
   protected readonly isNew = this.initial.id === null;
-  protected readonly codigo = signal(this.initial.codigo);
-  protected readonly cliente = signal(this.initial.cliente);
-  protected readonly estado = signal<string>(this.initial.estado);
-  protected readonly urgente = signal(this.initial.urgente);
 
-  /** El `<form>`, para que Ctrl+S lo envíe en vez de hacer clic en algo. */
-  private readonly form = viewChild<ElementRef<HTMLFormElement>>('form');
-
-  constructor() {
-    // `requestSubmit()` y no `save()` ni `click()` (DS-5): Enter, el botón y el atajo levantan
-    // un único `submit`, y lo que se agregue al envío (validación, guarda) vale para los tres.
-    this.shortcuts.register('save', () => this.form()?.nativeElement.requestSubmit());
-  }
+  /** Los validadores viven acá: el campo solo dibuja el mensaje del que falló. */
+  protected readonly form = new FormGroup({
+    // Sin `required`: esta pantalla completa lo que falta («EXP-2026-XXXX», «Sin cliente») y su
+    // presupuesto de clics fija guardar en uno (REQ-FE-DS4-003). Lo escrito sí se valida.
+    codigo: new FormControl(this.initial.codigo, {
+      nonNullable: true,
+      validators: [Validators.pattern(/^EXP-\d{4}-\d{4}$/)],
+    }),
+    cliente: new FormControl(this.initial.cliente, {
+      nonNullable: true,
+      validators: [Validators.minLength(3)],
+    }),
+    estado: new FormControl<string>(this.initial.estado, { nonNullable: true }),
+    urgente: new FormControl(this.initial.urgente, { nonNullable: true }),
+  });
 
   protected save(): void {
+    const value = this.form.getRawValue();
     this.dialogRef.close({
       id: this.initial.id,
-      codigo: this.codigo().trim(),
-      cliente: this.cliente().trim(),
-      estado: this.estado() as EstadoExpedicion,
-      urgente: this.urgente(),
+      codigo: value.codigo.trim(),
+      cliente: value.cliente.trim(),
+      estado: value.estado as EstadoExpedicion,
+      urgente: value.urgente,
     });
   }
 

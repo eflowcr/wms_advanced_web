@@ -255,10 +255,10 @@ const PATTERNS: readonly CatalogEntry[] = [
   {
     id: 'pattern-form',
     name: 'Formulario',
-    selector: null,
-    route: null,
-    status: 'gap',
-    note: 'Composición pendiente.',
+    selector: 'ewmsForm',
+    route: `${SHOWROOM_BASE}/patterns/form`,
+    status: 'ready',
+    note: 'Validar al salir y al enviar, resumen de errores, Ctrl+S y cambios sin guardar. Guardar nunca se deshabilita.',
   },
   {
     id: 'pattern-filters',
