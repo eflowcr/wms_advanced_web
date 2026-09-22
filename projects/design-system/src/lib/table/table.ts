@@ -44,6 +44,8 @@ import { TABLE_CONTEXT, type TableContext } from './table-context';
 import { TableFilters } from './table-filters';
 import { TablePopover } from './table-popover';
 import { TableToolbar } from './table-toolbar';
+import { exportMatrix, toTsv } from './table-export';
+import { TableSelection } from './table-selection';
 import { TableViewState } from './table-view';
 import {
   emptyQuery,
@@ -60,7 +62,6 @@ import {
 } from './table.tokens';
 import {
   CELL_CLASSES,
-  COLUMN_WIDTH,
   HEADER_CELL_CLASSES,
   ROW_HEIGHT,
   TABLE_CLASSES,
@@ -68,13 +69,13 @@ import {
   columnHeaderClasses,
   rowClasses,
   type BadgeDescriptor,
+  type BulkActionEvent,
   type MenuItem,
   type RowActivateEvent,
   type RowMenuEvent,
   type RowState,
   type TableChildren,
   type TableDensity,
-  type TablePin,
   type TableView,
 } from './table.types';
 import {
@@ -150,6 +151,9 @@ export class Table<T> implements TableContext {
 
   readonly menuItems = input<readonly MenuItem[]>([]);
 
+  /** Acciones sobre lo seleccionado: la barra las muestra con «3 seleccionadas». */
+  readonly bulkActions = input<readonly MenuItem[]>([]);
+
   /** Pinta solo las filas visibles; conviene desde unas 500. Ver vault: Tabla §10. */
   readonly virtual = input<boolean>(false);
 
@@ -173,6 +177,7 @@ export class Table<T> implements TableContext {
   readonly rowActivate = output<RowActivateEvent<T>>();
   readonly rowMenu = output<RowMenuEvent<T>>();
   readonly selectionChange = output<readonly T[]>();
+  readonly bulkAction = output<BulkActionEvent<T>>();
   readonly queryChange = output<TableQuery>();
   /** Columnas ocultas, anchos, fijadas y densidad: en memoria, para quien quiera guardarlos. */
   readonly viewChange = output<TableView>();
@@ -318,16 +323,27 @@ export class Table<T> implements TableContext {
       }).length > 0,
   );
 
-  private readonly selectedKeys = signal<ReadonlySet<unknown>>(new Set());
+  protected readonly selection = new TableSelection<T>();
+  readonly selectedCount = this.selection.count;
+
+  /** Lo que dice la región viva: la selección y lo copiado, que no mueven el foco. */
+  protected readonly announcement = signal('');
 
   protected readonly allSelected = computed(() => {
     const rows = this.rows();
-    return rows.length > 0 && rows.every((flat) => this.selectedKeys().has(flat.key));
+    return rows.length > 0 && rows.every((flat) => this.selection.has(flat.key));
   });
 
   protected readonly someSelected = computed(
-    () => !this.allSelected() && this.rows().some((flat) => this.selectedKeys().has(flat.key)),
+    () => !this.allSelected() && this.rows().some((flat) => this.selection.has(flat.key)),
   );
+
+  /** Un clic con Shift en la casilla: se lee en `click`, que llega antes que `change`. */
+  private rangeGesture = false;
+
+  protected onSelectClick(event: MouseEvent): void {
+    this.rangeGesture = event.shiftKey;
+  }
 
   protected readonly columnCount = computed(
     () => this.visibleColumns().length + (this.selectable() ? 1 : 0),
@@ -371,6 +387,7 @@ export class Table<T> implements TableContext {
       },
     });
 
+
     // Medir en fase de lectura: sin esto la primera ventana se calcula con altura cero.
     afterNextRender({
       read: () => {
@@ -405,6 +422,10 @@ export class Table<T> implements TableContext {
     });
   }
 
+  private measurePins(): void {
+    this.layout.measure(this.host.nativeElement, this.scrollBox()?.nativeElement);
+  }
+
   // Lee `--delay-search-input`; sin token no hay espera (ningún número de reserva en TS).
   private typed(source: Observable<string>): Observable<string> {
     const delay = readMilliseconds(DELAY_SEARCH_INPUT_TOKEN);
@@ -418,142 +439,13 @@ export class Table<T> implements TableContext {
     this.densityChoice.set(density);
   }
 
-  readonly layout = new TableViewState(this.columns, this.densityChoice);
+  readonly layout = new TableViewState(this.columns, this.densityChoice, this.selectable);
 
   /** Las columnas que se dibujan: visibles, con las fijadas en los bordes. */
   protected readonly visibleColumns = this.layout.visibleColumns;
 
-  /** Desplazamiento de cada celda fijada, medido en el DOM: depende de lo que mide cada columna. */
-  protected readonly pinOffsets = signal<Readonly<Record<string, number>>>({});
-
-  /** Anchos medidos de las cabeceras: el separador los anuncia en `aria-valuenow`. */
-  protected readonly measuredWidths = signal<Readonly<Record<string, number>>>({});
-
-  private readonly anyStartPin = computed(() =>
-    this.visibleColumns().some((column) => column.pinned() === 'start'),
-  );
-
-  /**
-   * Se fija solo si lo fijado cabe en media caja: a 390 px la casilla y una columna `md` dejaban
-   * setenta píxeles para desplazar y todo control quedaba debajo de ellas.
-   */
-  protected readonly pinning = signal(true);
-
-  private pinOf(column: TableColumn): TablePin | null {
-    return this.pinning() ? column.pinned() : null;
-  }
-
-  protected pinClasses(column: TableColumn, header: boolean): string {
-    const pin = this.pinOf(column);
-    if (pin === null) {
-      return header ? 'relative' : '';
-    }
-    const columns = this.visibleColumns().filter((candidate) => this.pinOf(candidate) === pin);
-    const edge = pin === 'start' ? columns.at(-1) === column : columns[0] === column;
-    // Separador por token en el borde que da a lo que desplaza.
-    const separator = edge
-      ? pin === 'start'
-        ? 'border-e border-e-(color:--color-border-strong)'
-        : 'border-s border-s-(color:--color-border-strong)'
-      : '';
-    // En la cabecera las no fijadas son `relative` (por el separador) y se pintarían encima.
-    return `sticky ${header ? 'z-3' : 'z-1 bg-inherit'} ${separator}`.trim();
-  }
-
-  protected pinStart(column: TableColumn): number | null {
-    return this.pinOf(column) === 'start' ? (this.pinOffsets()[column.key()] ?? 0) : null;
-  }
-
-  protected pinEnd(column: TableColumn): number | null {
-    return this.pinOf(column) === 'end' ? (this.pinOffsets()[column.key()] ?? 0) : null;
-  }
-
-  /** La casilla va fija si hay columnas fijadas al inicio: quedan juntas a la izquierda. */
-  protected readonly selectionPinned = computed(
-    () => this.pinning() && this.selectable() && this.anyStartPin(),
-  );
-
-  private measurePins(): void {
-    const head = this.host.nativeElement.querySelector('thead tr');
-    if (!head) {
-      return;
-    }
-    const cells = [...head.querySelectorAll<HTMLElement>('th[data-col]')];
-    const width = (cell: HTMLElement | undefined): number => cell?.getBoundingClientRect().width ?? 0;
-    const offsets: Record<string, number> = {};
-    const measured: Record<string, number> = {};
-    let start = width(head.querySelector<HTMLElement>('th[data-col-select]') ?? undefined);
-    for (const cell of cells) {
-      const key = cell.dataset['col'] ?? '';
-      measured[key] = Math.round(width(cell));
-      if (cell.dataset['pin'] === 'start') {
-        offsets[key] = start;
-        start += width(cell);
-      }
-    }
-    let end = 0;
-    for (const cell of [...cells].reverse()) {
-      if (cell.dataset['pin'] === 'end') {
-        offsets[cell.dataset['col'] ?? ''] = end;
-        end += width(cell);
-      }
-    }
-    const room = this.scrollBox()?.nativeElement.clientWidth ?? 0;
-    const fits = start + end <= room / 2;
-    if (fits !== this.pinning()) {
-      this.pinning.set(fits);
-    }
-    // Solo si cambió: escribir lo mismo agenda otro pintado, y otra medida.
-    if (JSON.stringify(offsets) !== JSON.stringify(this.pinOffsets())) {
-      this.pinOffsets.set(offsets);
-    }
-    if (JSON.stringify(measured) !== JSON.stringify(this.measuredWidths())) {
-      this.measuredWidths.set(measured);
-    }
-  }
-
-  protected headerWidth(column: TableColumn): string | null {
-    const chosen = this.layout.width(column);
-    return chosen === null ? this.columnWidth(column) : `${chosen}px`;
-  }
-
-  protected widthNow(column: TableColumn): number {
-    return this.layout.width(column) ?? this.measuredWidths()[column.key()] ?? 0;
-  }
-
-  protected readonly minColumnWidth = readPixels('--col-filter-min-width');
-
-  /** Arrastre: la captura del puntero sigue al separador aunque el cursor salga de la cabecera. */
-  protected startResize(event: PointerEvent, column: TableColumn): void {
-    const handle = event.currentTarget as HTMLElement;
-    const from = event.clientX;
-    const initial = handle.closest('th')?.getBoundingClientRect().width ?? this.widthNow(column);
-    handle.setPointerCapture?.(event.pointerId);
-    const move = (next: PointerEvent): void => this.layout.resize(column, initial + next.clientX - from);
-    const end = (): void => {
-      handle.removeEventListener('pointermove', move);
-      handle.removeEventListener('pointerup', end);
-      handle.removeEventListener('pointercancel', end);
-    };
-    handle.addEventListener('pointermove', move);
-    handle.addEventListener('pointerup', end);
-    handle.addEventListener('pointercancel', end);
-    event.preventDefault();
-  }
-
-  protected onResizeKey(event: KeyboardEvent, column: TableColumn): void {
-    if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
-      event.preventDefault();
-      this.layout.step(column, this.widthNow(column), event.key === 'ArrowRight' ? 1 : -1);
-    }
-  }
 
   protected readonly rowHeight = computed(() => ROW_HEIGHT[this.densityChoice()]);
-
-  protected columnWidth(column: TableColumn): string | null {
-    const width = column.width();
-    return width === 'fill' ? null : COLUMN_WIDTH[width];
-  }
 
   protected cellClassesFor(column: TableColumn): string {
     return `${CELL_CLASSES} ${columnCellClasses(column.type())}`;
@@ -649,7 +541,11 @@ export class Table<T> implements TableContext {
   }
 
   protected readonly showToolbar = computed(
-    () => this.quickFilter() || this.anyFilterable() || this.columnChooser(),
+    () =>
+      this.quickFilter() ||
+      this.anyFilterable() ||
+      this.columnChooser() ||
+      this.selection.count() > 0,
   );
 
   private ownsShortcut(): boolean {
@@ -719,42 +615,52 @@ export class Table<T> implements TableContext {
   }
 
   protected isSelected(flat: FlatRow<T>): boolean {
-    return this.selectedKeys().has(flat.key);
+    return this.selection.has(flat.key);
   }
 
-  protected toggleRow(flat: FlatRow<T>): void {
-    const keys = new Set(this.selectedKeys());
-    if (keys.has(flat.key)) {
-      keys.delete(flat.key);
+  /** Con Shift (clic o Espacio) marca desde la última tocada hasta esta. */
+  protected toggleRow(flat: FlatRow<T>, range = this.rangeGesture): void {
+    this.rangeGesture = false;
+    if (range) {
+      this.selection.range(flat, this.rows());
     } else {
-      keys.add(flat.key);
+      this.selection.toggle(flat);
     }
-    this.selectedKeys.set(keys);
     this.emitSelection();
   }
 
-  // Solo lo que está en pantalla: si no, alguien borra 400 registros queriendo borrar 20.
   protected toggleAll(): void {
-    const keys = new Set(this.selectedKeys());
-    if (this.allSelected()) {
-      for (const flat of this.rows()) {
-        keys.delete(flat.key);
-      }
-    } else {
-      for (const flat of this.rows()) {
-        keys.add(flat.key);
-      }
-    }
-    this.selectedKeys.set(keys);
+    this.selection.toggleAll(this.rows());
     this.emitSelection();
+  }
+
+  clearSelection(): void {
+    this.selection.clear();
+    this.emitSelection();
+  }
+
+  runBulk(item: MenuItem): void {
+    if (!item.disabled) {
+      this.bulkAction.emit({ item, rows: this.selection.rows() });
+    }
   }
 
   private emitSelection(): void {
-    const byKey = new Map(this.rows().map((flat) => [flat.key, flat.row]));
-    const rows = [...this.selectedKeys()]
-      .map((key) => byKey.get(key))
-      .filter((row): row is T => row !== undefined);
-    this.selectionChange.emit(rows);
+    this.selectionChange.emit(this.selection.rows());
+    this.announcement.set(this.text().selectedCount(this.selection.count()));
+  }
+
+  /**
+   * Ctrl+C: la selección, o la fila enfocada, como texto con tabulaciones y encabezados; se pega
+   * en Excel tal cual. Solo columnas visibles, en su orden. Ver vault: Tabla §15.
+   */
+  private copy(flat: FlatRow<T>): void {
+    const rows = this.selection.count() > 0 ? this.selection.rows() : [flat.row];
+    const text = toTsv(exportMatrix(this.visibleColumns(), rows));
+    void navigator.clipboard?.writeText(text).then(
+      () => this.announcement.set(this.text().copied(rows.length)),
+      () => undefined,
+    );
   }
 
   protected readonly showPagination = computed(() => (this.pageCount() ?? 0) > 1);
@@ -839,7 +745,15 @@ export class Table<T> implements TableContext {
         if (this.selectable()) {
           // Espacio hace scroll por defecto.
           event.preventDefault();
-          this.toggleRow(flat);
+          this.toggleRow(flat, event.shiftKey);
+        }
+        return;
+
+      case 'c':
+      case 'C':
+        if (event.ctrlKey || event.metaKey) {
+          event.preventDefault();
+          this.copy(flat);
         }
         return;
 

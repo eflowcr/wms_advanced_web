@@ -76,9 +76,11 @@
           [selectable]="true"
           [quickFilter]="true"
           [columnChooser]="true"
+          [bulkActions]="masivas"
           ariaLabel="Expediciones"
           (rowActivate)="abrir($event)"
           (selectionChange)="seleccion.set($event)"
+          (bulkAction)="masiva($event)"
           (queryChange)="consulta.set($event)"
         >
           <ewms-column
@@ -126,6 +128,10 @@
           <div class="flex flex-wrap gap-2">
             <dt class="text-secondary">Seleccionadas:</dt>
             <dd class="font-mono text-primary" data-selection-count>{{ seleccion().length }}</dd>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <dt class="text-secondary">Última acción masiva:</dt>
+            <dd class="text-primary" data-bulk-choice>{{ ultimaMasiva() }}</dd>
           </div>
           <div class="flex flex-wrap gap-2">
             <dt class="text-secondary">Última fila activada:</dt>

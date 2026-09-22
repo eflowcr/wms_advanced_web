@@ -125,6 +125,9 @@ export const TABLE_MESSAGES: TableMessages = {
   },
   columns: 'Columnas',
   resizeColumn: (column) => `Ancho de la columna ${column}`,
+  selectedCount: (count) => (count === 1 ? '1 seleccionada' : `${count} seleccionadas`),
+  clearSelection: 'Quitar selección',
+  copied: (rows) => (rows === 1 ? '1 fila copiada' : `${rows} filas copiadas`),
 };
 
 /** `Intl` directo y no `transloco-locale`: la tabla solo pide dos funciones que devuelvan texto. */

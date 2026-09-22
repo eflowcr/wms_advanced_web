@@ -29,9 +29,9 @@
             role="columnheader"
             class="w-0"
             [class]="headerCellClasses"
-            [class.sticky]="selectionPinned()"
-            [class.z-3]="selectionPinned()"
-            [style.left.px]="selectionPinned() ? 0 : null"
+            [class.sticky]="layout.selectionPinned()"
+            [class.z-3]="layout.selectionPinned()"
+            [style.left.px]="layout.selectionPinned() ? 0 : null"
             data-col-select
           >
             <span class="flex items-center">
@@ -49,10 +49,10 @@
           <th
             scope="col"
             role="columnheader"
-            [class]="headerCellClasses + ' ' + pinClasses(column, true)"
-            [style.width]="headerWidth(column)"
-            [style.left.px]="pinStart(column)"
-            [style.right.px]="pinEnd(column)"
+            [class]="headerCellClasses + ' ' + layout.pinClasses(column, true)"
+            [style.width]="layout.headerWidth(column)"
+            [style.left.px]="layout.pinStart(column)"
+            [style.right.px]="layout.pinEnd(column)"
             [attr.aria-sort]="ariaSort(column)"
             [attr.data-col]="column.key()"
             [attr.data-pin]="column.pinned()"
@@ -87,11 +87,11 @@
                 tabindex="0"
                 class="absolute inset-y-0 -end-1 z-2 w-2 cursor-col-resize touch-none rounded-sm outline-none hover:bg-ghost-hover focus-visible:shadow-(--focus-ring-shadow)"
                 [attr.aria-label]="text().resizeColumn(column.header() || column.key())"
-                [attr.aria-valuenow]="widthNow(column)"
-                [attr.aria-valuemin]="minColumnWidth"
+                [attr.aria-valuenow]="layout.widthNow(column)"
+                [attr.aria-valuemin]="layout.minColumnWidth"
                 [attr.data-resize]="column.key()"
-                (pointerdown)="startResize($event, column)"
-                (keydown)="onResizeKey($event, column)"
+                (pointerdown)="layout.startResize($event, column)"
+                (keydown)="layout.onResizeKey($event, column)"
                 (dblclick)="layout.reset(column)"
               ></span>
             }
@@ -106,17 +106,17 @@
           @if (selectable()) {
             <td
               [class]="headerCellClasses"
-              [class.sticky]="selectionPinned()"
-              [class.z-3]="selectionPinned()"
-              [style.left.px]="selectionPinned() ? 0 : null"
+              [class.sticky]="layout.selectionPinned()"
+              [class.z-3]="layout.selectionPinned()"
+              [style.left.px]="layout.selectionPinned() ? 0 : null"
             ></td>
           }
           @for (column of visibleColumns(); track column.key()) {
             <!-- `<td>` y no `<th>`: un segundo `<th>` daría dos nombres por columna, o uno vacío que axe reporta. -->
             <td
-              [class]="headerCellClasses + ' pb-2 ' + pinClasses(column, true)"
-              [style.left.px]="pinStart(column)"
-              [style.right.px]="pinEnd(column)"
+              [class]="headerCellClasses + ' pb-2 ' + layout.pinClasses(column, true)"
+              [style.left.px]="layout.pinStart(column)"
+              [style.right.px]="layout.pinEnd(column)"
             >
               @if (column.filterable()) {
                 @switch (column.type()) {
@@ -233,12 +233,13 @@
             <td
               role="gridcell"
               [class]="cellClasses"
-              [class.sticky]="selectionPinned()"
-              [class.z-1]="selectionPinned()"
-              [class.bg-inherit]="selectionPinned()"
-              [style.left.px]="selectionPinned() ? 0 : null"
+              [class.sticky]="layout.selectionPinned()"
+              [class.z-1]="layout.selectionPinned()"
+              [class.bg-inherit]="layout.selectionPinned()"
+              [style.left.px]="layout.selectionPinned() ? 0 : null"
               [attr.data-cell]="rowIndex + '-0'"
               [attr.tabindex]="isFocused(rowIndex, 0) ? 0 : -1"
+              (click)="onSelectClick($event)"
               (focus)="onCellFocus(rowIndex, 0)"
               (keydown)="onKeydown($event, rowIndex)"
             >
@@ -256,9 +257,9 @@
           @for (column of visibleColumns(); track column.key(); let columnIndex = $index) {
             <td
               role="gridcell"
-              [class]="cellClassesFor(column) + ' ' + pinClasses(column, false)"
-              [style.left.px]="pinStart(column)"
-              [style.right.px]="pinEnd(column)"
+              [class]="cellClassesFor(column) + ' ' + layout.pinClasses(column, false)"
+              [style.left.px]="layout.pinStart(column)"
+              [style.right.px]="layout.pinEnd(column)"
               [attr.data-cell]="rowIndex + '-' + (selectable() ? columnIndex + 1 : columnIndex)"
               [attr.tabindex]="
                 isFocused(rowIndex, selectable() ? columnIndex + 1 : columnIndex) ? 0 : -1
@@ -407,6 +408,9 @@
     </tbody>
   </table>
 </div>
+
+<!-- Siempre presente: una región viva que aparece con su primer mensaje se anuncia mal. -->
+<p class="sr-only" role="status" aria-live="polite" data-table-announce>{{ announcement() }}</p>
 
 @if (showPagination()) {
   <div data-pagination>

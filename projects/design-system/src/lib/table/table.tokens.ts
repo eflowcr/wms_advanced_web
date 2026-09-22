@@ -44,6 +44,13 @@ export interface TableMessages {
   readonly columns: string;
   /** Nombre del separador: «Ancho de la columna Código». */
   readonly resizeColumn: (column: string) => string;
+
+  // Selección: la barra de acciones masivas y lo que se anuncia.
+  /** «1 seleccionada», «3 seleccionadas». */
+  readonly selectedCount: (count: number) => string;
+  readonly clearSelection: string;
+  /** Lo copiado con Ctrl+C: «3 filas copiadas». */
+  readonly copied: (rows: number) => string;
 }
 
 /** Solo lo que se muestra: ordenar y filtrar usan el valor crudo. Ver vault: Tabla §2. */

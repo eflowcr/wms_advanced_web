@@ -1654,6 +1654,38 @@ test.describe('DS-3 lote C: la tabla', () => {
     await expect(page.locator(`${DEMO} th[data-col="fecha"]`)).toHaveCount(0);
   });
 
+  test('selection with intent: Shift marks a range, the bar acts on it, Ctrl+C pastes into Excel', async ({
+    page,
+    context,
+  }) => {
+    await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+    await page.goto(TABLE);
+    await ready(page);
+
+    const boxes = page.locator(`${ROWS} input[type="checkbox"]`);
+    await boxes.nth(0).click();
+    await boxes.nth(3).click({ modifiers: ['Shift'] });
+    await expect(page.locator(`${DEMO} [data-selected-count]`)).toHaveText('4 seleccionadas');
+    await expect(page.locator(`${DEMO} [data-table-announce]`)).toHaveText('4 seleccionadas');
+
+    await page.locator(`${DEMO} [data-bulk-action="imprimir"] button`).click();
+    await expect(page.locator('[data-bulk-choice]')).toHaveText('Imprimir etiquetas · 4 expediciones');
+
+    await page.locator(`${DEMO} [data-cell="0-1"]`).focus();
+    await page.keyboard.press('Control+c');
+    await expect(page.locator(`${DEMO} [data-table-announce]`)).toHaveText('4 filas copiadas');
+    const pasted = await page.evaluate(() => navigator.clipboard.readText());
+    // Chromium en Windows devuelve CRLF, que es lo que espera Excel.
+    const lines = pasted.split(/\r?\n/);
+    expect(lines).toHaveLength(5);
+    expect(lines[0]).toBe('Código\tCliente / artículo\tFecha\tBultos\tEstado');
+    // Número sin separador y fecha ISO: Excel los lee como dato, no como texto.
+    expect(lines[1]).toMatch(/^EXP-2026-0400\t.+\t\d{4}-\d{2}-\d{2}\t\d+\t/);
+
+    await page.locator(`${DEMO} [data-clear-selection] button`).click();
+    await expect(page.locator(`${DEMO} [data-bulk-bar]`)).toHaveCount(0);
+  });
+
   test('the quick filter narrows the table, and the empty state is the projected one', async ({
     page,
   }) => {

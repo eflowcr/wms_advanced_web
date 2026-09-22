@@ -26,8 +26,10 @@
     "table": {
       "childrenFailed": "No se pudieron cargar las líneas.",
       "clearFilters": "Limpiar filtros",
+      "clearSelection": "Quitar selección",
       "collapse": "Contraer la fila",
       "columns": "Columnas",
+      "copied": "{rows, plural, one {# fila copiada} other {# filas copiadas}}",
       "density": "Densidad",
       "densityMd": "Media",
       "densitySm": "Compacta",
@@ -48,6 +50,7 @@
       "search": "Buscar en la tabla",
       "selectAll": "Seleccionar todas las filas visibles",
       "selectRow": "Seleccionar la fila",
+      "selectedCount": "{count, plural, one {# seleccionada} other {# seleccionadas}}",
       "setAll": "Todos",
       "setNone": "Ninguno",
       "setSummary": "{chosen, plural, =0 {{{ column }}: ninguno} other {{{ column }}: # de {{ total }}}}",

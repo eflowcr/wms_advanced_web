@@ -70,6 +70,40 @@
   </div>
 </div>
 
+@if (table.selectedCount() > 0) {
+  <!-- Acciones masivas: con algo seleccionado la barra dice cuánto y qué se puede hacer. -->
+  <div
+    class="flex flex-wrap items-center gap-2 rounded-md border border-default bg-row-selected px-3 py-2"
+    data-bulk-bar
+  >
+    <span class="text-h4 text-primary" data-selected-count>
+      {{ text.selectedCount(table.selectedCount()) }}
+    </span>
+    @for (item of table.bulkActions(); track item.id) {
+      <ewms-button
+        [variant]="item.tone === 'danger' ? 'danger' : 'secondary'"
+        size="sm"
+        [icon]="item.icon ?? null"
+        [disabled]="item.disabled ?? false"
+        [attr.data-bulk-action]="item.id"
+        (click)="table.runBulk(item)"
+      >
+        {{ item.label }}
+      </ewms-button>
+    }
+    <ewms-button
+      class="ms-auto"
+      variant="ghost"
+      size="sm"
+      icon="x"
+      data-clear-selection
+      (click)="table.clearSelection()"
+    >
+      {{ text.clearSelection }}
+    </ewms-button>
+  </div>
+}
+
 @if (table.filtering.chips().length > 0) {
   <ul class="flex flex-wrap items-center gap-2" data-filter-chips>
     @for (chip of table.filtering.chips(); track chip.key) {

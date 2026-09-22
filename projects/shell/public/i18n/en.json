@@ -26,8 +26,10 @@
     "table": {
       "childrenFailed": "The lines could not be loaded.",
       "clearFilters": "Clear filters",
+      "clearSelection": "Clear selection",
       "collapse": "Collapse the row",
       "columns": "Columns",
+      "copied": "{rows, plural, one {# row copied} other {# rows copied}}",
       "density": "Density",
       "densityMd": "Comfortable",
       "densitySm": "Compact",
@@ -48,6 +50,7 @@
       "search": "Search the table",
       "selectAll": "Select every visible row",
       "selectRow": "Select the row",
+      "selectedCount": "{count, plural, one {# selected} other {# selected}}",
       "setAll": "All",
       "setNone": "None",
       "setSummary": "{chosen, plural, =0 {{{ column }}: none} other {{{ column }}: # of {{ total }}}}",

@@ -184,6 +184,11 @@ function tableMessages(): TableMessages {
       return transloco.translate('ds.table.columns');
     },
     resizeColumn: (column) => transloco.translate('ds.table.resizeColumn', { column }),
+    selectedCount: (count) => transloco.translate('ds.table.selectedCount', { count }),
+    get clearSelection() {
+      return transloco.translate('ds.table.clearSelection');
+    },
+    copied: (rows) => transloco.translate('ds.table.copied', { rows }),
   };
 }
 

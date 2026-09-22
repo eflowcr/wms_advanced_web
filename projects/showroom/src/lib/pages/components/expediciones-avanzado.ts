@@ -28,6 +28,12 @@ export const ACCIONES_FILA: readonly MenuItem[] = [
   { id: 'anular', label: 'Anular', icon: 'trash', tone: 'danger', separatorBefore: true },
 ];
 
+/** Lo que se hace con varias a la vez: la barra de la tabla las muestra con la selección. */
+export const ACCIONES_MASIVAS: readonly MenuItem[] = [
+  { id: 'imprimir', label: 'Imprimir etiquetas', icon: 'label-print' },
+  { id: 'anular', label: 'Anular', icon: 'trash', tone: 'danger' },
+];
+
 /**
  * Hijos con retraso; los de una cabecera con incidencia fallan siempre. La tabla
  * pinta «Cargando…» y «No se pudo cargar» con reintento sin que el consumidor escriba nada.

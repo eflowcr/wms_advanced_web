@@ -68,9 +68,11 @@ export {
   emptyQuery,
   isDateRange,
   isNumberRange,
+  isSetFilter,
   readCell,
   type DateRange,
   type NumberRange,
+  type SetFilter,
   type TableFilterValue,
   type TablePage,
   type TableQuery,
@@ -95,6 +97,11 @@ export {
   type TableColumnType,
   type TableColumnWidth,
   type TableDensity,
+  type BulkActionEvent,
+  type ExportRequest,
+  type TableAggregate,
+  type TablePin,
+  type TableView,
 } from './lib/table/table.types';
 export { expandableKeys, flattenTree, type FlattenOptions } from './lib/table/tree';
 export { menuItemClasses, moveMenuIndex } from './lib/menu/menu';

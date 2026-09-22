@@ -22,7 +22,7 @@ import {
   type TableFormatters,
   type TableMessages,
 } from './table.tokens';
-import type { BadgeDictionary, MenuItem, TableView } from './table.types';
+import type { BadgeDictionary, BulkActionEvent, MenuItem, TableView } from './table.types';
 
 interface Row {
   readonly id: string;
@@ -85,6 +85,9 @@ const MESSAGES: TableMessages = {
     chosen === total ? `${column}: todos` : `${column}: ${chosen} de ${total}`,
   columns: 'Columnas',
   resizeColumn: (column) => `Ancho de la columna ${column}`,
+  selectedCount: (count) => `${count} seleccionadas`,
+  clearSelection: 'Quitar selección',
+  copied: (rows) => `${rows} filas copiadas`,
 };
 
 const DATE_WORDS = {
@@ -116,6 +119,8 @@ const FORMATTERS: TableFormatters = {
       (rowActivate)="activated = $event.row.codigo"
       (selectionChange)="selection = $event"
       (queryChange)="lastQuery = $event"
+      [bulkActions]="bulk"
+      (bulkAction)="lastBulk = $event"
     >
       <ewms-column key="codigo" header="Código" [sortable]="true" [filterable]="true" />
       <ewms-column
@@ -152,6 +157,11 @@ class TestHost {
   activated = '';
   selection: readonly Row[] = [];
   lastQuery: TableQuery | null = null;
+  readonly bulk: readonly MenuItem[] = [
+    { id: 'imprimir', label: 'Imprimir etiquetas' },
+    { id: 'anular', label: 'Anular', tone: 'danger' },
+  ];
+  lastBulk: BulkActionEvent<Row> | null = null;
 }
 
 function clearOverlays(): void {
@@ -486,6 +496,89 @@ describe('Table', () => {
       selectAll().dispatchEvent(new Event('change'));
       await settle();
       expect(host.selection.length).toBe(0);
+    });
+
+    it('SHIFT MARKS A RANGE from the last one touched, by click and by Space', async () => {
+      checkboxes()[0]!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      await settle();
+      checkboxes()[2]!.dispatchEvent(new MouseEvent('click', { bubbles: true, shiftKey: true }));
+      await settle();
+      expect(host.selection.map((row) => row.codigo)).toEqual(['EXP-0001', 'EXP-0002', 'EXP-0003']);
+
+      // Con el teclado: se limpia y el rango va de la fila 2 a la 0.
+      (fixture.nativeElement.querySelector('[data-clear-selection] button') as HTMLElement).click();
+      await settle();
+      const space = (row: number, shiftKey: boolean): void => {
+        const cell = fixture.nativeElement.querySelector(`[data-cell="${row}-0"]`) as HTMLElement;
+        cell.dispatchEvent(new KeyboardEvent('keydown', { key: ' ', shiftKey, bubbles: true }));
+      };
+      space(2, false);
+      space(0, true);
+      await settle();
+      expect(host.selection.length).toBe(3);
+    });
+
+    it('the bulk bar says how many, runs the declared actions and clears, out loud', async () => {
+      tick(checkboxes()[0]!);
+      tick(checkboxes()[2]!);
+      await settle();
+      const bar = fixture.nativeElement.querySelector('[data-bulk-bar]') as HTMLElement;
+      expect(bar.querySelector('[data-selected-count]')?.textContent?.trim()).toBe('2 seleccionadas');
+      expect(fixture.nativeElement.querySelector('[data-table-announce]')?.textContent).toBe(
+        '2 seleccionadas',
+      );
+      expect(bar.querySelector('[data-bulk-action="anular"] button')?.className).toContain('danger');
+
+      (bar.querySelector('[data-bulk-action="imprimir"] button') as HTMLElement).click();
+      expect(host.lastBulk?.item.id).toBe('imprimir');
+      expect(host.lastBulk?.rows.map((row) => row.codigo)).toEqual(['EXP-0001', 'EXP-0003']);
+
+      // Una acción deshabilitada se ve y no hace nada.
+      host.lastBulk = null;
+      (fixture.debugElement.query(By.directive(Table)).componentInstance as Table<Row>).runBulk({
+        id: 'x',
+        label: 'Deshabilitada',
+        disabled: true,
+      });
+      expect(host.lastBulk).toBeNull();
+
+      (bar.querySelector('[data-clear-selection] button') as HTMLElement).click();
+      await settle();
+      expect(host.selection).toEqual([]);
+      expect(fixture.nativeElement.querySelector('[data-bulk-bar]')).toBeNull();
+    });
+
+    it('Ctrl+C copies what is selected, or the focused row, as tab-separated text', async () => {
+      const copied: string[] = [];
+      Object.defineProperty(navigator, 'clipboard', {
+        configurable: true,
+        value: { writeText: (text: string) => (copied.push(text), Promise.resolve()) },
+      });
+      const press = (row: number): void => {
+        const cell = fixture.nativeElement.querySelector(`[data-cell="${row}-1"]`) as HTMLElement;
+        cell.dispatchEvent(new KeyboardEvent('keydown', { key: 'c', ctrlKey: true, bubbles: true }));
+      };
+
+      press(1);
+      await settle();
+      // Encabezados y datos crudos: el número sin formato, la fecha ISO, el estado por su etiqueta.
+      expect(copied[0]).toBe(
+        'Código\tBultos\tFecha\tEstado\nEXP-0002\t900\t2026-02-03\tCon incidencia',
+      );
+      expect(fixture.nativeElement.querySelector('[data-table-announce]')?.textContent).toBe(
+        '1 filas copiadas',
+      );
+
+      tick(checkboxes()[0]!);
+      tick(checkboxes()[2]!);
+      await settle();
+      press(1);
+      await settle();
+      expect(copied[1]?.split('\n').map((line) => line.split('\t')[0])).toEqual([
+        'Código',
+        'EXP-0001',
+        'EXP-0003',
+      ]);
     });
 
     it('is not rendered at all when the table is not selectable', async () => {
@@ -1713,7 +1806,22 @@ describe('Table columns', () => {
 
   let fixture: ComponentFixture<ColumnsHost>;
 
+  /** jsdom no tiene ResizeObserver: uno que cuenta lo que observa prueba que la tabla lo usa. */
+  const observed: Element[] = [];
+
   beforeEach(async () => {
+    observed.length = 0;
+    vi.stubGlobal(
+      'ResizeObserver',
+      class {
+        observe(target: Element): void {
+          observed.push(target);
+        }
+        disconnect(): void {
+          observed.length = 0;
+        }
+      },
+    );
     document.documentElement.style.setProperty('--col-resize-step', pixels(STEP));
     document.documentElement.style.setProperty('--col-filter-min-width', pixels(MIN));
     await TestBed.configureTestingModule({
@@ -1729,6 +1837,7 @@ describe('Table columns', () => {
   });
 
   afterEach(() => {
+    vi.unstubAllGlobals();
     document.documentElement.style.removeProperty('--col-resize-step');
     document.documentElement.style.removeProperty('--col-filter-min-width');
     fixture.nativeElement.remove();
@@ -1756,6 +1865,10 @@ describe('Table columns', () => {
     (fixture.nativeElement.querySelector('[data-column-chooser] button') as HTMLElement).click();
     await settle();
   }
+
+  it('re-measures when the table changes size: it observes the table itself', () => {
+    expect(observed).toEqual([fixture.nativeElement.querySelector('table')]);
+  });
 
   it('PINNED GOES TO THE EDGES: start first, end last, sticky, with a separator', () => {
     expect(headers()).toEqual(['codigo', 'bultos', 'fecha', 'acciones']);

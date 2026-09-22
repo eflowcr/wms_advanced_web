@@ -1391,6 +1391,13 @@ describe('ShowroomTable', () => {
     await fixture.whenStable();
     expect(element.querySelector('[data-selection-count]')?.textContent).toBe('1');
 
+    // La barra de la tabla ofrece las acciones masivas de la demo, y la demo anota la elegida.
+    element.querySelector<HTMLButtonElement>('[data-bulk-action="imprimir"] button')!.click();
+    await fixture.whenStable();
+    expect(element.querySelector('[data-bulk-choice]')?.textContent).toBe(
+      'Imprimir etiquetas · 1 expediciones',
+    );
+
     element.querySelector<HTMLButtonElement>('[data-demo-table] [data-sort="bultos"]')!.click();
     await fixture.whenStable();
     expect(element.querySelector('[data-query]')?.textContent).toContain('bultos asc');

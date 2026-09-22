@@ -15,6 +15,7 @@ import {
   EmptyTemplate,
   Table,
   TableColumn,
+  type BulkActionEvent,
   type RowActivateEvent,
   type RowMenuEvent,
   type TableQuery,
@@ -27,6 +28,7 @@ import { TokenValue } from '../../ui/token-value';
 import { ESTADOS, EXPEDICIONES, type ExpedicionRow } from './expediciones';
 import {
   ACCIONES_FILA,
+  ACCIONES_MASIVAS,
   CABECERAS,
   FuentePaginada,
   hijosPerezosos,
@@ -50,9 +52,11 @@ const CONSUMER_TEMPLATE = [
   '  [selectable]="true"',
   '  [quickFilter]="true"',
   '  [columnChooser]="true"',
+  '  [bulkActions]="masivas"',
   '  ariaLabel="Expediciones"',
   '  (rowActivate)="abrir($event)"',
   '  (selectionChange)="seleccion.set($event)"',
+  '  (bulkAction)="masiva($event)"',
   '  (queryChange)="consulta.set($event)"',
   '>',
   '  <ewms-column key="codigo" header="Código" width="md" pinned="start" [sortable]="true" [filterable]="true" />',
@@ -238,6 +242,8 @@ export class ShowroomTable {
   // --------------------------------------------------------------- lote D
 
   protected readonly accionesFila = ACCIONES_FILA;
+  protected readonly masivas = ACCIONES_MASIVAS;
+  protected readonly ultimaMasiva = signal('(ninguna)');
   protected readonly hijosPerezosos = hijosPerezosos;
 
   /** Las cabeceras solas, para la demo de detalle y menú. */
@@ -309,6 +315,11 @@ export class ShowroomTable {
       ]),
     );
     this.ubicacionesCargadas.set(UBICACIONES_TOTAL);
+  }
+
+  /** No hace nada: lo anota, como el resto de las demos. */
+  protected masiva(event: BulkActionEvent<ExpedicionRow>): void {
+    this.ultimaMasiva.set(`${event.item.label} · ${event.rows.length} expediciones`);
   }
 
   protected elegir(event: RowMenuEvent<ExpedicionRow>): void {
