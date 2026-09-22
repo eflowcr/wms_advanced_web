@@ -28,7 +28,7 @@ interface MenuHost<Target> {
   readonly viewContainerRef: ViewContainerRef;
   readonly document: Document;
   /** Al cerrar, el foco vuelve a quien lo abrió (la fila, la cabecera), no al documento. */
-  readonly closed: (target: Target) => void;
+  readonly closed: (target: Target, anchor: HTMLElement | null) => void;
   readonly chosen: (target: Target, item: MenuItem) => void;
 }
 
@@ -55,6 +55,8 @@ export class TableMenu<Target> {
   });
 
   private overlay: OverlayRef | null = null;
+  /** Quien lo abrió: el foco vuelve ahí (la cabecera con Shift+F10, el ⋮ con un clic). */
+  private anchor: HTMLElement | null = null;
 
   // Chromium/X11 manda `contextmenu` al pulsar y `auxclick` al soltar, y cerraba el menú
   // recién abierto (defecto 2a88b80). Solo un `pointerdown` nuevo lo puede cerrar.
@@ -88,6 +90,7 @@ export class TableMenu<Target> {
       return;
     }
     this.target.set(target);
+    this.anchor = anchor;
     this.index.set(-1);
     this.overlay = createMenuOverlay(
       this.host.injector,
@@ -125,7 +128,7 @@ export class TableMenu<Target> {
     this.target.set(null);
     this.index.set(-1);
     if (target !== null) {
-      this.host.closed(target);
+      this.host.closed(target, this.anchor);
     }
   }
 

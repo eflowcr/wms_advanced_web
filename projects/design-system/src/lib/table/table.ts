@@ -591,13 +591,15 @@ export class Table<T> implements TableContext {
     injector: this.injector,
     viewContainerRef: this.viewContainerRef,
     document: this.host.nativeElement.ownerDocument,
-    // Tras pintar: fijar u ocultar mueve la cabecera, y mover un nodo le quita el foco.
-    closed: (column) =>
+    // Tras pintar: fijar u ocultar mueve la cabecera, y mover un nodo le quita el foco. Oculta, el
+    // foco va a la cabecera vecina que quedó en su lugar.
+    closed: (column, anchor) =>
       afterNextRender(
         () =>
-          this.host.nativeElement
-            .querySelector<HTMLElement>(`th[data-col="${column.key()}"] [data-column-menu] button`)
-            ?.focus(),
+          (anchor?.isConnected
+            ? anchor
+            : this.host.nativeElement.querySelector<HTMLElement>('th[data-col] [data-sort], th[data-col] [data-resize]')
+          )?.focus(),
         { injector: this.injector },
       ),
     chosen: (column, item) => this.columnActions.run(item.id as ColumnAction, column),

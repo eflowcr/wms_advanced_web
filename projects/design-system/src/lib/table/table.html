@@ -129,7 +129,7 @@
                   [label]="text().columnMenu(name)"
                   [expanded]="columnMenu.target() === column"
                   data-column-menu
-                  (click)="columnMenu.open(column, $any($event).currentTarget)"
+                  (click)="columnMenu.open(column, $any($event).target.closest('button'))"
                 />
               </div>
               @if (column.type() !== 'actions') {

@@ -1826,7 +1826,8 @@ test.describe('DS-3 lote C: la tabla', () => {
     await page.keyboard.press('Enter');
     await expect(page.locator(`${DEMO} th[data-col="fecha"]`)).toHaveAttribute('data-pin', 'end');
     await expect(page.locator(`${DEMO} th[data-col]`).last()).toHaveAttribute('data-col', 'fecha');
-    await expect(page.locator(`${DEMO} th[data-col="fecha"] [data-column-menu] button`)).toBeFocused();
+    // El foco vuelve a quien lo abrió: la cabecera, que se movió con la columna.
+    await expect(page.locator(`${DEMO} [data-sort="fecha"]`)).toBeFocused();
 
     await page.locator(`${DEMO} [data-sort="bultos"]`).click();
     await page.locator(`${DEMO} [data-sort="codigo"]`).click({ modifiers: ['Shift'] });
