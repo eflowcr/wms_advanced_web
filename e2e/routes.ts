@@ -20,6 +20,7 @@ export const TABLE = '/design-system/components/table';
 export const PAGINATION = '/design-system/components/pagination';
 export const SPLIT_BUTTON = '/design-system/components/split-button';
 export const DATE_PICKER = '/design-system/components/date-picker';
+export const NAVIGATION = '/design-system/components/navigation';
 export const KEYBOARD = '/design-system/patterns/keyboard';
 export const SEARCH_CREATE_EDIT = '/design-system/patterns/search-create-edit';
 export const EMPTY_STATE = '/design-system/patterns/empty-state';
@@ -53,6 +54,7 @@ export const PAGES = [
   { url: PAGINATION, heading: 'Paginación' },
   { url: SPLIT_BUTTON, heading: 'Split button' },
   { url: DATE_PICKER, heading: 'Date picker' },
+  { url: NAVIGATION, heading: 'Navegación' },
   { url: KEYBOARD, heading: 'Atajos de teclado' },
   { url: SEARCH_CREATE_EDIT, heading: 'Buscar, crear, editar' },
   { url: EMPTY_STATE, heading: 'Estado vacío' },

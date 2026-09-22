@@ -37,7 +37,7 @@ export class ScanDetector {
     }
 
     // Una pistola no manda teclas con nombre ni modificadores: cualquiera de ellas corta la
-    // ráfaga (mantener la flecha abajo imitaba un escaneo). Ver vault: Search-Select.
+    // ráfaga (mantener la flecha abajo imitaba un escaneo). Ver vault: Select.
     if (event.key.length !== 1 || event.ctrlKey || event.altKey || event.metaKey) {
       this.reset();
       return KEY;

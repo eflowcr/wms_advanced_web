@@ -39,7 +39,7 @@ testem.log
 /typings
 __screenshots__/
 
-# Claude Code
+# Configuración local del agente de desarrollo
 # La config local del agente es de la máquina (rutas y permisos de acá). Se ignora el
 # archivo y no la carpeta: un `.claude/settings.json` compartido sí se versiona.
 .claude/settings.local.json
@@ -58,8 +58,6 @@ Thumbs.db
 # Utilidades de una sola vez de la máquina del desarrollador, fuera del proyecto. Un
 # script que sí sea del proyecto va en una carpeta propia, con `git add -f`.
 /*.ps1
-limpieza-ewms.ps1
-commit-unico.ps1
 
 # Salida del arnés visual del showroom (npm run showroom:capture): capturas para mirar,
 # no líneas base. Ver playwright.capture.config.ts.

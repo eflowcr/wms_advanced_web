@@ -1,5 +1,5 @@
 // Aspecto y teclado de toda lista flotante, compartidos por Select y Search Select (HG-04
-// de REQ-FE-DS3-001). Ver vault: Search-Select.
+// de REQ-FE-DS3-001). Ver vault: Select.
 
 /**
  * La altura máxima con scroll no es un tope de filas. El ancho completo es obligatorio: el
