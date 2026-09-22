@@ -93,6 +93,26 @@ export class TableViewState {
     return index >= 0 && group[index + delta] !== undefined;
   }
 
+  /** Algo difiere de lo declarado: habilita «Restablecer vista». */
+  readonly customised = computed(() => {
+    const order = this.order();
+    const declared = this.columns().map((column) => column.key());
+    return (
+      this.hidden().size > 0 ||
+      Object.keys(this.widths()).length > 0 ||
+      Object.keys(this.pins()).length > 0 ||
+      (order !== null && this.orderedColumns().some((column, i) => column.key() !== declared[i]))
+    );
+  });
+
+  /** Orden, visibles, anchos y fijadas vuelven a lo declarado. La densidad la vuelve la tabla. */
+  reset(): void {
+    this.order.set(null);
+    this.hidden.set(new Set());
+    this.widths.set({});
+    this.pins.set({});
+  }
+
   /** Posición entre las visibles, base 1. */
   positionOf(column: TableColumn): ColumnPosition {
     const visible = this.visibleColumns();

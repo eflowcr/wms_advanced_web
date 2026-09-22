@@ -161,6 +161,12 @@ function tableMessages(): TableMessages {
       return transloco.translate('ds.table.clearFilters');
     },
     removeFilter: (column) => transloco.translate('ds.table.removeFilter', { column }),
+    get view() {
+      return transloco.translate('ds.table.view');
+    },
+    get resetView() {
+      return transloco.translate('ds.table.resetView');
+    },
     get density() {
       return transloco.translate('ds.table.density');
     },

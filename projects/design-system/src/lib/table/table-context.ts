@@ -36,6 +36,8 @@ export interface TableContext {
   toggleFilters(): void;
   moveColumn(column: TableColumn, delta: 1 | -1): void;
   setDensity(density: TableDensity): void;
+  readonly viewChanged: Signal<boolean>;
+  resetView(): void;
 }
 
 export const TABLE_CONTEXT = new InjectionToken<TableContext>('TABLE_CONTEXT');

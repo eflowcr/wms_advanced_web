@@ -114,6 +114,8 @@ export const TABLE_MESSAGES: TableMessages = {
   filters: (active) => (active === 0 ? 'Filtros' : `Filtros (${active})`),
   clearFilters: 'Limpiar filtros',
   removeFilter: (column) => `Quitar el filtro ${column}`,
+  view: 'Vista',
+  resetView: 'Restablecer vista',
   density: 'Densidad',
   densityMd: 'Media',
   densitySm: 'Compacta',

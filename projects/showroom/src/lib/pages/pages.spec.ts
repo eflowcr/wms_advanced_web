@@ -1410,7 +1410,7 @@ describe('ShowroomTable', () => {
     expect(element.querySelector('[data-query]')?.textContent).toContain('bultos asc, codigo asc');
 
     // Mover una columna se anuncia con las palabras del showroom.
-    element.querySelector<HTMLButtonElement>('[data-demo-table] [data-column-chooser] button')!.click();
+    element.querySelector<HTMLButtonElement>('[data-demo-table] [data-view-menu] button')!.click();
     await fixture.whenStable();
     document.querySelector<HTMLButtonElement>('[data-column-row="cliente"] [data-column-down] button')!.click();
     await fixture.whenStable();

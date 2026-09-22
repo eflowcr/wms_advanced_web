@@ -1425,8 +1425,8 @@ test.describe('DS-3 lote C: la tabla', () => {
     await page.goto(TABLE);
     await ready(page);
 
-    // La densidad es de la barra de la tabla: un panel con dos opciones.
-    await page.locator(`${DEMO} [data-density-menu] button`).click();
+    // La densidad vive en Vista, el panel de la barra con columnas y «Restablecer vista».
+    await page.locator(`${DEMO} [data-view-menu] button`).click();
     await page.locator('[data-density="sm"]').click();
     await expect(page.locator('[data-density="sm"] input')).toBeChecked();
 
@@ -1649,9 +1649,32 @@ test.describe('DS-3 lote C: la tabla', () => {
     await expect(handle).toHaveAttribute('aria-valuenow', String(before + 16));
 
     // El selector oculta una columna y la tabla se lo cuenta a quien escucha.
-    await page.locator(`${DEMO} [data-column-chooser] button`).click();
-    await page.getByRole('dialog', { name: 'Columnas' }).getByRole('checkbox', { name: 'Fecha' }).uncheck();
+    await page.locator(`${DEMO} [data-view-menu] button`).click();
+    const view = page.getByRole('dialog', { name: 'Vista' });
+    await view.getByRole('checkbox', { name: 'Fecha' }).uncheck();
     await expect(page.locator(`${DEMO} th[data-col="fecha"]`)).toHaveCount(0);
+
+    // «Restablecer vista» solo se habilita con algo cambiado, y vuelve a lo declarado.
+    const reset = view.locator('[data-reset-view] button');
+    await expect(reset).toBeEnabled();
+    await reset.click();
+    await expect(page.locator(`${DEMO} th[data-col="fecha"]`)).toHaveCount(1);
+    await expect(reset).toBeDisabled();
+  });
+
+  test('THE TOOLBAR IS FOUR CONTROLS, and at 390 px it takes two rows at most', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto(TABLE);
+    await ready(page);
+
+    const controls = page.locator(
+      `${DEMO} [data-table-toolbar] :is([data-quick-filter], [data-filters-toggle], [data-view-menu], [data-export])`,
+    );
+    await expect(controls).toHaveCount(4);
+    const rows = await controls.evaluateAll(
+      (elements) => new Set(elements.map((element) => Math.round(element.getBoundingClientRect().top))).size,
+    );
+    expect(rows).toBeLessThanOrEqual(2);
   });
 
   test('selection with intent: Shift marks a range, the bar acts on it, Ctrl+C pastes into Excel', async ({

@@ -13,13 +13,15 @@
     </div>
   }
 
-  <div class="ms-auto flex flex-wrap items-center gap-2">
+  <div class="ms-auto flex flex-wrap items-center gap-2" data-toolbar-actions>
     @if (table.anyFilterable()) {
       <!-- Ocultar la fila no borra filtros: los activos siguen abajo como chips. -->
       <ewms-button
         variant="secondary"
         size="sm"
         icon="filter"
+        [iconOnly]="compact()"
+        [label]="compact() ? text.filters(table.filtering.count()) : null"
         [expanded]="table.filtersOpen()"
         [controls]="table.filterRowId"
         data-filters-toggle
@@ -29,8 +31,15 @@
       </ewms-button>
     }
 
-    @if (table.columnChooser()) {
-      <ewms-table-popover [label]="text.columns" icon="eye" data-column-chooser>
+    <!-- Vista: columnas, densidad y volver a lo declarado, en un solo lugar (antes eran dos botones). -->
+    <ewms-table-popover
+      [label]="text.view"
+      icon="controls"
+      [iconOnly]="compact()"
+      [panelLabel]="text.view"
+      data-view-menu
+    >
+      @if (table.columnChooser()) {
         <!-- En el orden de la tabla. Subir/Bajar es el camino que siempre sirve: táctil y lector de pantalla. -->
         <fieldset class="flex flex-col gap-1">
           <legend class="mb-1 text-caption text-secondary">{{ text.columns }}</legend>
@@ -69,22 +78,8 @@
             </div>
           }
         </fieldset>
-      </ewms-table-popover>
-    }
+      }
 
-    @if (table.exportable()) {
-      <ewms-split-button
-        size="sm"
-        icon="download"
-        [label]="text.export"
-        [actions]="exportActions()"
-        data-export
-        (primary)="table.runExport('csv')"
-        (action)="runExport($event)"
-      />
-    }
-
-    <ewms-table-popover [label]="text.density" icon="controls" data-density-menu>
       <!-- items-start: estirado, el host del radio dejaba una zona muerta a la derecha del texto. -->
       <fieldset class="flex flex-col items-start gap-2">
         <legend class="mb-1 text-caption text-secondary">{{ text.density }}</legend>
@@ -103,7 +98,32 @@
           data-density="sm"
         />
       </fieldset>
+      <!-- Habilitado solo si algo difiere de lo declarado: orden, visibles, anchos, fijadas o densidad. -->
+      <div class="border-t border-default pt-2">
+        <ewms-button
+          variant="ghost"
+          size="sm"
+          icon="refresh"
+          [disabled]="!table.viewChanged()"
+          data-reset-view
+          (click)="table.resetView()"
+        >
+          {{ text.resetView }}
+        </ewms-button>
+      </div>
     </ewms-table-popover>
+
+    @if (table.exportable()) {
+      <ewms-split-button
+        size="sm"
+        icon="download"
+        [label]="text.export"
+        [actions]="exportActions()"
+        data-export
+        (primary)="table.runExport('csv')"
+        (action)="runExport($event)"
+      />
+    }
   </div>
 </div>
 

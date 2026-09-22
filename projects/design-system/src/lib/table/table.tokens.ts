@@ -31,6 +31,9 @@ export interface TableMessages {
   readonly clearFilters: string;
   /** Nombre del botón × de un chip: «Quitar el filtro Estado». */
   readonly removeFilter: (column: string) => string;
+  /** El botón que agrupa columnas, densidad y «Restablecer vista». */
+  readonly view: string;
+  readonly resetView: string;
   readonly density: string;
   readonly densityMd: string;
   readonly densitySm: string;

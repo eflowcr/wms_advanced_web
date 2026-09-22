@@ -84,6 +84,8 @@ const MESSAGES: TableMessages = {
   filters: (active) => (active === 0 ? 'Filtros' : `Filtros (${active})`),
   clearFilters: 'Limpiar filtros',
   removeFilter: (column) => `Quitar el filtro ${column}`,
+  view: 'Vista',
+  resetView: 'Restablecer vista',
   density: 'Densidad',
   densityMd: 'Media',
   densitySm: 'Compacta',
@@ -722,27 +724,27 @@ describe('Table', () => {
   });
 
   describe('density', () => {
-    it('takes its height from a token, per density', async () => {
+    it('takes its height from a token; chosen in Vista, «Restablecer vista» brings it back', async () => {
       expect(bodyRows()[0]?.style.height).toBe('var(--row-height-md)');
-
-      host.density.set('sm');
+      (fixture.nativeElement.querySelector('[data-view-menu] button') as HTMLElement).click();
+      await settle();
+      const reset = (): HTMLButtonElement =>
+        document.querySelector('[data-reset-view] button') as HTMLButtonElement;
+      expect(reset().disabled).toBe(true);
+      (document.querySelector('[data-density="sm"] input') as HTMLInputElement).click();
       await settle();
       expect(bodyRows()[0]?.style.height).toBe('var(--row-height-sm)');
-    });
-
-    it('is chosen from the toolbar, starting at the declared one', async () => {
-      (fixture.nativeElement.querySelector('[data-density-menu] button') as HTMLElement).click();
+      expect(reset().disabled).toBe(false);
+      reset().click();
       await settle();
-      const compact = document.querySelector('[data-density="sm"] input') as HTMLInputElement;
-      compact.click();
-      await settle();
-      expect(bodyRows()[0]?.style.height).toBe('var(--row-height-sm)');
+      expect(bodyRows()[0]?.style.height).toBe('var(--row-height-md)');
+      expect(reset().disabled).toBe(true);
       clearOverlays();
     });
 
     it('the panel closes on Escape back to its button, on a click outside and on Tab away', async () => {
       const button = fixture.nativeElement.querySelector(
-        '[data-density-menu] button',
+        '[data-view-menu] button',
       ) as HTMLButtonElement;
       const panel = (): HTMLElement | null => document.querySelector('[role="dialog"]');
       const open = async (): Promise<void> => {
@@ -1125,20 +1127,12 @@ describe('Table with lazy children', () => {
 
     expect(fixture.nativeElement.querySelector('[data-loading="0"]')).toBeNull();
     expect(fixture.nativeElement.querySelectorAll('tbody tr:not([data-empty-row])').length).toBe(3);
-  });
 
-  it('asks only ONCE, however often the row is opened', async () => {
-    toggle();
-    await settle();
-    host.pending.next(KIDS);
-    host.pending.complete();
-    await settle();
-
+    // Pide una sola vez, por más que se abra la fila.
     toggle();
     await settle();
     toggle();
     await settle();
-
     expect(host.subscriptions).toBe(1);
   });
 
@@ -1332,7 +1326,7 @@ describe('Table master/detail', () => {
     expect(cell.textContent).toContain('Detalle de EXP-0001');
   });
 
-  it('says on the BUTTON that it is open, and what it opened', async () => {
+  it('says on the BUTTON that it is open and what it opened; panels open and fold alone', async () => {
     const button = toggle(0) as HTMLButtonElement;
     expect(button.getAttribute('aria-expanded')).toBe('false');
     expect(button.getAttribute('aria-controls')).toBeNull();
@@ -1345,12 +1339,8 @@ describe('Table master/detail', () => {
     expect(opened.getAttribute('aria-expanded')).toBe('true');
     const cell = panels()[0]?.querySelector('td') as HTMLElement;
     expect(opened.getAttribute('aria-controls')).toBe(cell.id);
-  });
 
-  // Y cada panel recibe su fila, no la primera.
-  it('opens as many panels as somebody asks for, and folds each back alone', async () => {
-    toggle(0)?.click();
-    await settle();
+    // Abre tantos paneles como se pidan, cada uno con su fila, y pliega cada uno solo.
     toggle(1)?.click();
     await settle();
     expect(panels().length).toBe(2);
@@ -1919,13 +1909,14 @@ describe('Table columns', () => {
     document.querySelector(`[data-column-option="${key}"] input`) as HTMLInputElement;
 
   async function openChooser(): Promise<void> {
-    (fixture.nativeElement.querySelector('[data-column-chooser] button') as HTMLElement).click();
+    (fixture.nativeElement.querySelector('[data-view-menu] button') as HTMLElement).click();
     await settle();
   }
 
   it('PINNED GOES TO THE EDGES: start first, end last, sticky, with a separator', () => {
-    // Vuelve a medir cuando la tabla cambia de tamaño: observa la tabla misma.
-    expect(observed).toEqual([fixture.nativeElement.querySelector('table')]);
+    // Vuelve a medir cuando la tabla cambia de tamaño (y la barra, para compactarse).
+    expect(observed).toContain(fixture.nativeElement.querySelector('table'));
+    expect(observed).toContain(fixture.nativeElement.querySelector('ewms-table-toolbar'));
     expect(headers()).toEqual(['codigo', 'bultos', 'fecha', 'acciones']);
     expect(header('codigo').className).toContain('sticky');
     expect(header('codigo').className).toContain('border-e');
@@ -1971,7 +1962,7 @@ describe('Table columns', () => {
     document.body.appendChild(two.nativeElement);
     two.detectChanges();
     await two.whenStable();
-    (two.nativeElement.querySelector('[data-column-chooser] button') as HTMLElement).click();
+    (two.nativeElement.querySelector('[data-view-menu] button') as HTMLElement).click();
     two.detectChanges();
     await two.whenStable();
 
@@ -2015,6 +2006,13 @@ describe('Table columns', () => {
     entry('hide').click();
     await settle();
     expect(fixture.componentInstance.view?.hidden).toEqual(['fecha']);
+
+    // «Restablecer vista» vuelve a lo declarado: orden, visibles y fijadas.
+    await openChooser();
+    (document.querySelector('[data-reset-view] button') as HTMLButtonElement).click();
+    await settle();
+    expect(headers()).toEqual(['codigo', 'bultos', 'fecha', 'acciones']);
+    expect(fixture.componentInstance.view?.pinned).toEqual({ codigo: 'start', acciones: 'end' });
   });
 
   it('REORDERS INSIDE ITS PIN GROUP, from the chooser and by dragging, and says where', async () => {

@@ -446,6 +446,16 @@ export class Table<T> implements TableContext {
 
   readonly layout = new TableViewState(this.columns, this.densityChoice, this.selectable);
 
+  /** «Restablecer vista» solo se habilita si algo cambió, densidad incluida. */
+  readonly viewChanged = computed(
+    () => this.layout.customised() || this.densityChoice() !== this.density(),
+  );
+
+  resetView(): void {
+    this.layout.reset();
+    this.densityChoice.set(this.density());
+  }
+
   protected readonly drag = new TableColumnDrag({
     layout: this.layout,
     columnOf: (key) => this.columns().find((column) => column.key() === key),

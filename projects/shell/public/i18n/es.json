@@ -71,6 +71,7 @@
       "pageOf": "Página {{ page }} de {{ pages }}",
       "previousPage": "Página anterior",
       "removeFilter": "Quitar el filtro {{ column }}",
+      "resetView": "Restablecer vista",
       "resizeColumn": "Ancho de la columna {{ column }}",
       "retry": "Reintentar",
       "rowMenu": "Acciones de la fila",
@@ -89,7 +90,8 @@
       "sortedAscending": "Orden ascendente",
       "sortedDescending": "Orden descendente",
       "sumSelected": "{{ column }} seleccionados",
-      "sumShown": "{{ column }} en pantalla"
+      "sumShown": "{{ column }} en pantalla",
+      "view": "Vista"
     }
   },
   "shell": {
