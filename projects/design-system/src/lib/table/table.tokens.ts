@@ -57,6 +57,10 @@ export interface TableMessages {
   readonly exportSelected: string;
   readonly copyAll: string;
 
+  // Estados de la tabla entera.
+  readonly loading: string;
+  readonly loadFailed: string;
+
   // Barra de estado.
   /** «12 de 340 filas», o «12 filas» con `total` null. */
   readonly rowsShown: (shown: number, total: number | null) => string;

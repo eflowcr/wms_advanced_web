@@ -24,9 +24,8 @@ import {
 } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
-import type { OverlayRef } from '@angular/cdk/overlay';
 import { isObservable, of, type Observable } from 'rxjs';
-import { catchError, debounceTime, skip, switchMap, tap } from 'rxjs/operators';
+import { catchError, debounceTime, map, skip, switchMap, tap } from 'rxjs/operators';
 import { Badge } from '../badge/badge';
 import { Checkbox } from '../checkbox/checkbox';
 import { familyTintClass } from '../feedback/feedback.types';
@@ -37,7 +36,7 @@ import { KeyboardShortcuts } from '../keyboard/keyboard-shortcuts';
 import { Input as TextInput } from '../input/input';
 import { Pagination } from '../pagination/pagination';
 
-import { readMilliseconds, readPixels } from '../tokens/read-token';
+import { readMilliseconds } from '../tokens/read-token';
 const DELAY_SEARCH_INPUT_TOKEN = '--delay-search-input';
 import { CellTemplate, TableColumn } from './column';
 import { TABLE_CONTEXT, type TableContext } from './table-context';
@@ -80,15 +79,8 @@ import {
   type TableDensity,
   type TableView,
 } from './table.types';
-import {
-  createMenuOverlay,
-  menuItemClasses,
-  MENU_CLASSES,
-  MENU_ICON_SLOT_CLASSES,
-  MENU_SEPARATOR_CLASSES,
-  MENU_POSITIONS,
-  moveMenuIndex,
-} from '../menu/menu';
+import { TableRowMenu } from './table-row-menu';
+import { TableWindow } from './table-window';
 import { expandableKeys, flattenTree, type FlatRow } from './tree';
 
 export type { CellContext } from './column';
@@ -115,6 +107,9 @@ export class EmptyTemplate {
 let nextTableId = 0;
 
 const EMPTY_PAGE: TablePage<never> = { rows: [], page: 0, pageSize: 0, total: 0 };
+
+/** Tinte solo en excepción: con todas teñidas, ninguna llama la atención (decisión del usuario). */
+const TINTED_STATES: readonly RowState[] = ['danger', 'warning'];
 
 /** La tabla de datos: árbol aplanado, estado de fila como dato. Ver vault: Tabla. */
 @Component({
@@ -191,7 +186,7 @@ export class Table<T> implements TableContext {
   readonly viewChange = output<TableView>();
 
   private readonly viewContainerRef = inject(ViewContainerRef);
-  private readonly menuTemplate = viewChild<TemplateRef<unknown>>('menu');
+  private readonly menuTemplate = viewChild<TemplateRef<unknown>>('rowMenuPanel');
 
   protected readonly detail = contentChild(DetailTemplate);
   protected readonly empty = contentChild(EmptyTemplate);
@@ -234,7 +229,21 @@ export class Table<T> implements TableContext {
   }));
 
   // Con la fuente: sin ella, cambiar de fuente dejaba las filas viejas en pantalla.
-  private readonly request = computed(() => ({ source: this.source(), query: this.query() }));
+  /** «Reintentar» vuelve a pedir la misma consulta: este contador es lo único que cambia. */
+  private readonly reload = signal(0);
+
+  private readonly request = computed(() => ({
+    source: this.source(),
+    query: this.query(),
+    attempt: this.reload(),
+  }));
+
+  /** Cargando no vacía la tabla: las filas quedan, atenuadas, y el alto no se mueve. */
+  protected readonly loadState = signal<'loading' | 'ready' | 'error'>('loading');
+
+  protected retryLoad(): void {
+    this.reload.update((attempt) => attempt + 1);
+  }
 
   protected readonly page = signal<TablePage<T>>({
     rows: [],
@@ -374,14 +383,23 @@ export class Table<T> implements TableContext {
     // switchMap cancela la petición en vuelo: una página 0 lenta no pisa a una página 1 rápida.
     toObservable(this.request)
       .pipe(
-        tap(({ query }) => this.queryChange.emit(query)),
+        tap(({ query }) => {
+          this.queryChange.emit(query);
+          this.loadState.set('loading');
+        }),
         switchMap(({ source, query }) =>
           // Atrapado por consulta: un error fuera del switchMap mata la suscripción para siempre.
-          source.load(query).pipe(catchError(() => of(EMPTY_PAGE as TablePage<T>))),
+          source.load(query).pipe(
+            map((page) => ({ page, failed: false })),
+            catchError(() => of({ page: EMPTY_PAGE as TablePage<T>, failed: true })),
+          ),
         ),
         takeUntilDestroyed(),
       )
-      .subscribe((page) => this.page.set(page));
+      .subscribe(({ page, failed }) => {
+        this.page.set(page);
+        this.loadState.set(failed ? 'error' : 'ready');
+      });
 
     this.typed(this.searchControl.valueChanges)
       .pipe(takeUntilDestroyed())
@@ -409,7 +427,7 @@ export class Table<T> implements TableContext {
       read: () => {
         const box = this.scrollBox()?.nativeElement;
         if (box) {
-          this.onScrollBoxReady(box);
+          this.viewport.measure(box);
         }
         // Las fuentes y el ancho de la página cambian lo que mide una columna.
         if (typeof ResizeObserver !== 'undefined' && box) {
@@ -430,12 +448,7 @@ export class Table<T> implements TableContext {
         }
       });
 
-    // El overlay vive en el body: sin esto el menú abierto sobrevive a la tabla.
-    this.destroyRef.onDestroy(() => {
-      this.releaseMenuGesture();
-      this.menuOverlay?.dispose();
-      this.menuOverlay = null;
-    });
+    this.destroyRef.onDestroy(() => this.menu.dispose());
   }
 
   private measurePins(): void {
@@ -472,7 +485,8 @@ export class Table<T> implements TableContext {
 
   protected rowClassesFor(flat: FlatRow<T>): string {
     const state = this.resolveRowState()?.(flat.row) ?? null;
-    return rowClasses(this.isSelected(flat), state ? familyTintClass(state) : '');
+    const tinted = state !== null && TINTED_STATES.includes(state);
+    return rowClasses(this.isSelected(flat), tinted ? familyTintClass(state) : '');
   }
 
   // Formateado para ver, nunca para ordenar.
@@ -807,7 +821,7 @@ export class Table<T> implements TableContext {
           return;
         }
         event.preventDefault();
-        this.openMenu(flat, event.currentTarget as HTMLElement);
+        this.menu.open(flat, event.currentTarget as HTMLElement);
         return;
 
       default:
@@ -820,21 +834,7 @@ export class Table<T> implements TableContext {
     this.focusRow.set(rowIndex);
     this.focusColumn.set(columnIndex);
 
-    const px = this.rowPixels();
-    if (this.virtualised() && px !== null) {
-      const box = this.host.nativeElement.querySelector<HTMLElement>('[data-scroll-box]');
-      if (box) {
-        const top = rowIndex * px;
-        const bottom = top + px;
-        if (top < box.scrollTop) {
-          box.scrollTop = top;
-        } else if (bottom > box.scrollTop + box.clientHeight) {
-          box.scrollTop = bottom - box.clientHeight;
-        }
-        this.scrollTop.set(box.scrollTop);
-        this.viewportHeight.set(box.clientHeight);
-      }
-    }
+    this.viewport.reveal(this.scrollBox()?.nativeElement ?? null, rowIndex);
 
     queueMicrotask(() => {
       this.host.nativeElement
@@ -868,183 +868,26 @@ export class Table<T> implements TableContext {
     this.openDetails.set(open);
   }
 
-  private menuOverlay: OverlayRef | null = null;
-
-  // Chromium/X11 manda `contextmenu` al pulsar y `auxclick` al soltar, y cerraba el menú
-  // recién abierto (defecto 2a88b80). Solo un `pointerdown` nuevo lo puede cerrar.
-  private menuGestureEnded = false;
-
-  private readonly onMenuPointerDown = (): void => {
-    this.menuGestureEnded = true;
-  };
-
-  private releaseMenuGesture(): void {
-    this.host.nativeElement.ownerDocument.removeEventListener(
-      'pointerdown',
-      this.onMenuPointerDown,
-      true,
-    );
-  }
-
-  protected readonly menuRow = signal<FlatRow<T> | null>(null);
-  protected readonly menuIndex = signal(-1);
-  protected readonly menuClasses = MENU_CLASSES;
-  protected readonly menuSeparatorClasses = MENU_SEPARATOR_CLASSES;
-  protected readonly menuIconSlotClasses = MENU_ICON_SLOT_CLASSES;
-  protected readonly menuId = `${this.tableId}-menu`;
-
-  protected readonly hasMenu = computed(() => this.menuItems().length > 0);
-
-  protected menuOptionId(index: number): string {
-    return `${this.menuId}-item-${index}`;
-  }
-
-  protected menuItemClassesFor(item: MenuItem, index: number): string {
-    return menuItemClasses(item, index === this.menuIndex());
-  }
-
-  // Clic derecho y kebab: un trackpad no tiene clic derecho.
-  protected openMenu(flat: FlatRow<T>, anchor: HTMLElement): void {
-    if (!this.hasMenu()) {
-      return;
-    }
-    this.closeMenu();
-    const template = this.menuTemplate();
-    if (!template) {
-      return;
-    }
-    this.menuRow.set(flat);
-    this.menuIndex.set(-1);
-    this.menuOverlay = createMenuOverlay(
-      this.injector,
-      anchor,
-      this.viewContainerRef,
-      template,
-      MENU_POSITIONS,
-    );
-    this.menuGestureEnded = false;
-    this.host.nativeElement.ownerDocument.addEventListener(
-      'pointerdown',
-      this.onMenuPointerDown,
-      true,
-    );
-    this.menuOverlay.outsidePointerEvents().subscribe(() => {
-      if (this.menuGestureEnded) {
-        this.closeMenu();
-      }
-    });
-    queueMicrotask(() => {
-      this.host.nativeElement.ownerDocument.querySelector<HTMLElement>(`#${this.menuId}`)?.focus();
-    });
-  }
-
-  protected onRowContextMenu(event: MouseEvent, flat: FlatRow<T>): void {
-    if (!this.hasMenu()) {
-      return;
-    }
-    event.preventDefault();
-    this.openMenu(flat, event.target as HTMLElement);
-  }
-
-  // Devuelve el foco a la fila, no al documento.
-  protected closeMenu(): void {
-    if (!this.menuOverlay) {
-      return;
-    }
-    this.releaseMenuGesture();
-    const row = this.menuRow();
-    this.menuOverlay.dispose();
-    this.menuOverlay = null;
-    this.menuRow.set(null);
-    this.menuIndex.set(-1);
-    if (row) {
+  protected readonly menu = new TableRowMenu<T>({
+    tableId: this.tableId,
+    items: () => this.menuItems(),
+    template: () => this.menuTemplate(),
+    injector: this.injector,
+    viewContainerRef: this.viewContainerRef,
+    document: this.host.nativeElement.ownerDocument,
+    closed: (row) => {
       const index = this.rows().findIndex((flat) => flat.key === row.key);
       if (index >= 0) {
         this.moveFocus(index, this.focusColumn());
       }
-    }
-  }
-
-  protected chooseMenuItem(item: MenuItem): void {
-    const row = this.menuRow();
-    if (!row || item.disabled) {
-      return;
-    }
-    this.closeMenu();
-    this.rowMenu.emit({ row: row.row, item });
-  }
-
-  protected onMenuKeydown(event: KeyboardEvent): void {
-    const items = this.menuItems();
-    switch (event.key) {
-      case 'ArrowDown':
-        event.preventDefault();
-        this.menuIndex.set(moveMenuIndex(items, this.menuIndex(), 1));
-        return;
-      case 'ArrowUp':
-        event.preventDefault();
-        this.menuIndex.set(moveMenuIndex(items, this.menuIndex(), -1));
-        return;
-      case 'Enter':
-      case ' ': {
-        const item = items[this.menuIndex()];
-        if (item) {
-          event.preventDefault();
-          this.chooseMenuItem(item);
-        }
-        return;
-      }
-      case 'Escape':
-        event.preventDefault();
-        this.closeMenu();
-        return;
-      default:
-        return;
-    }
-  }
-
-  // Sin token de altura no hay virtualización, en vez de un número inventado.
-  protected readonly rowPixels = computed(() =>
-    readPixels(this.densityChoice() === 'sm' ? '--row-height-sm' : '--row-height-md'),
-  );
-
-  protected readonly virtualised = computed(() => this.virtual() && this.rowPixels() !== null);
-
-  private readonly scrollTop = signal(0);
-  private readonly viewportHeight = signal(0);
-
-  private readonly scrollBox = viewChild<ElementRef<HTMLElement>>('scrollBox');
-
-  private readonly overscan = 6;
-
-  // No es `cdk-virtual-scroll-viewport`: su transform rompe la cabecera pegajosa.
-  // Ver vault: Tabla §10.
-  protected readonly rowWindow = computed(() => {
-    const all = this.rows();
-    const px = this.rowPixels();
-    if (!this.virtualised() || px === null) {
-      return { first: 0, rows: all, before: 0, after: 0 };
-    }
-    const visible = Math.ceil(this.viewportHeight() / px) + this.overscan * 2;
-    const first = Math.max(0, Math.floor(this.scrollTop() / px) - this.overscan);
-    const last = Math.min(all.length, first + visible);
-    return {
-      first,
-      rows: all.slice(first, last),
-      before: first * px,
-      after: (all.length - last) * px,
-    };
+    },
+    chosen: (row, item) => this.rowMenu.emit({ row: row.row, item }),
   });
 
-  protected onScroll(event: Event): void {
-    const element = event.target as HTMLElement;
-    this.scrollTop.set(element.scrollTop);
-    this.viewportHeight.set(element.clientHeight);
-  }
+  /** La ventana de `[virtual]`: qué filas se dibujan. */
+  protected readonly viewport = new TableWindow(this.rows, this.virtual, this.densityChoice);
 
-  protected onScrollBoxReady(element: HTMLElement): void {
-    this.viewportHeight.set(element.clientHeight);
-  }
+  private readonly scrollBox = viewChild<ElementRef<HTMLElement>>('scrollBox');
 
   protected onRowDblclick(flat: FlatRow<T>): void {
     this.rowActivate.emit({ row: flat.row });

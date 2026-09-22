@@ -20,7 +20,9 @@ describe('the showroom dictionaries', () => {
     });
 
     it('formats an ISO date', () => {
-      expect(TABLE_FORMATTERS.date('2026-01-15')).toContain('2026');
+      // Día y mes con dos dígitos: en columna se leen alineados. La forma y no el orden: con el ICU
+      // recortado de Node el orden cae al locale raíz; el orden español lo afirma e2e.
+      expect(TABLE_FORMATTERS.date('2026-01-05')).toMatch(/^\d{2}\/\d{2}\/2026$/);
     });
 
     it('RETURNS THE RAW VALUE RATHER THAN "Invalid Date"', () => {

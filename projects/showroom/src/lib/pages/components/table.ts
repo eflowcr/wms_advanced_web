@@ -90,13 +90,15 @@ const MATRIX_STATES: readonly MatrixAxis[] = [
   { id: 'tint', label: 'Tinte de la fila' },
 ];
 
-/** Tintes de fila escritos completos para que Tailwind vea cada clase. */
+/** Tintes de fila escritos completos para que Tailwind vea cada clase. Solo las excepciones tiñen. */
 const TINTS: Readonly<Record<string, string>> = {
-  neutral: 'bg-neutral-surface',
+  neutral: 'bg-surface',
   warning: 'bg-warning-surface',
-  success: 'bg-success-surface',
+  success: 'bg-surface',
   danger: 'bg-danger-surface',
 };
+
+const TINTED: ReadonlySet<string> = new Set(['warning', 'danger']);
 
 const LABELS: Readonly<Record<string, string>> = {
   neutral: 'Pendiente',
@@ -347,6 +349,10 @@ export class ShowroomTable {
 
   protected tintFor(variant: string): string {
     return TINTS[variant] ?? '';
+  }
+
+  protected isTinted(variant: string): boolean {
+    return TINTED.has(variant);
   }
 
   protected labelFor(variant: string): string {

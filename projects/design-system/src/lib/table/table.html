@@ -3,15 +3,14 @@
   <ewms-table-toolbar />
 }
 
-<!-- Con ventana también desplaza en vertical y tiene alto: es lo que mide la ventana. -->
 <!-- El marco lleva el borde: la barra de estado queda adentro y no desplaza con la tabla. -->
 <div class="overflow-hidden rounded-md border border-default">
+  <!-- Alto máximo por token: la cabecera pegajosa sirve siempre, y la ventana tiene qué medir. -->
   <div
-    class="overflow-x-auto"
-    [class]="virtualised() ? 'max-h-120 overflow-y-auto' : ''"
+    class="max-h-(--table-max-height) overflow-auto"
     #scrollBox
     data-scroll-box
-    (scroll)="onScroll($event)"
+    (scroll)="viewport.measure($any($event).target)"
   >
     <table
       [id]="tableId"
@@ -20,6 +19,7 @@
       [attr.aria-label]="ariaLabel()"
       [attr.aria-rowcount]="page().total ?? rows().length"
       [attr.aria-colcount]="columnCount()"
+      [attr.aria-busy]="loadState() === 'loading' ? 'true' : null"
     >
       <!-- Pegajosa; por eso la ventana es propia y no el viewport del CDK. Ver vault: Tabla §10. -->
       <thead class="sticky top-0 z-10">
@@ -123,10 +123,10 @@
                 @if (column.filterable()) {
                   @switch (column.type()) {
                     @case ('number') {
-                      <!-- Lado a lado con un mínimo legible: la columna crece antes que cortar «Desde». -->
+                      <!-- Lado a lado con un mínimo legible. Sin flechitas: Chrome les reserva ancho aunque no se vean, y cortaba «Desd». -->
                       <span class="flex gap-1" [attr.data-filter]="column.key()">
                         <ewms-input
-                          class="flex-1 min-w-(--col-filter-min-width)"
+                          class="flex-1 min-w-(--col-filter-min-width) [&_input]:[appearance:textfield] [&_input::-webkit-inner-spin-button]:appearance-none"
                           type="number"
                           size="sm"
                           [label]="text().filterFrom"
@@ -135,7 +135,7 @@
                           [formControl]="filtering.control(column, 'min')"
                         />
                         <ewms-input
-                          class="flex-1 min-w-(--col-filter-min-width)"
+                          class="flex-1 min-w-(--col-filter-min-width) [&_input]:[appearance:textfield] [&_input::-webkit-inner-spin-button]:appearance-none"
                           type="number"
                           size="sm"
                           [label]="text().filterTo"
@@ -206,16 +206,17 @@
         }
       </thead>
 
-      <tbody>
-        @if (rowWindow().before > 0) {
+      <!-- Cargando con filas: se atenúan en su lugar, y el alto de la tabla no salta. -->
+      <tbody [class.opacity-60]="loadState() === 'loading' && rows().length > 0">
+        @if (viewport.rows().before > 0) {
           <tr aria-hidden="true" data-spacer="before">
-            <td [attr.colspan]="columnCount()" [style.height.px]="rowWindow().before"></td>
+            <td [attr.colspan]="columnCount()" [style.height.px]="viewport.rows().before"></td>
           </tr>
         }
 
-        @for (flat of rowWindow().rows; track flat.key; let windowIndex = $index) {
+        @for (flat of viewport.rows().rows; track flat.key; let windowIndex = $index) {
           <!-- Índice absoluto: el teclado camina la tabla, no la ventana. -->
-          @let rowIndex = rowWindow().first + windowIndex;
+          @let rowIndex = viewport.rows().first + windowIndex;
           <tr
             role="row"
             [class]="rowClassesFor(flat)"
@@ -229,7 +230,7 @@
             [attr.aria-selected]="selectable() ? isSelected(flat) : null"
             [class.is-child]="flat.level > 0"
             (dblclick)="onRowDblclick(flat)"
-            (contextmenu)="onRowContextMenu($event, flat)"
+            (contextmenu)="menu.onContextMenu($event, flat)"
           >
             @if (selectable()) {
               <td
@@ -323,7 +324,7 @@
                           (click)="toggleDetail(flat)"
                         />
                       }
-                      @if (hasMenu()) {
+                      @if (menu.enabled()) {
                         <ewms-button
                           [iconOnly]="true"
                           variant="ghost"
@@ -331,7 +332,7 @@
                           size="sm"
                           [label]="text().rowMenu"
                           [attr.data-kebab]="rowIndex"
-                          (click)="openMenu(flat, $any($event).currentTarget)"
+                          (click)="menu.open(flat, $any($event).currentTarget)"
                         />
                       }
                     </span>
@@ -394,17 +395,41 @@
           }
         }
 
-        @if (rowWindow().after > 0) {
+        @if (viewport.rows().after > 0) {
           <tr aria-hidden="true" data-spacer="after">
-            <td [attr.colspan]="columnCount()" [style.height.px]="rowWindow().after"></td>
+            <td [attr.colspan]="columnCount()" [style.height.px]="viewport.rows().after"></td>
           </tr>
         }
 
-        @if (rows().length === 0) {
+        @if (loadState() === 'error') {
+          <!-- La fuente falló: se dice y se ofrece reintentar, no una tabla vacía que miente. -->
+          <tr role="row" data-load-error>
+            <td role="gridcell" [attr.colspan]="columnCount()" class="p-8">
+              <span class="flex items-center justify-center gap-2 text-p text-danger">
+                <ewms-icon name="circle-x" size="sm" />
+                {{ text().loadFailed }}
+                <ewms-button
+                  variant="secondary"
+                  size="sm"
+                  icon="refresh"
+                  data-load-retry
+                  (click)="retryLoad()"
+                >
+                  {{ text().retry }}
+                </ewms-button>
+              </span>
+            </td>
+          </tr>
+        } @else if (rows().length === 0) {
           <tr role="row" data-empty-row>
             <td role="gridcell" [attr.colspan]="columnCount()" class="p-8 text-center">
-              <!-- Se proyecta: el texto vacío es de la pantalla, no de la biblioteca (ADR 0008). -->
-              @if (empty(); as template) {
+              @if (loadState() === 'loading') {
+                <span class="inline-flex items-center gap-2 text-secondary" data-loading-table>
+                  <ewms-icon name="spinner" size="sm" />
+                  {{ text().loading }}
+                </span>
+              } @else if (empty(); as template) {
+                <!-- Se proyecta: el texto vacío es de la pantalla, no de la biblioteca (ADR 0008). -->
                 <ng-container [ngTemplateOutlet]="template.template" />
               }
             </td>
@@ -434,30 +459,30 @@
 }
 
 <!-- Menú con foco en la lista y `aria-activedescendant`, como el Select. Una entrada deshabilitada se ve pero las flechas la saltan. -->
-<ng-template #menu>
+<ng-template #rowMenuPanel>
   <ul
-    [id]="menuId"
+    [id]="menu.id"
     role="menu"
     tabindex="-1"
-    [class]="menuClasses"
+    [class]="menu.classes"
     [attr.aria-label]="text().rowMenu"
-    [attr.aria-activedescendant]="menuIndex() >= 0 ? menuOptionId(menuIndex()) : null"
-    (keydown)="onMenuKeydown($event)"
+    [attr.aria-activedescendant]="menu.index() >= 0 ? menu.optionId(menu.index()) : null"
+    (keydown)="menu.onKeydown($event)"
   >
     @for (item of menuItems(); track item.id; let itemIndex = $index) {
       @if (item.separatorBefore) {
-        <li [class]="menuSeparatorClasses" role="separator"></li>
+        <li [class]="menu.separatorClasses" role="separator"></li>
       }
       <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -->
       <li
-        [id]="menuOptionId(itemIndex)"
+        [id]="menu.optionId(itemIndex)"
         role="menuitem"
-        [class]="menuItemClassesFor(item, itemIndex)"
+        [class]="menu.itemClasses(item, itemIndex)"
         [attr.aria-disabled]="item.disabled ? 'true' : null"
         [attr.data-menu-item]="item.id"
-        (click)="chooseMenuItem(item)"
+        (click)="menu.choose(item)"
       >
-        <span [class]="menuIconSlotClasses" aria-hidden="true">
+        <span [class]="menu.iconSlotClasses" aria-hidden="true">
           @if (item.icon) {
             <ewms-icon [name]="item.icon" size="sm" />
           }

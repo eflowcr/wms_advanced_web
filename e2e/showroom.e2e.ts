@@ -2004,9 +2004,51 @@ test.describe('DS-3 lote D: detalle, menú, ventana y paginador', () => {
         context.font = [style.fontWeight, style.fontSize, style.fontFamily].join(' ');
         const room =
           input.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
-        return context.measureText(input.placeholder).width <= room;
+        // Con flechitas Chrome les reserva ancho aunque no se vean: la cuenta de arriba daba
+        // «cabe» y en pantalla se leía «Desd» (2026-09-22). Sin ellas, la cuenta es la verdad.
+        return style.appearance === 'textfield' && context.measureText(input.placeholder).width <= room;
       });
       expect(fits, `box ${index} fits its placeholder`).toBe(true);
     }
+  });
+
+  test('polish: the header stays while the rows scroll, only exceptions are tinted, dates read in a column', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1440, height: 600 });
+    await page.goto(TABLE);
+    await ready(page);
+
+    const demo = '[data-demo-table]';
+    // Cabecera fija: la caja tiene alto máximo por token y desplaza adentro.
+    const box = page.locator(`${demo} [data-scroll-box]`);
+    await box.evaluate((element) => {
+      element.scrollTop = element.scrollHeight;
+    });
+    const header = page.locator(`${demo} thead`);
+    await expect
+      .poll(async () => Math.round((await header.boundingBox())!.y - (await box.boundingBox())!.y))
+      .toBe(0);
+
+    // Solo «Con incidencia» y «En proceso» tiñen; el resto lleva el badge y nada más. Con poll:
+    // una lectura del DOM que reintenta, nunca un getAttribute suelto.
+    await expect
+      .poll(() =>
+        page.locator(`${demo} tbody tr[data-row]`).evaluateAll((rows) =>
+          rows
+            .filter(
+              (row) =>
+                /bg-(danger|warning)-surface/.test(row.className) !==
+                /Con incidencia|En proceso/.test(row.querySelector('ewms-badge')?.textContent ?? ''),
+            )
+            .map((row) => row.textContent?.trim()),
+        ),
+      )
+      .toEqual([]);
+
+    // Día y mes con dos dígitos, desde el formateador.
+    await expect(page.locator(`${demo} tbody tr[data-row] td:nth-child(4)`).first()).toHaveText(
+      /^\s*\d{2}\/\d{2}\/2026\s*$/,
+    );
   });
 });

@@ -189,6 +189,12 @@ function tableMessages(): TableMessages {
       return transloco.translate('ds.table.clearSelection');
     },
     copied: (rows) => transloco.translate('ds.table.copied', { rows }),
+    get loading() {
+      return transloco.translate('ds.table.loading');
+    },
+    get loadFailed() {
+      return transloco.translate('ds.table.loadFailed');
+    },
     get export() {
       return transloco.translate('ds.table.export');
     },
@@ -338,7 +344,14 @@ function tableFormatters(): TableFormatters {
         return '';
       }
       const parsed = parseTableDate(value);
-      return parsed === null ? String(value) : locale.localizeDate(parsed);
+      // Día y mes con dos dígitos: en columna se leen alineados (16/03/2026).
+      return parsed === null
+        ? String(value)
+        : locale.localizeDate(parsed, undefined, {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+          });
     },
     number: (value) => {
       if (value === null || value === undefined || value === '') {

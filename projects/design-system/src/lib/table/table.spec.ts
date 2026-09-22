@@ -96,6 +96,8 @@ const MESSAGES: TableMessages = {
   selectedCount: (count) => `${count} seleccionadas`,
   clearSelection: 'Quitar selección',
   copied: (rows) => `${rows} filas copiadas`,
+  loading: 'Cargando…',
+  loadFailed: 'No se pudo cargar la tabla.',
   export: 'Exportar',
   exportSelected: 'CSV de lo seleccionado',
   copyAll: 'Copiar al portapapeles',
@@ -325,10 +327,12 @@ describe('Table', () => {
       expect(badge?.querySelector('svg')).not.toBeNull();
     });
 
-    it('tints the row from THE SAME dictionary', () => {
+    it('tints the row from THE SAME dictionary, and ONLY AN EXCEPTION', () => {
       // `rowState="estado"` lee los badges de la columna `estado`: no pueden discrepar.
       expect(bodyRows()[1]?.className).toContain('bg-danger-surface');
-      expect(bodyRows()[0]?.className).toContain('bg-neutral-surface');
+      // Pendiente es `neutral`: solo el badge; con todas teñidas ninguna llama la atención.
+      expect(bodyRows()[0]?.className).not.toContain('neutral');
+      expect(bodyRows()[0]?.className).toContain('bg-surface');
     });
 
     it('aligns numbers to the end, in mono', () => {
@@ -964,6 +968,77 @@ describe('Table', () => {
 });
 
 describe('Table with a failing source', () => {
+  it('says the table failed and offers a retry, instead of an empty page', async () => {
+    await TestBed.configureTestingModule({
+      imports: [TestHost, Table, TableColumn, EmptyTemplate],
+      providers: [
+        { provide: EWMS_TABLE_MESSAGES, useValue: MESSAGES },
+        { provide: EWMS_DATE_PICKER_MESSAGES, useValue: DATE_WORDS },
+        { provide: EWMS_TABLE_FORMATTERS, useValue: FORMATTERS },
+      ],
+    }).compileComponents();
+    const fixture = TestBed.createComponent(TestHost);
+    let calls = 0;
+    fixture.componentInstance.source.set({
+      // La primera falla; el reintento contesta.
+      load: () =>
+        (calls += 1) === 1
+          ? throwError(() => new Error('boom'))
+          : of({ rows: ROWS, page: 0, pageSize: 50, total: 3 }),
+    });
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const failure = fixture.nativeElement.querySelector('[data-load-error]') as HTMLElement;
+    expect(failure.textContent).toContain('No se pudo cargar la tabla.');
+    expect(fixture.nativeElement.querySelector('[data-empty-row]')).toBeNull();
+
+    (failure.querySelector('[data-load-retry] button') as HTMLElement).click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    expect(calls).toBe(2);
+    expect(fixture.nativeElement.querySelector('[data-load-error]')).toBeNull();
+    expect(fixture.nativeElement.querySelectorAll('tbody tr:not([data-empty-row])').length).toBe(3);
+  });
+
+  it('LOADING NEVER EMPTIES THE TABLE: the rows stay, dimmed, and it says it is busy', async () => {
+    await TestBed.configureTestingModule({
+      imports: [TestHost, Table, TableColumn, EmptyTemplate],
+      providers: [
+        { provide: EWMS_TABLE_MESSAGES, useValue: MESSAGES },
+        { provide: EWMS_DATE_PICKER_MESSAGES, useValue: DATE_WORDS },
+        { provide: EWMS_TABLE_FORMATTERS, useValue: FORMATTERS },
+      ],
+    }).compileComponents();
+    const fixture = TestBed.createComponent(TestHost);
+    const pending = new Subject<TablePage<Row>>();
+    fixture.componentInstance.source.set({ load: () => pending });
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const table = fixture.nativeElement.querySelector('table') as HTMLElement;
+    expect(table.getAttribute('aria-busy')).toBe('true');
+    expect(fixture.nativeElement.querySelector('[data-loading-table]')?.textContent).toContain(
+      'Cargando…',
+    );
+
+    pending.next({ rows: ROWS, page: 0, pageSize: 50, total: 3 });
+    fixture.detectChanges();
+    expect(table.hasAttribute('aria-busy')).toBe(false);
+
+    // Otra consulta en camino: las filas se quedan, atenuadas, en vez de vaciar la tabla.
+    const next = new Subject<TablePage<Row>>();
+    fixture.componentInstance.source.set({ load: () => next });
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelectorAll('tbody tr:not([data-empty-row])').length).toBe(3);
+    expect(fixture.nativeElement.querySelector('tbody').className).toContain('opacity-60');
+  });
+
   it('survives a source that errors, and can load again afterwards', async () => {
     await TestBed.configureTestingModule({
       imports: [TestHost, Table, TableColumn, EmptyTemplate],
@@ -981,7 +1056,7 @@ describe('Table with a failing source', () => {
     fixture.detectChanges();
     await fixture.whenStable();
 
-    expect(fixture.nativeElement.querySelector('[data-empty-row]')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('[data-load-error]')).not.toBeNull();
 
     // El pipeline sigue vivo: un error fuera del switchMap habría matado la suscripción.
     fixture.componentInstance.source.set(new ArrayTableSource(ROWS, ['codigo']));

@@ -513,8 +513,9 @@
   <section class="flex flex-col gap-4" aria-labelledby="ta-matrix" data-block="5-matriz">
     <h2 id="ta-matrix" class="text-h2">Matriz de estados</h2>
     <p class="text-secondary">
-      Los cuatro estados de fila, con las <strong>dos</strong> señales que produce cada uno. Las dos
-      salen del mismo diccionario, así que no pueden discrepar.
+      Los cuatro estados de fila, con las señales que produce cada uno, salidas del mismo diccionario.
+      <strong>Solo las excepciones tiñen la fila</strong> —«Con incidencia» y «En proceso»—; las
+      demás llevan solo el badge. Con todas teñidas, ninguna llamaba la atención.
     </p>
     <ewms-demo-frame ground="surface">
       <ewms-state-matrix
@@ -528,10 +529,14 @@
             <ewms-badge [variant]="variant.id" [label]="labelFor(variant.id)" />
           } @else {
             <span
-              class="inline-block h-6 w-32 rounded-sm border border-default"
+              class="inline-flex h-6 w-32 items-center justify-center rounded-sm border border-default text-caption text-secondary"
               [class]="tintFor(variant.id)"
               [attr.data-tint]="variant.id"
-            ></span>
+            >
+              @if (!isTinted(variant.id)) {
+                sin tinte
+              }
+            </span>
           }
         </ng-template>
       </ewms-state-matrix>

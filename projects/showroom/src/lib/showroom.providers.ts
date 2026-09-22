@@ -128,6 +128,8 @@ export const TABLE_MESSAGES: TableMessages = {
   selectedCount: (count) => (count === 1 ? '1 seleccionada' : `${count} seleccionadas`),
   clearSelection: 'Quitar selección',
   copied: (rows) => (rows === 1 ? '1 fila copiada' : `${rows} filas copiadas`),
+  loading: 'Cargando…',
+  loadFailed: 'No se pudieron cargar las filas.',
   export: 'Exportar',
   exportSelected: 'CSV de lo seleccionado',
   copyAll: 'Copiar al portapapeles',
@@ -142,6 +144,12 @@ export const TABLE_MESSAGES: TableMessages = {
   },
 };
 
+const DATE_FORMAT = new Intl.DateTimeFormat('es', {
+  day: '2-digit',
+  month: '2-digit',
+  year: 'numeric',
+});
+
 /** `Intl` directo y no `transloco-locale`: la tabla solo pide dos funciones que devuelvan texto. */
 export const TABLE_FORMATTERS: TableFormatters = {
   // `parseTableDate` y no `new Date(...)`: `new Date('2026-03-15')` es medianoche UTC e imprimía
@@ -151,7 +159,8 @@ export const TABLE_FORMATTERS: TableFormatters = {
       return '';
     }
     const parsed = parseTableDate(value);
-    return parsed === null ? String(value) : new Intl.DateTimeFormat('es').format(parsed);
+    // Día y mes con dos dígitos: en columna, 16/03/2026 y 5/02/2026 se leen desalineados.
+    return parsed === null ? String(value) : DATE_FORMAT.format(parsed);
   },
   number: (value) => {
     if (value === null || value === undefined || value === '') {

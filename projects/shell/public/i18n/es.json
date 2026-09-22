@@ -45,6 +45,8 @@
       "filterPlaceholder": "Filtrar",
       "filterTo": "Hasta",
       "filters": "{active, plural, =0 {Filtros} other {Filtros (#)}}",
+      "loadFailed": "No se pudieron cargar las filas.",
+      "loading": "Cargando…",
       "loadingChildren": "Cargando las líneas…",
       "nextPage": "Página siguiente",
       "pageOf": "Página {{ page }} de {{ pages }}",
