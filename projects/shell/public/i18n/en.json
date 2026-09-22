@@ -24,12 +24,16 @@
       "moreActions": "More options"
     },
     "table": {
+      "avgSelected": "Average selected {{ column }}",
+      "avgShown": "Average {{ column }} on screen",
       "childrenFailed": "The lines could not be loaded.",
       "clearFilters": "Clear filters",
       "clearSelection": "Clear selection",
       "collapse": "Collapse the row",
       "columns": "Columns",
       "copied": "{rows, plural, one {# row copied} other {# rows copied}}",
+      "countSelected": "Selected rows with {{ column }}",
+      "countShown": "Rows with {{ column }} on screen",
       "density": "Density",
       "densityMd": "Comfortable",
       "densitySm": "Compact",
@@ -46,6 +50,8 @@
       "resizeColumn": "{{ column }} column width",
       "retry": "Retry",
       "rowMenu": "Row actions",
+      "rowsShown": "{shown, plural, one {# row} other {# rows}}",
+      "rowsShownOf": "{{ shown }} of {total, plural, one {# row} other {# rows}}",
       "rowsTotal": "{total, plural, =0 {No rows} one {# row} other {# rows}}",
       "search": "Search the table",
       "selectAll": "Select every visible row",
@@ -56,7 +62,9 @@
       "setSummary": "{chosen, plural, =0 {{{ column }}: none} other {{{ column }}: # of {{ total }}}}",
       "setSummaryAll": "{{ column }}: all",
       "sortedAscending": "Ascending order",
-      "sortedDescending": "Descending order"
+      "sortedDescending": "Descending order",
+      "sumSelected": "Selected {{ column }}",
+      "sumShown": "{{ column }} on screen"
     }
   },
   "shell": {

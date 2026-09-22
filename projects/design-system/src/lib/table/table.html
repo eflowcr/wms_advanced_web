@@ -4,8 +4,10 @@
 }
 
 <!-- Con ventana también desplaza en vertical y tiene alto: es lo que mide la ventana. -->
+<!-- El marco lleva el borde: la barra de estado queda adentro y no desplaza con la tabla. -->
+<div class="overflow-hidden rounded-md border border-default">
 <div
-  class="overflow-x-auto rounded-md border border-default"
+  class="overflow-x-auto"
   [class]="virtualised() ? 'max-h-120 overflow-y-auto' : ''"
   #scrollBox
   data-scroll-box
@@ -407,6 +409,10 @@
       }
     </tbody>
   </table>
+</div>
+@if (showStatus()) {
+  <ewms-table-status />
+}
 </div>
 
 <!-- Siempre presente: una región viva que aparece con su primer mensaje se anuncia mal. -->

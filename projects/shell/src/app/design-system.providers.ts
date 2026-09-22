@@ -189,6 +189,20 @@ function tableMessages(): TableMessages {
       return transloco.translate('ds.table.clearSelection');
     },
     copied: (rows) => transloco.translate('ds.table.copied', { rows }),
+    rowsShown: (shown, total) =>
+      total === null
+        ? transloco.translate('ds.table.rowsShown', { shown })
+        : transloco.translate('ds.table.rowsShownOf', { shown, total }),
+    // Una clave por combinación, literal: transloco-keys-manager lee la fuente (ver arriba).
+    aggregate: (kind, column, scope) => {
+      /** t(ds.table.sumSelected, ds.table.sumShown, ds.table.avgSelected, ds.table.avgShown, ds.table.countSelected, ds.table.countShown) */
+      const keys = {
+        sum: { selected: 'ds.table.sumSelected', shown: 'ds.table.sumShown' },
+        avg: { selected: 'ds.table.avgSelected', shown: 'ds.table.avgShown' },
+        count: { selected: 'ds.table.countSelected', shown: 'ds.table.countShown' },
+      } as const;
+      return transloco.translate(keys[kind][scope], { column });
+    },
   };
 }
 

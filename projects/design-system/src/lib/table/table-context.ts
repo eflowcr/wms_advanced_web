@@ -1,9 +1,10 @@
 import { InjectionToken, type Signal } from '@angular/core';
 import type { FormControl } from '@angular/forms';
+import type { TableColumn } from './column';
 import type { TableFilters } from './table-filters';
 import type { TableViewState } from './table-view';
 import type { MenuItem, TableDensity } from './table.types';
-import type { TableMessages } from './table.tokens';
+import type { TableFormatters, TableMessages } from './table.tokens';
 
 /**
  * Lo que las piezas internas de la Tabla (barra de herramientas, barra de estado) leen de ella.
@@ -22,6 +23,11 @@ export interface TableContext {
   readonly columnChooser: Signal<boolean>;
   readonly layout: TableViewState;
   readonly selectedCount: Signal<number>;
+  readonly selectedRows: Signal<readonly unknown[]>;
+  readonly pageRows: Signal<readonly unknown[]>;
+  readonly pageTotal: Signal<number | null>;
+  readonly visibleColumns: Signal<readonly TableColumn[]>;
+  readonly format: Signal<TableFormatters>;
   readonly bulkActions: Signal<readonly MenuItem[]>;
   runBulk(item: MenuItem): void;
   clearSelection(): void;

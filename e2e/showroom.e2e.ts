@@ -1686,6 +1686,30 @@ test.describe('DS-3 lote C: la tabla', () => {
     await expect(page.locator(`${DEMO} [data-bulk-bar]`)).toHaveCount(0);
   });
 
+  test('the status bar counts the rows and adds up Bultos: on screen, then over the selection', async ({
+    page,
+  }) => {
+    await page.goto(TABLE);
+    await ready(page);
+
+    const status = page.locator(`${DEMO} [data-table-status]`);
+    await expect(status.locator('[data-status-rows]')).toHaveText('12 de 12 filas');
+    const bultos = page.locator(`${ROWS} td:nth-child(5)`);
+    const numbers = (await bultos.allTextContents()).map((text) => Number(text.replace(/\D/g, '')));
+    const onScreen = numbers.reduce((total, value) => total + value, 0);
+    await expect(status.locator('[data-aggregate="bultos"]')).toHaveText(
+      `Bultos en pantalla: ${new Intl.NumberFormat('es').format(onScreen)}`,
+    );
+
+    const boxes = page.locator(`${ROWS} input[type="checkbox"]`);
+    await boxes.nth(0).click();
+    await boxes.nth(1).click();
+    await expect(status.locator('[data-status-selected]')).toHaveText('2 seleccionadas');
+    await expect(status.locator('[data-aggregate="bultos"]')).toHaveText(
+      `Bultos seleccionados: ${new Intl.NumberFormat('es').format(numbers[0]! + numbers[1]!)}`,
+    );
+  });
+
   test('the quick filter narrows the table, and the empty state is the projected one', async ({
     page,
   }) => {

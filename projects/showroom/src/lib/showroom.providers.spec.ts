@@ -54,6 +54,18 @@ describe('the showroom dictionaries', () => {
       expect(TABLE_MESSAGES.setSummary('Estado', 0, 4)).toBe('Estado: ninguno');
     });
 
+    it('words the status bar: rows, selection, copies and each kind of aggregate', () => {
+      expect(TABLE_MESSAGES.rowsShown(12, 340)).toBe('12 de 340 filas');
+      expect(TABLE_MESSAGES.rowsShown(12, null)).toBe('12 filas');
+      expect(TABLE_MESSAGES.selectedCount(1)).toBe('1 seleccionada');
+      expect(TABLE_MESSAGES.selectedCount(3)).toBe('3 seleccionadas');
+      expect(TABLE_MESSAGES.copied(1)).toBe('1 fila copiada');
+      expect(TABLE_MESSAGES.copied(4)).toBe('4 filas copiadas');
+      expect(TABLE_MESSAGES.aggregate('sum', 'Bultos', 'selected')).toBe('Bultos seleccionados');
+      expect(TABLE_MESSAGES.aggregate('avg', 'Bultos', 'shown')).toBe('Promedio de bultos en pantalla');
+      expect(TABLE_MESSAGES.aggregate('count', 'Bultos', 'shown')).toBe('Filas con bultos en pantalla');
+    });
+
     it('says how many results, with or without a total', () => {
       // `null` es un total legítimo y el mensaje lo refleja.
       expect(SELECT_MESSAGES.results(3, 340)).toBe('3 de 340 resultados');

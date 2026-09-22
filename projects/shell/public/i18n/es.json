@@ -24,12 +24,16 @@
       "moreActions": "Más opciones"
     },
     "table": {
+      "avgSelected": "Promedio de {{ column }} seleccionados",
+      "avgShown": "Promedio de {{ column }} en pantalla",
       "childrenFailed": "No se pudieron cargar las líneas.",
       "clearFilters": "Limpiar filtros",
       "clearSelection": "Quitar selección",
       "collapse": "Contraer la fila",
       "columns": "Columnas",
       "copied": "{rows, plural, one {# fila copiada} other {# filas copiadas}}",
+      "countSelected": "Filas con {{ column }} seleccionadas",
+      "countShown": "Filas con {{ column }} en pantalla",
       "density": "Densidad",
       "densityMd": "Media",
       "densitySm": "Compacta",
@@ -46,6 +50,8 @@
       "resizeColumn": "Ancho de la columna {{ column }}",
       "retry": "Reintentar",
       "rowMenu": "Acciones de la fila",
+      "rowsShown": "{shown, plural, one {# fila} other {# filas}}",
+      "rowsShownOf": "{{ shown }} de {total, plural, one {# fila} other {# filas}}",
       "rowsTotal": "{total, plural, =0 {Sin filas} one {# fila} other {# filas}}",
       "search": "Buscar en la tabla",
       "selectAll": "Seleccionar todas las filas visibles",
@@ -56,7 +62,9 @@
       "setSummary": "{chosen, plural, =0 {{{ column }}: ninguno} other {{{ column }}: # de {{ total }}}}",
       "setSummaryAll": "{{ column }}: todos",
       "sortedAscending": "Orden ascendente",
-      "sortedDescending": "Orden descendente"
+      "sortedDescending": "Orden descendente",
+      "sumSelected": "{{ column }} seleccionados",
+      "sumShown": "{{ column }} en pantalla"
     }
   },
   "shell": {

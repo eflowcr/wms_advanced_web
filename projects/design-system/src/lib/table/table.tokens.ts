@@ -51,6 +51,16 @@ export interface TableMessages {
   readonly clearSelection: string;
   /** Lo copiado con Ctrl+C: «3 filas copiadas». */
   readonly copied: (rows: number) => string;
+
+  // Barra de estado.
+  /** «12 de 340 filas», o «12 filas» con `total` null. */
+  readonly rowsShown: (shown: number, total: number | null) => string;
+  /** La etiqueta del agregado: «Bultos seleccionados», «Promedio de bultos en pantalla». */
+  readonly aggregate: (
+    kind: 'sum' | 'avg' | 'count',
+    column: string,
+    scope: 'selected' | 'shown',
+  ) => string;
 }
 
 /** Solo lo que se muestra: ordenar y filtrar usan el valor crudo. Ver vault: Tabla §2. */

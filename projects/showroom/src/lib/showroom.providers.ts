@@ -128,6 +128,15 @@ export const TABLE_MESSAGES: TableMessages = {
   selectedCount: (count) => (count === 1 ? '1 seleccionada' : `${count} seleccionadas`),
   clearSelection: 'Quitar selección',
   copied: (rows) => (rows === 1 ? '1 fila copiada' : `${rows} filas copiadas`),
+  rowsShown: (shown, total) =>
+    total === null ? `${shown} filas` : `${shown} de ${total} filas`,
+  aggregate: (kind, column, scope) => {
+    const where = scope === 'selected' ? 'seleccionados' : 'en pantalla';
+    if (kind === 'avg') {
+      return `Promedio de ${column.toLowerCase()} ${where}`;
+    }
+    return kind === 'count' ? `Filas con ${column.toLowerCase()} ${where}` : `${column} ${where}`;
+  },
 };
 
 /** `Intl` directo y no `transloco-locale`: la tabla solo pide dos funciones que devuelvan texto. */

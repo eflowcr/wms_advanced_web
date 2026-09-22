@@ -62,7 +62,7 @@ const CONSUMER_TEMPLATE = [
   '  <ewms-column key="codigo" header="Código" width="md" pinned="start" [sortable]="true" [filterable]="true" />',
   '  <ewms-column key="cliente" header="Cliente / artículo" width="fill" [filterable]="true" />',
   '  <ewms-column key="fecha" header="Fecha" type="date" width="md" [sortable]="true" [filterable]="true" />',
-  '  <ewms-column key="bultos" header="Bultos" type="number" width="sm" [sortable]="true" [filterable]="true" />',
+  '  <ewms-column key="bultos" header="Bultos" type="number" width="sm" aggregate="sum" [sortable]="true" [filterable]="true" />',
   '  <ewms-column key="estado" header="Estado" type="badge" width="md" [badges]="ESTADOS" [filterable]="true" />',
   '',
   '  <ng-template ewmsEmpty>',

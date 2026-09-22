@@ -22,7 +22,13 @@ import {
   type TableFormatters,
   type TableMessages,
 } from './table.tokens';
-import type { BadgeDictionary, BulkActionEvent, MenuItem, TableView } from './table.types';
+import type {
+  BadgeDictionary,
+  BulkActionEvent,
+  MenuItem,
+  TableAggregate,
+  TableView,
+} from './table.types';
 
 interface Row {
   readonly id: string;
@@ -88,6 +94,8 @@ const MESSAGES: TableMessages = {
   selectedCount: (count) => `${count} seleccionadas`,
   clearSelection: 'Quitar selección',
   copied: (rows) => `${rows} filas copiadas`,
+  rowsShown: (shown, total) => (total === null ? `${shown} filas` : `${shown} de ${total} filas`),
+  aggregate: (kind, column, scope) => `${kind} ${column} ${scope}`,
 };
 
 const DATE_WORDS = {
@@ -129,6 +137,7 @@ const FORMATTERS: TableFormatters = {
         type="number"
         [sortable]="true"
         [filterable]="true"
+        [aggregate]="aggregate()"
       />
       <ewms-column key="fecha" header="Fecha" type="date" [filterable]="true" />
       <ewms-column
@@ -152,6 +161,7 @@ class TestHost {
   readonly withTree = signal(true);
   readonly selectable = signal(true);
   readonly density = signal<'md' | 'sm'>('md');
+  readonly aggregate = signal<TableAggregate | null>('sum');
   readonly byId = (row: Row): unknown => row.id;
 
   activated = '';
@@ -877,6 +887,41 @@ describe('Table', () => {
       toggle().click();
       await filterCodigo('EXP');
       await expectNoAxeViolations(fixture.nativeElement);
+    });
+  });
+
+  describe('the status bar', () => {
+    const status = (): string =>
+      (fixture.nativeElement.querySelector('[data-table-status]') as HTMLElement).textContent
+        ?.replace(/\s+/g, ' ')
+        .trim() ?? '';
+
+    it('counts what is on screen against the total, and adds up a number column', () => {
+      // Las raíces de la página: 1200 + 900 + 40, sin contar dos veces las hijas.
+      expect(status()).toBe('3 de 3 filas sum Bultos shown: n:2140');
+    });
+
+    it('OVER THE SELECTION WHEN THERE IS ONE, and says how many', async () => {
+      const boxes = [
+        ...fixture.nativeElement.querySelectorAll('tbody input[type="checkbox"]'),
+      ] as HTMLInputElement[];
+      for (const box of [boxes[0]!, boxes[2]!]) {
+        box.checked = true;
+        box.dispatchEvent(new Event('change'));
+      }
+      await settle();
+      expect(status()).toBe('3 de 3 filas 2 seleccionadas sum Bultos selected: n:1240');
+    });
+
+    it('averages and counts, and says «N filas» when the source does not count', async () => {
+      host.aggregate.set('avg');
+      await settle();
+      expect(status()).toContain('avg Bultos shown: n:713.3333333333334');
+
+      host.aggregate.set('count');
+      host.source.set({ load: () => of({ rows: ROWS, page: 0, pageSize: 50, total: null }) });
+      await settle();
+      expect(status()).toBe('3 filas count Bultos shown: n:3');
     });
   });
 

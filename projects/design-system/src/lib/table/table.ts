@@ -43,6 +43,7 @@ import { CellTemplate, TableColumn } from './column';
 import { TABLE_CONTEXT, type TableContext } from './table-context';
 import { TableFilters } from './table-filters';
 import { TablePopover } from './table-popover';
+import { TableStatus } from './table-status';
 import { TableToolbar } from './table-toolbar';
 import { exportMatrix, toTsv } from './table-export';
 import { TableSelection } from './table-selection';
@@ -128,6 +129,7 @@ const EMPTY_PAGE: TablePage<never> = { rows: [], page: 0, pageSize: 0, total: 0 
     Pagination,
     ReactiveFormsModule,
     TablePopover,
+    TableStatus,
     TableToolbar,
     TextInput,
   ],
@@ -208,7 +210,7 @@ export class Table<T> implements TableContext {
     ...(this.messages() ?? {}),
   }));
 
-  protected readonly format = computed(() => ({
+  readonly format = computed(() => ({
     ...this.providedFormatters,
     ...(this.formatters() ?? {}),
   }));
@@ -234,6 +236,14 @@ export class Table<T> implements TableContext {
     pageSize: 0,
     total: null,
   });
+
+  readonly pageRows = computed(() => this.page().rows);
+  readonly pageTotal = computed(() => this.page().total);
+
+  /** Al pie: con una columna que agrega, o cuando ya hay barra (filtrar sin decir cuántas quedan…). */
+  protected readonly showStatus = computed(
+    () => this.showToolbar() || this.columns().some((column) => column.aggregate() !== null),
+  );
 
   protected readonly pageCount = computed(() => {
     const total = this.page().total;
@@ -325,6 +335,7 @@ export class Table<T> implements TableContext {
 
   protected readonly selection = new TableSelection<T>();
   readonly selectedCount = this.selection.count;
+  readonly selectedRows = this.selection.rows;
 
   /** Lo que dice la región viva: la selección y lo copiado, que no mueven el foco. */
   protected readonly announcement = signal('');
@@ -442,7 +453,7 @@ export class Table<T> implements TableContext {
   readonly layout = new TableViewState(this.columns, this.densityChoice, this.selectable);
 
   /** Las columnas que se dibujan: visibles, con las fijadas en los bordes. */
-  protected readonly visibleColumns = this.layout.visibleColumns;
+  readonly visibleColumns = this.layout.visibleColumns;
 
 
   protected readonly rowHeight = computed(() => ROW_HEIGHT[this.densityChoice()]);
