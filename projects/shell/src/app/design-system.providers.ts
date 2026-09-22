@@ -167,6 +167,12 @@ function tableMessages(): TableMessages {
     get resetView() {
       return transloco.translate('ds.table.resetView');
     },
+    get expandAll() {
+      return transloco.translate('ds.table.expandAll');
+    },
+    get collapseAll() {
+      return transloco.translate('ds.table.collapseAll');
+    },
     get density() {
       return transloco.translate('ds.table.density');
     },

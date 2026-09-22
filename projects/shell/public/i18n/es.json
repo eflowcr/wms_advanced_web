@@ -30,6 +30,7 @@
       "clearFilters": "Limpiar filtros",
       "clearSelection": "Quitar selección",
       "collapse": "Contraer la fila",
+      "collapseAll": "Contraer todo",
       "columnActions": {
         "fit": "Ajustar al contenido",
         "hide": "Ocultar columna",
@@ -53,6 +54,7 @@
       "densityMd": "Media",
       "densitySm": "Compacta",
       "expand": "Expandir la fila",
+      "expandAll": "Expandir todo",
       "export": "Exportar",
       "exportSelected": "CSV de lo seleccionado",
       "filterFrom": "Desde",

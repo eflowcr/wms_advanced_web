@@ -206,6 +206,35 @@ export class TableViewState {
    */
   private readonly pinning = signal(true);
 
+  /** Hay contenido debajo de las fijadas al inicio (desplazado) o al final (por desplazar). */
+  private readonly scrolled = signal({ start: false, end: false });
+
+  /** Al desplazar y al medir: las fijadas muestran el separador solo si tapan algo. */
+  onScroll(box: HTMLElement): void {
+    const start = box.scrollLeft > 0;
+    const end = box.scrollLeft + box.clientWidth < box.scrollWidth - 1;
+    const current = this.scrolled();
+    if (current.start !== start || current.end !== end) {
+      this.scrolled.set({ start, end });
+    }
+  }
+
+  /** Celdas cuyo texto no entra: solo esas llevan tooltip con el texto completo. */
+  readonly clipped = signal<ReadonlySet<string>>(new Set());
+
+  measureClipped(host: HTMLElement): void {
+    const next = new Set<string>();
+    for (const span of host.querySelectorAll<HTMLElement>('tbody td[data-cell] .truncate')) {
+      if (span.scrollWidth > span.clientWidth) {
+        next.add(span.closest<HTMLElement>('td')?.dataset['cell'] ?? '');
+      }
+    }
+    const current = this.clipped();
+    if (next.size !== current.size || [...next].some((cell) => !current.has(cell))) {
+      this.clipped.set(next);
+    }
+  }
+
   private pinOf(column: TableColumn): TablePin | null {
     return this.pinning() ? this.pinnedOf(column) : null;
   }
@@ -217,12 +246,15 @@ export class TableViewState {
     }
     const columns = this.visibleColumns().filter((candidate) => this.pinOf(candidate) === pin);
     const edge = pin === 'start' ? columns.at(-1) === column : columns[0] === column;
-    // Separador por token en el borde que da a lo que desplaza.
-    const separator = edge
-      ? pin === 'start'
-        ? 'border-e border-e-(color:--color-border-strong)'
-        : 'border-s border-s-(color:--color-border-strong)'
-      : '';
+    // Separador y sombra solo con contenido desplazado debajo; la sombra en un seudoelemento,
+    // porque la de la celda es de la marca de excepción.
+    const covering = pin === 'start' ? this.scrolled().start : this.scrolled().end;
+    const separator =
+      edge && covering
+        ? pin === 'start'
+          ? 'border-e border-e-(color:--color-border-strong) after:absolute after:inset-y-0 after:end-0 after:w-px after:shadow-pin-start'
+          : 'border-s border-s-(color:--color-border-strong) after:absolute after:inset-y-0 after:start-0 after:w-px after:shadow-pin-end'
+        : '';
     // En la cabecera las no fijadas son `relative` (por el separador) y se pintarían encima.
     return `sticky ${header ? 'z-3' : 'z-1 bg-inherit'} ${separator}`.trim();
   }
@@ -267,6 +299,10 @@ export class TableViewState {
         end += width(cell);
       }
     }
+    if (box) {
+      this.onScroll(box);
+    }
+    this.measureClipped(host);
     const room = box?.clientWidth ?? 0;
     const fits = start + end <= room / 2;
     if (fits !== this.pinning()) {

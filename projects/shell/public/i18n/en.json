@@ -30,6 +30,7 @@
       "clearFilters": "Clear filters",
       "clearSelection": "Clear selection",
       "collapse": "Collapse the row",
+      "collapseAll": "Collapse all",
       "columnActions": {
         "fit": "Fit to content",
         "hide": "Hide column",
@@ -53,6 +54,7 @@
       "densityMd": "Comfortable",
       "densitySm": "Compact",
       "expand": "Expand the row",
+      "expandAll": "Expand all",
       "export": "Export",
       "exportSelected": "CSV of the selection",
       "filterFrom": "From",

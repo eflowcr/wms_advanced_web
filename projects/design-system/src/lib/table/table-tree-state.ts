@@ -2,7 +2,7 @@ import { computed, signal, type Signal } from '@angular/core';
 import { isObservable } from 'rxjs';
 import { readCell } from './table-source';
 import type { TableChildren } from './table.types';
-import { flattenTree, type FlatRow } from './tree';
+import { expandableKeys, flattenTree, type FlatRow } from './tree';
 
 /**
  * El árbol de la Tabla: qué filas están abiertas, los hijos perezosos (en vuelo, fallidos,
@@ -58,6 +58,29 @@ export class TableTreeState<T> {
       failed: this.failed(),
     }),
   );
+
+  /** Las que se abren sin pedir nada: «Expandir todo» no dispara la red por hijos perezosos. */
+  private readonly eagerKeys = computed(() =>
+    expandableKeys(this.roots(), {
+      children: this.childrenOf,
+      hasChildren: (row) => {
+        const resolved = this.resolve()?.(row) ?? null;
+        return resolved !== null && !isObservable(resolved) && resolved.length > 0;
+      },
+      key: this.key(),
+    }),
+  );
+
+  /** Vista ofrece «Expandir todo» solo si hay algo que abrir sin pedirlo. */
+  readonly anyExpandable = computed(() => this.eagerKeys().length > 0);
+
+  expandAll(): void {
+    this.expanded.set(new Set([...this.expanded(), ...this.eagerKeys()]));
+  }
+
+  collapseAll(): void {
+    this.expanded.set(new Set());
+  }
 
   toggle(flat: FlatRow<T>): void {
     if (!flat.hasChildren) {

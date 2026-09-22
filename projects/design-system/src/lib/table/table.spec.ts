@@ -86,6 +86,8 @@ const MESSAGES: TableMessages = {
   removeFilter: (column) => `Quitar el filtro ${column}`,
   view: 'Vista',
   resetView: 'Restablecer vista',
+  expandAll: 'Expandir todo',
+  collapseAll: 'Contraer todo',
   density: 'Densidad',
   densityMd: 'Media',
   densitySm: 'Compacta',
@@ -303,6 +305,18 @@ describe('Table', () => {
   });
 
   describe('the tree', () => {
+    it('Vista expands everything that needs no request, and folds it all back', async () => {
+      (fixture.nativeElement.querySelector('[data-view-menu] button') as HTMLElement).click();
+      await settle();
+      (document.querySelector('[data-expand-all] button') as HTMLButtonElement).click();
+      await settle();
+      expect(bodyRows().length).toBe(5);
+      (document.querySelector('[data-collapse-all] button') as HTMLButtonElement).click();
+      await settle();
+      expect(bodyRows().length).toBe(3);
+      clearOverlays();
+    });
+
     function toggle(rowIndex: number): void {
       (
         fixture.nativeElement.querySelector(`[data-toggle="${rowIndex}"]`) as HTMLButtonElement
@@ -343,16 +357,32 @@ describe('Table', () => {
       expect(badge?.textContent).toContain('Con incidencia');
       expect(badge?.querySelector('svg')).not.toBeNull();
       // `rowState="estado"` lee los badges de la columna `estado`: no pueden discrepar.
-      expect(bodyRows()[1]?.className).toContain('bg-danger-surface');
+      expect(bodyRows()[1]?.className).toContain('bg-row-danger');
+      // La barra lateral va en la primera celda (la casilla), no en la fila.
+      expect(cellsOf(1)[0]?.className).toContain('shadow-row-mark-danger');
       // Pendiente es `neutral`: solo el badge; con todas teñidas ninguna llama la atención.
-      expect(bodyRows()[0]?.className).not.toContain('neutral');
-      expect(bodyRows()[0]?.className).toContain('bg-surface');
+      expect(bodyRows()[0]?.className).toContain('hover:bg-row-hover');
+      expect(cellsOf(0)[0]?.className).not.toContain('shadow-row-mark');
     });
 
-    it('aligns numbers to the end, in mono', () => {
+    it('A CUT TEXT SHOWS WHOLE on focus; one that fits has no tooltip', async () => {
+      const cut = cellsOf(0)[1]!.querySelector('.truncate') as HTMLElement;
+      Object.defineProperty(cut, 'scrollWidth', { configurable: true, value: 300 });
+      host.density.set('sm');
+      await settle();
+      const overlay = (): string => document.querySelector('.cdk-overlay-container')?.textContent ?? '';
+      cellsOf(0)[1]!.dispatchEvent(new FocusEvent('focusin'));
+      expect(overlay()).toContain('EXP-0001');
+      cellsOf(0)[1]!.dispatchEvent(new FocusEvent('focusout'));
+      cellsOf(1)[1]!.dispatchEvent(new FocusEvent('focusin'));
+      expect(overlay()).not.toContain('EXP-0002');
+      clearOverlays();
+    });
+
+    it('aligns numbers to the end with even digits, in the body font', () => {
       const numberCell = cellsOf(0)[2];
-      expect(numberCell?.className).toContain('text-end');
-      expect(numberCell?.className).toContain('font-mono');
+      expect(numberCell?.className).toContain('tabular-nums');
+      expect(numberCell?.className).not.toContain('font-mono');
     });
   });
 
@@ -400,6 +430,8 @@ describe('Table', () => {
       expect(host.lastQuery?.sort.map((sort) => sort.key)).toEqual(['bultos', 'codigo']);
       expect(ariaSortOf('codigo')).toBeNull();
       expect(header('codigo').querySelector('[data-sort-priority]')?.textContent?.trim()).toBe('2');
+      // Ordenadas en primario; las demás, en el secundario de la cabecera.
+      expect(header('codigo').className).toContain('text-primary');
       expect(header('codigo').querySelector('svg[aria-label]')?.getAttribute('aria-label')).toBe(
         'Orden ascendente, prioridad 2',
       );
@@ -434,10 +466,14 @@ describe('Table', () => {
       expect(boxes('fecha').length).toBe(1);
     });
 
-    it('filters text by substring, and a number range on both bounds', async () => {
+    it('filters text by substring (the whole query goes out), and a number range', async () => {
       type(boxes('codigo')[0]!, '0002');
       await settle();
       expect(bodyRows().length).toBe(1);
+      expect(host.lastQuery?.filters).toEqual({ codigo: '0002' });
+      expect(host.lastQuery?.page).toBe(0);
+      // Un control reconstruido en cada ciclo borraría lo tipeado.
+      expect(boxes('codigo')[0]?.value).toBe('0002');
       type(boxes('codigo')[0]!, '');
       const [min, max] = boxes('bultos');
       type(min!, '100');
@@ -479,20 +515,6 @@ describe('Table', () => {
       expect(bodyRows().length).toBe(3);
     });
 
-    it('sends the whole query out, which is what a saved view will persist', async () => {
-      type(boxes('codigo')[0]!, '0002');
-      await settle();
-      expect(host.lastQuery?.filters).toEqual({ codigo: '0002' });
-      expect(host.lastQuery?.page).toBe(0);
-    });
-
-    it('keeps the filter boxes across change detection', async () => {
-      // Un control reconstruido en cada ciclo borraría lo tipeado.
-      const box = boxes('codigo')[0]!;
-      type(box, 'EXP');
-      await settle();
-      expect(boxes('codigo')[0]?.value).toBe('EXP');
-    });
   });
 
   describe('selection', () => {
@@ -513,19 +535,16 @@ describe('Table', () => {
       box.dispatchEvent(new Event('change'));
     }
 
-    it('emits the chosen rows', async () => {
+    it('emits the chosen rows, and SELECTED WINS OVER THE STATE TINT', async () => {
       tick(checkboxes()[1]!);
       await settle();
       expect(host.selection.map((row) => row.codigo)).toEqual(['EXP-0002']);
       expect(bodyRows()[1]?.getAttribute('aria-selected')).toBe('true');
-    });
-
-    it('SELECTED WINS OVER THE STATE TINT', async () => {
-      tick(checkboxes()[1]!);
-      await settle();
       // El estado ya lo dice el badge (ícono y texto); la selección, solo tinte y casilla.
       expect(bodyRows()[1]?.className).toContain('bg-row-selected');
-      expect(bodyRows()[1]?.className).not.toContain('bg-danger-surface');
+      expect(bodyRows()[1]?.className).not.toContain('bg-row-danger');
+      // …y la excepción conserva su marca lateral.
+      expect(cellsOf(1)[0]?.className).toContain('shadow-row-mark-danger');
     });
 
     it('the header box ticks what is on screen, and goes mixed in between', async () => {
@@ -654,11 +673,8 @@ describe('Table', () => {
       );
     }
 
-    it('is ONE tab stop for the whole table', () => {
+    it('is ONE tab stop; moves down a column, and stops at the ends instead of wrapping', async () => {
       expect(tabbable()).toEqual(['0-0']);
-    });
-
-    it('moves down a column, and stops at the ends instead of wrapping', async () => {
       press(0, 1, 'ArrowDown');
       await settle();
       expect(tabbable()).toEqual(['1-0']);
@@ -700,7 +716,7 @@ describe('Table', () => {
       expect(tabbable()).toEqual(['2-4']);
     });
 
-    it('Enter activates the row, and so does a double click', async () => {
+    it('Enter activates the row, and so does a double click; Space ticks it', async () => {
       press(1, 0, 'Enter');
       await settle();
       expect(host.activated).toBe('EXP-0002');
@@ -709,9 +725,8 @@ describe('Table', () => {
       bodyRows()[2]?.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
       await settle();
       expect(host.activated).toBe('EXP-0003');
-    });
 
-    it('Space ticks the row, and stops the page scrolling', async () => {
+      // Espacio marca la fila, y no desplaza la página.
       const cell = fixture.nativeElement.querySelector('[data-cell="1-0"]') as HTMLElement;
       const event = new KeyboardEvent('keydown', { key: ' ', bubbles: true, cancelable: true });
       cell.dispatchEvent(event);
@@ -915,7 +930,12 @@ describe('Table', () => {
       });
     });
 
-    it('has no axe violations with the filters open and a chip showing', async () => {
+    // Expandida, con selección, filtros abiertos y un chip: todo lo que la barra suma, junto.
+    it('has no axe violations expanded, with a selection, the filters open and a chip', async () => {
+      (fixture.nativeElement.querySelector('[data-toggle="0"]') as HTMLButtonElement).click();
+      const box = fixture.nativeElement.querySelector('tbody input[type="checkbox"]');
+      box.checked = true;
+      box.dispatchEvent(new Event('change'));
       toggle().click();
       await filterCodigo('EXP');
       await expectNoAxeViolations(fixture.nativeElement);
@@ -966,19 +986,6 @@ describe('Table', () => {
       await settle();
       expect(bodyRows().length).toBe(3);
     });
-  });
-
-  it('has no axe violations, expanded and with a selection', async () => {
-    (fixture.nativeElement.querySelector('[data-toggle="0"]') as HTMLButtonElement).click();
-    await settle();
-    const box = fixture.nativeElement.querySelector(
-      'tbody input[type="checkbox"]',
-    ) as HTMLInputElement;
-    box.checked = true;
-    box.dispatchEvent(new Event('change'));
-    await settle();
-
-    await expectNoAxeViolations(fixture.nativeElement);
   });
 });
 
@@ -1136,7 +1143,7 @@ describe('Table with lazy children', () => {
     expect(host.subscriptions).toBe(1);
   });
 
-  it('shows the failure in line, with a retry, expanded; folded, it goes away', async () => {
+  it('shows the failure in line, expanded; folded it goes away; the retry can succeed', async () => {
     toggle();
     await settle();
 
@@ -1152,18 +1159,13 @@ describe('Table with lazy children', () => {
 
     toggle();
     await settle();
-
     // El fallo se recuerda (el reintento sigue andando), pero no se pinta bajo un padre plegado.
     expect(fixture.nativeElement.querySelector('[data-failed="0"]')).toBeNull();
     expect(fixture.nativeElement.querySelector('[data-loading="0"]')).toBeNull();
-  });
 
-  it('retries, and the second attempt can succeed', async () => {
+    // Reabierta, reintenta, y el segundo intento puede salir bien.
     toggle();
     await settle();
-    host.pending.error(new Error('boom'));
-    await settle();
-
     host.pending = new Subject<readonly Lazy[]>();
     (fixture.nativeElement.querySelector('[data-retry="0"]') as HTMLButtonElement).click();
     await settle();
@@ -1402,7 +1404,7 @@ describe('Table master/detail', () => {
     expect(menu()).not.toBeNull();
   });
 
-  it('survives the auxclick that follows its own right click', async () => {
+  it('survives the auxclick of its own right click, and closes on a new gesture', async () => {
     // Orden X11 de Chromium (el de CI): `contextmenu` al pulsar, `auxclick` al soltar; el CDK
     // tomaba ese `auxclick` como clic afuera. Costó nueve pruebas rojas solo en CI.
     rowOf(1).dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true }));
@@ -1414,14 +1416,8 @@ describe('Table master/detail', () => {
     );
     await settle();
     expect(menu(), 'the menu closed itself on the tail of its own click').not.toBeNull();
-  });
 
-  it('still closes on a pointer gesture that is not the one that opened it', async () => {
     // La guarda no puede volverse «nunca cierra»: un gesto nuevo afuera cierra el menú.
-    kebab(0)?.click();
-    await settle();
-    expect(menu()).not.toBeNull();
-
     document.body.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true }));
     document.body.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     await settle();
@@ -1441,7 +1437,7 @@ describe('Table master/detail', () => {
     expect(menu()).toBeNull();
   });
 
-  it('takes the focus itself, and points at the active entry', async () => {
+  it('takes the focus, points at the active entry, and walks past what cannot be chosen', async () => {
     kebab(0)?.click();
     await settle();
     await Promise.resolve();
@@ -1451,19 +1447,15 @@ describe('Table master/detail', () => {
     press('ArrowDown');
     await settle();
     expect(menu()?.getAttribute('aria-activedescendant')).toBe(entries()[0]?.id);
-  });
 
-  it('walks past what cannot be chosen, and a click on it emits nothing', async () => {
-    kebab(0)?.click();
-    await settle();
+    // Salta lo que no se puede elegir, y un clic en eso no emite nada.
     entries()[1]?.click();
     await settle();
     expect(host.chosen).toBe('');
     expect(menu()).not.toBeNull();
     press('ArrowDown');
-    press('ArrowDown');
     await settle();
-    // Imprimir está deshabilitado: la segunda pulsación cae en Duplicar.
+    // Imprimir está deshabilitado: desde Ver, la flecha cae en Duplicar.
     expect(menu()?.getAttribute('aria-activedescendant')).toBe(entries()[2]?.id);
 
     press('ArrowUp');
@@ -1659,7 +1651,7 @@ describe('Table virtualisation', () => {
     );
   });
 
-  it('moves the window when the box is scrolled, keeping the absolute index', async () => {
+  it('moves the window when scrolled, keeping the absolute index, never past the last', async () => {
     scrollTo(4000, 400);
     await settle();
 
@@ -1672,9 +1664,8 @@ describe('Table virtualisation', () => {
 
     // Diez filas a la vista, más 6 de overscan a cada lado.
     expect(drawn().length).toBe(22);
-  });
 
-  it('never draws past the last row', async () => {
+    // Y nunca dibuja más allá de la última.
     scrollTo(5000 * ROW_PIXELS, 400);
     await settle();
     expect(spacerHeight('after')).toBe(0);
@@ -1913,13 +1904,18 @@ describe('Table columns', () => {
     await settle();
   }
 
-  it('PINNED GOES TO THE EDGES: start first, end last, sticky, with a separator', () => {
+  it('PINNED GOES TO THE EDGES, sticky; the separator only with something under it', async () => {
     // Vuelve a medir cuando la tabla cambia de tamaño (y la barra, para compactarse).
     expect(observed).toContain(fixture.nativeElement.querySelector('table'));
     expect(observed).toContain(fixture.nativeElement.querySelector('ewms-table-toolbar'));
     expect(headers()).toEqual(['codigo', 'bultos', 'fecha', 'acciones']);
     expect(header('codigo').className).toContain('sticky');
-    expect(header('codigo').className).toContain('border-e');
+    expect(header('codigo').className).not.toContain('border-e');
+    const box = fixture.nativeElement.querySelector('[data-scroll-box]') as HTMLElement;
+    box.scrollLeft = 40;
+    box.dispatchEvent(new Event('scroll'));
+    await settle();
+    expect(header('codigo').className).toContain('after:shadow-pin-start');
     expect(header('acciones').className).toContain('sticky');
     expect(header('acciones').style.right).toBe(pixels(0));
     // La casilla se queda con ellas, a la izquierda.

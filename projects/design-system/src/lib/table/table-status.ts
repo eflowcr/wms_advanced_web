@@ -33,7 +33,7 @@ interface AggregateLine {
     }
     @for (line of aggregates(); track line.key) {
       <span [attr.data-aggregate]="line.key">
-        {{ line.label }}:&ngsp;<span class="font-mono text-primary">{{ line.value }}</span> </span
+        {{ line.label }}:&ngsp;<span class="tabular-nums text-primary">{{ line.value }}</span> </span
       >&ngsp;
     }
   `,

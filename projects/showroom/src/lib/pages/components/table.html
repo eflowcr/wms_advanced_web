@@ -184,7 +184,7 @@
         <p class="text-caption">
           La fila de filtros está oculta: «Filtros» la muestra (o <kbd class="font-mono">Alt+R</kbd>
           con el foco en la tabla). Ocultarla no borra nada: cada filtro activo queda como chip, y su
-          × lo quita. La densidad también está en la barra.
+          × lo quita. La barra son cuatro controles: buscar, Filtros, Vista y Exportar.
         </p>
       </li>
       <li class="flex flex-col gap-1 rounded-md border border-default bg-surface p-4">
@@ -196,11 +196,26 @@
         </p>
       </li>
       <li class="flex flex-col gap-1 rounded-md border border-default bg-surface p-4">
-        <h4 class="text-h4">Columnas: mostrar, fijar, redimensionar</h4>
+        <h4 class="text-h4">Columnas: reordenar, fijar, ajustar</h4>
         <p class="text-caption">
-          «Columnas» oculta y muestra; Código está <code class="font-mono">pinned="start"</code> y no
-          se va al desplazar; el borde de cada cabecera se arrastra, o se enfoca y se mueve con las
-          flechas. Todo sale por <code class="font-mono">(viewChange)</code>.
+          Se arrastra la cabecera, o <kbd class="font-mono">Alt+Shift+←/→</kbd> con el foco en ella,
+          o Subir/Bajar en Vista. El ⋮ de cada cabecera (o <kbd class="font-mono">Shift+F10</kbd>)
+          ordena, fija, ajusta al contenido, mueve y oculta. Todo sale por
+          <code class="font-mono">(viewChange)</code>, y «Restablecer vista» lo deshace.
+        </p>
+      </li>
+      <li class="flex flex-col gap-1 rounded-md border border-default bg-surface p-4">
+        <h4 class="text-h4">Orden por varias columnas</h4>
+        <p class="text-caption">
+          Clic ordena por una; <kbd class="font-mono">Shift+clic</kbd> suma otra, y la cabecera dice
+          su prioridad. La consulta lleva la lista entera.
+        </p>
+      </li>
+      <li class="flex flex-col gap-1 rounded-md border border-default bg-surface p-4">
+        <h4 class="text-h4">Estado vacío que elige solo</h4>
+        <p class="text-caption">
+          Sin filtros, «todavía no hay»; con alguno, «ninguna coincide» con «Limpiar filtros»; si la
+          fuente falla, «Reintentar». Buscá algo que no exista en la demo.
         </p>
       </li>
       <li class="flex flex-col gap-1 rounded-md border border-default bg-surface p-4">
@@ -230,9 +245,9 @@
       <li class="flex flex-col gap-1 rounded-md border border-default bg-surface p-4">
         <h4 class="text-h4">Pulido y estados</h4>
         <p class="text-caption">
-          Solo las excepciones tiñen la fila; las fechas van con dos dígitos; la cabecera queda fija
-          al desplazar adentro; si la fuente falla hay una fila de error con «Reintentar», y cargando
-          no cambia el alto.
+          Solo las excepciones tiñen la fila, con una barra lateral que sobrevive a la selección;
+          números y fechas con dígitos alineados; un texto cortado muestra el completo al pasar o
+          al enfocar; la sombra de lo fijado aparece solo con algo debajo.
         </p>
       </li>
     </ul>
@@ -602,6 +617,47 @@
         </ng-template>
       </ewms-state-matrix>
     </ewms-demo-frame>
+    <h3 class="text-h3">La matriz de fila</h3>
+    <p class="text-secondary">
+      Fondo y marca de cada estado, con las clases que usa la tabla. Seleccionada gana al tinte;
+      la excepción conserva su barra lateral. Contraste AA medido para el texto y los badges sobre
+      cada fondo (en la ficha).
+    </p>
+    <div
+      class="overflow-x-auto rounded-md border border-default bg-surface outline-none focus-visible:shadow-(--focus-ring-shadow)"
+      tabindex="0"
+    >
+      <!-- Sobre superficie, como la tabla: sobre el lienzo, el hover no se distinguía del fondo. -->
+      <table class="w-full border-separate border-spacing-0 text-caption" data-row-matrix>
+        <caption class="sr-only">Fondo y marca de cada estado de fila</caption>
+        <thead>
+          <tr class="bg-secondary text-secondary">
+            <th scope="col" class="p-2 text-left">Estado</th>
+            <th scope="col" class="p-2 text-left">Fondo</th>
+            <th scope="col" class="p-2 text-left">Marca</th>
+            <th scope="col" class="p-2 text-left">Muestra</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of rowMatrix; track item.id) {
+            <tr [attr.data-row-state]="item.id">
+              <th scope="row" class="border-t border-default p-2 text-left text-primary">
+                {{ item.state }}
+              </th>
+              <td class="border-t border-default p-2 font-mono">{{ item.background }}</td>
+              <td class="border-t border-default p-2 font-mono">{{ item.mark }}</td>
+              <td class="border-t border-default p-2">
+                <span class="flex min-w-72 items-center gap-3 px-3 py-2" [class]="item.row + ' ' + item.cell">
+                  <span class="text-p whitespace-nowrap text-primary">EXP-2026-0400</span>
+                  <span class="text-secondary">secundario</span>
+                  <ewms-badge variant="danger" label="Con incidencia" />
+                </span>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
     <div class="flex flex-col gap-2 rounded-md border border-strong bg-secondary p-4">
       <h3 class="text-h4">El color nunca es la única señal (WCAG 1.4.1)</h3>
       <p class="text-caption">
@@ -616,10 +672,9 @@
       </p>
     </div>
     <p class="text-caption text-secondary">
-      <strong>Hover, Focus y Disabled no están en esta matriz, y no es un hueco.</strong> Hover y
-      Focus son estados de una <em>celda</em> y se recorren con el teclado en la demo de arriba, que
-      es donde se ven de verdad; una fila no se puede deshabilitar, porque una fila no es un
-      control.
+      <strong>Disabled no está en la matriz, y no es un hueco:</strong> una fila no se puede
+      deshabilitar, porque una fila no es un control. Hover y foco están arriba, con su fondo;
+      en la demo se recorren de verdad.
     </p>
   </section>
 
@@ -627,7 +682,7 @@
   <section class="flex flex-col gap-4" aria-labelledby="ta-sizes" data-block="6-tamanos">
     <h2 id="ta-sizes" class="text-h2">Tamaños</h2>
     <p class="text-secondary">
-      Dos densidades. Se eligen en el panel «Densidad» de la barra de la tabla; <code class="font-mono">density</code> es el
+      Dos densidades. Se eligen en el panel «Vista» de la barra de la tabla; <code class="font-mono">density</code> es el
       valor con que arranca.
     </p>
     <div class="overflow-x-auto">

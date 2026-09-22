@@ -2,6 +2,7 @@ import { InjectionToken, type Signal } from '@angular/core';
 import type { FormControl } from '@angular/forms';
 import type { TableColumn } from './column';
 import type { TableFilters } from './table-filters';
+import type { TableTreeState } from './table-tree-state';
 import type { TableViewState } from './table-view';
 import type { MenuItem, TableDensity } from './table.types';
 import type { TableFormatters, TableMessages } from './table.tokens';
@@ -37,6 +38,8 @@ export interface TableContext {
   moveColumn(column: TableColumn, delta: 1 | -1): void;
   setDensity(density: TableDensity): void;
   readonly viewChanged: Signal<boolean>;
+  /** Lo del árbol que ofrece Vista, sin el tipo de fila (la barra no lo conoce). */
+  readonly tree: Pick<TableTreeState<unknown>, 'anyExpandable' | 'expandAll' | 'collapseAll'>;
   resetView(): void;
 }
 

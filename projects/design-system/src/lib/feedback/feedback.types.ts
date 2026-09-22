@@ -32,20 +32,6 @@ export function familyBoxClasses(family: SemanticFamily): string {
   }
 }
 
-/** Solo el tinte, para una fila de tabla: con el frente de color el SKU se leería peor. */
-export function familyTintClass(family: SemanticFamily): string {
-  switch (family) {
-    case 'success':
-      return 'bg-success-surface';
-    case 'warning':
-      return 'bg-warning-surface';
-    case 'danger':
-      return 'bg-danger-surface';
-    case 'neutral':
-      return 'bg-neutral-surface';
-  }
-}
-
 /** Los mismos cuatro dibujos en Banner, Toast y tabla. */
 export function familyIcon(family: SemanticFamily): IconName {
   switch (family) {

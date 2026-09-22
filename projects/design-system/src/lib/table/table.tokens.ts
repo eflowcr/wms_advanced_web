@@ -34,6 +34,9 @@ export interface TableMessages {
   /** El botón que agrupa columnas, densidad y «Restablecer vista». */
   readonly view: string;
   readonly resetView: string;
+  /** En Vista, solo si la tabla tiene árbol. */
+  readonly expandAll: string;
+  readonly collapseAll: string;
   readonly density: string;
   readonly densityMd: string;
   readonly densitySm: string;

@@ -116,6 +116,8 @@ export const TABLE_MESSAGES: TableMessages = {
   removeFilter: (column) => `Quitar el filtro ${column}`,
   view: 'Vista',
   resetView: 'Restablecer vista',
+  expandAll: 'Expandir todo',
+  collapseAll: 'Contraer todo',
   density: 'Densidad',
   densityMd: 'Media',
   densitySm: 'Compacta',

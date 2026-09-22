@@ -98,6 +98,21 @@
           data-density="sm"
         />
       </fieldset>
+      @if (table.tree.anyExpandable()) {
+        <div class="flex flex-wrap gap-2" data-tree-actions>
+          <ewms-button variant="secondary" size="sm" data-expand-all (click)="table.tree.expandAll()">
+            {{ text.expandAll }}
+          </ewms-button>
+          <ewms-button
+            variant="secondary"
+            size="sm"
+            data-collapse-all
+            (click)="table.tree.collapseAll()"
+          >
+            {{ text.collapseAll }}
+          </ewms-button>
+        </div>
+      }
       <!-- Habilitado solo si algo difiere de lo declarado: orden, visibles, anchos, fijadas o densidad. -->
       <div class="border-t border-default pt-2">
         <ewms-button

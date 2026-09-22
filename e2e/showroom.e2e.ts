@@ -1854,6 +1854,33 @@ test.describe('DS-3 lote C: la tabla', () => {
     await expect(page.locator('[data-selection-count]')).toHaveText('12');
   });
 
+  test('THE ROW MATRIX: hover is not the selected blue, a selected exception keeps its mark, digits line up', async ({
+    page,
+  }) => {
+    await page.goto(TABLE);
+    await ready(page);
+
+    const background = (row: string) =>
+      page.locator(row).evaluate((element) => getComputedStyle(element).backgroundColor);
+    const plain = `${ROWS}:not(.bg-row-danger):not(.bg-row-warning)`;
+    await page.locator(plain).first().hover();
+    const hover = await background(`${plain} >> nth=0`);
+
+    // Anclada por índice: al seleccionarla pierde el tinte, y un selector por clase saltaría a otra.
+    const index = await page.locator(`${ROWS}.bg-row-danger`).first().getAttribute('data-row');
+    const exception = page.locator(`${ROWS}[data-row="${index}"]`);
+    await exception.locator('input[type="checkbox"]').check();
+    await expect(exception).toHaveClass(/bg-row-selected/);
+    expect(await exception.evaluate((row) => getComputedStyle(row).backgroundColor)).not.toBe(hover);
+    // La barra lateral sigue en la primera celda: la excepción no se pierde al seleccionar.
+    await expect(exception.locator('td').first()).toHaveCSS('box-shadow', /inset/);
+
+    // Números en la fuente del cuerpo, con dígitos de ancho fijo.
+    const number = page.locator(`${ROWS} td[data-col="bultos"]`).first();
+    await expect(number).toHaveCSS('font-variant-numeric', 'tabular-nums');
+    await expect(number).toHaveCSS('font-family', /Montserrat/);
+  });
+
   test('a coloured row also says its state in words', async ({ page }) => {
     await page.goto(TABLE);
     await ready(page);
@@ -1863,7 +1890,7 @@ test.describe('DS-3 lote C: la tabla', () => {
     await expect(page.locator(`${DEMO} ewms-badge`)).toHaveCount(12);
 
     // Cada fila teñida lleva insignia con icono y texto: el color nunca es la única señal (WCAG 1.4.1).
-    const tinted = page.locator(`${ROWS}.bg-danger-surface`).first();
+    const tinted = page.locator(`${ROWS}.bg-row-danger`).first();
     await expect(tinted.locator('ewms-badge')).toContainText('Con incidencia');
     await expect(tinted.locator('ewms-badge svg')).toBeVisible();
   });
@@ -1971,7 +1998,7 @@ test.describe('DS-3 lote D: detalle, menú, ventana y paginador', () => {
     const demo = '[data-demo-perezosa]';
     // La expedición con incidencia es la que nunca recibe hijos.
     // Una sola fila abierta: sus filas de carga y de error son las únicas de la tabla.
-    await page.locator(`${demo} tr.bg-danger-surface`).first().locator('[data-toggle]').click();
+    await page.locator(`${demo} tr.bg-row-danger`).first().locator('[data-toggle]').click();
     await expect(page.locator(`${demo} [data-loading]`)).toBeVisible();
     await expect(page.locator(`${demo} [data-failed]`)).toBeVisible();
     await expect(page.locator(`${demo} [data-retry]`)).toBeVisible();
@@ -2121,7 +2148,7 @@ test.describe('DS-3 lote D: detalle, menú, ventana y paginador', () => {
           rows
             .filter(
               (row) =>
-                /bg-(danger|warning)-surface/.test(row.className) !==
+                /bg-row-(danger|warning)/.test(row.className) !==
                 /Con incidencia|En proceso/.test(row.querySelector('ewms-badge')?.textContent ?? ''),
             )
             .map((row) => row.textContent?.trim()),

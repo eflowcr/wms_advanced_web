@@ -10,7 +10,7 @@
     class="max-h-(--table-max-height) overflow-auto"
     #scrollBox
     data-scroll-box
-    (scroll)="viewport.measure($any($event).target)"
+    (scroll)="viewport.measure($any($event).target); layout.onScroll($any($event).target)"
   >
     <table
       [id]="tableId"
@@ -89,10 +89,20 @@
                     <span class="truncate">{{ column.header() }}</span>
                     @switch (sorting.direction(column)) {
                       @case ('asc') {
-                        <ewms-icon name="chevron-up" size="sm" [label]="sortLabel(column)" />
+                        <ewms-icon
+                          class="text-(color:--color-bg-primary)"
+                          name="chevron-up"
+                          size="sm"
+                          [label]="sortLabel(column)"
+                        />
                       }
                       @case ('desc') {
-                        <ewms-icon name="chevron-down" size="sm" [label]="sortLabel(column)" />
+                        <ewms-icon
+                          class="text-(color:--color-bg-primary)"
+                          name="chevron-down"
+                          size="sm"
+                          [label]="sortLabel(column)"
+                        />
                       }
                       @default {
                         <ewms-icon name="arrows-sort" size="sm" aria-hidden="true" />
@@ -276,16 +286,16 @@
             @if (selectable()) {
               <td
                 role="gridcell"
-                [class]="cellClasses"
+                [class]="cellClasses + ' ' + markFor(flat, true)"
                 [class.sticky]="layout.selectionPinned()"
                 [class.z-1]="layout.selectionPinned()"
                 [class.bg-inherit]="layout.selectionPinned()"
                 [style.left.px]="layout.selectionPinned() ? 0 : null"
                 [attr.data-cell]="rowIndex + '-0'"
-                [attr.tabindex]="isFocused(rowIndex, 0) ? 0 : -1"
+                [attr.tabindex]="keys.isFocused(rowIndex, 0) ? 0 : -1"
                 (click)="onSelectClick($event)"
-                (focus)="onCellFocus(rowIndex, 0)"
-                (keydown)="onKeydown($event, rowIndex)"
+                (focus)="keys.onCellFocus(rowIndex, 0)"
+                (keydown)="keys.onKeydown($event, rowIndex)"
               >
                 <!-- En flex: suelto, el checkbox se alineaba a la línea de base y quedaba alto. -->
                 <span class="flex items-center">
@@ -301,16 +311,24 @@
             @for (column of visibleColumns(); track column.key(); let columnIndex = $index) {
               <td
                 role="gridcell"
-                [class]="cellClassesFor(column) + ' ' + layout.pinClasses(column, false)"
+                [class]="
+                  cellClassesFor(column) +
+                  ' ' +
+                  layout.pinClasses(column, false) +
+                  ' ' +
+                  markFor(flat, $first && !selectable())
+                "
+                [ewmsTooltip]="display(column, flat.row)"
+                [tooltipDisabled]="!layout.clipped().has(rowIndex + '-' + (selectable() ? columnIndex + 1 : columnIndex))"
                 [style.left.px]="layout.pinStart(column)"
                 [style.right.px]="layout.pinEnd(column)"
                 [attr.data-col]="column.key()"
                 [attr.data-cell]="rowIndex + '-' + (selectable() ? columnIndex + 1 : columnIndex)"
                 [attr.tabindex]="
-                  isFocused(rowIndex, selectable() ? columnIndex + 1 : columnIndex) ? 0 : -1
+                  keys.isFocused(rowIndex, selectable() ? columnIndex + 1 : columnIndex) ? 0 : -1
                 "
-                (focus)="onCellFocus(rowIndex, selectable() ? columnIndex + 1 : columnIndex)"
-                (keydown)="onKeydown($event, rowIndex)"
+                (focus)="keys.onCellFocus(rowIndex, selectable() ? columnIndex + 1 : columnIndex)"
+                (keydown)="keys.onKeydown($event, rowIndex)"
               >
                 <!-- El td alinea texto, no a los hijos de un flex: el número se corre con justify-end. -->
                 <span

@@ -294,9 +294,9 @@ test.describe('showroom capture rig', () => {
     await page.keyboard.press('Escape');
 
     // Hijos en camino e hijos que nunca llegan: la fila de carga dura lo que la demora de la demo.
-    const failing = page.locator(`${PEREZOSA} tr.bg-danger-surface`).first();
+    const failing = page.locator(`${PEREZOSA} tr.bg-row-danger`).first();
     const failingRow = await failing.getAttribute('data-row');
-    const ok = page.locator(`${PEREZOSA} tr[data-row]:not(.bg-danger-surface)`).first();
+    const ok = page.locator(`${PEREZOSA} tr[data-row]:not(.bg-row-danger)`).first();
     const okRow = await ok.getAttribute('data-row');
 
     // Dos filas distintas: plegar la que falla para reusarla se llevaría su fila de error,

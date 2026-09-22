@@ -28,7 +28,6 @@ import { of, type Observable } from 'rxjs';
 import { catchError, debounceTime, map, skip, switchMap, tap } from 'rxjs/operators';
 import { Badge } from '../badge/badge';
 import { Checkbox } from '../checkbox/checkbox';
-import { familyTintClass } from '../feedback/feedback.types';
 import { Icon } from '../icon/icon';
 import { Button } from '../button/button';
 import { DatePicker } from '../date-picker/date-picker';
@@ -40,6 +39,7 @@ import {
 import { KeyboardShortcuts } from '../keyboard/keyboard-shortcuts';
 import { Input as TextInput } from '../input/input';
 import { Pagination } from '../pagination/pagination';
+import { Tooltip } from '../tooltip/tooltip';
 
 import { readMilliseconds } from '../tokens/read-token';
 const DELAY_SEARCH_INPUT_TOKEN = '--delay-search-input';
@@ -74,6 +74,8 @@ import {
   columnCellClasses,
   columnHeaderClasses,
   rowClasses,
+  rowMarkClasses,
+  type RowException,
   type BadgeDescriptor,
   type BulkActionEvent,
   type ExportRequest,
@@ -86,6 +88,7 @@ import {
   type TableView,
 } from './table.types';
 import { TableColumnMenu, type ColumnAction } from './table-column-menu';
+import { TableKeyboard } from './table-keyboard';
 import { TableMenu } from './table-menu';
 import { TableSortState } from './table-sort';
 import { TableWindow } from './table-window';
@@ -117,9 +120,6 @@ let nextTableId = 0;
 
 const EMPTY_PAGE: TablePage<never> = { rows: [], page: 0, pageSize: 0, total: 0 };
 
-/** Tinte solo en excepción: con todas teñidas, ninguna llama la atención (decisión del usuario). */
-const TINTED_STATES: readonly RowState[] = ['danger', 'warning'];
-
 /** La tabla de datos: árbol aplanado, estado de fila como dato. Ver vault: Tabla. */
 @Component({
   selector: 'ewms-table',
@@ -134,6 +134,7 @@ const TINTED_STATES: readonly RowState[] = ['danger', 'warning'];
     NgTemplateOutlet,
     Pagination,
     ReactiveFormsModule,
+    Tooltip,
     TablePopover,
     TableStatus,
     TableToolbar,
@@ -343,9 +344,6 @@ export class Table<T> implements TableContext {
     () => this.visibleColumns().length + (this.selectable() ? 1 : 0),
   );
 
-  // Un solo tab stop para toda la tabla.
-  protected readonly focusRow = signal(0);
-  protected readonly focusColumn = signal(0);
 
   constructor() {
     // switchMap cancela la petición en vuelo: una página 0 lenta no pisa a una página 1 rápida.
@@ -386,6 +384,8 @@ export class Table<T> implements TableContext {
         this.visibleColumns();
         this.layout.view();
         this.selectable();
+        // Las filas dibujadas también: cuáles cortan su texto depende de ellas.
+        this.viewport.rows();
         this.measurePins();
       },
     });
@@ -503,14 +503,24 @@ export class Table<T> implements TableContext {
     return `${CELL_CLASSES} ${columnCellClasses(column.type())}`;
   }
 
+  /** La columna ordenada se lee en primario; las demás, en secundario (el de la cabecera). */
   protected headerClassesFor(column: TableColumn): string {
-    return columnHeaderClasses(column.type());
+    const sorted = this.sorting.direction(column) !== null ? ' text-primary' : '';
+    return columnHeaderClasses(column.type()) + sorted;
+  }
+
+  private exceptionOf(flat: FlatRow<T>): RowException | null {
+    const state = this.resolveRowState()?.(flat.row) ?? null;
+    return state === 'danger' || state === 'warning' ? state : null;
   }
 
   protected rowClassesFor(flat: FlatRow<T>): string {
-    const state = this.resolveRowState()?.(flat.row) ?? null;
-    const tinted = state !== null && TINTED_STATES.includes(state);
-    return rowClasses(this.isSelected(flat), tinted ? familyTintClass(state) : '');
+    return rowClasses(this.isSelected(flat), this.exceptionOf(flat));
+  }
+
+  /** La marca va en la primera celda de la fila, sea la casilla o la primera columna. */
+  protected markFor(flat: FlatRow<T>, first: boolean): string {
+    return first ? rowMarkClasses(this.exceptionOf(flat)) : '';
   }
 
   // Formateado para ver, nunca para ordenar.
@@ -744,118 +754,19 @@ export class Table<T> implements TableContext {
     this.pageIndex.set(Math.min(pages - 1, Math.max(0, page)));
   }
 
-  protected isFocused(rowIndex: number, columnIndex: number): boolean {
-    return this.focusRow() === rowIndex && this.focusColumn() === columnIndex;
-  }
-
-  protected onCellFocus(rowIndex: number, columnIndex: number): void {
-    this.focusRow.set(rowIndex);
-    this.focusColumn.set(columnIndex);
-  }
-
-  // Teclado treegrid de las WAI-ARIA APG: en una fila padre las flechas expanden y
-  // pliegan antes de moverse entre celdas. Ver vault: Tabla §6.
-  protected onKeydown(event: KeyboardEvent, rowIndex: number): void {
-    // La lista aplanada entera, nunca la ventana.
-    const rows = this.rows();
-    const flat = rows[rowIndex];
-    if (!flat) {
-      return;
-    }
-
-    switch (event.key) {
-      case 'ArrowDown':
-        event.preventDefault();
-        this.moveFocus(Math.min(rows.length - 1, rowIndex + 1), this.focusColumn());
-        return;
-
-      case 'ArrowUp':
-        event.preventDefault();
-        this.moveFocus(Math.max(0, rowIndex - 1), this.focusColumn());
-        return;
-
-      case 'ArrowRight':
-        event.preventDefault();
-        if (flat.hasChildren && !flat.expanded) {
-          this.toggleExpanded(flat);
-          return;
-        }
-        this.moveFocus(rowIndex, Math.min(this.columnCount() - 1, this.focusColumn() + 1));
-        return;
-
-      case 'ArrowLeft':
-        event.preventDefault();
-        if (flat.hasChildren && flat.expanded) {
-          this.toggleExpanded(flat);
-          return;
-        }
-        if (this.focusColumn() === 0 && flat.level > 0) {
-          // Primera celda de una hija: va al padre.
-          this.moveFocus(parentIndexOf(rows, rowIndex), 0);
-          return;
-        }
-        this.moveFocus(rowIndex, Math.max(0, this.focusColumn() - 1));
-        return;
-
-      case 'Home':
-        event.preventDefault();
-        this.moveFocus(event.ctrlKey ? 0 : rowIndex, 0);
-        return;
-
-      case 'End':
-        event.preventDefault();
-        this.moveFocus(event.ctrlKey ? rows.length - 1 : rowIndex, this.columnCount() - 1);
-        return;
-
-      case 'Enter':
-        event.preventDefault();
-        this.rowActivate.emit({ row: flat.row });
-        return;
-
-      case ' ':
-        if (this.selectable()) {
-          // Espacio hace scroll por defecto.
-          event.preventDefault();
-          this.toggleRow(flat, event.shiftKey);
-        }
-        return;
-
-      case 'c':
-      case 'C':
-        if (event.ctrlKey || event.metaKey) {
-          event.preventDefault();
-          this.copy(flat);
-        }
-        return;
-
-      case 'ContextMenu':
-      case 'F10':
-        // Shift+F10 y la tecla de menú abren el menú; F10 a secas es del navegador.
-        if (event.key === 'F10' && !event.shiftKey) {
-          return;
-        }
-        event.preventDefault();
-        this.menu.open(flat, event.currentTarget as HTMLElement);
-        return;
-
-      default:
-        return;
-    }
-  }
-
-  // Con ventana, la fila destino puede no estar en el DOM: scroll primero, foco después.
-  private moveFocus(rowIndex: number, columnIndex: number): void {
-    this.focusRow.set(rowIndex);
-    this.focusColumn.set(columnIndex);
-
-    this.viewport.reveal(this.scrollBox()?.nativeElement ?? null, rowIndex);
-
-    queueMicrotask(() => {
-      this.host.nativeElement
-        .querySelector<HTMLElement>(`[data-cell="${rowIndex}-${columnIndex}"]`)
-        ?.focus();
-    });
-  }
+  /** Una parada de Tab y el teclado treegrid: ver `table-keyboard.ts`. */
+  protected readonly keys = new TableKeyboard<T>({
+    element: this.host.nativeElement,
+    rows: () => this.rows(),
+    columnCount: () => this.columnCount(),
+    selectable: () => this.selectable(),
+    toggle: (flat) => this.toggleExpanded(flat),
+    activate: (flat) => this.rowActivate.emit({ row: flat.row }),
+    select: (flat, range) => this.toggleRow(flat, range),
+    copy: (flat) => this.copy(flat),
+    openMenu: (flat, anchor) => this.menu.open(flat, anchor),
+    reveal: (rowIndex) => this.viewport.reveal(this.scrollBox()?.nativeElement ?? null, rowIndex),
+  });
 
   private readonly openDetails = signal<ReadonlySet<unknown>>(new Set());
 
@@ -893,7 +804,7 @@ export class Table<T> implements TableContext {
     closed: (row) => {
       const index = this.rows().findIndex((flat) => flat.key === row.key);
       if (index >= 0) {
-        this.moveFocus(index, this.focusColumn());
+        this.keys.moveFocus(index, this.keys.focusColumn());
       }
     },
     chosen: (row, item) => this.rowMenu.emit({ row: row.row, item }),
@@ -912,14 +823,4 @@ export class Table<T> implements TableContext {
   protected onRowDblclick(flat: FlatRow<T>): void {
     this.rowActivate.emit({ row: flat.row });
   }
-}
-
-function parentIndexOf<T>(rows: readonly FlatRow<T>[], from: number): number {
-  const level = rows[from]?.level ?? 0;
-  for (let index = from - 1; index >= 0; index -= 1) {
-    if ((rows[index]?.level ?? 0) < level) {
-      return index;
-    }
-  }
-  return from;
 }

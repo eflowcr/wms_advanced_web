@@ -1368,7 +1368,19 @@ describe('ShowroomTable', () => {
       tint.getAttribute('data-tint'),
     );
     expect(tints).toEqual(['neutral', 'warning', 'success', 'danger']);
-    expect(element.querySelectorAll('[data-block="5-matriz"] ewms-badge').length).toBe(4);
+    expect(element.querySelectorAll('[data-block="5-matriz"] ewms-state-matrix ewms-badge').length).toBe(4);
+    // Y la matriz de fila: siete estados, con la marca lateral donde hay excepción.
+    const states = [...element.querySelectorAll('[data-row-state]')];
+    expect(states.map((row) => row.getAttribute('data-row-state'))).toEqual([
+      'normal',
+      'hover',
+      'focus',
+      'selected',
+      'danger',
+      'warning',
+      'selected-danger',
+    ]);
+    expect(states[6]?.querySelector('.shadow-row-mark-danger')).not.toBeNull();
   });
 
   it('falls back to nothing for a variant no state carries', async () => {

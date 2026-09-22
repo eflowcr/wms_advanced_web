@@ -90,10 +90,59 @@ const MATRIX_STATES: readonly MatrixAxis[] = [
 /** Tintes de fila escritos completos para que Tailwind vea cada clase. Solo las excepciones tiñen. */
 const TINTS: Readonly<Record<string, string>> = {
   neutral: 'bg-surface',
-  warning: 'bg-warning-surface',
+  warning: 'bg-row-warning',
   success: 'bg-surface',
-  danger: 'bg-danger-surface',
+  danger: 'bg-row-danger',
 };
+
+/**
+ * La matriz de fila (Tabla §23), con las clases que usa la tabla escritas enteras. El foco
+ * se muestra con su anillo interior aplicado a mano: `:focus-visible` no se fuerza.
+ */
+const ROW_MATRIX: readonly {
+  readonly id: string;
+  readonly state: string;
+  readonly background: string;
+  readonly mark: string;
+  readonly row: string;
+  readonly cell: string;
+}[] = [
+  { id: 'normal', state: 'Normal', background: '--color-surface', mark: '—', row: 'bg-surface', cell: '' },
+  { id: 'hover', state: 'Hover', background: '--color-row-hover', mark: '—', row: 'bg-row-hover', cell: '' },
+  {
+    id: 'focus',
+    state: 'Enfocada (teclado)',
+    background: '--color-row-hover',
+    mark: 'anillo interior',
+    row: 'bg-row-hover',
+    cell: 'outline-2 -outline-offset-2 outline-focus',
+  },
+  { id: 'selected', state: 'Seleccionada', background: '--color-row-selected', mark: '—', row: 'bg-row-selected', cell: '' },
+  {
+    id: 'danger',
+    state: 'Excepción danger',
+    background: '--color-row-danger',
+    mark: '--shadow-row-mark-danger',
+    row: 'bg-row-danger',
+    cell: 'shadow-row-mark-danger',
+  },
+  {
+    id: 'warning',
+    state: 'Excepción warning',
+    background: '--color-row-warning',
+    mark: '--shadow-row-mark-warning',
+    row: 'bg-row-warning',
+    cell: 'shadow-row-mark-warning',
+  },
+  {
+    id: 'selected-danger',
+    state: 'Seleccionada + excepción',
+    background: '--color-row-selected',
+    mark: '--shadow-row-mark-danger',
+    row: 'bg-row-selected',
+    cell: 'shadow-row-mark-danger',
+  },
+];
 
 const TINTED: ReadonlySet<string> = new Set(['warning', 'danger']);
 
@@ -172,7 +221,8 @@ const PROPS: readonly PropRow[] = [
     name: 'ewms-column: pinned · hideable · aggregate',
     type: "'start' | 'end' · boolean · 'sum' | 'avg' | 'count'",
     default: 'null · true · null',
-    description: 'Fija la columna al borde, la saca del selector, o la suma al pie (solo number).',
+    description:
+      'Fijado inicial (el usuario lo cambia en el menú ⋮), sin casilla en Vista, o la suma al pie.',
   },
   {
     name: 'trackBy',
@@ -203,7 +253,8 @@ const PROPS: readonly PropRow[] = [
     name: '(viewChange)',
     type: 'TableView',
     default: '—',
-    description: 'Columnas ocultas, anchos, fijadas y densidad: en memoria, para quien quiera guardarlas.',
+    description:
+      'Orden, columnas ocultas, anchos, fijadas y densidad: en memoria, para quien quiera guardarlas.',
   },
   {
     name: '(bulkAction)',
@@ -222,7 +273,7 @@ const PROPS: readonly PropRow[] = [
     type: 'TableQuery',
     default: '—',
     description:
-      'La consulta entera en cada cambio: es lo que una vista guardada persistirá cuando haya backend.',
+      'La consulta entera en cada cambio (el orden es una lista): lo que una vista guardada persistirá.',
   },
 ];
 
@@ -234,9 +285,11 @@ const ANATOMY = [
   { part: 'Borde bajo la cabecera', token: '--color-border-strong' },
   { part: 'Borde entre filas', token: '--color-border' },
   { part: 'Fila seleccionada', token: '--color-row-selected' },
-  { part: 'Fila en hover', token: '--color-ghost-hover' },
-  { part: 'Tinte de fila «Con incidencia»', token: '--color-danger-surface' },
-  { part: 'Tinte de fila «En proceso»', token: '--color-warning-surface' },
+  { part: 'Fila en hover y enfocada', token: '--color-row-hover' },
+  { part: 'Tinte de fila «Con incidencia»', token: '--color-row-danger' },
+  { part: 'Tinte de fila «En proceso»', token: '--color-row-warning' },
+  { part: 'Marca lateral de una excepción', token: '--row-mark-width' },
+  { part: 'Sombra de una fijada con contenido debajo', token: '--shadow-pin-start' },
   { part: 'Anillo de foco de la celda', token: '--focus-ring-shadow' },
   { part: 'Alto máximo: la cabecera queda fija', token: '--table-max-height' },
   { part: 'Paso de las flechas al redimensionar', token: '--col-resize-step' },
@@ -270,6 +323,7 @@ export class ShowroomTable {
   protected readonly anatomy = ANATOMY;
   protected readonly matrixVariants = MATRIX_VARIANTS;
   protected readonly matrixStates = MATRIX_STATES;
+  protected readonly rowMatrix = ROW_MATRIX;
   protected readonly estados = ESTADOS;
   protected readonly consumerTemplate = CONSUMER_TEMPLATE;
   protected readonly consumerComponent = CONSUMER_COMPONENT;
