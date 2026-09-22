@@ -1,6 +1,6 @@
 import { Component, signal, type Type } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
-import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { disabled, form, FormField } from '@angular/forms/signals';
 import { By } from '@angular/platform-browser';
 import { expectNoAxeViolations } from '@ewms/testing';
 import { Subject, type Observable } from 'rxjs';
@@ -108,17 +108,22 @@ function unmount(fixture: ComponentFixture<unknown>): void {
       [placeholder]="'Elegir bodega'"
       [hint]="hint()"
       [error]="error()"
-      [formControl]="control"
+      [formField]="bodega"
     />
   `,
-  imports: [Select, ReactiveFormsModule],
+  imports: [Select, FormField],
 })
 class ListHost {
   readonly options = signal<readonly SelectOption[]>(WAREHOUSES);
   readonly size = signal<FieldSize>('md');
   readonly hint = signal('');
   readonly error = signal(false);
-  readonly control = new FormControl<unknown>(null);
+  readonly locked = signal(false);
+  readonly model = signal<{ bodega: string | null }>({ bodega: null });
+  readonly form = form(this.model, (path) => {
+    disabled(path.bodega, () => this.locked());
+  });
+  readonly bodega = this.form.bodega;
 }
 
 describe('Select, options in memory', () => {
@@ -150,7 +155,9 @@ describe('Select, options in memory', () => {
   });
 
   it('a click opens every option on the value, and the mouse keeps the focus on the field', async () => {
-    host.control.setValue('BS');
+    host.model.set({ bodega: 'BS' });
+    // Un `settle` antes de abrir: el modelo llega al campo en un efecto, no en la misma vuelta.
+    await settle();
     await openPanel();
 
     expect(rows()).toHaveLength(3);
@@ -171,7 +178,7 @@ describe('Select, options in memory', () => {
     row(1).click();
     await settle();
     expect(document.activeElement).toBe(field());
-    expect(host.control.value).toBe('BN');
+    expect(host.form.bodega().value()).toBe('BN');
     expect(field().hasAttribute('aria-controls')).toBe(false);
     expect(field().hasAttribute('aria-activedescendant')).toBe(false);
   });
@@ -194,8 +201,8 @@ describe('Select, options in memory', () => {
     await press('Enter');
 
     expect(listbox()).toBeNull();
-    expect(host.control.value).toBe('BN');
-    expect(host.control.touched).toBe(true);
+    expect(host.form.bodega().value()).toBe('BN');
+    expect(host.form.bodega().touched()).toBe(true);
     expect(field().value).toBe('Bodega norte');
     expect(document.activeElement).toBe(field());
   });
@@ -208,11 +215,11 @@ describe('Select, options in memory', () => {
     expect(rows()).toHaveLength(1);
     await press('ArrowDown');
     await press('Enter');
-    expect(host.control.value).toBe('BN');
+    expect(host.form.bodega().value()).toBe('BN');
   });
 
   it('closes on Escape, Tab or a click outside without changing the value', async () => {
-    host.control.setValue('BC');
+    host.model.set({ bodega: 'BC' });
     for (const close of [
       () => press('Escape'),
       () => press('Tab'),
@@ -225,7 +232,7 @@ describe('Select, options in memory', () => {
       await press('ArrowDown');
       await close();
       expect(listbox()).toBeNull();
-      expect(host.control.value).toBe('BC');
+      expect(host.form.bodega().value()).toBe('BC');
     }
   });
 
@@ -256,7 +263,7 @@ describe('Select, options in memory', () => {
     await press('Escape');
 
     // Quien deshabilita gana: el formulario apaga clic y teclado.
-    host.control.disable();
+    host.locked.set(true);
     await settle();
     expect(field().disabled).toBe(true);
     field().click();
@@ -279,13 +286,13 @@ describe('Select, options in memory', () => {
     <ewms-select
       [source]="source()"
       [display]="display"
-      [formControl]="control"
+      [formField]="articulo"
       label="Artículo"
       placeholder="Código o descripción"
       [hint]="hint()"
     />
   `,
-  imports: [Select, ReactiveFormsModule],
+  imports: [Select, FormField],
 })
 class SourceHost {
   readonly source = signal<SearchSource<Article>>(new ControlledSource());
@@ -293,7 +300,9 @@ class SourceHost {
     label: (item: Article) => `${item.code} — ${item.name}`,
     code: (item: Article) => item.code,
   };
-  readonly control = new FormControl<Article | null>(null);
+  readonly model = signal<{ articulo: Article | null }>({ articulo: null });
+  readonly form = form(this.model);
+  readonly articulo = this.form.articulo;
   readonly hint = signal('');
 }
 
@@ -429,7 +438,7 @@ describe('Select, a backend source (REQ-FE-DS3-001)', () => {
     it('PACQ-03.1: no results repeats the text searched, and keeps the value', async () => {
       await search('ZZZ', []);
       expect(listbox()?.textContent).toContain('Sin resultados para «ZZZ»');
-      expect(host.control.value).toBeNull();
+      expect(host.form.articulo().value()).toBeNull();
     });
 
     it('PACQ-03.2/3: the error carries a retry in the flow, which repeats the query', async () => {
@@ -469,7 +478,7 @@ describe('Select, a backend source (REQ-FE-DS3-001)', () => {
 
       source.resolve([CATALOGUE[2]!]);
       await settle();
-      expect(host.control.value?.code).toBe('SKU-90001');
+      expect(host.form.articulo().value()?.code).toBe('SKU-90001');
 
       // La consulta retrasada detrás de la ráfaga no reabre el panel.
       await waitForDelay();
@@ -483,7 +492,7 @@ describe('Select, a backend source (REQ-FE-DS3-001)', () => {
       await scan('SKU-9');
       source.resolve([CATALOGUE[2]!]);
       await settle();
-      expect(host.control.value).toBeNull();
+      expect(host.form.articulo().value()).toBeNull();
       expect(rows()).toHaveLength(1);
     });
 
@@ -498,7 +507,7 @@ describe('Select, a backend source (REQ-FE-DS3-001)', () => {
         await press(name);
       }
 
-      expect(host.control.value).toEqual(CATALOGUE[0]);
+      expect(host.form.articulo().value()).toEqual(CATALOGUE[0]);
       expect(source.calls.length).toBe(1);
     });
 
@@ -523,7 +532,7 @@ describe('Select, a backend source (REQ-FE-DS3-001)', () => {
       await search();
       rows()[1]?.click();
       await settle();
-      expect(host.control.value).toEqual(CATALOGUE[1]);
+      expect(host.form.articulo().value()).toEqual(CATALOGUE[1]);
       expect(field().value).toBe('SKU-88214 — Caja plegable 80x60');
 
       // RFE-03: vaciar la caja no busca ni borra el valor.
@@ -541,8 +550,8 @@ describe('Select, a backend source (REQ-FE-DS3-001)', () => {
       field().blur();
       await settle();
       expect(field().value).toBe('SKU-88214 — Caja plegable 80x60');
-      expect(host.control.value).toEqual(CATALOGUE[1]);
-      expect(host.control.touched).toBe(true);
+      expect(host.form.articulo().value()).toEqual(CATALOGUE[1]);
+      expect(host.form.articulo().touched()).toBe(true);
     });
 
     it('PACQ-06.2: Escape closes, leaves the value alone and keeps the focus', async () => {
@@ -551,7 +560,7 @@ describe('Select, a backend source (REQ-FE-DS3-001)', () => {
       const event = await press('Escape');
 
       expect(listbox()).toBeNull();
-      expect(host.control.value).toBeNull();
+      expect(host.form.articulo().value()).toBeNull();
       expect(document.activeElement).toBe(field());
       expect(event.defaultPrevented).toBe(true);
     });

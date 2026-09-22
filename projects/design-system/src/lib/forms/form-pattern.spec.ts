@@ -30,15 +30,12 @@ const MAP: ShortcutMap = {
 
 const MESSAGES: FormMessages = {
   errors: {
+    ...NO_FORM_MESSAGES.errors,
     required: () => 'Este campo es obligatorio',
-    minlength: (detail) => `Mínimo ${(detail as { requiredLength: number }).requiredLength}`,
-    maxlength: () => '',
-    min: () => '',
-    max: () => '',
+    minLength: (limit) => `Mínimo ${limit}`,
     pattern: () => 'El formato no es el esperado',
-    email: () => '',
-    custom: () => '',
   },
+  customError: () => '',
   errorSummary: (count) => `Revisá ${count} campos`,
   errorSummaryLabel: 'Error',
   requiredLegend: '* obligatorio',
@@ -206,7 +203,7 @@ describe('el formulario sin resumen y sin palabras', () => {
     expect(fixture.componentInstance.saved).toBe(0);
     expect(fixture.nativeElement.querySelector('[data-form-errors]')).toBeNull();
     expect(fixture.nativeElement.querySelector('p.text-danger')).toBeNull();
-    expect(NO_FORM_MESSAGES.errors.required(null, 'required')).toBe('');
+    expect(NO_FORM_MESSAGES.errors.required(null)).toBe('');
     expect(NO_FORM_MESSAGES.errorSummary(2)).toBe('');
   });
 });

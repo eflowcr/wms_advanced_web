@@ -21,9 +21,11 @@
       "errorSummary": "{count, plural, =1 {Check 1 field} other {Check # fields}}",
       "errorSummaryLabel": "Error",
       "max": "The maximum is {{ max }}",
-      "maxlength": "At most {{ length }} characters",
+      "maxDate": "The latest date is {{ date }}",
+      "maxLength": "At most {{ length }} characters",
       "min": "The minimum is {{ min }}",
-      "minlength": "At least {{ length }} characters",
+      "minDate": "The earliest date is {{ date }}",
+      "minLength": "At least {{ length }} characters",
       "pattern": "The format is not the expected one",
       "required": "This field is required",
       "requiredLegend": "* required"

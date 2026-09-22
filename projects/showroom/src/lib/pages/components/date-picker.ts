@@ -16,7 +16,7 @@ const PROPS: readonly PropRow[] = [
     description: "Una fecha 'YYYY-MM-DD', o el DateRange { from, to } de la tabla.",
   },
   {
-    name: 'min · max',
+    name: 'minDate · maxDate',
     type: 'string | null',
     default: 'null',
     description: "'YYYY-MM-DD'. Los días fuera se ven, se recorren y no se eligen.",
@@ -36,7 +36,7 @@ const ANATOMY: readonly { readonly part: string; readonly token: string }[] = [
   { part: 'Elevación del calendario', token: '--shadow-md' },
   { part: 'Día elegido', token: '--color-bg-primary' },
   { part: 'Hoy (aro)', token: '--color-border-strong' },
-  { part: 'Día fuera de min/max', token: '--color-text-disabled' },
+  { part: 'Día fuera del rango', token: '--color-text-disabled' },
   { part: 'Hover de un día', token: '--color-ghost-hover' },
   { part: 'Anillo de foco del día', token: '--focus-ring-shadow' },
 ];
@@ -82,7 +82,7 @@ export class ShowroomDatePicker {
     '<ewms-date-picker',
     "  [label]=\"'expediciones.entrega' | transloco\"",
     '  formControlName="entrega"',
-    '  [min]="hoy"',
+    '  [minDate]="hoy"',
     '/>',
     '<ewms-date-picker',
     "  [label]=\"'reportes.periodo' | transloco\"",

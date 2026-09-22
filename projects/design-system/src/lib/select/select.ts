@@ -7,9 +7,11 @@ import {
   effect,
   ElementRef,
   inject,
-
+  Injector,
   input,
+  output,
   isDevMode,
+  model,
   signal,
   TemplateRef,
   ViewContainerRef,
@@ -18,6 +20,7 @@ import {
   type OnInit,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import type { FormValueControl, ValidationError } from '@angular/forms/signals';
 import { of, Subject, timer } from 'rxjs';
 import { debounce } from 'rxjs/operators';
 import {
@@ -31,7 +34,7 @@ import {
   type FieldSize,
   type FieldState,
 } from '../field/field.types';
-import { FormControlBase, provideValueAccessor } from '../forms/control-value-accessor';
+import { fieldErrorText } from '../forms/field-note';
 import { EmptyState } from '../empty-state/empty-state';
 import { Icon } from '../icon/icon';
 import { ScanDetector } from '../keyboard/scan-detector';
@@ -71,9 +74,13 @@ let nextSelectId = 0;
   imports: [EmptyState, Icon],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { class: 'block' },
-  providers: [provideValueAccessor(() => Select)],
 })
-export class Select<T = unknown> extends FormControlBase<unknown> implements OnInit, OnDestroy {
+export class Select<T = unknown>
+  implements FormValueControl<unknown>, OnInit, OnDestroy
+{
+  /** Con `[formField]` lo llena el formulario; fuera de uno, `[(value)]`. */
+  readonly value = model<unknown>(null);
+
   /** Lista cerrada en memoria: `SelectOption`, o registros con `display`. */
   readonly options = input<readonly SelectOption[] | readonly T[] | null>(null);
 
@@ -83,16 +90,23 @@ export class Select<T = unknown> extends FormControlBase<unknown> implements OnI
   /** Con `display`, el valor es el registro; sin él, `SelectOption.value`. */
   readonly display = input<SearchDisplay<T> | null>(null);
 
-  /** Siembra el control; después manda `writeValue`. */
-  readonly value = input<unknown>(null);
-
   readonly size = input<FieldSize>('md');
   readonly label = input.required<string>();
   readonly placeholder = input<string>('');
   readonly hint = input<string>('');
 
-  /** Solo visual: valida el formulario de arriba. */
+  /** Solo dibujo, para las demos del catálogo: quien valida es el formulario. */
   readonly error = input<boolean>(false);
+
+  // Del contrato `FormValueControl`: el `[formField]` las llena solo. Ninguna que no se lea acá.
+  readonly errors = input<readonly ValidationError[]>([]);
+  readonly invalid = input<boolean>(false);
+  readonly touched = input<boolean>(false);
+  readonly required = input<boolean>(false);
+  readonly disabled = input<boolean>(false);
+
+  /** Al perder el foco, nunca al ganarlo: el formulario marca «tocado» con esto. */
+  readonly touch = output<void>();
 
   /** Pisa, en esta instancia, los textos de `EWMS_SELECT_MESSAGES` (ADR 0008). */
   readonly messages = input<Partial<SelectMessages> | null>(null);
@@ -105,6 +119,7 @@ export class Select<T = unknown> extends FormControlBase<unknown> implements OnI
     ...(this.messages() ?? {}),
   }));
 
+  private readonly injector = inject(Injector);
   private readonly viewContainerRef = inject(ViewContainerRef);
   private readonly anchor = viewChild.required<ElementRef<HTMLElement>>('anchor');
   private readonly panelTemplate = viewChild.required<TemplateRef<unknown>>('panel');
@@ -118,8 +133,6 @@ export class Select<T = unknown> extends FormControlBase<unknown> implements OnI
   protected readonly hintId = `${this.fieldId}-hint`;
   protected readonly statusId = `${this.fieldId}-status`;
   protected readonly errorId = `${this.fieldId}-error`;
-
-  protected readonly valueSource = this.value;
 
   protected readonly text = signal('');
   protected readonly isOpen = signal(false);
@@ -158,8 +171,6 @@ export class Select<T = unknown> extends FormControlBase<unknown> implements OnI
   );
 
   constructor() {
-    super();
-
     // RFE-01: la espera es un token leído por emisión. En memoria no hay espera: no hay red.
     this.typed
       .pipe(
@@ -202,7 +213,7 @@ export class Select<T = unknown> extends FormControlBase<unknown> implements OnI
   }
 
   protected readonly selectedLabel = computed(() => {
-    const chosen = this.controlValue();
+    const chosen = this.value();
     if (chosen === null || chosen === undefined) {
       return null;
     }
@@ -215,15 +226,20 @@ export class Select<T = unknown> extends FormControlBase<unknown> implements OnI
   });
 
   protected readonly selectedIndex = computed(() =>
-    this.rows().findIndex((item) => this.valueFor(item) === this.controlValue()),
+    this.rows().findIndex((item) => this.valueFor(item) === this.value()),
   );
 
+  /** Se valida al salir del campo y al enviar, nunca mientras se escribe. */
+  protected readonly showError = computed(() => this.invalid() && this.touched());
+
+  protected readonly fieldError = fieldErrorText(this.errors, this.showError);
+
   protected readonly effectiveState = computed<FieldState>(() => {
-    if (this.isDisabled()) {
+    if (this.disabled()) {
       return 'disabled';
     }
     // El validador que falló manda: el error es del formulario, no del dibujo.
-    return this.error() || this.fieldError() || this.search.status() === 'error'
+    return this.error() || this.showError() || this.search.status() === 'error'
       ? 'error'
       : 'default';
   });
@@ -306,7 +322,7 @@ export class Select<T = unknown> extends FormControlBase<unknown> implements OnI
   }
 
   private open(): void {
-    if (this.isDisabled() || this.isOpen()) {
+    if (this.disabled() || this.isOpen()) {
       return;
     }
     if (!this.overlayRef) {
@@ -356,7 +372,7 @@ export class Select<T = unknown> extends FormControlBase<unknown> implements OnI
 
   /** RFE-06: la ráfaga se mide acá, con umbral en token; el DS no puede importar `core/keyboard/`. */
   protected onKeydown(event: KeyboardEvent): void {
-    if (this.isDisabled()) {
+    if (this.disabled()) {
       return;
     }
     const isScan =
@@ -424,10 +440,10 @@ export class Select<T = unknown> extends FormControlBase<unknown> implements OnI
 
   /** El único camino que cambia el valor; Escape, Tab y clic afuera van a `close()`. */
   protected choose(item: unknown): void {
-    this.commit(this.valueFor(item));
+    this.value.set(this.valueFor(item));
     this.text.set(this.labelOf(item));
     this.close();
-    this.markTouched();
+    this.touch.emit();
   }
 
   /** El foco se mueve en mousedown: prevenirlo lo deja en el campo. */
@@ -438,7 +454,7 @@ export class Select<T = unknown> extends FormControlBase<unknown> implements OnI
   /** Repone la etiqueta del valor real: texto a medio tipear mentiría sobre él (RFE-03). */
   protected onBlur(): void {
     this.text.set(this.selectedLabel() ?? '');
-    this.markTouched();
+    this.touch.emit();
   }
 
   /** RFE-01: volver al campo reabre el panel si hay resultados, sin retipear. */

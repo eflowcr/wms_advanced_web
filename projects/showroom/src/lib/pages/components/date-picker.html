@@ -57,7 +57,7 @@
             formControlName="entrega"
             placeholder="dd/mm/aaaa"
             hint="Escribila, o abrí el calendario con el botón."
-            [min]="today"
+            [minDate]="today"
           />
           <p class="text-caption text-secondary">
             Valor: <span class="font-mono text-primary" data-demo-date-value>{{ show(delivery()) }}</span>

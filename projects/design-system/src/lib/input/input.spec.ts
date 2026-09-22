@@ -1,8 +1,9 @@
 import { Component, signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
-import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { disabled, form, FormField, minLength, required } from '@angular/forms/signals';
 import { By } from '@angular/platform-browser';
 import { expectNoAxeViolations } from '@ewms/testing';
+import { EWMS_FORM_MESSAGES, NO_FORM_MESSAGES, type FormMessages } from '../forms/form.types';
 import type { FieldSize, FieldState } from '../field/field.types';
 import { Input } from './input';
 import type { InputType } from './input.types';
@@ -10,6 +11,11 @@ import type { InputType } from './input.types';
 const TYPES: readonly InputType[] = ['text', 'number', 'password', 'search', 'textarea'];
 const STATES: readonly FieldState[] = ['default', 'error', 'disabled', 'readonly'];
 const SIZES: readonly FieldSize[] = ['sm', 'md', 'lg'];
+
+const MESSAGES: FormMessages = {
+  ...NO_FORM_MESSAGES,
+  errors: { ...NO_FORM_MESSAGES.errors, minLength: (limit) => `Mínimo ${limit} caracteres` },
+};
 
 @Component({
   template: `
@@ -49,11 +55,18 @@ class TestHost {
 }
 
 @Component({
-  template: ` <ewms-input [label]="'Lote'" [formControl]="control" /> `,
-  imports: [Input, ReactiveFormsModule],
+  template: ` <ewms-input label="Lote" hint="Tres letras" [formField]="lote" /> `,
+  imports: [Input, FormField],
 })
-class ReactiveHost {
-  readonly control = new FormControl('');
+class FormHost {
+  readonly locked = signal(false);
+  readonly model = signal({ lote: '' });
+  readonly form = form(this.model, (path) => {
+    required(path.lote);
+    minLength(path.lote, 3);
+    disabled(path.lote, () => this.locked());
+  });
+  readonly lote = this.form.lote;
 }
 
 /** Como `getByLabelText`: pasa por el par for/id a propósito, porque ese par es el criterio. */
@@ -378,30 +391,13 @@ describe('Input', () => {
     });
   });
 
-  describe('Disabled, from either source', () => {
-    function instance(): Input {
-      return fixture.debugElement.query(By.directive(Input)).componentInstance as Input;
-    }
-
-    it('lets the disabled INPUT win over a form that enables the control', async () => {
+  describe('Disabled', () => {
+    it('is disabled by the entrada, or by state="disabled"', async () => {
       host.disabled.set(true);
       await settle();
-
-      // Como lo llama Angular. Ninguna fuente rehabilita lo que la otra deshabilitó:
-      // form.enable() no deshace un [disabled]="true" de la plantilla.
-      instance().setDisabledState(false);
-      await settle();
-
       expect(control().disabled).toBe(true);
-    });
 
-    it('is disabled by the form alone when the input says nothing', async () => {
-      instance().setDisabledState(true);
-      await settle();
-      expect(control().disabled).toBe(true);
-    });
-
-    it('is disabled by state="disabled" alone', async () => {
+      host.disabled.set(false);
       host.state.set('disabled');
       await settle();
       expect(control().disabled).toBe(true);
@@ -437,14 +433,17 @@ describe('Input', () => {
   });
 });
 
-describe('Input with a reactive form', () => {
-  let fixture: ComponentFixture<ReactiveHost>;
+describe('Input inside a signal form', () => {
+  let fixture: ComponentFixture<FormHost>;
+  let host: FormHost;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [ReactiveHost, Input, ReactiveFormsModule],
+      imports: [FormHost, Input],
+      providers: [{ provide: EWMS_FORM_MESSAGES, useValue: MESSAGES }],
     }).compileComponents();
-    fixture = TestBed.createComponent(ReactiveHost);
+    fixture = TestBed.createComponent(FormHost);
+    host = fixture.componentInstance;
     fixture.detectChanges();
     await fixture.whenStable();
   });
@@ -458,39 +457,61 @@ describe('Input with a reactive form', () => {
     return (fixture.nativeElement as Element).querySelector('input') as HTMLInputElement;
   }
 
-  it('writes the form value into the field', async () => {
-    fixture.componentInstance.control.setValue('L-0042');
-    await settle();
+  function note(): string {
+    return (fixture.nativeElement as Element).querySelector('p')?.textContent?.trim() ?? '';
+  }
 
+  it('writes the form value into the field, and typing back into the form', async () => {
+    host.model.set({ lote: 'L-0042' });
+    await settle();
     expect(field().value).toBe('L-0042');
-  });
 
-  it('reports typing back to the form', async () => {
     field().value = 'L-0099';
     field().dispatchEvent(new Event('input'));
     await settle();
-
-    expect(fixture.componentInstance.control.value).toBe('L-0099');
+    expect(host.form.lote().value()).toBe('L-0099');
   });
 
-  it('marks the control touched when the focus leaves, not on typing', async () => {
+  it('marks the field touched when the focus leaves, not on typing', async () => {
     field().value = 'L-0099';
     field().dispatchEvent(new Event('input'));
     await settle();
-    expect(fixture.componentInstance.control.touched).toBe(false);
+    expect(host.form.lote().touched()).toBe(false);
 
     focusThenLeave(field());
     await settle();
-    expect(fixture.componentInstance.control.touched).toBe(true);
+    expect(host.form.lote().touched()).toBe(true);
   });
 
-  it('follows setDisabledState in both directions', async () => {
-    fixture.componentInstance.control.disable();
+  it('shows the hint while typing and the failing validator after leaving', async () => {
+    expect(note()).toBe('Tres letras');
+
+    field().value = 'ab';
+    field().dispatchEvent(new Event('input'));
+    await settle();
+    // Todavía el hint: se valida al salir, nunca mientras se escribe.
+    expect(note()).toBe('Tres letras');
+    expect(field().hasAttribute('aria-invalid')).toBe(false);
+
+    focusThenLeave(field());
+    await settle();
+    expect(note()).toBe('Mínimo 3 caracteres');
+    expect(field().getAttribute('aria-invalid')).toBe('true');
+    expect(field().getAttribute('aria-describedby')).toBeTruthy();
+  });
+
+  it('takes the asterisk and the native required from the schema', () => {
+    expect(field().required).toBe(true);
+    expect(
+      (fixture.nativeElement as Element).querySelector('label span')?.getAttribute('aria-hidden'),
+    ).toBe('true');
+  });
+
+  // Deshabilitar dentro de un formulario va por `disabled(path.x)` del esquema: Angular
+  // prohíbe `[disabled]` en el mismo nodo que `[formField]` (NG8022).
+  it('is disabled by the schema rule', async () => {
+    host.locked.set(true);
     await settle();
     expect(field().disabled).toBe(true);
-
-    fixture.componentInstance.control.enable();
-    await settle();
-    expect(field().disabled).toBe(false);
   });
 });

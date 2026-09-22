@@ -8,15 +8,18 @@ import {
   effect,
   ElementRef,
   inject,
-
+  Injector,
   input,
   LOCALE_ID,
+  model,
+  output,
   signal,
   TemplateRef,
   ViewContainerRef,
   viewChild,
   type OnDestroy,
 } from '@angular/core';
+import type { FormValueControl, ValidationError } from '@angular/forms/signals';
 import { Button } from '../button/button';
 import {
   FIELD_BASE_CLASSES,
@@ -28,7 +31,7 @@ import {
   type FieldSize,
   type FieldState,
 } from '../field/field.types';
-import { FormControlBase, provideValueAccessor } from '../forms/control-value-accessor';
+import { fieldErrorText } from '../forms/field-note';
 import { SUFFIX_PADDING_CLASS } from '../input/input.types';
 import { createConnectedOverlay, PANEL_POSITIONS } from '../overlay/connected-overlay';
 import type { DateRange } from '../table/table-source';
@@ -68,27 +71,40 @@ let nextDatePickerId = 0;
   imports: [Button],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { class: 'block' },
-  providers: [provideValueAccessor(() => DatePicker)],
 })
-export class DatePicker extends FormControlBase<DatePickerValue> implements OnDestroy {
+export class DatePicker implements FormValueControl<DatePickerValue>, OnDestroy {
+  /** Con `[formField]` lo llena el formulario; fuera de uno, `[(value)]`. */
+  readonly value = model<DatePickerValue>(null);
+
   readonly label = input.required<string>();
   readonly mode = input<DatePickerMode>('single');
-  /** 'YYYY-MM-DD'; los días fuera de [min, max] se ven y no se eligen. */
-  readonly min = input<string | null>(null);
-  readonly max = input<string | null>(null);
+  /**
+   * 'YYYY-MM-DD'; los días fuera del rango se ven y no se eligen. `minDate`/`maxDate` y no
+   * `min`/`max`: esos dos nombres son del contrato `FormUiControl`, con otro tipo.
+   */
+  readonly minDate = input<string | null>(null);
+  readonly maxDate = input<string | null>(null);
   readonly size = input<FieldSize>('md');
   readonly placeholder = input<string>('');
   readonly hint = input<string>('');
+  /** Solo dibujo, para las demos del catálogo: quien valida es el formulario. */
   readonly error = input<boolean>(false);
   /** Solo para lectores: el filtro de la tabla ya tiene la cabecera de la columna encima. */
   readonly hideLabel = input<boolean>(false);
 
-  /** Siembra el control; después manda `writeValue`. */
-  readonly value = input<DatePickerValue>(null);
-  protected readonly valueSource = this.value;
+  // Del contrato `FormValueControl`: el `[formField]` las llena solo. Ninguna que no se lea acá.
+  readonly errors = input<readonly ValidationError[]>([]);
+  readonly invalid = input<boolean>(false);
+  readonly touched = input<boolean>(false);
+  readonly required = input<boolean>(false);
+  readonly disabled = input<boolean>(false);
+
+  /** Al perder el foco, nunca al ganarlo: el formulario marca «tocado» con esto. */
+  readonly touch = output<void>();
 
   protected readonly words = inject(EWMS_DATE_PICKER_MESSAGES);
   private readonly localeId = inject(LOCALE_ID);
+  private readonly injector = inject(Injector);
   private readonly viewContainerRef = inject(ViewContainerRef);
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly anchor = viewChild.required<ElementRef<HTMLElement>>('anchor');
@@ -120,8 +136,7 @@ export class DatePicker extends FormControlBase<DatePickerValue> implements OnDe
   }
 
   constructor() {
-    super();
-    effect(() => this.text.set(this.format(this.controlValue())));
+    effect(() => this.text.set(this.format(this.value())));
   }
 
   ngOnDestroy(): void {
@@ -129,8 +144,13 @@ export class DatePicker extends FormControlBase<DatePickerValue> implements OnDe
     this.overlayRef = null;
   }
 
+  /** Se valida al salir del campo y al enviar, nunca mientras se escribe. */
+  protected readonly showError = computed(() => this.invalid() && this.touched());
+
+  protected readonly fieldError = fieldErrorText(this.errors, this.showError);
+
   protected readonly effectiveState = computed<FieldState>(() =>
-    this.isDisabled() ? 'disabled' : this.error() || this.fieldError() ? 'error' : 'default',
+    this.disabled() ? 'disabled' : this.error() || this.showError() ? 'error' : 'default',
   );
 
   /** El mensaje del validador reemplaza al hint, como en el Input. */
@@ -173,18 +193,18 @@ export class DatePicker extends FormControlBase<DatePickerValue> implements OnDe
   }
 
   private range(): DateRange {
-    const value = this.controlValue();
+    const value = this.value();
     return value !== null && typeof value === 'object' ? value : {};
   }
 
   protected isOutside(iso: string): boolean {
-    const min = this.min();
-    const max = this.max();
+    const min = this.minDate();
+    const max = this.maxDate();
     return (min !== null && iso < min) || (max !== null && iso > max);
   }
 
   protected isSelected(iso: string): boolean {
-    const value = this.controlValue();
+    const value = this.value();
     if (this.mode() === 'single') {
       return value === iso;
     }
@@ -224,10 +244,10 @@ export class DatePicker extends FormControlBase<DatePickerValue> implements OnDe
   }
 
   private open(): void {
-    if (this.isDisabled()) {
+    if (this.disabled()) {
       return;
     }
-    const value = this.controlValue();
+    const value = this.value();
     const start = typeof value === 'string' ? value : this.range().from;
     this.focused.set(parseIso(start) ? start! : this.clamp(this.today));
     this.pendingStart.set(null);
@@ -265,8 +285,8 @@ export class DatePicker extends FormControlBase<DatePickerValue> implements OnDe
   }
 
   private clamp(iso: string): string {
-    const min = this.min();
-    const max = this.max();
+    const min = this.minDate();
+    const max = this.maxDate();
     return min !== null && iso < min ? min : max !== null && iso > max ? max : iso;
   }
 
@@ -296,16 +316,16 @@ export class DatePicker extends FormControlBase<DatePickerValue> implements OnDe
     }
     this.focused.set(iso);
     if (this.mode() === 'single') {
-      this.commit(iso);
+      this.value.set(iso);
     } else {
       const start = this.pendingStart();
       if (start === null) {
         this.pendingStart.set(iso);
         return;
       }
-      this.commit(start <= iso ? { from: start, to: iso } : { from: iso, to: start });
+      this.value.set(start <= iso ? { from: start, to: iso } : { from: iso, to: start });
     }
-    this.markTouched();
+    this.touch.emit();
     this.close(true);
   }
 
@@ -369,19 +389,19 @@ export class DatePicker extends FormControlBase<DatePickerValue> implements OnDe
     }
     const [first, second] = dates as string[];
     if (this.mode() === 'single') {
-      this.commit(first ?? null);
+      this.value.set(first ?? null);
     } else if (first === undefined) {
-      this.commit(null);
+      this.value.set(null);
     } else {
       const to = second ?? first;
-      this.commit(first <= to ? { from: first, to } : { from: to, to: first });
+      this.value.set(first <= to ? { from: first, to } : { from: to, to: first });
     }
     this.showValue();
   }
 
   /** Al DOM también: si el texto vuelve a ser el de antes, el binding no ve cambio y no repinta. */
   private showValue(): void {
-    this.text.set(this.format(this.controlValue()));
+    this.text.set(this.format(this.value()));
     this.field().nativeElement.value = this.text();
   }
 
@@ -396,7 +416,7 @@ export class DatePicker extends FormControlBase<DatePickerValue> implements OnDe
 
   protected onBlur(): void {
     this.commitText();
-    this.markTouched();
+    this.touch.emit();
   }
 }
 

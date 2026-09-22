@@ -299,24 +299,27 @@ function tableMessages(): TableMessages {
 }
 
 /**
- * Un mensaje por validador, con las claves literales (transloco-keys-manager lee la fuente).
- * `custom` recibe lo que puso el validador propio: una cadena ya traducida pasa tal cual.
+ * Un mensaje por `kind` de Signal Forms, con las claves literales (transloco-keys-manager lee la
+ * fuente). Un validador del proyecto trae su texto en el `message` del error, que gana sobre esto.
  */
 function formMessages(): FormMessages {
   const transloco = inject(TranslocoService);
-  const length = (detail: unknown): number => (detail as { requiredLength: number }).requiredLength;
+  const locale = inject(TranslocoLocaleService);
+  const day = (limit: unknown): string =>
+    limit instanceof Date ? locale.localizeDate(limit, undefined, DATE_LIMIT_FORMAT) : '';
   return {
     errors: {
       required: () => transloco.translate('ds.form.required'),
-      minlength: (detail) => transloco.translate('ds.form.minlength', { length: length(detail) }),
-      maxlength: (detail) => transloco.translate('ds.form.maxlength', { length: length(detail) }),
-      min: (detail) => transloco.translate('ds.form.min', { min: (detail as { min: number }).min }),
-      max: (detail) => transloco.translate('ds.form.max', { max: (detail as { max: number }).max }),
+      minLength: (limit) => transloco.translate('ds.form.minLength', { length: limit }),
+      maxLength: (limit) => transloco.translate('ds.form.maxLength', { length: limit }),
+      min: (limit) => transloco.translate('ds.form.min', { min: limit }),
+      max: (limit) => transloco.translate('ds.form.max', { max: limit }),
+      minDate: (limit) => transloco.translate('ds.form.minDate', { date: day(limit) }),
+      maxDate: (limit) => transloco.translate('ds.form.maxDate', { date: day(limit) }),
       pattern: () => transloco.translate('ds.form.pattern'),
       email: () => transloco.translate('ds.form.email'),
-      custom: (detail) =>
-        typeof detail === 'string' ? detail : transloco.translate('ds.form.custom'),
     },
+    customError: () => transloco.translate('ds.form.custom'),
     errorSummary: (count) => transloco.translate('ds.form.errorSummary', { count }),
     get errorSummaryLabel() {
       return transloco.translate('ds.form.errorSummaryLabel');
@@ -458,6 +461,9 @@ function datePickerMessages(): DatePickerMessages {
     },
   };
 }
+
+/** Día y mes con dos dígitos, igual que en la tabla: 16/03/2026 y no 16/3/2026. */
+const DATE_LIMIT_FORMAT = { day: '2-digit', month: '2-digit', year: 'numeric' } as const;
 
 function tableFormatters(): TableFormatters {
   const locale = inject(TranslocoLocaleService);

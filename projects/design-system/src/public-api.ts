@@ -56,12 +56,13 @@ export {
   type EmptyStateSize,
 } from './lib/empty-state/empty-state';
 
-// Formulario (2026-09-22): las reglas en un solo lugar, sobre ReactiveForms.
+// Formulario (2026-09-22): las reglas en un solo lugar, sobre Signal Forms (ADR 0013).
 export {
   EWMS_FORM_MESSAGES,
   NO_FORM_MESSAGES,
-  type FormErrorKey,
+  type FormErrorKind,
   type FormErrorWriter,
+  type FormErrorWriters,
   type FormMessages,
 } from './lib/forms/form.types';
 export { FormPattern } from './lib/forms/form-pattern';

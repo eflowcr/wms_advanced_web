@@ -20,7 +20,7 @@ import {
   Validators,
   type ControlValueAccessor,
 } from '@angular/forms';
-import { EWMS_FORM_MESSAGES, type FormErrorKey } from './form.types';
+import { EWMS_FORM_MESSAGES } from './form.types';
 
 let nextFieldId = 0;
 
@@ -85,9 +85,14 @@ export abstract class FormControlBase<TValue> implements ControlValueAccessor {
       return '';
     }
     const [key, detail] = Object.entries(errors)[0] ?? [];
-    const write =
-      this.formMessages?.errors[key as FormErrorKey] ?? this.formMessages?.errors.custom;
-    return key === undefined || write === undefined ? '' : write(detail, key);
+    if (key === undefined) {
+      return '';
+    }
+    // Los nombres de `ReactiveForms` no son los `kind` de Signal Forms. Se va con este archivo.
+    const kind = key === 'minlength' ? 'minLength' : key === 'maxlength' ? 'maxLength' : key;
+    const write = this.formMessages?.errors[kind] ?? this.formMessages?.customError;
+    const limit = (detail as Record<string, unknown> | null)?.['requiredLength'] ?? detail;
+    return write === undefined ? '' : write(limit);
   });
 
   /** Obligatorio según el formulario: el asterisco no se escribe a mano en cada campo. */

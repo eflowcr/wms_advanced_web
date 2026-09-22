@@ -1,7 +1,7 @@
 <!-- Asterisco `aria-hidden`: el `required` nativo ya lo anuncia; el glifo lo diría dos veces. -->
 <label [for]="fieldId" [class]="hideLabel() ? 'sr-only' : 'block text-caption text-secondary mb-1'">
   {{ label() }}
-  @if (showRequired()) {
+  @if (required()) {
     <span aria-hidden="true">*</span>
   }
 </label>
@@ -25,10 +25,10 @@
       [style.borderColor]="borderColor()"
       [style.fontSize]="fontSize()"
       [attr.placeholder]="placeholder() || null"
-      [value]="controlValue()"
+      [value]="value()"
       [disabled]="isNativeDisabled()"
       [readOnly]="isReadonly()"
-      [required]="showRequired()"
+      [required]="required()"
       [attr.aria-invalid]="isInvalid() ? 'true' : null"
       [attr.aria-describedby]="describedBy()"
       (input)="onInput($event)"
@@ -47,10 +47,10 @@
       [style.borderColor]="borderColor()"
       [style.fontSize]="fontSize()"
       [attr.placeholder]="placeholder() || null"
-      [value]="controlValue()"
+      [value]="value()"
       [disabled]="isNativeDisabled()"
       [readOnly]="isReadonly()"
-      [required]="showRequired()"
+      [required]="required()"
       [attr.aria-invalid]="isInvalid() ? 'true' : null"
       [attr.aria-describedby]="describedBy()"
       (input)="onInput($event)"

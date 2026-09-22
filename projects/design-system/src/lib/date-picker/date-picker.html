@@ -4,7 +4,7 @@
   [class.sr-only]="hideLabel()"
 >
   {{ label() }}
-  @if (requiredByForm()) {
+  @if (required()) {
     <span aria-hidden="true">*</span>
   }
 </label>
@@ -20,7 +20,7 @@
     [class]="fieldClasses()"
     [style.borderColor]="borderColor()"
     [style.fontSize]="fontSize()"
-    [disabled]="isDisabled()"
+    [disabled]="disabled()"
     [placeholder]="placeholder()"
     [value]="text()"
     [attr.aria-invalid]="effectiveState() === 'error' ? 'true' : null"
@@ -36,7 +36,7 @@
       size="sm"
       icon="calendar"
       [label]="words.chooseDate"
-      [disabled]="isDisabled()"
+      [disabled]="disabled()"
       [expanded]="isOpen()"
       [controls]="isOpen() ? dialogId : null"
       (click)="toggle()"
