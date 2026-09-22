@@ -111,7 +111,7 @@ const COMPONENTS: readonly CatalogEntry[] = [
     selector: 'ewms-input',
     route: `${SHOWROOM_BASE}/components/input`,
     status: 'ready',
-    note: 'Cinco tipos, ControlValueAccessor, y la altura compartida con el Botón del mismo tamaño.',
+    note: 'Cinco tipos, FormValueControl<string>, y la altura compartida con el Botón del mismo tamaño.',
   },
   {
     id: 'checkbox',

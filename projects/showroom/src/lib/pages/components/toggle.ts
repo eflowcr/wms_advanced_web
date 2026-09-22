@@ -66,7 +66,7 @@ const PROPS: readonly PropRow[] = [
     name: 'disabled',
     type: 'boolean',
     default: 'false',
-    description: 'De FormControlBase, combinado con el del formulario por OR — ver el bloque 8.',
+    description: 'Fuera de un formulario. Dentro de uno lo pone la regla disabled() del esquema — ver el bloque 8.',
   },
   {
     name: '(checkedChange)',

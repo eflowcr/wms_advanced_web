@@ -256,7 +256,7 @@ export class ShowroomInput {
 
   protected readonly snippet = [
     '<ewms-input',
-    '  formControlName="sku"',
+    '  [formField]="alta.sku"',
     "  [label]=\"'articulos.sku' | transloco\"",
     "  [hint]=\"'articulos.skuFormato' | transloco\"",
     '  [state]="form.controls.sku.invalid && form.controls.sku.touched ? \'error\' : \'default\'"',

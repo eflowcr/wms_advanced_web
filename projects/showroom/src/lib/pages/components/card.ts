@@ -158,7 +158,7 @@ export class ShowroomCard {
 
   protected readonly snippet = [
     '<ewms-card-group',
-    '  formControlName="almacen"',
+    '  [formField]="alta.almacen"',
     "  [label]=\"'recepciones.almacen' | transloco\"",
     '>',
     '  @for (almacen of almacenes(); track almacen.id) {',

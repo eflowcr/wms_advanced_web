@@ -156,7 +156,7 @@ export class ShowroomRadio {
     "  <legend>{{ 'recepciones.tipo' | transloco }}</legend>",
     '  @for (opcion of tipos(); track opcion.value) {',
     '    <ewms-radio',
-    '      formControlName="tipo"',
+    '      [formField]="alta.tipo"',
     '      name="tipo-recepcion"',
     '      [value]="opcion.value"',
     '      [label]="opcion.label"',

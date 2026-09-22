@@ -20,6 +20,7 @@ import {
   type TableMessages,
 } from '@ewms/design-system';
 import { CATALOG } from './catalog';
+import { SHIPMENT_CODE } from './pages/patterns/expedicion.rules';
 import { SHOWROOM_SHORTCUT_MAP } from './shortcuts.map';
 
 /**
@@ -223,7 +224,7 @@ export const FORM_MESSAGES: FormMessages = {
     pattern: () => 'El formato no es el esperado',
     email: () => 'Escribí un correo válido',
     // `kind` del proyecto: el validador de `expedicion.rules.ts` no lleva su texto encima.
-    shipmentCode: () => 'El código va como EXP-2026-0000',
+    [SHIPMENT_CODE]: () => 'El código va como EXP-2026-0000',
   },
   customError: () => 'Revisá este campo',
   errorSummary: (count) => (count === 1 ? 'Revisá 1 campo' : `Revisá ${count} campos`),

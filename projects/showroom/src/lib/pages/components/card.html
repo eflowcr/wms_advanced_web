@@ -368,11 +368,10 @@
     <h3 class="text-h3">Salidas</h3>
     <div class="flex flex-col gap-2 rounded-md border border-warning bg-warning-surface p-4">
       <p>
-        <strong>Ninguna.</strong> El valor viaja por
-        <code class="font-mono">ControlValueAccessor</code> —o sea por
-        <code class="font-mono">[formField]</code> o
-        <code class="font-mono">ngModel</code>— y se escucha con
-        <code class="font-mono">valueChanges</code> del control. Como en el Select, y por la misma
+        <strong>Una, y la declara <code class="font-mono">model()</code>:</strong>
+        <code class="font-mono">(valueChange)</code>. El valor viaja por
+        <code class="font-mono">[formField]</code> dentro de un formulario y por
+        <code class="font-mono">[(value)]</code> fuera de uno. Como en el Select, y por la misma
         razón: acá no hay ningún <code class="font-mono">&lt;input&gt;</code> nativo cuyo
         <code class="font-mono">change</code> haya que frenar.
       </p>

@@ -125,6 +125,7 @@ These rules are **ESLint errors that fail CI**, not a good-faith agreement. See
   Domain prefixes (`inv-`, `sec-`) arrive with `projects/domains/`.
 - Standalone components and lazy routes only. No NgModules.
 - Signals by default: `input()`, `output()`, `computed()`.
-- Forms: the form controls are `ControlValueAccessor`s and the `[ewmsForm]`
-  pattern runs on reactive forms.
+- Forms: **Signal Forms** (ADR 0013). A field implements `FormValueControl` or
+  `FormCheckboxControl` with `model()`, and the `[ewmsForm]` pattern submits with
+  `submit()`. Importing `@angular/forms` is a lint error.
 - OnPush is the Angular 22 default and is not configured per component.

@@ -10,7 +10,6 @@ import {
   viewChild,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { FormsModule } from '@angular/forms';
 import {
   ArrayTableSource,
   Banner,
@@ -49,7 +48,7 @@ const FLOW_CONTROLS =
 // del CDK); la regla de oyente global único es del teclado, y ese sigue siendo del motor.
 @Component({
   selector: 'ewms-showroom-search-create-edit',
-  imports: [Banner, Button, DemoFrame, FormsModule, Select, Table, TableColumn],
+  imports: [Banner, Button, DemoFrame, Select, Table, TableColumn],
   templateUrl: './search-create-edit.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

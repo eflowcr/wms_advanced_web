@@ -297,23 +297,19 @@
     <h3 class="text-h3">La regla del disabled</h3>
     <div class="flex flex-col gap-2 rounded-md border border-strong bg-secondary p-4">
       <p>
-        <code class="font-mono">isDisabled = disabled() || disabledByForm()</code>.
-        <strong>Quien deshabilita gana, y nadie re-habilita.</strong>
+        <strong>Un solo dueño por vez.</strong> Fuera de un formulario, la entrada
+        <code class="font-mono">disabled</code>. Dentro de uno, la regla
+        <code class="font-mono">disabled(path.x, …)</code> del esquema.
       </p>
       <p class="text-caption">
-        La entrada <code class="font-mono">disabled</code> y el
-        <code class="font-mono">setDisabledState</code> que llama Angular cuando el
-        <code class="font-mono">FormControl</code> está deshabilitado no se fusionan: se combinan con
-        OR. Dejar que el formulario pisara la entrada haría que
-        <code class="font-mono">[disabled]="true"</code> se volviera operable en cuanto el formulario
-        habilitara el control, que es lo contrario de lo que dice la plantilla. Deshabilitar es una
-        propiedad de seguridad: la respuesta restrictiva es el default correcto y la permisiva es la
-        que hay que argumentar.
+        No se combinan porque Angular no lo permite: enlazar
+        <code class="font-mono">[disabled]</code> en el mismo nodo que
+        <code class="font-mono">[formField]</code> es un error de compilación (NG8022). Deshabilitar
+        es una propiedad de seguridad, y con un solo dueño no hay dos fuentes en desacuerdo.
       </p>
       <p class="text-caption">
-        Para que lo maneje el formulario, <strong>no pases la entrada</strong>. Idéntico en el
-        Checkbox, el Radio, el Input y el Select: está en
-        <code class="font-mono">FormControlBase</code>, escrito una sola vez.
+        Para que lo maneje el formulario, <strong>no pases la entrada</strong>: la regla del
+        esquema hace el resto. Idéntico en el Checkbox, el Radio, el Input y el Select.
       </p>
     </div>
 

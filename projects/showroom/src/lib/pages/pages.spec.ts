@@ -702,13 +702,13 @@ describe('ShowroomInput', () => {
     expect(variants).toEqual(['text', 'number', 'password', 'search', 'textarea']);
   });
 
-  it('drives the demo from a real reactive form, not from a local copy', async () => {
+  it('drives the demo from a real signal form, not from a local copy', async () => {
     const { fixture, element } = await render(ShowroomInput);
     const page = fixture.componentInstance as unknown as {
       model: { set(value: { sku: string; clave: string; busqueda: string }): void };
     };
 
-    // Escribir en el control debe cambiar la lectura: prueba de que es un ControlValueAccessor real.
+    // Escribir el modelo debe cambiar la lectura: prueba de que el campo está atado de verdad.
     page.model.set({ sku: 'SKU-99999-Z', clave: '', busqueda: '' });
     await fixture.whenStable();
     expect(element.querySelector('[data-demo-value]')?.textContent).toContain('SKU-99999-Z');

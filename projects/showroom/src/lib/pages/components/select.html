@@ -429,11 +429,10 @@
     <h3 class="text-h3">Salidas</h3>
     <div class="flex flex-col gap-2 rounded-md border border-warning bg-warning-surface p-4">
       <p>
-        <strong>Ninguna.</strong>&ngsp;<code class="font-mono">&lt;ewms-select&gt;</code> no declara
-        ningún <code class="font-mono">output()</code>: el valor viaja por
-        <code class="font-mono">ControlValueAccessor</code>, es decir por
-        <code class="font-mono">[formField]</code>, y se
-        escucha con <code class="font-mono">valueChanges</code> del control.
+        <strong>Dos, y una la declara <code class="font-mono">model()</code>:</strong>
+        <code class="font-mono">(valueChange)</code> y <code class="font-mono">(touch)</code>. El
+        valor viaja por <code class="font-mono">[formField]</code> dentro de un formulario y por
+        <code class="font-mono">[(value)]</code> fuera de uno.
       </p>
       <p class="text-caption">
         Y <strong>no hay <code class="font-mono">(change)</code> nativo que se escape</strong>: acá

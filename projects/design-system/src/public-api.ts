@@ -10,7 +10,7 @@ export {
 } from './lib/button/button';
 export { Tooltip, type TooltipPosition } from './lib/tooltip/tooltip';
 
-// Formulario (DS-2), ControlValueAccessor por una base común. `FieldSize` y `FieldState`
+// Formulario (DS-2, Signal Forms desde 2026-09-22). `FieldSize` y `FieldState`
 // se exportan una vez: Input y Select comparten escala y un segundo nombre derivaría.
 export { type FieldSize, type FieldState } from './lib/field/field.types';
 export { Input, type InputType } from './lib/input/input';
@@ -66,7 +66,7 @@ export {
   type FormErrorWriters,
   type FormMessages,
 } from './lib/forms/form.types';
-export { FormPattern } from './lib/forms/form-pattern';
+export { FormPattern, type FormAction } from './lib/forms/form-pattern';
 export { confirmDiscard } from './lib/forms/confirm-discard';
 
 // Filtros (2026-09-22): los chips son de la tabla y de la barra de pantalla, la misma pieza.
