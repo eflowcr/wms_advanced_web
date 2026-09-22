@@ -199,7 +199,7 @@
           "builder": "@angular/build:unit-test",
           "options": {
             "tsConfig": "projects/shared/tsconfig.spec.json",
-            "runnerConfig": "vitest.config.ts",
+            "runnerConfig": "vitest.shared-lib.config.ts",
             "coverage": true
           }
         }

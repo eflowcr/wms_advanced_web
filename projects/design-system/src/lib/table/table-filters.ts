@@ -3,18 +3,13 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl } from '@angular/forms';
 import type { Observable } from 'rxjs';
 import type { DatePickerValue } from '../date-picker/date-picker';
+import type { FilterChip } from '../filters/filter-chips';
 import type { TableColumn } from './column';
 import { isDateRange, isNumberRange, isSetFilter, type TableFilterValue } from './table-source';
 import type { TableFormatters } from './table.tokens';
 
 export type FilterBound = 'text' | 'min' | 'max';
 
-/** Un filtro activo, para su chip: se ve aunque la fila de filtros esté oculta. */
-export interface FilterChip {
-  readonly key: string;
-  readonly column: string;
-  readonly value: string;
-}
 
 interface FiltersHost {
   readonly columns: () => readonly TableColumn[];

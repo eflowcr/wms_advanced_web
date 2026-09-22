@@ -13,6 +13,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { Button } from '../button/button';
 import { Checkbox } from '../checkbox/checkbox';
+import { FilterChips } from '../filters/filter-chips';
 import { Icon } from '../icon/icon';
 import { Input as TextInput } from '../input/input';
 import { Radio } from '../radio/radio';
@@ -31,6 +32,7 @@ import type { TableDensity } from './table.types';
   imports: [
     Button,
     Checkbox,
+    FilterChips,
     Icon,
     Radio,
     ReactiveFormsModule,

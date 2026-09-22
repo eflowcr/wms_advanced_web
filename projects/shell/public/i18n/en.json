@@ -11,6 +11,10 @@
       "nextMonth": "Next month",
       "previousMonth": "Previous month"
     },
+    "filterBar": {
+      "fewerFilters": "Fewer filters",
+      "moreFilters": "{active, plural, =0 {More filters} other {More filters (#)}}"
+    },
     "select": {
       "error": "The catalogue could not be reached.",
       "more": "Show more results",

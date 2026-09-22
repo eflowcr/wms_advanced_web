@@ -7,6 +7,7 @@ import { expect, test, type Page } from '@playwright/test';
  */
 
 import {
+  FILTERS,
   PAGES,
   BANNER,
   BUTTON,
@@ -1384,6 +1385,35 @@ test.describe('DS-3 lote B: el select con una fuente remota', () => {
     await page.keyboard.press('ArrowDown');
     await page.keyboard.press('Enter');
     await expect(page.locator('[data-demo-search-value]')).toContainText('SKU-');
+  });
+});
+
+// El patrón Filtros: los filtros de pantalla viven en la URL, no en la tabla.
+test.describe('el patrón Filtros', () => {
+  const DEMO = '[data-demo-filters]';
+
+  test('A FILTERED LINK IS SHAREABLE: the URL carries it, reload keeps it, back undoes it', async ({
+    page,
+  }) => {
+    await page.goto(FILTERS);
+    await ready(page);
+    const rows = page.locator(`${DEMO} tbody tr[data-row]`);
+    await expect(rows).toHaveCount(12);
+
+    await page.locator(`${DEMO} [data-field="almacen"] input`).click();
+    await page.getByRole('option', { name: 'Central' }).click();
+    await expect(page).toHaveURL(/almacen=central/);
+    await expect(rows).toHaveCount(6);
+    await expect(page.locator(`${DEMO} [data-chip="almacen"]`)).toContainText('Almacén: Central');
+
+    // El mismo enlace, abierto de nuevo: lo mismo.
+    await page.reload();
+    await ready(page);
+    await expect(rows).toHaveCount(6);
+
+    // «Atrás» deshace el último filtro.
+    await page.goBack();
+    await expect(rows).toHaveCount(12);
   });
 });
 

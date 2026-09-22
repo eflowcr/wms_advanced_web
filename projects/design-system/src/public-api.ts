@@ -56,6 +56,17 @@ export {
   type EmptyStateSize,
 } from './lib/empty-state/empty-state';
 
+// Filtros (2026-09-22): los chips son de la tabla y de la barra de pantalla, la misma pieza.
+export { FilterChips, type FilterChip, type FilterChipsMessages } from './lib/filters/filter-chips';
+export {
+  EWMS_FILTER_BAR_MESSAGES,
+  FilterBar,
+  type FilterBarMessages,
+  type FilterField,
+  type FilterFieldValue,
+  type FilterValues,
+} from './lib/filters/filter-bar';
+
 // Badge (DS-3): fuera de la Tabla para que detalle, card y lista digan «con incidencia» igual.
 export { Badge } from './lib/badge/badge';
 export { type SemanticFamily } from './lib/feedback/feedback.types';

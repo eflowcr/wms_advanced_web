@@ -1,6 +1,7 @@
 import { inject, signal, type Provider } from '@angular/core';
 import {
   EWMS_DATE_PICKER_MESSAGES,
+  EWMS_FILTER_BAR_MESSAGES,
   EWMS_FAVORITE_LABELS,
   EWMS_SELECT_MESSAGES,
   EWMS_SHORTCUT_HELP_MESSAGES,
@@ -10,6 +11,7 @@ import {
   EWMS_TABLE_MESSAGES,
   parseTableDate,
   type FavoriteLabelResolver,
+  type FilterBarMessages,
   type SelectMessages,
   type ShortcutHelpMessages,
   type TableFormatters,
@@ -27,6 +29,7 @@ export function provideShowroomDesignSystem(): Provider[] {
     { provide: EWMS_TABLE_MESSAGES, useValue: TABLE_MESSAGES },
     { provide: EWMS_TABLE_FORMATTERS, useValue: TABLE_FORMATTERS },
     { provide: EWMS_SELECT_MESSAGES, useValue: SELECT_MESSAGES },
+    { provide: EWMS_FILTER_BAR_MESSAGES, useValue: FILTER_BAR_MESSAGES },
     { provide: EWMS_SHORTCUT_MAP, useValue: SHOWROOM_SHORTCUT_MAP },
     { provide: EWMS_SHORTCUT_HELP_MESSAGES, useValue: SHORTCUT_HELP_MESSAGES },
     { provide: EWMS_SPLIT_BUTTON_MESSAGES, useValue: { moreActions: 'Más opciones' } },
@@ -195,6 +198,14 @@ export const TABLE_FORMATTERS: TableFormatters = {
     const parsed = Number(value);
     return Number.isFinite(parsed) ? new Intl.NumberFormat('es').format(parsed) : String(value);
   },
+};
+
+/** Los chips comparten `clearFilters` y `removeFilter` con la tabla: una sola forma de decirlo. */
+export const FILTER_BAR_MESSAGES: FilterBarMessages = {
+  moreFilters: (active) => (active === 0 ? 'Más filtros' : `Más filtros (${active})`),
+  fewerFilters: 'Menos filtros',
+  clearFilters: 'Limpiar filtros',
+  removeFilter: (field) => `Quitar el filtro ${field}`,
 };
 
 export const SELECT_MESSAGES: SelectMessages = {

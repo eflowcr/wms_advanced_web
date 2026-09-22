@@ -2,6 +2,7 @@ import { computed, inject, type Provider } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import {
   EWMS_DATE_PICKER_MESSAGES,
+  EWMS_FILTER_BAR_MESSAGES,
   EWMS_FAVORITE_LABELS,
   EWMS_FAVORITES_STORE,
   EWMS_SELECT_MESSAGES,
@@ -15,6 +16,7 @@ import {
   parseTableDate,
   type DatePickerMessages,
   type FavoriteLabelResolver,
+  type FilterBarMessages,
   type SelectMessages,
   type ShortcutHelpMessages,
   type SplitButtonMessages,
@@ -44,6 +46,10 @@ export function provideEwmsDesignSystem(): Provider[] {
     {
       provide: EWMS_SELECT_MESSAGES,
       useFactory: selectMessages,
+    },
+    {
+      provide: EWMS_FILTER_BAR_MESSAGES,
+      useFactory: filterBarMessages,
     },
     // El mapa es valor y las palabras son fábrica (DS-4): las teclas no cambian con
     // el idioma. El showroom provee su propio par para registrar `create` sin el shell.
@@ -279,6 +285,21 @@ function tableMessages(): TableMessages {
       } as const;
       return transloco.translate(keys[kind][scope], { column });
     },
+  };
+}
+
+/** Los chips repiten las palabras de la tabla: una sola forma de decir «Limpiar filtros». */
+function filterBarMessages(): FilterBarMessages {
+  const transloco = inject(TranslocoService);
+  return {
+    moreFilters: (active) => transloco.translate('ds.filterBar.moreFilters', { active }),
+    get fewerFilters() {
+      return transloco.translate('ds.filterBar.fewerFilters');
+    },
+    get clearFilters() {
+      return transloco.translate('ds.table.clearFilters');
+    },
+    removeFilter: (field) => transloco.translate('ds.table.removeFilter', { column: field }),
   };
 }
 

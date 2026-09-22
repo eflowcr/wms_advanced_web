@@ -263,10 +263,10 @@ const PATTERNS: readonly CatalogEntry[] = [
   {
     id: 'pattern-filters',
     name: 'Filtros',
-    selector: null,
-    route: null,
-    status: 'gap',
-    note: 'Composición pendiente.',
+    selector: 'ewms-filter-bar',
+    route: `${SHOWROOM_BASE}/patterns/filters`,
+    status: 'ready',
+    note: 'Filtros de pantalla que van a la fuente y viven en la URL; los chips son los de la tabla.',
   },
   {
     id: 'pattern-empty',

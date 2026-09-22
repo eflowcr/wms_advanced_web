@@ -1,0 +1,56 @@
+<!-- Aplica al cambiar un campo: sin botón «Aplicar», que solo agrega un clic y una duda. -->
+<div class="flex flex-wrap items-end gap-3" data-filter-bar>
+  @for (field of visible(); track field.key) {
+    <div class="min-w-(--col-width-md) flex-1 basis-60 max-w-80" [attr.data-field]="field.key">
+      @switch (field.kind) {
+        @case ('select') {
+          <ewms-select
+            size="sm"
+            [label]="field.label"
+            [options]="selectOptions(field)"
+            [formControl]="$any(control(field))"
+          />
+        }
+        @case ('date-range') {
+          <ewms-date-picker
+            mode="range"
+            size="sm"
+            [label]="field.label"
+            [formControl]="$any(control(field))"
+          />
+        }
+        @default {
+          <ewms-input
+            type="search"
+            size="sm"
+            [label]="field.label"
+            [formControl]="$any(control(field))"
+          />
+        }
+      }
+    </div>
+  }
+
+  @if (hidden().length > 0) {
+    <ewms-button
+      class="mb-0.5"
+      variant="ghost"
+      size="sm"
+      [icon]="expanded() ? 'chevron-up' : 'chevron-down'"
+      iconPosition="right"
+      [expanded]="expanded()"
+      data-more-filters
+      (click)="expanded.set(!expanded())"
+    >
+      {{ expanded() ? text.fewerFilters : text.moreFilters(hiddenActive()) }}
+    </ewms-button>
+  }
+</div>
+
+<!-- La misma pieza que la barra de la tabla: un solo lugar decide cómo se ve un filtro activo. -->
+<ewms-filter-chips
+  [chips]="chips()"
+  [messages]="text"
+  (remove)="remove($event)"
+  (clearAll)="clearAll()"
+/>

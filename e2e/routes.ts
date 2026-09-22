@@ -23,6 +23,7 @@ export const DATE_PICKER = '/design-system/components/date-picker';
 export const KEYBOARD = '/design-system/patterns/keyboard';
 export const SEARCH_CREATE_EDIT = '/design-system/patterns/search-create-edit';
 export const EMPTY_STATE = '/design-system/patterns/empty-state';
+export const FILTERS = '/design-system/patterns/filters';
 
 /**
  * Las rutas navegables del catálogo, patrones incluidos. Sumarla acá la somete a las cuatro
@@ -54,4 +55,5 @@ export const PAGES = [
   { url: KEYBOARD, heading: 'Atajos de teclado' },
   { url: SEARCH_CREATE_EDIT, heading: 'Buscar, crear, editar' },
   { url: EMPTY_STATE, heading: 'Estado vacío' },
+  { url: FILTERS, heading: 'Filtros' },
 ] as const;

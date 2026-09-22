@@ -34,10 +34,16 @@ const ROUTES = [
   { name: '24-components-date-picker', url: '/design-system/components/date-picker' },
   { name: '40-patterns-search-create-edit', url: '/design-system/patterns/search-create-edit' },
   { name: '41-patterns-empty-state', url: '/design-system/patterns/empty-state' },
+  { name: '42-patterns-filters', url: '/design-system/patterns/filters' },
 ] as const;
 
 /** A 390 px, una pasada por las páginas que más cambian con el ancho. */
-const NARROW = ['21-components-table', '40-patterns-search-create-edit', '41-patterns-empty-state'];
+const NARROW = [
+  '21-components-table',
+  '40-patterns-search-create-edit',
+  '41-patterns-empty-state',
+  '42-patterns-filters',
+];
 
 /**
  * Con la fuente de respaldo en pantalla todo ancho medido está mal. document.fonts.ready solo no

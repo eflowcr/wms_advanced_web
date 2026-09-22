@@ -1,13 +1,16 @@
 import { provideZonelessChangeDetection, signal, type Type } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { provideRouter, Router } from '@angular/router';
 import {
   EWMS_FAVORITE_LABELS,
   EWMS_FAVORITES_STORE,
   Favorites,
+  FilterBar,
   InMemoryFavoritesStore,
   Viewport,
   type FavoriteLabelResolver,
+  type FilterValues,
 } from '@ewms/design-system';
 import { expectNoAxeViolations } from '@ewms/testing';
 import { ShowroomLayout } from '../layout/showroom-layout';
@@ -31,6 +34,7 @@ import { ShowroomToggle } from './components/toggle';
 import { ShowroomTooltip } from './components/tooltip';
 import { FLOW_BUDGETS } from './patterns/click-budget';
 import { ShowroomEmptyState } from './patterns/empty-state';
+import { ShowroomFilters } from './patterns/filters';
 import { ShowroomKeyboard } from './patterns/keyboard';
 import { ShowroomSearchCreateEdit } from './patterns/search-create-edit';
 import { ShowroomBrand } from './foundations/brand';
@@ -573,6 +577,7 @@ const PATTERNS: readonly { name: string; component: Type<unknown>; heading: stri
     heading: 'Buscar, crear, editar',
   },
   { name: 'ShowroomEmptyState', component: ShowroomEmptyState, heading: 'Estado vacío' },
+  { name: 'ShowroomFilters', component: ShowroomFilters, heading: 'Filtros' },
 ];
 
 describe.each([...SHEETS, ...PATTERNS])('$name', ({ component, heading }) => {
@@ -1769,6 +1774,46 @@ describe('ShowroomKeyboard', () => {
       'Ningún layout raíz montó el motor',
     );
     expect(element.querySelectorAll('[data-demo-bindings] tr').length).toBe(0);
+  });
+});
+
+describe('ShowroomFilters', () => {
+  it('FILTERS GO TO THE SOURCE, and the table says «no results» with what is left empty', async () => {
+    const { fixture, element } = await render(ShowroomFilters);
+    const rows = (): number => element.querySelectorAll('[data-demo-filters] tbody tr[data-row]').length;
+    expect(rows()).toBe(12);
+
+    const bar = fixture.debugElement.query(By.directive(FilterBar)).componentInstance as {
+      valueChange: { emit(value: FilterValues): void };
+    };
+    bar.valueChange.emit({ almacen: 'central' });
+    await fixture.whenStable();
+    fixture.detectChanges();
+    expect(rows()).toBe(6);
+    expect(element.querySelector('[data-active-filters]')?.textContent).toBe('1');
+
+    // Un período recorta por cualquiera de sus extremos.
+    bar.valueChange.emit({ fecha: { from: '2026-03-01' } });
+    await fixture.whenStable();
+    fixture.detectChanges();
+    expect(rows()).toBe(2);
+    bar.valueChange.emit({ fecha: { to: '2026-01-31' } });
+    await fixture.whenStable();
+    fixture.detectChanges();
+    expect(rows()).toBe(5);
+
+    // Sin resultados, «Limpiar filtros» de la tabla limpia también los de pantalla.
+    bar.valueChange.emit({ almacen: 'central', texto: 'no-existe' });
+    await fixture.whenStable();
+    fixture.detectChanges();
+    expect(rows()).toBe(0);
+    const empty = element.querySelector('[data-empty-state]');
+    expect(empty?.getAttribute('data-empty-state')).toBe('no-results');
+    element.querySelector<HTMLButtonElement>('[data-empty-action] button')!.click();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    expect(rows()).toBe(12);
+    expect(element.querySelector('[data-active-filters]')?.textContent).toBe('0');
   });
 });
 

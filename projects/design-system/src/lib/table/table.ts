@@ -170,6 +170,9 @@ export class Table<T> implements TableContext {
 
   readonly quickFilter = input<boolean>(false);
 
+  /** Cuántos filtros de pantalla hay puestos: con alguno, vacío es «sin resultados». */
+  readonly screenFilters = input<number>(0);
+
   /** Selector de columnas en la barra: mostrar y ocultar. `hideable="false"` no se ofrece. */
   readonly columnChooser = input<boolean>(false);
 
@@ -193,6 +196,8 @@ export class Table<T> implements TableContext {
   /** Con una fuente remota la tabla no descarga: dice qué pidió el usuario, y lo hace el servicio. */
   readonly exportRequest = output<ExportRequest>();
   readonly queryChange = output<TableQuery>();
+  /** «Limpiar filtros» del estado vacío: la pantalla limpia además los suyos. */
+  readonly filtersCleared = output<void>();
   /** Columnas ocultas, anchos, fijadas y densidad: en memoria, para quien quiera guardarlos. */
   readonly viewChange = output<TableView>();
 
@@ -259,9 +264,11 @@ export class Table<T> implements TableContext {
     run: () => this.reload.update((attempt) => attempt + 1),
   }));
 
-  /** Con búsqueda o filtros, vacío es «sin resultados» y se ofrece limpiarlos. */
+  /** Con búsqueda o filtros —de columna o de pantalla—, vacío es «sin resultados». */
   protected readonly emptyKind = computed<EmptyStateKind>(() =>
-    this.search() !== '' || this.filtering.count() > 0 ? 'no-results' : 'no-data',
+    this.search() !== '' || this.filtering.count() > 0 || this.screenFilters() > 0
+      ? 'no-results'
+      : 'no-data',
   );
 
   protected readonly clearAction = computed<EmptyStateAction>(() => ({
@@ -269,12 +276,13 @@ export class Table<T> implements TableContext {
     run: () => this.clearQuery(),
   }));
 
-  /** Búsqueda y filtros de columna a la vez: lo que dejó la tabla vacía. */
+  /** Búsqueda y filtros de columna; los de pantalla los limpia quien los tiene. */
   clearQuery(): void {
     this.searchControl.setValue('', { emitEvent: false });
     this.search.set('');
     this.pageIndex.set(0);
     this.filtering.clearAll();
+    this.filtersCleared.emit();
   }
 
   protected readonly page = signal<TablePage<T>>({
