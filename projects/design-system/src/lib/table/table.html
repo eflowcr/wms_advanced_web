@@ -1,15 +1,6 @@
 <!-- Una `<table>` real: la semántica de cabecera y celda sale gratis. Con hijos es `treegrid`; sin ellos, `grid`. -->
-@if (quickFilter()) {
-  <div class="mb-3 max-w-120" data-quick-filter>
-    <ewms-input
-      type="search"
-      size="sm"
-      [label]="text().search"
-      [hideLabel]="true"
-      [placeholder]="text().search"
-      [formControl]="searchControl"
-    />
-  </div>
+@if (showToolbar()) {
+  <ewms-table-toolbar />
 }
 
 <!-- Con ventana también desplaza en vertical y tiene alto: es lo que mide la ventana. -->
@@ -81,7 +72,8 @@
 
       @if (anyFilterable()) {
         <!-- La forma de cada filtro sale del tipo de la columna. Una caja vacía es sin límite, nunca cero. -->
-        <tr role="row" data-filter-row>
+        <!-- En el DOM aunque esté oculta: `aria-controls` de «Filtros» apunta a algo que existe. -->
+        <tr role="row" data-filter-row [id]="filterRowId" [hidden]="!filtersOpen()">
           @if (selectable()) {
             <td [class]="headerCellClasses"></td>
           }
@@ -100,7 +92,7 @@
                         [label]="text().filterFrom"
                         [hideLabel]="true"
                         [placeholder]="text().filterFrom"
-                        [formControl]="filterControl(column, 'min')"
+                        [formControl]="filtering.control(column, 'min')"
                       />
                       <ewms-input
                         class="flex-1 min-w-(--col-filter-min-width)"
@@ -109,7 +101,7 @@
                         [label]="text().filterTo"
                         [hideLabel]="true"
                         [placeholder]="text().filterTo"
-                        [formControl]="filterControl(column, 'max')"
+                        [formControl]="filtering.control(column, 'max')"
                       />
                     </span>
                   }
@@ -123,7 +115,7 @@
                         [label]="column.header() || column.key()"
                         [hideLabel]="true"
                         [placeholder]="text().filterFrom + ' – ' + text().filterTo"
-                        [formControl]="dateFilterControl(column)"
+                        [formControl]="filtering.dateControl(column)"
                       />
                     </span>
                   }
@@ -135,7 +127,7 @@
                         [label]="column.header() || column.key()"
                         [hideLabel]="true"
                         [placeholder]="text().filterPlaceholder"
-                        [formControl]="filterControl(column, 'text')"
+                        [formControl]="filtering.control(column, 'text')"
                       />
                     </span>
                   }
@@ -346,7 +338,7 @@
 </div>
 
 @if (showPagination()) {
-  <div class="mt-3" data-pagination>
+  <div data-pagination>
     <ewms-pagination
       [page]="page().page"
       [pageCount]="pageCount() ?? 1"

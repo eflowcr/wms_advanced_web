@@ -156,6 +156,20 @@ function tableMessages(): TableMessages {
     pageOf: (page, pages) =>
       transloco.translate('ds.table.pageOf', { page: String(page), pages: String(pages) }),
     rowsTotal: (total) => transloco.translate('ds.table.rowsTotal', { total }),
+    filters: (active) => transloco.translate('ds.table.filters', { active }),
+    get clearFilters() {
+      return transloco.translate('ds.table.clearFilters');
+    },
+    removeFilter: (column) => transloco.translate('ds.table.removeFilter', { column }),
+    get density() {
+      return transloco.translate('ds.table.density');
+    },
+    get densityMd() {
+      return transloco.translate('ds.table.densityMd');
+    },
+    get densitySm() {
+      return transloco.translate('ds.table.densitySm');
+    },
   };
 }
 
@@ -230,6 +244,9 @@ function shortcutHelpMessages(): ShortcutHelpMessages {
       },
       get cancel() {
         return transloco.translate('shell.shortcuts.actions.cancel');
+      },
+      get filters() {
+        return transloco.translate('shell.shortcuts.actions.filters');
       },
       get help() {
         return transloco.translate('shell.shortcuts.actions.help');

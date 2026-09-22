@@ -1425,8 +1425,10 @@ test.describe('DS-3 lote C: la tabla', () => {
     await page.goto(TABLE);
     await ready(page);
 
+    // La densidad es de la barra de la tabla: un panel con dos opciones.
+    await page.locator(`${DEMO} [data-density-menu] button`).click();
     await page.locator('[data-density="sm"]').click();
-    await expect(page.locator('[data-density-value]')).toHaveText('sm');
+    await expect(page.locator('[data-density="sm"] input')).toBeChecked();
 
     const row = await page.locator(ROWS).first().boundingBox();
     expect(round(row?.height)).toBe(32);
@@ -1543,6 +1545,8 @@ test.describe('DS-3 lote C: la tabla', () => {
     await page.goto(TABLE);
     await ready(page);
 
+    // Ocultos por defecto: se abren con «Filtros».
+    await page.locator(`${DEMO} [data-filters-toggle] button`).click();
     const boxes = page.locator(`${DEMO} [data-filter="bultos"] input`);
     await expect(boxes).toHaveCount(2);
 
@@ -1553,6 +1557,33 @@ test.describe('DS-3 lote C: la tabla', () => {
 
     await boxes.nth(0).fill('');
     await expect(page.locator(ROWS)).toHaveCount(12);
+  });
+
+  test('the filters hide and come back with the button and Alt+R, and the chips never hide', async ({
+    page,
+  }) => {
+    await page.goto(TABLE);
+    await ready(page);
+
+    const toggle = page.locator(`${DEMO} [data-filters-toggle] button`);
+    const filterRow = page.locator(`${DEMO} [data-filter-row]`);
+    await expect(filterRow).toBeHidden();
+    await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+
+    await toggle.click();
+    await page.locator(`${DEMO} [data-filter="codigo"] input`).fill('0403');
+    await expect(toggle).toHaveText(/Filtros \(1\)/);
+
+    // Con el foco en la tabla, el atajo del mapa oculta la fila; el chip sigue diciendo qué filtra.
+    await page.locator(`${DEMO} [data-cell="0-0"]`).focus();
+    await page.keyboard.press('Alt+r');
+    await expect(filterRow).toBeHidden();
+    await expect(page.locator(`${DEMO} [data-chip="codigo"]`)).toContainText('Código: 0403');
+    await expect(page.locator(ROWS)).toHaveCount(1);
+
+    await page.locator(`${DEMO} [data-clear-filters]`).click();
+    await expect(page.locator(ROWS)).toHaveCount(12);
+    await expect(page.locator(`${DEMO} [data-chip]`)).toHaveCount(0);
   });
 
   test('the quick filter narrows the table, and the empty state is the projected one', async ({
@@ -1795,7 +1826,9 @@ test.describe('DS-3 lote D: detalle, menú, ventana y paginador', () => {
     await page.goto(TABLE);
     await ready(page);
 
+    await page.locator('[data-demo-table] [data-filters-toggle] button').click();
     const filterRow = page.locator('[data-demo-table] [data-filter-row]');
+    await expect(filterRow).toBeVisible();
 
     // Los filtros son Small, mismo token que la fila compacta (--row-height-sm): un campo en una
     // celda mide exactamente una fila, y la fecha es un solo campo de rango (2026-09-21).

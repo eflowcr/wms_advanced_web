@@ -1,6 +1,7 @@
 import type { Observable } from 'rxjs';
 import type { SemanticFamily } from '../feedback/feedback.types';
 import type { MenuItem } from '../menu/menu.types';
+import type { TableQuery } from './table-source';
 
 /** Nombrado por familia de color, las mismas cuatro de Banner y Toast. */
 export type RowState = SemanticFamily;
@@ -33,6 +34,33 @@ export interface RowMenuEvent<T> {
 }
 
 export type TableDensity = 'md' | 'sm';
+
+export type TablePin = 'start' | 'end';
+
+export type TableAggregate = 'sum' | 'avg' | 'count';
+
+/**
+ * Lo que el usuario configuró, en memoria: sale por `(viewChange)` y no se guarda en el
+ * navegador. Guardar vistas llega con backend. Anchos en píxeles CSS medidos.
+ */
+export interface TableView {
+  readonly hidden: readonly string[];
+  readonly widths: Readonly<Record<string, number>>;
+  readonly pinned: Readonly<Record<string, TablePin>>;
+  readonly density: TableDensity;
+}
+
+export interface BulkActionEvent<T> {
+  readonly item: MenuItem;
+  readonly rows: readonly T[];
+}
+
+/** Con fuente remota la tabla no descarga: pasa la consulta y lo visible a quien sí puede. */
+export interface ExportRequest {
+  readonly query: TableQuery;
+  readonly columns: readonly string[];
+  readonly selectedOnly: boolean;
+}
 
 export const ROW_HEIGHT: Readonly<Record<TableDensity, string>> = {
   md: 'var(--row-height-md)',

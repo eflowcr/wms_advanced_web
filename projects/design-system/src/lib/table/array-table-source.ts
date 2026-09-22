@@ -2,6 +2,7 @@ import { Observable, of } from 'rxjs';
 import {
   isDateRange,
   isNumberRange,
+  isSetFilter,
   readCell,
   type TableFilterValue,
   type TablePage,
@@ -21,10 +22,7 @@ export class ArrayTableSource<T> implements TableSource<T> {
   ) {}
 
   load(query: TableQuery): Observable<TablePage<T>> {
-    const matched = this.rows.filter(
-      (row) => this.matchesSearch(row, query.search) && this.matchesFilters(row, query.filters),
-    );
-    const sorted = sortRows(matched, query);
+    const sorted = this.matching(query);
     const from = query.page * query.pageSize;
 
     return of({
@@ -33,6 +31,14 @@ export class ArrayTableSource<T> implements TableSource<T> {
       pageSize: query.pageSize,
       total: sorted.length,
     });
+  }
+
+  /** Lo filtrado y ordenado, sin paginar: lo que exporta la tabla. */
+  matching(query: TableQuery): readonly T[] {
+    const matched = this.rows.filter(
+      (row) => this.matchesSearch(row, query.search) && this.matchesFilters(row, query.filters),
+    );
+    return sortRows(matched, query);
   }
 
   private matchesSearch(row: T, search: string): boolean {
@@ -55,8 +61,13 @@ export class ArrayTableSource<T> implements TableSource<T> {
   }
 }
 
-/** Exportada para que el spec fije las tres formas sin armar una fuente. */
+/** Exportada para que el spec fije las cuatro formas sin armar una fuente. */
 export function matchesFilter(value: unknown, filter: TableFilterValue): boolean {
+  if (isSetFilter(filter)) {
+    // Vacío es «ninguno elegido» y no «todos»: la tabla borra el filtro antes de mandarlo vacío.
+    return filter.includes(String(value ?? ''));
+  }
+
   if (typeof filter === 'string') {
     return (
       filter.trim() === '' ||

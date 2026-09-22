@@ -1336,18 +1336,6 @@ describe('ShowroomTable', () => {
     expect(element.querySelectorAll('[data-demo-table] table').length).toBe(1);
   });
 
-  it('changes density for real', async () => {
-    const { fixture, element } = await render(ShowroomTable);
-    expect(element.querySelector('[data-density-value]')?.textContent).toBe('md');
-
-    element.querySelector<HTMLButtonElement>('[data-density="sm"]')!.click();
-    await fixture.whenStable();
-
-    expect(element.querySelector('[data-density-value]')?.textContent).toBe('sm');
-    const row = element.querySelector<HTMLElement>('[data-demo-table] tbody tr');
-    expect(row?.style.height).toBe('var(--row-height-sm)');
-  });
-
   it('reports what the last query asked for', async () => {
     const { fixture, element } = await render(ShowroomTable);
     const search = element.querySelector<HTMLInputElement>(
@@ -1408,14 +1396,6 @@ describe('ShowroomTable', () => {
     expect(element.querySelector('[data-query]')?.textContent).toContain('bultos asc');
   });
 
-  it('goes back to the medium density', async () => {
-    const { fixture, element } = await render(ShowroomTable);
-    element.querySelector<HTMLButtonElement>('[data-density="sm"]')!.click();
-    await fixture.whenStable();
-    element.querySelector<HTMLButtonElement>('[data-density="md"]')!.click();
-    await fixture.whenStable();
-    expect(element.querySelector('[data-density-value]')?.textContent).toBe('md');
-  });
 });
 
 /*

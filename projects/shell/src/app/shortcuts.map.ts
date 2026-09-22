@@ -35,6 +35,12 @@ export const SHORTCUT_MAP: ShortcutMap = {
   /** Única excepción de RFE-04 dentro de un campo: quien cancela suele estar escribiendo en él. */
   cancel: { key: 'Escape', insideTextFields: true, chord: ['Esc'] },
 
+  /**
+   * Alt+R y no Alt+F: Alt+F abre el menú de Chrome y de Firefox en Windows. Fuera de un campo,
+   * como `create`: en un filtro, Alt+R es del navegador.
+   */
+  filters: { key: 'r', alt: true, chord: ['Alt', 'R'] },
+
   /** `?` es Shift+/ y llega como un solo carácter: va sin modificador, como `/`. */
   help: { key: '?', chord: ['?'] },
 };

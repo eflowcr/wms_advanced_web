@@ -381,7 +381,7 @@ test.describe('the shortcut rules, in a browser', () => {
     const help = page.locator('ewms-shortcut-help');
     await expect(help).toBeVisible();
 
-    await expect(help.locator('kbd')).toHaveText(['/', 'Alt', 'N', 'Ctrl', 'S', 'Esc', '?']);
+    await expect(help.locator('kbd')).toHaveText(['/', 'Alt', 'N', 'Ctrl', 'S', 'Esc', 'Alt', 'R', '?']);
 
     await page.keyboard.press('Escape');
     await expect(help).toHaveCount(0);

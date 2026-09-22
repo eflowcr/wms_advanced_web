@@ -9,9 +9,11 @@ import {
   DestroyRef,
   Directive,
   ElementRef,
+  forwardRef,
   inject,
   Injector,
   input,
+  linkedSignal,
   output,
   signal,
   TemplateRef,
@@ -29,17 +31,20 @@ import { Checkbox } from '../checkbox/checkbox';
 import { familyTintClass } from '../feedback/feedback.types';
 import { Icon } from '../icon/icon';
 import { Button } from '../button/button';
-import { DatePicker, type DatePickerValue } from '../date-picker/date-picker';
+import { DatePicker } from '../date-picker/date-picker';
+import { KeyboardShortcuts } from '../keyboard/keyboard-shortcuts';
 import { Input as TextInput } from '../input/input';
 import { Pagination } from '../pagination/pagination';
 
 import { readMilliseconds, readPixels } from '../tokens/read-token';
 const DELAY_SEARCH_INPUT_TOKEN = '--delay-search-input';
 import { CellTemplate, TableColumn } from './column';
+import { TABLE_CONTEXT, type TableContext } from './table-context';
+import { TableFilters } from './table-filters';
+import { TableToolbar } from './table-toolbar';
 import {
   emptyQuery,
   readCell,
-  type TableFilterValue,
   type TablePage,
   type TableQuery,
   type TableSource,
@@ -116,12 +121,14 @@ const EMPTY_PAGE: TablePage<never> = { rows: [], page: 0, pageSize: 0, total: 0 
     NgTemplateOutlet,
     Pagination,
     ReactiveFormsModule,
+    TableToolbar,
     TextInput,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  host: { class: 'block' },
+  host: { class: 'flex flex-col gap-3' },
+  viewProviders: [{ provide: TABLE_CONTEXT, useExisting: forwardRef(() => Table) }],
 })
-export class Table<T> {
+export class Table<T> implements TableContext {
   readonly source = input.required<TableSource<T>>();
 
   /** Obligatorio: una tabla sin nombre no se encuentra. */
@@ -173,13 +180,14 @@ export class Table<T> {
   private readonly providedFormatters = inject(EWMS_TABLE_FORMATTERS);
 
   private readonly id = ++nextTableId;
-  protected readonly tableId = `ewms-table-${this.id}`;
+  readonly tableId = `ewms-table-${this.id}`;
+  readonly filterRowId = `${this.tableId}-filters`;
 
   protected readonly tableClasses = TABLE_CLASSES;
   protected readonly headerCellClasses = HEADER_CELL_CLASSES;
   protected readonly cellClasses = CELL_CLASSES;
 
-  protected readonly text = computed(() => ({
+  readonly text = computed(() => ({
     ...this.providedMessages,
     ...(this.messages() ?? {}),
   }));
@@ -190,14 +198,13 @@ export class Table<T> {
   }));
 
   private readonly search = signal('');
-  private readonly filters = signal<Readonly<Record<string, TableFilterValue>>>({});
   private readonly sort = signal<TableQuery['sort']>(null);
   private readonly pageIndex = signal(0);
 
   protected readonly query = computed<TableQuery>(() => ({
     ...emptyQuery(this.pageSize()),
     search: this.search(),
-    filters: this.filters(),
+    filters: this.filtering.values(),
     sort: this.sort(),
     page: this.pageIndex(),
   }));
@@ -349,6 +356,16 @@ export class Table<T> {
       },
     });
 
+    // `filters` del mapa de atajos, sin listener propio: lo contesta la tabla que tiene el foco,
+    // o la primera filtrable si el foco no está en ninguna. Ver vault: Tabla §12.
+    inject(KeyboardShortcuts)
+      .events.pipe(takeUntilDestroyed())
+      .subscribe((event) => {
+        if (event.action === 'filters' && event.outcome === 'unregistered' && this.ownsShortcut()) {
+          this.toggleFilters();
+        }
+      });
+
     // El overlay vive en el body: sin esto el menú abierto sobrevive a la tabla.
     this.destroyRef.onDestroy(() => {
       this.releaseMenuGesture();
@@ -363,7 +380,14 @@ export class Table<T> {
     return delay === null || delay <= 0 ? source : source.pipe(debounceTime(delay));
   }
 
-  protected readonly rowHeight = computed(() => ROW_HEIGHT[this.density()]);
+  /** Parte de la entrada `density`; después manda la barra de herramientas. */
+  readonly densityChoice = linkedSignal(() => this.density());
+
+  setDensity(density: TableDensity): void {
+    this.densityChoice.set(density);
+  }
+
+  protected readonly rowHeight = computed(() => ROW_HEIGHT[this.densityChoice()]);
 
   protected columnWidth(column: TableColumn): string | null {
     const width = column.width();
@@ -434,82 +458,40 @@ export class Table<T> {
     }
   }
 
-  protected readonly anyFilterable = computed(() =>
-    this.columns().some((column) => column.filterable()),
-  );
+  readonly anyFilterable = computed(() => this.columns().some((column) => column.filterable()));
 
-  // Memorizado: la plantilla lo pide en cada ciclo y uno nuevo borraría lo tipeado.
-  private readonly filterControls = new Map<string, FormControl<string>>();
+  readonly filtering = new TableFilters({
+    columns: () => this.columns(),
+    format: () => this.format(),
+    typed: (source) => this.typed(source),
+    changed: () => this.pageIndex.set(0),
+  });
 
-  protected filterControl(column: TableColumn, bound: FilterBound): FormControl<string> {
-    const id = `${column.key()}:${bound}`;
-    const existing = this.filterControls.get(id);
-    if (existing) {
-      return existing;
-    }
-    const control = new FormControl('', { nonNullable: true });
-    this.typed(control.valueChanges)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((value) => this.onFilterChange(column, bound, value));
-    this.filterControls.set(id, control);
-    return control;
+  /** Oculta por defecto: se muestra lo que se usa. Ocultar no borra filtros (hay chips). */
+  readonly filtersOpen = signal(false);
+
+  toggleFilters(): void {
+    this.filtersOpen.update((open) => !open);
   }
 
-  /** La fecha es un solo campo de rango: el date picker ya entrega el `DateRange`. */
-  protected dateFilterControl(column: TableColumn): FormControl<DatePickerValue> {
-    const id = `${column.key()}:range`;
-    const existing = this.dateControls.get(id);
-    if (existing) {
-      return existing;
+  protected readonly showToolbar = computed(() => this.quickFilter() || this.anyFilterable());
+
+  private ownsShortcut(): boolean {
+    const host = this.host.nativeElement;
+    const active = host.ownerDocument.activeElement;
+    if (!this.anyFilterable()) {
+      return false;
     }
-    const control = new FormControl<DatePickerValue>(null);
-    control.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((value) => {
-      const range = value !== null && typeof value === 'object' ? value : null;
-      this.writeFilter(column, range && (range.from || range.to) ? range : undefined);
-    });
-    this.dateControls.set(id, control);
-    return control;
+    if (active && host.contains(active)) {
+      return true;
+    }
+    // Fuera de toda tabla: la primera que filtra, que es la que tiene el botón.
+    const inAnyTable = active?.closest('ewms-table') ?? null;
+    const first = host.ownerDocument.querySelector('[data-filters-toggle]')?.closest('ewms-table');
+    return inAnyTable === null && first === host;
   }
 
-  private readonly dateControls = new Map<string, FormControl<DatePickerValue>>();
-
-  private onFilterChange(column: TableColumn, bound: FilterBound, raw: string): void {
-    if (bound === 'text') {
-      this.writeFilter(column, raw.trim() === '' ? undefined : raw);
-      return;
-    }
-
-    const current = this.filters()[column.key()];
-    const base: Record<string, unknown> =
-      current === undefined || typeof current === 'string' ? {} : { ...current };
-
-    if (raw.trim() === '') {
-      // Vacía es sin límite, no cero: leerla como 0 tiraría filas en silencio.
-      delete base[bound];
-    } else {
-      base[bound] = column.type() === 'number' ? Number(raw) : raw;
-    }
-
-    this.writeFilter(
-      column,
-      Object.keys(base).length === 0 ? undefined : (base as TableFilterValue),
-    );
-  }
-
-  private writeFilter(column: TableColumn, value: TableFilterValue | undefined): void {
-    this.pageIndex.set(0);
-    this.filters.update((current) => {
-      const next = { ...current };
-      if (value === undefined) {
-        delete next[column.key()];
-      } else {
-        next[column.key()] = value;
-      }
-      return next;
-    });
-  }
-
-  protected readonly searchControl = new FormControl('', { nonNullable: true });
+  readonly searchControl = new FormControl('', { nonNullable: true });
 
   protected readonly searchText = this.search as Signal<string>;
 
@@ -890,7 +872,7 @@ export class Table<T> {
 
   // Sin token de altura no hay virtualización, en vez de un número inventado.
   protected readonly rowPixels = computed(() =>
-    readPixels(this.density() === 'sm' ? '--row-height-sm' : '--row-height-md'),
+    readPixels(this.densityChoice() === 'sm' ? '--row-height-sm' : '--row-height-md'),
   );
 
   protected readonly virtualised = computed(() => this.virtual() && this.rowPixels() !== null);
@@ -957,5 +939,3 @@ function parentIndexOf<T>(rows: readonly FlatRow<T>[], from: number): number {
   }
   return from;
 }
-
-type FilterBound = 'text' | 'min' | 'max';

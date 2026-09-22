@@ -16,5 +16,6 @@ export const SHOWROOM_SHORTCUT_MAP: ShortcutMap = {
     chord: ['Ctrl', 'S'],
   },
   cancel: { key: 'Escape', insideTextFields: true, chord: ['Esc'] },
+  filters: { key: 'r', alt: true, chord: ['Alt', 'R'] },
   help: { key: '?', chord: ['?'] },
 };

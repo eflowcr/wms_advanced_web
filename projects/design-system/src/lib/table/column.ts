@@ -7,7 +7,13 @@ import {
   input,
   TemplateRef,
 } from '@angular/core';
-import type { BadgeDictionary, TableColumnType, TableColumnWidth } from './table.types';
+import type {
+  BadgeDictionary,
+  TableAggregate,
+  TableColumnType,
+  TableColumnWidth,
+  TablePin,
+} from './table.types';
 
 export interface CellContext<T> {
   readonly $implicit: T;
@@ -52,6 +58,15 @@ export class TableColumn {
 
   /** Solo en `type="badge"`; `rowState` lee el mismo diccionario. */
   readonly badges = input<BadgeDictionary>({});
+
+  /** `false`: el selector de columnas no la ofrece. */
+  readonly hideable = input<boolean>(true);
+
+  /** Fija la columna al inicio o al final cuando la tabla desplaza en horizontal. */
+  readonly pinned = input<TablePin | null>(null);
+
+  /** Solo en `type="number"`: la barra de estado lo calcula sobre la selección o lo visible. */
+  readonly aggregate = input<TableAggregate | null>(null);
 
   readonly cell = contentChild(CellTemplate);
 }

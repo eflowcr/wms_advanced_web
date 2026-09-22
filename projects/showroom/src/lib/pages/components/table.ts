@@ -17,7 +17,6 @@ import {
   TableColumn,
   type RowActivateEvent,
   type RowMenuEvent,
-  type TableDensity,
   type TableQuery,
   type TableSource,
 } from '@ewms/design-system';
@@ -50,7 +49,6 @@ const CONSUMER_TEMPLATE = [
   '  [trackBy]="porId"',
   '  [selectable]="true"',
   '  [quickFilter]="true"',
-  '  [density]="densidad()"',
   '  ariaLabel="Expediciones"',
   '  (rowActivate)="abrir($event)"',
   '  (selectionChange)="seleccion.set($event)"',
@@ -277,7 +275,6 @@ export class ShowroomTable {
   protected readonly ultimaAccion = signal('(ninguna)');
   protected readonly ultimaDescarga = signal('(ninguna)');
 
-  protected readonly densidad = signal<TableDensity>('md');
   protected readonly seleccion = signal<readonly ExpedicionRow[]>([]);
   protected readonly consulta = signal<TableQuery | null>(null);
   protected readonly ultimaActivada = signal('(ninguna)');
@@ -333,10 +330,6 @@ export class ShowroomTable {
   /** Cuántas líneas cuelgan de una cabecera, según la lista completa. */
   protected lineasDe(row: ExpedicionRow): number {
     return EXPEDICIONES.find((expedicion) => expedicion.id === row.id)?.hijos?.length ?? 0;
-  }
-
-  protected setDensidad(density: TableDensity): void {
-    this.densidad.set(density);
   }
 
   protected tintFor(variant: string): string {

@@ -464,7 +464,7 @@ describe('the DS-4 pattern pages, driven', () => {
         cell.textContent?.trim(),
       );
 
-      expect(actions).toEqual(['search', 'create', 'save', 'cancel', 'help']);
+      expect(actions).toEqual(['search', 'create', 'save', 'cancel', 'filters', 'help']);
       expect(page.textContent).not.toContain('Ningún layout raíz montó el motor');
     });
 

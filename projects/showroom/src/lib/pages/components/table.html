@@ -68,29 +68,6 @@
 
     <ewms-demo-frame ground="canvas" label="El componente real, con su fuente en memoria">
       <div class="flex flex-col gap-4" data-demo-table>
-        <div class="flex flex-wrap items-center gap-2">
-          <span class="text-caption text-secondary">Densidad:</span>
-          <button
-            type="button"
-            class="cursor-pointer rounded-sm border border-strong bg-surface px-2 py-1 text-caption text-primary outline-none focus-visible:shadow-(--focus-ring-shadow)"
-            data-density="md"
-            (click)="setDensidad('md')"
-          >
-            Media (40 px)
-          </button>
-          <button
-            type="button"
-            class="cursor-pointer rounded-sm border border-strong bg-surface px-2 py-1 text-caption text-primary outline-none focus-visible:shadow-(--focus-ring-shadow)"
-            data-density="sm"
-            (click)="setDensidad('sm')"
-          >
-            Compacta (32 px)
-          </button>
-          <span class="font-mono text-caption text-primary" data-density-value>{{
-            densidad()
-          }}</span>
-        </div>
-
         <ewms-table
           [source]="expediciones"
           children="hijos"
@@ -98,7 +75,6 @@
           [trackBy]="porId"
           [selectable]="true"
           [quickFilter]="true"
-          [density]="densidad()"
           ariaLabel="Expediciones"
           (rowActivate)="abrir($event)"
           (selectionChange)="seleccion.set($event)"
@@ -567,7 +543,10 @@
   <!-- ================================================================= 6. Tamaños -->
   <section class="flex flex-col gap-4" aria-labelledby="ta-sizes" data-block="6-tamanos">
     <h2 id="ta-sizes" class="text-h2">Tamaños</h2>
-    <p class="text-secondary">Dos densidades, y los botones de la demo las cambian de verdad.</p>
+    <p class="text-secondary">
+      Dos densidades. Se eligen en el panel «Densidad» de la barra de la tabla; <code class="font-mono">density</code> es el
+      valor con que arranca.
+    </p>
     <div class="overflow-x-auto">
       <table class="w-full border-collapse text-caption">
         <caption class="mb-2 text-left text-secondary">

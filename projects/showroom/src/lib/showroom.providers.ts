@@ -85,6 +85,7 @@ export const SHORTCUT_HELP_MESSAGES: ShortcutHelpMessages = {
     create: 'Crear un registro nuevo',
     save: 'Guardar el formulario activo',
     cancel: 'Cancelar lo que esté en curso, o cerrar lo que esté abierto',
+    filters: 'Mostrar u ocultar los filtros de la tabla',
     help: 'Abrir esta lista',
   },
 };
@@ -108,6 +109,12 @@ export const TABLE_MESSAGES: TableMessages = {
   nextPage: 'Página siguiente',
   pageOf: (page, pages) => `Página ${page} de ${pages}`,
   rowsTotal: (total) => (total === 1 ? '1 fila' : `${total} filas`),
+  filters: (active) => (active === 0 ? 'Filtros' : `Filtros (${active})`),
+  clearFilters: 'Limpiar filtros',
+  removeFilter: (column) => `Quitar el filtro ${column}`,
+  density: 'Densidad',
+  densityMd: 'Media',
+  densitySm: 'Compacta',
 };
 
 /** `Intl` directo y no `transloco-locale`: la tabla solo pide dos funciones que devuelvan texto. */

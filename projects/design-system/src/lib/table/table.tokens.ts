@@ -23,6 +23,16 @@ export interface TableMessages {
   readonly nextPage: string;
   readonly pageOf: (page: number, pages: number) => string;
   readonly rowsTotal: (total: number) => string;
+
+  // Barra de herramientas. Ver vault: Tabla §12.
+  /** «Filtros», o «Filtros (2)» con filtros de columna activos. */
+  readonly filters: (active: number) => string;
+  readonly clearFilters: string;
+  /** Nombre del botón × de un chip: «Quitar el filtro Estado». */
+  readonly removeFilter: (column: string) => string;
+  readonly density: string;
+  readonly densityMd: string;
+  readonly densitySm: string;
 }
 
 /** Solo lo que se muestra: ordenar y filtrar usan el valor crudo. Ver vault: Tabla §2. */

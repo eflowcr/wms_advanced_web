@@ -1,9 +1,17 @@
+import { DialogModule } from '@angular/cdk/dialog';
 import { Component, signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { expectNoAxeViolations, pixels } from '@ewms/testing';
 import { By } from '@angular/platform-browser';
 import { defer, Observable, of, Subject, throwError } from 'rxjs';
 import { EWMS_DATE_PICKER_MESSAGES } from '../date-picker/date-picker.types';
+import { ShortcutsHost } from '../keyboard/shortcuts-host';
+import {
+  EWMS_SHORTCUT_HELP_MESSAGES,
+  EWMS_SHORTCUT_MAP,
+  type ShortcutHelpMessages,
+  type ShortcutMap,
+} from '../keyboard/shortcuts.types';
 import { ArrayTableSource } from './array-table-source';
 import { TableColumn } from './column';
 import { DetailTemplate, EmptyTemplate, Table } from './table';
@@ -65,6 +73,12 @@ const MESSAGES: TableMessages = {
   nextPage: 'Siguiente',
   pageOf: (page, pages) => `Página ${page} de ${pages}`,
   rowsTotal: (total) => `${total} filas`,
+  filters: (active) => (active === 0 ? 'Filtros' : `Filtros (${active})`),
+  clearFilters: 'Limpiar filtros',
+  removeFilter: (column) => `Quitar el filtro ${column}`,
+  density: 'Densidad',
+  densityMd: 'Media',
+  densitySm: 'Compacta',
 };
 
 const DATE_WORDS = {
@@ -126,6 +140,12 @@ class TestHost {
   activated = '';
   selection: readonly Row[] = [];
   lastQuery: TableQuery | null = null;
+}
+
+function clearOverlays(): void {
+  for (const container of document.querySelectorAll('.cdk-overlay-container')) {
+    container.remove();
+  }
 }
 
 class LazySource implements TableSource<Row> {
@@ -560,6 +580,145 @@ describe('Table', () => {
       host.density.set('sm');
       await settle();
       expect(bodyRows()[0]?.style.height).toBe('var(--row-height-sm)');
+    });
+
+    it('is chosen from the toolbar, starting at the declared one', async () => {
+      (fixture.nativeElement.querySelector('[data-density-menu] button') as HTMLElement).click();
+      await settle();
+      const compact = document.querySelector('[data-density="sm"] input') as HTMLInputElement;
+      compact.click();
+      await settle();
+      expect(bodyRows()[0]?.style.height).toBe('var(--row-height-sm)');
+      clearOverlays();
+    });
+
+    it('the panel closes on Escape back to its button, on a click outside and on Tab away', async () => {
+      const button = fixture.nativeElement.querySelector(
+        '[data-density-menu] button',
+      ) as HTMLButtonElement;
+      const panel = (): HTMLElement | null => document.querySelector('[role="dialog"]');
+      const open = async (): Promise<void> => {
+        button.click();
+        await settle();
+        await Promise.resolve();
+      };
+
+      await open();
+      expect(button.getAttribute('aria-expanded')).toBe('true');
+      expect(document.activeElement).toBe(document.querySelector('[data-density="md"] input'));
+      panel()!.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+      await settle();
+      expect(panel()).toBeNull();
+      expect(document.activeElement).toBe(button);
+
+      await open();
+      document.body.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      await settle();
+      expect(panel()).toBeNull();
+
+      await open();
+      panel()!.dispatchEvent(new FocusEvent('focusout', { bubbles: true, relatedTarget: button }));
+      await settle();
+      expect(panel()).toBeNull();
+
+      await open();
+      button.click();
+      await settle();
+      expect(panel()).toBeNull();
+      clearOverlays();
+    });
+  });
+
+  describe('the toolbar and the hidden filters', () => {
+    const toggle = (): HTMLButtonElement =>
+      fixture.nativeElement.querySelector('[data-filters-toggle] button') as HTMLButtonElement;
+    const filterRow = (): HTMLElement =>
+      fixture.nativeElement.querySelector('[data-filter-row]') as HTMLElement;
+    const chips = (): HTMLElement[] => [
+      ...fixture.nativeElement.querySelectorAll('[data-chip]'),
+    ] as HTMLElement[];
+
+    async function filterCodigo(value: string): Promise<void> {
+      const box = fixture.nativeElement.querySelector(
+        '[data-filter="codigo"] input',
+      ) as HTMLInputElement;
+      box.value = value;
+      box.dispatchEvent(new Event('input'));
+      await settle();
+    }
+
+    it('hides the filter row by default, and the button says what it controls', async () => {
+      expect(filterRow().hidden).toBe(true);
+      expect(toggle().getAttribute('aria-expanded')).toBe('false');
+      expect(toggle().getAttribute('aria-controls')).toBe(filterRow().id);
+
+      toggle().click();
+      await settle();
+      expect(filterRow().hidden).toBe(false);
+      expect(toggle().getAttribute('aria-expanded')).toBe('true');
+    });
+
+    it('HIDING NEVER HIDES THAT IT FILTERS: the chips stay, and the button counts', async () => {
+      await filterCodigo('0002');
+      expect(toggle().textContent?.trim()).toBe('Filtros (1)');
+      expect(chips().map((chip) => chip.textContent?.replace(/\s+/g, ' ').trim())).toEqual([
+        'Código: 0002',
+      ]);
+      expect(bodyRows().length).toBe(1);
+    });
+
+    it('the chip × takes that filter off, box included; «Limpiar filtros» takes them all', async () => {
+      await filterCodigo('0002');
+      chips()[0]!.querySelector('button')!.click();
+      await settle();
+      expect(bodyRows().length).toBe(3);
+      expect(chips().length).toBe(0);
+      expect(
+        (fixture.nativeElement.querySelector('[data-filter="codigo"] input') as HTMLInputElement)
+          .value,
+      ).toBe('');
+
+      await filterCodigo('EXP');
+      (fixture.nativeElement.querySelector('[data-clear-filters]') as HTMLButtonElement).click();
+      await settle();
+      expect(host.lastQuery?.filters).toEqual({});
+      expect(toggle().textContent?.trim()).toBe('Filtros');
+    });
+
+    it('writes each chip in the shape of its column: ranges with their bounds', async () => {
+      const [min, max] = [
+        ...fixture.nativeElement.querySelectorAll('[data-filter="bultos"] input'),
+      ] as HTMLInputElement[];
+      min!.value = '100';
+      min!.dispatchEvent(new Event('input'));
+      await settle();
+      expect(chips()[0]?.textContent).toContain('≥ n:100');
+
+      max!.value = '1000';
+      max!.dispatchEvent(new Event('input'));
+      await settle();
+      expect(chips()[0]?.textContent).toContain('n:100 – n:1000');
+
+      min!.value = '';
+      min!.dispatchEvent(new Event('input'));
+      await settle();
+      expect(chips()[0]?.textContent).toContain('≤ n:1000');
+
+      const range = fixture.nativeElement.querySelector(
+        '[data-filter="fecha"] input',
+      ) as HTMLInputElement;
+      range.value = '1/2/2026 – 28/2/2026';
+      range.dispatchEvent(new Event('input'));
+      range.focus();
+      range.blur();
+      await settle();
+      expect(chips()[1]?.textContent).toContain('d:2026-02-01 – d:2026-02-28');
+    });
+
+    it('has no axe violations with the filters open and a chip showing', async () => {
+      toggle().click();
+      await filterCodigo('EXP');
+      await expectNoAxeViolations(fixture.nativeElement);
     });
   });
 
@@ -1365,5 +1524,94 @@ describe('Table with no row height declared', () => {
     // `[virtual]` activo y aun así dibuja las veinte, sin espaciadores.
     expect(fixture.nativeElement.querySelectorAll('[data-row]').length).toBe(20);
     expect(fixture.nativeElement.querySelector('[data-spacer]')).toBeNull();
+  });
+});
+
+// El atajo `filters` sale del mapa y del único listener del motor: la tabla no escucha teclas.
+describe('Table and the `filters` shortcut', () => {
+  const MAP: ShortcutMap = {
+    search: { key: '/', chord: ['/'] },
+    create: { key: 'n', alt: true, chord: ['Alt', 'N'] },
+    save: { key: 's', ctrl: true, chord: ['Ctrl', 'S'] },
+    cancel: { key: 'Escape', insideTextFields: true, chord: ['Esc'] },
+    filters: { key: 'r', alt: true, chord: ['Alt', 'R'] },
+    help: { key: '?', chord: ['?'] },
+  };
+
+  @Component({
+    template: `
+      <div ewmsShortcutsHost>
+        <button id="outside" type="button">afuera</button>
+        <ewms-table id="plain" [source]="source" ariaLabel="Sin filtros">
+          <ewms-column key="codigo" header="Código" />
+        </ewms-table>
+        <ewms-table id="filtered" [source]="source" [quickFilter]="true" ariaLabel="Con filtros">
+          <ewms-column key="codigo" header="Código" [filterable]="true" />
+        </ewms-table>
+      </div>
+    `,
+    imports: [ShortcutsHost, Table, TableColumn],
+    providers: [
+      { provide: EWMS_SHORTCUT_MAP, useValue: MAP },
+      { provide: EWMS_SHORTCUT_HELP_MESSAGES, useValue: {} as ShortcutHelpMessages },
+    ],
+  })
+  class ShortcutHost {
+    readonly source = new ArrayTableSource(ROWS, ['codigo']);
+  }
+
+  let fixture: ComponentFixture<ShortcutHost>;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [ShortcutHost, DialogModule],
+      providers: [
+        { provide: EWMS_TABLE_MESSAGES, useValue: MESSAGES },
+        { provide: EWMS_TABLE_FORMATTERS, useValue: FORMATTERS },
+      ],
+    }).compileComponents();
+    fixture = TestBed.createComponent(ShortcutHost);
+    document.body.appendChild(fixture.nativeElement);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+  });
+
+  afterEach(() => {
+    fixture.destroy();
+    fixture.nativeElement.remove();
+  });
+
+  const filterRow = (): HTMLElement =>
+    fixture.nativeElement.querySelector('#filtered [data-filter-row]') as HTMLElement;
+
+  async function pressFrom(target: HTMLElement): Promise<void> {
+    target.focus();
+    target.dispatchEvent(new KeyboardEvent('keydown', { key: 'r', altKey: true, bubbles: true }));
+    fixture.detectChanges();
+    await fixture.whenStable();
+  }
+
+  it('toggles the filters of the table that has the focus', async () => {
+    const cell = fixture.nativeElement.querySelector('#filtered [data-cell="0-0"]') as HTMLElement;
+    await pressFrom(cell);
+    expect(filterRow().hidden).toBe(false);
+    await pressFrom(cell);
+    expect(filterRow().hidden).toBe(true);
+  });
+
+  it('from outside every table it goes to the first one that filters; from a field, nowhere', async () => {
+    // `#plain` va primero en el documento, pero no filtra: contesta `#filtered`.
+    await pressFrom(fixture.nativeElement.querySelector('#outside') as HTMLElement);
+    expect(filterRow().hidden).toBe(false);
+
+    // Con el foco en una tabla que no filtra, nadie contesta.
+    const plainCell = fixture.nativeElement.querySelector('#plain [data-cell="0-0"]') as HTMLElement;
+    await pressFrom(plainCell);
+    expect(filterRow().hidden).toBe(false);
+
+    // En un campo, Alt+R es del navegador (RFE-04).
+    await pressFrom(fixture.nativeElement.querySelector('#filtered [data-quick-filter] input'));
+    expect(filterRow().hidden).toBe(false);
   });
 });
