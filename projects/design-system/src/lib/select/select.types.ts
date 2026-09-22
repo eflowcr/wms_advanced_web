@@ -12,18 +12,6 @@ export interface SelectOption {
   value: unknown;
 }
 
-/**
- * Hasta 7 opciones no busca: escribir para elegir entre tres estados es un paso de más.
- * Decisión del usuario (2026-09-21). Ver vault: Select.
- */
-export const SELECT_SEARCH_THRESHOLD = 7;
-
-/** `true` y `false` fuerzan; `auto` busca con `source` o con más de SELECT_SEARCH_THRESHOLD. */
-export type SelectSearchable = 'auto' | boolean;
-
-/** Typeahead de la lista corta: una pausa más larga empieza una palabra nueva. */
-export const SELECT_TYPEAHEAD_RESET_MS = 500;
-
 /** RFE-03: `empty` y `error` no se mezclan, o una caída parece un depósito vacío. */
 export type SearchStatus = 'idle' | 'searching' | 'ready' | 'empty' | 'error';
 
@@ -48,7 +36,7 @@ export const SEARCH_MORE_CLASSES =
   'flex w-full items-center justify-center gap-2 px-3 py-1.5 cursor-pointer text-caption ' +
   'text-(color:--color-bg-primary)';
 
-/** Textos ya traducidos, provistos una vez por token. Solo los usa el modo que busca. */
+/** Textos ya traducidos, provistos una vez por token (ADR 0008). */
 export interface SelectMessages {
   readonly searching: string;
   /** RFE-03: recibe el texto buscado para mostrarlo. */
@@ -62,7 +50,7 @@ export interface SelectMessages {
 
 export const EWMS_SELECT_MESSAGES = new InjectionToken<SelectMessages>('EWMS_SELECT_MESSAGES');
 
-/** Sin proveedor la lista corta no pierde nada; el modo que busca queda sin palabras. */
+/** Sin proveedor el campo funciona igual; solo quedan mudos la región viva y los avisos. */
 export const NO_SELECT_MESSAGES: SelectMessages = {
   searching: '',
   noResults: () => '',

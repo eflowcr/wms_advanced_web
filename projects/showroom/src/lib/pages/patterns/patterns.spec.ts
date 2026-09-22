@@ -351,9 +351,7 @@ describe('the DS-4 pattern pages, driven', () => {
       press('n', { altKey: true });
       await settle();
 
-      const estado = query<HTMLSelectElement>(
-        '[data-form-estado] button, [data-form-estado] select',
-      );
+      const estado = query<HTMLInputElement>('[data-form-estado] input[role="combobox"]');
       expect(estado).not.toBeNull();
 
       const urgente = query<HTMLInputElement>('[data-form-urgente] input')!;
@@ -411,7 +409,7 @@ describe('the DS-4 pattern pages, driven', () => {
       press('n', { altKey: true });
       await settle();
 
-      query<HTMLButtonElement>('[data-form-estado] button')!.click();
+      query<HTMLInputElement>('[data-form-estado] input')!.click();
       await settle();
       const options = [...(overlay()?.querySelectorAll<HTMLElement>('[role="option"]') ?? [])];
       const completada = options.find((option) => option.textContent?.includes('Completada'));

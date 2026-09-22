@@ -313,7 +313,7 @@ test.describe('a panel that does not fit flips instead of falling off', () => {
       style.top = 'calc(100vh - 70px)';
     });
 
-    const trigger = host.locator('button').first();
+    const trigger = host.locator('[role="combobox"]').first();
     await trigger.click();
 
     const panel = page.locator('[role="listbox"]');
@@ -333,7 +333,7 @@ test.describe('a panel that does not fit flips instead of falling off', () => {
     await page.goto(SPACING);
     await ready(page);
 
-    const trigger = page.locator('[data-demo-select] button').first();
+    const trigger = page.locator('[data-demo-select] [role="combobox"]').first();
     await trigger.scrollIntoViewIfNeeded();
     await trigger.click();
 
@@ -356,7 +356,7 @@ test.describe('the fixed geometry of the system', () => {
     await ready(page);
 
     const input = await page.locator('[data-measure="mixed-input"] input').boundingBox();
-    const select = await page.locator('[data-measure="mixed-select"] button').boundingBox();
+    const select = await page.locator('[data-measure="mixed-select"] input').boundingBox();
     const button = await page.locator('[data-measure="mixed-button"] button').boundingBox();
 
     expect(round(input?.height), 'input md').toBe(40);
@@ -419,7 +419,7 @@ test.describe('the component sheets measure what they claim', () => {
 
     for (const size of ['sm', 'md', 'lg'] as const) {
       const chevron = await page
-        .locator(`[data-chevron-sample="${size}"] button svg`)
+        .locator(`[data-chevron-sample="${size}"] svg`)
         .boundingBox();
       expect(round(chevron?.width), `chevron ${size}`).toBe(16);
     }
@@ -463,7 +463,7 @@ test.describe('the component sheets measure what they claim', () => {
     await page.goto(SELECT);
     await ready(page);
 
-    const trigger = page.locator('[data-demo-select] button').first();
+    const trigger = page.locator('[data-demo-select] [role="combobox"]').first();
     await trigger.scrollIntoViewIfNeeded();
     await trigger.click();
 
@@ -988,38 +988,32 @@ test.describe('keyboard only', () => {
     await page.goto(SELECT);
     await ready(page);
 
-    const trigger = page.locator('[data-demo-select] button').first();
+    const trigger = page.locator('[data-demo-select] [role="combobox"]').first();
     const panel = page.locator('[role="listbox"]');
     const value = page.locator('[data-demo-value]');
 
+    // Tres estados, con teclado: flecha abre, flecha elige, Enter confirma.
     await trigger.focus();
-    await page.keyboard.press('Enter');
+    await page.keyboard.press('ArrowDown');
     await expect(panel).toBeVisible();
+    await expect(panel.locator('[role="option"]')).toHaveCount(3);
 
-    // Escape cierra sin elegir y el foco nunca dejó el disparador (aria-activedescendant, ver select.ts).
-    const untouched = await value.textContent();
+    // Escape cierra sin elegir y el foco nunca dejó el campo (aria-activedescendant, ver select.ts).
     await page.keyboard.press('Escape');
     await expect(panel).toHaveCount(0);
     await expect(trigger).toBeFocused();
-    await expect(value).toHaveText(untouched ?? '');
+    await expect(value).toHaveText('preparacion');
 
-    // Espacio también abre: el disparador es un button nativo, sin manejador propio.
-    await page.keyboard.press('Space');
+    await page.keyboard.press('ArrowDown');
     await expect(panel).toBeVisible();
-
-    // Las flechas mueven la fila activa; el foco sigue sin moverse.
+    // Abre sobre el valor: la activa es «En preparación», la segunda.
+    await expect(trigger).toHaveAttribute('aria-activedescendant', /-option-1$/);
     await page.keyboard.press('ArrowDown');
-    await expect(trigger).toBeFocused();
-    await expect(trigger, 'the arrows must mark an active option').toHaveAttribute(
-      'aria-activedescendant',
-      /.+/,
-    );
-
-    await page.keyboard.press('ArrowDown');
+    await expect(trigger).toHaveAttribute('aria-activedescendant', /-option-2$/);
     await page.keyboard.press('Enter');
     await expect(panel).toHaveCount(0);
     await expect(trigger).toBeFocused();
-    await expect(value).not.toHaveText(untouched ?? '');
+    await expect(value).toHaveText('despachada');
   });
 
   test('Escape dismisses a tooltip opened by focus, and the focus stays put', async ({ page }) => {

@@ -781,16 +781,16 @@ describe('ShowroomSelect', () => {
     expect(page.isError('default')).toBe(false);
     expect(page.isDisabled('disabled')).toBe(true);
     expect(page.isDisabled('default')).toBe(false);
-    expect(page.chosenLabel()).toBe('Muelle 3');
+    expect(page.chosenLabel()).toBe('En preparación');
   });
 
   it('says so when the form holds a value no option carries', async () => {
     const { fixture } = await render(ShowroomSelect);
     const page = fixture.componentInstance as unknown as {
-      form: { controls: { ubicacion: { setValue(value: unknown): void } } };
+      form: { controls: { estado: { setValue(value: unknown): void } } };
       chosenLabel(): string;
     };
-    page.form.controls.ubicacion.setValue('una-que-no-existe');
+    page.form.controls.estado.setValue('una-que-no-existe');
     await fixture.whenStable();
     expect(page.chosenLabel()).toBe('(sin elegir)');
   });
@@ -1219,17 +1219,15 @@ describe('ShowroomSplitButton', () => {
 describe('ShowroomSelect, the three forms', () => {
   afterEach(clearOverlays);
 
-  it('renders a button, a local search and a remote search, all the real component', async () => {
+  it('renders three demos of the same text combobox: short, long and remote', async () => {
     const { element } = await render(ShowroomSelect);
-    expect(element.querySelector('[data-demo-select] button[role="combobox"]')).not.toBeNull();
+    expect(element.querySelector('[data-demo-select] input[role="combobox"]')).not.toBeNull();
     expect(element.querySelector('[data-demo-long] input[role="combobox"]')).not.toBeNull();
     expect(element.querySelector('[data-demo-search] input[role="combobox"]')).not.toBeNull();
     expect(element.querySelector('[data-demo-search-value]')?.textContent).toBe('(ninguno)');
     expect(element.querySelector('[data-queries]')).toBeNull();
     // Con semilla: la cantidad es un hecho de la página, no de la suerte.
-    expect(element.querySelector('[data-block="4-variantes"]')?.textContent).toContain(
-      '340 artículos',
-    );
+    expect(element.querySelector('[data-block="3-demo"]')?.textContent).toContain('340 artículos');
   });
 
   it('the buttons really change how the source behaves, and go back', async () => {

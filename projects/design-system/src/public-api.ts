@@ -34,8 +34,8 @@ export { CardGroup } from './lib/card/card-group';
 export { DialogService, type OpenDialogOptions } from './lib/dialog/dialog.service';
 export { type ConfirmOptions, type DialogTone } from './lib/dialog/dialog.types';
 
-// Select (DS-2, con la búsqueda de REQ-FE-DS3-001 desde 2026-09-21): lista corta, lista larga
-// que filtra en memoria, o `SearchSource<T>`, el contrato para el backend.
+// Select (DS-2; siempre busca desde 2026-09-22, REQ-FE-DS3-001 v1.3): `options` filtra en
+// memoria, `SearchSource<T>` es el contrato para el backend.
 export {
   Select,
   type SearchDisplay,
@@ -44,9 +44,8 @@ export {
   type SearchStatus,
   type SelectMessages,
   type SelectOption,
-  type SelectSearchable,
 } from './lib/select/select';
-export { EWMS_SELECT_MESSAGES, SELECT_SEARCH_THRESHOLD } from './lib/select/select.types';
+export { EWMS_SELECT_MESSAGES } from './lib/select/select.types';
 export { SEARCH_PAGE_SIZE } from './lib/select/search-source';
 
 // Badge (DS-3): fuera de la Tabla para que detalle, card y lista digan «con incidencia» igual.

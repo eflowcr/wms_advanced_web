@@ -143,7 +143,7 @@ const COMPONENTS: readonly CatalogEntry[] = [
     selector: 'ewms-select',
     route: `${SHOWROOM_BASE}/components/select`,
     status: 'ready',
-    note: 'El único selector: lista corta, lista larga que filtra y fuente remota que resuelve un escaneo.',
+    note: 'El único selector, y siempre busca: en memoria filtra al escribir; con fuente pagina y resuelve un escaneo.',
   },
   {
     id: 'table',

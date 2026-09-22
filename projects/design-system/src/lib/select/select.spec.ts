@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, type Type } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { By } from '@angular/platform-browser';
@@ -11,7 +11,6 @@ import {
   DELAY_SEARCH_INPUT_TOKEN,
   EWMS_SELECT_MESSAGES,
   SCAN_THRESHOLD_TOKEN,
-  SELECT_SEARCH_THRESHOLD,
   TIMEOUT_SEARCH_TOKEN,
   type SelectOption,
 } from './select.types';
@@ -21,12 +20,6 @@ const WAREHOUSES: readonly SelectOption[] = [
   { label: 'Bodega norte', value: 'BN' },
   { label: 'Bodega sur', value: 'BS' },
 ];
-
-/** Una más que el umbral: la lista que ya busca. */
-const LOCATIONS: readonly SelectOption[] = Array.from(
-  { length: SELECT_SEARCH_THRESHOLD + 1 },
-  (_unused, index) => ({ label: `Pasillo ${String.fromCharCode(65 + index)}`, value: index }),
-);
 
 interface Article {
   readonly code: string;
@@ -72,30 +65,38 @@ class ControlledSource implements SearchSource<Article> {
   }
 }
 
-function key(name: string): KeyboardEvent {
-  return new KeyboardEvent('keydown', { key: name, bubbles: true, cancelable: true });
+const listbox = () =>
+  document.querySelector<HTMLElement>('.cdk-overlay-container [role="listbox"]');
+const rows = () => [...document.querySelectorAll<HTMLElement>('[role="listbox"] [role="option"]')];
+const row = (index: number): HTMLElement => rows()[index] ?? document.createElement('li');
+
+/** Monta un anfitrión con los textos provistos, como se usa el componente, y sus ayudantes. */
+async function mount<H>(type: Type<H>) {
+  await TestBed.configureTestingModule({
+    imports: [type],
+    providers: [{ provide: EWMS_SELECT_MESSAGES, useValue: MESSAGES }],
+  }).compileComponents();
+  const fixture = TestBed.createComponent(type);
+  document.body.appendChild(fixture.nativeElement);
+  const settle = async (): Promise<void> => {
+    fixture.detectChanges();
+    await fixture.whenStable();
+  };
+  const field = (): HTMLInputElement =>
+    fixture.nativeElement.querySelector('[role="combobox"]') as HTMLInputElement;
+  const press = async (name: string): Promise<KeyboardEvent> => {
+    const event = new KeyboardEvent('keydown', { key: name, bubbles: true, cancelable: true });
+    field().dispatchEvent(event);
+    await settle();
+    return event;
+  };
+  await settle();
+  return { fixture, host: fixture.componentInstance, settle, field, press };
 }
 
-function listbox(): HTMLElement | null {
-  return document.querySelector<HTMLElement>('.cdk-overlay-container [role="listbox"]');
-}
-
-function rows(): HTMLElement[] {
-  return [...document.querySelectorAll<HTMLElement>('[role="listbox"] [role="option"]')];
-}
-
-function row(index: number): HTMLElement {
-  const found = rows()[index];
-  if (!found) {
-    throw new Error(`No option at index ${index}`);
-  }
-  return found;
-}
-
-function clearOverlays(): void {
-  for (const container of document.querySelectorAll('.cdk-overlay-container')) {
-    container.remove();
-  }
+function unmount(fixture: ComponentFixture<unknown>): void {
+  fixture.nativeElement.remove();
+  document.querySelectorAll('.cdk-overlay-container').forEach((container) => container.remove());
 }
 
 @Component({
@@ -120,104 +121,94 @@ class ListHost {
   readonly control = new FormControl<unknown>(null);
 }
 
-describe('Select, a short list', () => {
+describe('Select, options in memory', () => {
   let fixture: ComponentFixture<ListHost>;
   let host: ListHost;
+  let settle: () => Promise<void>;
+  let field: () => HTMLInputElement;
+  let press: (name: string) => Promise<KeyboardEvent>;
 
   beforeEach(async () => {
-    await TestBed.configureTestingModule({ imports: [ListHost] }).compileComponents();
-    fixture = TestBed.createComponent(ListHost);
-    host = fixture.componentInstance;
-    document.body.appendChild(fixture.nativeElement);
-    await settle();
+    ({ fixture, host, settle, field, press } = await mount(ListHost));
   });
 
-  afterEach(() => {
-    fixture.nativeElement.remove();
-    clearOverlays();
-  });
-
-  async function settle(): Promise<void> {
-    fixture.detectChanges();
-    await fixture.whenStable();
-  }
-
-  function trigger(): HTMLButtonElement {
-    return fixture.nativeElement.querySelector('[role="combobox"]') as HTMLButtonElement;
-  }
-
-  async function press(name: string): Promise<KeyboardEvent> {
-    const event = key(name);
-    trigger().dispatchEvent(event);
-    await settle();
-    return event;
-  }
+  afterEach(() => unmount(fixture));
 
   async function openPanel(): Promise<void> {
-    trigger().focus();
-    trigger().click();
+    field().focus();
+    field().click();
     await settle();
   }
 
-  it(`does not search with ${SELECT_SEARCH_THRESHOLD} options or fewer: a button, named by its label`, () => {
-    expect(trigger().tagName).toBe('BUTTON');
-    expect(trigger().getAttribute('aria-expanded')).toBe('false');
-    const labelId = trigger().getAttribute('aria-labelledby');
-    expect(fixture.nativeElement.querySelector(`#${labelId}`)?.textContent?.trim()).toBe('Bodega');
-    expect(trigger().textContent?.trim()).toContain('Elegir bodega');
+  it('is always a text combobox with a chevron, labelled by for/id', () => {
+    expect(field().tagName).toBe('INPUT');
+    expect(field().getAttribute('aria-expanded')).toBe('false');
+    expect(field().placeholder).toBe('Elegir bodega');
+    const label = fixture.nativeElement.querySelector(`label[for="${field().id}"]`);
+    expect(label?.textContent?.trim()).toBe('Bodega');
+    expect(fixture.nativeElement.querySelector('ewms-icon[name="chevron-down"]')).not.toBeNull();
   });
 
-  it('opens on the current value and points aria-controls at the listbox while it exists', async () => {
+  it('a click opens every option on the value, and the mouse keeps the focus on the field', async () => {
     host.control.setValue('BS');
     await openPanel();
 
-    expect(listbox()).not.toBeNull();
     expect(rows()).toHaveLength(3);
-    expect(trigger().getAttribute('aria-controls')).toBe(listbox()?.id);
-    expect(trigger().getAttribute('aria-activedescendant')).toBe(row(2).id);
+    expect(field().getAttribute('aria-controls')).toBe(listbox()?.id);
+    expect(field().getAttribute('aria-activedescendant')).toBe(row(2).id);
+    expect(row(2).getAttribute('aria-selected')).toBe('true');
+    expect(row(0).getAttribute('aria-selected')).toBe('false');
+    expect(row(2).style.fontWeight).toBe('var(--text-control-selected-weight)');
+    expect(row(2).querySelector('ewms-icon[name="check"]')).not.toBeNull();
 
-    await press('Escape');
-    expect(trigger().hasAttribute('aria-controls')).toBe(false);
-    expect(trigger().hasAttribute('aria-activedescendant')).toBe(false);
+    // El ratón no saca el foco del campo: mousedown se previene y el hover marca la activa.
+    const mousedown = new MouseEvent('mousedown', { bubbles: true, cancelable: true });
+    row(1).dispatchEvent(mousedown);
+    expect(mousedown.defaultPrevented).toBe(true);
+    row(0).dispatchEvent(new MouseEvent('mouseenter'));
+    await settle();
+    expect(field().getAttribute('aria-activedescendant')).toBe(row(0).id);
+    row(1).click();
+    await settle();
+    expect(document.activeElement).toBe(field());
+    expect(host.control.value).toBe('BN');
+    expect(field().hasAttribute('aria-controls')).toBe(false);
+    expect(field().hasAttribute('aria-activedescendant')).toBe(false);
   });
 
-  it('moves with the arrows, stops at the ends, and marks the active row like the mouse', async () => {
-    trigger().focus();
+  it('three options, keyboard only: arrow opens, arrow picks, Enter confirms', async () => {
+    field().focus();
     await press('ArrowDown');
-    expect(trigger().getAttribute('aria-activedescendant')).toBe(row(0).id);
-
+    expect(rows()).toHaveLength(3);
+    await press('ArrowDown');
     await press('ArrowUp');
-    expect(trigger().getAttribute('aria-activedescendant')).toBe(row(0).id);
-    for (let i = 0; i < 10; i += 1) {
+    // Frena en los extremos, y marca la fila activa como el ratón.
+    expect(field().getAttribute('aria-activedescendant')).toBe(row(0).id);
+    for (let i = 0; i < 5; i += 1) {
       await press('ArrowDown');
     }
-    expect(trigger().getAttribute('aria-activedescendant')).toBe(row(2).id);
+    expect(field().getAttribute('aria-activedescendant')).toBe(row(2).id);
     expect(row(2).classList.contains('bg-ghost-hover')).toBe(true);
     expect(row(1).classList.contains('bg-ghost-hover')).toBe(false);
-  });
-
-  it('jumps to an option by typing its first letters (typeahead)', async () => {
-    trigger().focus();
-    for (const letter of 'bodega n') {
-      await press(letter);
-    }
-
-    expect(listbox()).not.toBeNull();
-    // A mitad de palabra el espacio es una letra más, no el clic del botón.
-    expect(trigger().getAttribute('aria-activedescendant')).toBe(row(1).id);
-  });
-
-  it('chooses on Enter, reports to the form, marks it touched and keeps the focus', async () => {
-    trigger().focus();
-    await press('ArrowDown');
-    await press('ArrowDown');
+    await press('ArrowUp');
     await press('Enter');
 
     expect(listbox()).toBeNull();
     expect(host.control.value).toBe('BN');
     expect(host.control.touched).toBe(true);
-    expect(trigger().textContent?.trim()).toContain('Bodega norte');
-    expect(document.activeElement).toBe(trigger());
+    expect(field().value).toBe('Bodega norte');
+    expect(document.activeElement).toBe(field());
+  });
+
+  it('filters as you type, with no wait', async () => {
+    field().value = 'norte';
+    field().dispatchEvent(new Event('input'));
+    await settle();
+
+    expect(rows()).toHaveLength(1);
+    await press('ArrowDown');
+    await press('Enter');
+    expect(host.control.value).toBe('BN');
   });
 
   it('closes on Escape, Tab or a click outside without changing the value', async () => {
@@ -238,70 +229,37 @@ describe('Select, a short list', () => {
     }
   });
 
-  it('keeps the focus on the trigger when an option is clicked', async () => {
-    await openPanel();
-    const mousedown = new MouseEvent('mousedown', { bubbles: true, cancelable: true });
-    row(1).dispatchEvent(mousedown);
-    expect(mousedown.defaultPrevented).toBe(true);
-
-    row(2).dispatchEvent(new MouseEvent('mouseenter'));
+  // La escala es la de field.types, que la spec del Input recorre en los tres tamaños.
+  it('uses the Input scale, and a sm chevron even at size lg', async () => {
+    host.size.set('lg');
     await settle();
-    expect(trigger().getAttribute('aria-activedescendant')).toBe(row(2).id);
-
-    row(1).click();
-    await settle();
-    expect(document.activeElement).toBe(trigger());
-    expect(host.control.value).toBe('BN');
-  });
-
-  it('marks the chosen row selected, bold and checked', async () => {
-    host.control.setValue('BN');
-    await openPanel();
-
-    expect(row(1).getAttribute('aria-selected')).toBe('true');
-    expect(row(0).getAttribute('aria-selected')).toBe('false');
-    expect(row(1).style.fontWeight).toBe('var(--text-control-selected-weight)');
-    expect(row(1).querySelector('ewms-icon[name="check"]')).not.toBeNull();
-  });
-
-  const boxes: readonly (readonly [FieldSize, string, string])[] = [
-    ['sm', 'h-8', 'px-2.5'],
-    ['md', 'h-10', 'px-3'],
-    ['lg', 'h-12', 'px-3.5'],
-  ];
-
-  it.each(boxes)('uses the Input scale and a sm chevron at size "%s"', async (size, height, padding) => {
-    host.size.set(size);
-    await settle();
-
-    expect(trigger().classList.contains(height)).toBe(true);
-    expect(trigger().classList.contains(padding)).toBe(true);
+    expect(field().classList.contains('h-12')).toBe(true);
     const icon = fixture.debugElement.query(By.css('ewms-icon[name="chevron-down"]'));
     expect((icon.componentInstance as { size: () => string }).size()).toBe('sm');
   });
 
   it('treats Open like Focus for the border, but an error keeps its colour', async () => {
-    const resting = trigger().style.borderColor;
+    const resting = field().style.borderColor;
     await openPanel();
-    expect(trigger().style.borderColor).not.toBe(resting);
+    expect(field().style.borderColor).not.toBe(resting);
     await press('Escape');
 
     host.error.set(true);
     host.hint.set('Elegí una bodega');
     await settle();
-    const errorBorder = trigger().style.borderColor;
-    expect(trigger().getAttribute('aria-invalid')).toBe('true');
-    expect(fixture.nativeElement.querySelector('p')?.classList.contains('text-danger')).toBe(true);
+    const errorBorder = field().style.borderColor;
+    expect(field().getAttribute('aria-invalid')).toBe('true');
+    const hint = fixture.nativeElement.querySelector('p.mt-1') as HTMLElement;
+    expect(hint.classList.contains('text-danger')).toBe(true);
     await openPanel();
-    expect(trigger().style.borderColor).toBe(errorBorder);
-  });
+    expect(field().style.borderColor).toBe(errorBorder);
+    await press('Escape');
 
-  it('refuses click and keyboard when the form disables it', async () => {
+    // Quien deshabilita gana: el formulario apaga clic y teclado.
     host.control.disable();
     await settle();
-
-    expect(trigger().disabled).toBe(true);
-    trigger().click();
+    expect(field().disabled).toBe(true);
+    field().click();
     await press('ArrowDown');
     expect(listbox()).toBeNull();
   });
@@ -313,97 +271,6 @@ describe('Select, a short list', () => {
 
     await openPanel();
     await expectNoAxeViolations(document.querySelector('.cdk-overlay-container')!);
-  });
-});
-
-@Component({
-  template: `
-    <ewms-select
-      [options]="options()"
-      [searchable]="searchable()"
-      label="Ubicación"
-      [formControl]="control"
-    />
-  `,
-  imports: [Select, ReactiveFormsModule],
-})
-class LongListHost {
-  readonly options = signal<readonly SelectOption[]>(LOCATIONS);
-  readonly searchable = signal<'auto' | boolean>('auto');
-  readonly control = new FormControl<unknown>(null);
-}
-
-describe('Select, a long list in memory', () => {
-  let fixture: ComponentFixture<LongListHost>;
-  let host: LongListHost;
-
-  beforeEach(async () => {
-    await TestBed.configureTestingModule({
-      imports: [LongListHost],
-      providers: [{ provide: EWMS_SELECT_MESSAGES, useValue: MESSAGES }],
-    }).compileComponents();
-    fixture = TestBed.createComponent(LongListHost);
-    host = fixture.componentInstance;
-    document.body.appendChild(fixture.nativeElement);
-    await settle();
-  });
-
-  afterEach(() => {
-    fixture.nativeElement.remove();
-    clearOverlays();
-  });
-
-  async function settle(): Promise<void> {
-    fixture.detectChanges();
-    await fixture.whenStable();
-  }
-
-  function field(): HTMLInputElement {
-    return fixture.nativeElement.querySelector('[role="combobox"]') as HTMLInputElement;
-  }
-
-  it(`searches with more than ${SELECT_SEARCH_THRESHOLD}: a text field, opened with every option`, async () => {
-    expect(field().tagName).toBe('INPUT');
-    field().click();
-    await settle();
-
-    expect(rows()).toHaveLength(LOCATIONS.length);
-  });
-
-  it('filters locally as you type, with no wait, and chooses the value', async () => {
-    field().value = 'pasillo c';
-    field().dispatchEvent(new Event('input'));
-    await settle();
-
-    expect(rows()).toHaveLength(1);
-    field().dispatchEvent(key('ArrowDown'));
-    field().dispatchEvent(key('Enter'));
-    await settle();
-
-    expect(host.control.value).toBe(2);
-    expect(field().value).toBe('Pasillo C');
-  });
-
-  it('opens on the chosen value when it comes back, with the arrows', async () => {
-    host.control.setValue(5);
-    await settle();
-    expect(field().value).toBe('Pasillo F');
-
-    field().dispatchEvent(key('ArrowDown'));
-    await settle();
-    expect(field().getAttribute('aria-activedescendant')).toBe(row(5).id);
-    expect(row(5).getAttribute('aria-selected')).toBe('true');
-  });
-
-  it('obeys searchable over the count, in both directions', async () => {
-    host.searchable.set(false);
-    await settle();
-    expect(field().tagName).toBe('BUTTON');
-
-    host.options.set(LOCATIONS.slice(0, 3));
-    host.searchable.set(true);
-    await settle();
-    expect(field().tagName).toBe('INPUT');
   });
 });
 
@@ -433,6 +300,9 @@ class SourceHost {
 describe('Select, a backend source (REQ-FE-DS3-001)', () => {
   let fixture: ComponentFixture<SourceHost>;
   let host: SourceHost;
+  let settle: () => Promise<void>;
+  let field: () => HTMLInputElement;
+  let press: (name: string) => Promise<KeyboardEvent>;
   let source: ControlledSource;
 
   beforeEach(async () => {
@@ -440,36 +310,17 @@ describe('Select, a backend source (REQ-FE-DS3-001)', () => {
     document.documentElement.style.setProperty(DELAY_SEARCH_INPUT_TOKEN, '300ms');
     document.documentElement.style.setProperty(TIMEOUT_SEARCH_TOKEN, '5000ms');
     document.documentElement.style.setProperty(SCAN_THRESHOLD_TOKEN, '50ms');
-
-    await TestBed.configureTestingModule({
-      imports: [SourceHost],
-      // Los textos se proveen, no se pasan por entrada: así se usa el componente.
-      providers: [{ provide: EWMS_SELECT_MESSAGES, useValue: MESSAGES }],
-    }).compileComponents();
-    fixture = TestBed.createComponent(SourceHost);
-    host = fixture.componentInstance;
+    ({ fixture, host, settle, field, press } = await mount(SourceHost));
     source = host.source() as ControlledSource;
-    document.body.appendChild(fixture.nativeElement);
-    await settle();
   });
 
   afterEach(() => {
-    fixture.nativeElement.remove();
-    clearOverlays();
+    unmount(fixture);
     for (const token of [DELAY_SEARCH_INPUT_TOKEN, TIMEOUT_SEARCH_TOKEN, SCAN_THRESHOLD_TOKEN]) {
       document.documentElement.style.removeProperty(token);
     }
     vi.useRealTimers();
   });
-
-  async function settle(): Promise<void> {
-    fixture.detectChanges();
-    await fixture.whenStable();
-  }
-
-  function field(): HTMLInputElement {
-    return fixture.nativeElement.querySelector('input') as HTMLInputElement;
-  }
 
   function region(): HTMLElement {
     return fixture.nativeElement.querySelector('[role="status"]') as HTMLElement;
@@ -490,13 +341,6 @@ describe('Select, a backend source (REQ-FE-DS3-001)', () => {
     }
   }
 
-  async function press(name: string): Promise<KeyboardEvent> {
-    const event = key(name);
-    field().dispatchEvent(event);
-    await settle();
-    return event;
-  }
-
   async function waitForDelay(): Promise<void> {
     vi.advanceTimersByTime(300);
     await settle();
@@ -510,9 +354,10 @@ describe('Select, a backend source (REQ-FE-DS3-001)', () => {
   }
 
   describe('RFE-01 — it filters while you type', () => {
-    it('PACQ-01.1: three characters open the panel by themselves, with no chevron', async () => {
+    it('PACQ-01.1: three characters open the panel by themselves; a click alone does not', async () => {
+      field().click();
+      await settle();
       expect(listbox()).toBeNull();
-      expect(fixture.nativeElement.querySelector('ewms-icon[name="chevron-down"]')).toBeNull();
       await search();
       expect(rows()).toHaveLength(3);
     });
@@ -538,19 +383,6 @@ describe('Select, a backend source (REQ-FE-DS3-001)', () => {
       await settle();
       expect(rows()).toHaveLength(1);
       expect(rows()[0]?.textContent).toContain('SKU-88214');
-    });
-
-    it('clearing the box stops searching and does not touch the chosen value', async () => {
-      await search();
-      rows()[0]?.click();
-      await settle();
-
-      field().value = '';
-      field().dispatchEvent(new Event('input'));
-      await settle();
-
-      expect(listbox()).toBeNull();
-      expect(host.control.value?.code).toBe('SKU-88213');
     });
   });
 
@@ -592,17 +424,6 @@ describe('Select, a backend source (REQ-FE-DS3-001)', () => {
 
       expect(alert()?.textContent).toContain('No se pudo consultar el catálogo');
       expect(fixture.nativeElement.textContent).not.toContain('Sin resultados');
-    });
-
-    it('with no timeout token declared it simply never times out', async () => {
-      document.documentElement.style.removeProperty(TIMEOUT_SEARCH_TOKEN);
-      host.source.set({ search: () => new Subject<SearchPage<Article>>() });
-      await settle();
-      await type('SKU');
-      await waitForDelay();
-      vi.advanceTimersByTime(60_000);
-      await settle();
-      expect(alert()).toBeNull();
     });
 
     it('PACQ-03.1: no results repeats the text searched, and keeps the value', async () => {
@@ -666,42 +487,62 @@ describe('Select, a backend source (REQ-FE-DS3-001)', () => {
       expect(rows()).toHaveLength(1);
     });
 
-    it('a person typing at human speed is never mistaken for a gun', async () => {
-      await type('SKU-90001', 150);
+    it('neither a person at human speed nor the arrows on the list make a burst', async () => {
+      await type('caja', 150);
       await press('Enter');
       expect(source.calls.length).toBe(0);
       await waitForDelay();
-      expect(source.calls.length).toBe(1);
-    });
-
-    it('walking the list with the arrows does not build a burst', async () => {
-      await search('caja', CATALOGUE, { hasMore: true });
-      await press('ArrowDown');
-      await press('ArrowDown');
-      await press('Escape');
-      await press('ArrowDown');
-      await press('ArrowDown');
-      await press('Enter');
+      source.resolve(CATALOGUE, { hasMore: true });
+      await settle();
+      for (const name of ['ArrowDown', 'ArrowDown', 'Escape', 'ArrowDown', 'ArrowDown', 'Enter']) {
+        await press(name);
+      }
 
       expect(host.control.value).toEqual(CATALOGUE[0]);
       expect(source.calls.length).toBe(1);
     });
 
-    it('with no threshold token declared, nothing is ever classified as a scan', async () => {
+    it('with no token declared, nothing is a scan and nothing times out', async () => {
       document.documentElement.style.removeProperty(SCAN_THRESHOLD_TOKEN);
+      document.documentElement.style.removeProperty(TIMEOUT_SEARCH_TOKEN);
       await scan('SKU-90001');
       expect(source.calls.length).toBe(0);
+
+      host.source.set({ search: () => new Subject<SearchPage<Article>>() });
+      await settle();
+      await type('X');
+      await waitForDelay();
+      vi.advanceTimersByTime(60_000);
+      await settle();
+      expect(alert()).toBeNull();
     });
   });
 
   describe('RFE-07 and RFE-08 — the form and the keyboard', () => {
-    it('PACQ-06.1: the value is the RECORD, not the text', async () => {
+    it('PACQ-06.1: the value is the RECORD; clearing or half-typing never changes it', async () => {
       await search();
       rows()[1]?.click();
       await settle();
-
       expect(host.control.value).toEqual(CATALOGUE[1]);
       expect(field().value).toBe('SKU-88214 — Caja plegable 80x60');
+
+      // RFE-03: vaciar la caja no busca ni borra el valor.
+      field().value = '';
+      field().dispatchEvent(new Event('input'));
+      await settle();
+      expect(listbox()).toBeNull();
+
+      // Al salir, el texto a medio escribir se reemplaza por la etiqueta del valor real.
+      field().value = 'a medio escribir';
+      field().dispatchEvent(new Event('input'));
+      await settle();
+      // Método del DOM y no un evento sintético: la compuerta 10 toma el nombre como clase.
+      field().focus();
+      field().blur();
+      await settle();
+      expect(field().value).toBe('SKU-88214 — Caja plegable 80x60');
+      expect(host.control.value).toEqual(CATALOGUE[1]);
+      expect(host.control.touched).toBe(true);
     });
 
     it('PACQ-06.2: Escape closes, leaves the value alone and keeps the focus', async () => {
@@ -724,39 +565,6 @@ describe('Select, a backend source (REQ-FE-DS3-001)', () => {
       source.resolve(CATALOGUE, { total: 340 });
       await settle();
       expect(region().textContent?.trim()).toBe('3 de 340');
-    });
-
-    it('is a combobox that says whether its list is open, and what is active', async () => {
-      expect(field().getAttribute('aria-expanded')).toBe('false');
-      expect(field().getAttribute('aria-controls')).toBeNull();
-      await search();
-      expect(field().getAttribute('aria-expanded')).toBe('true');
-      expect(field().getAttribute('aria-controls')).toBeTruthy();
-      await press('ArrowDown');
-      expect(field().getAttribute('aria-activedescendant')).toContain('-option-0');
-    });
-
-    it('leaving the field puts the chosen record back in the box', async () => {
-      await search();
-      rows()[0]?.click();
-      await settle();
-
-      field().value = 'a medio escribir';
-      field().dispatchEvent(new Event('input'));
-      await settle();
-      // Método del DOM y no un evento sintético: la compuerta 10 toma el nombre como clase.
-      field().focus();
-      field().blur();
-      await settle();
-
-      expect(field().value).toBe('SKU-88213 — Caja plegable 60x40');
-      expect(host.control.touched).toBe(true);
-    });
-
-    it('quien deshabilita gana: the form can disable it', async () => {
-      host.control.disable();
-      await settle();
-      expect(field().disabled).toBe(true);
     });
 
     it('PACQ-06.3: no axe violations, with the panel up', async () => {
