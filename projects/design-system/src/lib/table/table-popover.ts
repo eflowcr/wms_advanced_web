@@ -50,7 +50,7 @@ let nextPopoverId = 0;
         role="dialog"
         tabindex="-1"
         class="flex min-w-56 flex-col gap-2 rounded-control border border-default bg-surface p-3 shadow-md outline-none"
-        [attr.aria-label]="label()"
+        [attr.aria-label]="panelLabel() || label()"
         (keydown)="onKeydown($event)"
         (focusout)="onFocusOut($event)"
       >
@@ -63,6 +63,8 @@ export class TablePopover {
   readonly label = input.required<string>();
   readonly icon = input<IconName | null>(null);
   readonly iconOnly = input<boolean>(false);
+  /** Nombre del panel si no es el texto del botón (un filtro dice su columna, no su resumen). */
+  readonly panelLabel = input<string>('');
 
   protected readonly panelId = `ewms-table-popover-${++nextPopoverId}`;
   protected readonly isOpen = signal(false);

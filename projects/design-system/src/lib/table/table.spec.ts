@@ -79,6 +79,10 @@ const MESSAGES: TableMessages = {
   density: 'Densidad',
   densityMd: 'Media',
   densitySm: 'Compacta',
+  setAll: 'Todos',
+  setNone: 'Ninguno',
+  setSummary: (column, chosen, total) =>
+    chosen === total ? `${column}: todos` : `${column}: ${chosen} de ${total}`,
 };
 
 const DATE_WORDS = {
@@ -120,7 +124,13 @@ const FORMATTERS: TableFormatters = {
         [filterable]="true"
       />
       <ewms-column key="fecha" header="Fecha" type="date" [filterable]="true" />
-      <ewms-column key="estado" header="Estado" type="badge" [badges]="estados" />
+      <ewms-column
+        key="estado"
+        header="Estado"
+        type="badge"
+        [badges]="estados"
+        [filterable]="true"
+      />
 
       <ng-template ewmsEmpty>
         <p>Ninguna expedición coincide.</p>
@@ -713,6 +723,59 @@ describe('Table', () => {
       range.blur();
       await settle();
       expect(chips()[1]?.textContent).toContain('d:2026-02-01 – d:2026-02-28');
+    });
+
+    describe('a badge column: a set of its states', () => {
+      const trigger = (): HTMLButtonElement =>
+        fixture.nativeElement.querySelector('[data-filter="estado"] button') as HTMLButtonElement;
+      const box = (selector: string): HTMLInputElement =>
+        document.querySelector(`${selector} input`) as HTMLInputElement;
+
+      async function openSet(): Promise<void> {
+        toggle().click();
+        await settle();
+        trigger().click();
+        await settle();
+      }
+
+      afterEach(clearOverlays);
+
+      it('opens with every state ticked, and unticking one drops its rows', async () => {
+        await openSet();
+        expect(trigger().textContent?.trim()).toBe('Estado: todos');
+        expect(box('[data-set-all]').checked).toBe(true);
+
+        box('[data-set-option="pendiente"]').click();
+        await settle();
+        expect(bodyRows().map((row) => row.textContent)).toEqual([
+          expect.stringContaining('EXP-0002'),
+        ]);
+        expect(host.lastQuery?.filters).toEqual({ estado: ['con-incidencia'] });
+        expect(trigger().textContent?.trim()).toBe('Estado: 1 de 2');
+        expect(box('[data-set-all]').getAttribute('aria-checked')).toBe('mixed');
+        expect(chips()[0]?.textContent).toContain('Estado: Con incidencia');
+        await expectNoAxeViolations(document.querySelector('.cdk-overlay-container')!);
+      });
+
+      it('«Todos» unticked is none at all; ticked again, the filter is gone', async () => {
+        await openSet();
+        box('[data-set-all]').click();
+        await settle();
+        expect(bodyRows().length).toBe(0);
+        expect(chips()[0]?.textContent).toContain('Estado: Ninguno');
+
+        box('[data-set-all]').click();
+        await settle();
+        expect(host.lastQuery?.filters).toEqual({});
+        expect(bodyRows().length).toBe(3);
+
+        // Volver a marcar la última que faltaba también borra el filtro: «todas» no filtra.
+        box('[data-set-option="pendiente"]').click();
+        await settle();
+        box('[data-set-option="pendiente"]').click();
+        await settle();
+        expect(host.lastQuery?.filters).toEqual({});
+      });
     });
 
     it('has no axe violations with the filters open and a chip showing', async () => {

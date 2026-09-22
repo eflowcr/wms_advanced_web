@@ -114,6 +114,15 @@ describe('matchesFilter', () => {
     });
   });
 
+  describe('set of states', () => {
+    it('passes the keys it holds and nothing else, empty included', () => {
+      expect(matchesFilter('en-proceso', ['en-proceso', 'con-incidencia'])).toBe(true);
+      expect(matchesFilter('completada', ['en-proceso', 'con-incidencia'])).toBe(false);
+      // Vacío es «ninguno marcado», no «sin filtro»: la tabla borra el filtro cuando son todos.
+      expect(matchesFilter('en-proceso', [])).toBe(false);
+    });
+  });
+
   it('an empty object is every bound cleared, which is no filter at all', () => {
     expect(matchesFilter('lo que sea', {})).toBe(true);
   });

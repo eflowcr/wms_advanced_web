@@ -28,6 +28,8 @@ interface FiltersHost {
   readonly typed: (source: Observable<string>) => Observable<string>;
   /** Cualquier cambio vuelve a la página 0. */
   readonly changed: () => void;
+  /** El chip de un conjunto vacío. */
+  readonly none: () => string;
 }
 
 /**
@@ -89,12 +91,11 @@ export class TableFilters {
     return control;
   }
 
-  /** Vacío es «sin filtro», no «ninguno pasa»: un conjunto sin claves no se manda. */
   write(key: string, value: TableFilterValue | undefined): void {
     this.host.changed();
     this.values.update((current) => {
       const next = { ...current };
-      if (value === undefined || (isSetFilter(value) && value.length === 0)) {
+      if (value === undefined) {
         delete next[key];
       } else {
         next[key] = value;
@@ -110,6 +111,39 @@ export class TableFilters {
     }
     this.dateControls.get(key)?.setValue(null, { emitEvent: false });
     this.write(key, undefined);
+  }
+
+  /** Sin filtro, todas pasan: un conjunto ausente es «todas marcadas». */
+  isChosen(column: TableColumn, option: string): boolean {
+    const value = this.values()[column.key()];
+    return value === undefined || !isSetFilter(value) || value.includes(option);
+  }
+
+  /** Para «Todos»: marcado, indeterminado o vacío. */
+  setState(column: TableColumn): 'all' | 'some' | 'none' {
+    const value = this.values()[column.key()];
+    if (value === undefined || !isSetFilter(value)) {
+      return 'all';
+    }
+    return value.length === 0 ? 'none' : 'some';
+  }
+
+  /** Con todas marcadas otra vez el filtro se borra: «todas» no es un filtro. */
+  toggleOption(column: TableColumn, option: string): void {
+    const all = Object.keys(column.badges());
+    const chosen = new Set(all.filter((key) => this.isChosen(column, key)));
+    if (chosen.has(option)) {
+      chosen.delete(option);
+    } else {
+      chosen.add(option);
+    }
+    // En el orden del diccionario, no en el de los clics: el chip se lee igual siempre.
+    this.write(column.key(), chosen.size === all.length ? undefined : all.filter((key) => chosen.has(key)));
+  }
+
+  /** «Todos» desmarcado es ninguna: la tabla queda vacía, como la pidió quien lo desmarcó. */
+  toggleAll(column: TableColumn): void {
+    this.write(column.key(), this.setState(column) === 'all' ? [] : undefined);
   }
 
   clearAll(): void {
@@ -146,7 +180,9 @@ export class TableFilters {
     const format = this.host.format();
     if (isSetFilter(filter)) {
       const badges = column.badges();
-      return filter.map((key) => badges[key]?.label ?? key).join(', ');
+      return filter.length === 0
+        ? this.host.none()
+        : filter.map((key) => badges[key]?.label ?? key).join(', ');
     }
     if (isNumberRange(filter)) {
       return bounds(filter.min, filter.max, format.number);

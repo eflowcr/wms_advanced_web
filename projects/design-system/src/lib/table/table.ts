@@ -41,6 +41,7 @@ const DELAY_SEARCH_INPUT_TOKEN = '--delay-search-input';
 import { CellTemplate, TableColumn } from './column';
 import { TABLE_CONTEXT, type TableContext } from './table-context';
 import { TableFilters } from './table-filters';
+import { TablePopover } from './table-popover';
 import { TableToolbar } from './table-toolbar';
 import {
   emptyQuery,
@@ -121,6 +122,7 @@ const EMPTY_PAGE: TablePage<never> = { rows: [], page: 0, pageSize: 0, total: 0 
     NgTemplateOutlet,
     Pagination,
     ReactiveFormsModule,
+    TablePopover,
     TableToolbar,
     TextInput,
   ],
@@ -465,7 +467,20 @@ export class Table<T> implements TableContext {
     format: () => this.format(),
     typed: (source) => this.typed(source),
     changed: () => this.pageIndex.set(0),
+    none: () => this.text().setNone,
   });
+
+  /** Las opciones de un filtro de conjunto: el diccionario de la columna, en su orden. */
+  protected setOptions(column: TableColumn): readonly { key: string; label: string }[] {
+    return Object.entries(column.badges()).map(([key, badge]) => ({ key, label: badge.label }));
+  }
+
+  protected setLabel(column: TableColumn): string {
+    const header = column.header() || column.key();
+    const options = this.setOptions(column);
+    const chosen = options.filter((option) => this.filtering.isChosen(column, option.key));
+    return this.text().setSummary(header, chosen.length, options.length);
+  }
 
   /** Oculta por defecto: se muestra lo que se usa. Ocultar no borra filtros (hay chips). */
   readonly filtersOpen = signal(false);

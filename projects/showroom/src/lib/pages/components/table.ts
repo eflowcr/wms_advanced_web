@@ -58,7 +58,7 @@ const CONSUMER_TEMPLATE = [
   '  <ewms-column key="cliente" header="Cliente / artículo" width="fill" [filterable]="true" />',
   '  <ewms-column key="fecha" header="Fecha" type="date" width="md" [sortable]="true" [filterable]="true" />',
   '  <ewms-column key="bultos" header="Bultos" type="number" width="sm" [sortable]="true" [filterable]="true" />',
-  '  <ewms-column key="estado" header="Estado" type="badge" width="md" [badges]="ESTADOS" />',
+  '  <ewms-column key="estado" header="Estado" type="badge" width="md" [badges]="ESTADOS" [filterable]="true" />',
   '',
   '  <ng-template ewmsEmpty>',
   '    <p>Ninguna expedición coincide con el filtro.</p>',

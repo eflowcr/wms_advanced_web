@@ -105,6 +105,33 @@
                       />
                     </span>
                   }
+                  @case ('badge') {
+                    <!-- Filtro de conjunto (el «set filter» de AG Grid): casillas del diccionario. -->
+                    <span class="block" [attr.data-filter]="column.key()">
+                      <ewms-table-popover
+                        [label]="setLabel(column)"
+                        [panelLabel]="column.header() || column.key()"
+                        icon="filter"
+                      >
+                        @let state = filtering.setState(column);
+                        <ewms-checkbox
+                          [label]="text().setAll"
+                          [checked]="state === 'all'"
+                          [indeterminate]="state === 'some'"
+                          data-set-all
+                          (checkedChange)="filtering.toggleAll(column)"
+                        />
+                        @for (option of setOptions(column); track option.key) {
+                          <ewms-checkbox
+                            [label]="option.label"
+                            [checked]="filtering.isChosen(column, option.key)"
+                            [attr.data-set-option]="option.key"
+                            (checkedChange)="filtering.toggleOption(column, option.key)"
+                          />
+                        }
+                      </ewms-table-popover>
+                    </span>
+                  }
                   @case ('date') {
                     <!-- Un campo de rango, no dos apilados: la fila de filtros queda en una altura. -->
                     <span class="block" [attr.data-filter]="column.key()">

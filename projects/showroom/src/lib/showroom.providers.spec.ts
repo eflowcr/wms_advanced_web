@@ -45,6 +45,15 @@ describe('the showroom dictionaries', () => {
       expect(TABLE_MESSAGES.rowsTotal(12)).toBe('12 filas');
     });
 
+    it('says what the toolbar filters, and how much of a set is chosen', () => {
+      expect(TABLE_MESSAGES.filters(0)).toBe('Filtros');
+      expect(TABLE_MESSAGES.filters(2)).toBe('Filtros (2)');
+      expect(TABLE_MESSAGES.removeFilter('Estado')).toBe('Quitar el filtro Estado');
+      expect(TABLE_MESSAGES.setSummary('Estado', 4, 4)).toBe('Estado: todos');
+      expect(TABLE_MESSAGES.setSummary('Estado', 2, 4)).toBe('Estado: 2 de 4');
+      expect(TABLE_MESSAGES.setSummary('Estado', 0, 4)).toBe('Estado: ninguno');
+    });
+
     it('says how many results, with or without a total', () => {
       // `null` es un total legítimo y el mensaje lo refleja.
       expect(SELECT_MESSAGES.results(3, 340)).toBe('3 de 340 resultados');

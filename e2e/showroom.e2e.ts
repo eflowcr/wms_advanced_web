@@ -1586,6 +1586,34 @@ test.describe('DS-3 lote C: la tabla', () => {
     await expect(page.locator(`${DEMO} [data-chip]`)).toHaveCount(0);
   });
 
+  test('the Estado filter is a set: «Con incidencia» plus «En proceso», and nothing else', async ({
+    page,
+  }) => {
+    await page.goto(TABLE);
+    await ready(page);
+
+    await page.locator(`${DEMO} [data-filters-toggle] button`).click();
+    const trigger = page.locator(`${DEMO} [data-filter="estado"] button`);
+    await trigger.click();
+    const panel = page.getByRole('dialog', { name: 'Estado' });
+    await expect(panel).toBeVisible();
+
+    // Todas marcadas al abrir: se desmarca lo que sobra, con teclado incluido.
+    await panel.getByRole('checkbox', { name: 'Pendiente' }).uncheck();
+    await panel.getByRole('checkbox', { name: 'Completada' }).press('Space');
+    await expect(panel.getByRole('checkbox', { name: 'Todos' })).toHaveAttribute('aria-checked', 'mixed');
+    await expect(trigger).toHaveText(/Estado: 2 de 4/);
+
+    const badges = page.locator(`${ROWS} ewms-badge`);
+    for (const text of await badges.allTextContents()) {
+      expect(text).toMatch(/Con incidencia|En proceso/);
+    }
+    await page.keyboard.press('Escape');
+    await expect(panel).toHaveCount(0);
+    await expect(trigger).toBeFocused();
+    await expect(page.locator(`${DEMO} [data-chip="estado"]`)).toContainText('Con incidencia');
+  });
+
   test('the quick filter narrows the table, and the empty state is the projected one', async ({
     page,
   }) => {

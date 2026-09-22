@@ -170,6 +170,16 @@ function tableMessages(): TableMessages {
     get densitySm() {
       return transloco.translate('ds.table.densitySm');
     },
+    get setAll() {
+      return transloco.translate('ds.table.setAll');
+    },
+    get setNone() {
+      return transloco.translate('ds.table.setNone');
+    },
+    setSummary: (column, chosen, total) =>
+      chosen === total
+        ? transloco.translate('ds.table.setSummaryAll', { column })
+        : transloco.translate('ds.table.setSummary', { column, chosen, total }),
   };
 }
 

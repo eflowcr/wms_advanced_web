@@ -104,7 +104,14 @@
             [sortable]="true"
             [filterable]="true"
           />
-          <ewms-column key="estado" header="Estado" type="badge" width="md" [badges]="estados" />
+          <ewms-column
+            key="estado"
+            header="Estado"
+            type="badge"
+            width="md"
+            [badges]="estados"
+            [filterable]="true"
+          />
 
           <ng-template ewmsEmpty>
             <p>Ninguna expedición coincide con el filtro.</p>

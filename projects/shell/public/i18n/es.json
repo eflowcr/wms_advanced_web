@@ -46,6 +46,10 @@
       "search": "Buscar en la tabla",
       "selectAll": "Seleccionar todas las filas visibles",
       "selectRow": "Seleccionar la fila",
+      "setAll": "Todos",
+      "setNone": "Ninguno",
+      "setSummary": "{chosen, plural, =0 {{{ column }}: ninguno} other {{{ column }}: # de {{ total }}}}",
+      "setSummaryAll": "{{ column }}: todos",
       "sortedAscending": "Orden ascendente",
       "sortedDescending": "Orden descendente"
     }

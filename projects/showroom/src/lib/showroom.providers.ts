@@ -115,6 +115,14 @@ export const TABLE_MESSAGES: TableMessages = {
   density: 'Densidad',
   densityMd: 'Media',
   densitySm: 'Compacta',
+  setAll: 'Todos',
+  setNone: 'Ninguno',
+  setSummary: (column, chosen, total) => {
+    if (chosen === total) {
+      return `${column}: todos`;
+    }
+    return chosen === 0 ? `${column}: ninguno` : `${column}: ${chosen} de ${total}`;
+  },
 };
 
 /** `Intl` directo y no `transloco-locale`: la tabla solo pide dos funciones que devuelvan texto. */

@@ -33,6 +33,12 @@ export interface TableMessages {
   readonly density: string;
   readonly densityMd: string;
   readonly densitySm: string;
+
+  // Filtro de conjunto de una columna `badge`.
+  readonly setAll: string;
+  readonly setNone: string;
+  /** Texto del botón: «Estado: todos», «Estado: 2 de 4», «Estado: ninguno». */
+  readonly setSummary: (column: string, chosen: number, total: number) => string;
 }
 
 /** Solo lo que se muestra: ordenar y filtrar usan el valor crudo. Ver vault: Tabla §2. */

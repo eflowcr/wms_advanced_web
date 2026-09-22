@@ -46,6 +46,10 @@
       "search": "Search the table",
       "selectAll": "Select every visible row",
       "selectRow": "Select the row",
+      "setAll": "All",
+      "setNone": "None",
+      "setSummary": "{chosen, plural, =0 {{{ column }}: none} other {{{ column }}: # of {{ total }}}}",
+      "setSummaryAll": "{{ column }}: all",
       "sortedAscending": "Ascending order",
       "sortedDescending": "Descending order"
     }
