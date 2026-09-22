@@ -3,6 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { provideRouter, Router } from '@angular/router';
 import {
+  DialogService,
   EWMS_FAVORITE_LABELS,
   EWMS_FAVORITES_STORE,
   Favorites,
@@ -1820,6 +1821,35 @@ describe('ShowroomForm', () => {
     await (fixture.componentInstance as unknown as { salir(): Promise<void> }).salir();
     await settle();
     expect(element.querySelector('[data-form-left]')?.textContent).toBe('salió sin guardar');
+  });
+
+  it('asks before leaving with unsaved changes, and stays when the answer is no', async () => {
+    let asked = 0;
+    TestBed.overrideProvider(DialogService, {
+      useValue: { confirm: () => ((asked += 1), Promise.resolve(false)) },
+    });
+    const { fixture, element } = await render(ShowroomForm);
+    const page = fixture.componentInstance as unknown as { salir(): Promise<void> };
+
+    // Limpio: no pregunta.
+    await page.salir();
+    await fixture.whenStable();
+    expect(asked).toBe(0);
+
+    // Sucio, y el «sucio» lo marca escribir en la caja, no el modelo desde el código.
+    const box = element.querySelector('[data-form-cliente] input') as HTMLInputElement;
+    box.value = 'Distribuidora Andes';
+    box.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    // Corre en el contexto de inyección del componente, como el `canDeactivate` del router:
+    // llamarlo suelto desde un clic falla con NG0203.
+    await page.salir();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    expect(asked).toBe(1);
+    expect(element.querySelector('[data-form-left]')?.textContent).toBe('se quedó');
   });
 });
 

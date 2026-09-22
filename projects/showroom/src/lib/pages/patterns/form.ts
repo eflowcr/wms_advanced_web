@@ -1,4 +1,11 @@
-import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  inject,
+  Injector,
+  runInInjectionContext,
+  signal,
+} from '@angular/core';
 import {
   email,
   form,
@@ -110,6 +117,8 @@ interface AltaExpedicion {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ShowroomForm {
+  private readonly injector = inject(Injector);
+
   protected readonly version = DESIGN_SYSTEM_VERSION;
   protected readonly props = PROPS;
   protected readonly almacenes = ALMACENES;
@@ -156,15 +165,21 @@ export class ShowroomForm {
     this.alta().reset(value);
   };
 
-  /** Lo que haría el `canDeactivate` del router: pregunta solo si hay cambios sin guardar. */
+  /**
+   * Lo que haría el `canDeactivate` del router: pregunta solo si hay cambios sin guardar.
+   * `runInInjectionContext` porque esto sale de un clic y `confirmDiscard` inyecta el diálogo;
+   * al `canDeactivate` el router ya se lo da (NG0203 si falta).
+   */
   protected async salir(): Promise<void> {
-    const leave = await confirmDiscard(this.alta, {
-      title: 'Hay cambios sin guardar',
-      body: 'Si salís ahora se pierden. ¿Salir igual?',
-      confirmLabel: 'Salir sin guardar',
-      cancelLabel: 'Seguir editando',
-      tone: 'danger',
-    });
+    const leave = await runInInjectionContext(this.injector, () =>
+      confirmDiscard(this.alta, {
+        title: 'Hay cambios sin guardar',
+        body: 'Si salís ahora se pierden. ¿Salir igual?',
+        confirmLabel: 'Salir sin guardar',
+        cancelLabel: 'Seguir editando',
+        tone: 'danger',
+      }),
+    );
     this.left.set(leave ? 'salió sin guardar' : 'se quedó');
   }
 
