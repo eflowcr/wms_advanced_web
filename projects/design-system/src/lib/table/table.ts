@@ -85,7 +85,9 @@ import {
   type TableDensity,
   type TableView,
 } from './table.types';
-import { TableRowMenu } from './table-row-menu';
+import { TableColumnMenu, type ColumnAction } from './table-column-menu';
+import { TableMenu } from './table-menu';
+import { TableSortState } from './table-sort';
 import { TableWindow } from './table-window';
 import { TableTreeState } from './table-tree-state';
 import type { FlatRow } from './tree';
@@ -194,7 +196,7 @@ export class Table<T> implements TableContext {
   readonly viewChange = output<TableView>();
 
   private readonly viewContainerRef = inject(ViewContainerRef);
-  private readonly menuTemplate = viewChild<TemplateRef<unknown>>('rowMenuPanel');
+  private readonly menuTemplate = viewChild<TemplateRef<unknown>>('menuPanel');
 
   protected readonly detail = contentChild(DetailTemplate);
   protected readonly empty = contentChild(EmptyTemplate);
@@ -225,14 +227,15 @@ export class Table<T> implements TableContext {
   }));
 
   private readonly search = signal('');
-  private readonly sort = signal<TableQuery['sort']>(null);
+  /** Una lista: clic ordena por una columna, Shift+clic suma otra. Ver `table-sort.ts`. */
+  readonly sorting = new TableSortState(() => this.pageIndex.set(0));
   private readonly pageIndex = signal(0);
 
   protected readonly query = computed<TableQuery>(() => ({
     ...emptyQuery(this.pageSize()),
     search: this.search(),
     filters: this.filtering.values(),
-    sort: this.sort(),
+    sort: this.sorting.list(),
     page: this.pageIndex(),
   }));
 
@@ -418,7 +421,10 @@ export class Table<T> implements TableContext {
         }
       });
 
-    this.destroyRef.onDestroy(() => this.menu.dispose());
+    this.destroyRef.onDestroy(() => {
+      this.menu.dispose();
+      this.columnMenu.dispose();
+    });
   }
 
   private measurePins(): void {
@@ -518,35 +524,64 @@ export class Table<T> implements TableContext {
     return column.cell() as CellTemplate<T> | undefined;
   }
 
-  protected sortDirection(column: TableColumn): 'asc' | 'desc' | null {
-    const sort = this.sort();
-    return sort && sort.key === column.key() ? sort.direction : null;
+  /** Shift+clic y Shift+Enter suman la columna al orden en vez de reemplazarlo. */
+  protected toggleSort(column: TableColumn, event: MouseEvent | KeyboardEvent): void {
+    this.sorting.toggle(column, event.shiftKey);
   }
 
-  // `aria-sort` solo en la columna ordenada: `none` en las demás es ruido.
-  protected ariaSort(column: TableColumn): string | null {
-    const direction = this.sortDirection(column);
-    if (!direction) {
-      return null;
+  /** Shift+F10, la tecla de menú y Shift+Enter, con el foco en una cabecera. */
+  protected onHeaderKeydown(event: KeyboardEvent, column: TableColumn): void {
+    const target = event.target as HTMLElement;
+    if (event.key === 'Enter' && event.shiftKey && target.dataset['sort'] !== undefined) {
+      event.preventDefault();
+      this.toggleSort(column, event);
+    } else if (event.key === 'ContextMenu' || (event.key === 'F10' && event.shiftKey)) {
+      event.preventDefault();
+      this.columnMenu.open(column, target);
     }
-    return direction === 'asc' ? 'ascending' : 'descending';
   }
 
-  // Asc, desc y ninguno: el tercer clic devuelve el orden de la fuente.
-  protected toggleSort(column: TableColumn): void {
-    if (!column.sortable()) {
-      return;
-    }
-    const current = this.sortDirection(column);
-    this.pageIndex.set(0);
-    if (current === null) {
-      this.sort.set({ key: column.key(), direction: 'asc' });
-    } else if (current === 'asc') {
-      this.sort.set({ key: column.key(), direction: 'desc' });
-    } else {
-      this.sort.set(null);
-    }
+  /** «Orden ascendente», y con dos o más órdenes «…, prioridad 2». */
+  protected sortLabel(column: TableColumn): string {
+    const text = this.text();
+    const sorted =
+      this.sorting.direction(column) === 'asc' ? text.sortedAscending : text.sortedDescending;
+    const priority = this.sorting.priority(column);
+    return priority === null ? sorted : text.sortPriority(sorted, priority);
   }
+
+  protected fitColumn(column: TableColumn): void {
+    this.layout.fit(column, this.host.nativeElement);
+  }
+
+  /** ⋮, clic derecho y Shift+F10 sobre una cabecera: todo lo de esa columna. Ver vault: Tabla §21. */
+  protected readonly columnActions = new TableColumnMenu({
+    sort: this.sorting,
+    layout: this.layout,
+    words: () => this.text().columnActions,
+    fit: (column) => this.fitColumn(column),
+    move: (column, delta) => this.moveColumn(column, delta),
+  });
+
+  protected readonly columnMenu = new TableMenu<TableColumn>({
+    id: `${this.tableId}-column-menu`,
+    items: (column) => this.columnActions.items(column),
+    label: (column) => this.text().columnMenu(column.header() || column.key()),
+    template: () => this.menuTemplate(),
+    injector: this.injector,
+    viewContainerRef: this.viewContainerRef,
+    document: this.host.nativeElement.ownerDocument,
+    // Tras pintar: fijar u ocultar mueve la cabecera, y mover un nodo le quita el foco.
+    closed: (column) =>
+      afterNextRender(
+        () =>
+          this.host.nativeElement
+            .querySelector<HTMLElement>(`th[data-col="${column.key()}"] [data-column-menu] button`)
+            ?.focus(),
+        { injector: this.injector },
+      ),
+    chosen: (column, item) => this.columnActions.run(item.id as ColumnAction, column),
+  });
 
   readonly anyFilterable = computed(() => this.columns().some((column) => column.filterable()));
 
@@ -837,9 +872,10 @@ export class Table<T> implements TableContext {
     this.openDetails.set(open);
   }
 
-  protected readonly menu = new TableRowMenu<T>({
-    tableId: this.tableId,
+  protected readonly menu = new TableMenu<FlatRow<T>>({
+    id: `${this.tableId}-menu`,
     items: () => this.menuItems(),
+    label: () => this.text().rowMenu,
     template: () => this.menuTemplate(),
     injector: this.injector,
     viewContainerRef: this.viewContainerRef,
@@ -852,6 +888,11 @@ export class Table<T> implements TableContext {
     },
     chosen: (row, item) => this.rowMenu.emit({ row: row.row, item }),
   });
+
+  /** Un solo panel para los dos menús: el que esté abierto. */
+  protected readonly activeMenu = computed(() =>
+    this.columnMenu.target() !== null ? this.columnMenu : this.menu,
+  );
 
   /** La ventana de `[virtual]`: qué filas se dibujan. */
   protected readonly viewport = new TableWindow(this.rows, this.virtual, this.densityChoice);

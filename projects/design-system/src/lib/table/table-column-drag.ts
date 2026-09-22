@@ -46,7 +46,8 @@ export class TableColumnDrag {
 
   over(event: DragEvent, column: TableColumn): void {
     const source = this.source();
-    if (!source || source === column || source.pinned() !== column.pinned()) {
+    const { layout } = this.host;
+    if (!source || source === column || layout.pinnedOf(source) !== layout.pinnedOf(column)) {
       this.target.set(null);
       return;
     }

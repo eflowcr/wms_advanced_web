@@ -6,6 +6,8 @@ import { COLUMN_WIDTH, type TableDensity, type TablePin, type TableView } from '
 /** El paso del teclado al redimensionar y el mínimo de una columna, por token. */
 const RESIZE_STEP_TOKEN = '--col-resize-step';
 const MIN_WIDTH_TOKEN = '--col-filter-min-width';
+/** Tope de «Ajustar al contenido»: un texto larguísimo no se lleva la tabla entera. */
+const FIT_MAX_TOKEN = '--col-fit-max-width';
 
 /** Dónde cae una columna movida, para anunciarlo: «Cliente, posición 2 de 5». */
 export interface ColumnPosition {
@@ -22,6 +24,27 @@ export class TableViewState {
   private readonly widths = signal<Readonly<Record<string, number>>>({});
   /** Claves en el orden del usuario; null es el declarado. */
   private readonly order = signal<readonly string[] | null>(null);
+  /** Lo que el usuario fijó o soltó; `pinned` de la columna es solo el valor inicial. */
+  private readonly pins = signal<Readonly<Record<string, TablePin | null>>>({});
+
+  /** El fijado vigente: el del usuario si lo cambió, si no el declarado. */
+  pinnedOf(column: TableColumn): TablePin | null {
+    const pins = this.pins();
+    return column.key() in pins ? (pins[column.key()] ?? null) : column.pinned();
+  }
+
+  /** Fijar a un borde o soltar; volver al declarado borra la marca. */
+  pin(column: TableColumn, pin: TablePin | null): void {
+    this.pins.update((current) => {
+      const next = { ...current };
+      if (pin === column.pinned()) {
+        delete next[column.key()];
+      } else {
+        next[column.key()] = pin;
+      }
+      return next;
+    });
+  }
 
   /** Todas, en el orden del usuario; una columna que no estaba en él cae al final. */
   readonly orderedColumns = computed(() => {
@@ -39,7 +62,7 @@ export class TableViewState {
   /** Las visibles, con las fijadas al inicio y al final: el `sticky` solo pega en los bordes. */
   readonly visibleColumns = computed(() => {
     const visible = this.orderedColumns().filter((column) => !this.hidden().has(column.key()));
-    const at = (pin: TablePin | null) => visible.filter((column) => column.pinned() === pin);
+    const at = (pin: TablePin | null) => visible.filter((column) => this.pinnedOf(column) === pin);
     return [...at('start'), ...at(null), ...at('end')];
   });
 
@@ -52,7 +75,7 @@ export class TableViewState {
 
   /** Suelta `column` junto a `target`. Una normal no cae entre las fijadas, ni al revés. */
   place(column: TableColumn, target: TableColumn, side: 'before' | 'after'): ColumnPosition | null {
-    if (column === target || column.pinned() !== target.pinned()) {
+    if (column === target || this.pinnedOf(column) !== this.pinnedOf(target)) {
       return null;
     }
     const keys = this.orderedColumns()
@@ -78,7 +101,9 @@ export class TableViewState {
 
   /** Las visibles con el mismo fijado: una columna se mueve dentro de ellas. */
   groupOf(column: TableColumn): readonly TableColumn[] {
-    return this.visibleColumns().filter((candidate) => candidate.pinned() === column.pinned());
+    return this.visibleColumns().filter(
+      (candidate) => this.pinnedOf(candidate) === this.pinnedOf(column),
+    );
   }
 
   constructor(
@@ -131,13 +156,18 @@ export class TableViewState {
     }
   }
 
-  /** Doble clic: vuelve al ancho del token. */
-  reset(column: TableColumn): void {
-    this.widths.update((current) => {
-      const next = { ...current };
-      delete next[column.key()];
-      return next;
-    });
+  /**
+   * Ajustar al contenido (doble clic y menú de columna): lo que piden la cabecera y las filas
+   * dibujadas, con tope por token. Sin token de tope no se ajusta: un número inventado sería copia.
+   */
+  fit(column: TableColumn, host: HTMLElement): void {
+    const max = readPixels(FIT_MAX_TOKEN);
+    const cells = host.querySelectorAll<HTMLElement>(`[data-col="${column.key()}"]`);
+    if (max === null || cells.length === 0) {
+      return;
+    }
+    const widest = Math.max(...[...cells].map(naturalWidth));
+    this.resize(column, Math.min(max, widest));
   }
 
   /** Desplazamiento de cada celda fijada, medido en el DOM: depende de lo que mide cada columna. */
@@ -147,7 +177,7 @@ export class TableViewState {
   private readonly measuredWidths = signal<Readonly<Record<string, number>>>({});
 
   private readonly anyStartPin = computed(() =>
-    this.visibleColumns().some((column) => column.pinned() === 'start'),
+    this.visibleColumns().some((column) => this.pinnedOf(column) === 'start'),
   );
 
   /**
@@ -157,7 +187,7 @@ export class TableViewState {
   private readonly pinning = signal(true);
 
   private pinOf(column: TableColumn): TablePin | null {
-    return this.pinning() ? column.pinned() : null;
+    return this.pinning() ? this.pinnedOf(column) : null;
   }
 
   pinClasses(column: TableColumn, header: boolean): string {
@@ -278,9 +308,34 @@ export class TableViewState {
     widths: this.widths(),
     pinned: Object.fromEntries(
       this.columns()
-        .filter((column) => column.pinned() !== null)
-        .map((column) => [column.key(), column.pinned() as TablePin]),
+        .filter((column) => this.pinnedOf(column) !== null)
+        .map((column) => [column.key(), this.pinnedOf(column) as TablePin]),
     ),
     density: this.density(),
   }));
+}
+
+/**
+ * Lo que pide una celda sin recortar: el texto con elipsis cuenta entero (`scrollWidth`), el resto
+ * lo que mide, más huecos y relleno. Sumado a mano: la celda ya tiene el ancho de la columna.
+ */
+function naturalWidth(cell: HTMLElement): number {
+  const style = getComputedStyle(cell);
+  const padding = (parseFloat(style.paddingLeft) || 0) + (parseFloat(style.paddingRight) || 0);
+  return padding + contentWidth(cell.firstElementChild as HTMLElement | null);
+}
+
+function contentWidth(element: HTMLElement | null): number {
+  if (element === null) {
+    return 0;
+  }
+  if (element.classList.contains('truncate')) {
+    return element.scrollWidth;
+  }
+  const children = [...element.children] as HTMLElement[];
+  if (children.length === 0 || !element.classList.contains('flex')) {
+    return element.getBoundingClientRect().width;
+  }
+  const gap = parseFloat(getComputedStyle(element).columnGap) || 0;
+  return children.reduce((sum, child) => sum + contentWidth(child), gap * (children.length - 1));
 }

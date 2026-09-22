@@ -46,7 +46,8 @@ export interface TableQuery {
   readonly search: string;
   /** Por `key`; clave ausente = sin filtro. */
   readonly filters: Readonly<Record<string, TableFilterValue>>;
-  readonly sort: TableSort | null;
+  /** Por prioridad: la primera manda y las demás desempatan. Vacía = el orden de la fuente. */
+  readonly sort: readonly TableSort[];
   readonly page: number;
   readonly pageSize: number;
 }
@@ -65,7 +66,7 @@ export interface TablePage<T> {
 }
 
 export function emptyQuery(pageSize: number): TableQuery {
-  return { search: '', filters: {}, sort: null, page: 0, pageSize };
+  return { search: '', filters: {}, sort: [], page: 0, pageSize };
 }
 
 /** Primer nivel: `key` es un nombre, no un camino. Para más, `ewmsCell`. */

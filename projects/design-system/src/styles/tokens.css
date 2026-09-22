@@ -86,6 +86,7 @@
   --size-96: 96px;
   --size-160: 160px;
   --size-240: 240px;
+  --size-480: 480px;
   --size-pill: 9999px;
 
   /* Montserrat es variable 100–900. */
@@ -235,6 +236,8 @@
   --table-max-height: var(--vh-70);
   /* Paso del teclado al redimensionar una columna: el space-4 de la escala. */
   --col-resize-step: var(--size-16);
+  /* Tope de «Ajustar al contenido»: un texto larguísimo no se lleva la tabla entera. */
+  --col-fit-max-width: var(--size-480);
 
   /* 3000 ms (ficha Notificaciones). `ToastService` lo lee de la hoja; sin ella el toast
    * queda fijo en vez de inventar un número. */

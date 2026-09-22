@@ -112,6 +112,7 @@ export {
   type TableView,
 } from './lib/table/table.types';
 export { expandableKeys, flattenTree, type FlattenOptions } from './lib/table/tree';
+export { type ColumnAction } from './lib/table/table-column-menu';
 export { menuItemClasses, moveMenuIndex } from './lib/menu/menu';
 
 // Split button (2026-09-21): acción principal y alternativas, sobre el menú de la Tabla.

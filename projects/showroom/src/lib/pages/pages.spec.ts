@@ -1403,8 +1403,20 @@ describe('ShowroomTable', () => {
     );
 
     element.querySelector<HTMLButtonElement>('[data-demo-table] [data-sort="bultos"]')!.click();
+    element
+      .querySelector('[data-demo-table] [data-sort="codigo"]')!
+      .dispatchEvent(new MouseEvent('click', { bubbles: true, shiftKey: true }));
     await fixture.whenStable();
-    expect(element.querySelector('[data-query]')?.textContent).toContain('bultos asc');
+    expect(element.querySelector('[data-query]')?.textContent).toContain('bultos asc, codigo asc');
+
+    // Mover una columna se anuncia con las palabras del showroom.
+    element.querySelector<HTMLButtonElement>('[data-demo-table] [data-column-chooser] button')!.click();
+    await fixture.whenStable();
+    document.querySelector<HTMLButtonElement>('[data-column-row="cliente"] [data-column-down] button')!.click();
+    await fixture.whenStable();
+    expect(element.querySelector('[data-demo-table] [data-table-announce]')?.textContent).toBe(
+      'Cliente / artículo, posición 3 de 5',
+    );
   });
 });
 

@@ -54,6 +54,7 @@
               role="columnheader"
               draggable="true"
               [class]="
+                'group/head ' +
                 headerCellClasses +
                 ' ' +
                 layout.pinClasses(column, true) +
@@ -63,37 +64,64 @@
               [style.width]="layout.headerWidth(column)"
               [style.left.px]="layout.pinStart(column)"
               [style.right.px]="layout.pinEnd(column)"
-              [attr.aria-sort]="ariaSort(column)"
+              [attr.aria-sort]="sorting.ariaSort(column)"
               [attr.data-col]="column.key()"
-              [attr.data-pin]="column.pinned()"
+              [attr.data-pin]="layout.pinnedOf(column)"
+              (keydown)="onHeaderKeydown($event, column)"
+              (contextmenu)="columnMenu.onContextMenu($event, column)"
               (pointerdown)="drag.press($event)"
               (dragstart)="drag.start($event, column)"
               (dragover)="drag.over($event, column)"
               (drop)="drag.drop($event, column)"
               (dragend)="drag.end()"
             >
-              @if (column.sortable()) {
-                <button
-                  type="button"
-                  class="flex w-full cursor-pointer items-center gap-1 rounded-sm py-2 outline-none focus-visible:shadow-(--focus-ring-shadow)"
-                  [class]="headerClassesFor(column)"
-                  [attr.data-sort]="column.key()"
-                  (click)="toggleSort(column)"
-                >
-                  <span class="truncate">{{ column.header() }}</span>
-                  @if (sortDirection(column) === 'asc') {
-                    <ewms-icon name="chevron-up" size="sm" [label]="text().sortedAscending" />
-                  } @else if (sortDirection(column) === 'desc') {
-                    <ewms-icon name="chevron-down" size="sm" [label]="text().sortedDescending" />
-                  } @else {
-                    <ewms-icon name="arrows-sort" size="sm" aria-hidden="true" />
-                  }
-                </button>
-              } @else {
-                <span class="flex items-center py-2" [class]="headerClassesFor(column)">
-                  <span class="truncate">{{ column.header() }}</span>
-                </span>
-              }
+              @let name = column.header() || column.key();
+              <div class="flex items-center gap-1">
+                @if (column.sortable()) {
+                  <!-- Clic ordena por esta sola; Shift+clic (y Shift+Enter) la suma al orden. -->
+                  <button
+                    type="button"
+                    class="flex min-w-0 flex-1 cursor-pointer items-center gap-1 rounded-sm py-2 outline-none focus-visible:shadow-(--focus-ring-shadow)"
+                    [class]="headerClassesFor(column)"
+                    [attr.data-sort]="column.key()"
+                    (click)="toggleSort(column, $event)"
+                  >
+                    <span class="truncate">{{ column.header() }}</span>
+                    @switch (sorting.direction(column)) {
+                      @case ('asc') {
+                        <ewms-icon name="chevron-up" size="sm" [label]="sortLabel(column)" />
+                      }
+                      @case ('desc') {
+                        <ewms-icon name="chevron-down" size="sm" [label]="sortLabel(column)" />
+                      }
+                      @default {
+                        <ewms-icon name="arrows-sort" size="sm" aria-hidden="true" />
+                      }
+                    }
+                    @if (sorting.priority(column); as priority) {
+                      <span class="text-caption" aria-hidden="true" data-sort-priority>{{
+                        priority
+                      }}</span>
+                    }
+                  </button>
+                } @else {
+                  <span class="flex min-w-0 flex-1 items-center py-2" [class]="headerClassesFor(column)">
+                    <span class="truncate">{{ column.header() }}</span>
+                  </span>
+                }
+                <!-- ⋮ al pasar el mouse o con el foco en la cabecera; en pantallas táctiles, siempre. -->
+                <ewms-button
+                  class="opacity-0 group-hover/head:opacity-100 group-focus-within/head:opacity-100 pointer-coarse:opacity-100"
+                  variant="ghost"
+                  size="sm"
+                  icon="more"
+                  [iconOnly]="true"
+                  [label]="text().columnMenu(name)"
+                  [expanded]="columnMenu.target() === column"
+                  data-column-menu
+                  (click)="columnMenu.open(column, $any($event).currentTarget)"
+                />
+              </div>
               @if (column.type() !== 'actions') {
                 <!-- Separador de ancho (APG window splitter): arrastre, flechas por token, doble clic. -->
                 <span
@@ -107,7 +135,7 @@
                   [attr.data-resize]="column.key()"
                   (pointerdown)="layout.startResize($event, column)"
                   (keydown)="layout.onResizeKey($event, column)"
-                  (dblclick)="layout.reset(column)"
+                  (dblclick)="fitColumn(column)"
                 ></span>
               }
             </th>
@@ -276,6 +304,7 @@
                 [class]="cellClassesFor(column) + ' ' + layout.pinClasses(column, false)"
                 [style.left.px]="layout.pinStart(column)"
                 [style.right.px]="layout.pinEnd(column)"
+                [attr.data-col]="column.key()"
                 [attr.data-cell]="rowIndex + '-' + (selectable() ? columnIndex + 1 : columnIndex)"
                 [attr.tabindex]="
                   isFocused(rowIndex, selectable() ? columnIndex + 1 : columnIndex) ? 0 : -1
@@ -337,7 +366,7 @@
                           (click)="toggleDetail(flat)"
                         />
                       }
-                      @if (menu.enabled()) {
+                      @if (menu.enabled(flat)) {
                         <ewms-button
                           [iconOnly]="true"
                           variant="ghost"
@@ -473,31 +502,32 @@
   </div>
 }
 
-<!-- Menú con foco en la lista y `aria-activedescendant`, como el Select. Una entrada deshabilitada se ve pero las flechas la saltan. -->
-<ng-template #rowMenuPanel>
+<!-- Un panel para el menú de fila y el de columna: foco en la lista y `aria-activedescendant`, como el Select. Una entrada deshabilitada se ve pero las flechas la saltan. -->
+<ng-template #menuPanel>
+  @let panel = activeMenu();
   <ul
-    [id]="menu.id"
+    [id]="panel.id"
     role="menu"
     tabindex="-1"
-    [class]="menu.classes"
-    [attr.aria-label]="text().rowMenu"
-    [attr.aria-activedescendant]="menu.index() >= 0 ? menu.optionId(menu.index()) : null"
-    (keydown)="menu.onKeydown($event)"
+    [class]="panel.classes"
+    [attr.aria-label]="panel.label()"
+    [attr.aria-activedescendant]="panel.index() >= 0 ? panel.optionId(panel.index()) : null"
+    (keydown)="panel.onKeydown($event)"
   >
-    @for (item of menuItems(); track item.id; let itemIndex = $index) {
+    @for (item of panel.items(); track item.id; let itemIndex = $index) {
       @if (item.separatorBefore) {
-        <li [class]="menu.separatorClasses" role="separator"></li>
+        <li [class]="panel.separatorClasses" role="separator"></li>
       }
       <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -->
       <li
-        [id]="menu.optionId(itemIndex)"
+        [id]="panel.optionId(itemIndex)"
         role="menuitem"
-        [class]="menu.itemClasses(item, itemIndex)"
+        [class]="panel.itemClasses(item, itemIndex)"
         [attr.aria-disabled]="item.disabled ? 'true' : null"
         [attr.data-menu-item]="item.id"
-        (click)="menu.choose(item)"
+        (click)="panel.choose(item)"
       >
-        <span [class]="menu.iconSlotClasses" aria-hidden="true">
+        <span [class]="panel.iconSlotClasses" aria-hidden="true">
           @if (item.icon) {
             <ewms-icon [name]="item.icon" size="sm" />
           }

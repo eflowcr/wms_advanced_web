@@ -188,6 +188,42 @@ function tableMessages(): TableMessages {
     moveLater: (column) => transloco.translate('ds.table.moveLater', { column }),
     columnMoved: (column, position, total) =>
       transloco.translate('ds.table.columnMoved', { column, position, total }),
+    columnMenu: (column) => transloco.translate('ds.table.columnMenu', { column }),
+    // Un getter por acción con la clave literal, por la regla de arriba.
+    columnActions: {
+      get sortAsc() {
+        return transloco.translate('ds.table.columnActions.sortAsc');
+      },
+      get sortDesc() {
+        return transloco.translate('ds.table.columnActions.sortDesc');
+      },
+      get sortClear() {
+        return transloco.translate('ds.table.columnActions.sortClear');
+      },
+      get pinStart() {
+        return transloco.translate('ds.table.columnActions.pinStart');
+      },
+      get pinEnd() {
+        return transloco.translate('ds.table.columnActions.pinEnd');
+      },
+      get unpin() {
+        return transloco.translate('ds.table.columnActions.unpin');
+      },
+      get fit() {
+        return transloco.translate('ds.table.columnActions.fit');
+      },
+      get moveLeft() {
+        return transloco.translate('ds.table.columnActions.moveLeft');
+      },
+      get moveRight() {
+        return transloco.translate('ds.table.columnActions.moveRight');
+      },
+      get hide() {
+        return transloco.translate('ds.table.columnActions.hide');
+      },
+    },
+    sortPriority: (sorted, priority) =>
+      transloco.translate('ds.table.sortPriority', { sorted, priority }),
     selectedCount: (count) => transloco.translate('ds.table.selectedCount', { count }),
     get clearSelection() {
       return transloco.translate('ds.table.clearSelection');

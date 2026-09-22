@@ -135,17 +135,28 @@ describe('sortRows', () => {
 
   it('SORTS NUMBERS NUMERICALLY, not as the text somebody would see', () => {
     // Ordenar por el texto formateado pondría «1.200» antes de «900».
-    const sorted = sortRows(ROWS, query({ sort: { key: 'bultos', direction: 'asc' } }));
+    const sorted = sortRows(ROWS, query({ sort: [{ key: 'bultos', direction: 'asc' }] }));
     expect(sorted.map((row) => row.bultos)).toEqual([0, 40, 900, 1200]);
   });
 
-  it('sorts descending too', () => {
-    const sorted = sortRows(ROWS, query({ sort: { key: 'bultos', direction: 'desc' } }));
+  it('sorts descending too, and a second key breaks the ties of the first', () => {
+    const sorted = sortRows(ROWS, query({ sort: [{ key: 'bultos', direction: 'desc' }] }));
     expect(sorted.map((row) => row.bultos)).toEqual([1200, 900, 40, 0]);
+
+    const tied = [
+      { codigo: 'a', cliente: 'Norte', bultos: 2 },
+      { codigo: 'b', cliente: 'Andes', bultos: 2 },
+      { codigo: 'c', cliente: 'Valle', bultos: 1 },
+    ];
+    const byBoth = [
+      { key: 'bultos', direction: 'desc' },
+      { key: 'cliente', direction: 'asc' },
+    ] as const;
+    expect(sortRows(tied, query({ sort: byBoth })).map((row) => row.codigo)).toEqual(['b', 'a', 'c']);
   });
 
   it('sorts text by collation, so an accent is not a different letter', () => {
-    const sorted = sortRows(ROWS, query({ sort: { key: 'cliente', direction: 'asc' } }));
+    const sorted = sortRows(ROWS, query({ sort: [{ key: 'cliente', direction: 'asc' }] }));
     // `localeCompare` pone «Ñandú» entre «Andes» y «Norte»; por punto de código iría tras la Z.
     expect(sorted.map((row) => row.cliente)).toEqual(['Andes', 'Ñandú', 'Norte', 'Valle']);
   });
@@ -157,23 +168,23 @@ describe('sortRows', () => {
       { codigo: 'c', cliente: 'Alfa' },
     ];
 
-    const ascending = sortRows(withGaps, query({ sort: { key: 'cliente', direction: 'asc' } }));
+    const ascending = sortRows(withGaps, query({ sort: [{ key: 'cliente', direction: 'asc' }] }));
     expect(ascending.map((row) => row.codigo)).toEqual(['c', 'a', 'b']);
 
-    const descending = sortRows(withGaps, query({ sort: { key: 'cliente', direction: 'desc' } }));
+    const descending = sortRows(withGaps, query({ sort: [{ key: 'cliente', direction: 'desc' }] }));
     // Siguen al final: descendente no puede abrir con una pantalla de blancos.
     expect(descending.map((row) => row.codigo)).toEqual(['a', 'c', 'b']);
   });
 
   it('leaves two empty values in their original order', () => {
     const rows = [{ codigo: 'a' }, { codigo: 'b' }];
-    const sorted = sortRows(rows, query({ sort: { key: 'cliente', direction: 'asc' } }));
+    const sorted = sortRows(rows, query({ sort: [{ key: 'cliente', direction: 'asc' }] }));
     expect(sorted.map((row) => row.codigo)).toEqual(['a', 'b']);
   });
 
   it('does not mutate what it was given', () => {
     const original = [...ROWS];
-    sortRows(ROWS, query({ sort: { key: 'bultos', direction: 'desc' } }));
+    sortRows(ROWS, query({ sort: [{ key: 'bultos', direction: 'desc' }] }));
     expect(ROWS).toEqual(original);
   });
 });

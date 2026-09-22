@@ -105,18 +105,26 @@ export function matchesFilter(value: unknown, filter: TableFilterValue): boolean
   return true;
 }
 
-/** Estable, con los vacíos al final en ambas direcciones: descendente no abre con blancos. */
+/**
+ * Estable, por prioridad (la primera manda, las demás desempatan), con los vacíos al final en
+ * ambas direcciones: descendente no abre con blancos.
+ */
 export function sortRows<T>(rows: readonly T[], query: TableQuery): readonly T[] {
-  const sort = query.sort;
-  if (!sort) {
+  if (query.sort.length === 0) {
     return rows;
   }
-  const factor = sort.direction === 'asc' ? 1 : -1;
   return [...rows].sort((a, b) => {
-    const left = readCell(a, sort.key);
-    const right = readCell(b, sort.key);
-    const missing = compareMissing(left, right);
-    return missing !== null ? missing : factor * compareValues(left, right);
+    for (const sort of query.sort) {
+      const left = readCell(a, sort.key);
+      const right = readCell(b, sort.key);
+      const missing = compareMissing(left, right);
+      const order =
+        missing !== null ? missing : (sort.direction === 'asc' ? 1 : -1) * compareValues(left, right);
+      if (order !== 0) {
+        return order;
+      }
+    }
+    return 0;
   });
 }
 

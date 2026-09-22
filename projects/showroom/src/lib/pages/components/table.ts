@@ -410,7 +410,10 @@ export class ShowroomTable {
       return '(todavía ninguna)';
     }
     const filters = Object.keys(query.filters);
-    const sort = query.sort ? `${query.sort.key} ${query.sort.direction}` : 'sin orden';
+    const sort =
+      query.sort.length === 0
+        ? 'sin orden'
+        : query.sort.map((entry) => `${entry.key} ${entry.direction}`).join(', ');
     const search = query.search === '' ? 'sin búsqueda' : `«${query.search}»`;
     const byColumn = filters.length === 0 ? 'sin filtros' : `filtros: ${filters.join(', ')}`;
     return `${search} · ${byColumn} · ${sort} · página ${query.page}`;

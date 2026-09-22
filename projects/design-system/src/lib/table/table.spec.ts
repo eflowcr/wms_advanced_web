@@ -96,6 +96,20 @@ const MESSAGES: TableMessages = {
   moveEarlier: (column) => `Subir ${column}`,
   moveLater: (column) => `Bajar ${column}`,
   columnMoved: (column, position, total) => `${column}, posición ${position} de ${total}`,
+  columnMenu: (column) => `Opciones de la columna ${column}`,
+  columnActions: {
+    sortAsc: 'Ordenar ascendente',
+    sortDesc: 'Ordenar descendente',
+    sortClear: 'Quitar orden',
+    pinStart: 'Fijar a la izquierda',
+    pinEnd: 'Fijar a la derecha',
+    unpin: 'Soltar',
+    fit: 'Ajustar al contenido',
+    moveLeft: 'Mover a la izquierda',
+    moveRight: 'Mover a la derecha',
+    hide: 'Ocultar columna',
+  },
+  sortPriority: (sorted, priority) => `${sorted}, prioridad ${priority}`,
   selectedCount: (count) => `${count} seleccionadas`,
   clearSelection: 'Quitar selección',
   copied: (rows) => `${rows} filas copiadas`,
@@ -377,10 +391,25 @@ describe('Table', () => {
       expect(ariaSortOf('bultos')).toBeNull();
     });
 
-    it('marks only the sorted column, never the others', async () => {
+    it('SHIFT ADDS A COLUMN TO THE SORT, with its priority; aria-sort stays on the first', async () => {
       header('bultos').click();
+      header('codigo').dispatchEvent(new MouseEvent('click', { bubbles: true, shiftKey: true }));
       await settle();
+      expect(host.lastQuery?.sort.map((sort) => sort.key)).toEqual(['bultos', 'codigo']);
       expect(ariaSortOf('codigo')).toBeNull();
+      expect(header('codigo').querySelector('[data-sort-priority]')?.textContent?.trim()).toBe('2');
+      expect(header('codigo').querySelector('svg[aria-label]')?.getAttribute('aria-label')).toBe(
+        'Orden ascendente, prioridad 2',
+      );
+
+      // Shift+Enter la cicla en su lugar; un clic simple deja solo esa (y la tercera vez, ninguna).
+      const shiftEnter = { key: 'Enter', shiftKey: true, bubbles: true };
+      header('codigo').dispatchEvent(new KeyboardEvent('keydown', shiftEnter));
+      await settle();
+      expect(host.lastQuery?.sort[1]).toEqual({ key: 'codigo', direction: 'desc' });
+      header('codigo').click();
+      await settle();
+      expect(host.lastQuery?.sort).toEqual([]);
     });
   });
 
@@ -952,9 +981,9 @@ describe('Table', () => {
 });
 
 describe('Table with a failing source', () => {
-  it('says the table failed and offers a retry, instead of an empty page', async () => {
+  async function mount(source: TableSource<Row>): Promise<ComponentFixture<TestHost>> {
     await TestBed.configureTestingModule({
-      imports: [TestHost, Table, TableColumn, EmptyTemplate],
+      imports: [TestHost],
       providers: [
         { provide: EWMS_TABLE_MESSAGES, useValue: MESSAGES },
         { provide: EWMS_DATE_PICKER_MESSAGES, useValue: DATE_WORDS },
@@ -962,17 +991,23 @@ describe('Table with a failing source', () => {
       ],
     }).compileComponents();
     const fixture = TestBed.createComponent(TestHost);
+    fixture.componentInstance.source.set(source);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    return fixture;
+  }
+
+  // El reintento pasa por el mismo switchMap: prueba también que el error no mató la suscripción.
+  it('says the table failed and offers a retry, instead of an empty page', async () => {
     let calls = 0;
-    fixture.componentInstance.source.set({
+    const fixture = await mount({
       // La primera falla; el reintento contesta.
       load: () =>
         (calls += 1) === 1
           ? throwError(() => new Error('boom'))
           : of({ rows: ROWS, page: 0, pageSize: 50, total: 3 }),
     });
-    fixture.detectChanges();
-    await fixture.whenStable();
-    fixture.detectChanges();
 
     const failure = fixture.nativeElement.querySelector('[data-load-error]') as HTMLElement;
     expect(failure.textContent).toContain('No se pudo cargar la tabla.');
@@ -988,20 +1023,8 @@ describe('Table with a failing source', () => {
   });
 
   it('LOADING NEVER EMPTIES THE TABLE: the rows stay, dimmed, and it says it is busy', async () => {
-    await TestBed.configureTestingModule({
-      imports: [TestHost, Table, TableColumn, EmptyTemplate],
-      providers: [
-        { provide: EWMS_TABLE_MESSAGES, useValue: MESSAGES },
-        { provide: EWMS_DATE_PICKER_MESSAGES, useValue: DATE_WORDS },
-        { provide: EWMS_TABLE_FORMATTERS, useValue: FORMATTERS },
-      ],
-    }).compileComponents();
-    const fixture = TestBed.createComponent(TestHost);
     const pending = new Subject<TablePage<Row>>();
-    fixture.componentInstance.source.set({ load: () => pending });
-    fixture.detectChanges();
-    await fixture.whenStable();
-    fixture.detectChanges();
+    const fixture = await mount({ load: () => pending });
 
     const table = fixture.nativeElement.querySelector('table') as HTMLElement;
     expect(table.getAttribute('aria-busy')).toBe('true');
@@ -1021,34 +1044,6 @@ describe('Table with a failing source', () => {
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelectorAll('tbody tr:not([data-empty-row])').length).toBe(3);
     expect(fixture.nativeElement.querySelector('tbody').className).toContain('opacity-60');
-  });
-
-  it('survives a source that errors, and can load again afterwards', async () => {
-    await TestBed.configureTestingModule({
-      imports: [TestHost, Table, TableColumn, EmptyTemplate],
-      providers: [
-        { provide: EWMS_TABLE_MESSAGES, useValue: MESSAGES },
-        { provide: EWMS_DATE_PICKER_MESSAGES, useValue: DATE_WORDS },
-        { provide: EWMS_TABLE_FORMATTERS, useValue: FORMATTERS },
-      ],
-    }).compileComponents();
-
-    const fixture = TestBed.createComponent(TestHost);
-    fixture.componentInstance.source.set({
-      load: () => throwError(() => new Error('boom')),
-    });
-    fixture.detectChanges();
-    await fixture.whenStable();
-
-    expect(fixture.nativeElement.querySelector('[data-load-error]')).not.toBeNull();
-
-    // El pipeline sigue vivo: un error fuera del switchMap habría matado la suscripción.
-    fixture.componentInstance.source.set(new ArrayTableSource(ROWS, ['codigo']));
-    fixture.detectChanges();
-    await fixture.whenStable();
-    fixture.detectChanges();
-
-    expect(fixture.nativeElement.querySelectorAll('tbody tr:not([data-empty-row])').length).toBe(3);
   });
 });
 
@@ -1209,75 +1204,40 @@ describe('Table paging', () => {
     readonly byId = (row: Small): unknown => row.id;
   }
 
-  it('asks for one page at a time, and can be moved between them', async () => {
+  it('asks for one page at a time, moves between them, and without a total has no count', async () => {
     await TestBed.configureTestingModule({
-      imports: [PagedHost, Table, TableColumn],
+      imports: [PagedHost],
       providers: [
         { provide: EWMS_TABLE_MESSAGES, useValue: MESSAGES },
         { provide: EWMS_DATE_PICKER_MESSAGES, useValue: DATE_WORDS },
         { provide: EWMS_TABLE_FORMATTERS, useValue: FORMATTERS },
       ],
     }).compileComponents();
-
     const fixture = TestBed.createComponent(PagedHost);
-    fixture.detectChanges();
-    await fixture.whenStable();
-    fixture.detectChanges();
-
-    const rows = (): number =>
-      fixture.nativeElement.querySelectorAll('tbody tr:not([data-empty-row])').length;
-    expect(rows()).toBe(3);
-
     const table = fixture.debugElement.query(By.directive(Table)).componentInstance as {
       goToPage(page: number): void;
       pageCount(): number | null;
-    };
-
-    expect(table.pageCount()).toBe(3);
-
-    table.goToPage(2);
-    fixture.detectChanges();
-    await fixture.whenStable();
-    fixture.detectChanges();
-    expect(rows()).toBe(1);
-
-    // Fuera de rango se acota: una página inalcanzable es una pantalla vacía sin salida.
-    table.goToPage(99);
-    fixture.detectChanges();
-    await fixture.whenStable();
-    fixture.detectChanges();
-    expect(rows()).toBe(1);
-
-    table.goToPage(-5);
-    fixture.detectChanges();
-    await fixture.whenStable();
-    fixture.detectChanges();
-    expect(rows()).toBe(3);
-  });
-
-  it('has no page count when the source declines to total', async () => {
-    await TestBed.configureTestingModule({
-      imports: [PagedHost, Table, TableColumn],
-      providers: [
-        { provide: EWMS_TABLE_MESSAGES, useValue: MESSAGES },
-        { provide: EWMS_DATE_PICKER_MESSAGES, useValue: DATE_WORDS },
-        { provide: EWMS_TABLE_FORMATTERS, useValue: FORMATTERS },
-      ],
-    }).compileComponents();
-
-    const fixture = TestBed.createComponent(PagedHost);
-    fixture.detectChanges();
-    await fixture.whenStable();
-
-    const table = fixture.debugElement.query(By.directive(Table)).componentInstance as {
       page: { set(value: TablePage<Small>): void };
-      pageCount(): number | null;
-      goToPage(page: number): void;
     };
-    table.page.set({ rows: MANY.slice(0, 3), page: 0, pageSize: 3, total: null });
-    fixture.detectChanges();
+    const rows = async (page?: number): Promise<number> => {
+      if (page !== undefined) {
+        table.goToPage(page);
+      }
+      fixture.detectChanges();
+      await fixture.whenStable();
+      fixture.detectChanges();
+      return fixture.nativeElement.querySelectorAll('tbody tr:not([data-empty-row])').length;
+    };
+    expect(await rows()).toBe(3);
+    expect(table.pageCount()).toBe(3);
+    expect(await rows(2)).toBe(1);
+    // Fuera de rango se acota: una página inalcanzable es una pantalla vacía sin salida.
+    expect(await rows(99)).toBe(1);
+    expect(await rows(-5)).toBe(3);
 
     // Sin total no hay paginador: no puede prometer una última página.
+    table.page.set({ rows: MANY.slice(0, 3), page: 0, pageSize: 3, total: null });
+    fixture.detectChanges();
     expect(table.pageCount()).toBeNull();
     table.goToPage(2);
     expect(table.pageCount()).toBeNull();
@@ -1873,6 +1833,7 @@ describe('Table columns', () => {
   /** Los dos tokens, con valores de prueba: el paso y el mínimo que la tabla lee al redimensionar. */
   const STEP = 16;
   const MIN = 72;
+  const FIT = 400;
 
   @Component({
     template: `
@@ -1918,6 +1879,7 @@ describe('Table columns', () => {
     );
     document.documentElement.style.setProperty('--col-resize-step', pixels(STEP));
     document.documentElement.style.setProperty('--col-filter-min-width', pixels(MIN));
+    document.documentElement.style.setProperty('--col-fit-max-width', pixels(FIT));
     await TestBed.configureTestingModule({
       imports: [ColumnsHost],
       providers: [
@@ -1934,6 +1896,7 @@ describe('Table columns', () => {
     vi.unstubAllGlobals();
     document.documentElement.style.removeProperty('--col-resize-step');
     document.documentElement.style.removeProperty('--col-filter-min-width');
+    document.documentElement.style.removeProperty('--col-fit-max-width');
     fixture.nativeElement.remove();
     clearOverlays();
   });
@@ -2022,6 +1985,38 @@ describe('Table columns', () => {
     two.nativeElement.remove();
   });
 
+  it('THE COLUMN MENU: ⋮ or Shift+F10, what is done disabled; it pins and hides', async () => {
+    const entry = (id: string): HTMLElement =>
+      document.querySelector(`[data-menu-item="${id}"]`) as HTMLElement;
+    const open = header('bultos').querySelector('[data-column-menu] button') as HTMLElement;
+    open.click();
+    await settle();
+    expect(document.querySelector('[role="menu"]')?.getAttribute('aria-label')).toBe(
+      'Opciones de la columna Bultos',
+    );
+    // No ordena: sin entradas de orden. Suelta ya, y no se mueve a la izquierda de la fijada.
+    expect(entry('sortAsc')).toBeNull();
+    expect(entry('unpin').getAttribute('aria-disabled')).toBe('true');
+    expect(entry('moveLeft').getAttribute('aria-disabled')).toBe('true');
+    entry('pinStart').click();
+    await settle();
+    expect(headers()).toEqual(['bultos', 'codigo', 'fecha', 'acciones']);
+    expect(fixture.componentInstance.view?.pinned).toEqual({
+      bultos: 'start',
+      codigo: 'start',
+      acciones: 'end',
+    });
+    expect(document.activeElement).toBe(open);
+
+    separator('fecha').dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'F10', shiftKey: true, bubbles: true }),
+    );
+    await settle();
+    entry('hide').click();
+    await settle();
+    expect(fixture.componentInstance.view?.hidden).toEqual(['fecha']);
+  });
+
   it('REORDERS INSIDE ITS PIN GROUP, from the chooser and by dragging, and says where', async () => {
     const dataTransfer = { setData: () => undefined, effectAllowed: 'none' };
     const drag = (type: string, key: string, clientX = 0): void => {
@@ -2085,11 +2080,12 @@ describe('Table columns', () => {
     await settle();
     expect(header('fecha').style.width).toBe(pixels(MIN));
 
-    // Doble clic: vuelve al ancho declarado, que en una `fill` es ninguno.
+    // Doble clic: ajusta a lo que pide la celda más ancha, con el tope del token.
+    const widest = fixture.nativeElement.querySelector('td[data-col="fecha"] .truncate');
+    Object.defineProperty(widest, 'scrollWidth', { configurable: true, value: 900 });
     handle.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
     await settle();
-    expect(header('fecha').style.width).toBe('');
-    expect(fixture.componentInstance.view?.widths).toEqual({});
+    expect(fixture.componentInstance.view?.widths).toEqual({ fecha: FIT });
 
     // Con el puntero, y nunca bajo el mínimo.
     const grip = separator('bultos');

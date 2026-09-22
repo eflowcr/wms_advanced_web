@@ -1785,6 +1785,35 @@ test.describe('DS-3 lote C: la tabla', () => {
     await expect(said).toHaveText('Bultos, posición 3 de 5');
   });
 
+  test('THE COLUMN MENU opens with Shift+F10 and pins; Shift+click sorts by a second column', async ({
+    page,
+  }) => {
+    await page.goto(TABLE);
+    await ready(page);
+
+    await page.locator(`${DEMO} [data-sort="fecha"]`).focus();
+    await page.keyboard.press('Shift+F10');
+    const menu = page.locator('[role="menu"]');
+    await expect(menu).toHaveAttribute('aria-label', 'Opciones de la columna Fecha');
+    // Ordenar ↑, ↓, (Quitar orden, deshabilitada), Fijar a la izquierda, Fijar a la derecha.
+    await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('Enter');
+    await expect(page.locator(`${DEMO} th[data-col="fecha"]`)).toHaveAttribute('data-pin', 'end');
+    await expect(page.locator(`${DEMO} th[data-col]`).last()).toHaveAttribute('data-col', 'fecha');
+    await expect(page.locator(`${DEMO} th[data-col="fecha"] [data-column-menu] button`)).toBeFocused();
+
+    await page.locator(`${DEMO} [data-sort="bultos"]`).click();
+    await page.locator(`${DEMO} [data-sort="codigo"]`).click({ modifiers: ['Shift'] });
+    await expect(page.locator(`${DEMO} [data-sort="codigo"] [data-sort-priority]`)).toHaveText('2');
+    await expect(page.locator(`${DEMO} th[data-col="bultos"]`)).toHaveAttribute(
+      'aria-sort',
+      'ascending',
+    );
+  });
+
   test('selects every visible row from the header, and says so as mixed in between', async ({
     page,
   }) => {
