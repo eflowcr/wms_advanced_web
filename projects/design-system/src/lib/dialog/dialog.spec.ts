@@ -134,25 +134,18 @@ describe('DialogService', () => {
     ];
 
     for (const [tone, family, confirmClass] of CASES) {
-      it(`${tone} paints the halo ${family} and its confirm button ${confirmClass}`, async () => {
+      it(`${tone} paints its glyph ${family}, with nothing behind it, and its confirm button ${confirmClass}`, async () => {
         void host.dialogs.confirm({ ...BASE, tone });
         await settle();
 
-        const halo = box()?.querySelector('[aria-hidden="true"]') as HTMLElement;
-        expect(halo.className).toContain(`bg-${family}-surface`);
-        expect(halo.className).toContain(`shadow-(--shadow-halo-${family})`);
+        const glyph = box()?.querySelector('[data-dialog-icon]') as HTMLElement;
+        // Solo el color de la familia: sin fondo, aro ni halo.
+        expect(glyph.className).toBe(`flex shrink-0 text-${family}`);
+        expect(glyph.querySelector('svg')).not.toBeNull();
 
         expect(buttons()[1]?.className).toContain(confirmClass);
       });
     }
-
-    it('draws the icon zone as a shape with no glyph inside, which is the exception', async () => {
-      void host.dialogs.confirm(BASE);
-      await settle();
-      const halo = box()?.querySelector('[aria-hidden="true"]') as HTMLElement;
-      expect(halo.querySelector('svg')).toBeNull();
-      expect(halo.textContent?.trim()).toBe('');
-    });
   });
 
   describe('Escape and the backdrop', () => {

@@ -21,7 +21,7 @@
   <!-- ================================================ 2. Qué resuelve / cuándo no -->
   <section class="flex flex-col gap-4" aria-labelledby="ca-purpose" data-block="2-proposito">
     <h2 id="ca-purpose" class="text-h2">Qué resuelve, y cuándo NO usarlo</h2>
-    <div class="grid grid-cols-[repeat(auto-fit,minmax(20rem,1fr))] gap-4">
+    <div class="grid grid-cols-[repeat(auto-fit,minmax(min(20rem,100%),1fr))] gap-4">
       <div class="flex flex-col gap-2 rounded-md border border-default bg-surface p-4">
         <h3 class="text-h3">Qué resuelve</h3>
         <p>
@@ -59,7 +59,7 @@
   <!-- ========================================================= 3. Demo principal -->
   <section class="flex flex-col gap-4" aria-labelledby="ca-demo" data-block="3-demo">
     <h2 id="ca-demo" class="text-h2">Demo principal</h2>
-    <div class="grid grid-cols-[repeat(auto-fit,minmax(24rem,1fr))] gap-6">
+    <div class="grid grid-cols-[repeat(auto-fit,minmax(min(24rem,100%),1fr))] gap-6">
       <ewms-demo-frame ground="canvas" label="Selector de almacén, en un formulario reactivo real">
         <form [formGroup]="form" class="flex flex-col gap-4">
           <p class="text-caption text-secondary" id="ca-warehouse-label">Almacén de destino</p>
@@ -122,7 +122,7 @@
       inyector si tiene un grupo arriba.
     </p>
 
-    <div class="grid grid-cols-[repeat(auto-fit,minmax(20rem,1fr))] gap-4">
+    <div class="grid grid-cols-[repeat(auto-fit,minmax(min(20rem,100%),1fr))] gap-4">
       <div class="flex flex-col gap-3">
         <h3 class="text-h3">De contenido</h3>
         <ewms-demo-frame ground="canvas">
@@ -166,11 +166,6 @@
           Con una bandera, <code class="font-mono">&lt;ewms-card selectable&gt;</code> fuera de un
           grupo sería código que compila: un radio sin nada donde ser radio. Preguntarle al
           inyector <strong>elimina la posibilidad</strong> en vez de documentarla.
-        </p>
-        <p class="text-caption">
-          Es el mismo criterio por el que <code class="font-mono">&lt;ewms-icon-button&gt;</code> es
-          un componente aparte del Botón en vez de una variante suya: lo que no debe existir no
-          debería compilar.
         </p>
       </div>
     </div>

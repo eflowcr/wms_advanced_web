@@ -28,7 +28,8 @@ import { Badge } from '../badge/badge';
 import { Checkbox } from '../checkbox/checkbox';
 import { familyTintClass } from '../feedback/feedback.types';
 import { Icon } from '../icon/icon';
-import { IconButton } from '../icon-button/icon-button';
+import { Button } from '../button/button';
+import { DatePicker, type DatePickerValue } from '../date-picker/date-picker';
 import { Input as TextInput } from '../input/input';
 import { Pagination } from '../pagination/pagination';
 
@@ -73,7 +74,7 @@ import {
   MENU_SEPARATOR_CLASSES,
   MENU_POSITIONS,
   moveMenuIndex,
-} from './row-menu';
+} from '../menu/menu';
 import { expandableKeys, flattenTree, type FlatRow } from './tree';
 
 export type { CellContext } from './column';
@@ -108,8 +109,9 @@ const EMPTY_PAGE: TablePage<never> = { rows: [], page: 0, pageSize: 0, total: 0 
   imports: [
     Badge,
     Checkbox,
+    DatePicker,
     Icon,
-    IconButton,
+    Button,
     NgTemplateOutlet,
     Pagination,
     ReactiveFormsModule,
@@ -451,6 +453,24 @@ export class Table<T> {
     this.filterControls.set(id, control);
     return control;
   }
+
+  /** La fecha es un solo campo de rango: el date picker ya entrega el `DateRange`. */
+  protected dateFilterControl(column: TableColumn): FormControl<DatePickerValue> {
+    const id = `${column.key()}:range`;
+    const existing = this.dateControls.get(id);
+    if (existing) {
+      return existing;
+    }
+    const control = new FormControl<DatePickerValue>(null);
+    control.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((value) => {
+      const range = value !== null && typeof value === 'object' ? value : null;
+      this.writeFilter(column, range && (range.from || range.to) ? range : undefined);
+    });
+    this.dateControls.set(id, control);
+    return control;
+  }
+
+  private readonly dateControls = new Map<string, FormControl<DatePickerValue>>();
 
   private onFilterChange(column: TableColumn, bound: FilterBound, raw: string): void {
     if (bound === 'text') {
@@ -936,4 +956,4 @@ function parentIndexOf<T>(rows: readonly FlatRow<T>[], from: number): number {
   return from;
 }
 
-type FilterBound = 'text' | 'min' | 'max' | 'from' | 'to';
+type FilterBound = 'text' | 'min' | 'max';

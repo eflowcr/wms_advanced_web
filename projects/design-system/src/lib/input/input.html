@@ -60,21 +60,23 @@
   }
 
   @if (hasSuffix()) {
-    <!-- Este icono se pulsa: `ewms-icon-button` con nombre; `sm` (32 px) llena el relleno derecho. -->
+    <!-- Este icono se pulsa: botón de solo ícono con nombre; `sm` (32 px) llena el relleno derecho. -->
     <span class="absolute top-1/2 -translate-y-1/2 right-1 flex items-center">
       @if (hasPasswordToggle()) {
-        <ewms-icon-button
+        <ewms-button
+          [iconOnly]="true"
+          variant="ghost"
           [icon]="passwordToggleIcon()"
           [label]="passwordToggleLabel()"
-          [tooltip]="passwordToggleLabel()"
           size="sm"
           (click)="togglePasswordVisibility()"
         />
       } @else {
-        <ewms-icon-button
+        <ewms-button
+          [iconOnly]="true"
+          variant="ghost"
           icon="x"
           [label]="clearLabel()"
-          [tooltip]="clearLabel()"
           size="sm"
           (click)="clear()"
         />

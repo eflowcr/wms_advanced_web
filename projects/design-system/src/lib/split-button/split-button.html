@@ -1,0 +1,47 @@
+<!-- Dos botones del sistema pegados; el segundo abre el menú de fila de la Tabla (APG menu button). -->
+<span [class]="mainClasses">
+  <ewms-button variant="secondary" [icon]="icon()" (click)="primary.emit()">{{ label() }}</ewms-button>
+</span>
+<span [class]="triggerClasses" data-split-trigger>
+  <ewms-button
+    variant="secondary"
+    icon="chevron-down"
+    [iconOnly]="true"
+    [label]="words.moreActions"
+    [expanded]="isOpen()"
+    [controls]="isOpen() ? menuId : null"
+    (click)="toggle()"
+    (keydown)="onTriggerKeydown($event)"
+  />
+</span>
+
+<!-- Foco en la lista y `aria-activedescendant`, como el menú de fila. Las deshabilitadas se ven y las flechas las saltan. -->
+<ng-template #menu>
+  <ul
+    [id]="menuId"
+    role="menu"
+    tabindex="-1"
+    [class]="menuClasses"
+    [attr.aria-label]="label()"
+    [attr.aria-activedescendant]="activeId()"
+    (keydown)="onMenuKeydown($event)"
+  >
+    @for (item of actions(); track item.id; let index = $index) {
+      <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -->
+      <li
+        [id]="itemId(index)"
+        role="menuitem"
+        [class]="itemClasses(item, index)"
+        [attr.aria-disabled]="item.disabled ? 'true' : null"
+        [attr.data-split-action]="item.id"
+        (click)="choose(item)"
+        (mouseenter)="onItemEnter(index)"
+      >
+        @if (item.icon) {
+          <ewms-icon [name]="item.icon" size="sm" />
+        }
+        <span class="truncate">{{ item.label }}</span>
+      </li>
+    }
+  </ul>
+</ng-template>

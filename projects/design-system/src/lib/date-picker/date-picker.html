@@ -1,0 +1,119 @@
+<label
+  [attr.for]="fieldId"
+  class="block text-caption text-secondary mb-1"
+  [class.sr-only]="hideLabel()"
+>
+  {{ label() }}
+</label>
+
+<!-- La caja de `ewms-input` con el botón del calendario como sufijo, igual que el ojo de la clave. -->
+<div #anchor class="relative">
+  <input
+    #field
+    type="text"
+    inputmode="numeric"
+    autocomplete="off"
+    [id]="fieldId"
+    [class]="fieldClasses()"
+    [style.borderColor]="borderColor()"
+    [style.fontSize]="fontSize()"
+    [disabled]="isDisabled()"
+    [placeholder]="placeholder()"
+    [value]="text()"
+    [attr.aria-invalid]="error() ? 'true' : null"
+    [attr.aria-describedby]="hint() ? hintId : null"
+    (input)="onInput($event)"
+    (keydown)="onFieldKeydown($event)"
+    (blur)="onBlur()"
+  />
+  <span class="absolute top-1/2 -translate-y-1/2 right-1 flex items-center" data-date-trigger>
+    <ewms-button
+      [iconOnly]="true"
+      variant="ghost"
+      size="sm"
+      icon="calendar"
+      [label]="words.chooseDate"
+      [disabled]="isDisabled()"
+      [expanded]="isOpen()"
+      [controls]="isOpen() ? dialogId : null"
+      (click)="toggle()"
+    />
+  </span>
+</div>
+
+@if (hint()) {
+  <p [id]="hintId" class="mt-1 text-caption" [class]="error() ? 'text-danger' : 'text-secondary'">
+    {{ hint() }}
+  </p>
+}
+
+<!-- APG date picker dialog: foco en la grilla con tabindex itinerante; Tab no sale del diálogo. -->
+<ng-template #panel>
+  <div
+    [id]="dialogId"
+    role="dialog"
+    aria-modal="true"
+    [attr.aria-labelledby]="titleId"
+    [class]="panelClasses"
+    (keydown)="onPanelKeydown($event)"
+  >
+    <div class="flex items-center justify-between gap-2">
+      <ewms-button
+        [iconOnly]="true"
+        variant="ghost"
+        size="sm"
+        icon="chevron-left"
+        [label]="words.previousMonth"
+        data-date-previous
+        (click)="moveMonth(-1)"
+      />
+      <h2 [id]="titleId" class="text-p text-primary" aria-live="polite">{{ title() }}</h2>
+      <ewms-button
+        [iconOnly]="true"
+        variant="ghost"
+        size="sm"
+        icon="chevron-right"
+        [label]="words.nextMonth"
+        data-date-next
+        (click)="moveMonth(1)"
+      />
+    </div>
+
+    <!-- La grilla no se enfoca: se enfoca la celda activa (tabindex itinerante), y su tecla sube hasta acá. -->
+    <!-- eslint-disable-next-line @angular-eslint/template/interactive-supports-focus -->
+    <table role="grid" class="border-collapse" [attr.aria-labelledby]="titleId" (keydown)="onGridKeydown($event)">
+      <thead>
+        <tr>
+          @for (day of weekdays(); track day.long) {
+            <th scope="col" class="h-8 w-8 text-caption text-secondary" [attr.abbr]="day.long">
+              {{ day.short }}
+            </th>
+          }
+        </tr>
+      </thead>
+      <tbody>
+        @for (week of weeks(); track $index) {
+          <tr>
+            @for (cell of week; track $index) {
+              @if (cell.iso; as iso) {
+                <td
+                  [class]="cellClasses(cell)"
+                  [attr.tabindex]="iso === focused() ? 0 : -1"
+                  [attr.data-date]="iso"
+                  [attr.aria-selected]="isSelected(iso)"
+                  [attr.aria-disabled]="isOutside(iso) ? 'true' : null"
+                  [attr.aria-current]="iso === today ? 'date' : null"
+                  (click)="pick(iso)"
+                >
+                  {{ cell.day }}
+                </td>
+              } @else {
+                <td></td>
+              }
+            }
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</ng-template>

@@ -30,7 +30,7 @@
 
   <section class="flex flex-col gap-4" aria-labelledby="brand-shapes">
     <h2 id="brand-shapes" class="text-h2">Las tres formas</h2>
-    <ul class="grid grid-cols-[repeat(auto-fit,minmax(20rem,1fr))] gap-4">
+    <ul class="grid grid-cols-[repeat(auto-fit,minmax(min(20rem,100%),1fr))] gap-4">
       @for (shape of shapes; track shape.id) {
         <li class="flex flex-col gap-2" [attr.data-shape]="shape.id">
           <ewms-demo-frame ground="surface" [label]="shape.name">
@@ -51,7 +51,7 @@
       el del contenedor. Por eso el <em>mismo</em> archivo sirve sobre el canvas y sobre el rail
       navy. Ésa es la razón de que exista la versión mono, y es lo que hay que ver funcionando.
     </p>
-    <div class="grid grid-cols-[repeat(auto-fit,minmax(20rem,1fr))] gap-4">
+    <div class="grid grid-cols-[repeat(auto-fit,minmax(min(20rem,100%),1fr))] gap-4">
       <ewms-demo-frame ground="canvas" label="Mono heredando text-primary">
         <span
           class="block h-12 w-full"
@@ -86,7 +86,7 @@
       trabajo que usa la aplicación, escrita acá para que sea visible y se pueda corregir, no para
       darla por cerrada.
     </p>
-    <div class="grid grid-cols-[repeat(auto-fit,minmax(20rem,1fr))] gap-4">
+    <div class="grid grid-cols-[repeat(auto-fit,minmax(min(20rem,100%),1fr))] gap-4">
       <ewms-demo-frame ground="surface" label="Tamaño mínimo del isotipo">
         <div class="flex items-end gap-6">
           <div class="flex flex-col items-center gap-2">
@@ -130,7 +130,7 @@
 
   <section class="flex flex-col gap-4" aria-labelledby="brand-misuse">
     <h2 id="brand-misuse" class="text-h2">Usos incorrectos</h2>
-    <ul class="grid grid-cols-[repeat(auto-fit,minmax(18rem,1fr))] gap-4">
+    <ul class="grid grid-cols-[repeat(auto-fit,minmax(min(18rem,100%),1fr))] gap-4">
       <li class="flex flex-col gap-2">
         <ewms-demo-frame ground="surface">
           <img
@@ -199,7 +199,7 @@
       bloque de credenciales del App Shell. Todavía no hay SVG: lo que hay son PNG, redimensionados
       para web al entrar al repositorio.
     </p>
-    <ul class="grid grid-cols-[repeat(auto-fit,minmax(18rem,1fr))] gap-4">
+    <ul class="grid grid-cols-[repeat(auto-fit,minmax(min(18rem,100%),1fr))] gap-4">
       @for (logo of eprac; track logo.id) {
         <li class="flex flex-col gap-2" [attr.data-eprac]="logo.id">
           <ewms-demo-frame [ground]="logo.ground" [label]="logo.name">

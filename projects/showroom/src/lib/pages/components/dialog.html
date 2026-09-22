@@ -20,7 +20,7 @@
   <!-- ================================================ 2. Qué resuelve / cuándo no -->
   <section class="flex flex-col gap-4" aria-labelledby="di-purpose" data-block="2-proposito">
     <h2 id="di-purpose" class="text-h2">Qué resuelve, y cuándo NO usarlo</h2>
-    <div class="grid grid-cols-[repeat(auto-fit,minmax(20rem,1fr))] gap-4">
+    <div class="grid grid-cols-[repeat(auto-fit,minmax(min(20rem,100%),1fr))] gap-4">
       <div class="flex flex-col gap-2 rounded-md border border-default bg-surface p-4">
         <h3 class="text-h3">Qué resuelve</h3>
         <p>
@@ -62,7 +62,7 @@
       <strong>Abrilos.</strong> No hay ninguna foto de un diálogo en esta página: un diálogo es una
       trampa de foco, un backdrop y una promesa, y nada de eso se ve en una imagen quieta.
     </p>
-    <div class="grid grid-cols-[repeat(auto-fit,minmax(24rem,1fr))] gap-6">
+    <div class="grid grid-cols-[repeat(auto-fit,minmax(min(24rem,100%),1fr))] gap-6">
       <ewms-demo-frame ground="canvas" label="Confirmaciones reales, con su respuesta">
         <div class="flex flex-col gap-4" data-demo-dialog>
           <div class="flex flex-wrap gap-2">
@@ -99,17 +99,17 @@
   <section class="flex flex-col gap-4" aria-labelledby="di-variants" data-block="4-variantes">
     <h2 id="di-variants" class="text-h2">Variantes</h2>
     <p class="text-secondary">
-      Tres tonos, y el tono decide tres cosas a la vez: el halo, la variante del botón que confirma
+      Tres tonos, y el tono decide tres cosas a la vez: el glifo, la variante del botón que confirma
       y si el backdrop cierra.
     </p>
 
     <div class="flex flex-col gap-2 rounded-md border border-strong bg-secondary p-4">
-      <h3 class="text-h4">La zona de icono es una forma con halo, y no lleva glifo</h3>
+      <h3 class="text-h4">Un glifo del catálogo, sin círculo ni halo</h3>
       <p class="text-caption">
-        <strong>Es una excepción documentada en la ficha, no una pieza que falte.</strong> El
-        tratamiento se validó con el usuario el 27/08 y la ficha lleva un aviso explícito: cuando
-        exista la librería de iconos, <em>no</em> se «arregla» metiéndole un triángulo. Cambiarlo
-        requiere una decisión.
+        <strong>Cambio de decisión del usuario del 2026-09-21.</strong> La forma redonda con halo
+        validada el 27/08 no iba alineada al resto del proyecto. Ahora es un glifo del catálogo de
+        íconos en el color de la familia, junto al título, y todo el diálogo va alineado a la
+        izquierda, como el de formulario.
       </p>
       <p class="text-caption">
         <strong>Info se pinta neutral, no azul.</strong> El registro de Figma de este componente lo
@@ -170,8 +170,8 @@
   <section class="flex flex-col gap-4" aria-labelledby="di-matrix" data-block="5-matriz">
     <h2 id="di-matrix" class="text-h2">Matriz de estados</h2>
     <p class="text-secondary">
-      Los tres tonos contra lo que cada uno decide. La primera columna dibuja la zona de icono de
-      verdad, con sus tokens; las otras dos son hechos.
+      Los tres tonos contra lo que cada uno decide. La primera columna dibuja el glifo de verdad,
+      con el mismo ícono y color; las otras dos son hechos.
     </p>
     <ewms-demo-frame ground="surface">
       <ewms-state-matrix
@@ -181,14 +181,10 @@
         caption="Los tres tonos y lo que cada uno decide"
       >
         <ng-template let-variant="variant" let-state="state">
-          @if (isHalo(state.id)) {
-            <span
-              class="inline-block rounded-full border border-solid"
-              [class]="haloClasses(variant.id)"
-              [style.width]="'var(--size-dialog-icon)'"
-              [style.height]="'var(--size-dialog-icon)'"
-              [attr.data-halo]="variant.id"
-            ></span>
+          @if (isGlyph(state.id) && glyphFor(variant.id); as glyph) {
+            <span class="inline-flex" [class]="glyph.color" [attr.data-glyph]="variant.id">
+              <ewms-icon [name]="glyph.name" size="lg" />
+            </span>
           } @else {
             <span class="text-caption text-primary">{{ fact(variant.id, state.id) }}</span>
           }
@@ -197,9 +193,8 @@
     </ewms-demo-frame>
     <p class="text-caption text-secondary">
       <strong>No hay tres diálogos abiertos lado a lado, y no se puede haberlos:</strong> son
-      modales, y dos modales a la vez no son dos modales. Lo que sí se puede dibujar quieto es la
-      zona de icono, y está dibujada con los mismos tokens que usa el componente — no con una
-      copia.
+      modales, y dos modales a la vez no son dos modales. Lo que sí se puede dibujar quieto es el
+      glifo, con el mismo ícono y la misma clase de color que usa el componente.
     </p>
     <p class="text-caption text-secondary">
       Tampoco hay Hover, Focus ni Disabled. El diálogo no es un control: lo que se pulsa son sus
@@ -257,7 +252,7 @@
     </div>
 
     <div class="flex flex-col gap-2 rounded-md border border-strong bg-secondary p-4">
-      <h3 class="text-h4">Los tres tokens nuevos son alias, y el halo es una desviación reportada</h3>
+      <h3 class="text-h4">Los tres tokens propios son alias</h3>
       <ul class="flex flex-col gap-2 text-caption">
         <li>
           <code class="font-mono">--radius-dialog</code> sale de la escala de longitudes (los
@@ -272,16 +267,9 @@
           de blur que se emite.
         </li>
         <li>
-          <strong>El halo no copia la opacidad que pide la ficha.</strong> La ficha describe el
-          color del glifo al 35 %; un color con alfa sería un <em>primitivo de color nuevo</em>, y
-          eso es decisión de diseño: se reporta, no se inventa. El halo usa el
-          <code class="font-mono">-border</code> de la familia, que ya es ese mismo color aclarado y
-          está medido. <strong>Queda reportado.</strong>
-        </li>
-        <li>
-          Es una sombra compuesta de semánticos, igual que
-          <code class="font-mono">--focus-ring-shadow</code>, y por la misma razón: lo que define el
-          efecto son dos tokens y una geometría, no un color nuevo.
+          El glifo no trae token propio: es el <code class="font-mono">-text</code> de la familia y
+          el tamaño <code class="font-mono">lg</code> de la escala de íconos. Los tokens del halo y
+          del círculo se borraron el 2026-09-21.
         </li>
       </ul>
     </div>
@@ -298,7 +286,7 @@
     ><code>{{ snippet }}</code></pre>
 
     <h3 class="text-h3">Accesibilidad — las dos preguntas que la ficha dejaba abiertas</h3>
-    <div class="grid grid-cols-[repeat(auto-fit,minmax(20rem,1fr))] gap-4">
+    <div class="grid grid-cols-[repeat(auto-fit,minmax(min(20rem,100%),1fr))] gap-4">
       <div class="flex flex-col gap-2 rounded-md border border-success bg-success-surface p-4">
         <h4 class="text-h4">El diálogo dice cómo se llama</h4>
         <p class="text-caption">

@@ -8,7 +8,6 @@ export {
   type ButtonSize,
   type ButtonVariant,
 } from './lib/button/button';
-export { IconButton } from './lib/icon-button/icon-button';
 export { Tooltip, type TooltipPosition } from './lib/tooltip/tooltip';
 
 // Formulario (DS-2), ControlValueAccessor por una base común. `FieldSize` y `FieldState`
@@ -18,7 +17,6 @@ export { Input, type InputType } from './lib/input/input';
 export { Checkbox } from './lib/checkbox/checkbox';
 export { Radio } from './lib/radio/radio';
 export { Toggle } from './lib/toggle/toggle';
-export { Select, type SelectOption } from './lib/select/select';
 export { ICON_CATEGORIES, type IconCategory, type IconName } from './icons/icons.generated';
 
 // Feedback (DS-3): banner y toast comparten `FeedbackVariant`. Info se pinta neutral:
@@ -36,18 +34,20 @@ export { CardGroup } from './lib/card/card-group';
 export { DialogService, type OpenDialogOptions } from './lib/dialog/dialog.service';
 export { type ConfirmOptions, type DialogTone } from './lib/dialog/dialog.types';
 
-// Search select (DS-3, REQ-FE-DS3-001): `SearchSource<T>` es el contrato para el backend.
-// La fuente en memoria es de la demo y no se exporta.
+// Select (DS-2, con la búsqueda de REQ-FE-DS3-001 desde 2026-09-21): lista corta, lista larga
+// que filtra en memoria, o `SearchSource<T>`, el contrato para el backend.
 export {
-  SearchSelect,
+  Select,
   type SearchDisplay,
   type SearchPage,
-  type SearchSelectMessages,
   type SearchSource,
   type SearchStatus,
-} from './lib/search-select/search-select';
-export { EWMS_SEARCH_SELECT_MESSAGES } from './lib/search-select/search-select.types';
-export { SEARCH_PAGE_SIZE } from './lib/search-select/search-source';
+  type SelectMessages,
+  type SelectOption,
+  type SelectSearchable,
+} from './lib/select/select';
+export { EWMS_SELECT_MESSAGES, SELECT_SEARCH_THRESHOLD } from './lib/select/select.types';
+export { SEARCH_PAGE_SIZE } from './lib/select/search-source';
 
 // Badge (DS-3): fuera de la Tabla para que detalle, card y lista digan «con incidencia» igual.
 export { Badge } from './lib/badge/badge';
@@ -98,7 +98,24 @@ export {
   type TableDensity,
 } from './lib/table/table.types';
 export { expandableKeys, flattenTree, type FlattenOptions } from './lib/table/tree';
-export { menuItemClasses, moveMenuIndex } from './lib/table/row-menu';
+export { menuItemClasses, moveMenuIndex } from './lib/menu/menu';
+
+// Split button (2026-09-21): acción principal y alternativas, sobre el menú de la Tabla.
+export {
+  SplitButton,
+  type SplitAction,
+  type SplitButtonMessages,
+} from './lib/split-button/split-button';
+export { EWMS_SPLIT_BUTTON_MESSAGES } from './lib/split-button/split-button.types';
+
+// Date picker (2026-09-21): calendario propio en el idioma de la app; valor ISO o `DateRange`.
+export {
+  DatePicker,
+  type DatePickerMessages,
+  type DatePickerMode,
+  type DatePickerValue,
+} from './lib/date-picker/date-picker';
+export { EWMS_DATE_PICKER_MESSAGES } from './lib/date-picker/date-picker.types';
 
 // Pagination (DS-3): aparte de la tabla, porque cards, logs y colas de picking también paginan.
 export { Pagination, type PaginationMessages } from './lib/pagination/pagination';

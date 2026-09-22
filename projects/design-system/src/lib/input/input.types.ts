@@ -16,5 +16,5 @@ export const PREFIX_ICON_OFFSET_CLASSES: Readonly<Record<FieldSize, string>> = {
   lg: 'left-3.5',
 };
 
-/** Un valor para los tres tamaños: el sufijo es un icon-button de 32 px más 4 px por lado. */
+/** Un valor para los tres tamaños: el sufijo es un botón de solo ícono de 32 px más 4 px por lado. */
 export const SUFFIX_PADDING_CLASS = 'pr-10';

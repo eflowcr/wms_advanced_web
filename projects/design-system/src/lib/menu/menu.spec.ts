@@ -1,5 +1,5 @@
-import { menuItemClasses, moveMenuIndex } from './row-menu';
-import type { MenuItem } from './table.types';
+import { menuItemClasses, moveMenuIndex } from './menu';
+import type { MenuItem } from './menu.types';
 
 const ITEMS: readonly MenuItem[] = [
   { id: 'ver', label: 'Ver detalle' },

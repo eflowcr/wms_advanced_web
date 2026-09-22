@@ -325,7 +325,7 @@ describe('KeyboardShortcuts', () => {
     });
 
     /**
-     * Regresión de DS-5: tras un escaneo en search-select, el Enter siguiente no activaba
+     * Regresión de DS-5: tras un escaneo en select, el Enter siguiente no activaba
      * un botón enfocado (WCAG 2.1.1). Ver vault: Atajos-de-Teclado.
      */
     it('a key somebody else answered still closes the open run', () => {

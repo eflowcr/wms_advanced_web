@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
-import { IconButton } from '../icon-button/icon-button';
+import { Button } from '../button/button';
 import { Favorites } from './favorites';
 
 /**
@@ -9,12 +9,12 @@ import { Favorites } from './favorites';
 @Component({
   selector: 'ewms-favorite-toggle',
   template: `
-    <ewms-icon-button
+    <ewms-button
+      [iconOnly]="true"
       icon="star"
       [variant]="marked() ? 'primary' : 'ghost'"
       [size]="size()"
       [label]="marked() ? removeLabel() : addLabel()"
-      [tooltip]="marked() ? removeLabel() : addLabel()"
       [pressed]="marked()"
       (click)="onToggle()"
     />
@@ -22,7 +22,7 @@ import { Favorites } from './favorites';
     <!-- No se vacía después: vaciarla volvería a anunciar. Guarda la última confirmación. -->
     <span class="sr-only" role="status" data-favorite-announce>{{ announcement() }}</span>
   `,
-  imports: [IconButton],
+  imports: [Button],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { class: 'inline-flex items-center', 'data-favorite-toggle': '' },
 })

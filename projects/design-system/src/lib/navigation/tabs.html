@@ -5,11 +5,12 @@
   [class.border-default]="!isDocument()"
 >
   @if (showArrows()) {
-    <ewms-icon-button
+    <ewms-button
+      [iconOnly]="true"
+      variant="ghost"
       icon="chevron-left"
       size="sm"
       [label]="scrollBackLabel()"
-      [tooltip]="scrollBackLabel()"
       (click)="scrollBy(-1)"
     />
   }
@@ -62,11 +63,12 @@
   </div>
 
   @if (showArrows()) {
-    <ewms-icon-button
+    <ewms-button
+      [iconOnly]="true"
+      variant="ghost"
       icon="chevron-right"
       size="sm"
       [label]="scrollForwardLabel()"
-      [tooltip]="scrollForwardLabel()"
       (click)="scrollBy(1)"
     />
   }

@@ -13,11 +13,9 @@ import {
   CARD,
   CHECKBOX,
   DIALOG,
-  ICON_BUTTON,
   INPUT,
   PAGINATION,
   RADIO,
-  SEARCH_SELECT,
   SELECT,
   SPACING,
   TABLE,
@@ -49,18 +47,32 @@ test.describe('the showroom renders and is reachable', () => {
     });
   }
 
-  test('the old Spanish icon route still works', async ({ page }) => {
+  test('the retired routes still work', async ({ page }) => {
     // Las URL se declararon estables: un enlace ya compartido tiene que seguir abriendo.
-    await page.goto('/design-system/iconografia');
-    await expect(page).toHaveURL(/\/design-system\/foundations\/icons$/);
-    await expect(page.getByRole('heading', { level: 1, name: 'Iconografía' })).toBeVisible();
+    for (const [old, now, heading] of [
+      ['/design-system/iconografia', /\/foundations\/icons$/, 'Iconografía'],
+      ['/design-system/components/icon-button', /\/components\/button$/, 'Botón'],
+      ['/design-system/components/search-select', /\/components\/select$/, 'Select'],
+    ] as const) {
+      await page.goto(old);
+      await expect(page).toHaveURL(now);
+      await expect(page.getByRole('heading', { level: 1, name: heading })).toBeVisible();
+    }
   });
 
-  test('the sidebar marks the page you are on', async ({ page }) => {
-    await page.goto(BUTTON);
+  test('the sidebar marks the page you are on, once even when two entries share it', async ({
+    page,
+  }) => {
     const current = page.locator('[data-sidebar] a[aria-current="page"]');
-    await expect(current).toHaveCount(1);
-    await expect(current).toHaveText('Botón');
+    // Tabla y Badge comparten ruta: se marca solo la primera.
+    for (const [url, name] of [
+      [BUTTON, 'Botón'],
+      [TABLE, 'Tabla de datos'],
+    ] as const) {
+      await page.goto(url);
+      await expect(current).toHaveCount(1);
+      await expect(current).toHaveText(name);
+    }
   });
 
   test('the search filters the catalogue by name and by selector', async ({ page }) => {
@@ -358,8 +370,8 @@ test.describe('the fixed geometry of the system', () => {
 
 // Cada ficha lee sus números del propio DOM en vez de imprimirlos; acá se comprueba que lea el correcto.
 test.describe('the component sheets measure what they claim', () => {
-  test('the icon button is square at the three sizes, over the 2.5.8 minimum', async ({ page }) => {
-    await page.goto(ICON_BUTTON);
+  test('the icon-only button is square at the three sizes', async ({ page }) => {
+    await page.goto(BUTTON);
     await ready(page);
 
     for (const [size, expected] of [
@@ -367,12 +379,12 @@ test.describe('the component sheets measure what they claim', () => {
       ['md', 40],
       ['lg', 48],
     ] as const) {
-      const box = await page.locator(`[data-size-sample="${size}"] button`).boundingBox();
-      expect(round(box?.width), `icon button ${size} width`).toBe(expected);
-      expect(round(box?.height), `icon button ${size} height`).toBe(expected);
+      const sample = page.locator(`[data-icon-size-sample="${size}"]`);
+      const box = await sample.locator('button').boundingBox();
+      expect(round(box?.width), `icon-only ${size} width`).toBe(expected);
+      expect(round(box?.height), `icon-only ${size} height`).toBe(expected);
+      await expect(sample).toContainText(`${expected} × ${expected} px`);
     }
-    // La página deriva el veredicto 2.5.8 de lo que midió: sin insignia de fallo, la derivación coincide.
-    await expect(page.getByText('por debajo de')).toHaveCount(0);
   });
 
   test('the text page reads back the element each variant really rendered', async ({ page }) => {
@@ -1204,17 +1216,32 @@ test.describe('DS-3 lote B: dialog', () => {
     await expect(page.locator('[data-last-answer]')).toContainText('no confirmado');
   });
 
-  test('the icon zone is 56 px of shape with no glyph in it', async ({ page }) => {
+  test('each tone is a glyph with no shadow, on the left margin of the form dialog', async ({
+    page,
+  }) => {
     await page.goto(DIALOG);
     await ready(page);
 
     for (const tone of ['danger', 'warning', 'info'] as const) {
-      const halo = page.locator(`[data-halo="${tone}"]`);
-      const box = await halo.boundingBox();
-      expect(round(box?.width), `${tone} halo width`).toBe(56);
-      expect(round(box?.height), `${tone} halo height`).toBe(56);
-      // La excepción documentada: una forma y nada adentro.
-      await expect(halo.locator('svg')).toHaveCount(0);
+      await page.locator(`[data-open="${tone}"] button`).click();
+      const dialog = page.locator('[role="dialog"]');
+      const glyph = dialog.locator('[data-dialog-icon]');
+      await expect(glyph.locator('svg')).toHaveCount(1);
+      expect(await glyph.evaluate((element) => getComputedStyle(element).boxShadow)).toBe('none');
+
+      // Como el de formulario (p-6 y borde): todo arranca en el borde interior del relleno.
+      const container = dialog.locator('div').first();
+      const box = await container.boundingBox();
+      const inset = await container.evaluate((element) => {
+        const style = getComputedStyle(element);
+        return parseFloat(style.paddingLeft) + parseFloat(style.borderLeftWidth);
+      });
+      for (const part of [glyph, dialog.locator('p').first()]) {
+        const left = (await part.boundingBox())!.x - box!.x;
+        expect(round(left), `${tone} left margin`).toBe(round(inset));
+      }
+      await page.keyboard.press('Escape');
+      await expect(dialog).toHaveCount(0);
     }
   });
 
@@ -1235,11 +1262,11 @@ test.describe('DS-3 lote B: dialog', () => {
   });
 });
 
-test.describe('DS-3 lote B: selector con búsqueda', () => {
+test.describe('DS-3 lote B: el select con una fuente remota', () => {
   const FIELD = '[data-demo-search] input[role="combobox"]';
 
   test('filters as you type, with nothing opened first', async ({ page }) => {
-    await page.goto(SEARCH_SELECT);
+    await page.goto(SELECT);
     await ready(page);
 
     await expect(page.locator('[role="listbox"]')).toHaveCount(0);
@@ -1250,7 +1277,7 @@ test.describe('DS-3 lote B: selector con búsqueda', () => {
   });
 
   test('a scan resolves without the panel ever opening', async ({ page }) => {
-    await page.goto(SEARCH_SELECT);
+    await page.goto(SELECT);
     await ready(page);
 
     const field = page.locator(FIELD);
@@ -1262,13 +1289,13 @@ test.describe('DS-3 lote B: selector con búsqueda', () => {
     await page.keyboard.type('SKU-88042', { delay: 0 });
     await page.keyboard.press('Enter');
 
-    await expect(page.locator('[data-demo-value]')).toContainText('SKU-88042');
+    await expect(page.locator('[data-demo-search-value]')).toContainText('SKU-88042');
     // Cero clics, y el panel nunca apareció.
     await expect(page.locator('[role="listbox"]')).toHaveCount(0);
   });
 
   test('typing the same code at human speed opens the panel instead', async ({ page }) => {
-    await page.goto(SEARCH_SELECT);
+    await page.goto(SELECT);
     await ready(page);
 
     const field = page.locator(FIELD);
@@ -1276,13 +1303,13 @@ test.describe('DS-3 lote B: selector con búsqueda', () => {
     await page.keyboard.type('SKU-88042', { delay: 150 });
 
     await expect(page.locator('[role="listbox"]')).toBeVisible();
-    await expect(page.locator('[data-demo-value]')).toHaveText('(ninguno)');
+    await expect(page.locator('[data-demo-search-value]')).toHaveText('(ninguno)');
   });
 
   test('the error is in the flow, and one Tab from the field reaches its retry', async ({
     page,
   }) => {
-    await page.goto(SEARCH_SELECT);
+    await page.goto(SELECT);
     await ready(page);
 
     await page.locator('[data-behaviour="failing"] button').click();
@@ -1301,7 +1328,7 @@ test.describe('DS-3 lote B: selector con búsqueda', () => {
   });
 
   test('a source slower than the timeout is an error, not an empty warehouse', async ({ page }) => {
-    await page.goto(SEARCH_SELECT);
+    await page.goto(SELECT);
     await ready(page);
 
     await page.locator('[data-behaviour="slow"] button').click();
@@ -1313,7 +1340,7 @@ test.describe('DS-3 lote B: selector con búsqueda', () => {
   });
 
   test('pages: the next page is appended, and changing the text starts over', async ({ page }) => {
-    await page.goto(SEARCH_SELECT);
+    await page.goto(SELECT);
     await ready(page);
 
     await page.locator(FIELD).fill('SKU');
@@ -1329,7 +1356,7 @@ test.describe('DS-3 lote B: selector con búsqueda', () => {
   });
 
   test('works when the source declines to count', async ({ page }) => {
-    await page.goto(SEARCH_SELECT);
+    await page.goto(SELECT);
     await ready(page);
 
     await page.locator('[data-toggle-counts] button').click();
@@ -1342,7 +1369,7 @@ test.describe('DS-3 lote B: selector con búsqueda', () => {
   });
 
   test('the arrows walk the list and Escape gives nothing away', async ({ page }) => {
-    await page.goto(SEARCH_SELECT);
+    await page.goto(SELECT);
     await ready(page);
 
     const field = page.locator(FIELD);
@@ -1357,28 +1384,14 @@ test.describe('DS-3 lote B: selector con búsqueda', () => {
 
     await page.keyboard.press('Escape');
     await expect(page.locator('[role="listbox"]')).toHaveCount(0);
-    await expect(page.locator('[data-demo-value]')).toHaveText('(ninguno)');
+    await expect(page.locator('[data-demo-search-value]')).toHaveText('(ninguno)');
     await expect(field).toBeFocused();
 
     // Enter sobre una fila activa elige el registro, no el texto.
     await page.keyboard.press('ArrowDown');
     await page.keyboard.press('ArrowDown');
     await page.keyboard.press('Enter');
-    await expect(page.locator('[data-demo-value]')).toContainText('SKU-');
-  });
-
-  test('the three sizes are the system scale: 32 / 40 / 48', async ({ page }) => {
-    await page.goto(SEARCH_SELECT);
-    await ready(page);
-
-    for (const [size, expected] of [
-      ['sm', 32],
-      ['md', 40],
-      ['lg', 48],
-    ] as const) {
-      const box = await page.locator(`[data-size-sample="${size}"] input`).boundingBox();
-      expect(round(box?.height), `search select ${size}`).toBe(expected);
-    }
+    await expect(page.locator('[data-demo-search-value]')).toContainText('SKU-');
   });
 });
 
@@ -1775,35 +1788,38 @@ test.describe('DS-3 lote D: detalle, menú, ventana y paginador', () => {
     await expect(page.locator(demo)).not.toContainText('filas');
   });
 
-  test('a filter field IS a compact row tall, and a narrow range stacks', async ({ page }) => {
-    // 1600 de ancho por el App Shell: su riel ocupa 232 px y a 1280 la columna de fecha también se
-    // apilaba. La mitad que apila se afirma en la misma página y ancho, sobre una columna angosta
-    // por declaración.
-    await page.setViewportSize({ width: 1600, height: 900 });
+  test('the filter row is one compact field tall, and no placeholder is cut', async ({ page }) => {
     await page.goto(TABLE);
     await ready(page);
 
     const filterRow = page.locator('[data-demo-table] [data-filter-row]');
 
-    // Los filtros son ewms-input Small, mismo token que la fila compacta (--row-height-sm):
-    // un campo en una celda mide exactamente una fila.
-    const single = filterRow.locator('[data-filter="cliente"] input');
-    await expect(single).toBeVisible();
-    expect(round((await single.boundingBox())?.height)).toBe(32);
+    // Los filtros son Small, mismo token que la fila compacta (--row-height-sm): un campo en una
+    // celda mide exactamente una fila, y la fecha es un solo campo de rango (2026-09-21).
+    for (const key of ['cliente', 'fecha']) {
+      const field = filterRow.locator(`[data-filter="${key}"] input`);
+      await expect(field).toHaveCount(1);
+      expect(round((await field.boundingBox())?.height), key).toBe(32);
+    }
 
-    // Una columna md tiene ancho para dos cajas lado a lado.
-    const wideRange = filterRow.locator('[data-filter="fecha"] input');
-    await expect(wideRange).toHaveCount(2);
-    expect(round((await wideRange.nth(0).boundingBox())?.y)).toBe(
-      round((await wideRange.nth(1).boundingBox())?.y),
+    // Las dos cajas numéricas van lado a lado y la columna crece antes que cortarlas: encogidas
+    // se leían «Desc» y «Hast». El ancho es preferencia; la legibilidad, no.
+    const numbers = filterRow.locator('[data-filter="bultos"] input');
+    await expect(numbers).toHaveCount(2);
+    expect(round((await numbers.nth(0).boundingBox())?.y)).toBe(
+      round((await numbers.nth(1).boundingBox())?.y),
     );
-
-    // Una sm no, y las cajas se apilan en vez de encogerse: encogidas se leían «D» y «H».
-    // El ancho es preferencia; la legibilidad, no.
-    const narrowRange = filterRow.locator('[data-filter="bultos"] input');
-    await expect(narrowRange).toHaveCount(2);
-    expect(round((await narrowRange.nth(1).boundingBox())?.y)).toBeGreaterThan(
-      round((await narrowRange.nth(0).boundingBox())?.y) ?? 0,
-    );
+    for (const index of [0, 1]) {
+      // scrollWidth no cuenta el placeholder: se mide con la fuente real del campo.
+      const fits = await numbers.nth(index).evaluate((input: HTMLInputElement) => {
+        const style = getComputedStyle(input);
+        const context = document.createElement('canvas').getContext('2d')!;
+        context.font = [style.fontWeight, style.fontSize, style.fontFamily].join(' ');
+        const room =
+          input.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
+        return context.measureText(input.placeholder).width <= room;
+      });
+      expect(fits, `box ${index} fits its placeholder`).toBe(true);
+    }
   });
 });

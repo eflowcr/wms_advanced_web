@@ -18,7 +18,6 @@ const ROUTES = [
   { name: '06-foundations-icons', url: '/design-system/foundations/icons' },
   { name: '07-components-button', url: '/design-system/components/button' },
   { name: '08-components-text', url: '/design-system/components/text' },
-  { name: '09-components-icon-button', url: '/design-system/components/icon-button' },
   { name: '10-components-tooltip', url: '/design-system/components/tooltip' },
   { name: '11-components-input', url: '/design-system/components/input' },
   { name: '12-components-select', url: '/design-system/components/select' },
@@ -29,9 +28,10 @@ const ROUTES = [
   { name: '17-components-toast', url: '/design-system/components/toast' },
   { name: '18-components-card', url: '/design-system/components/card' },
   { name: '19-components-dialog', url: '/design-system/components/dialog' },
-  { name: '20-components-search-select', url: '/design-system/components/search-select' },
   { name: '21-components-table', url: '/design-system/components/table' },
   { name: '22-components-pagination', url: '/design-system/components/pagination' },
+  { name: '23-components-split-button', url: '/design-system/components/split-button' },
+  { name: '24-components-date-picker', url: '/design-system/components/date-picker' },
 ] as const;
 
 /**

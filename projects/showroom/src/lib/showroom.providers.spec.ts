@@ -2,7 +2,7 @@ import { Injector, signal } from '@angular/core';
 import { EWMS_FAVORITE_LABELS, type FavoriteLabelResolver } from '@ewms/design-system';
 import {
   provideShowroomDesignSystem,
-  SEARCH_SELECT_MESSAGES,
+  SELECT_MESSAGES,
   TABLE_FORMATTERS,
   TABLE_MESSAGES,
 } from './showroom.providers';
@@ -47,12 +47,12 @@ describe('the showroom dictionaries', () => {
 
     it('says how many results, with or without a total', () => {
       // `null` es un total legítimo y el mensaje lo refleja.
-      expect(SEARCH_SELECT_MESSAGES.results(3, 340)).toBe('3 de 340 resultados');
-      expect(SEARCH_SELECT_MESSAGES.results(3, null)).toBe('3 resultados');
+      expect(SELECT_MESSAGES.results(3, 340)).toBe('3 de 340 resultados');
+      expect(SELECT_MESSAGES.results(3, null)).toBe('3 resultados');
     });
 
     it('repeats the text that was searched', () => {
-      expect(SEARCH_SELECT_MESSAGES.noResults('caja')).toContain('caja');
+      expect(SELECT_MESSAGES.noResults('caja')).toContain('caja');
     });
   });
 });

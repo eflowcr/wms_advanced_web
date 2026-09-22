@@ -26,7 +26,7 @@
       al texto. Valores leídos en vivo de <code class="font-mono">tokens.css</code>.
     </p>
     <ewms-demo-frame ground="canvas">
-      <ul class="grid grid-cols-[repeat(auto-fit,minmax(24rem,1fr))] gap-6">
+      <ul class="grid grid-cols-[repeat(auto-fit,minmax(min(24rem,100%),1fr))] gap-6">
         @for (size of sizes; track size) {
           <li class="flex items-center gap-4" [attr.data-icon-size]="size">
             <ewms-icon name="pallet" [size]="size" [attr.data-measure]="'icon-' + size" />
@@ -47,7 +47,7 @@
       En la barra superior los iconos van invertidos. El icono no cambia: cambia el color del
       contenedor.
     </p>
-    <div class="grid grid-cols-[repeat(auto-fit,minmax(18rem,1fr))] gap-4">
+    <div class="grid grid-cols-[repeat(auto-fit,minmax(min(18rem,100%),1fr))] gap-4">
       <ewms-demo-frame ground="surface" label="Heredando text-primary">
         <ul class="flex flex-wrap items-center gap-6">
           @for (name of topBar; track name) {
@@ -70,7 +70,7 @@
       <h2 [id]="'iconography-' + group.id" class="text-h2">
         {{ group.title }} <span class="text-secondary">({{ group.names.length }})</span>
       </h2>
-      <ul class="grid grid-cols-[repeat(auto-fill,minmax(8rem,1fr))] gap-2">
+      <ul class="grid grid-cols-[repeat(auto-fill,minmax(min(8rem,100%),1fr))] gap-2">
         @for (name of group.names; track name) {
           <li>
             <button

@@ -1,3 +1,5 @@
+import type { IconName } from '../../icons/icons.generated';
+
 /** Tonos de confirmación. `info` se pinta neutral: el azul es solo acción. Ver vault: Modal. */
 export type DialogTone = 'danger' | 'warning' | 'info';
 
@@ -24,15 +26,15 @@ export function backdropDismisses(tone: DialogTone): boolean {
   return tone !== 'danger';
 }
 
-/** Círculo de 56 px con aro y halo (`--shadow-halo-*`), sin glifo a propósito. Ver vault: Modal. */
-export function dialogIconClasses(tone: DialogTone): string {
+/** Glifo del catálogo en el color de la familia, sin fondo ni sombra (Modal v1.2, 2026-09-21). */
+export function dialogIcon(tone: DialogTone): { readonly name: IconName; readonly color: string } {
   switch (tone) {
     case 'danger':
-      return 'bg-danger-surface border-danger shadow-(--shadow-halo-danger)';
+      return { name: 'alert-triangle', color: 'text-danger' };
     case 'warning':
-      return 'bg-warning-surface border-warning shadow-(--shadow-halo-warning)';
+      return { name: 'alert-triangle', color: 'text-warning' };
     case 'info':
-      return 'bg-neutral-surface border-neutral shadow-(--shadow-halo-neutral)';
+      return { name: 'info-circle', color: 'text-neutral' };
   }
 }
 
@@ -47,7 +49,7 @@ export function confirmButtonVariant(tone: DialogTone): 'danger' | 'primary' {
  * como clase toda tirada entre acentos graves de un .ts (ya rompió la build).
  */
 export const DIALOG_BOX_CLASSES =
-  'flex w-full max-w-120 flex-col items-center gap-4 bg-surface p-6 text-center ' +
+  'flex w-full max-w-120 flex-col gap-4 bg-surface p-6 ' +
   'rounded-dialog shadow-dialog border border-default border-solid';
 
 /** Navy al 50 % con desenfoque: navy y no negro, como toda capa del sistema. */

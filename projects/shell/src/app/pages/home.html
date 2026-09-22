@@ -1,11 +1,11 @@
 <!-- `tabindex="-1"` y el marcador: el App Shell pone acá el foco en cada cambio de ruta. -->
 <h1 class="text-h1" tabindex="-1" data-page-heading>{{ brandName }}</h1>
-<p>{{ 'shell.home.intro' | transloco }}</p>
+<p class="text-p text-secondary">{{ 'shell.home.intro' | transloco }}</p>
 
 <!-- Provisional: un ejemplo de cada caso de i18n hasta que haya pantallas reales (i18n.md). -->
-<section aria-labelledby="home-samples">
-  <h2 id="home-samples">{{ 'shell.home.samples.title' | transloco }}</h2>
-  <ul>
+<section class="flex flex-col gap-2" aria-labelledby="home-samples">
+  <h2 id="home-samples" class="text-h3">{{ 'shell.home.samples.title' | transloco }}</h2>
+  <ul class="flex list-disc flex-col gap-1 pl-6 text-p">
     @for (count of unitCounts; track count) {
       <li data-sample="plural">{{ 'shell.home.samples.unitsFound' | transloco: { count } }}</li>
     }

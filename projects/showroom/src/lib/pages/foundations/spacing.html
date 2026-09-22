@@ -41,7 +41,7 @@
 
   <section class="flex flex-col gap-4" aria-labelledby="spacing-radii">
     <h2 id="spacing-radii" class="text-h2">Los cinco radios</h2>
-    <ul class="grid grid-cols-[repeat(auto-fit,minmax(16rem,1fr))] gap-4">
+    <ul class="grid grid-cols-[repeat(auto-fit,minmax(min(16rem,100%),1fr))] gap-4">
       @for (radius of radii; track radius.token) {
         <li class="flex flex-col gap-2" [attr.data-radius]="radius.token">
           <span

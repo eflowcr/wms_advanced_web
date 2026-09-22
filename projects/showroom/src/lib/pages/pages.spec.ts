@@ -6,6 +6,7 @@ import {
   EWMS_FAVORITES_STORE,
   Favorites,
   InMemoryFavoritesStore,
+  Viewport,
   type FavoriteLabelResolver,
 } from '@ewms/design-system';
 import { expectNoAxeViolations } from '@ewms/testing';
@@ -16,13 +17,13 @@ import { ShowroomButton } from './components/button';
 import { ShowroomCard } from './components/card';
 import { ShowroomCheckbox } from './components/checkbox';
 import { ShowroomDialog } from './components/dialog';
-import { ShowroomIconButton } from './components/icon-button';
 import { ShowroomInput } from './components/input';
 import { ShowroomNavigation } from './components/navigation';
 import { ShowroomPagination } from './components/pagination';
 import { ShowroomRadio } from './components/radio';
-import { ShowroomSearchSelect } from './components/search-select';
 import { ShowroomSelect } from './components/select';
+import { ShowroomSplitButton } from './components/split-button';
+import { ShowroomDatePicker } from './components/date-picker';
 import { ShowroomTable } from './components/table';
 import { ShowroomText } from './components/text';
 import { ShowroomToast } from './components/toast';
@@ -62,6 +63,26 @@ async function render<T>(component: Type<T>) {
 }
 
 describe('ShowroomLayout', () => {
+  it('below the breakpoint swaps the sidebar for the system select, which navigates', async () => {
+    TestBed.overrideProvider(Viewport, { useValue: { isWide: signal(false).asReadonly() } });
+    const { fixture, element } = await render(ShowroomLayout);
+    const navigate = vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
+    expect(element.querySelector('[data-sidebar]')).toBeNull();
+    // Sin barra, el ajuste de alto al hacer scroll no tiene a quién medir, y no falla.
+    window.dispatchEvent(new Event('scroll'));
+
+    const field = element.querySelector<HTMLInputElement>('[data-catalog-picker] input')!;
+    field.value = 'botón';
+    field.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    await fixture.whenStable();
+    document.querySelector<HTMLElement>('[role="option"]')!.click();
+    await fixture.whenStable();
+
+    expect(navigate).toHaveBeenCalledWith('/design-system/components/button');
+    clearOverlays();
+  });
+
   it('lists every catalogue entry in the sidebar', async () => {
     const { element } = await render(ShowroomLayout);
     expect(element.querySelectorAll('[data-sidebar] nav li').length).toBeGreaterThan(20);
@@ -250,10 +271,10 @@ describe('ShowroomHome', () => {
     const { element } = await render(ShowroomHome);
     expect(element.querySelectorAll('[data-entry]').length).toBeGreaterThan(20);
     expect(element.querySelector('[data-entry="button"] a')).not.toBeNull();
-    // `split-button` y no `navigation` (dejó de ser hueco en DS-5, la tabla en DS-3 lote C).
-    // Importa que un hueco siga visible, no cuál: un hueco visible es información.
-    expect(element.querySelector('[data-entry="split-button"] a')).toBeNull();
-    expect(element.querySelector('[data-entry="split-button"]')?.textContent).toContain(
+    // Un patrón y no un componente: los dos últimos huecos (split button y date picker) se
+    // cerraron el 2026-09-21. Importa que un hueco siga visible, no cuál.
+    expect(element.querySelector('[data-entry="pattern-form"] a')).toBeNull();
+    expect(element.querySelector('[data-entry="pattern-form"]')?.textContent).toContain(
       '(pendiente)',
     );
     expect(element.querySelector('[data-entry="navigation"] a')).not.toBeNull();
@@ -387,11 +408,21 @@ describe('ShowroomButton', () => {
       '2-proposito',
       '3-demo',
       '4-variantes',
+      '4b-solo-icono',
       '5-matriz',
       '6-tamanos',
       '7-anatomia',
       '8-contrato',
     ]);
+  });
+
+  it('gives every icon-only demo a name, which is what label is for', async () => {
+    const { element } = await render(ShowroomButton);
+    const iconOnly = [...element.querySelectorAll('[data-block="4b-solo-icono"] button')];
+    expect(iconOnly).toHaveLength(6);
+    for (const button of iconOnly) {
+      expect(button.getAttribute('aria-label')?.length).toBeGreaterThan(0);
+    }
   });
 
   it('renders the four variants with their canonical names', async () => {
@@ -512,10 +543,9 @@ const BLOCKS = [
 // renderiza; una unión de sus tipos sería una unión a la que nada se puede asignar.
 const SHEETS: readonly { name: string; component: Type<unknown>; heading: string }[] = [
   { name: 'ShowroomText', component: ShowroomText, heading: 'Texto' },
-  { name: 'ShowroomIconButton', component: ShowroomIconButton, heading: 'Icon Button' },
   { name: 'ShowroomTooltip', component: ShowroomTooltip, heading: 'Tooltip' },
   { name: 'ShowroomInput', component: ShowroomInput, heading: 'Input' },
-  { name: 'ShowroomSelect', component: ShowroomSelect, heading: 'Select / Dropdown' },
+  { name: 'ShowroomSelect', component: ShowroomSelect, heading: 'Select' },
   { name: 'ShowroomCheckbox', component: ShowroomCheckbox, heading: 'Checkbox' },
   { name: 'ShowroomRadio', component: ShowroomRadio, heading: 'Radio' },
   { name: 'ShowroomToggle', component: ShowroomToggle, heading: 'Toggle' },
@@ -523,13 +553,10 @@ const SHEETS: readonly { name: string; component: Type<unknown>; heading: string
   { name: 'ShowroomToast', component: ShowroomToast, heading: 'Toast' },
   { name: 'ShowroomCard', component: ShowroomCard, heading: 'Card' },
   { name: 'ShowroomDialog', component: ShowroomDialog, heading: 'Dialog' },
-  {
-    name: 'ShowroomSearchSelect',
-    component: ShowroomSearchSelect,
-    heading: 'Selector con búsqueda',
-  },
   { name: 'ShowroomTable', component: ShowroomTable, heading: 'Tabla de datos' },
   { name: 'ShowroomPagination', component: ShowroomPagination, heading: 'Paginación' },
+  { name: 'ShowroomSplitButton', component: ShowroomSplitButton, heading: 'Split button' },
+  { name: 'ShowroomDatePicker', component: ShowroomDatePicker, heading: 'Date picker' },
   { name: 'ShowroomNavigation', component: ShowroomNavigation, heading: 'Navegación' },
 ];
 
@@ -621,53 +648,6 @@ describe('ShowroomText', () => {
 
     expect(page.isPending({ pending: ['--text-mono-weight'] }, '--text-mono-weight')).toBe(true);
     expect(page.isPending({ pending: [] }, '--text-mono-weight')).toBe(false);
-  });
-});
-
-describe('ShowroomIconButton', () => {
-  it('renders the four variants and the full matrix with the real component', async () => {
-    const { element } = await render(ShowroomIconButton);
-    const variants = [...element.querySelectorAll('[data-variant]')].map((el) =>
-      el.getAttribute('data-variant'),
-    );
-    expect(variants).toEqual(['primary', 'secondary', 'danger', 'ghost']);
-
-    const matrix = element.querySelector('ewms-state-matrix');
-    expect(matrix?.querySelectorAll('tbody ewms-icon-button')).toHaveLength(20);
-  });
-
-  it('forces hover and focus with the token the component itself would use', async () => {
-    const { fixture } = await render(ShowroomIconButton);
-    const page = fixture.componentInstance as unknown as {
-      forced(variant: string, state: string): string;
-    };
-    expect(page.forced('primary', 'hover')).toBe('[&_button]:bg-primary-hover');
-    // Ghost oscurece el texto además del fondo: hallazgo de axe en PR 3.
-    expect(page.forced('ghost', 'hover')).toContain('text-(color:--color-bg-primary-hover)');
-    // Disabled y Loading son entradas reales: no se fuerza nada.
-    expect(page.forced('primary', 'disabled')).toBe('');
-    expect(page.forced('primary', 'loading')).toBe('');
-  });
-
-  it('falls back to the component default rather than casting an unknown id', async () => {
-    const { fixture } = await render(ShowroomIconButton);
-    const page = fixture.componentInstance as unknown as {
-      variantFor(id: string): string;
-      forced(variant: string, state: string): string;
-    };
-    expect(page.variantFor('danger')).toBe('danger');
-    // Ghost es el default de este componente; Primary es el del Button.
-    expect(page.variantFor('no-such-variant')).toBe('ghost');
-    expect(page.forced('no-such-variant', 'hover')).toBe('');
-  });
-
-  it('gives every demo instance a name, which is what the component is for', async () => {
-    const { element } = await render(ShowroomIconButton);
-    const buttons = [...element.querySelectorAll('button[aria-label]')];
-    expect(buttons.length).toBeGreaterThan(20);
-    for (const button of buttons) {
-      expect(button.getAttribute('aria-label')?.length).toBeGreaterThan(0);
-    }
   });
 });
 
@@ -1169,16 +1149,16 @@ describe('ShowroomDialog', () => {
     element.remove();
   });
 
-  it('draws the three halos with the component own tokens, and none of them blue', async () => {
+  it('draws the three glyphs in their family colour, and none of them blue', async () => {
     const { element } = await render(ShowroomDialog);
-    const halos = [...element.querySelectorAll<HTMLElement>('[data-halo]')];
-    expect(halos.length).toBe(3);
-    expect(halos[0]?.className).toContain('shadow-(--shadow-halo-danger)');
-    expect(halos[2]?.className).toContain('bg-neutral-surface');
-    for (const halo of halos) {
-      expect(halo.className).not.toContain('primary');
-      // La excepción que documenta la ficha: una forma sin nada adentro.
-      expect(halo.querySelector('svg')).toBeNull();
+    const glyphs = [...element.querySelectorAll<HTMLElement>('[data-glyph]')];
+    expect(glyphs.map((glyph) => glyph.className)).toEqual([
+      'inline-flex text-danger',
+      'inline-flex text-warning',
+      'inline-flex text-neutral',
+    ]);
+    for (const glyph of glyphs) {
+      expect(glyph.querySelector('svg')).not.toBeNull();
     }
   });
 
@@ -1187,139 +1167,123 @@ describe('ShowroomDialog', () => {
     const page = fixture.componentInstance as unknown as {
       rowFor(tone: string): { name: string };
       fact(tone: string, stateId: string): string;
-      isHalo(stateId: string): boolean;
-      haloClasses(tone: string): string;
+      isGlyph(stateId: string): boolean;
+      glyphFor(tone: string): unknown;
     };
     expect(page.rowFor('no-such-tone').name).toBe('Info');
     expect(page.fact('danger', 'confirm')).toBe('Danger');
     expect(page.fact('danger', 'backdrop')).toBe('No cierra');
-    expect(page.fact('danger', 'halo')).toBe('');
-    expect(page.isHalo('halo')).toBe(true);
-    expect(page.isHalo('confirm')).toBe(false);
-    expect(page.haloClasses('no-such-tone')).toBe('');
+    expect(page.fact('danger', 'glyph')).toBe('');
+    expect(page.isGlyph('glyph')).toBe(true);
+    expect(page.isGlyph('confirm')).toBe(false);
+    expect(page.glyphFor('no-such-tone')).toBeNull();
   });
 });
 
-describe('ShowroomSearchSelect', () => {
+describe('ShowroomDatePicker', () => {
+  it('prints the value the form holds: an ISO date, or the table DateRange', async () => {
+    const { fixture, element } = await render(ShowroomDatePicker);
+    expect(element.querySelector('[data-demo-date-value]')?.textContent).toBe('null');
+    expect(element.querySelector('[data-demo-range-value]')?.textContent).toContain(
+      '"from":"2026-09-01"',
+    );
+    const page = fixture.componentInstance as unknown as {
+      form: { controls: { entrega: { setValue(value: string): void } } };
+    };
+    page.form.controls.entrega.setValue('2099-01-02');
+    await fixture.whenStable();
+    expect(element.querySelector('[data-demo-date-value]')?.textContent).toContain('2099-01-02');
+  });
+});
+
+describe('ShowroomSplitButton', () => {
   afterEach(clearOverlays);
 
-  it('renders the real component inside a reactive form', async () => {
-    const { element } = await render(ShowroomSearchSelect);
-    expect(element.querySelector('[data-demo-search] ewms-search-select')).not.toBeNull();
+  it('reports which output each gesture fired: the main action, then a menu choice', async () => {
+    const { fixture, element } = await render(ShowroomSplitButton);
+    const last = () => element.querySelector('[data-demo-last]')?.textContent;
+    const [main, trigger] = [...element.querySelectorAll<HTMLButtonElement>('[data-demo-split] button')];
+
+    main!.click();
+    await fixture.whenStable();
+    expect(last()).toBe('pdf');
+
+    trigger!.click();
+    await fixture.whenStable();
+    document.querySelector<HTMLElement>('[data-split-action="csv"]')!.click();
+    await fixture.whenStable();
+    expect(last()).toBe('csv');
+  });
+});
+
+describe('ShowroomSelect, the three forms', () => {
+  afterEach(clearOverlays);
+
+  it('renders a button, a local search and a remote search, all the real component', async () => {
+    const { element } = await render(ShowroomSelect);
+    expect(element.querySelector('[data-demo-select] button[role="combobox"]')).not.toBeNull();
+    expect(element.querySelector('[data-demo-long] input[role="combobox"]')).not.toBeNull();
     expect(element.querySelector('[data-demo-search] input[role="combobox"]')).not.toBeNull();
-  });
-
-  it('starts with nothing chosen and nothing asked of the source', async () => {
-    const { element } = await render(ShowroomSearchSelect);
-    expect(element.querySelector('[data-demo-value]')?.textContent).toBe('(ninguno)');
+    expect(element.querySelector('[data-demo-search-value]')?.textContent).toBe('(ninguno)');
     expect(element.querySelector('[data-queries]')).toBeNull();
+    // Con semilla: la cantidad es un hecho de la página, no de la suerte.
+    expect(element.querySelector('[data-block="4-variantes"]')?.textContent).toContain(
+      '340 artículos',
+    );
   });
 
-  it('the buttons really change how the source behaves', async () => {
-    const { fixture, element } = await render(ShowroomSearchSelect);
-    const behaviour = () => element.querySelector('[data-behaviour-value]')?.textContent;
-
-    expect(behaviour()).toBe('normal');
-
-    element.querySelector<HTMLButtonElement>('[data-behaviour="failing"] button')!.click();
-    await fixture.whenStable();
-    expect(behaviour()).toBe('failing');
-
-    element.querySelector<HTMLButtonElement>('[data-behaviour="slow"] button')!.click();
-    await fixture.whenStable();
-    expect(behaviour()).toBe('slow');
-  });
-
-  it('can make the source stop counting, because total null is legitimate', async () => {
-    const { fixture, element } = await render(ShowroomSearchSelect);
-    const counts = () => element.querySelector('[data-counts-value]')?.textContent;
-
-    expect(counts()).toContain('total: número');
-
-    element.querySelector<HTMLButtonElement>('[data-toggle-counts] button')!.click();
-    await fixture.whenStable();
-    expect(counts()).toContain('total: null');
-  });
-
-  it('records what the source was asked, and can clear the record', async () => {
-    const { fixture } = await render(ShowroomSearchSelect);
-    const page = fixture.componentInstance as unknown as {
-      source(): { search(query: string, page: number): { subscribe(): void } };
-      clearQueries(): void;
-      queries(): readonly string[];
+  it('the buttons really change how the source behaves, and go back', async () => {
+    const { fixture, element } = await render(ShowroomSelect);
+    const read = (selector: string) => element.querySelector(selector)?.textContent;
+    const click = async (selector: string) => {
+      element.querySelector<HTMLButtonElement>(`${selector} button`)!.click();
+      await fixture.whenStable();
     };
 
-    page.source().search('caja', 0).subscribe();
-    await fixture.whenStable();
-    expect(page.queries()[0]).toContain('«caja»');
+    expect(read('[data-behaviour-value]')).toBe('normal');
+    await click('[data-behaviour="failing"]');
+    expect(read('[data-behaviour-value]')).toBe('failing');
+    await click('[data-behaviour="slow"]');
+    expect(read('[data-behaviour-value]')).toBe('slow');
+    await click('[data-behaviour="normal"]');
+    expect(read('[data-behaviour-value]')).toBe('normal');
 
-    page.clearQueries();
-    expect(page.queries().length).toBe(0);
+    // total null es legítimo, y la demo lo puede pedir.
+    await click('[data-toggle-counts]');
+    expect(read('[data-counts-value]')).toContain('total: null');
   });
 
-  it('shows a catalogue that is the same on every load', async () => {
-    const { element } = await render(ShowroomSearchSelect);
-    // Con semilla: la cantidad es un hecho de la página, no de la suerte.
-    expect(element.querySelector('[data-block="3-demo"]')?.textContent).toContain('340 artículos');
-  });
-
-  it('goes back to normal, and clears the record, from the page itself', async () => {
-    const { fixture, element } = await render(ShowroomSearchSelect);
-
-    element.querySelector<HTMLButtonElement>('[data-behaviour="failing"] button')!.click();
-    await fixture.whenStable();
-    element.querySelector<HTMLButtonElement>('[data-behaviour="normal"] button')!.click();
-    await fixture.whenStable();
-    expect(element.querySelector('[data-behaviour-value]')?.textContent).toBe('normal');
-
-    element.querySelector<HTMLButtonElement>('[data-clear-queries] button')!.click();
-    await fixture.whenStable();
-    expect(element.querySelector('[data-queries]')).toBeNull();
-  });
-
-  it('carries the four messages and the two display functions, already in Spanish', async () => {
-    const { fixture } = await render(ShowroomSearchSelect);
+  it('records what the source was asked, and clears the record from the page', async () => {
+    const { fixture, element } = await render(ShowroomSelect);
     const page = fixture.componentInstance as unknown as {
-      messages: {
-        searching: string;
-        noResults(query: string): string;
-        error: string;
-        retry: string;
-        more: string;
-        results(count: number, total: number | null): string;
-      };
+      source(): { search(query: string, page: number): { subscribe(): void } };
+      queries(): readonly string[];
       display: {
         label(article: { code: string; name: string }): string;
         code(article: { code: string }): string;
       };
     };
 
-    expect(page.messages.searching).toBe('Buscando…');
-    expect(page.messages.noResults('caja')).toContain('caja');
-    expect(page.messages.error).toContain('catálogo');
-    expect(page.messages.retry).toBe('Reintentar');
-    expect(page.messages.more).toContain('más resultados');
+    page.source().search('caja', 0).subscribe();
+    await fixture.whenStable();
+    expect(page.queries()[0]).toContain('«caja»');
+    element.querySelector<HTMLButtonElement>('[data-clear-queries] button')!.click();
+    await fixture.whenStable();
+    expect(element.querySelector('[data-queries]')).toBeNull();
 
-    // El total puede ser null y el mensaje lo refleja.
-    expect(page.messages.results(3, 340)).toBe('3 de 340 resultados');
-    expect(page.messages.results(3, null)).toBe('3 resultados');
-
-    const article = { code: 'SKU-88000', name: 'Caja plegable 60x40' };
-    expect(page.display.label(article)).toBe('SKU-88000 · Caja plegable 60x40');
+    const article = { code: 'SKU-88000', name: 'Caja' };
+    expect(page.display.label(article)).toBe('SKU-88000 · Caja');
     expect(page.display.code(article)).toBe('SKU-88000');
   });
 
-  it('fills the state matrix from one table of facts', async () => {
-    const { fixture } = await render(ShowroomSearchSelect);
+  it('fills the search state matrix from one table of facts', async () => {
+    const { fixture } = await render(ShowroomSelect);
     const page = fixture.componentInstance as unknown as {
-      fact(variantId: string, stateId: string): string;
-      chosenLabel(): string;
+      fact(variantId: string, columnId: string): string;
     };
     expect(page.fact('error', 'where')).toContain('bajo el campo');
     expect(page.fact('empty', 'value')).toContain('Intacto');
     expect(page.fact('no-such-state', 'where')).toBe('');
-    expect(page.fact('error', 'no-such-column')).toBe('');
-    expect(page.chosenLabel()).toBe('(ninguno)');
   });
 });
 

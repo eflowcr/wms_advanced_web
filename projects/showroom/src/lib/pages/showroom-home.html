@@ -10,7 +10,7 @@
     </p>
   </header>
 
-  <section class="grid grid-cols-[repeat(auto-fit,minmax(20rem,1fr))] gap-4">
+  <section class="grid grid-cols-[repeat(auto-fit,minmax(min(20rem,100%),1fr))] gap-4">
     <div class="flex flex-col gap-2 rounded-md border border-default bg-surface p-4">
       <h2 class="text-h3">Cómo se usa</h2>
       <p>
@@ -32,7 +32,7 @@
   @for (section of catalog; track section.id) {
     <section class="flex flex-col gap-4" [attr.aria-labelledby]="'index-' + section.id">
       <h2 [id]="'index-' + section.id" class="text-h2">{{ section.title }}</h2>
-      <ul class="grid grid-cols-[repeat(auto-fill,minmax(18rem,1fr))] gap-3">
+      <ul class="grid grid-cols-[repeat(auto-fill,minmax(min(18rem,100%),1fr))] gap-3">
         @for (entry of section.entries; track entry.id) {
           <li
             class="flex flex-col gap-1 rounded-md border border-default p-4"

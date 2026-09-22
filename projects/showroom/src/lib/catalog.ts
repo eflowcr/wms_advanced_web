@@ -87,7 +87,7 @@ const COMPONENTS: readonly CatalogEntry[] = [
     selector: 'ewms-button',
     route: `${SHOWROOM_BASE}/components/button`,
     status: 'ready',
-    note: 'Cuatro variantes, tres tamaños y el patrón anti-doble-envío.',
+    note: 'Cuatro variantes, tres tamaños, solo ícono cuadrado y el patrón anti-doble-envío.',
   },
   {
     id: 'text',
@@ -96,14 +96,6 @@ const COMPONENTS: readonly CatalogEntry[] = [
     route: `${SHOWROOM_BASE}/components/text`,
     status: 'ready',
     note: 'Las siete variantes semánticas, y por qué el nivel visual no se separa del nivel del documento.',
-  },
-  {
-    id: 'icon-button',
-    name: 'Icon Button',
-    selector: 'ewms-icon-button',
-    route: `${SHOWROOM_BASE}/components/icon-button`,
-    status: 'ready',
-    note: 'Cuadrado en los tres tamaños, con label y tooltip obligatorios en el tipo.',
   },
   {
     id: 'tooltip',
@@ -147,19 +139,11 @@ const COMPONENTS: readonly CatalogEntry[] = [
   },
   {
     id: 'select',
-    name: 'Select / Dropdown',
+    name: 'Select',
     selector: 'ewms-select',
     route: `${SHOWROOM_BASE}/components/select`,
     status: 'ready',
-    note: 'Panel en overlay del CDK, con el teclado y el volteo que jsdom no podía probar.',
-  },
-  {
-    id: 'search-select',
-    name: 'Selector con búsqueda',
-    selector: 'ewms-search-select',
-    route: `${SHOWROOM_BASE}/components/search-select`,
-    status: 'ready',
-    note: 'Se escribe y filtra; un código escaneado se resuelve sin abrir el panel. No reemplaza al Select.',
+    note: 'El único selector: lista corta, lista larga que filtra y fuente remota que resuelve un escaneo.',
   },
   {
     id: 'table',
@@ -236,18 +220,18 @@ const COMPONENTS: readonly CatalogEntry[] = [
   {
     id: 'split-button',
     name: 'Split button',
-    selector: null,
-    route: null,
-    status: 'gap',
-    note: 'Hueco reservado, sin ficha. El patrón «Descargar / PDF / Excel / CSV».',
+    selector: 'ewms-split-button',
+    route: `${SHOWROOM_BASE}/components/split-button`,
+    status: 'ready',
+    note: 'Acción principal y alternativas a un clic: «Descargar / PDF / Excel / CSV». El menú es el de la Tabla.',
   },
   {
     id: 'date-picker',
     name: 'Date picker',
-    selector: null,
-    route: null,
-    status: 'gap',
-    note: 'Hueco reservado, sin ficha.',
+    selector: 'ewms-date-picker',
+    route: `${SHOWROOM_BASE}/components/date-picker`,
+    status: 'ready',
+    note: 'Fecha o período en el idioma de la app, escrita o elegida con el teclado. Valor ISO.',
   },
 ];
 

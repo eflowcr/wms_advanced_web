@@ -16,11 +16,12 @@
 
   @if (dismissible()) {
     <!-- Ghost sobre color: su azul de acción es correcto, porque cerrar es el clic. -->
-    <ewms-icon-button
+    <ewms-button
+      [iconOnly]="true"
+      variant="ghost"
       icon="x"
       size="sm"
       [label]="dismissLabel()"
-      [tooltip]="dismissLabel()"
       (click)="onDismiss()"
     />
   }

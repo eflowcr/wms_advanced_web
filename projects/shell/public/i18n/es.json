@@ -6,7 +6,12 @@
     }
   },
   "ds": {
-    "searchSelect": {
+    "datePicker": {
+      "chooseDate": "Elegir fecha",
+      "nextMonth": "Mes siguiente",
+      "previousMonth": "Mes anterior"
+    },
+    "select": {
       "error": "No se pudo consultar el catálogo.",
       "more": "Ver más resultados",
       "noResults": "Sin resultados para «{{ query }}»",
@@ -14,6 +19,9 @@
       "resultsOf": "{{ count }} de {{ total }} resultados",
       "retry": "Reintentar",
       "searching": "Buscando…"
+    },
+    "splitButton": {
+      "moreActions": "Más opciones"
     },
     "table": {
       "childrenFailed": "No se pudieron cargar las líneas.",

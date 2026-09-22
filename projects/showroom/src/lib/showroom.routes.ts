@@ -44,9 +44,10 @@ export const showroomRoutes: Routes = [
         loadComponent: async () => (await import('./pages/components/text')).ShowroomText,
       },
       {
+        // El botón de solo ícono es una sección del Botón desde 2026-09-21; la URL sigue andando.
         path: 'components/icon-button',
-        loadComponent: async () =>
-          (await import('./pages/components/icon-button')).ShowroomIconButton,
+        redirectTo: 'components/button',
+        pathMatch: 'full',
       },
       {
         path: 'components/tooltip',
@@ -89,9 +90,20 @@ export const showroomRoutes: Routes = [
         loadComponent: async () => (await import('./pages/components/dialog')).ShowroomDialog,
       },
       {
+        // Un solo selector desde 2026-09-21: la búsqueda es parte del Select. La URL sigue andando.
         path: 'components/search-select',
+        redirectTo: 'components/select',
+        pathMatch: 'full',
+      },
+      {
+        path: 'components/date-picker',
         loadComponent: async () =>
-          (await import('./pages/components/search-select')).ShowroomSearchSelect,
+          (await import('./pages/components/date-picker')).ShowroomDatePicker,
+      },
+      {
+        path: 'components/split-button',
+        loadComponent: async () =>
+          (await import('./pages/components/split-button')).ShowroomSplitButton,
       },
       {
         path: 'components/table',

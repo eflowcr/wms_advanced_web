@@ -2,6 +2,7 @@ import {
   afterNextRender,
   ChangeDetectionStrategy,
   Component,
+  computed,
   ElementRef,
   inject,
   signal,
@@ -9,9 +10,13 @@ import {
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import {
+  Button,
   DESIGN_SYSTEM_VERSION,
+  SEARCH_PAGE_SIZE,
+  SELECT_SEARCH_THRESHOLD,
   Select,
   type FieldSize,
+  type SearchDisplay,
   type SelectOption,
 } from '@ewms/design-system';
 import { DemoFrame } from '../../ui/demo-frame';
@@ -19,6 +24,13 @@ import { PropTable, type PropRow } from '../../ui/prop-table';
 import { StateMatrix, type MatrixAxis } from '../../ui/state-matrix';
 import { TokenValue } from '../../ui/token-value';
 import { formatBox, formatHeight, rectOf, widthOf } from './measure';
+import {
+  CATALOGUE,
+  CatalogueSource,
+  UncountedSource,
+  type Article,
+  type SourceBehaviour,
+} from './search-catalogue';
 
 /**
  * Solo estados reales del disparador cerrado. Sin Focus ni Open, por lo mismo que en
@@ -51,28 +63,93 @@ const OPTIONS: readonly SelectOption[] = [
   { value: 'transito', label: 'En tránsito' },
 ];
 
+/** Más que el umbral: con esta lista el mismo componente pasa a buscar. */
+const LOCATIONS: readonly SelectOption[] = Array.from({ length: 24 }, (_unused, index) => {
+  const aisle = String.fromCharCode(65 + Math.floor(index / 6));
+  const rack = String((index % 6) + 1).padStart(2, '0');
+  return { value: `${aisle}-${rack}`, label: `Pasillo ${aisle}, rack ${rack}` };
+});
+
+/** Los estados de la búsqueda no se pueden congelar: la matriz es una tabla de hechos. */
+const SEARCH_VARIANTS: readonly MatrixAxis[] = [
+  { id: 'idle', label: 'Sin escribir' },
+  { id: 'searching', label: 'Buscando' },
+  { id: 'empty', label: 'Sin resultados' },
+  { id: 'error', label: 'Error del servicio' },
+  { id: 'more', label: 'Hay más páginas' },
+];
+
+const SEARCH_COLUMNS: readonly MatrixAxis[] = [
+  { id: 'where', label: 'Dónde se ve' },
+  { id: 'announce', label: 'Qué se anuncia' },
+  { id: 'value', label: 'Qué pasa con el valor' },
+];
+
+const SEARCH_FACTS: Readonly<Record<string, Readonly<Record<string, string>>>> = {
+  idle: {
+    where: 'Nada. El panel no está en el documento.',
+    announce: 'Nada: la región viva está vacía.',
+    value: 'Intacto.',
+  },
+  searching: {
+    where: 'Fila con spinner al final del panel.',
+    announce: '«Buscando…»',
+    value: 'Intacto.',
+  },
+  empty: {
+    where: 'Fila en el panel, repitiendo el texto buscado.',
+    announce: '«Sin resultados para «X»»',
+    value: 'Intacto. Un texto sin coincidencias no borra lo elegido.',
+  },
+  error: {
+    where: 'Bloque bajo el campo, en el flujo, con botón de reintento.',
+    announce: '«No se pudo consultar el catálogo»',
+    value: 'Intacto, y el texto escrito tampoco se pierde.',
+  },
+  more: {
+    where: 'Última fila del panel, alcanzable con las flechas.',
+    announce: '«N de M» — o «N resultados» si la fuente no cuenta.',
+    value: 'Intacto hasta que se elige una fila.',
+  },
+};
+
 /** Verificada contra select.ts. */
 const PROPS: readonly PropRow[] = [
   {
     name: 'label',
     type: 'string',
     default: '— (requerido)',
-    description:
-      'Requerido y renderizado como texto visible. Un <button> no es etiquetable, así que se une al trigger con aria-labelledby y no con for/id.',
+    description: 'Visible. En la lista corta se une por aria-labelledby; cuando busca, por for/id.',
   },
   {
     name: 'options',
-    type: 'readonly SelectOption[]',
-    default: '[]',
-    description:
-      'Las filas, en el orden en que se muestran. SelectOption es { label: string; value: unknown }. Sin límite: la plantilla las renderiza todas.',
+    type: 'readonly SelectOption[] | readonly T[]',
+    default: 'null',
+    description: `Lista cerrada en memoria. Con más de ${SELECT_SEARCH_THRESHOLD} opciones, busca.`,
+  },
+  {
+    name: 'source',
+    type: 'SearchSource<T>',
+    default: 'null',
+    description: 'Fuente del backend, paginada. Excluye a options: los dos juntos son un error.',
+  },
+  {
+    name: 'display',
+    type: 'SearchDisplay<T>',
+    default: 'null',
+    description: 'label(item) y code(item). Con display el valor es el registro entero.',
+  },
+  {
+    name: 'searchable',
+    type: "'auto' | boolean",
+    default: "'auto'",
+    description: `auto: busca con source o con más de ${SELECT_SEARCH_THRESHOLD} opciones.`,
   },
   {
     name: 'value',
     type: 'unknown',
     default: 'null',
-    description:
-      'El valor elegido. Siembra el control; después manda writeValue, es decir el formulario.',
+    description: 'El valor elegido. Siembra el control; después manda el formulario.',
   },
   {
     name: 'size',
@@ -81,48 +158,42 @@ const PROPS: readonly PropRow[] = [
     description: 'La misma escala del Input y del Botón: 32 / 40 / 48.',
   },
   {
-    name: 'placeholder',
+    name: 'placeholder · hint',
     type: 'string',
     default: "''",
-    description: 'Lo que muestra el trigger mientras no hay nada elegido. Ya traducido.',
+    description: 'Ya traducidos. El hint va por aria-describedby y se pone danger con error.',
   },
   {
-    name: 'hint',
-    type: 'string',
-    default: "''",
-    description: 'Ayuda bajo el trigger, conectada con aria-describedby. Se pone danger con error.',
-  },
-  {
-    name: 'error',
+    name: 'error · disabled',
     type: 'boolean',
     default: 'false',
-    description:
-      'Booleano, no un estado: el Select no tiene read-only. Puramente visual, como el del Input.',
+    description: 'Visual el primero; disabled se suma por OR al del formulario.',
   },
   {
-    name: 'disabled',
-    type: 'boolean',
-    default: 'false',
-    description: 'Heredado de FormControlBase, combinado con el del formulario por OR.',
+    name: 'messages',
+    type: 'Partial<SelectMessages>',
+    default: 'null',
+    description: 'Pisa en una instancia los textos de EWMS_SELECT_MESSAGES, que se proveen una vez.',
   },
 ];
 
 const ANATOMY = [
-  { part: 'Fondo del trigger y del panel', token: '--color-surface' },
-  { part: 'Borde default del trigger', token: '--color-border-strong' },
+  { part: 'Fondo del campo y del panel', token: '--color-surface' },
+  { part: 'Borde default', token: '--color-border-strong' },
   { part: 'Borde en foco y con el panel abierto', token: '--color-bg-primary' },
-  { part: 'Borde en error', token: '--color-bg-danger' },
+  { part: 'Borde en error, también el del servicio', token: '--color-bg-danger' },
+  { part: 'Fondo del bloque de error del servicio', token: '--color-danger-surface' },
   { part: 'Anillo de foco (las dos bandas)', token: '--focus-ring-shadow' },
-  { part: 'Color del anillo', token: '--color-focus-ring' },
   { part: 'Fondo deshabilitado', token: '--color-bg-secondary' },
   { part: 'Placeholder, chevron y hint', token: '--color-text-secondary' },
-  { part: 'Texto deshabilitado', token: '--color-text-disabled' },
   { part: 'Fondo de la opción activa y del hover', token: '--color-ghost-hover' },
-  { part: 'Hint en error', token: '--color-danger-text' },
-  { part: 'Radio del trigger y del panel', token: '--radius-control' },
+  { part: 'Radio del campo y del panel', token: '--radius-control' },
   { part: 'Elevación del panel', token: '--shadow-md' },
   { part: 'Peso de la opción seleccionada', token: '--text-control-selected-weight' },
   { part: 'Chevron y check, los tres tamaños', token: '--size-icon-sm' },
+  { part: 'Retardo entre la última tecla y la consulta', token: '--delay-search-input' },
+  { part: 'Cuánto se tolera que tarde la fuente', token: '--timeout-search' },
+  { part: 'Umbral de ráfaga de escáner, por tecla', token: '--threshold-scan-keystroke' },
 ] as const;
 
 interface ChevronSample {
@@ -134,12 +205,12 @@ interface ChevronSample {
 }
 
 /**
- * /design-system/components/select: ficha de ewms-select. El panel es el componente, así
- * que la página abre con él desplegado: fila activa, seleccionada, teclado y volteo.
+ * /design-system/components/select: el único selector (decisión del usuario, 2026-09-21).
+ * Lista corta, lista larga que busca en memoria y fuente remota, sobre el mismo componente.
  */
 @Component({
   selector: 'ewms-showroom-select',
-  imports: [ReactiveFormsModule, Select, DemoFrame, PropTable, StateMatrix, TokenValue],
+  imports: [Button, ReactiveFormsModule, Select, DemoFrame, PropTable, StateMatrix, TokenValue],
   templateUrl: './select.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -147,19 +218,61 @@ export class ShowroomSelect {
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
 
   protected readonly version = DESIGN_SYSTEM_VERSION;
+  protected readonly threshold = SELECT_SEARCH_THRESHOLD;
   protected readonly states = STATES;
   protected readonly sizes = SIZES;
   protected readonly options = OPTIONS;
+  protected readonly locations = LOCATIONS;
   protected readonly props = PROPS;
   protected readonly anatomy = ANATOMY;
+  protected readonly searchVariants = SEARCH_VARIANTS;
+  protected readonly searchColumns = SEARCH_COLUMNS;
+  protected readonly pageSize = SEARCH_PAGE_SIZE;
+  protected readonly catalogueSize = CATALOGUE.length;
 
   protected readonly form = new FormGroup({
     ubicacion: new FormControl<unknown>('muelle-3'),
+    rack: new FormControl<unknown>(null),
+    articulo: new FormControl<Article | null>(null),
   });
 
   protected readonly chosen = toSignal(this.form.controls.ubicacion.valueChanges, {
     initialValue: this.form.controls.ubicacion.value,
   });
+
+  protected readonly rack = toSignal(this.form.controls.rack.valueChanges, {
+    initialValue: this.form.controls.rack.value,
+  });
+
+  protected readonly article = toSignal(this.form.controls.articulo.valueChanges, {
+    initialValue: this.form.controls.articulo.value,
+  });
+
+  /** Comportamiento de la fuente, para ver los estados de falla. */
+  protected readonly behaviour = signal<SourceBehaviour>('normal');
+
+  /** Si la fuente informa total; null es válido. */
+  protected readonly counts = signal(true);
+
+  /** Consultas recibidas por la fuente, la más nueva primero. */
+  protected readonly queries = signal<readonly string[]>([]);
+
+  private readonly counted = new CatalogueSource(
+    () => this.behaviour(),
+    (query, page) => this.recordQuery(query, page),
+  );
+
+  private readonly uncounted = new UncountedSource(this.counted);
+
+  protected readonly source = computed(() => (this.counts() ? this.counted : this.uncounted));
+
+  protected readonly display: SearchDisplay<Article> = {
+    label: (article) => `${article.code} · ${article.name}`,
+    code: (article) => article.code,
+  };
+
+  /** Código existente del catálogo sintético, para las instrucciones de escaneo. */
+  protected readonly sampleCode = CATALOGUE[42]?.code ?? '';
 
   protected readonly chevrons = signal<readonly ChevronSample[]>([
     { size: 'sm', label: 'Small', trigger: '…', chevron: '…', sameChevron: false },
@@ -168,12 +281,30 @@ export class ShowroomSelect {
   ]);
 
   protected readonly snippet = [
+    '<!-- Lista cerrada en memoria: con 7 o menos no busca -->',
     '<ewms-select',
-    '  formControlName="ubicacion"',
-    "  [label]=\"'recepciones.ubicacion' | transloco\"",
-    '  [options]="ubicaciones()"',
-    "  [placeholder]=\"'comun.elegir' | transloco\"",
+    '  formControlName="estado"',
+    "  [label]=\"'recepciones.estado' | transloco\"",
+    '  [options]="estados()"',
     '/>',
+    '',
+    '<!-- Fuente del backend: busca, pagina y resuelve un escaneo -->',
+    '<ewms-select',
+    '  formControlName="articulo"',
+    '  [source]="catalogo"',
+    '  [display]="{ label: a => a.codigo, code: a => a.codigo }"',
+    "  [label]=\"'recepciones.articulo' | transloco\"",
+    '/>',
+  ].join('\n');
+
+  protected readonly sourceSnippet = [
+    'export class CatalogoHttpSource implements SearchSource<Articulo> {',
+    '  private readonly http = inject(ArticulosApi);',
+    '',
+    '  search(query: string, page: number): Observable<SearchPage<Articulo>> {',
+    '    return this.http.buscar({ q: query, page, pageSize: 20 });',
+    '  }',
+    '}',
   ].join('\n');
 
   constructor() {
@@ -218,5 +349,30 @@ export class ShowroomSelect {
   protected chosenLabel(): string {
     const value = this.chosen();
     return OPTIONS.find((option) => option.value === value)?.label ?? '(sin elegir)';
+  }
+
+  protected readonly articleLabel = computed(() => {
+    const article = this.article();
+    return article ? `${article.code} · ${article.name}` : '(ninguno)';
+  });
+
+  protected fact(variantId: string, columnId: string): string {
+    return SEARCH_FACTS[variantId]?.[columnId] ?? '';
+  }
+
+  protected setBehaviour(behaviour: SourceBehaviour): void {
+    this.behaviour.set(behaviour);
+  }
+
+  protected toggleCounts(): void {
+    this.counts.update((value) => !value);
+  }
+
+  protected clearQueries(): void {
+    this.queries.set([]);
+  }
+
+  private recordQuery(query: string, page: number): void {
+    this.queries.update((current) => [`«${query}» · página ${page}`, ...current].slice(0, 6));
   }
 }

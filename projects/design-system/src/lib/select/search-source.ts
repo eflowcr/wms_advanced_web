@@ -1,8 +1,8 @@
-import type { Observable } from 'rxjs';
+import { of, type Observable } from 'rxjs';
 
 /**
- * Contrato de datos de `ewms-search-select` (REQ-FE-DS3-001 RFE-02): la especificación del
- * endpoint de catálogo, escrita antes que él. Sin HTTP adentro. Ver vault: Search-Select.
+ * Contrato de datos de `ewms-select` con `source` (REQ-FE-DS3-001 RFE-02): la especificación
+ * del endpoint de catálogo, escrita antes que él. Sin HTTP adentro. Ver vault: Select.
  */
 export interface SearchSource<T> {
   /**
@@ -35,4 +35,15 @@ export interface SearchDisplay<T> {
   label: (item: T) => string;
   /** Solo decide si un escaneo identificó un registro; sin él, un escaneo siempre abre el panel. */
   code?: (item: T) => string;
+}
+
+/** La lista de `options` como fuente: contiene, sin mayúsculas, y sin páginas. */
+export function memorySource<T>(items: readonly T[], label: (item: T) => string): SearchSource<T> {
+  return {
+    search: (query) => {
+      const needle = query.trim().toLowerCase();
+      const found = needle ? items.filter((item) => label(item).toLowerCase().includes(needle)) : items;
+      return of({ items: found, page: 0, pageSize: found.length, total: found.length, hasMore: false });
+    },
+  };
 }

@@ -1,19 +1,23 @@
 import { computed, inject, type Provider } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import {
+  EWMS_DATE_PICKER_MESSAGES,
   EWMS_FAVORITE_LABELS,
   EWMS_FAVORITES_STORE,
-  EWMS_SEARCH_SELECT_MESSAGES,
+  EWMS_SELECT_MESSAGES,
   EWMS_SHORTCUT_HELP_MESSAGES,
+  EWMS_SPLIT_BUTTON_MESSAGES,
   EWMS_SHORTCUT_MAP,
   EWMS_TABLE_FORMATTERS,
   EWMS_TABLE_MESSAGES,
   Favorites,
   InMemoryFavoritesStore,
   parseTableDate,
+  type DatePickerMessages,
   type FavoriteLabelResolver,
-  type SearchSelectMessages,
+  type SelectMessages,
   type ShortcutHelpMessages,
+  type SplitButtonMessages,
   type TableFormatters,
   type TableMessages,
 } from '@ewms/design-system';
@@ -38,8 +42,8 @@ export function provideEwmsDesignSystem(): Provider[] {
       useFactory: tableFormatters,
     },
     {
-      provide: EWMS_SEARCH_SELECT_MESSAGES,
-      useFactory: searchSelectMessages,
+      provide: EWMS_SELECT_MESSAGES,
+      useFactory: selectMessages,
     },
     // El mapa es valor y las palabras son fábrica (DS-4): las teclas no cambian con
     // el idioma. El showroom provee su propio par para registrar `create` sin el shell.
@@ -62,6 +66,14 @@ export function provideEwmsDesignSystem(): Provider[] {
     {
       provide: EWMS_SHORTCUT_HELP_MESSAGES,
       useFactory: shortcutHelpMessages,
+    },
+    {
+      provide: EWMS_SPLIT_BUTTON_MESSAGES,
+      useFactory: splitButtonMessages,
+    },
+    {
+      provide: EWMS_DATE_PICKER_MESSAGES,
+      useFactory: datePickerMessages,
     },
   ];
 }
@@ -151,26 +163,26 @@ function tableMessages(): TableMessages {
  * Getters: `translate()` lee el idioma activo al llamarse, y con cadenas planas la
  * interfaz quedaría en el idioma del arranque.
  */
-function searchSelectMessages(): SearchSelectMessages {
+function selectMessages(): SelectMessages {
   const transloco = inject(TranslocoService);
   return {
     get searching() {
-      return transloco.translate('ds.searchSelect.searching');
+      return transloco.translate('ds.select.searching');
     },
     get error() {
-      return transloco.translate('ds.searchSelect.error');
+      return transloco.translate('ds.select.error');
     },
     get retry() {
-      return transloco.translate('ds.searchSelect.retry');
+      return transloco.translate('ds.select.retry');
     },
     get more() {
-      return transloco.translate('ds.searchSelect.more');
+      return transloco.translate('ds.select.more');
     },
-    noResults: (query) => transloco.translate('ds.searchSelect.noResults', { query }),
+    noResults: (query) => transloco.translate('ds.select.noResults', { query }),
     results: (count, total) =>
       total === null
-        ? transloco.translate('ds.searchSelect.results', { count })
-        : transloco.translate('ds.searchSelect.resultsOf', { count, total }),
+        ? transloco.translate('ds.select.results', { count })
+        : transloco.translate('ds.select.resultsOf', { count, total }),
   };
 }
 
@@ -222,6 +234,35 @@ function shortcutHelpMessages(): ShortcutHelpMessages {
       get help() {
         return transloco.translate('shell.shortcuts.actions.help');
       },
+    },
+  };
+}
+
+function splitButtonMessages(): SplitButtonMessages {
+  const transloco = inject(TranslocoService);
+  return {
+    get moreActions() {
+      return transloco.translate('ds.splitButton.moreActions');
+    },
+  };
+}
+
+/** `locale` también es getter: el calendario sigue al idioma activo sin recargar. */
+function datePickerMessages(): DatePickerMessages {
+  const transloco = inject(TranslocoService);
+  const locale = inject(TranslocoLocaleService);
+  return {
+    get chooseDate() {
+      return transloco.translate('ds.datePicker.chooseDate');
+    },
+    get previousMonth() {
+      return transloco.translate('ds.datePicker.previousMonth');
+    },
+    get nextMonth() {
+      return transloco.translate('ds.datePicker.nextMonth');
+    },
+    get locale() {
+      return locale.getLocale();
     },
   };
 }

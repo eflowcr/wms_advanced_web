@@ -1,86 +1,89 @@
 <!-- Showroom solo en español, exento de i18n (compuerta 12): se declara para que el lector de pantalla no lo lea en inglés. -->
-<div class="grid grid-cols-[17rem_minmax(0,1fr)] items-start bg-canvas" lang="es">
+<div class="grid items-start bg-canvas" [class]="gridClasses()" lang="es">
   <!--
     <div> y no <aside> ni <main>: el shell ya pone el <main> y un segundo duplica el landmark.
     El único landmark propio es el <nav> de abajo.
   -->
-  <div
-    class="sticky top-0 flex h-screen flex-col gap-4 overflow-y-auto border-r border-default bg-surface p-4"
-    data-sidebar
-  >
-    <div class="flex flex-col gap-1">
-      <a
-        class="text-h3 text-primary rounded-sm outline-none focus-visible:shadow-(--focus-ring-shadow)"
-        routerLink="/design-system"
-      >
-        Sistema de diseño
-      </a>
-      <p class="text-caption text-secondary">
-        <span class="font-mono">&#64;ewms/design-system</span> v{{ version }}
-      </p>
-    </div>
+  <!-- Debajo del punto de corte la barra no entra: la reemplaza el selector de arriba del contenido. -->
+  @if (wide()) {
+    <div
+      #sidebar
+      class="sticky top-0 flex max-h-screen flex-col gap-4 overflow-y-auto border-r border-default bg-surface p-4"
+      data-sidebar
+    >
+      <div class="flex flex-col gap-1">
+        <a
+          class="text-h3 text-primary rounded-sm outline-none focus-visible:shadow-(--focus-ring-shadow)"
+          routerLink="/design-system"
+        >
+          Sistema de diseño
+        </a>
+        <p class="text-caption text-secondary">
+          <span class="font-mono">&#64;ewms/design-system</span> v{{ version }}
+        </p>
+      </div>
 
-    <!--
+      <!--
       Bloque de favoritos arriba de la barra (REQ-FE-DS4-002 RFE-04): el mismo componente del
       App Shell, no una copia, y la misma lista `Favorites` por inyección; acá no se provee almacén.
     -->
-    <ewms-favorites-nav
-      ground="surface"
-      label="Favoritos"
-      emptyLabel="Marcá una página con ★"
-      [activeRoute]="activeRoute()"
-      (favoriteSelect)="onFavorite($event)"
-    />
-
-    <div class="flex flex-col gap-2">
-      <label class="text-caption text-secondary" for="showroom-search">
-        Buscar por nombre o selector
-      </label>
-      <input
-        id="showroom-search"
-        type="search"
-        class="h-10 rounded-control border border-strong bg-surface px-3 text-p text-primary outline-none focus-visible:shadow-(--focus-ring-shadow)"
-        placeholder="boton, ewms-input..."
-        [value]="query()"
-        (input)="onSearch($event)"
+      <ewms-favorites-nav
+        ground="surface"
+        label="Favoritos"
+        emptyLabel="Marcá una página con ★"
+        [activeRoute]="activeRoute()"
+        (favoriteSelect)="onFavorite($event)"
       />
-      @if (filtering()) {
-        <p class="text-caption text-secondary" role="status">{{ matches() }} resultado(s)</p>
-      }
-    </div>
 
-    <nav class="flex flex-col gap-5" aria-label="Páginas del catálogo">
-      @for (section of sections(); track section.id) {
-        <div class="flex flex-col gap-1">
-          <h2 class="text-h4 text-secondary uppercase">{{ section.title }}</h2>
-          <ul class="flex flex-col">
-            @for (entry of section.entries; track entry.id) {
-              <li>
-                @if (entry.route) {
-                  <a
-                    class="block rounded-sm px-2 py-1 text-p text-primary outline-none hover:bg-ghost-hover focus-visible:shadow-(--focus-ring-shadow) aria-[current=page]:bg-row-selected"
-                    [routerLink]="entry.route"
-                    routerLinkActive
-                    ariaCurrentWhenActive="page"
-                    [routerLinkActiveOptions]="{ exact: true }"
-                  >
-                    {{ entry.name }}
-                  </a>
-                } @else {
-                  <span class="block px-2 py-1 text-p text-secondary" [attr.title]="entry.note">
-                    {{ entry.name }} {{ statusLabels[entry.status] }}
-                  </span>
-                }
-              </li>
-            }
-          </ul>
-        </div>
-      }
-      @if (matches() === 0) {
-        <p class="text-p text-secondary">Nada coincide con la búsqueda.</p>
-      }
-    </nav>
-  </div>
+      <div class="flex flex-col gap-2">
+        <label class="text-caption text-secondary" for="showroom-search">
+          Buscar por nombre o selector
+        </label>
+        <input
+          id="showroom-search"
+          type="search"
+          class="h-10 rounded-control border border-strong bg-surface px-3 text-p text-primary outline-none focus-visible:shadow-(--focus-ring-shadow)"
+          placeholder="boton, ewms-input..."
+          [value]="query()"
+          (input)="onSearch($event)"
+        />
+        @if (filtering()) {
+          <p class="text-caption text-secondary" role="status">{{ matches() }} resultado(s)</p>
+        }
+      </div>
+
+      <nav class="flex flex-col gap-5" aria-label="Páginas del catálogo">
+        @for (section of sections(); track section.id) {
+          <div class="flex flex-col gap-1">
+            <h2 class="text-h4 text-secondary uppercase">{{ section.title }}</h2>
+            <ul class="flex flex-col">
+              @for (entry of section.entries; track entry.id) {
+                <li>
+                  @if (entry.route) {
+                    <!-- Una sola marcada: Badge y Favoritos comparten ruta con Tabla y Navegación. -->
+                    <a
+                      class="block rounded-sm px-2 py-1 text-p text-primary outline-none hover:bg-ghost-hover focus-visible:shadow-(--focus-ring-shadow) aria-[current=page]:bg-row-selected"
+                      [routerLink]="entry.route"
+                      [attr.aria-current]="isCurrent(entry) ? 'page' : null"
+                    >
+                      {{ entry.name }}
+                    </a>
+                  } @else {
+                    <span class="block px-2 py-1 text-p text-secondary" [attr.title]="entry.note">
+                      {{ entry.name }} {{ statusLabels[entry.status] }}
+                    </span>
+                  }
+                </li>
+              }
+            </ul>
+          </div>
+        }
+        @if (matches() === 0) {
+          <p class="text-p text-secondary">Nada coincide con la búsqueda.</p>
+        }
+      </nav>
+    </div>
+  }
 
   <!--
     Sin `<ewms-toast-outlet>` a propósito: `MainLayout` ya tiene el único, y dos regiones aria-live
@@ -90,7 +93,18 @@
     Tampoco estrella, por la misma razón: la del encabezado de la aplicación sirve a toda pantalla;
     otra acá serían dos `aria-pressed` para la misma ruta y la misma lista.
   -->
-  <div class="flex min-w-0 flex-col gap-4 p-8">
+  <div class="flex min-w-0 flex-col gap-4" [class]="wide() ? 'p-8' : 'p-4'">
+    @if (!wide()) {
+      <!-- El selector del sistema, que busca: el catálogo tiene más de siete páginas. -->
+      <nav aria-label="Páginas del catálogo" data-catalog-picker>
+        <ewms-select
+          label="Ir a una página del catálogo"
+          [options]="pages"
+          [ngModel]="activeRoute()"
+          (ngModelChange)="go($event)"
+        />
+      </nav>
+    }
     <router-outlet />
   </div>
 </div>

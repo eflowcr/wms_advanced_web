@@ -19,12 +19,12 @@
   >
     <!-- La hamburguesa solo existe donde hay rail: debajo del corte manda la barra inferior. -->
     @if (viewport.isWide()) {
-      <ewms-icon-button
+      <ewms-button
+        [iconOnly]="true"
         icon="menu"
         variant="ghost"
         data-rail-toggle
         [label]="'shell.nav.toggleMenu' | transloco"
-        [tooltip]="'shell.nav.toggleMenu' | transloco"
         [expanded]="railExpanded()"
         (click)="onRailExpandedChange(!railExpanded())"
       />
@@ -41,7 +41,7 @@
     }
 
     <!--
-      Destino de `/`. Un `<input>` y no `ewms-search-select`: todavía no hay nada que
+      Destino de `/`. Un `<input>` y no `ewms-select`: todavía no hay nada que
       buscar, y un buscador que parece real sin estar conectado es peor.
     -->
     <!--
@@ -74,12 +74,12 @@
 
     <app-language-switcher />
 
-    <ewms-icon-button
+    <ewms-button
+      [iconOnly]="true"
       icon="logout"
       variant="ghost"
       data-shell-logout
       [label]="'shell.session.signOut' | transloco"
-      [tooltip]="'shell.session.signOut' | transloco"
     />
 
     <!-- Decorativo: el usuario ya está escrito al pie del rail; anunciarlo dos veces es ruido. -->
@@ -167,14 +167,14 @@
       }
 
       <!--
-        `tabindex="-1"` para recibir el foco cuando la página no tiene `h1`. El anillo de
-        foco del `h1` se pone acá con `:focus` y no `:focus-visible`, porque ese foco siempre
-        es programático. Ver vault: App-Shell.
+        `tabindex="-1"` para recibir el foco cuando la página no tiene `h1`. El foco va al `h1`
+        en cada navegación; el anillo, solo con `:focus-visible` (llegando por teclado): con
+        `:focus` se pintaba en cada clic (2026-09-21). Ver vault: App-Shell.
       -->
       <main
         #main
         id="main"
-        class="min-w-0 flex-1 [&_h1:focus]:rounded-sm [&_h1:focus]:shadow-(--focus-ring-shadow) [&_h1:focus]:outline-none"
+        class="min-w-0 flex-1 [&_h1:focus]:outline-none [&_h1:focus-visible]:rounded-sm [&_h1:focus-visible]:shadow-(--focus-ring-shadow)"
         tabindex="-1"
       >
         <router-outlet />
