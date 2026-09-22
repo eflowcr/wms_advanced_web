@@ -29,6 +29,24 @@
       </ewms-button>
     }
 
+    @if (table.columnChooser()) {
+      <ewms-table-popover [label]="text.columns" icon="eye" data-column-chooser>
+        <fieldset class="flex flex-col items-start gap-2">
+          <legend class="mb-1 text-caption text-secondary">{{ text.columns }}</legend>
+          @for (column of table.layout.hideable(); track column.key()) {
+            <!-- La última visible no se apaga: sin columnas no se podría volver a configurar. -->
+            <ewms-checkbox
+              [label]="column.header() || column.key()"
+              [checked]="table.layout.isVisible(column)"
+              [disabled]="!table.layout.canHide(column)"
+              [attr.data-column-option]="column.key()"
+              (checkedChange)="table.layout.toggle(column)"
+            />
+          }
+        </fieldset>
+      </ewms-table-popover>
+    }
+
     <ewms-table-popover [label]="text.density" icon="controls" data-density-menu>
       <!-- items-start: estirado, el host del radio dejaba una zona muerta a la derecha del texto. -->
       <fieldset class="flex flex-col items-start gap-2">

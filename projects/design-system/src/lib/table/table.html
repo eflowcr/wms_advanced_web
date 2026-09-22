@@ -24,7 +24,16 @@
       <tr role="row">
         @if (selectable()) {
           <!-- w-0: la columna del checkbox mide lo que el checkbox, sin hueco hasta el chevron. -->
-          <th scope="col" role="columnheader" class="w-0" [class]="headerCellClasses">
+          <th
+            scope="col"
+            role="columnheader"
+            class="w-0"
+            [class]="headerCellClasses"
+            [class.sticky]="selectionPinned()"
+            [class.z-3]="selectionPinned()"
+            [style.left.px]="selectionPinned() ? 0 : null"
+            data-col-select
+          >
             <span class="flex items-center">
               <ewms-checkbox
                 [checked]="allSelected()"
@@ -36,13 +45,17 @@
           </th>
         }
 
-        @for (column of columns(); track column.key()) {
+        @for (column of visibleColumns(); track column.key()) {
           <th
             scope="col"
             role="columnheader"
-            [class]="headerCellClasses"
-            [style.width]="columnWidth(column)"
+            [class]="headerCellClasses + ' ' + pinClasses(column, true)"
+            [style.width]="headerWidth(column)"
+            [style.left.px]="pinStart(column)"
+            [style.right.px]="pinEnd(column)"
             [attr.aria-sort]="ariaSort(column)"
+            [attr.data-col]="column.key()"
+            [attr.data-pin]="column.pinned()"
           >
             @if (column.sortable()) {
               <button
@@ -66,6 +79,22 @@
                 <span class="truncate">{{ column.header() }}</span>
               </span>
             }
+            @if (column.type() !== 'actions') {
+              <!-- Separador de ancho (APG window splitter): arrastre, flechas por token, doble clic. -->
+              <span
+                role="separator"
+                aria-orientation="vertical"
+                tabindex="0"
+                class="absolute inset-y-0 -end-1 z-2 w-2 cursor-col-resize touch-none rounded-sm outline-none hover:bg-ghost-hover focus-visible:shadow-(--focus-ring-shadow)"
+                [attr.aria-label]="text().resizeColumn(column.header() || column.key())"
+                [attr.aria-valuenow]="widthNow(column)"
+                [attr.aria-valuemin]="minColumnWidth"
+                [attr.data-resize]="column.key()"
+                (pointerdown)="startResize($event, column)"
+                (keydown)="onResizeKey($event, column)"
+                (dblclick)="layout.reset(column)"
+              ></span>
+            }
           </th>
         }
       </tr>
@@ -75,11 +104,20 @@
         <!-- En el DOM aunque esté oculta: `aria-controls` de «Filtros» apunta a algo que existe. -->
         <tr role="row" data-filter-row [id]="filterRowId" [hidden]="!filtersOpen()">
           @if (selectable()) {
-            <td [class]="headerCellClasses"></td>
+            <td
+              [class]="headerCellClasses"
+              [class.sticky]="selectionPinned()"
+              [class.z-3]="selectionPinned()"
+              [style.left.px]="selectionPinned() ? 0 : null"
+            ></td>
           }
-          @for (column of columns(); track column.key()) {
+          @for (column of visibleColumns(); track column.key()) {
             <!-- `<td>` y no `<th>`: un segundo `<th>` daría dos nombres por columna, o uno vacío que axe reporta. -->
-            <td [class]="headerCellClasses" class="pb-2">
+            <td
+              [class]="headerCellClasses + ' pb-2 ' + pinClasses(column, true)"
+              [style.left.px]="pinStart(column)"
+              [style.right.px]="pinEnd(column)"
+            >
               @if (column.filterable()) {
                 @switch (column.type()) {
                   @case ('number') {
@@ -107,7 +145,7 @@
                   }
                   @case ('badge') {
                     <!-- Filtro de conjunto (el «set filter» de AG Grid): casillas del diccionario. -->
-                    <span class="block" [attr.data-filter]="column.key()">
+                    <span class="block whitespace-nowrap" [attr.data-filter]="column.key()">
                       <ewms-table-popover
                         [label]="setLabel(column)"
                         [panelLabel]="column.header() || column.key()"
@@ -195,6 +233,10 @@
             <td
               role="gridcell"
               [class]="cellClasses"
+              [class.sticky]="selectionPinned()"
+              [class.z-1]="selectionPinned()"
+              [class.bg-inherit]="selectionPinned()"
+              [style.left.px]="selectionPinned() ? 0 : null"
               [attr.data-cell]="rowIndex + '-0'"
               [attr.tabindex]="isFocused(rowIndex, 0) ? 0 : -1"
               (focus)="onCellFocus(rowIndex, 0)"
@@ -211,10 +253,12 @@
             </td>
           }
 
-          @for (column of columns(); track column.key(); let columnIndex = $index) {
+          @for (column of visibleColumns(); track column.key(); let columnIndex = $index) {
             <td
               role="gridcell"
-              [class]="cellClassesFor(column)"
+              [class]="cellClassesFor(column) + ' ' + pinClasses(column, false)"
+              [style.left.px]="pinStart(column)"
+              [style.right.px]="pinEnd(column)"
               [attr.data-cell]="rowIndex + '-' + (selectable() ? columnIndex + 1 : columnIndex)"
               [attr.tabindex]="
                 isFocused(rowIndex, selectable() ? columnIndex + 1 : columnIndex) ? 0 : -1

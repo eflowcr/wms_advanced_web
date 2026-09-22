@@ -22,7 +22,7 @@ import {
   type TableFormatters,
   type TableMessages,
 } from './table.tokens';
-import type { BadgeDictionary, MenuItem } from './table.types';
+import type { BadgeDictionary, MenuItem, TableView } from './table.types';
 
 interface Row {
   readonly id: string;
@@ -83,6 +83,8 @@ const MESSAGES: TableMessages = {
   setNone: 'Ninguno',
   setSummary: (column, chosen, total) =>
     chosen === total ? `${column}: todos` : `${column}: ${chosen} de ${total}`,
+  columns: 'Columnas',
+  resizeColumn: (column) => `Ancho de la columna ${column}`,
 };
 
 const DATE_WORDS = {
@@ -1676,5 +1678,203 @@ describe('Table and the `filters` shortcut', () => {
     // En un campo, Alt+R es del navegador (RFE-04).
     await pressFrom(fixture.nativeElement.querySelector('#filtered [data-quick-filter] input'));
     expect(filterRow().hidden).toBe(false);
+  });
+});
+
+// Columnas que el usuario configura: mostrar, fijar y redimensionar. Todo sale por (viewChange).
+describe('Table columns', () => {
+  /** Los dos tokens, con valores de prueba: el paso y el mínimo que la tabla lee al redimensionar. */
+  const STEP = 16;
+  const MIN = 72;
+
+  @Component({
+    template: `
+      <ewms-table
+        [source]="source"
+        [trackBy]="byId"
+        [selectable]="true"
+        [columnChooser]="true"
+        ariaLabel="Columnas"
+        (viewChange)="view = $event"
+      >
+        <ewms-column key="bultos" header="Bultos" type="number" />
+        <ewms-column key="codigo" header="Código" pinned="start" [hideable]="false" />
+        <ewms-column key="fecha" header="Fecha" type="date" />
+        <ewms-column key="acciones" header="Acciones" type="actions" pinned="end" />
+      </ewms-table>
+    `,
+    imports: [Table, TableColumn],
+  })
+  class ColumnsHost {
+    readonly source = new ArrayTableSource(ROWS, ['codigo']);
+    readonly byId = (row: Row): unknown => row.id;
+    view: TableView | null = null;
+  }
+
+  let fixture: ComponentFixture<ColumnsHost>;
+
+  beforeEach(async () => {
+    document.documentElement.style.setProperty('--col-resize-step', pixels(STEP));
+    document.documentElement.style.setProperty('--col-filter-min-width', pixels(MIN));
+    await TestBed.configureTestingModule({
+      imports: [ColumnsHost],
+      providers: [
+        { provide: EWMS_TABLE_MESSAGES, useValue: MESSAGES },
+        { provide: EWMS_TABLE_FORMATTERS, useValue: FORMATTERS },
+      ],
+    }).compileComponents();
+    fixture = TestBed.createComponent(ColumnsHost);
+    document.body.appendChild(fixture.nativeElement);
+    await settle();
+  });
+
+  afterEach(() => {
+    document.documentElement.style.removeProperty('--col-resize-step');
+    document.documentElement.style.removeProperty('--col-filter-min-width');
+    fixture.nativeElement.remove();
+    clearOverlays();
+  });
+
+  async function settle(): Promise<void> {
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+  }
+
+  const headers = (): string[] =>
+    [...fixture.nativeElement.querySelectorAll('thead tr:first-child th[data-col]')].map(
+      (th) => (th as HTMLElement).dataset['col'] ?? '',
+    );
+  const header = (key: string): HTMLElement =>
+    fixture.nativeElement.querySelector(`th[data-col="${key}"]`) as HTMLElement;
+  const separator = (key: string): HTMLElement =>
+    fixture.nativeElement.querySelector(`[data-resize="${key}"]`) as HTMLElement;
+  const option = (key: string): HTMLInputElement =>
+    document.querySelector(`[data-column-option="${key}"] input`) as HTMLInputElement;
+
+  async function openChooser(): Promise<void> {
+    (fixture.nativeElement.querySelector('[data-column-chooser] button') as HTMLElement).click();
+    await settle();
+  }
+
+  it('PINNED GOES TO THE EDGES: start first, end last, sticky, with a separator', () => {
+    expect(headers()).toEqual(['codigo', 'bultos', 'fecha', 'acciones']);
+    expect(header('codigo').className).toContain('sticky');
+    expect(header('codigo').className).toContain('border-e');
+    expect(header('acciones').className).toContain('sticky');
+    expect(header('acciones').style.right).toBe(pixels(0));
+    // La casilla se queda con ellas, a la izquierda.
+    expect(fixture.nativeElement.querySelector('th[data-col-select]').className).toContain('sticky');
+    const firstRow = fixture.nativeElement.querySelector('tbody tr') as HTMLElement;
+    expect(firstRow.querySelector('[data-cell="0-1"]')?.className).toContain('bg-inherit');
+  });
+
+  it('hides and shows from the chooser, and never offers one that says no', async () => {
+    await openChooser();
+    expect(option('codigo')).toBeNull();
+
+    option('bultos').click();
+    await settle();
+    expect(headers()).toEqual(['codigo', 'fecha', 'acciones']);
+    expect(fixture.nativeElement.querySelector('table').getAttribute('aria-colcount')).toBe('4');
+    expect(fixture.componentInstance.view?.hidden).toEqual(['bultos']);
+
+    option('bultos').click();
+    await settle();
+    expect(headers()).toEqual(['codigo', 'bultos', 'fecha', 'acciones']);
+  });
+
+  it('NEVER HIDES THE LAST VISIBLE ONE: its box goes disabled', async () => {
+    @Component({
+      template: `
+        <ewms-table [source]="source" [columnChooser]="true" ariaLabel="Dos">
+          <ewms-column key="codigo" header="Código" />
+          <ewms-column key="bultos" header="Bultos" type="number" />
+        </ewms-table>
+      `,
+      imports: [Table, TableColumn],
+    })
+    class TwoHost {
+      readonly source = new ArrayTableSource(ROWS, ['codigo']);
+    }
+    const two = TestBed.createComponent(TwoHost);
+    document.body.appendChild(two.nativeElement);
+    two.detectChanges();
+    await two.whenStable();
+    (two.nativeElement.querySelector('[data-column-chooser] button') as HTMLElement).click();
+    two.detectChanges();
+    await two.whenStable();
+
+    option('codigo').click();
+    two.detectChanges();
+    await two.whenStable();
+    expect(option('bultos').disabled).toBe(true);
+    option('bultos').click();
+    two.detectChanges();
+    expect(two.nativeElement.querySelectorAll('th[data-col]').length).toBe(1);
+    two.nativeElement.remove();
+  });
+
+  it('is a window splitter: named, vertical, with its width; arrows step by token', async () => {
+    const handle = separator('fecha');
+    expect(handle.getAttribute('role')).toBe('separator');
+    expect(handle.getAttribute('aria-orientation')).toBe('vertical');
+    expect(handle.getAttribute('aria-label')).toBe('Ancho de la columna Fecha');
+    expect(handle.getAttribute('tabindex')).toBe('0');
+    // Una columna de acciones no se redimensiona.
+    expect(separator('acciones')).toBeNull();
+
+    handle.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+    await settle();
+    // jsdom mide cero: el mínimo manda.
+    expect(fixture.componentInstance.view?.widths).toEqual({ fecha: MIN });
+    handle.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+    await settle();
+    expect(header('fecha').style.width).toBe(pixels(MIN + STEP));
+    expect(handle.getAttribute('aria-valuenow')).toBe(String(MIN + STEP));
+
+    handle.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true }));
+    await settle();
+    expect(header('fecha').style.width).toBe(pixels(MIN));
+
+    // Doble clic: vuelve al ancho declarado, que en una `fill` es ninguno.
+    handle.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
+    await settle();
+    expect(header('fecha').style.width).toBe('');
+    expect(fixture.componentInstance.view?.widths).toEqual({});
+  });
+
+  it('drags with the pointer, and never below the minimum', async () => {
+    const handle = separator('bultos');
+    handle.dispatchEvent(new MouseEvent('pointerdown', { clientX: 100, bubbles: true }));
+    handle.dispatchEvent(new MouseEvent('pointermove', { clientX: 260, bubbles: true }));
+    handle.dispatchEvent(new MouseEvent('pointerup', { clientX: 260, bubbles: true }));
+    await settle();
+    expect(header('bultos').style.width).toBe(pixels(160));
+
+    handle.dispatchEvent(new MouseEvent('pointerdown', { clientX: 100, bubbles: true }));
+    handle.dispatchEvent(new MouseEvent('pointermove', { clientX: 0, bubbles: true }));
+    await settle();
+    expect(header('bultos').style.width).toBe(pixels(MIN));
+  });
+
+  it('LETS GO OF THE PINS when they would take more than half the box', async () => {
+    const box = fixture.nativeElement.querySelector('[data-scroll-box]') as HTMLElement;
+    Object.defineProperty(box, 'clientWidth', { configurable: true, value: 274 });
+    header('codigo').getBoundingClientRect = () => ({ width: 160 }) as DOMRect;
+    // Cualquier cambio de la vista vuelve a medir.
+    separator('fecha').dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+    await settle();
+
+    expect(header('codigo').className).not.toContain('sticky');
+    expect(fixture.nativeElement.querySelector('th[data-col-select]').className).not.toContain('sticky');
+    // El orden no cambia: lo fijado sigue en su borde, solo deja de pegarse.
+    expect(headers()[0]).toBe('codigo');
+  });
+
+  it('has no axe violations with the chooser open', async () => {
+    await openChooser();
+    await expectNoAxeViolations(fixture.nativeElement);
+    await expectNoAxeViolations(document.querySelector('.cdk-overlay-container')!);
   });
 });

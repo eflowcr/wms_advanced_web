@@ -123,6 +123,8 @@ export const TABLE_MESSAGES: TableMessages = {
     }
     return chosen === 0 ? `${column}: ninguno` : `${column}: ${chosen} de ${total}`;
   },
+  columns: 'Columnas',
+  resizeColumn: (column) => `Ancho de la columna ${column}`,
 };
 
 /** `Intl` directo y no `transloco-locale`: la tabla solo pide dos funciones que devuelvan texto. */

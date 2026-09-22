@@ -1614,6 +1614,46 @@ test.describe('DS-3 lote C: la tabla', () => {
     await expect(page.locator(`${DEMO} [data-chip="estado"]`)).toContainText('Con incidencia');
   });
 
+  test('columns: the pinned stay in view while the table scrolls, and resize from the keyboard', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto(TABLE);
+    await ready(page);
+
+    // Con los filtros abiertos la tabla es más ancha que su caja: desplaza adentro, la página no.
+    await page.locator(`${DEMO} [data-filters-toggle] button`).click();
+    const box = page.locator(`${DEMO} [data-scroll-box]`);
+    await box.evaluate((element) => {
+      element.scrollLeft = element.scrollWidth;
+    });
+    const boxLeft = (await box.boundingBox())!.x;
+    const codigo = page.locator(`${DEMO} th[data-col="codigo"]`);
+    const select = page.locator(`${DEMO} th[data-col-select]`);
+    await expect
+      .poll(async () => Math.round((await select.boundingBox())!.x - boxLeft))
+      .toBeLessThanOrEqual(1);
+    const selectBox = (await select.boundingBox())!;
+    expect(Math.round((await codigo.boundingBox())!.x)).toBe(
+      Math.round(selectBox.x + selectBox.width),
+    );
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+
+    // El separador es una parada de teclado y anuncia su ancho.
+    const handle = page.locator(`${DEMO} [data-resize="cliente"]`);
+    await handle.focus();
+    // Sin getAttribute (no reintenta): el ancho de partida es el de la cabecera medida.
+    const before = Math.round((await page.locator(`${DEMO} th[data-col="cliente"]`).boundingBox())!.width);
+    await expect(handle).toHaveAttribute('aria-valuenow', String(before));
+    await page.keyboard.press('ArrowRight');
+    await expect(handle).toHaveAttribute('aria-valuenow', String(before + 16));
+
+    // El selector oculta una columna y la tabla se lo cuenta a quien escucha.
+    await page.locator(`${DEMO} [data-column-chooser] button`).click();
+    await page.getByRole('dialog', { name: 'Columnas' }).getByRole('checkbox', { name: 'Fecha' }).uncheck();
+    await expect(page.locator(`${DEMO} th[data-col="fecha"]`)).toHaveCount(0);
+  });
+
   test('the quick filter narrows the table, and the empty state is the projected one', async ({
     page,
   }) => {

@@ -39,6 +39,11 @@ export interface TableMessages {
   readonly setNone: string;
   /** Texto del botón: «Estado: todos», «Estado: 2 de 4», «Estado: ninguno». */
   readonly setSummary: (column: string, chosen: number, total: number) => string;
+
+  // Columnas: selector y separador de ancho.
+  readonly columns: string;
+  /** Nombre del separador: «Ancho de la columna Código». */
+  readonly resizeColumn: (column: string) => string;
 }
 
 /** Solo lo que se muestra: ordenar y filtrar usan el valor crudo. Ver vault: Tabla §2. */

@@ -93,8 +93,11 @@ export function columnHeaderClasses(type: TableColumnType): string {
   return type === 'number' || type === 'actions' ? 'justify-end' : 'justify-start';
 }
 
-/** Borde colapsado a propósito: el tinte de la fila llega al borde de la celda sin costura. */
-export const TABLE_CLASSES = 'w-full border-collapse text-p';
+/**
+ * Bordes separados con espacio cero, no colapsados: un borde colapsado no viaja con una celda
+ * `sticky`, y el separador de una columna fijada quedaría atrás al desplazar.
+ */
+export const TABLE_CLASSES = 'w-full border-separate border-spacing-0 text-p';
 
 export const HEADER_CELL_CLASSES =
   'border-b border-strong bg-secondary px-3 text-caption text-secondary';
@@ -107,11 +110,14 @@ export const CELL_CLASSES =
   'border-b border-default px-3 align-middle text-primary ' +
   'focus-visible:outline-2 focus-visible:outline-focus';
 
-/** Seleccionada gana al tinte de estado: el estado ya lo dice el badge. */
+/**
+ * Seleccionada gana al tinte de estado: el estado ya lo dice el badge. Siempre con fondo: una
+ * celda fijada lo hereda, y transparente dejaría ver lo que pasa por debajo al desplazar.
+ */
 export function rowClasses(selected: boolean, tint: string): string {
-  const base = 'group';
+  // Un solo fondo por fila: dos utilidades de color las decide el orden de la hoja, no el atributo.
   if (selected) {
-    return `${base} bg-row-selected`;
+    return 'group bg-row-selected';
   }
-  return tint ? `${base} ${tint}` : `${base} hover:bg-ghost-hover`;
+  return tint ? `group ${tint}` : 'group bg-surface hover:bg-ghost-hover';
 }

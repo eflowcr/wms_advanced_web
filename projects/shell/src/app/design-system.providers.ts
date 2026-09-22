@@ -180,6 +180,10 @@ function tableMessages(): TableMessages {
       chosen === total
         ? transloco.translate('ds.table.setSummaryAll', { column })
         : transloco.translate('ds.table.setSummary', { column, chosen, total }),
+    get columns() {
+      return transloco.translate('ds.table.columns');
+    },
+    resizeColumn: (column) => transloco.translate('ds.table.resizeColumn', { column }),
   };
 }
 

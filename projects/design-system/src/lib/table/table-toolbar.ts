@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, DestroyRef, effect, inject } from '
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { Button } from '../button/button';
+import { Checkbox } from '../checkbox/checkbox';
 import { Icon } from '../icon/icon';
 import { Input as TextInput } from '../input/input';
 import { Radio } from '../radio/radio';
@@ -16,7 +17,7 @@ import type { TableDensity } from './table.types';
 @Component({
   selector: 'ewms-table-toolbar',
   templateUrl: './table-toolbar.html',
-  imports: [Button, Icon, Radio, ReactiveFormsModule, TablePopover, TextInput],
+  imports: [Button, Checkbox, Icon, Radio, ReactiveFormsModule, TablePopover, TextInput],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { class: 'flex flex-col gap-2' },
 })

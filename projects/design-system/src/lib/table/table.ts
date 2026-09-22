@@ -1,6 +1,7 @@
 import { NgTemplateOutlet } from '@angular/common';
 import {
   afterNextRender,
+  afterRenderEffect,
   ChangeDetectionStrategy,
   Component,
   computed,
@@ -25,7 +26,7 @@ import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import type { OverlayRef } from '@angular/cdk/overlay';
 import { isObservable, of, type Observable } from 'rxjs';
-import { catchError, debounceTime, switchMap, tap } from 'rxjs/operators';
+import { catchError, debounceTime, skip, switchMap, tap } from 'rxjs/operators';
 import { Badge } from '../badge/badge';
 import { Checkbox } from '../checkbox/checkbox';
 import { familyTintClass } from '../feedback/feedback.types';
@@ -43,6 +44,7 @@ import { TABLE_CONTEXT, type TableContext } from './table-context';
 import { TableFilters } from './table-filters';
 import { TablePopover } from './table-popover';
 import { TableToolbar } from './table-toolbar';
+import { TableViewState } from './table-view';
 import {
   emptyQuery,
   readCell,
@@ -72,6 +74,8 @@ import {
   type RowState,
   type TableChildren,
   type TableDensity,
+  type TablePin,
+  type TableView,
 } from './table.types';
 import {
   createMenuOverlay,
@@ -153,6 +157,9 @@ export class Table<T> implements TableContext {
 
   readonly quickFilter = input<boolean>(false);
 
+  /** Selector de columnas en la barra: mostrar y ocultar. `hideable="false"` no se ofrece. */
+  readonly columnChooser = input<boolean>(false);
+
   readonly density = input<TableDensity>('md');
 
   readonly pageSize = input<number>(50);
@@ -167,6 +174,8 @@ export class Table<T> implements TableContext {
   readonly rowMenu = output<RowMenuEvent<T>>();
   readonly selectionChange = output<readonly T[]>();
   readonly queryChange = output<TableQuery>();
+  /** Columnas ocultas, anchos, fijadas y densidad: en memoria, para quien quiera guardarlos. */
+  readonly viewChange = output<TableView>();
 
   private readonly viewContainerRef = inject(ViewContainerRef);
   private readonly menuTemplate = viewChild<TemplateRef<unknown>>('menu');
@@ -321,7 +330,7 @@ export class Table<T> implements TableContext {
   );
 
   protected readonly columnCount = computed(
-    () => this.columns().length + (this.selectable() ? 1 : 0),
+    () => this.visibleColumns().length + (this.selectable() ? 1 : 0),
   );
 
   // Un solo tab stop para toda la tabla.
@@ -348,12 +357,32 @@ export class Table<T> implements TableContext {
         this.search.set(text);
       });
 
+    toObservable(this.layout.view)
+      .pipe(skip(1), takeUntilDestroyed())
+      .subscribe((view) => this.viewChange.emit(view));
+
+    // Las fijadas se desplazan lo que miden sus vecinas: se mide tras cada pintado que las mueva.
+    afterRenderEffect({
+      read: () => {
+        this.visibleColumns();
+        this.layout.view();
+        this.selectable();
+        this.measurePins();
+      },
+    });
+
     // Medir en fase de lectura: sin esto la primera ventana se calcula con altura cero.
     afterNextRender({
       read: () => {
         const box = this.scrollBox()?.nativeElement;
         if (box) {
           this.onScrollBoxReady(box);
+        }
+        // Las fuentes y el ancho de la página cambian lo que mide una columna.
+        if (typeof ResizeObserver !== 'undefined' && box) {
+          const observer = new ResizeObserver(() => this.measurePins());
+          observer.observe(box.querySelector('table') ?? box);
+          this.destroyRef.onDestroy(() => observer.disconnect());
         }
       },
     });
@@ -387,6 +416,136 @@ export class Table<T> implements TableContext {
 
   setDensity(density: TableDensity): void {
     this.densityChoice.set(density);
+  }
+
+  readonly layout = new TableViewState(this.columns, this.densityChoice);
+
+  /** Las columnas que se dibujan: visibles, con las fijadas en los bordes. */
+  protected readonly visibleColumns = this.layout.visibleColumns;
+
+  /** Desplazamiento de cada celda fijada, medido en el DOM: depende de lo que mide cada columna. */
+  protected readonly pinOffsets = signal<Readonly<Record<string, number>>>({});
+
+  /** Anchos medidos de las cabeceras: el separador los anuncia en `aria-valuenow`. */
+  protected readonly measuredWidths = signal<Readonly<Record<string, number>>>({});
+
+  private readonly anyStartPin = computed(() =>
+    this.visibleColumns().some((column) => column.pinned() === 'start'),
+  );
+
+  /**
+   * Se fija solo si lo fijado cabe en media caja: a 390 px la casilla y una columna `md` dejaban
+   * setenta píxeles para desplazar y todo control quedaba debajo de ellas.
+   */
+  protected readonly pinning = signal(true);
+
+  private pinOf(column: TableColumn): TablePin | null {
+    return this.pinning() ? column.pinned() : null;
+  }
+
+  protected pinClasses(column: TableColumn, header: boolean): string {
+    const pin = this.pinOf(column);
+    if (pin === null) {
+      return header ? 'relative' : '';
+    }
+    const columns = this.visibleColumns().filter((candidate) => this.pinOf(candidate) === pin);
+    const edge = pin === 'start' ? columns.at(-1) === column : columns[0] === column;
+    // Separador por token en el borde que da a lo que desplaza.
+    const separator = edge
+      ? pin === 'start'
+        ? 'border-e border-e-(color:--color-border-strong)'
+        : 'border-s border-s-(color:--color-border-strong)'
+      : '';
+    // En la cabecera las no fijadas son `relative` (por el separador) y se pintarían encima.
+    return `sticky ${header ? 'z-3' : 'z-1 bg-inherit'} ${separator}`.trim();
+  }
+
+  protected pinStart(column: TableColumn): number | null {
+    return this.pinOf(column) === 'start' ? (this.pinOffsets()[column.key()] ?? 0) : null;
+  }
+
+  protected pinEnd(column: TableColumn): number | null {
+    return this.pinOf(column) === 'end' ? (this.pinOffsets()[column.key()] ?? 0) : null;
+  }
+
+  /** La casilla va fija si hay columnas fijadas al inicio: quedan juntas a la izquierda. */
+  protected readonly selectionPinned = computed(
+    () => this.pinning() && this.selectable() && this.anyStartPin(),
+  );
+
+  private measurePins(): void {
+    const head = this.host.nativeElement.querySelector('thead tr');
+    if (!head) {
+      return;
+    }
+    const cells = [...head.querySelectorAll<HTMLElement>('th[data-col]')];
+    const width = (cell: HTMLElement | undefined): number => cell?.getBoundingClientRect().width ?? 0;
+    const offsets: Record<string, number> = {};
+    const measured: Record<string, number> = {};
+    let start = width(head.querySelector<HTMLElement>('th[data-col-select]') ?? undefined);
+    for (const cell of cells) {
+      const key = cell.dataset['col'] ?? '';
+      measured[key] = Math.round(width(cell));
+      if (cell.dataset['pin'] === 'start') {
+        offsets[key] = start;
+        start += width(cell);
+      }
+    }
+    let end = 0;
+    for (const cell of [...cells].reverse()) {
+      if (cell.dataset['pin'] === 'end') {
+        offsets[cell.dataset['col'] ?? ''] = end;
+        end += width(cell);
+      }
+    }
+    const room = this.scrollBox()?.nativeElement.clientWidth ?? 0;
+    const fits = start + end <= room / 2;
+    if (fits !== this.pinning()) {
+      this.pinning.set(fits);
+    }
+    // Solo si cambió: escribir lo mismo agenda otro pintado, y otra medida.
+    if (JSON.stringify(offsets) !== JSON.stringify(this.pinOffsets())) {
+      this.pinOffsets.set(offsets);
+    }
+    if (JSON.stringify(measured) !== JSON.stringify(this.measuredWidths())) {
+      this.measuredWidths.set(measured);
+    }
+  }
+
+  protected headerWidth(column: TableColumn): string | null {
+    const chosen = this.layout.width(column);
+    return chosen === null ? this.columnWidth(column) : `${chosen}px`;
+  }
+
+  protected widthNow(column: TableColumn): number {
+    return this.layout.width(column) ?? this.measuredWidths()[column.key()] ?? 0;
+  }
+
+  protected readonly minColumnWidth = readPixels('--col-filter-min-width');
+
+  /** Arrastre: la captura del puntero sigue al separador aunque el cursor salga de la cabecera. */
+  protected startResize(event: PointerEvent, column: TableColumn): void {
+    const handle = event.currentTarget as HTMLElement;
+    const from = event.clientX;
+    const initial = handle.closest('th')?.getBoundingClientRect().width ?? this.widthNow(column);
+    handle.setPointerCapture?.(event.pointerId);
+    const move = (next: PointerEvent): void => this.layout.resize(column, initial + next.clientX - from);
+    const end = (): void => {
+      handle.removeEventListener('pointermove', move);
+      handle.removeEventListener('pointerup', end);
+      handle.removeEventListener('pointercancel', end);
+    };
+    handle.addEventListener('pointermove', move);
+    handle.addEventListener('pointerup', end);
+    handle.addEventListener('pointercancel', end);
+    event.preventDefault();
+  }
+
+  protected onResizeKey(event: KeyboardEvent, column: TableColumn): void {
+    if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+      event.preventDefault();
+      this.layout.step(column, this.widthNow(column), event.key === 'ArrowRight' ? 1 : -1);
+    }
   }
 
   protected readonly rowHeight = computed(() => ROW_HEIGHT[this.densityChoice()]);
@@ -489,7 +648,9 @@ export class Table<T> implements TableContext {
     this.filtersOpen.update((open) => !open);
   }
 
-  protected readonly showToolbar = computed(() => this.quickFilter() || this.anyFilterable());
+  protected readonly showToolbar = computed(
+    () => this.quickFilter() || this.anyFilterable() || this.columnChooser(),
+  );
 
   private ownsShortcut(): boolean {
     const host = this.host.nativeElement;

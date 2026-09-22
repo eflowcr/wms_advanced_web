@@ -75,6 +75,7 @@
           [trackBy]="porId"
           [selectable]="true"
           [quickFilter]="true"
+          [columnChooser]="true"
           ariaLabel="Expediciones"
           (rowActivate)="abrir($event)"
           (selectionChange)="seleccion.set($event)"
@@ -84,6 +85,7 @@
             key="codigo"
             header="Código"
             width="md"
+            pinned="start"
             [sortable]="true"
             [filterable]="true"
           />
@@ -202,7 +204,7 @@
           <ewms-column key="cliente" header="Cliente" width="fill" />
           <ewms-column key="bultos" header="Bultos" type="number" width="sm" [sortable]="true" />
           <ewms-column key="estado" header="Estado" type="badge" width="md" [badges]="estados" />
-          <ewms-column key="acciones" header="Acciones" type="actions" width="sm" />
+          <ewms-column key="acciones" header="Acciones" type="actions" width="sm" pinned="end" />
 
           <!--
             El panel no repite las columnas (para eso está el árbol): muestra lo que la
