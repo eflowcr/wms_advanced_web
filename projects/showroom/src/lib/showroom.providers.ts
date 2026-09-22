@@ -128,6 +128,9 @@ export const TABLE_MESSAGES: TableMessages = {
   selectedCount: (count) => (count === 1 ? '1 seleccionada' : `${count} seleccionadas`),
   clearSelection: 'Quitar selección',
   copied: (rows) => (rows === 1 ? '1 fila copiada' : `${rows} filas copiadas`),
+  export: 'Exportar',
+  exportSelected: 'CSV de lo seleccionado',
+  copyAll: 'Copiar al portapapeles',
   rowsShown: (shown, total) =>
     total === null ? `${shown} filas` : `${shown} de ${total} filas`,
   aggregate: (kind, column, scope) => {

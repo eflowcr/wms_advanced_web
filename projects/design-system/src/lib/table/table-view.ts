@@ -1,12 +1,7 @@
 import { computed, signal, type Signal } from '@angular/core';
 import { readPixels } from '../tokens/read-token';
 import type { TableColumn } from './column';
-import {
-  COLUMN_WIDTH,
-  type TableDensity,
-  type TablePin,
-  type TableView,
-} from './table.types';
+import { COLUMN_WIDTH, type TableDensity, type TablePin, type TableView } from './table.types';
 
 /** El paso del teclado al redimensionar y el mínimo de una columna, por token. */
 const RESIZE_STEP_TOKEN = '--col-resize-step';
@@ -66,7 +61,10 @@ export class TableViewState {
   /** Sin token de mínimo no se achica nada: un número inventado sería una copia. */
   resize(column: TableColumn, pixels: number): void {
     const min = readPixels(MIN_WIDTH_TOKEN) ?? pixels;
-    this.widths.update((current) => ({ ...current, [column.key()]: Math.round(Math.max(min, pixels)) }));
+    this.widths.update((current) => ({
+      ...current,
+      [column.key()]: Math.round(Math.max(min, pixels)),
+    }));
   }
 
   /** Flechas del separador: un paso por token; sin token, ninguno. */
@@ -143,7 +141,8 @@ export class TableViewState {
       return;
     }
     const cells = [...head.querySelectorAll<HTMLElement>('th[data-col]')];
-    const width = (cell: HTMLElement | undefined): number => cell?.getBoundingClientRect().width ?? 0;
+    const width = (cell: HTMLElement | undefined): number =>
+      cell?.getBoundingClientRect().width ?? 0;
     const offsets: Record<string, number> = {};
     const measured: Record<string, number> = {};
     let start = width(head.querySelector<HTMLElement>('th[data-col-select]') ?? undefined);

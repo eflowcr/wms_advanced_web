@@ -33,7 +33,10 @@ export function exportCell(column: TableColumn, row: unknown): string {
 }
 
 /** Encabezados y filas: la primera línea dice qué es cada columna. */
-export function exportMatrix(columns: readonly TableColumn[], rows: readonly unknown[]): string[][] {
+export function exportMatrix(
+  columns: readonly TableColumn[],
+  rows: readonly unknown[],
+): string[][] {
   const chosen = exportColumns(columns);
   return [
     chosen.map((column) => column.header() || column.key()),
@@ -43,7 +46,9 @@ export function exportMatrix(columns: readonly TableColumn[], rows: readonly unk
 
 /** Tabulaciones, como las pega Excel. Un tabulador o salto adentro partiría la celda. */
 export function toTsv(matrix: readonly (readonly string[])[]): string {
-  return matrix.map((line) => line.map((cell) => cell.replace(/[\t\r\n]+/g, ' ')).join('\t')).join('\n');
+  return matrix
+    .map((line) => line.map((cell) => cell.replace(/[\t\r\n]+/g, ' ')).join('\t'))
+    .join('\n');
 }
 
 /** RFC 4180: comillas si hace falta, comillas dobladas adentro, CRLF entre filas. */
@@ -51,6 +56,19 @@ export function toCsv(matrix: readonly (readonly string[])[]): string {
   const quote = (cell: string): string =>
     /[",\r\n]/.test(cell) ? `"${cell.replace(/"/g, '""')}"` : cell;
   return matrix.map((line) => line.map(quote).join(',')).join('\r\n');
+}
+
+/**
+ * Descarga en el navegador, sin librería: con BOM UTF-8, o Excel lee «Ã³» donde dice «ó».
+ * El nombre del archivo es el de la tabla.
+ */
+export function downloadCsv(name: string, csv: string, document: Document): void {
+  const url = URL.createObjectURL(new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' }));
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `${name}.csv`;
+  link.click();
+  URL.revokeObjectURL(url);
 }
 
 function isoDate(date: Date): string {

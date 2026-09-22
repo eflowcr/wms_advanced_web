@@ -52,6 +52,7 @@ const CONSUMER_TEMPLATE = [
   '  [selectable]="true"',
   '  [quickFilter]="true"',
   '  [columnChooser]="true"',
+  '  [exportable]="true"',
   '  [bulkActions]="masivas"',
   '  ariaLabel="Expediciones"',
   '  (rowActivate)="abrir($event)"',

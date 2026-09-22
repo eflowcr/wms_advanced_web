@@ -28,6 +28,8 @@ export interface TableContext {
   readonly pageTotal: Signal<number | null>;
   readonly visibleColumns: Signal<readonly TableColumn[]>;
   readonly format: Signal<TableFormatters>;
+  readonly exportable: Signal<boolean>;
+  runExport(kind: 'csv' | 'csv-selected' | 'copy'): void;
   readonly bulkActions: Signal<readonly MenuItem[]>;
   runBulk(item: MenuItem): void;
   clearSelection(): void;

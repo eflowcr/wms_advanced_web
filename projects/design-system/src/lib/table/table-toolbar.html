@@ -47,6 +47,18 @@
       </ewms-table-popover>
     }
 
+    @if (table.exportable()) {
+      <ewms-split-button
+        size="sm"
+        icon="download"
+        [label]="text.export"
+        [actions]="exportActions()"
+        data-export
+        (primary)="table.runExport('csv')"
+        (action)="runExport($event)"
+      />
+    }
+
     <ewms-table-popover [label]="text.density" icon="controls" data-density-menu>
       <!-- items-start: estirado, el host del radio dejaba una zona muerta a la derecha del texto. -->
       <fieldset class="flex flex-col items-start gap-2">
@@ -112,7 +124,9 @@
         [attr.data-chip]="chip.key"
       >
         <!-- &ngsp;: sin él el lector de pantalla junta «Código:0002». -->
-        <span><span class="text-secondary">{{ chip.column }}:</span>&ngsp;{{ chip.value }}</span>
+        <span
+          ><span class="text-secondary">{{ chip.column }}:</span>&ngsp;{{ chip.value }}</span
+        >
         <button
           type="button"
           class="inline-flex cursor-pointer rounded-full p-0.5 text-secondary outline-none hover:bg-ghost-hover focus-visible:shadow-(--focus-ring-shadow)"

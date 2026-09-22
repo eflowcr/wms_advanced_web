@@ -189,6 +189,15 @@ function tableMessages(): TableMessages {
       return transloco.translate('ds.table.clearSelection');
     },
     copied: (rows) => transloco.translate('ds.table.copied', { rows }),
+    get export() {
+      return transloco.translate('ds.table.export');
+    },
+    get exportSelected() {
+      return transloco.translate('ds.table.exportSelected');
+    },
+    get copyAll() {
+      return transloco.translate('ds.table.copyAll');
+    },
     rowsShown: (shown, total) =>
       total === null
         ? transloco.translate('ds.table.rowsShown', { shown })

@@ -52,6 +52,11 @@ export interface TableMessages {
   /** Lo copiado con Ctrl+C: «3 filas copiadas». */
   readonly copied: (rows: number) => string;
 
+  // Exportar: la acción principal es CSV.
+  readonly export: string;
+  readonly exportSelected: string;
+  readonly copyAll: string;
+
   // Barra de estado.
   /** «12 de 340 filas», o «12 filas» con `total` null. */
   readonly rowsShown: (shown: number, total: number | null) => string;

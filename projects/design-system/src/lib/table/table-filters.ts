@@ -4,12 +4,7 @@ import { FormControl } from '@angular/forms';
 import type { Observable } from 'rxjs';
 import type { DatePickerValue } from '../date-picker/date-picker';
 import type { TableColumn } from './column';
-import {
-  isDateRange,
-  isNumberRange,
-  isSetFilter,
-  type TableFilterValue,
-} from './table-source';
+import { isDateRange, isNumberRange, isSetFilter, type TableFilterValue } from './table-source';
 import type { TableFormatters } from './table.tokens';
 
 export type FilterBound = 'text' | 'min' | 'max';
@@ -138,7 +133,10 @@ export class TableFilters {
       chosen.add(option);
     }
     // En el orden del diccionario, no en el de los clics: el chip se lee igual siempre.
-    this.write(column.key(), chosen.size === all.length ? undefined : all.filter((key) => chosen.has(key)));
+    this.write(
+      column.key(),
+      chosen.size === all.length ? undefined : all.filter((key) => chosen.has(key)),
+    );
   }
 
   /** «Todos» desmarcado es ninguna: la tabla queda vacía, como la pidió quien lo desmarcó. */

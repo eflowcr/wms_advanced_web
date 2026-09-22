@@ -5,6 +5,7 @@ import { expectNoAxeViolations, pixels } from '@ewms/testing';
 import { By } from '@angular/platform-browser';
 import { defer, Observable, of, Subject, throwError } from 'rxjs';
 import { EWMS_DATE_PICKER_MESSAGES } from '../date-picker/date-picker.types';
+import { EWMS_SPLIT_BUTTON_MESSAGES } from '../split-button/split-button.types';
 import { ShortcutsHost } from '../keyboard/shortcuts-host';
 import {
   EWMS_SHORTCUT_HELP_MESSAGES,
@@ -25,6 +26,7 @@ import {
 import type {
   BadgeDictionary,
   BulkActionEvent,
+  ExportRequest,
   MenuItem,
   TableAggregate,
   TableView,
@@ -94,6 +96,9 @@ const MESSAGES: TableMessages = {
   selectedCount: (count) => `${count} seleccionadas`,
   clearSelection: 'Quitar selección',
   copied: (rows) => `${rows} filas copiadas`,
+  export: 'Exportar',
+  exportSelected: 'CSV de lo seleccionado',
+  copyAll: 'Copiar al portapapeles',
   rowsShown: (shown, total) => (total === null ? `${shown} filas` : `${shown} de ${total} filas`),
   aggregate: (kind, column, scope) => `${kind} ${column} ${scope}`,
 };
@@ -533,11 +538,15 @@ describe('Table', () => {
       tick(checkboxes()[2]!);
       await settle();
       const bar = fixture.nativeElement.querySelector('[data-bulk-bar]') as HTMLElement;
-      expect(bar.querySelector('[data-selected-count]')?.textContent?.trim()).toBe('2 seleccionadas');
+      expect(bar.querySelector('[data-selected-count]')?.textContent?.trim()).toBe(
+        '2 seleccionadas',
+      );
       expect(fixture.nativeElement.querySelector('[data-table-announce]')?.textContent).toBe(
         '2 seleccionadas',
       );
-      expect(bar.querySelector('[data-bulk-action="anular"] button')?.className).toContain('danger');
+      expect(bar.querySelector('[data-bulk-action="anular"] button')?.className).toContain(
+        'danger',
+      );
 
       (bar.querySelector('[data-bulk-action="imprimir"] button') as HTMLElement).click();
       expect(host.lastBulk?.item.id).toBe('imprimir');
@@ -566,7 +575,9 @@ describe('Table', () => {
       });
       const press = (row: number): void => {
         const cell = fixture.nativeElement.querySelector(`[data-cell="${row}-1"]`) as HTMLElement;
-        cell.dispatchEvent(new KeyboardEvent('keydown', { key: 'c', ctrlKey: true, bubbles: true }));
+        cell.dispatchEvent(
+          new KeyboardEvent('keydown', { key: 'c', ctrlKey: true, bubbles: true }),
+        );
       };
 
       press(1);
@@ -749,9 +760,8 @@ describe('Table', () => {
       fixture.nativeElement.querySelector('[data-filters-toggle] button') as HTMLButtonElement;
     const filterRow = (): HTMLElement =>
       fixture.nativeElement.querySelector('[data-filter-row]') as HTMLElement;
-    const chips = (): HTMLElement[] => [
-      ...fixture.nativeElement.querySelectorAll('[data-chip]'),
-    ] as HTMLElement[];
+    const chips = (): HTMLElement[] =>
+      [...fixture.nativeElement.querySelectorAll('[data-chip]')] as HTMLElement[];
 
     async function filterCodigo(value: string): Promise<void> {
       const box = fixture.nativeElement.querySelector(
@@ -1604,7 +1614,7 @@ async function hugeFixture(rows: readonly Big[]): Promise<ComponentFixture<HugeH
     imports: [HugeHost, Table, TableColumn],
     providers: [
       { provide: EWMS_TABLE_MESSAGES, useValue: MESSAGES },
-        { provide: EWMS_DATE_PICKER_MESSAGES, useValue: DATE_WORDS },
+      { provide: EWMS_DATE_PICKER_MESSAGES, useValue: DATE_WORDS },
       { provide: EWMS_TABLE_FORMATTERS, useValue: FORMATTERS },
     ],
   }).compileComponents();
@@ -1809,7 +1819,9 @@ describe('Table and the `filters` shortcut', () => {
     expect(filterRow().hidden).toBe(false);
 
     // Con el foco en una tabla que no filtra, nadie contesta.
-    const plainCell = fixture.nativeElement.querySelector('#plain [data-cell="0-0"]') as HTMLElement;
+    const plainCell = fixture.nativeElement.querySelector(
+      '#plain [data-cell="0-0"]',
+    ) as HTMLElement;
     await pressFrom(plainCell);
     expect(filterRow().hidden).toBe(false);
 
@@ -1922,7 +1934,9 @@ describe('Table columns', () => {
     expect(header('acciones').className).toContain('sticky');
     expect(header('acciones').style.right).toBe(pixels(0));
     // La casilla se queda con ellas, a la izquierda.
-    expect(fixture.nativeElement.querySelector('th[data-col-select]').className).toContain('sticky');
+    expect(fixture.nativeElement.querySelector('th[data-col-select]').className).toContain(
+      'sticky',
+    );
     const firstRow = fixture.nativeElement.querySelector('tbody tr') as HTMLElement;
     expect(firstRow.querySelector('[data-cell="0-1"]')?.className).toContain('bg-inherit');
   });
@@ -2021,11 +2035,15 @@ describe('Table columns', () => {
     Object.defineProperty(box, 'clientWidth', { configurable: true, value: 274 });
     header('codigo').getBoundingClientRect = () => ({ width: 160 }) as DOMRect;
     // Cualquier cambio de la vista vuelve a medir.
-    separator('fecha').dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+    separator('fecha').dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }),
+    );
     await settle();
 
     expect(header('codigo').className).not.toContain('sticky');
-    expect(fixture.nativeElement.querySelector('th[data-col-select]').className).not.toContain('sticky');
+    expect(fixture.nativeElement.querySelector('th[data-col-select]').className).not.toContain(
+      'sticky',
+    );
     // El orden no cambia: lo fijado sigue en su borde, solo deja de pegarse.
     expect(headers()[0]).toBe('codigo');
   });
@@ -2034,5 +2052,172 @@ describe('Table columns', () => {
     await openChooser();
     await expectNoAxeViolations(fixture.nativeElement);
     await expectNoAxeViolations(document.querySelector('.cdk-overlay-container')!);
+  });
+});
+
+// Exportar: CSV en el cliente con una fuente en memoria; con una remota, solo la petición.
+describe('Table export', () => {
+  @Component({
+    template: `
+      <ewms-table
+        [source]="source()"
+        [trackBy]="byId"
+        [selectable]="true"
+        [exportable]="true"
+        [pageSize]="2"
+        ariaLabel="Expediciones"
+        (exportRequest)="request = $event"
+      >
+        <ewms-column key="codigo" header="Código" [sortable]="true" />
+        <ewms-column key="bultos" header="Bultos" type="number" [sortable]="true" />
+        <ewms-column key="fecha" header="Fecha" type="date" />
+        <ewms-column key="estado" header="Estado" type="badge" [badges]="estados" />
+        <ewms-column key="acciones" header="Acciones" type="actions" />
+      </ewms-table>
+    `,
+    imports: [Table, TableColumn],
+  })
+  class ExportHost {
+    readonly estados = ESTADOS;
+    readonly source = signal<TableSource<Row>>(
+      new ArrayTableSource([...ROWS, { ...ROWS[1]!, id: '4', codigo: 'EXP-0004', bultos: 1234 }]),
+    );
+    readonly byId = (row: Row): unknown => row.id;
+    request: ExportRequest | null = null;
+  }
+
+  let fixture: ComponentFixture<ExportHost>;
+  let downloads: { name: string; text: Promise<string> }[];
+
+  beforeEach(async () => {
+    downloads = [];
+    let blob: Blob | null = null;
+    // jsdom no implementa las dos: se definen, y se borran al terminar.
+    Object.defineProperty(URL, 'createObjectURL', {
+      configurable: true,
+      value: (made: Blob) => ((blob = made), 'blob:tabla'),
+    });
+    Object.defineProperty(URL, 'revokeObjectURL', { configurable: true, value: () => undefined });
+    vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function (
+      this: HTMLAnchorElement,
+    ) {
+      // `text()` descarta el BOM al decodificar: se leen los bytes y se decodifica sin tocarlo.
+      const bytes = blob!.arrayBuffer();
+      downloads.push({
+        name: this.download,
+        text: bytes.then((buffer) => new TextDecoder('utf-8', { ignoreBOM: true }).decode(buffer)),
+      });
+    });
+    await TestBed.configureTestingModule({
+      imports: [ExportHost],
+      providers: [
+        { provide: EWMS_TABLE_MESSAGES, useValue: MESSAGES },
+        { provide: EWMS_TABLE_FORMATTERS, useValue: FORMATTERS },
+        { provide: EWMS_SPLIT_BUTTON_MESSAGES, useValue: { moreActions: 'Más acciones' } },
+      ],
+    }).compileComponents();
+    fixture = TestBed.createComponent(ExportHost);
+    document.body.appendChild(fixture.nativeElement);
+    await settle();
+  });
+
+  afterEach(() => {
+    delete (URL as { createObjectURL?: unknown }).createObjectURL;
+    delete (URL as { revokeObjectURL?: unknown }).revokeObjectURL;
+    vi.restoreAllMocks();
+    fixture.nativeElement.remove();
+    clearOverlays();
+  });
+
+  async function settle(): Promise<void> {
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+  }
+
+  const primary = (): HTMLButtonElement =>
+    fixture.nativeElement.querySelector('[data-export] button') as HTMLButtonElement;
+
+  async function alternative(id: string): Promise<void> {
+    (
+      fixture.nativeElement.querySelector(
+        '[data-export] [data-split-trigger] button',
+      ) as HTMLElement
+    ).click();
+    await settle();
+    (document.querySelector(`[data-split-action="${id}"]`) as HTMLElement).click();
+    await settle();
+  }
+
+  it('CSV IS EVERYTHING FILTERED AND SORTED, not the page: BOM, raw numbers, ISO dates', async () => {
+    (fixture.nativeElement.querySelector('[data-sort="bultos"]') as HTMLElement).click();
+    await settle();
+    expect(fixture.nativeElement.querySelectorAll('tbody tr').length).toBe(2);
+
+    primary().click();
+    await settle();
+    expect(downloads[0]?.name).toBe('Expediciones.csv');
+    expect(await downloads[0]!.text).toBe(
+      '\uFEFFCódigo,Bultos,Fecha,Estado\r\n' +
+        'EXP-0003,40,2026-03-21,Pendiente\r\n' +
+        'EXP-0002,900,2026-02-03,Con incidencia\r\n' +
+        'EXP-0001,1200,2026-01-15,Pendiente\r\n' +
+        'EXP-0004,1234,2026-02-03,Con incidencia',
+    );
+  });
+
+  it('the alternatives: CSV of the selection, disabled without one, and a copy', async () => {
+    (
+      fixture.nativeElement.querySelector(
+        '[data-export] [data-split-trigger] button',
+      ) as HTMLElement
+    ).click();
+    await settle();
+    expect(
+      document.querySelector('[data-split-action="csv-selected"]')?.getAttribute('aria-disabled'),
+    ).toBe('true');
+    // Se cierra con su disparador: borrar el contenedor dejaría al menú sin dónde abrir.
+    (
+      fixture.nativeElement.querySelector(
+        '[data-export] [data-split-trigger] button',
+      ) as HTMLElement
+    ).click();
+    await settle();
+
+    const box = fixture.nativeElement.querySelector(
+      'tbody input[type="checkbox"]',
+    ) as HTMLInputElement;
+    box.checked = true;
+    box.dispatchEvent(new Event('change'));
+    await settle();
+    await alternative('csv-selected');
+    expect(await downloads[0]!.text).toBe(
+      '\uFEFFCódigo,Bultos,Fecha,Estado\r\nEXP-0001,1200,2026-01-15,Pendiente',
+    );
+
+    const copied: string[] = [];
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: { writeText: (text: string) => (copied.push(text), Promise.resolve()) },
+    });
+    await alternative('copy');
+    expect(copied[0]).toBe('Código\tBultos\tFecha\tEstado\nEXP-0001\t1200\t2026-01-15\tPendiente');
+    await expectNoAxeViolations(fixture.nativeElement);
+  });
+
+  it('A REMOTE SOURCE DOWNLOADS NOTHING: it gets the query and the visible columns', async () => {
+    fixture.componentInstance.source.set({
+      load: () => of({ rows: ROWS.slice(0, 2), page: 0, pageSize: 2, total: 40 }),
+    });
+    await settle();
+    primary().click();
+    await settle();
+
+    expect(downloads).toEqual([]);
+    expect(fixture.componentInstance.request).toEqual({
+      query: expect.objectContaining({ page: 0, pageSize: 2 }),
+      columns: ['codigo', 'bultos', 'fecha', 'estado', 'acciones'],
+      selectedOnly: false,
+    });
   });
 });

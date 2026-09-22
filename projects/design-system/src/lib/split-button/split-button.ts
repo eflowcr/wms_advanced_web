@@ -16,6 +16,7 @@ import {
 } from '@angular/core';
 import type { IconName } from '../../icons/icons.generated';
 import { Button } from '../button/button';
+import type { ButtonSize } from '../button/button.types';
 import { Icon } from '../icon/icon';
 import {
   createMenuOverlay,
@@ -53,6 +54,8 @@ export class SplitButton implements OnDestroy {
   readonly label = input.required<string>();
   readonly icon = input<IconName | null>(null);
   readonly actions = input<readonly SplitAction[]>([]);
+  /** La escala del Botón; `sm` en la barra de la Tabla, junto a sus otros botones. */
+  readonly size = input<ButtonSize>('md');
 
   /** La acción principal. */
   readonly primary = output<void>();

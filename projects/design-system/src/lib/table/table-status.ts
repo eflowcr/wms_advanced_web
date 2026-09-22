@@ -25,14 +25,16 @@ interface AggregateLine {
   template: `
     @let text = table.text();
     <!-- &ngsp; entre piezas: el flex no lo pinta, y sin él el lector junta «filas2 seleccionadas». -->
-    <span data-status-rows>{{ text.rowsShown(table.pageRows().length, table.pageTotal()) }}</span>&ngsp;
+    <span data-status-rows>{{ text.rowsShown(table.pageRows().length, table.pageTotal()) }}</span
+    >&ngsp;
     @if (table.selectedCount() > 0) {
-      <span data-status-selected>{{ text.selectedCount(table.selectedCount()) }}</span>&ngsp;
+      <span data-status-selected>{{ text.selectedCount(table.selectedCount()) }}</span
+      >&ngsp;
     }
     @for (line of aggregates(); track line.key) {
       <span [attr.data-aggregate]="line.key">
-        {{ line.label }}:&ngsp;<span class="font-mono text-primary">{{ line.value }}</span>
-      </span>&ngsp;
+        {{ line.label }}:&ngsp;<span class="font-mono text-primary">{{ line.value }}</span> </span
+      >&ngsp;
     }
   `,
 })
@@ -55,10 +57,18 @@ export class TableStatus {
           .filter((value) => Number.isFinite(value));
         const sum = numbers.reduce((total, value) => total + value, 0);
         const value =
-          kind === 'count' ? numbers.length : kind === 'avg' && numbers.length > 0 ? sum / numbers.length : sum;
+          kind === 'count'
+            ? numbers.length
+            : kind === 'avg' && numbers.length > 0
+              ? sum / numbers.length
+              : sum;
         return {
           key: column.key(),
-          label: text.aggregate(kind, column.header() || column.key(), selected ? 'selected' : 'shown'),
+          label: text.aggregate(
+            kind,
+            column.header() || column.key(),
+            selected ? 'selected' : 'shown',
+          ),
           value: format.number(value),
         };
       });

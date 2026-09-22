@@ -1710,6 +1710,33 @@ test.describe('DS-3 lote C: la tabla', () => {
     );
   });
 
+  test('export: a real CSV download, with a BOM, the filtered rows and Excel-readable values', async ({
+    page,
+  }) => {
+    await page.goto(TABLE);
+    await ready(page);
+
+    await page.locator(`${DEMO} [data-quick-filter] input`).fill('Andes');
+    await expect(page.locator(`${DEMO} [data-status-rows]`)).not.toHaveText('12 de 12 filas');
+    const shown = await page.locator(ROWS).count();
+
+    const [download] = await Promise.all([
+      page.waitForEvent('download'),
+      page.locator(`${DEMO} [data-export] button`).first().click(),
+    ]);
+    expect(download.suggestedFilename()).toBe('Expediciones.csv');
+    const bytes = await (await download.createReadStream()).toArray();
+    const buffer = Buffer.concat(bytes);
+    // Con BOM UTF-8: sin él Excel abre «CÃ³digo».
+    expect([...buffer.subarray(0, 3)]).toEqual([0xef, 0xbb, 0xbf]);
+    const lines = buffer.subarray(3).toString('utf-8').split('\r\n');
+    expect(lines[0]).toBe('Código,Cliente / artículo,Fecha,Bultos,Estado');
+    expect(lines).toHaveLength(shown + 1);
+    for (const line of lines.slice(1)) {
+      expect(line).toMatch(/^EXP-2026-\d{4},Distribuidora Andes,\d{4}-\d{2}-\d{2},\d+,/);
+    }
+  });
+
   test('the quick filter narrows the table, and the empty state is the projected one', async ({
     page,
   }) => {

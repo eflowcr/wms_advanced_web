@@ -45,7 +45,7 @@ import { TableFilters } from './table-filters';
 import { TablePopover } from './table-popover';
 import { TableStatus } from './table-status';
 import { TableToolbar } from './table-toolbar';
-import { exportMatrix, toTsv } from './table-export';
+import { downloadCsv, exportMatrix, toCsv, toTsv } from './table-export';
 import { TableSelection } from './table-selection';
 import { TableViewState } from './table-view';
 import {
@@ -71,6 +71,7 @@ import {
   rowClasses,
   type BadgeDescriptor,
   type BulkActionEvent,
+  type ExportRequest,
   type MenuItem,
   type RowActivateEvent,
   type RowMenuEvent,
@@ -166,6 +167,9 @@ export class Table<T> implements TableContext {
   /** Selector de columnas en la barra: mostrar y ocultar. `hideable="false"` no se ofrece. */
   readonly columnChooser = input<boolean>(false);
 
+  /** «Exportar» en la barra: CSV en el cliente con `ArrayTableSource`; si no, `(exportRequest)`. */
+  readonly exportable = input<boolean>(false);
+
   readonly density = input<TableDensity>('md');
 
   readonly pageSize = input<number>(50);
@@ -180,6 +184,8 @@ export class Table<T> implements TableContext {
   readonly rowMenu = output<RowMenuEvent<T>>();
   readonly selectionChange = output<readonly T[]>();
   readonly bulkAction = output<BulkActionEvent<T>>();
+  /** Con una fuente remota la tabla no descarga: dice qué pidió el usuario, y lo hace el servicio. */
+  readonly exportRequest = output<ExportRequest>();
   readonly queryChange = output<TableQuery>();
   /** Columnas ocultas, anchos, fijadas y densidad: en memoria, para quien quiera guardarlos. */
   readonly viewChange = output<TableView>();
@@ -398,7 +404,6 @@ export class Table<T> implements TableContext {
       },
     });
 
-
     // Medir en fase de lectura: sin esto la primera ventana se calcula con altura cero.
     afterNextRender({
       read: () => {
@@ -454,7 +459,6 @@ export class Table<T> implements TableContext {
 
   /** Las columnas que se dibujan: visibles, con las fijadas en los bordes. */
   readonly visibleColumns = this.layout.visibleColumns;
-
 
   protected readonly rowHeight = computed(() => ROW_HEIGHT[this.densityChoice()]);
 
@@ -556,6 +560,7 @@ export class Table<T> implements TableContext {
       this.quickFilter() ||
       this.anyFilterable() ||
       this.columnChooser() ||
+      this.exportable() ||
       this.selection.count() > 0,
   );
 
@@ -659,6 +664,33 @@ export class Table<T> implements TableContext {
   private emitSelection(): void {
     this.selectionChange.emit(this.selection.rows());
     this.announcement.set(this.text().selectedCount(this.selection.count()));
+  }
+
+  /**
+   * CSV o portapapeles: lo filtrado y ordenado entero si la fuente lo tiene en memoria, o lo
+   * seleccionado. Una fuente remota recibe la consulta por `(exportRequest)`. Ver vault: Tabla §16.
+   */
+  runExport(kind: 'csv' | 'csv-selected' | 'copy'): void {
+    const selectedOnly = kind === 'csv-selected';
+    const all = this.source().matching?.(this.query());
+    if (all === undefined && kind !== 'copy') {
+      const columns = this.visibleColumns().map((column) => column.key());
+      this.exportRequest.emit({ query: this.query(), columns, selectedOnly });
+      return;
+    }
+    // CSV: todo lo filtrado; la alternativa, lo seleccionado; copiar, lo seleccionado o todo.
+    const chosen = this.selection.count() > 0 ? this.selection.rows() : null;
+    const whole = all ?? this.pageRows();
+    const rows = selectedOnly ? this.selection.rows() : kind === 'copy' ? (chosen ?? whole) : whole;
+    const matrix = exportMatrix(this.visibleColumns(), rows);
+    if (kind === 'copy') {
+      void navigator.clipboard?.writeText(toTsv(matrix)).then(
+        () => this.announcement.set(this.text().copied(rows.length)),
+        () => undefined,
+      );
+      return;
+    }
+    downloadCsv(this.ariaLabel(), toCsv(matrix), this.host.nativeElement.ownerDocument);
   }
 
   /**

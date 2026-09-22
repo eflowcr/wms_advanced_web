@@ -33,7 +33,9 @@ describe('SplitButton', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [TestHost],
-      providers: [{ provide: EWMS_SPLIT_BUTTON_MESSAGES, useValue: { moreActions: 'Más formatos' } }],
+      providers: [
+        { provide: EWMS_SPLIT_BUTTON_MESSAGES, useValue: { moreActions: 'Más formatos' } },
+      ],
     }).compileComponents();
     fixture = TestBed.createComponent(TestHost);
     document.body.appendChild(fixture.nativeElement);
