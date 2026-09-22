@@ -1,20 +1,18 @@
 import { ApplicationInitStatus } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import type { Language } from '@ewms/core';
+import { LanguageService, type Language } from '@ewms/core';
 import { expectNoAxeViolations, provideI18nTesting } from '@ewms/testing';
 import { DICTIONARIES } from '../i18n.testing';
 import { Home } from './home';
 
-const BROWSER_LOCALE: Readonly<Record<Language, string>> = { es: 'es-CR', en: 'en-US' };
-
-/** Dibuja Home en el idioma del navegador, que el arranque aplica sin guardar nada. */
+/** Dibuja Home en el idioma pedido, fijado acá: por el navegador seguía al idioma de la máquina. */
 async function render(language: Language): Promise<HTMLElement> {
-  vi.spyOn(window.navigator, 'language', 'get').mockReturnValue(BROWSER_LOCALE[language]);
   await TestBed.configureTestingModule({
     imports: [Home],
     providers: [provideI18nTesting(DICTIONARIES)],
   }).compileComponents();
   await TestBed.inject(ApplicationInitStatus).donePromise;
+  await TestBed.inject(LanguageService).use(language);
   const fixture = TestBed.createComponent(Home);
   await fixture.whenStable();
   return fixture.nativeElement as HTMLElement;
@@ -27,8 +25,6 @@ function samples(element: HTMLElement, name: string): string[] {
 }
 
 describe('Home', () => {
-  afterEach(() => vi.restoreAllMocks());
-
   it.each<Language>(['es', 'en'])('has no accessibility violations in %s', async (language) => {
     await expectNoAxeViolations(await render(language));
   });

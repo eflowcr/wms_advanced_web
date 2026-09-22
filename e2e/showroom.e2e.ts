@@ -1254,6 +1254,35 @@ test.describe('DS-3 lote B: dialog', () => {
     expect(backdrop.background).toBe('rgba(1, 15, 66, 0.5)');
     expect(backdrop.filter).toContain('blur');
   });
+
+  // El CDK inyectaba <style> al abrirse el primer overlay y `style-src 'self'` lo bloqueaba,
+  // sin fallar ninguna compuerta: el componente salía sin estilo (ADR 0010).
+  test('NO OVERLAY BREAKS THE POLICY: neither the first tooltip nor the first dialog', async ({
+    page,
+  }) => {
+    await page.addInitScript(() => {
+      (window as unknown as { violations: string[] }).violations = [];
+      document.addEventListener('securitypolicyviolation', (event) => {
+        (window as unknown as { violations: string[] }).violations.push(
+          `${event.effectiveDirective}: ${event.target instanceof Element ? event.target.outerHTML.slice(0, 80) : ''}`,
+        );
+      });
+    });
+    await page.goto(TOOLTIP);
+    await ready(page);
+    await page.locator('[data-demo-tooltip] button').first().hover();
+    await expect(page.locator('[id^="ewms-tooltip-"]')).toBeVisible();
+
+    await page.goto(DIALOG);
+    await ready(page);
+    await page.locator('[data-open="info"] button').click();
+    await expect(page.locator('[role="dialog"]')).toBeVisible();
+
+    const violations = await page.evaluate(
+      () => (window as unknown as { violations: string[] }).violations,
+    );
+    expect(violations, violations.join(' · ')).toEqual([]);
+  });
 });
 
 test.describe('DS-3 lote B: el select con una fuente remota', () => {

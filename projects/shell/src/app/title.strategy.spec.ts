@@ -2,6 +2,7 @@ import { ApplicationInitStatus, Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Title } from '@angular/platform-browser';
 import { provideRouter, Router, TitleStrategy } from '@angular/router';
+import { LanguageService } from '@ewms/core';
 import { provideI18nTesting } from '@ewms/testing';
 import { BRAND_NAME } from './brand';
 import { DICTIONARIES } from './i18n.testing';
@@ -19,8 +20,6 @@ describe('EwmsTitleStrategy', () => {
   let title: Title;
 
   beforeEach(async () => {
-    // Español por el idioma del navegador, como lo resuelve el arranque.
-    vi.spyOn(window.navigator, 'language', 'get').mockReturnValue('es-CR');
     TestBed.configureTestingModule({
       providers: [
         provideI18nTesting(DICTIONARIES),
@@ -45,12 +44,12 @@ describe('EwmsTitleStrategy', () => {
       ],
     });
     await TestBed.inject(ApplicationInitStatus).donePromise;
+    // El idioma se fija acá: por el navegador, la prueba seguía al idioma de la máquina.
+    await TestBed.inject(LanguageService).use('es');
     router = TestBed.inject(Router);
     title = TestBed.inject(Title);
     await router.navigateByUrl('/');
   });
-
-  afterEach(() => vi.restoreAllMocks());
 
   it('puts the screen FIRST and the product second', async () => {
     // La pestaña trunca por la derecha: lo que distingue dos es el nombre de la pantalla.

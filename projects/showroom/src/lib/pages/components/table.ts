@@ -428,14 +428,6 @@ export class ShowroomTable {
     this.ultimaDescarga.set(row.codigo);
   }
 
-  /**
-   * ewmsDetail entrega la fila como unknown: usada como atributo suelto no hay
-   * entrada de la que inferir el tipo. Hueco de ergonomía; se convierte solo acá.
-   */
-  protected comoExpedicion(row: unknown): ExpedicionRow {
-    return row as ExpedicionRow;
-  }
-
   /** Cuántas líneas cuelgan de una cabecera, según la lista completa. */
   protected lineasDe(row: ExpedicionRow): number {
     return EXPEDICIONES.find((expedicion) => expedicion.id === row.id)?.hijos?.length ?? 0;

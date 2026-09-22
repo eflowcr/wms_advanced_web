@@ -103,6 +103,9 @@ export type { FlatRow } from './tree';
 export class DetailTemplate<T = unknown> {
   readonly template = inject<TemplateRef<{ $implicit: T }>>(TemplateRef);
 
+  /** No configura nada: con `[rowsFrom]="fuente"` la plantilla infiere la fila de `let-row`. */
+  readonly rowsFrom = input<TableSource<T> | null>(null);
+
   static ngTemplateContextGuard<T>(
     _directive: DetailTemplate<T>,
     _context: unknown,

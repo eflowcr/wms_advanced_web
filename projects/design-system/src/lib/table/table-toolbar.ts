@@ -14,7 +14,6 @@ import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { Button } from '../button/button';
 import { Checkbox } from '../checkbox/checkbox';
 import { FilterChips } from '../filters/filter-chips';
-import { Icon } from '../icon/icon';
 import { Input as TextInput } from '../input/input';
 import { Radio } from '../radio/radio';
 import { SplitButton, type SplitAction } from '../split-button/split-button';
@@ -33,7 +32,6 @@ import type { TableDensity } from './table.types';
     Button,
     Checkbox,
     FilterChips,
-    Icon,
     Radio,
     ReactiveFormsModule,
     SplitButton,

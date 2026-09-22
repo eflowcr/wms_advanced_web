@@ -25,6 +25,7 @@ import {
   type TableFormatters,
   type TableMessages,
 } from '@ewms/design-system';
+import { catalogNameFor } from '@ewms/showroom';
 import { TranslocoService } from '@jsverse/transloco';
 import { TranslocoLocaleService } from '@jsverse/transloco-locale';
 import { menuEntryFor } from './layout/menu';
@@ -102,8 +103,11 @@ function favoriteLabels(): FavoriteLabelResolver {
     labelFor: (route) =>
       computed(() => {
         lang();
+        // Una página del showroom se llama como en su catálogo: el menú solo sabe decir
+        // «Sistema de diseño», y trece favoritos con el mismo nombre no son favoritos.
+        const page = catalogNameFor(route);
         const entry = menuEntryFor(route);
-        return entry === undefined ? '' : transloco.translate(entry.labelKey);
+        return page ?? (entry === undefined ? '' : transloco.translate(entry.labelKey));
       }),
     iconFor: (route) => menuEntryFor(route)?.icon ?? null,
   };

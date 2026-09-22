@@ -1128,12 +1128,12 @@ describe('ShowroomDialog', () => {
     element.querySelector<HTMLButtonElement>('[data-open="danger"] button')!.click();
     await fixture.whenStable();
 
-    const dialog = document.querySelector('cdk-dialog-container');
+    const dialog = document.querySelector('.cdk-dialog-container');
     expect(dialog).not.toBeNull();
     expect(dialog?.textContent).toContain('Eliminar la expedición');
 
     // Cancelar: tres de las cuatro salidas responden false.
-    document.querySelectorAll<HTMLButtonElement>('cdk-dialog-container button')[0]!.click();
+    document.querySelectorAll<HTMLButtonElement>('.cdk-dialog-container button')[0]!.click();
     await fixture.whenStable();
 
     expect(element.querySelector('[data-last-answer]')?.textContent).toContain('no confirmado');
@@ -1147,7 +1147,7 @@ describe('ShowroomDialog', () => {
     element.querySelector<HTMLButtonElement>('[data-open="info"] button')!.click();
     await fixture.whenStable();
 
-    document.querySelectorAll<HTMLButtonElement>('cdk-dialog-container button')[1]!.click();
+    document.querySelectorAll<HTMLButtonElement>('.cdk-dialog-container button')[1]!.click();
     await fixture.whenStable();
 
     expect(element.querySelector('[data-last-answer]')?.textContent).toContain('confirmado (true)');

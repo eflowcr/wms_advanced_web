@@ -3,6 +3,7 @@ import { ApplicationConfig, provideBrowserGlobalErrorListeners } from '@angular/
 import { provideRouter, TitleStrategy } from '@angular/router';
 import { provideEwmsI18n } from '@ewms/core';
 import { routes } from './app.routes';
+import { CDK_STYLES_FROM_STYLESHEET } from './cdk.providers';
 import { EwmsTitleStrategy } from './title.strategy';
 
 export const appConfig: ApplicationConfig = {
@@ -14,5 +15,6 @@ export const appConfig: ApplicationConfig = {
     provideEwmsI18n(),
     // Título traducido por ruta (WCAG 2.4.2); el `title` de Angular lo congelaría en un idioma.
     { provide: TitleStrategy, useClass: EwmsTitleStrategy },
+    CDK_STYLES_FROM_STYLESHEET,
   ],
 };
