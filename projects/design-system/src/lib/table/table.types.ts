@@ -44,6 +44,8 @@ export type TableAggregate = 'sum' | 'avg' | 'count';
  * navegador. Guardar vistas llega con backend. Anchos en píxeles CSS medidos.
  */
 export interface TableView {
+  /** Todas las claves, visibles u ocultas, en el orden del usuario. */
+  readonly order: readonly string[];
   readonly hidden: readonly string[];
   readonly widths: Readonly<Record<string, number>>;
   readonly pinned: Readonly<Record<string, TablePin>>;

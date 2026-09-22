@@ -8,6 +8,7 @@ import { ShortcutsHost } from './shortcuts-host';
 import {
   EWMS_SHORTCUT_HELP_MESSAGES,
   EWMS_SHORTCUT_MAP,
+  type ShortcutAction,
   type ShortcutHelpMessages,
   type ShortcutMap,
 } from './shortcuts.types';
@@ -29,6 +30,8 @@ const MAP: ShortcutMap = {
   },
   cancel: { key: 'Escape', insideTextFields: true, chord: ['Esc'] },
   filters: { key: 'r', alt: true, chord: ['Alt', 'R'] },
+  moveColumnLeft: { key: 'ArrowLeft', alt: true, shift: true, chord: ['Alt', 'Shift', '←'] },
+  moveColumnRight: { key: 'ArrowRight', alt: true, shift: true, chord: ['Alt', 'Shift', '→'] },
   help: { key: '?', chord: ['?'] },
 };
 
@@ -47,6 +50,8 @@ const MESSAGES: ShortcutHelpMessages = {
     save: 'Guardar',
     cancel: 'Cancelar',
     filters: 'Filtros',
+    moveColumnLeft: 'Columna a la izquierda',
+    moveColumnRight: 'Columna a la derecha',
     help: 'Abrir esta lista',
   },
 };
@@ -99,7 +104,7 @@ describe('KeyboardShortcuts', () => {
   });
 
   /** Registra en un contexto de inyección, como exige `register`. */
-  function listen(action: 'search' | 'create' | 'save' | 'cancel'): void {
+  function listen(action: ShortcutAction): void {
     TestBed.runInInjectionContext(() => {
       shortcuts.register(action, () => fired.push(action));
     });
@@ -163,6 +168,13 @@ describe('KeyboardShortcuts', () => {
 
       // Nadie registró `create`: la combinación sigue siendo del navegador.
       expect(event.defaultPrevented).toBe(false);
+    });
+
+    it('Shift counts only where the map declares it: Alt+← alone is the browser «back»', () => {
+      listen('moveColumnLeft');
+      press('ArrowLeft', { altKey: true });
+      press('ArrowLeft', { altKey: true, shiftKey: true });
+      expect(fired).toEqual(['moveColumnLeft']);
     });
   });
 
@@ -369,7 +381,10 @@ describe('KeyboardShortcuts', () => {
 
       expect(dialog).not.toBeNull();
       const keys = [...dialog.querySelectorAll('kbd')].map((k) => k.textContent?.trim());
-      expect(keys).toEqual(['/', 'Alt', 'N', 'Ctrl', 'S', 'Esc', 'Alt', 'R', '?']);
+      expect(keys).toEqual([
+        ...['/', 'Alt', 'N', 'Ctrl', 'S', 'Esc', 'Alt', 'R'],
+        ...['Alt', 'Shift', '←', 'Alt', 'Shift', '→', '?'],
+      ]);
     });
 
     it('PACQ-04.3: an action added to the map appears without touching the dialog', async () => {

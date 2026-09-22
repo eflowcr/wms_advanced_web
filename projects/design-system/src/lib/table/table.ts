@@ -24,7 +24,7 @@ import {
 } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
-import { isObservable, of, type Observable } from 'rxjs';
+import { of, type Observable } from 'rxjs';
 import { catchError, debounceTime, map, skip, switchMap, tap } from 'rxjs/operators';
 import { Badge } from '../badge/badge';
 import { Checkbox } from '../checkbox/checkbox';
@@ -51,7 +51,8 @@ import { TableStatus } from './table-status';
 import { TableToolbar } from './table-toolbar';
 import { downloadCsv, exportMatrix, toCsv, toTsv } from './table-export';
 import { TableSelection } from './table-selection';
-import { TableViewState } from './table-view';
+import { TableColumnDrag } from './table-column-drag';
+import { TableViewState, type ColumnPosition } from './table-view';
 import {
   emptyQuery,
   readCell,
@@ -86,7 +87,8 @@ import {
 } from './table.types';
 import { TableRowMenu } from './table-row-menu';
 import { TableWindow } from './table-window';
-import { expandableKeys, flattenTree, type FlatRow } from './tree';
+import { TableTreeState } from './table-tree-state';
+import type { FlatRow } from './tree';
 
 export type { CellContext } from './column';
 export { TableColumn, CellTemplate } from './column';
@@ -291,22 +293,6 @@ export class Table<T> implements TableContext {
     return total === null ? null : Math.max(1, Math.ceil(total / this.pageSize()));
   });
 
-  private readonly expanded = signal<ReadonlySet<unknown>>(new Set());
-  private readonly loadingChildren = signal<ReadonlySet<unknown>>(new Set());
-  private readonly failedChildren = signal<ReadonlySet<unknown>>(new Set());
-  private readonly lazyChildren = signal<ReadonlyMap<unknown, readonly T[]>>(new Map());
-
-  private readonly resolveChildren = computed<TableChildren<T> | null>(() => {
-    const declared = this.children();
-    if (declared === null) {
-      return null;
-    }
-    if (typeof declared === 'string') {
-      return (row) => (readCell(row, declared) as readonly T[] | undefined) ?? null;
-    }
-    return declared;
-  });
-
   private readonly resolveRowState = computed<((row: T) => RowState | null) | null>(() => {
     const declared = this.rowState();
     if (declared === null) {
@@ -322,57 +308,10 @@ export class Table<T> implements TableContext {
     return (row) => dictionary[String(readCell(row, declared))]?.variant ?? null;
   });
 
-  protected readonly isTree = computed(() => this.resolveChildren() !== null);
-
-  // `undefined` = hay hijos y no llegaron; `null` = hoja. La diferencia dibuja el toggle.
-  private readonly childrenOf = (row: T): readonly T[] | null | undefined => {
-    const resolve = this.resolveChildren();
-    if (!resolve) {
-      return null;
-    }
-    const resolved = resolve(row);
-    if (resolved === null) {
-      return null;
-    }
-    if (isObservable(resolved)) {
-      return this.lazyChildren().get(this.trackBy()(row));
-    }
-    return resolved;
-  };
-
-  private readonly hasChildrenOf = (row: T): boolean => {
-    const resolve = this.resolveChildren();
-    if (!resolve) {
-      return false;
-    }
-    const resolved = resolve(row);
-    if (resolved === null) {
-      return false;
-    }
-    // Un padre perezoso siempre tiene toggle: si no, nadie podría pedir sus hijos.
-    return isObservable(resolved) || resolved.length > 0;
-  };
-
-  protected readonly rows = computed<readonly FlatRow<T>[]>(() =>
-    flattenTree(this.page().rows, {
-      children: this.childrenOf,
-      hasChildren: this.hasChildrenOf,
-      key: this.trackBy(),
-      expanded: this.expanded(),
-      loading: this.loadingChildren(),
-      failed: this.failedChildren(),
-    }),
-  );
-
-  protected readonly anyExpandable = computed(
-    () =>
-      this.isTree() &&
-      expandableKeys(this.page().rows, {
-        children: this.childrenOf,
-        hasChildren: this.hasChildrenOf,
-        key: this.trackBy(),
-      }).length > 0,
-  );
+  /** Abiertas, hijos perezosos y la lista aplanada: ver `table-tree-state.ts`. */
+  readonly tree = new TableTreeState<T>(this.children, this.trackBy, computed(() => this.page().rows));
+  protected readonly isTree = this.tree.isTree;
+  protected readonly rows = this.tree.rows;
 
   protected readonly selection = new TableSelection<T>();
   readonly selectedCount = this.selection.count;
@@ -464,13 +403,18 @@ export class Table<T> implements TableContext {
       },
     });
 
-    // `filters` del mapa de atajos, sin listener propio: lo contesta la tabla que tiene el foco,
-    // o la primera filtrable si el foco no está en ninguna. Ver vault: Tabla §12.
+    // Atajos del mapa, sin listener propio: `filters` lo contesta la tabla con el foco (o la primera
+    // filtrable); mover columna, la de la cabecera enfocada. Ver vault: Tabla §12 y §20.
     inject(KeyboardShortcuts)
       .events.pipe(takeUntilDestroyed())
-      .subscribe((event) => {
-        if (event.action === 'filters' && event.outcome === 'unregistered' && this.ownsShortcut()) {
+      .subscribe(({ action, outcome }) => {
+        if (outcome !== 'unregistered') {
+          return;
+        }
+        if (action === 'filters' && this.ownsShortcut()) {
           this.toggleFilters();
+        } else if (action === 'moveColumnLeft' || action === 'moveColumnRight') {
+          this.moveFocusedColumn(action === 'moveColumnLeft' ? -1 : 1);
         }
       });
 
@@ -495,6 +439,44 @@ export class Table<T> implements TableContext {
   }
 
   readonly layout = new TableViewState(this.columns, this.densityChoice, this.selectable);
+
+  protected readonly drag = new TableColumnDrag({
+    layout: this.layout,
+    columnOf: (key) => this.columns().find((column) => column.key() === key),
+    moved: (column, where) => this.announceMove(column, where),
+  });
+
+  /** Subir/Bajar del selector y el menú de columna: una posición, dentro de su grupo. */
+  moveColumn(column: TableColumn, delta: 1 | -1): void {
+    const where = this.layout.move(column, delta);
+    if (where) {
+      this.announceMove(column, where);
+    }
+  }
+
+  private announceMove(column: TableColumn, where: ColumnPosition): void {
+    const name = column.header() || column.key();
+    this.announcement.set(this.text().columnMoved(name, where.position, where.total));
+  }
+
+  /** Alt+Shift+←/→ con el foco en una cabecera; el foco sigue a la columna movida. */
+  private moveFocusedColumn(delta: 1 | -1): void {
+    const active = this.host.nativeElement.ownerDocument.activeElement as HTMLElement | null;
+    const cell = active?.closest<HTMLElement>('th[data-col]');
+    const column = this.columns().find((candidate) => candidate.key() === cell?.dataset['col']);
+    if (!cell || !column || !this.host.nativeElement.contains(cell)) {
+      return;
+    }
+    const focusable = active?.dataset['resize'] !== undefined ? '[data-resize]' : 'button';
+    this.moveColumn(column, delta);
+    afterNextRender(
+      () =>
+        this.host.nativeElement
+          .querySelector<HTMLElement>(`th[data-col="${column.key()}"] ${focusable}`)
+          ?.focus(),
+      { injector: this.injector },
+    );
+  }
 
   /** Las columnas que se dibujan: visibles, con las fijadas en los bordes. */
   readonly visibleColumns = this.layout.visibleColumns;
@@ -624,50 +606,11 @@ export class Table<T> implements TableContext {
   protected readonly searchText = this.search as Signal<string>;
 
   protected toggleExpanded(flat: FlatRow<T>): void {
-    if (!flat.hasChildren) {
-      return;
-    }
-    const open = new Set(this.expanded());
-    if (open.has(flat.key)) {
-      open.delete(flat.key);
-      this.expanded.set(open);
-      return;
-    }
-    open.add(flat.key);
-    this.expanded.set(open);
-    this.loadLazyChildren(flat);
-  }
-
-  // Una sola vez por fila: pedirlos en cada expansión le pega a la red sin necesidad.
-  private loadLazyChildren(flat: FlatRow<T>): void {
-    const resolve = this.resolveChildren();
-    const resolved = resolve?.(flat.row);
-    if (!resolved || !isObservable(resolved) || this.lazyChildren().has(flat.key)) {
-      return;
-    }
-
-    this.failedChildren.update((current) => withoutKey(current, flat.key));
-    this.loadingChildren.update((current) => withKey(current, flat.key));
-
-    resolved.subscribe({
-      next: (children) => {
-        this.lazyChildren.update((current) => new Map(current).set(flat.key, children));
-        this.loadingChildren.update((wip) => withoutKey(wip, flat.key));
-      },
-      error: () => {
-        this.loadingChildren.update((wip) => withoutKey(wip, flat.key));
-        this.failedChildren.update((current) => withKey(current, flat.key));
-      },
-    });
+    this.tree.toggle(flat);
   }
 
   protected retryChildren(flat: FlatRow<T>): void {
-    this.lazyChildren.update((current) => {
-      const next = new Map(current);
-      next.delete(flat.key);
-      return next;
-    });
-    this.loadLazyChildren(flat);
+    this.tree.retry(flat);
   }
 
   protected isSelected(flat: FlatRow<T>): boolean {
@@ -918,18 +861,6 @@ export class Table<T> implements TableContext {
   protected onRowDblclick(flat: FlatRow<T>): void {
     this.rowActivate.emit({ row: flat.row });
   }
-}
-
-function withKey(set: ReadonlySet<unknown>, key: unknown): ReadonlySet<unknown> {
-  const next = new Set(set);
-  next.add(key);
-  return next;
-}
-
-function withoutKey(set: ReadonlySet<unknown>, key: unknown): ReadonlySet<unknown> {
-  const next = new Set(set);
-  next.delete(key);
-  return next;
 }
 
 function parentIndexOf<T>(rows: readonly FlatRow<T>[], from: number): number {

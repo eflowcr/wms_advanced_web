@@ -11,6 +11,9 @@ export type ShortcutAction =
   | 'cancel'
   /** Muestra u oculta la fila de filtros de la tabla con el foco (ver Tabla §12). */
   | 'filters'
+  /** Mueve la columna de la cabecera enfocada una posición (ver Tabla §20). */
+  | 'moveColumnLeft'
+  | 'moveColumnRight'
   | 'help';
 
 /**
@@ -22,6 +25,8 @@ export interface ShortcutBinding {
   readonly key: string;
   readonly ctrl?: boolean;
   readonly alt?: boolean;
+  /** Sin declarar no se mira: `?` llega con Shift en un teclado y sin él en otro. */
+  readonly shift?: boolean;
   /** Dispara aun dentro de un campo: la excepción de RFE-04. Ver vault: Atajos-de-Teclado. */
   readonly insideTextFields?: boolean;
   /** Se aplica esté o no registrada la acción (el caso de Ctrl+S). */
@@ -68,6 +73,7 @@ export function matches(binding: ShortcutBinding, event: KeyboardEvent): boolean
     event.key === binding.key &&
     event.ctrlKey === (binding.ctrl ?? false) &&
     event.altKey === (binding.alt ?? false) &&
+    (binding.shift === undefined || event.shiftKey === binding.shift) &&
     // Meta nunca es de la aplicación: Command en macOS, menú del sistema en Windows.
     !event.metaKey
   );

@@ -31,17 +31,42 @@
 
     @if (table.columnChooser()) {
       <ewms-table-popover [label]="text.columns" icon="eye" data-column-chooser>
-        <fieldset class="flex flex-col items-start gap-2">
+        <!-- En el orden de la tabla. Subir/Bajar es el camino que siempre sirve: táctil y lector de pantalla. -->
+        <fieldset class="flex flex-col gap-1">
           <legend class="mb-1 text-caption text-secondary">{{ text.columns }}</legend>
-          @for (column of table.layout.hideable(); track column.key()) {
-            <!-- La última visible no se apaga: sin columnas no se podría volver a configurar. -->
-            <ewms-checkbox
-              [label]="column.header() || column.key()"
-              [checked]="table.layout.isVisible(column)"
-              [disabled]="!table.layout.canHide(column)"
-              [attr.data-column-option]="column.key()"
-              (checkedChange)="table.layout.toggle(column)"
-            />
+          @for (column of table.layout.orderedColumns(); track column.key()) {
+            @let name = column.header() || column.key();
+            <div class="flex items-center gap-1" [attr.data-column-row]="column.key()">
+              <!-- La última visible no se apaga: sin columnas no se podría volver a configurar. -->
+              <ewms-checkbox
+                class="me-auto"
+                [label]="name"
+                [checked]="table.layout.isVisible(column)"
+                [disabled]="!column.hideable() || !table.layout.canHide(column)"
+                [attr.data-column-option]="column.key()"
+                (checkedChange)="table.layout.toggle(column)"
+              />
+              <ewms-button
+                variant="ghost"
+                size="sm"
+                icon="chevron-up"
+                [iconOnly]="true"
+                [label]="text.moveEarlier(name)"
+                [disabled]="!table.layout.canMove(column, -1)"
+                data-column-up
+                (click)="table.moveColumn(column, -1)"
+              />
+              <ewms-button
+                variant="ghost"
+                size="sm"
+                icon="chevron-down"
+                [iconOnly]="true"
+                [label]="text.moveLater(name)"
+                [disabled]="!table.layout.canMove(column, 1)"
+                data-column-down
+                (click)="table.moveColumn(column, 1)"
+              />
+            </div>
           }
         </fieldset>
       </ewms-table-popover>

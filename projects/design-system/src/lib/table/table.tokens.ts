@@ -44,6 +44,11 @@ export interface TableMessages {
   readonly columns: string;
   /** Nombre del separador: «Ancho de la columna Código». */
   readonly resizeColumn: (column: string) => string;
+  /** Botones del selector de columnas: «Subir Cliente», «Bajar Cliente». */
+  readonly moveEarlier: (column: string) => string;
+  readonly moveLater: (column: string) => string;
+  /** Lo que se anuncia al mover una columna: «Cliente, posición 2 de 5». */
+  readonly columnMoved: (column: string, position: number, total: number) => string;
 
   // Selección: la barra de acciones masivas y lo que se anuncia.
   /** «1 seleccionada», «3 seleccionadas». */

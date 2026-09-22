@@ -34,6 +34,7 @@ export interface TableContext {
   runBulk(item: MenuItem): void;
   clearSelection(): void;
   toggleFilters(): void;
+  moveColumn(column: TableColumn, delta: 1 | -1): void;
   setDensity(density: TableDensity): void;
 }
 

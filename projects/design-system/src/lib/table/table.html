@@ -48,16 +48,29 @@
           }
 
           @for (column of visibleColumns(); track column.key()) {
+            <!-- Se arrastra para reordenar, dentro de su grupo de fijado; la línea marca dónde cae. -->
             <th
               scope="col"
               role="columnheader"
-              [class]="headerCellClasses + ' ' + layout.pinClasses(column, true)"
+              draggable="true"
+              [class]="
+                headerCellClasses +
+                ' ' +
+                layout.pinClasses(column, true) +
+                ' ' +
+                drag.lineClasses(column)
+              "
               [style.width]="layout.headerWidth(column)"
               [style.left.px]="layout.pinStart(column)"
               [style.right.px]="layout.pinEnd(column)"
               [attr.aria-sort]="ariaSort(column)"
               [attr.data-col]="column.key()"
               [attr.data-pin]="column.pinned()"
+              (pointerdown)="drag.press($event)"
+              (dragstart)="drag.start($event, column)"
+              (dragover)="drag.over($event, column)"
+              (drop)="drag.drop($event, column)"
+              (dragend)="drag.end()"
             >
               @if (column.sortable()) {
                 <button

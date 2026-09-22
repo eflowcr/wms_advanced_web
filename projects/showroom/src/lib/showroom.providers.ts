@@ -86,6 +86,8 @@ export const SHORTCUT_HELP_MESSAGES: ShortcutHelpMessages = {
     save: 'Guardar el formulario activo',
     cancel: 'Cancelar lo que esté en curso, o cerrar lo que esté abierto',
     filters: 'Mostrar u ocultar los filtros de la tabla',
+    moveColumnLeft: 'Mover la columna enfocada a la izquierda',
+    moveColumnRight: 'Mover la columna enfocada a la derecha',
     help: 'Abrir esta lista',
   },
 };
@@ -125,6 +127,9 @@ export const TABLE_MESSAGES: TableMessages = {
   },
   columns: 'Columnas',
   resizeColumn: (column) => `Ancho de la columna ${column}`,
+  moveEarlier: (column) => `Subir ${column}`,
+  moveLater: (column) => `Bajar ${column}`,
+  columnMoved: (column, position, total) => `${column}, posición ${position} de ${total}`,
   selectedCount: (count) => (count === 1 ? '1 seleccionada' : `${count} seleccionadas`),
   clearSelection: 'Quitar selección',
   copied: (rows) => (rows === 1 ? '1 fila copiada' : `${rows} filas copiadas`),

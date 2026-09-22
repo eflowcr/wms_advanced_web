@@ -93,6 +93,9 @@ const MESSAGES: TableMessages = {
     chosen === total ? `${column}: todos` : `${column}: ${chosen} de ${total}`,
   columns: 'Columnas',
   resizeColumn: (column) => `Ancho de la columna ${column}`,
+  moveEarlier: (column) => `Subir ${column}`,
+  moveLater: (column) => `Bajar ${column}`,
+  columnMoved: (column, position, total) => `${column}, posición ${position} de ${total}`,
   selectedCount: (count) => `${count} seleccionadas`,
   clearSelection: 'Quitar selección',
   copied: (rows) => `${rows} filas copiadas`,
@@ -319,13 +322,10 @@ describe('Table', () => {
       expect(textOf(0)).toContain('d:2026-01-15');
     });
 
-    it('draws a badge from the dictionary, with words and an icon', () => {
+    it('draws a badge from the dictionary; tints the row from THE SAME one, ONLY AN EXCEPTION', () => {
       const badge = bodyRows()[1]?.querySelector('ewms-badge');
       expect(badge?.textContent).toContain('Con incidencia');
       expect(badge?.querySelector('svg')).not.toBeNull();
-    });
-
-    it('tints the row from THE SAME dictionary, and ONLY AN EXCEPTION', () => {
       // `rowState="estado"` lee los badges de la columna `estado`: no pueden discrepar.
       expect(bodyRows()[1]?.className).toContain('bg-danger-surface');
       // Pendiente es `neutral`: solo el badge; con todas teñidas ninguna llama la atención.
@@ -403,14 +403,11 @@ describe('Table', () => {
       expect(boxes('fecha').length).toBe(1);
     });
 
-    it('filters text by substring', async () => {
+    it('filters text by substring, and a number range on both bounds', async () => {
       type(boxes('codigo')[0]!, '0002');
       await settle();
       expect(bodyRows().length).toBe(1);
-      expect(textOf(0)).toContain('EXP-0002');
-    });
-
-    it('filters a number range on both bounds', async () => {
+      type(boxes('codigo')[0]!, '');
       const [min, max] = boxes('bultos');
       type(min!, '100');
       type(max!, '1000');
@@ -630,26 +627,25 @@ describe('Table', () => {
       expect(tabbable()).toEqual(['0-0']);
     });
 
-    it('moves down and up a column', async () => {
+    it('moves down a column, and stops at the ends instead of wrapping', async () => {
       press(0, 1, 'ArrowDown');
       await settle();
       expect(tabbable()).toEqual(['1-0']);
+      press(1, 0, 'ArrowUp');
+      press(0, 0, 'ArrowUp');
+      await settle();
+      expect(tabbable()).toEqual(['0-0']);
     });
 
-    it('ARROW RIGHT EXPANDS A PARENT before it moves between cells', async () => {
+    it('ARROW RIGHT EXPANDS A PARENT before moving; left goes to the parent, then collapses', async () => {
       press(0, 0, 'ArrowRight');
       await settle();
       expect(bodyRows().length).toBe(5);
-
       press(0, 0, 'ArrowRight');
       await settle();
       expect(tabbable()).toEqual(['0-1']);
-    });
 
-    it('arrow left collapses, and from a child it goes to the parent', async () => {
-      press(0, 0, 'ArrowRight');
-      await settle();
-
+      press(1, 1, 'ArrowLeft');
       press(1, 0, 'ArrowLeft');
       await settle();
       expect(tabbable()).toEqual(['0-0']);
@@ -694,11 +690,6 @@ describe('Table', () => {
       expect(event.defaultPrevented).toBe(true);
     });
 
-    it('stops at the ends instead of wrapping', async () => {
-      press(0, 0, 'ArrowUp');
-      await settle();
-      expect(tabbable()).toEqual(['0-0']);
-    });
   });
 
   describe('density', () => {
@@ -774,7 +765,7 @@ describe('Table', () => {
       await settle();
     }
 
-    it('hides the filter row by default, and the button says what it controls', async () => {
+    it('hides the filter row by default, says what it controls, and HIDING NEVER HIDES A FILTER', async () => {
       expect(filterRow().hidden).toBe(true);
       expect(toggle().getAttribute('aria-expanded')).toBe('false');
       expect(toggle().getAttribute('aria-controls')).toBe(filterRow().id);
@@ -783,9 +774,7 @@ describe('Table', () => {
       await settle();
       expect(filterRow().hidden).toBe(false);
       expect(toggle().getAttribute('aria-expanded')).toBe('true');
-    });
-
-    it('HIDING NEVER HIDES THAT IT FILTERS: the chips stay, and the button counts', async () => {
+      toggle().click();
       await filterCodigo('0002');
       expect(toggle().textContent?.trim()).toBe('Filtros (1)');
       expect(chips().map((chip) => chip.textContent?.replace(/\s+/g, ' ').trim())).toEqual([
@@ -938,13 +927,10 @@ describe('Table', () => {
   });
 
   describe('a source that misbehaves', () => {
-    it('shows the empty state rather than breaking when a page comes back empty', async () => {
+    it('an empty page is the projected no-data; with no total it keeps working', async () => {
       host.source.set({ load: () => of({ rows: [], page: 0, pageSize: 50, total: 0 }) });
       await settle();
       expect(fixture.nativeElement.textContent).toContain('Ninguna expedición coincide');
-    });
-
-    it('keeps working when the source has no total to report', async () => {
       host.source.set(new LazySource());
       await settle();
       expect(bodyRows().length).toBe(3);
@@ -1129,24 +1115,14 @@ describe('Table with lazy children', () => {
     (fixture.nativeElement.querySelector('[data-toggle="0"]') as HTMLButtonElement).click();
   }
 
-  it('draws the toggle before any child exists', () => {
+  it('draws the toggle before any child exists, a busy row on the way, then the children', async () => {
     // Devolver un Observable ya afirma que hay hijos: si no, nadie podría pedirlos.
     expect(fixture.nativeElement.querySelector('[data-toggle="0"]')).not.toBeNull();
-  });
-
-  it('shows a busy row while they are on their way', async () => {
     toggle();
     await settle();
-
     const loading = fixture.nativeElement.querySelector('[data-loading="0"]');
-    expect(loading).not.toBeNull();
     expect(loading?.getAttribute('aria-busy')).toBe('true');
     expect(loading?.textContent).toContain('Cargando…');
-  });
-
-  it('replaces the busy row with the children when they land', async () => {
-    toggle();
-    await settle();
 
     host.pending.next(KIDS);
     host.pending.complete();
@@ -1171,7 +1147,7 @@ describe('Table with lazy children', () => {
     expect(host.subscriptions).toBe(1);
   });
 
-  it('shows the failure in line, with a retry, and keeps the row expanded', async () => {
+  it('shows the failure in line, with a retry, expanded; folded, it goes away', async () => {
     toggle();
     await settle();
 
@@ -1184,14 +1160,6 @@ describe('Table with lazy children', () => {
     expect(fixture.nativeElement.querySelector('tbody tr')?.getAttribute('aria-expanded')).toBe(
       'true',
     );
-  });
-
-  it('takes the failure away when the row is folded back up', async () => {
-    toggle();
-    await settle();
-    host.pending.error(new Error('boom'));
-    await settle();
-    expect(fixture.nativeElement.querySelector('[data-failed="0"]')).not.toBeNull();
 
     toggle();
     await settle();
@@ -1390,14 +1358,10 @@ describe('Table master/detail', () => {
     return [...fixture.nativeElement.querySelectorAll('[data-detail]')] as HTMLElement[];
   }
 
-  it('offers the panel only on the rows that have one', () => {
-    expect(toggle(0)).not.toBeNull();
+  it('offers the panel only where there is one; it unfolds one cell spanning the table', async () => {
     expect(toggle(1)).not.toBeNull();
     // Sin control, ni siquiera deshabilitado: prometería algo que la fila no hace.
     expect(toggle(2)).toBeNull();
-  });
-
-  it('unfolds one cell spanning the whole table, with the projected panel', async () => {
     toggle(0)?.click();
     await settle();
 
@@ -1406,14 +1370,6 @@ describe('Table master/detail', () => {
     // Tres columnas y sin casilla: el panel no repite las columnas.
     expect(cell.getAttribute('colspan')).toBe('3');
     expect(cell.textContent).toContain('Detalle de EXP-0001');
-  });
-
-  it('gives the panel the row it belongs to, not the first one', async () => {
-    toggle(1)?.click();
-    await settle();
-    expect(fixture.nativeElement.querySelector('[data-detail-body]')?.textContent).toContain(
-      'EXP-0002',
-    );
   });
 
   it('says on the BUTTON that it is open, and what it opened', async () => {
@@ -1431,6 +1387,7 @@ describe('Table master/detail', () => {
     expect(opened.getAttribute('aria-controls')).toBe(cell.id);
   });
 
+  // Y cada panel recibe su fila, no la primera.
   it('opens as many panels as somebody asks for, and folds each back alone', async () => {
     toggle(0)?.click();
     await settle();
@@ -1446,17 +1403,11 @@ describe('Table master/detail', () => {
     );
   });
 
-  it('adds rows to the DOM without pretending the table grew', async () => {
+  it('has no axe violations with a panel open, which is no row of the table', async () => {
+    toggle(0)?.click();
+    await settle();
     // Fila del DOM, no de la tabla: contarla leería cuatro expediciones donde hay tres.
-    toggle(0)?.click();
-    await settle();
-    const table = fixture.nativeElement.querySelector('table') as HTMLElement;
-    expect(table.getAttribute('aria-rowcount')).toBe('3');
-  });
-
-  it('has no axe violations with a panel open', async () => {
-    toggle(0)?.click();
-    await settle();
+    expect(fixture.nativeElement.querySelector('table').getAttribute('aria-rowcount')).toBe('3');
     await expectNoAxeViolations(fixture.nativeElement);
   });
 
@@ -1552,9 +1503,13 @@ describe('Table master/detail', () => {
     expect(menu()?.getAttribute('aria-activedescendant')).toBe(entries()[0]?.id);
   });
 
-  it('walks past what cannot be chosen', async () => {
+  it('walks past what cannot be chosen, and a click on it emits nothing', async () => {
     kebab(0)?.click();
     await settle();
+    entries()[1]?.click();
+    await settle();
+    expect(host.chosen).toBe('');
+    expect(menu()).not.toBeNull();
     press('ArrowDown');
     press('ArrowDown');
     await settle();
@@ -1576,23 +1531,13 @@ describe('Table master/detail', () => {
 
     expect(host.chosen).toBe('ver:EXP-0002');
     expect(menu()).toBeNull();
-  });
 
-  it('emits on a click, too', async () => {
+    // Y con un clic.
     kebab(0)?.click();
     await settle();
     entries()[3]?.click();
     await settle();
     expect(host.chosen).toBe('anular:EXP-0001');
-  });
-
-  it('emits nothing for a disabled entry, however it is pressed', async () => {
-    kebab(0)?.click();
-    await settle();
-    entries()[1]?.click();
-    await settle();
-    expect(host.chosen).toBe('');
-    expect(menu()).not.toBeNull();
   });
 
   it('gives the focus back to the row on Escape', async () => {
@@ -1758,9 +1703,7 @@ describe('Table virtualisation', () => {
     expect(table.getAttribute('aria-rowcount')).toBe('5000');
     expect(drawn().length).toBeGreaterThan(0);
     expect(drawn().length).toBeLessThan(60);
-  });
-
-  it('holds the scrollbar at the length of the whole table', () => {
+    // La barra de desplazamiento mide la tabla entera.
     expect(spacerHeight('before') + drawn().length * ROW_PIXELS + spacerHeight('after')).toBe(
       5000 * ROW_PIXELS,
     );
@@ -1821,6 +1764,8 @@ describe('Table and the `filters` shortcut', () => {
     save: { key: 's', ctrl: true, chord: ['Ctrl', 'S'] },
     cancel: { key: 'Escape', insideTextFields: true, chord: ['Esc'] },
     filters: { key: 'r', alt: true, chord: ['Alt', 'R'] },
+    moveColumnLeft: { key: 'ArrowLeft', alt: true, shift: true, chord: ['Alt', 'Shift', '←'] },
+    moveColumnRight: { key: 'ArrowRight', alt: true, shift: true, chord: ['Alt', 'Shift', '→'] },
     help: { key: '?', chord: ['?'] },
   };
 
@@ -1833,6 +1778,7 @@ describe('Table and the `filters` shortcut', () => {
         </ewms-table>
         <ewms-table id="filtered" [source]="source" [quickFilter]="true" ariaLabel="Con filtros">
           <ewms-column key="codigo" header="Código" [filterable]="true" />
+          <ewms-column key="bultos" header="Bultos" type="number" />
         </ewms-table>
       </div>
     `,
@@ -1901,6 +1847,24 @@ describe('Table and the `filters` shortcut', () => {
     // En un campo, Alt+R es del navegador (RFE-04).
     await pressFrom(fixture.nativeElement.querySelector('#filtered [data-quick-filter] input'));
     expect(filterRow().hidden).toBe(false);
+  });
+
+  it('Alt+Shift+→ moves the column whose header has the focus, and the focus follows it', async () => {
+    const handle = fixture.nativeElement.querySelector('#filtered [data-resize="codigo"]');
+    handle.focus();
+    handle.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'ArrowRight', altKey: true, shiftKey: true, bubbles: true }),
+    );
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const keys = [...fixture.nativeElement.querySelectorAll('#filtered th[data-col]')].map(
+      (th) => (th as HTMLElement).dataset['col'],
+    );
+    expect(keys).toEqual(['bultos', 'codigo']);
+    expect(document.activeElement?.getAttribute('data-resize')).toBe('codigo');
+    expect(fixture.nativeElement.querySelector('#filtered [data-table-announce]').textContent).toBe(
+      'Código, posición 2 de 2',
+    );
   });
 });
 
@@ -1996,11 +1960,9 @@ describe('Table columns', () => {
     await settle();
   }
 
-  it('re-measures when the table changes size: it observes the table itself', () => {
-    expect(observed).toEqual([fixture.nativeElement.querySelector('table')]);
-  });
-
   it('PINNED GOES TO THE EDGES: start first, end last, sticky, with a separator', () => {
+    // Vuelve a medir cuando la tabla cambia de tamaño: observa la tabla misma.
+    expect(observed).toEqual([fixture.nativeElement.querySelector('table')]);
     expect(headers()).toEqual(['codigo', 'bultos', 'fecha', 'acciones']);
     expect(header('codigo').className).toContain('sticky');
     expect(header('codigo').className).toContain('border-e');
@@ -2014,9 +1976,9 @@ describe('Table columns', () => {
     expect(firstRow.querySelector('[data-cell="0-1"]')?.className).toContain('bg-inherit');
   });
 
-  it('hides and shows from the chooser, and never offers one that says no', async () => {
+  it('hides and shows from the chooser, and never lets go of one that says no', async () => {
     await openChooser();
-    expect(option('codigo')).toBeNull();
+    expect(option('codigo').disabled).toBe(true);
 
     option('bultos').click();
     await settle();
@@ -2060,7 +2022,48 @@ describe('Table columns', () => {
     two.nativeElement.remove();
   });
 
-  it('is a window splitter: named, vertical, with its width; arrows step by token', async () => {
+  it('REORDERS INSIDE ITS PIN GROUP, from the chooser and by dragging, and says where', async () => {
+    const dataTransfer = { setData: () => undefined, effectAllowed: 'none' };
+    const drag = (type: string, key: string, clientX = 0): void => {
+      const event = new MouseEvent(type, { bubbles: true, cancelable: true, clientX });
+      header(key).dispatchEvent(Object.assign(event, { dataTransfer }));
+    };
+    await openChooser();
+    const row = (key: string, button: string): HTMLButtonElement =>
+      document.querySelector(`[data-column-row="${key}"] ${button} button`) as HTMLButtonElement;
+    // Bultos es la primera normal: no sube por encima de la fijada.
+    expect(row('bultos', '[data-column-up]').disabled).toBe(true);
+    row('bultos', '[data-column-down]').click();
+    await settle();
+    expect(headers()).toEqual(['codigo', 'fecha', 'bultos', 'acciones']);
+    expect(fixture.componentInstance.view?.order).toEqual(['codigo', 'fecha', 'bultos', 'acciones']);
+    expect(fixture.nativeElement.querySelector('[data-table-announce]').textContent).toBe(
+      'Bultos, posición 3 de 4',
+    );
+    // jsdom mide cero: a la izquierda del centro es «antes»; la línea marca el lado.
+    drag('dragstart', 'bultos');
+    drag('dragover', 'fecha', -1);
+    drag('dragover', 'fecha', -1);
+    await settle();
+    expect(header('fecha').className).toContain('before:start-0');
+    drag('drop', 'fecha', -1);
+    await settle();
+    expect(headers()).toEqual(['codigo', 'bultos', 'fecha', 'acciones']);
+
+    // Desde el separador se redimensiona; una normal no cae entre las fijadas.
+    separator('bultos').dispatchEvent(new MouseEvent('pointerdown', { bubbles: true }));
+    drag('dragstart', 'bultos');
+    drag('drop', 'fecha', -1);
+    header('bultos').dispatchEvent(new MouseEvent('pointerdown', { bubbles: true }));
+    drag('dragstart', 'bultos');
+    drag('dragover', 'codigo', -1);
+    drag('drop', 'codigo', -1);
+    await settle();
+    expect(header('codigo').className).not.toContain('before:');
+    expect(headers()).toEqual(['codigo', 'bultos', 'fecha', 'acciones']);
+  });
+
+  it('is a window splitter: named, vertical, with its width; arrows step by token; it drags', async () => {
     const handle = separator('fecha');
     expect(handle.getAttribute('role')).toBe('separator');
     expect(handle.getAttribute('aria-orientation')).toBe('vertical');
@@ -2087,18 +2090,17 @@ describe('Table columns', () => {
     await settle();
     expect(header('fecha').style.width).toBe('');
     expect(fixture.componentInstance.view?.widths).toEqual({});
-  });
 
-  it('drags with the pointer, and never below the minimum', async () => {
-    const handle = separator('bultos');
-    handle.dispatchEvent(new MouseEvent('pointerdown', { clientX: 100, bubbles: true }));
-    handle.dispatchEvent(new MouseEvent('pointermove', { clientX: 260, bubbles: true }));
-    handle.dispatchEvent(new MouseEvent('pointerup', { clientX: 260, bubbles: true }));
+    // Con el puntero, y nunca bajo el mínimo.
+    const grip = separator('bultos');
+    grip.dispatchEvent(new MouseEvent('pointerdown', { clientX: 100, bubbles: true }));
+    grip.dispatchEvent(new MouseEvent('pointermove', { clientX: 260, bubbles: true }));
+    grip.dispatchEvent(new MouseEvent('pointerup', { clientX: 260, bubbles: true }));
     await settle();
     expect(header('bultos').style.width).toBe(pixels(160));
 
-    handle.dispatchEvent(new MouseEvent('pointerdown', { clientX: 100, bubbles: true }));
-    handle.dispatchEvent(new MouseEvent('pointermove', { clientX: 0, bubbles: true }));
+    grip.dispatchEvent(new MouseEvent('pointerdown', { clientX: 100, bubbles: true }));
+    grip.dispatchEvent(new MouseEvent('pointermove', { clientX: 0, bubbles: true }));
     await settle();
     expect(header('bultos').style.width).toBe(pixels(MIN));
   });

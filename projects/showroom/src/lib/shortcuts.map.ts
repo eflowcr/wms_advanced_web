@@ -17,5 +17,7 @@ export const SHOWROOM_SHORTCUT_MAP: ShortcutMap = {
   },
   cancel: { key: 'Escape', insideTextFields: true, chord: ['Esc'] },
   filters: { key: 'r', alt: true, chord: ['Alt', 'R'] },
+  moveColumnLeft: { key: 'ArrowLeft', alt: true, shift: true, chord: ['Alt', 'Shift', '←'] },
+  moveColumnRight: { key: 'ArrowRight', alt: true, shift: true, chord: ['Alt', 'Shift', '→'] },
   help: { key: '?', chord: ['?'] },
 };

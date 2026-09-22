@@ -184,6 +184,10 @@ function tableMessages(): TableMessages {
       return transloco.translate('ds.table.columns');
     },
     resizeColumn: (column) => transloco.translate('ds.table.resizeColumn', { column }),
+    moveEarlier: (column) => transloco.translate('ds.table.moveEarlier', { column }),
+    moveLater: (column) => transloco.translate('ds.table.moveLater', { column }),
+    columnMoved: (column, position, total) =>
+      transloco.translate('ds.table.columnMoved', { column, position, total }),
     selectedCount: (count) => transloco.translate('ds.table.selectedCount', { count }),
     get clearSelection() {
       return transloco.translate('ds.table.clearSelection');
@@ -304,6 +308,12 @@ function shortcutHelpMessages(): ShortcutHelpMessages {
       },
       get filters() {
         return transloco.translate('shell.shortcuts.actions.filters');
+      },
+      get moveColumnLeft() {
+        return transloco.translate('shell.shortcuts.actions.moveColumnLeft');
+      },
+      get moveColumnRight() {
+        return transloco.translate('shell.shortcuts.actions.moveColumnRight');
       },
       get help() {
         return transloco.translate('shell.shortcuts.actions.help');

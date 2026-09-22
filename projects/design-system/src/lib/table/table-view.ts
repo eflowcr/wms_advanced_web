@@ -7,23 +7,79 @@ import { COLUMN_WIDTH, type TableDensity, type TablePin, type TableView } from '
 const RESIZE_STEP_TOKEN = '--col-resize-step';
 const MIN_WIDTH_TOKEN = '--col-filter-min-width';
 
+/** Dónde cae una columna movida, para anunciarlo: «Cliente, posición 2 de 5». */
+export interface ColumnPosition {
+  readonly position: number;
+  readonly total: number;
+}
+
 /**
- * Lo que el usuario configura de las columnas —ocultas, anchos— y cómo se fijan y miden. Vive en
- * memoria y sale por `(viewChange)`; nunca va al navegador. Interna. Ver vault: Tabla §14.
+ * Lo que el usuario configura de las columnas —orden, ocultas, anchos— y cómo se fijan y miden.
+ * Vive en memoria y sale por `(viewChange)`; nunca va al navegador. Interna. Ver vault: Tabla §14.
  */
 export class TableViewState {
   private readonly hidden = signal<ReadonlySet<string>>(new Set());
   private readonly widths = signal<Readonly<Record<string, number>>>({});
+  /** Claves en el orden del usuario; null es el declarado. */
+  private readonly order = signal<readonly string[] | null>(null);
+
+  /** Todas, en el orden del usuario; una columna que no estaba en él cae al final. */
+  readonly orderedColumns = computed(() => {
+    const order = this.order();
+    if (order === null) {
+      return this.columns();
+    }
+    const rank = (column: TableColumn): number => {
+      const index = order.indexOf(column.key());
+      return index < 0 ? order.length : index;
+    };
+    return [...this.columns()].sort((a, b) => rank(a) - rank(b));
+  });
 
   /** Las visibles, con las fijadas al inicio y al final: el `sticky` solo pega en los bordes. */
   readonly visibleColumns = computed(() => {
-    const visible = this.columns().filter((column) => !this.hidden().has(column.key()));
+    const visible = this.orderedColumns().filter((column) => !this.hidden().has(column.key()));
     const at = (pin: TablePin | null) => visible.filter((column) => column.pinned() === pin);
     return [...at('start'), ...at(null), ...at('end')];
   });
 
-  /** Lo que ofrece el selector de columnas: las que se pueden ocultar. */
-  readonly hideable = computed(() => this.columns().filter((column) => column.hideable()));
+  /** Una posición a la izquierda (-1) o a la derecha (1), sin salir de su grupo de fijado. */
+  move(column: TableColumn, delta: 1 | -1): ColumnPosition | null {
+    const group = this.groupOf(column);
+    const neighbour = group[group.indexOf(column) + delta];
+    return neighbour ? this.place(column, neighbour, delta > 0 ? 'after' : 'before') : null;
+  }
+
+  /** Suelta `column` junto a `target`. Una normal no cae entre las fijadas, ni al revés. */
+  place(column: TableColumn, target: TableColumn, side: 'before' | 'after'): ColumnPosition | null {
+    if (column === target || column.pinned() !== target.pinned()) {
+      return null;
+    }
+    const keys = this.orderedColumns()
+      .map((candidate) => candidate.key())
+      .filter((key) => key !== column.key());
+    keys.splice(keys.indexOf(target.key()) + (side === 'after' ? 1 : 0), 0, column.key());
+    this.order.set(keys);
+    return this.positionOf(column);
+  }
+
+  /** Deshabilita Subir/Bajar en el borde de su grupo, o si está oculta. */
+  canMove(column: TableColumn, delta: 1 | -1): boolean {
+    const group = this.groupOf(column);
+    const index = group.indexOf(column);
+    return index >= 0 && group[index + delta] !== undefined;
+  }
+
+  /** Posición entre las visibles, base 1. */
+  positionOf(column: TableColumn): ColumnPosition {
+    const visible = this.visibleColumns();
+    return { position: visible.indexOf(column) + 1, total: visible.length };
+  }
+
+  /** Las visibles con el mismo fijado: una columna se mueve dentro de ellas. */
+  groupOf(column: TableColumn): readonly TableColumn[] {
+    return this.visibleColumns().filter((candidate) => candidate.pinned() === column.pinned());
+  }
 
   constructor(
     private readonly columns: Signal<readonly TableColumn[]>,
@@ -209,13 +265,15 @@ export class TableViewState {
   }
 
   onResizeKey(event: KeyboardEvent, column: TableColumn): void {
-    if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+    // Con Alt es el atajo de mover columna, no un paso de ancho.
+    if (!event.altKey && (event.key === 'ArrowLeft' || event.key === 'ArrowRight')) {
       event.preventDefault();
       this.step(column, this.widthNow(column), event.key === 'ArrowRight' ? 1 : -1);
     }
   }
 
   readonly view = computed<TableView>(() => ({
+    order: this.orderedColumns().map((column) => column.key()),
     hidden: [...this.hidden()],
     widths: this.widths(),
     pinned: Object.fromEntries(

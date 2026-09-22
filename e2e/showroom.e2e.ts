@@ -1760,6 +1760,31 @@ test.describe('DS-3 lote C: la tabla', () => {
     await expect(page.locator(ROWS)).toHaveCount(12);
   });
 
+  test('REORDERS A COLUMN by dragging its header, or with Alt+Shift+arrows, and says where', async ({
+    page,
+  }) => {
+    await page.goto(TABLE);
+    await ready(page);
+
+    const heads = page.locator(`${DEMO} thead tr:first-child th[data-col]`);
+    const said = page.locator(`${DEMO} [data-table-announce]`);
+    // Desde el relleno, lejos del separador vecino; cae en la mitad izquierda de Cliente.
+    await page
+      .locator(`${DEMO} th[data-col="bultos"]`)
+      .dragTo(page.locator(`${DEMO} th[data-col="cliente"]`), {
+        sourcePosition: { x: 16, y: 8 },
+        targetPosition: { x: 8, y: 8 },
+      });
+    await expect(heads.nth(1)).toHaveAttribute('data-col', 'bultos');
+    await expect(said).toHaveText('Bultos, posición 2 de 5');
+
+    await page.locator(`${DEMO} [data-sort="bultos"]`).focus();
+    await page.keyboard.press('Alt+Shift+ArrowRight');
+    await expect(heads.nth(2)).toHaveAttribute('data-col', 'bultos');
+    await expect(page.locator(`${DEMO} [data-sort="bultos"]`)).toBeFocused();
+    await expect(said).toHaveText('Bultos, posición 3 de 5');
+  });
+
   test('selects every visible row from the header, and says so as mixed in between', async ({
     page,
   }) => {
