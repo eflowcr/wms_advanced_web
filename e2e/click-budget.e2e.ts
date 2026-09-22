@@ -51,6 +51,8 @@ async function pageCount(page: Page): Promise<number> {
 async function open(page: Page): Promise<void> {
   await page.goto(SCREEN);
   await expect(page.getByRole('heading', { level: 1, name: SCREEN_HEADING })).toBeVisible();
+  // Con datos: un escaneo antes de la primera página no encuentra nada (1 de 120 bajo carga).
+  await expect(page.locator('ewms-table tbody [role="row"][data-row]').first()).toBeVisible();
   await resetPageCounter(page);
 }
 
@@ -64,10 +66,18 @@ async function clickNeutral(page: Page): Promise<void> {
   await page.getByRole('heading', { level: 1, name: SCREEN_HEADING }).click();
 }
 
-/** Teclea como un lector industrial (5 ms por carácter, bajo los 50 ms del token) y cierra con Enter. */
+/**
+ * Una pistola con el foco fuera de un campo: la ráfaga entera en una sola tarea del navegador,
+ * como llega de un lector. Tipeada por CDP, con cuatro workers un hueco pasaba de 150 ms y partía
+ * el código («P-000123», 1 de 190). El motor oye `keydown` en el documento: es el mismo camino.
+ */
 async function scan(page: Page, code: string): Promise<void> {
-  await page.keyboard.type(code, { delay: 5 });
-  await page.keyboard.press('Enter');
+  await page.evaluate((keys) => {
+    const target = document.activeElement ?? document.body;
+    for (const key of keys) {
+      target.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true }));
+    }
+  }, [...code, 'Enter']);
 }
 
 test.describe('the click budget, counted', () => {
@@ -371,7 +381,7 @@ test.describe('the shortcut rules, in a browser', () => {
     const help = page.locator('ewms-shortcut-help');
     await expect(help).toBeVisible();
 
-    await expect(help.locator('kbd')).toHaveText(['/', 'Alt', 'N', 'Ctrl', 'S', 'Esc', '?']);
+    await expect(help.locator('kbd')).toHaveText(['/', 'Alt', 'N', 'Ctrl', 'S', 'Esc', 'Alt', 'R', '?']);
 
     await page.keyboard.press('Escape');
     await expect(help).toHaveCount(0);

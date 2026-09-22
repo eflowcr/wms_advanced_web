@@ -1,10 +1,13 @@
 <!-- Dos botones del sistema pegados; el segundo abre el menú de fila de la Tabla (APG menu button). -->
 <span [class]="mainClasses">
-  <ewms-button variant="secondary" [icon]="icon()" (click)="primary.emit()">{{ label() }}</ewms-button>
+  <ewms-button variant="secondary" [size]="size()" [icon]="icon()" (click)="primary.emit()">{{
+    label()
+  }}</ewms-button>
 </span>
 <span [class]="triggerClasses" data-split-trigger>
   <ewms-button
     variant="secondary"
+    [size]="size()"
     icon="chevron-down"
     [iconOnly]="true"
     [label]="words.moreActions"
@@ -37,9 +40,11 @@
         (click)="choose(item)"
         (mouseenter)="onItemEnter(index)"
       >
-        @if (item.icon) {
-          <ewms-icon [name]="item.icon" size="sm" />
-        }
+        <span [class]="iconSlotClasses" aria-hidden="true">
+          @if (item.icon) {
+            <ewms-icon [name]="item.icon" size="sm" />
+          }
+        </span>
         <span class="truncate">{{ item.label }}</span>
       </li>
     }

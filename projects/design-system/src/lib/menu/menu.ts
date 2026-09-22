@@ -27,8 +27,13 @@ export const MENU_POSITIONS: ConnectedPositionList = [
   { originX: 'start', originY: 'top', overlayX: 'start', overlayY: 'bottom' },
 ];
 
+/** Sin contorno al enfocarse: el indicador es la opción activa (`aria-activedescendant`). */
 export const MENU_CLASSES =
-  'min-w-48 bg-surface rounded-control shadow-md py-1 list-none p-0 border border-default';
+  'min-w-48 bg-surface rounded-control shadow-md py-1 list-none p-0 border border-default ' +
+  'outline-none';
+
+/** El hueco existe tenga o no ícono la opción: así los textos quedan alineados. */
+export const MENU_ICON_SLOT_CLASSES = 'inline-flex size-icon-sm shrink-0';
 
 /** Acá no hay color. */
 export const MENU_ITEM_CLASSES = 'flex w-full items-center gap-2 px-3 py-1.5 text-p';

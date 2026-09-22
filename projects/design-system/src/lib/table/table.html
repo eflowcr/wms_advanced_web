@@ -1,352 +1,453 @@
 <!-- Una `<table>` real: la semántica de cabecera y celda sale gratis. Con hijos es `treegrid`; sin ellos, `grid`. -->
-@if (quickFilter()) {
-  <div class="mb-3 max-w-120" data-quick-filter>
-    <ewms-input
-      type="search"
-      size="sm"
-      [label]="text().search"
-      [hideLabel]="true"
-      [placeholder]="text().search"
-      [formControl]="searchControl"
-    />
-  </div>
+@if (showToolbar()) {
+  <ewms-table-toolbar />
 }
 
-<!-- Con ventana también desplaza en vertical y tiene alto: es lo que mide la ventana. -->
-<div
-  class="overflow-x-auto rounded-md border border-default"
-  [class]="virtualised() ? 'max-h-120 overflow-y-auto' : ''"
-  #scrollBox
-  data-scroll-box
-  (scroll)="onScroll($event)"
->
-  <table
-    [id]="tableId"
-    [class]="tableClasses"
-    [attr.role]="isTree() ? 'treegrid' : 'grid'"
-    [attr.aria-label]="ariaLabel()"
-    [attr.aria-rowcount]="page().total ?? rows().length"
-    [attr.aria-colcount]="columnCount()"
+<!-- El marco lleva el borde: la barra de estado queda adentro y no desplaza con la tabla. -->
+<div class="overflow-hidden rounded-md border border-default">
+  <!-- Alto máximo por token: la cabecera pegajosa sirve siempre, y la ventana tiene qué medir. -->
+  <div
+    class="max-h-(--table-max-height) overflow-auto"
+    #scrollBox
+    data-scroll-box
+    (scroll)="viewport.measure($any($event).target)"
   >
-    <!-- Pegajosa; por eso la ventana es propia y no el viewport del CDK. Ver vault: Tabla §10. -->
-    <thead class="sticky top-0 z-10">
-      <tr role="row">
-        @if (selectable()) {
-          <!-- w-0: la columna del checkbox mide lo que el checkbox, sin hueco hasta el chevron. -->
-          <th scope="col" role="columnheader" class="w-0" [class]="headerCellClasses">
-            <span class="flex items-center">
-              <ewms-checkbox
-                [checked]="allSelected()"
-                [indeterminate]="someSelected()"
-                [ariaLabel]="text().selectAll"
-                (checkedChange)="toggleAll()"
-              />
-            </span>
-          </th>
-        }
-
-        @for (column of columns(); track column.key()) {
-          <th
-            scope="col"
-            role="columnheader"
-            [class]="headerCellClasses"
-            [style.width]="columnWidth(column)"
-            [attr.aria-sort]="ariaSort(column)"
-          >
-            @if (column.sortable()) {
-              <button
-                type="button"
-                class="flex w-full cursor-pointer items-center gap-1 rounded-sm py-2 outline-none focus-visible:shadow-(--focus-ring-shadow)"
-                [class]="headerClassesFor(column)"
-                [attr.data-sort]="column.key()"
-                (click)="toggleSort(column)"
-              >
-                <span class="truncate">{{ column.header() }}</span>
-                @if (sortDirection(column) === 'asc') {
-                  <ewms-icon name="chevron-up" size="sm" [label]="text().sortedAscending" />
-                } @else if (sortDirection(column) === 'desc') {
-                  <ewms-icon name="chevron-down" size="sm" [label]="text().sortedDescending" />
-                } @else {
-                  <ewms-icon name="arrows-sort" size="sm" aria-hidden="true" />
-                }
-              </button>
-            } @else {
-              <span class="flex items-center py-2" [class]="headerClassesFor(column)">
-                <span class="truncate">{{ column.header() }}</span>
-              </span>
-            }
-          </th>
-        }
-      </tr>
-
-      @if (anyFilterable()) {
-        <!-- La forma de cada filtro sale del tipo de la columna. Una caja vacía es sin límite, nunca cero. -->
-        <tr role="row" data-filter-row>
+    <table
+      [id]="tableId"
+      [class]="tableClasses"
+      [attr.role]="isTree() ? 'treegrid' : 'grid'"
+      [attr.aria-label]="ariaLabel()"
+      [attr.aria-rowcount]="page().total ?? rows().length"
+      [attr.aria-colcount]="columnCount()"
+      [attr.aria-busy]="loadState() === 'loading' ? 'true' : null"
+    >
+      <!-- Pegajosa; por eso la ventana es propia y no el viewport del CDK. Ver vault: Tabla §10. -->
+      <thead class="sticky top-0 z-10">
+        <tr role="row">
           @if (selectable()) {
-            <td [class]="headerCellClasses"></td>
-          }
-          @for (column of columns(); track column.key()) {
-            <!-- `<td>` y no `<th>`: un segundo `<th>` daría dos nombres por columna, o uno vacío que axe reporta. -->
-            <td [class]="headerCellClasses" class="pb-2">
-              @if (column.filterable()) {
-                @switch (column.type()) {
-                  @case ('number') {
-                    <!-- Lado a lado con un mínimo legible: la columna crece antes que cortar «Desde». -->
-                    <span class="flex gap-1" [attr.data-filter]="column.key()">
-                      <ewms-input
-                        class="flex-1 min-w-(--col-filter-min-width)"
-                        type="number"
-                        size="sm"
-                        [label]="text().filterFrom"
-                        [hideLabel]="true"
-                        [placeholder]="text().filterFrom"
-                        [formControl]="filterControl(column, 'min')"
-                      />
-                      <ewms-input
-                        class="flex-1 min-w-(--col-filter-min-width)"
-                        type="number"
-                        size="sm"
-                        [label]="text().filterTo"
-                        [hideLabel]="true"
-                        [placeholder]="text().filterTo"
-                        [formControl]="filterControl(column, 'max')"
-                      />
-                    </span>
-                  }
-                  @case ('date') {
-                    <!-- Un campo de rango, no dos apilados: la fila de filtros queda en una altura. -->
-                    <span class="block" [attr.data-filter]="column.key()">
-                      <ewms-date-picker
-                        class="min-w-(--col-width-md)"
-                        mode="range"
-                        size="sm"
-                        [label]="column.header() || column.key()"
-                        [hideLabel]="true"
-                        [placeholder]="text().filterFrom + ' – ' + text().filterTo"
-                        [formControl]="dateFilterControl(column)"
-                      />
-                    </span>
-                  }
-                  @default {
-                    <span class="block" [attr.data-filter]="column.key()">
-                      <ewms-input
-                        type="search"
-                        size="sm"
-                        [label]="column.header() || column.key()"
-                        [hideLabel]="true"
-                        [placeholder]="text().filterPlaceholder"
-                        [formControl]="filterControl(column, 'text')"
-                      />
-                    </span>
-                  }
-                }
-              }
-            </td>
-          }
-        </tr>
-      }
-    </thead>
-
-    <tbody>
-      @if (rowWindow().before > 0) {
-        <tr aria-hidden="true" data-spacer="before">
-          <td [attr.colspan]="columnCount()" [style.height.px]="rowWindow().before"></td>
-        </tr>
-      }
-
-      @for (flat of rowWindow().rows; track flat.key; let windowIndex = $index) {
-        <!-- Índice absoluto: el teclado camina la tabla, no la ventana. -->
-        @let rowIndex = rowWindow().first + windowIndex;
-        <tr
-          role="row"
-          [class]="rowClassesFor(flat)"
-          [style.height]="rowHeight()"
-          [attr.data-row]="rowIndex"
-          [attr.aria-rowindex]="rowIndex + 1"
-          [attr.aria-level]="isTree() ? flat.level + 1 : null"
-          [attr.aria-setsize]="isTree() ? flat.setSize : null"
-          [attr.aria-posinset]="isTree() ? flat.posInSet : null"
-          [attr.aria-expanded]="flat.hasChildren ? flat.expanded : null"
-          [attr.aria-selected]="selectable() ? isSelected(flat) : null"
-          [class.is-child]="flat.level > 0"
-          (dblclick)="onRowDblclick(flat)"
-          (contextmenu)="onRowContextMenu($event, flat)"
-        >
-          @if (selectable()) {
-            <td
-              role="gridcell"
-              [class]="cellClasses"
-              [attr.data-cell]="rowIndex + '-0'"
-              [attr.tabindex]="isFocused(rowIndex, 0) ? 0 : -1"
-              (focus)="onCellFocus(rowIndex, 0)"
-              (keydown)="onKeydown($event, rowIndex)"
+            <!-- w-0: la columna del checkbox mide lo que el checkbox, sin hueco hasta el chevron. -->
+            <th
+              scope="col"
+              role="columnheader"
+              class="w-0"
+              [class]="headerCellClasses"
+              [class.sticky]="layout.selectionPinned()"
+              [class.z-3]="layout.selectionPinned()"
+              [style.left.px]="layout.selectionPinned() ? 0 : null"
+              data-col-select
             >
-              <!-- En flex: suelto, el checkbox se alineaba a la línea de base y quedaba alto. -->
               <span class="flex items-center">
                 <ewms-checkbox
-                  [checked]="isSelected(flat)"
-                  [ariaLabel]="text().selectRow"
-                  (checkedChange)="toggleRow(flat)"
+                  [checked]="allSelected()"
+                  [indeterminate]="someSelected()"
+                  [ariaLabel]="text().selectAll"
+                  (checkedChange)="toggleAll()"
                 />
               </span>
-            </td>
+            </th>
           }
 
-          @for (column of columns(); track column.key(); let columnIndex = $index) {
-            <td
-              role="gridcell"
-              [class]="cellClassesFor(column)"
-              [attr.data-cell]="rowIndex + '-' + (selectable() ? columnIndex + 1 : columnIndex)"
-              [attr.tabindex]="
-                isFocused(rowIndex, selectable() ? columnIndex + 1 : columnIndex) ? 0 : -1
-              "
-              (focus)="onCellFocus(rowIndex, selectable() ? columnIndex + 1 : columnIndex)"
-              (keydown)="onKeydown($event, rowIndex)"
+          @for (column of visibleColumns(); track column.key()) {
+            <th
+              scope="col"
+              role="columnheader"
+              [class]="headerCellClasses + ' ' + layout.pinClasses(column, true)"
+              [style.width]="layout.headerWidth(column)"
+              [style.left.px]="layout.pinStart(column)"
+              [style.right.px]="layout.pinEnd(column)"
+              [attr.aria-sort]="ariaSort(column)"
+              [attr.data-col]="column.key()"
+              [attr.data-pin]="column.pinned()"
             >
-              <!-- El td alinea texto, no a los hijos de un flex: el número se corre con justify-end. -->
-              <span class="flex items-center gap-1" [class.justify-end]="column.type() === 'number'">
-                @if ($first && isTree()) {
-                  <!-- El toggle vive en la primera columna; una hoja lleva un espaciador del mismo ancho. -->
-                  <span
-                    class="tree-toggle-spacer inline-block shrink-0"
-                    [style.width]="'calc(' + flat.level + ' * var(--tree-indent))'"
-                  ></span>
-                  @if (flat.hasChildren) {
-                    <button
-                      type="button"
-                      class="tree-toggle inline-flex shrink-0 cursor-pointer rounded-sm outline-none focus-visible:shadow-(--focus-ring-shadow)"
-                      [attr.aria-label]="flat.expanded ? text().collapse : text().expand"
-                      [attr.data-toggle]="rowIndex"
-                      (click)="toggleExpanded(flat)"
-                    >
-                      <ewms-icon
-                        [name]="flat.expanded ? 'chevron-down' : 'chevron-right'"
-                        size="sm"
-                      />
-                    </button>
+              @if (column.sortable()) {
+                <button
+                  type="button"
+                  class="flex w-full cursor-pointer items-center gap-1 rounded-sm py-2 outline-none focus-visible:shadow-(--focus-ring-shadow)"
+                  [class]="headerClassesFor(column)"
+                  [attr.data-sort]="column.key()"
+                  (click)="toggleSort(column)"
+                >
+                  <span class="truncate">{{ column.header() }}</span>
+                  @if (sortDirection(column) === 'asc') {
+                    <ewms-icon name="chevron-up" size="sm" [label]="text().sortedAscending" />
+                  } @else if (sortDirection(column) === 'desc') {
+                    <ewms-icon name="chevron-down" size="sm" [label]="text().sortedDescending" />
                   } @else {
-                    <span class="tree-toggle-spacer inline-block size-icon-sm shrink-0"></span>
+                    <ewms-icon name="arrows-sort" size="sm" aria-hidden="true" />
                   }
-                }
-
-                @if (cellTemplateOf(column); as template) {
-                  <ng-container
-                    [ngTemplateOutlet]="template.template"
-                    [ngTemplateOutletContext]="{ $implicit: flat.row, value: flat.row }"
-                  />
-                } @else if (column.type() === 'badge') {
-                  @if (badgeFor(column, flat.row); as badge) {
-                    <ewms-badge [variant]="badge.variant" [label]="badge.label" />
-                  }
-                } @else if (column.type() === 'actions') {
-                  <span class="flex w-full items-center justify-end gap-1">
-                    @if (isMaster(flat.row)) {
-                      <!-- Control aparte del toggle del árbol: uno despliega filas, el otro un panel. -->
-                      <ewms-button
-                        [iconOnly]="true"
-                        variant="ghost"
-                        [icon]="isDetailOpen(flat) ? 'chevron-up' : 'chevron-down'"
-                        size="sm"
-                        [label]="isDetailOpen(flat) ? text().collapse : text().expand"
-                        [attr.data-detail-toggle]="rowIndex"
-                        [expanded]="isDetailOpen(flat)"
-                        [controls]="isDetailOpen(flat) ? detailId(flat) : null"
-                        (click)="toggleDetail(flat)"
-                      />
-                    }
-                    @if (hasMenu()) {
-                      <ewms-button
-                        [iconOnly]="true"
-                        variant="ghost"
-                        icon="more"
-                        size="sm"
-                        [label]="text().rowMenu"
-                        [attr.data-kebab]="rowIndex"
-                        (click)="openMenu(flat, $any($event).currentTarget)"
-                      />
-                    }
-                  </span>
-                } @else {
-                  <span class="truncate">{{ display(column, flat.row) }}</span>
-                }
-              </span>
-            </td>
+                </button>
+              } @else {
+                <span class="flex items-center py-2" [class]="headerClassesFor(column)">
+                  <span class="truncate">{{ column.header() }}</span>
+                </span>
+              }
+              @if (column.type() !== 'actions') {
+                <!-- Separador de ancho (APG window splitter): arrastre, flechas por token, doble clic. -->
+                <span
+                  role="separator"
+                  aria-orientation="vertical"
+                  tabindex="0"
+                  class="absolute inset-y-0 -end-1 z-2 w-2 cursor-col-resize touch-none rounded-sm outline-none hover:bg-ghost-hover focus-visible:shadow-(--focus-ring-shadow)"
+                  [attr.aria-label]="text().resizeColumn(column.header() || column.key())"
+                  [attr.aria-valuenow]="layout.widthNow(column)"
+                  [attr.aria-valuemin]="layout.minColumnWidth"
+                  [attr.data-resize]="column.key()"
+                  (pointerdown)="layout.startResize($event, column)"
+                  (keydown)="layout.onResizeKey($event, column)"
+                  (dblclick)="layout.reset(column)"
+                ></span>
+              }
+            </th>
           }
         </tr>
-        @if (isDetailOpen(flat)) {
-          <tr role="row" [attr.data-detail]="rowIndex">
-            <td
-              role="gridcell"
-              [id]="detailId(flat)"
-              [attr.colspan]="columnCount()"
-              [class]="cellClasses"
-              class="bg-secondary p-4"
-            >
-              @if (detail(); as template) {
-                <ng-container
-                  [ngTemplateOutlet]="template.template"
-                  [ngTemplateOutletContext]="{ $implicit: flat.row }"
-                />
+
+        @if (anyFilterable()) {
+          <!-- La forma de cada filtro sale del tipo de la columna. Una caja vacía es sin límite, nunca cero. -->
+          <!-- En el DOM aunque esté oculta: `aria-controls` de «Filtros» apunta a algo que existe. -->
+          <tr role="row" data-filter-row [id]="filterRowId" [hidden]="!filtersOpen()">
+            @if (selectable()) {
+              <td
+                [class]="headerCellClasses"
+                [class.sticky]="layout.selectionPinned()"
+                [class.z-3]="layout.selectionPinned()"
+                [style.left.px]="layout.selectionPinned() ? 0 : null"
+              ></td>
+            }
+            @for (column of visibleColumns(); track column.key()) {
+              <!-- `<td>` y no `<th>`: un segundo `<th>` daría dos nombres por columna, o uno vacío que axe reporta. -->
+              <td
+                [class]="headerCellClasses + ' pb-2 ' + layout.pinClasses(column, true)"
+                [style.left.px]="layout.pinStart(column)"
+                [style.right.px]="layout.pinEnd(column)"
+              >
+                @if (column.filterable()) {
+                  @switch (column.type()) {
+                    @case ('number') {
+                      <!-- Lado a lado con un mínimo legible. Sin flechitas: Chrome les reserva ancho aunque no se vean, y cortaba «Desd». -->
+                      <span class="flex gap-1" [attr.data-filter]="column.key()">
+                        <ewms-input
+                          class="flex-1 min-w-(--col-filter-min-width) [&_input]:[appearance:textfield] [&_input::-webkit-inner-spin-button]:appearance-none"
+                          type="number"
+                          size="sm"
+                          [label]="text().filterFrom"
+                          [hideLabel]="true"
+                          [placeholder]="text().filterFrom"
+                          [formControl]="filtering.control(column, 'min')"
+                        />
+                        <ewms-input
+                          class="flex-1 min-w-(--col-filter-min-width) [&_input]:[appearance:textfield] [&_input::-webkit-inner-spin-button]:appearance-none"
+                          type="number"
+                          size="sm"
+                          [label]="text().filterTo"
+                          [hideLabel]="true"
+                          [placeholder]="text().filterTo"
+                          [formControl]="filtering.control(column, 'max')"
+                        />
+                      </span>
+                    }
+                    @case ('badge') {
+                      <!-- Filtro de conjunto (el «set filter» de AG Grid): casillas del diccionario. -->
+                      <span class="block whitespace-nowrap" [attr.data-filter]="column.key()">
+                        <ewms-table-popover
+                          [label]="setLabel(column)"
+                          [panelLabel]="column.header() || column.key()"
+                          icon="filter"
+                        >
+                          @let state = filtering.setState(column);
+                          <ewms-checkbox
+                            [label]="text().setAll"
+                            [checked]="state === 'all'"
+                            [indeterminate]="state === 'some'"
+                            data-set-all
+                            (checkedChange)="filtering.toggleAll(column)"
+                          />
+                          @for (option of setOptions(column); track option.key) {
+                            <ewms-checkbox
+                              [label]="option.label"
+                              [checked]="filtering.isChosen(column, option.key)"
+                              [attr.data-set-option]="option.key"
+                              (checkedChange)="filtering.toggleOption(column, option.key)"
+                            />
+                          }
+                        </ewms-table-popover>
+                      </span>
+                    }
+                    @case ('date') {
+                      <!-- Un campo de rango, no dos apilados: la fila de filtros queda en una altura. -->
+                      <span class="block" [attr.data-filter]="column.key()">
+                        <ewms-date-picker
+                          class="min-w-(--col-width-md)"
+                          mode="range"
+                          size="sm"
+                          [label]="column.header() || column.key()"
+                          [hideLabel]="true"
+                          [placeholder]="text().filterFrom + ' – ' + text().filterTo"
+                          [formControl]="filtering.dateControl(column)"
+                        />
+                      </span>
+                    }
+                    @default {
+                      <span class="block" [attr.data-filter]="column.key()">
+                        <ewms-input
+                          type="search"
+                          size="sm"
+                          [label]="column.header() || column.key()"
+                          [hideLabel]="true"
+                          [placeholder]="text().filterPlaceholder"
+                          [formControl]="filtering.control(column, 'text')"
+                        />
+                      </span>
+                    }
+                  }
+                }
+              </td>
+            }
+          </tr>
+        }
+      </thead>
+
+      <!-- Cargando con filas: se atenúan en su lugar, y el alto de la tabla no salta. -->
+      <tbody [class.opacity-60]="loadState() === 'loading' && rows().length > 0">
+        @if (viewport.rows().before > 0) {
+          <tr aria-hidden="true" data-spacer="before">
+            <td [attr.colspan]="columnCount()" [style.height.px]="viewport.rows().before"></td>
+          </tr>
+        }
+
+        @for (flat of viewport.rows().rows; track flat.key; let windowIndex = $index) {
+          <!-- Índice absoluto: el teclado camina la tabla, no la ventana. -->
+          @let rowIndex = viewport.rows().first + windowIndex;
+          <tr
+            role="row"
+            [class]="rowClassesFor(flat)"
+            [style.height]="rowHeight()"
+            [attr.data-row]="rowIndex"
+            [attr.aria-rowindex]="rowIndex + 1"
+            [attr.aria-level]="isTree() ? flat.level + 1 : null"
+            [attr.aria-setsize]="isTree() ? flat.setSize : null"
+            [attr.aria-posinset]="isTree() ? flat.posInSet : null"
+            [attr.aria-expanded]="flat.hasChildren ? flat.expanded : null"
+            [attr.aria-selected]="selectable() ? isSelected(flat) : null"
+            [class.is-child]="flat.level > 0"
+            (dblclick)="onRowDblclick(flat)"
+            (contextmenu)="menu.onContextMenu($event, flat)"
+          >
+            @if (selectable()) {
+              <td
+                role="gridcell"
+                [class]="cellClasses"
+                [class.sticky]="layout.selectionPinned()"
+                [class.z-1]="layout.selectionPinned()"
+                [class.bg-inherit]="layout.selectionPinned()"
+                [style.left.px]="layout.selectionPinned() ? 0 : null"
+                [attr.data-cell]="rowIndex + '-0'"
+                [attr.tabindex]="isFocused(rowIndex, 0) ? 0 : -1"
+                (click)="onSelectClick($event)"
+                (focus)="onCellFocus(rowIndex, 0)"
+                (keydown)="onKeydown($event, rowIndex)"
+              >
+                <!-- En flex: suelto, el checkbox se alineaba a la línea de base y quedaba alto. -->
+                <span class="flex items-center">
+                  <ewms-checkbox
+                    [checked]="isSelected(flat)"
+                    [ariaLabel]="text().selectRow"
+                    (checkedChange)="toggleRow(flat)"
+                  />
+                </span>
+              </td>
+            }
+
+            @for (column of visibleColumns(); track column.key(); let columnIndex = $index) {
+              <td
+                role="gridcell"
+                [class]="cellClassesFor(column) + ' ' + layout.pinClasses(column, false)"
+                [style.left.px]="layout.pinStart(column)"
+                [style.right.px]="layout.pinEnd(column)"
+                [attr.data-cell]="rowIndex + '-' + (selectable() ? columnIndex + 1 : columnIndex)"
+                [attr.tabindex]="
+                  isFocused(rowIndex, selectable() ? columnIndex + 1 : columnIndex) ? 0 : -1
+                "
+                (focus)="onCellFocus(rowIndex, selectable() ? columnIndex + 1 : columnIndex)"
+                (keydown)="onKeydown($event, rowIndex)"
+              >
+                <!-- El td alinea texto, no a los hijos de un flex: el número se corre con justify-end. -->
+                <span
+                  class="flex items-center gap-1"
+                  [class.justify-end]="column.type() === 'number'"
+                >
+                  @if ($first && isTree()) {
+                    <!-- El toggle vive en la primera columna; una hoja lleva un espaciador del mismo ancho. -->
+                    <span
+                      class="tree-toggle-spacer inline-block shrink-0"
+                      [style.width]="'calc(' + flat.level + ' * var(--tree-indent))'"
+                    ></span>
+                    @if (flat.hasChildren) {
+                      <button
+                        type="button"
+                        class="tree-toggle inline-flex shrink-0 cursor-pointer rounded-sm outline-none focus-visible:shadow-(--focus-ring-shadow)"
+                        [attr.aria-label]="flat.expanded ? text().collapse : text().expand"
+                        [attr.data-toggle]="rowIndex"
+                        (click)="toggleExpanded(flat)"
+                      >
+                        <ewms-icon
+                          [name]="flat.expanded ? 'chevron-down' : 'chevron-right'"
+                          size="sm"
+                        />
+                      </button>
+                    } @else {
+                      <span class="tree-toggle-spacer inline-block size-icon-sm shrink-0"></span>
+                    }
+                  }
+
+                  @if (cellTemplateOf(column); as template) {
+                    <ng-container
+                      [ngTemplateOutlet]="template.template"
+                      [ngTemplateOutletContext]="{ $implicit: flat.row, value: flat.row }"
+                    />
+                  } @else if (column.type() === 'badge') {
+                    @if (badgeFor(column, flat.row); as badge) {
+                      <ewms-badge [variant]="badge.variant" [label]="badge.label" />
+                    }
+                  } @else if (column.type() === 'actions') {
+                    <span class="flex w-full items-center justify-end gap-1">
+                      @if (isMaster(flat.row)) {
+                        <!-- Control aparte del toggle del árbol: uno despliega filas, el otro un panel. -->
+                        <ewms-button
+                          [iconOnly]="true"
+                          variant="ghost"
+                          [icon]="isDetailOpen(flat) ? 'chevron-up' : 'chevron-down'"
+                          size="sm"
+                          [label]="isDetailOpen(flat) ? text().collapse : text().expand"
+                          [attr.data-detail-toggle]="rowIndex"
+                          [expanded]="isDetailOpen(flat)"
+                          [controls]="isDetailOpen(flat) ? detailId(flat) : null"
+                          (click)="toggleDetail(flat)"
+                        />
+                      }
+                      @if (menu.enabled()) {
+                        <ewms-button
+                          [iconOnly]="true"
+                          variant="ghost"
+                          icon="more"
+                          size="sm"
+                          [label]="text().rowMenu"
+                          [attr.data-kebab]="rowIndex"
+                          (click)="menu.open(flat, $any($event).currentTarget)"
+                        />
+                      }
+                    </span>
+                  } @else {
+                    <span class="truncate">{{ display(column, flat.row) }}</span>
+                  }
+                </span>
+              </td>
+            }
+          </tr>
+          @if (isDetailOpen(flat)) {
+            <tr role="row" [attr.data-detail]="rowIndex">
+              <td
+                role="gridcell"
+                [id]="detailId(flat)"
+                [attr.colspan]="columnCount()"
+                [class]="cellClasses"
+                class="bg-secondary p-4"
+              >
+                @if (detail(); as template) {
+                  <ng-container
+                    [ngTemplateOutlet]="template.template"
+                    [ngTemplateOutletContext]="{ $implicit: flat.row }"
+                  />
+                }
+              </td>
+            </tr>
+          }
+
+          @if (flat.loading) {
+            <!-- Fila propia, no un spinner en el padre: no tapa datos, y `aria-busy` le dice al lector que espere. -->
+            <tr role="row" aria-busy="true" [attr.data-loading]="rowIndex">
+              <td role="gridcell" [attr.colspan]="columnCount()" [class]="cellClasses">
+                <span class="flex items-center gap-2 text-caption text-secondary">
+                  <ewms-icon name="spinner" size="sm" />
+                  {{ text().loadingChildren }}
+                </span>
+              </td>
+            </tr>
+          }
+
+          @if (flat.failed) {
+            <!-- En línea y con el padre expandido: plegarlo escondería el error. -->
+            <tr role="row" [attr.data-failed]="rowIndex">
+              <td role="gridcell" [attr.colspan]="columnCount()" [class]="cellClasses">
+                <span class="flex items-center gap-2 text-caption text-danger">
+                  <ewms-icon name="circle-x" size="sm" />
+                  {{ text().childrenFailed }}
+                  <button
+                    type="button"
+                    class="cursor-pointer rounded-sm px-2 py-1 outline-none focus-visible:shadow-(--focus-ring-shadow) text-(color:--color-bg-primary) hover:text-(color:--color-bg-primary-hover)"
+                    [attr.data-retry]="rowIndex"
+                    (click)="retryChildren(flat)"
+                  >
+                    {{ text().retry }}
+                  </button>
+                </span>
+              </td>
+            </tr>
+          }
+        }
+
+        @if (viewport.rows().after > 0) {
+          <tr aria-hidden="true" data-spacer="after">
+            <td [attr.colspan]="columnCount()" [style.height.px]="viewport.rows().after"></td>
+          </tr>
+        }
+
+        @if (loadState() === 'error') {
+          <!-- La fuente falló: se dice y se ofrece reintentar, no una tabla vacía que miente. -->
+          <tr role="row" data-load-error>
+            <td role="gridcell" [attr.colspan]="columnCount()" class="p-8">
+              <span class="flex items-center justify-center gap-2 text-p text-danger">
+                <ewms-icon name="circle-x" size="sm" />
+                {{ text().loadFailed }}
+                <ewms-button
+                  variant="secondary"
+                  size="sm"
+                  icon="refresh"
+                  data-load-retry
+                  (click)="retryLoad()"
+                >
+                  {{ text().retry }}
+                </ewms-button>
+              </span>
+            </td>
+          </tr>
+        } @else if (rows().length === 0) {
+          <tr role="row" data-empty-row>
+            <td role="gridcell" [attr.colspan]="columnCount()" class="p-8 text-center">
+              @if (loadState() === 'loading') {
+                <span class="inline-flex items-center gap-2 text-secondary" data-loading-table>
+                  <ewms-icon name="spinner" size="sm" />
+                  {{ text().loading }}
+                </span>
+              } @else if (empty(); as template) {
+                <!-- Se proyecta: el texto vacío es de la pantalla, no de la biblioteca (ADR 0008). -->
+                <ng-container [ngTemplateOutlet]="template.template" />
               }
             </td>
           </tr>
         }
-
-        @if (flat.loading) {
-          <!-- Fila propia, no un spinner en el padre: no tapa datos, y `aria-busy` le dice al lector que espere. -->
-          <tr role="row" aria-busy="true" [attr.data-loading]="rowIndex">
-            <td role="gridcell" [attr.colspan]="columnCount()" [class]="cellClasses">
-              <span class="flex items-center gap-2 text-caption text-secondary">
-                <ewms-icon name="spinner" size="sm" />
-                {{ text().loadingChildren }}
-              </span>
-            </td>
-          </tr>
-        }
-
-        @if (flat.failed) {
-          <!-- En línea y con el padre expandido: plegarlo escondería el error. -->
-          <tr role="row" [attr.data-failed]="rowIndex">
-            <td role="gridcell" [attr.colspan]="columnCount()" [class]="cellClasses">
-              <span class="flex items-center gap-2 text-caption text-danger">
-                <ewms-icon name="circle-x" size="sm" />
-                {{ text().childrenFailed }}
-                <button
-                  type="button"
-                  class="cursor-pointer rounded-sm px-2 py-1 outline-none focus-visible:shadow-(--focus-ring-shadow) text-(color:--color-bg-primary) hover:text-(color:--color-bg-primary-hover)"
-                  [attr.data-retry]="rowIndex"
-                  (click)="retryChildren(flat)"
-                >
-                  {{ text().retry }}
-                </button>
-              </span>
-            </td>
-          </tr>
-        }
-      }
-
-      @if (rowWindow().after > 0) {
-        <tr aria-hidden="true" data-spacer="after">
-          <td [attr.colspan]="columnCount()" [style.height.px]="rowWindow().after"></td>
-        </tr>
-      }
-
-      @if (rows().length === 0) {
-        <tr role="row" data-empty-row>
-          <td role="gridcell" [attr.colspan]="columnCount()" class="p-8 text-center">
-            <!-- Se proyecta: el texto vacío es de la pantalla, no de la biblioteca (ADR 0008). -->
-            @if (empty(); as template) {
-              <ng-container [ngTemplateOutlet]="template.template" />
-            }
-          </td>
-        </tr>
-      }
-    </tbody>
-  </table>
+      </tbody>
+    </table>
+  </div>
+  @if (showStatus()) {
+    <ewms-table-status />
+  }
 </div>
 
+<!-- Siempre presente: una región viva que aparece con su primer mensaje se anuncia mal. -->
+<p class="sr-only" role="status" aria-live="polite" data-table-announce>{{ announcement() }}</p>
+
 @if (showPagination()) {
-  <div class="mt-3" data-pagination>
+  <div data-pagination>
     <ewms-pagination
       [page]="page().page"
       [pageCount]="pageCount() ?? 1"
@@ -358,32 +459,34 @@
 }
 
 <!-- Menú con foco en la lista y `aria-activedescendant`, como el Select. Una entrada deshabilitada se ve pero las flechas la saltan. -->
-<ng-template #menu>
+<ng-template #rowMenuPanel>
   <ul
-    [id]="menuId"
+    [id]="menu.id"
     role="menu"
     tabindex="-1"
-    [class]="menuClasses"
+    [class]="menu.classes"
     [attr.aria-label]="text().rowMenu"
-    [attr.aria-activedescendant]="menuIndex() >= 0 ? menuOptionId(menuIndex()) : null"
-    (keydown)="onMenuKeydown($event)"
+    [attr.aria-activedescendant]="menu.index() >= 0 ? menu.optionId(menu.index()) : null"
+    (keydown)="menu.onKeydown($event)"
   >
     @for (item of menuItems(); track item.id; let itemIndex = $index) {
       @if (item.separatorBefore) {
-        <li [class]="menuSeparatorClasses" role="separator"></li>
+        <li [class]="menu.separatorClasses" role="separator"></li>
       }
       <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -->
       <li
-        [id]="menuOptionId(itemIndex)"
+        [id]="menu.optionId(itemIndex)"
         role="menuitem"
-        [class]="menuItemClassesFor(item, itemIndex)"
+        [class]="menu.itemClasses(item, itemIndex)"
         [attr.aria-disabled]="item.disabled ? 'true' : null"
         [attr.data-menu-item]="item.id"
-        (click)="chooseMenuItem(item)"
+        (click)="menu.choose(item)"
       >
-        @if (item.icon) {
-          <ewms-icon [name]="item.icon" size="sm" />
-        }
+        <span [class]="menu.iconSlotClasses" aria-hidden="true">
+          @if (item.icon) {
+            <ewms-icon [name]="item.icon" size="sm" />
+          }
+        </span>
         <span class="truncate">{{ item.label }}</span>
       </li>
     }

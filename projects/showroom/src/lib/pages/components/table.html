@@ -68,29 +68,6 @@
 
     <ewms-demo-frame ground="canvas" label="El componente real, con su fuente en memoria">
       <div class="flex flex-col gap-4" data-demo-table>
-        <div class="flex flex-wrap items-center gap-2">
-          <span class="text-caption text-secondary">Densidad:</span>
-          <button
-            type="button"
-            class="cursor-pointer rounded-sm border border-strong bg-surface px-2 py-1 text-caption text-primary outline-none focus-visible:shadow-(--focus-ring-shadow)"
-            data-density="md"
-            (click)="setDensidad('md')"
-          >
-            Media (40 px)
-          </button>
-          <button
-            type="button"
-            class="cursor-pointer rounded-sm border border-strong bg-surface px-2 py-1 text-caption text-primary outline-none focus-visible:shadow-(--focus-ring-shadow)"
-            data-density="sm"
-            (click)="setDensidad('sm')"
-          >
-            Compacta (32 px)
-          </button>
-          <span class="font-mono text-caption text-primary" data-density-value>{{
-            densidad()
-          }}</span>
-        </div>
-
         <ewms-table
           [source]="expediciones"
           children="hijos"
@@ -98,16 +75,20 @@
           [trackBy]="porId"
           [selectable]="true"
           [quickFilter]="true"
-          [density]="densidad()"
+          [columnChooser]="true"
+          [exportable]="true"
+          [bulkActions]="masivas"
           ariaLabel="Expediciones"
           (rowActivate)="abrir($event)"
           (selectionChange)="seleccion.set($event)"
+          (bulkAction)="masiva($event)"
           (queryChange)="consulta.set($event)"
         >
           <ewms-column
             key="codigo"
             header="Código"
             width="md"
+            pinned="start"
             [sortable]="true"
             [filterable]="true"
           />
@@ -125,10 +106,18 @@
             header="Bultos"
             type="number"
             width="sm"
+            aggregate="sum"
             [sortable]="true"
             [filterable]="true"
           />
-          <ewms-column key="estado" header="Estado" type="badge" width="md" [badges]="estados" />
+          <ewms-column
+            key="estado"
+            header="Estado"
+            type="badge"
+            width="md"
+            [badges]="estados"
+            [filterable]="true"
+          />
 
           <ng-template ewmsEmpty>
             <p>Ninguna expedición coincide con el filtro.</p>
@@ -141,6 +130,10 @@
           <div class="flex flex-wrap gap-2">
             <dt class="text-secondary">Seleccionadas:</dt>
             <dd class="font-mono text-primary" data-selection-count>{{ seleccion().length }}</dd>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <dt class="text-secondary">Última acción masiva:</dt>
+            <dd class="text-primary" data-bulk-choice>{{ ultimaMasiva() }}</dd>
           </div>
           <div class="flex flex-wrap gap-2">
             <dt class="text-secondary">Última fila activada:</dt>
@@ -177,11 +170,76 @@
       data-consumer-component
     ><code>{{ consumerComponent }}</code></pre>
     <p class="text-caption text-secondary">
-      <span class="font-mono" data-component-lines>{{ componentLines() }}</span> líneas. Una es la
-      fuente y la otra es cómo se identifica una fila.
-      <strong>No hay ninguna función de estado ni de hijos</strong>: los dos son nombres de
-      propiedad, y el diccionario de estados ya estaba escrito para la columna badge.
+      <span class="font-mono" data-component-lines>{{ componentLines() }}</span> líneas: la fuente,
+      cómo se identifica una fila, y las acciones masivas con lo que hace cada una, que es lógica de
+      la pantalla y no de la tabla. <strong>No hay ninguna función de estado ni de hijos</strong>:
+      los dos son nombres de propiedad, y el diccionario de estados ya estaba escrito para la columna
+      badge.
     </p>
+
+    <h3 class="text-h3">Los diferenciadores, uno por uno</h3>
+    <p class="text-secondary">
+      Todos están en la demo de arriba y ninguno pide plantilla: cada uno se enciende con un atributo
+      de la tabla o de una columna. Lo que el usuario configura vive en memoria y sale por una salida.
+    </p>
+    <ul class="grid grid-cols-[repeat(auto-fit,minmax(min(20rem,100%),1fr))] gap-4" data-differentiators>
+      <li class="flex flex-col gap-1 rounded-md border border-default bg-surface p-4">
+        <h4 class="text-h4">Filtros que se esconden</h4>
+        <p class="text-caption">
+          La fila de filtros está oculta: «Filtros» la muestra (o <kbd class="font-mono">Alt+R</kbd>
+          con el foco en la tabla). Ocultarla no borra nada: cada filtro activo queda como chip, y su
+          × lo quita. La densidad también está en la barra.
+        </p>
+      </li>
+      <li class="flex flex-col gap-1 rounded-md border border-default bg-surface p-4">
+        <h4 class="text-h4">Filtro de conjunto</h4>
+        <p class="text-caption">
+          Estado se filtra con casillas de su diccionario, con «Todos» indeterminado: «Con incidencia»
+          más «En proceso» son dos clics. <code class="font-mono">[filterable]</code> en una columna
+          <code class="font-mono">badge</code>.
+        </p>
+      </li>
+      <li class="flex flex-col gap-1 rounded-md border border-default bg-surface p-4">
+        <h4 class="text-h4">Columnas: mostrar, fijar, redimensionar</h4>
+        <p class="text-caption">
+          «Columnas» oculta y muestra; Código está <code class="font-mono">pinned="start"</code> y no
+          se va al desplazar; el borde de cada cabecera se arrastra, o se enfoca y se mueve con las
+          flechas. Todo sale por <code class="font-mono">(viewChange)</code>.
+        </p>
+      </li>
+      <li class="flex flex-col gap-1 rounded-md border border-default bg-surface p-4">
+        <h4 class="text-h4">Selección con intención</h4>
+        <p class="text-caption">
+          Shift+clic marca un rango; la barra dice cuántas y ofrece las acciones masivas.
+          <kbd class="font-mono">Ctrl+C</kbd> copia lo marcado, o la fila enfocada, listo para
+          pegar en Excel.
+        </p>
+      </li>
+      <li class="flex flex-col gap-1 rounded-md border border-default bg-surface p-4">
+        <h4 class="text-h4">Barra de estado y agregados</h4>
+        <p class="text-caption">
+          Al pie: cuántas filas, cuántas seleccionadas, y Bultos sumados
+          (<code class="font-mono">aggregate="sum"</code>) sobre la selección si la hay, o sobre lo
+          que está en pantalla.
+        </p>
+      </li>
+      <li class="flex flex-col gap-1 rounded-md border border-default bg-surface p-4">
+        <h4 class="text-h4">Exportar</h4>
+        <p class="text-caption">
+          CSV de todo lo filtrado y ordenado, con BOM para que Excel lea los acentos; o solo lo
+          seleccionado, o al portapapeles. Con una fuente remota la tabla no descarga: emite
+          <code class="font-mono">(exportRequest)</code>.
+        </p>
+      </li>
+      <li class="flex flex-col gap-1 rounded-md border border-default bg-surface p-4">
+        <h4 class="text-h4">Pulido y estados</h4>
+        <p class="text-caption">
+          Solo las excepciones tiñen la fila; las fechas van con dos dígitos; la cabecera queda fija
+          al desplazar adentro; si la fuente falla hay una fila de error con «Reintentar», y cargando
+          no cambia el alto.
+        </p>
+      </li>
+    </ul>
 
     <ewms-prop-table [rows]="props" caption="Propiedades de <ewms-table>" />
 
@@ -219,7 +277,7 @@
           <ewms-column key="cliente" header="Cliente" width="fill" />
           <ewms-column key="bultos" header="Bultos" type="number" width="sm" [sortable]="true" />
           <ewms-column key="estado" header="Estado" type="badge" width="md" [badges]="estados" />
-          <ewms-column key="acciones" header="Acciones" type="actions" width="sm" />
+          <ewms-column key="acciones" header="Acciones" type="actions" width="sm" pinned="end" />
 
           <!--
             El panel no repite las columnas (para eso está el árbol): muestra lo que la
@@ -520,8 +578,9 @@
   <section class="flex flex-col gap-4" aria-labelledby="ta-matrix" data-block="5-matriz">
     <h2 id="ta-matrix" class="text-h2">Matriz de estados</h2>
     <p class="text-secondary">
-      Los cuatro estados de fila, con las <strong>dos</strong> señales que produce cada uno. Las dos
-      salen del mismo diccionario, así que no pueden discrepar.
+      Los cuatro estados de fila, con las señales que produce cada uno, salidas del mismo diccionario.
+      <strong>Solo las excepciones tiñen la fila</strong> —«Con incidencia» y «En proceso»—; las
+      demás llevan solo el badge. Con todas teñidas, ninguna llamaba la atención.
     </p>
     <ewms-demo-frame ground="surface">
       <ewms-state-matrix
@@ -535,10 +594,14 @@
             <ewms-badge [variant]="variant.id" [label]="labelFor(variant.id)" />
           } @else {
             <span
-              class="inline-block h-6 w-32 rounded-sm border border-default"
+              class="inline-flex h-6 w-32 items-center justify-center rounded-sm border border-default text-caption text-secondary"
               [class]="tintFor(variant.id)"
               [attr.data-tint]="variant.id"
-            ></span>
+            >
+              @if (!isTinted(variant.id)) {
+                sin tinte
+              }
+            </span>
           }
         </ng-template>
       </ewms-state-matrix>
@@ -567,7 +630,10 @@
   <!-- ================================================================= 6. Tamaños -->
   <section class="flex flex-col gap-4" aria-labelledby="ta-sizes" data-block="6-tamanos">
     <h2 id="ta-sizes" class="text-h2">Tamaños</h2>
-    <p class="text-secondary">Dos densidades, y los botones de la demo las cambian de verdad.</p>
+    <p class="text-secondary">
+      Dos densidades. Se eligen en el panel «Densidad» de la barra de la tabla; <code class="font-mono">density</code> es el
+      valor con que arranca.
+    </p>
     <div class="overflow-x-auto">
       <table class="w-full border-collapse text-caption">
         <caption class="mb-2 text-left text-secondary">

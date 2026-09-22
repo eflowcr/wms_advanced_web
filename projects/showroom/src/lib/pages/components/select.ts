@@ -13,7 +13,6 @@ import {
   Button,
   DESIGN_SYSTEM_VERSION,
   SEARCH_PAGE_SIZE,
-  SELECT_SEARCH_THRESHOLD,
   Select,
   type FieldSize,
   type SearchDisplay,
@@ -33,7 +32,7 @@ import {
 } from './search-catalogue';
 
 /**
- * Solo estados reales del disparador cerrado. Sin Focus ni Open, por lo mismo que en
+ * Solo estados reales del campo cerrado. Sin Focus ni Open, por lo mismo que en
  * Input (borde en línea atado a una señal); además el panel abierto vive en un
  * overlay del CDK fuera de la tabla.
  */
@@ -63,7 +62,14 @@ const OPTIONS: readonly SelectOption[] = [
   { value: 'transito', label: 'En tránsito' },
 ];
 
-/** Más que el umbral: con esta lista el mismo componente pasa a buscar. */
+/** La lista corta de la demo: con tres opciones se elige igual de rápido con teclado. */
+const STATES_3: readonly SelectOption[] = [
+  { value: 'abierta', label: 'Abierta' },
+  { value: 'preparacion', label: 'En preparación' },
+  { value: 'despachada', label: 'Despachada' },
+];
+
+/** Veinticuatro: la lista larga filtra en memoria, sin fuente. */
 const LOCATIONS: readonly SelectOption[] = Array.from({ length: 24 }, (_unused, index) => {
   const aisle = String.fromCharCode(65 + Math.floor(index / 6));
   const rack = String((index % 6) + 1).padStart(2, '0');
@@ -119,13 +125,13 @@ const PROPS: readonly PropRow[] = [
     name: 'label',
     type: 'string',
     default: '— (requerido)',
-    description: 'Visible. En la lista corta se une por aria-labelledby; cuando busca, por for/id.',
+    description: 'Visible, unida al campo por for/id.',
   },
   {
     name: 'options',
     type: 'readonly SelectOption[] | readonly T[]',
     default: 'null',
-    description: `Lista cerrada en memoria. Con más de ${SELECT_SEARCH_THRESHOLD} opciones, busca.`,
+    description: 'Lista cerrada en memoria: abre entera y filtra al escribir, sin espera.',
   },
   {
     name: 'source',
@@ -138,12 +144,6 @@ const PROPS: readonly PropRow[] = [
     type: 'SearchDisplay<T>',
     default: 'null',
     description: 'label(item) y code(item). Con display el valor es el registro entero.',
-  },
-  {
-    name: 'searchable',
-    type: "'auto' | boolean",
-    default: "'auto'",
-    description: `auto: busca con source o con más de ${SELECT_SEARCH_THRESHOLD} opciones.`,
   },
   {
     name: 'value',
@@ -205,8 +205,8 @@ interface ChevronSample {
 }
 
 /**
- * /design-system/components/select: el único selector (decisión del usuario, 2026-09-21).
- * Lista corta, lista larga que busca en memoria y fuente remota, sobre el mismo componente.
+ * /design-system/components/select: el único selector, y siempre busca (decisión del usuario,
+ * 2026-09-22). Tres demos sobre el mismo campo: lista corta, lista larga y fuente remota.
  */
 @Component({
   selector: 'ewms-showroom-select',
@@ -218,7 +218,7 @@ export class ShowroomSelect {
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
 
   protected readonly version = DESIGN_SYSTEM_VERSION;
-  protected readonly threshold = SELECT_SEARCH_THRESHOLD;
+  protected readonly states3 = STATES_3;
   protected readonly states = STATES;
   protected readonly sizes = SIZES;
   protected readonly options = OPTIONS;
@@ -231,13 +231,13 @@ export class ShowroomSelect {
   protected readonly catalogueSize = CATALOGUE.length;
 
   protected readonly form = new FormGroup({
-    ubicacion: new FormControl<unknown>('muelle-3'),
+    estado: new FormControl<unknown>('preparacion'),
     rack: new FormControl<unknown>(null),
     articulo: new FormControl<Article | null>(null),
   });
 
-  protected readonly chosen = toSignal(this.form.controls.ubicacion.valueChanges, {
-    initialValue: this.form.controls.ubicacion.value,
+  protected readonly chosen = toSignal(this.form.controls.estado.valueChanges, {
+    initialValue: this.form.controls.estado.value,
   });
 
   protected readonly rack = toSignal(this.form.controls.rack.valueChanges, {
@@ -281,7 +281,7 @@ export class ShowroomSelect {
   ]);
 
   protected readonly snippet = [
-    '<!-- Lista cerrada en memoria: con 7 o menos no busca -->',
+    '<!-- Lista cerrada en memoria: abre entera y filtra al escribir -->',
     '<ewms-select',
     '  formControlName="estado"',
     "  [label]=\"'recepciones.estado' | transloco\"",
@@ -315,7 +315,7 @@ export class ShowroomSelect {
         samples.map((sample) => {
           const root = this.host.nativeElement;
           const selector = `[data-chevron-sample="${sample.size}"]`;
-          const trigger = rectOf(root, `${selector} button`);
+          const trigger = rectOf(root, `${selector} input`);
           const chevron = rectOf(root, `${selector} svg`);
           return {
             ...sample,
@@ -348,7 +348,7 @@ export class ShowroomSelect {
   /** Etiqueta de la opción que tiene el formulario, para la lectura en vivo. */
   protected chosenLabel(): string {
     const value = this.chosen();
-    return OPTIONS.find((option) => option.value === value)?.label ?? '(sin elegir)';
+    return STATES_3.find((option) => option.value === value)?.label ?? '(sin elegir)';
   }
 
   protected readonly articleLabel = computed(() => {

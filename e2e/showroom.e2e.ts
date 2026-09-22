@@ -313,7 +313,7 @@ test.describe('a panel that does not fit flips instead of falling off', () => {
       style.top = 'calc(100vh - 70px)';
     });
 
-    const trigger = host.locator('button').first();
+    const trigger = host.locator('[role="combobox"]').first();
     await trigger.click();
 
     const panel = page.locator('[role="listbox"]');
@@ -333,7 +333,7 @@ test.describe('a panel that does not fit flips instead of falling off', () => {
     await page.goto(SPACING);
     await ready(page);
 
-    const trigger = page.locator('[data-demo-select] button').first();
+    const trigger = page.locator('[data-demo-select] [role="combobox"]').first();
     await trigger.scrollIntoViewIfNeeded();
     await trigger.click();
 
@@ -356,7 +356,7 @@ test.describe('the fixed geometry of the system', () => {
     await ready(page);
 
     const input = await page.locator('[data-measure="mixed-input"] input').boundingBox();
-    const select = await page.locator('[data-measure="mixed-select"] button').boundingBox();
+    const select = await page.locator('[data-measure="mixed-select"] input').boundingBox();
     const button = await page.locator('[data-measure="mixed-button"] button').boundingBox();
 
     expect(round(input?.height), 'input md').toBe(40);
@@ -419,7 +419,7 @@ test.describe('the component sheets measure what they claim', () => {
 
     for (const size of ['sm', 'md', 'lg'] as const) {
       const chevron = await page
-        .locator(`[data-chevron-sample="${size}"] button svg`)
+        .locator(`[data-chevron-sample="${size}"] svg`)
         .boundingBox();
       expect(round(chevron?.width), `chevron ${size}`).toBe(16);
     }
@@ -463,7 +463,7 @@ test.describe('the component sheets measure what they claim', () => {
     await page.goto(SELECT);
     await ready(page);
 
-    const trigger = page.locator('[data-demo-select] button').first();
+    const trigger = page.locator('[data-demo-select] [role="combobox"]').first();
     await trigger.scrollIntoViewIfNeeded();
     await trigger.click();
 
@@ -988,36 +988,32 @@ test.describe('keyboard only', () => {
     await page.goto(SELECT);
     await ready(page);
 
-    const trigger = page.locator('[data-demo-select] button').first();
+    const trigger = page.locator('[data-demo-select] [role="combobox"]').first();
     const panel = page.locator('[role="listbox"]');
     const value = page.locator('[data-demo-value]');
 
+    // Tres estados, con teclado: flecha abre, flecha elige, Enter confirma.
     await trigger.focus();
-    await page.keyboard.press('Enter');
+    await page.keyboard.press('ArrowDown');
     await expect(panel).toBeVisible();
+    await expect(panel.locator('[role="option"]')).toHaveCount(3);
 
-    // Escape cierra sin elegir y el foco nunca dejó el disparador (aria-activedescendant, ver select.ts).
-    const untouched = await value.textContent();
+    // Escape cierra sin elegir y el foco nunca dejó el campo (aria-activedescendant, ver select.ts).
     await page.keyboard.press('Escape');
     await expect(panel).toHaveCount(0);
     await expect(trigger).toBeFocused();
-    await expect(value).toHaveText(untouched ?? '');
+    await expect(value).toHaveText('preparacion');
 
-    // Espacio también abre: el disparador es un button nativo, sin manejador propio.
-    await page.keyboard.press('Space');
+    await page.keyboard.press('ArrowDown');
     await expect(panel).toBeVisible();
-
-    // Las flechas mueven la fila activa; el foco sigue sin moverse.
+    // Abre sobre el valor: la activa es «En preparación», la segunda.
+    await expect(trigger).toHaveAttribute('aria-activedescendant', /-option-1$/);
     await page.keyboard.press('ArrowDown');
-    await expect(trigger).toBeFocused();
-    const active = await trigger.getAttribute('aria-activedescendant');
-    expect(active, 'the arrows must mark an active option').not.toBeNull();
-
-    await page.keyboard.press('ArrowDown');
+    await expect(trigger).toHaveAttribute('aria-activedescendant', /-option-2$/);
     await page.keyboard.press('Enter');
     await expect(panel).toHaveCount(0);
     await expect(trigger).toBeFocused();
-    await expect(value).not.toHaveText(untouched ?? '');
+    await expect(value).toHaveText('despachada');
   });
 
   test('Escape dismisses a tooltip opened by focus, and the focus stays put', async ({ page }) => {
@@ -1183,13 +1179,9 @@ test.describe('DS-3 lote B: dialog', () => {
     const dialog = page.locator('[role="dialog"]');
     await expect(dialog).toBeVisible();
 
-    const labelledBy = await dialog.getAttribute('aria-labelledby');
-    const describedBy = await dialog.getAttribute('aria-describedby');
-    expect(labelledBy).toBeTruthy();
-    expect(describedBy).toBeTruthy();
-
-    await expect(page.locator(`#${labelledBy}`)).toContainText('Eliminar la expedición');
-    await expect(page.locator(`#${describedBy}`)).toContainText('34 bultos');
+    // El nombre y la descripción accesibles se calculan de aria-labelledby y aria-describedby.
+    await expect(dialog).toHaveAccessibleName(/Eliminar la expedición/);
+    await expect(dialog).toHaveAccessibleDescription(/34 bultos/);
     await expect(dialog).toHaveAttribute('aria-modal', 'true');
   });
 
@@ -1412,7 +1404,7 @@ test.describe('DS-3 lote C: la tabla', () => {
     expect(printed).toBe(snippet.trimEnd().split('\n').length);
     // El techo de la comanda para la demo de expediciones: si falla, se corrige la API, no la página.
     expect(printed).toBeLessThanOrEqual(40);
-    await expect(page.locator('[data-component-lines]')).toHaveText('2');
+    await expect(page.locator('[data-component-lines]')).toHaveText('4');
   });
 
   test('a row is exactly as tall as an input of the same size', async ({ page }) => {
@@ -1433,8 +1425,10 @@ test.describe('DS-3 lote C: la tabla', () => {
     await page.goto(TABLE);
     await ready(page);
 
+    // La densidad es de la barra de la tabla: un panel con dos opciones.
+    await page.locator(`${DEMO} [data-density-menu] button`).click();
     await page.locator('[data-density="sm"]').click();
-    await expect(page.locator('[data-density-value]')).toHaveText('sm');
+    await expect(page.locator('[data-density="sm"] input')).toBeChecked();
 
     const row = await page.locator(ROWS).first().boundingBox();
     expect(round(row?.height)).toBe(32);
@@ -1551,6 +1545,8 @@ test.describe('DS-3 lote C: la tabla', () => {
     await page.goto(TABLE);
     await ready(page);
 
+    // Ocultos por defecto: se abren con «Filtros».
+    await page.locator(`${DEMO} [data-filters-toggle] button`).click();
     const boxes = page.locator(`${DEMO} [data-filter="bultos"] input`);
     await expect(boxes).toHaveCount(2);
 
@@ -1561,6 +1557,184 @@ test.describe('DS-3 lote C: la tabla', () => {
 
     await boxes.nth(0).fill('');
     await expect(page.locator(ROWS)).toHaveCount(12);
+  });
+
+  test('the filters hide and come back with the button and Alt+R, and the chips never hide', async ({
+    page,
+  }) => {
+    await page.goto(TABLE);
+    await ready(page);
+
+    const toggle = page.locator(`${DEMO} [data-filters-toggle] button`);
+    const filterRow = page.locator(`${DEMO} [data-filter-row]`);
+    await expect(filterRow).toBeHidden();
+    await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+
+    await toggle.click();
+    await page.locator(`${DEMO} [data-filter="codigo"] input`).fill('0403');
+    await expect(toggle).toHaveText(/Filtros \(1\)/);
+
+    // Con el foco en la tabla, el atajo del mapa oculta la fila; el chip sigue diciendo qué filtra.
+    await page.locator(`${DEMO} [data-cell="0-0"]`).focus();
+    await page.keyboard.press('Alt+r');
+    await expect(filterRow).toBeHidden();
+    await expect(page.locator(`${DEMO} [data-chip="codigo"]`)).toContainText('Código: 0403');
+    await expect(page.locator(ROWS)).toHaveCount(1);
+
+    await page.locator(`${DEMO} [data-clear-filters]`).click();
+    await expect(page.locator(ROWS)).toHaveCount(12);
+    await expect(page.locator(`${DEMO} [data-chip]`)).toHaveCount(0);
+  });
+
+  test('the Estado filter is a set: «Con incidencia» plus «En proceso», and nothing else', async ({
+    page,
+  }) => {
+    await page.goto(TABLE);
+    await ready(page);
+
+    await page.locator(`${DEMO} [data-filters-toggle] button`).click();
+    const trigger = page.locator(`${DEMO} [data-filter="estado"] button`);
+    await trigger.click();
+    const panel = page.getByRole('dialog', { name: 'Estado' });
+    await expect(panel).toBeVisible();
+
+    // Todas marcadas al abrir: se desmarca lo que sobra, con teclado incluido.
+    await panel.getByRole('checkbox', { name: 'Pendiente' }).uncheck();
+    await panel.getByRole('checkbox', { name: 'Completada' }).press('Space');
+    await expect(panel.getByRole('checkbox', { name: 'Todos' })).toHaveAttribute('aria-checked', 'mixed');
+    await expect(trigger).toHaveText(/Estado: 2 de 4/);
+
+    const badges = page.locator(`${ROWS} ewms-badge`);
+    for (const text of await badges.allTextContents()) {
+      expect(text).toMatch(/Con incidencia|En proceso/);
+    }
+    await page.keyboard.press('Escape');
+    await expect(panel).toHaveCount(0);
+    await expect(trigger).toBeFocused();
+    await expect(page.locator(`${DEMO} [data-chip="estado"]`)).toContainText('Con incidencia');
+  });
+
+  test('columns: the pinned stay in view while the table scrolls, and resize from the keyboard', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto(TABLE);
+    await ready(page);
+
+    // Con los filtros abiertos la tabla es más ancha que su caja: desplaza adentro, la página no.
+    await page.locator(`${DEMO} [data-filters-toggle] button`).click();
+    const box = page.locator(`${DEMO} [data-scroll-box]`);
+    await box.evaluate((element) => {
+      element.scrollLeft = element.scrollWidth;
+    });
+    const boxLeft = (await box.boundingBox())!.x;
+    const codigo = page.locator(`${DEMO} th[data-col="codigo"]`);
+    const select = page.locator(`${DEMO} th[data-col-select]`);
+    await expect
+      .poll(async () => Math.round((await select.boundingBox())!.x - boxLeft))
+      .toBeLessThanOrEqual(1);
+    const selectBox = (await select.boundingBox())!;
+    expect(Math.round((await codigo.boundingBox())!.x)).toBe(
+      Math.round(selectBox.x + selectBox.width),
+    );
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+
+    // El separador es una parada de teclado y anuncia su ancho.
+    const handle = page.locator(`${DEMO} [data-resize="cliente"]`);
+    await handle.focus();
+    // Sin getAttribute (no reintenta): el ancho de partida es el de la cabecera medida.
+    const before = Math.round((await page.locator(`${DEMO} th[data-col="cliente"]`).boundingBox())!.width);
+    await expect(handle).toHaveAttribute('aria-valuenow', String(before));
+    await page.keyboard.press('ArrowRight');
+    await expect(handle).toHaveAttribute('aria-valuenow', String(before + 16));
+
+    // El selector oculta una columna y la tabla se lo cuenta a quien escucha.
+    await page.locator(`${DEMO} [data-column-chooser] button`).click();
+    await page.getByRole('dialog', { name: 'Columnas' }).getByRole('checkbox', { name: 'Fecha' }).uncheck();
+    await expect(page.locator(`${DEMO} th[data-col="fecha"]`)).toHaveCount(0);
+  });
+
+  test('selection with intent: Shift marks a range, the bar acts on it, Ctrl+C pastes into Excel', async ({
+    page,
+    context,
+  }) => {
+    await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+    await page.goto(TABLE);
+    await ready(page);
+
+    const boxes = page.locator(`${ROWS} input[type="checkbox"]`);
+    await boxes.nth(0).click();
+    await boxes.nth(3).click({ modifiers: ['Shift'] });
+    await expect(page.locator(`${DEMO} [data-selected-count]`)).toHaveText('4 seleccionadas');
+    await expect(page.locator(`${DEMO} [data-table-announce]`)).toHaveText('4 seleccionadas');
+
+    await page.locator(`${DEMO} [data-bulk-action="imprimir"] button`).click();
+    await expect(page.locator('[data-bulk-choice]')).toHaveText('Imprimir etiquetas · 4 expediciones');
+
+    await page.locator(`${DEMO} [data-cell="0-1"]`).focus();
+    await page.keyboard.press('Control+c');
+    await expect(page.locator(`${DEMO} [data-table-announce]`)).toHaveText('4 filas copiadas');
+    const pasted = await page.evaluate(() => navigator.clipboard.readText());
+    // Chromium en Windows devuelve CRLF, que es lo que espera Excel.
+    const lines = pasted.split(/\r?\n/);
+    expect(lines).toHaveLength(5);
+    expect(lines[0]).toBe('Código\tCliente / artículo\tFecha\tBultos\tEstado');
+    // Número sin separador y fecha ISO: Excel los lee como dato, no como texto.
+    expect(lines[1]).toMatch(/^EXP-2026-0400\t.+\t\d{4}-\d{2}-\d{2}\t\d+\t/);
+
+    await page.locator(`${DEMO} [data-clear-selection] button`).click();
+    await expect(page.locator(`${DEMO} [data-bulk-bar]`)).toHaveCount(0);
+  });
+
+  test('the status bar counts the rows and adds up Bultos: on screen, then over the selection', async ({
+    page,
+  }) => {
+    await page.goto(TABLE);
+    await ready(page);
+
+    const status = page.locator(`${DEMO} [data-table-status]`);
+    await expect(status.locator('[data-status-rows]')).toHaveText('12 de 12 filas');
+    const bultos = page.locator(`${ROWS} td:nth-child(5)`);
+    const numbers = (await bultos.allTextContents()).map((text) => Number(text.replace(/\D/g, '')));
+    const onScreen = numbers.reduce((total, value) => total + value, 0);
+    await expect(status.locator('[data-aggregate="bultos"]')).toHaveText(
+      `Bultos en pantalla: ${new Intl.NumberFormat('es').format(onScreen)}`,
+    );
+
+    const boxes = page.locator(`${ROWS} input[type="checkbox"]`);
+    await boxes.nth(0).click();
+    await boxes.nth(1).click();
+    await expect(status.locator('[data-status-selected]')).toHaveText('2 seleccionadas');
+    await expect(status.locator('[data-aggregate="bultos"]')).toHaveText(
+      `Bultos seleccionados: ${new Intl.NumberFormat('es').format(numbers[0]! + numbers[1]!)}`,
+    );
+  });
+
+  test('export: a real CSV download, with a BOM, the filtered rows and Excel-readable values', async ({
+    page,
+  }) => {
+    await page.goto(TABLE);
+    await ready(page);
+
+    await page.locator(`${DEMO} [data-quick-filter] input`).fill('Andes');
+    await expect(page.locator(`${DEMO} [data-status-rows]`)).not.toHaveText('12 de 12 filas');
+    const shown = await page.locator(ROWS).count();
+
+    const [download] = await Promise.all([
+      page.waitForEvent('download'),
+      page.locator(`${DEMO} [data-export] button`).first().click(),
+    ]);
+    expect(download.suggestedFilename()).toBe('Expediciones.csv');
+    const bytes = await (await download.createReadStream()).toArray();
+    const buffer = Buffer.concat(bytes);
+    // Con BOM UTF-8: sin él Excel abre «CÃ³digo».
+    expect([...buffer.subarray(0, 3)]).toEqual([0xef, 0xbb, 0xbf]);
+    const lines = buffer.subarray(3).toString('utf-8').split('\r\n');
+    expect(lines[0]).toBe('Código,Cliente / artículo,Fecha,Bultos,Estado');
+    expect(lines).toHaveLength(shown + 1);
+    for (const line of lines.slice(1)) {
+      expect(line).toMatch(/^EXP-2026-\d{4},Distribuidora Andes,\d{4}-\d{2}-\d{2},\d+,/);
+    }
   });
 
   test('the quick filter narrows the table, and the empty state is the projected one', async ({
@@ -1643,8 +1817,17 @@ test.describe('DS-3 lote D: detalle, menú, ventana y paginador', () => {
     await button.click();
     await expect(button).toHaveAttribute('aria-expanded', 'true');
 
-    const id = await page.locator(`${DETALLE} [data-detail="0"] td`).getAttribute('id');
-    await expect(button).toHaveAttribute('aria-controls', id ?? '');
+    // Lo que nombra aria-controls es la celda del panel de la fila 0.
+    await expect
+      .poll(() =>
+        button.evaluate(
+          (element) =>
+            document
+              .getElementById(element.getAttribute('aria-controls') ?? '')
+              ?.closest('[data-detail="0"]') != null,
+        ),
+      )
+      .toBe(true);
   });
 
   test('the row menu opens from the kebab and from the right button', async ({ page }) => {
@@ -1676,10 +1859,11 @@ test.describe('DS-3 lote D: detalle, menú, ventana y paginador', () => {
     // reintenta: sin zone.js, un getAttribute suelto lee el valor previo a la pulsación.
     const active = menu.locator('[role="menuitem"].bg-ghost-hover');
     await expect(active).toContainText('Duplicar');
-    await expect(menu).toHaveAttribute(
-      'aria-activedescendant',
-      (await active.getAttribute('id')) ?? '',
-    );
+    await expect
+      .poll(() =>
+        menu.evaluate((list) => list.getAttribute('aria-activedescendant') === list.querySelector('.bg-ghost-hover')?.id),
+      )
+      .toBe(true);
 
     await page.keyboard.press('Escape');
     await expect(page.locator(`${DETALLE} [data-cell="0-0"]`)).toBeFocused();
@@ -1703,13 +1887,11 @@ test.describe('DS-3 lote D: detalle, menú, ventana y paginador', () => {
 
     const demo = '[data-demo-perezosa]';
     // La expedición con incidencia es la que nunca recibe hijos.
-    const failing = page.locator(`${demo} tr.bg-danger-surface`).first();
-    const index = await failing.getAttribute('data-row');
-
-    await page.locator(`${demo} [data-toggle="${index}"]`).click();
-    await expect(page.locator(`${demo} [data-loading="${index}"]`)).toBeVisible();
-    await expect(page.locator(`${demo} [data-failed="${index}"]`)).toBeVisible();
-    await expect(page.locator(`${demo} [data-retry="${index}"]`)).toBeVisible();
+    // Una sola fila abierta: sus filas de carga y de error son las únicas de la tabla.
+    await page.locator(`${demo} tr.bg-danger-surface`).first().locator('[data-toggle]').click();
+    await expect(page.locator(`${demo} [data-loading]`)).toBeVisible();
+    await expect(page.locator(`${demo} [data-failed]`)).toBeVisible();
+    await expect(page.locator(`${demo} [data-retry]`)).toBeVisible();
   });
 
   test('FIVE THOUSAND ROWS, A HANDFUL IN THE DOM, and the count is still five thousand', async ({
@@ -1749,8 +1931,11 @@ test.describe('DS-3 lote D: detalle, menú, ventana y paginador', () => {
     // lugar en la tabla entera.
     const first = page.locator(`${VIRTUAL} [data-row]`).first();
     await expect(first).not.toHaveAttribute('data-row', '0');
-    const index = Number(await first.getAttribute('data-row'));
-    await expect(first).toHaveAttribute('aria-rowindex', String(index + 1));
+    await expect
+      .poll(() =>
+        first.evaluate((row) => Number(row.getAttribute('aria-rowindex')) - Number(row.getAttribute('data-row'))),
+      )
+      .toBe(1);
   });
 
   test('the paginator appears because the source counts, and moves a page', async ({ page }) => {
@@ -1792,7 +1977,9 @@ test.describe('DS-3 lote D: detalle, menú, ventana y paginador', () => {
     await page.goto(TABLE);
     await ready(page);
 
+    await page.locator('[data-demo-table] [data-filters-toggle] button').click();
     const filterRow = page.locator('[data-demo-table] [data-filter-row]');
+    await expect(filterRow).toBeVisible();
 
     // Los filtros son Small, mismo token que la fila compacta (--row-height-sm): un campo en una
     // celda mide exactamente una fila, y la fecha es un solo campo de rango (2026-09-21).
@@ -1817,9 +2004,51 @@ test.describe('DS-3 lote D: detalle, menú, ventana y paginador', () => {
         context.font = [style.fontWeight, style.fontSize, style.fontFamily].join(' ');
         const room =
           input.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
-        return context.measureText(input.placeholder).width <= room;
+        // Con flechitas Chrome les reserva ancho aunque no se vean: la cuenta de arriba daba
+        // «cabe» y en pantalla se leía «Desd» (2026-09-22). Sin ellas, la cuenta es la verdad.
+        return style.appearance === 'textfield' && context.measureText(input.placeholder).width <= room;
       });
       expect(fits, `box ${index} fits its placeholder`).toBe(true);
     }
+  });
+
+  test('polish: the header stays while the rows scroll, only exceptions are tinted, dates read in a column', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1440, height: 600 });
+    await page.goto(TABLE);
+    await ready(page);
+
+    const demo = '[data-demo-table]';
+    // Cabecera fija: la caja tiene alto máximo por token y desplaza adentro.
+    const box = page.locator(`${demo} [data-scroll-box]`);
+    await box.evaluate((element) => {
+      element.scrollTop = element.scrollHeight;
+    });
+    const header = page.locator(`${demo} thead`);
+    await expect
+      .poll(async () => Math.round((await header.boundingBox())!.y - (await box.boundingBox())!.y))
+      .toBe(0);
+
+    // Solo «Con incidencia» y «En proceso» tiñen; el resto lleva el badge y nada más. Con poll:
+    // una lectura del DOM que reintenta, nunca un getAttribute suelto.
+    await expect
+      .poll(() =>
+        page.locator(`${demo} tbody tr[data-row]`).evaluateAll((rows) =>
+          rows
+            .filter(
+              (row) =>
+                /bg-(danger|warning)-surface/.test(row.className) !==
+                /Con incidencia|En proceso/.test(row.querySelector('ewms-badge')?.textContent ?? ''),
+            )
+            .map((row) => row.textContent?.trim()),
+        ),
+      )
+      .toEqual([]);
+
+    // Día y mes con dos dígitos, desde el formateador.
+    await expect(page.locator(`${demo} tbody tr[data-row] td:nth-child(4)`).first()).toHaveText(
+      /^\s*\d{2}\/\d{2}\/2026\s*$/,
+    );
   });
 });

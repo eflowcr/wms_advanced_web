@@ -23,6 +23,53 @@ export interface TableMessages {
   readonly nextPage: string;
   readonly pageOf: (page: number, pages: number) => string;
   readonly rowsTotal: (total: number) => string;
+
+  // Barra de herramientas. Ver vault: Tabla §12.
+  /** «Filtros», o «Filtros (2)» con filtros de columna activos. */
+  readonly filters: (active: number) => string;
+  readonly clearFilters: string;
+  /** Nombre del botón × de un chip: «Quitar el filtro Estado». */
+  readonly removeFilter: (column: string) => string;
+  readonly density: string;
+  readonly densityMd: string;
+  readonly densitySm: string;
+
+  // Filtro de conjunto de una columna `badge`.
+  readonly setAll: string;
+  readonly setNone: string;
+  /** Texto del botón: «Estado: todos», «Estado: 2 de 4», «Estado: ninguno». */
+  readonly setSummary: (column: string, chosen: number, total: number) => string;
+
+  // Columnas: selector y separador de ancho.
+  readonly columns: string;
+  /** Nombre del separador: «Ancho de la columna Código». */
+  readonly resizeColumn: (column: string) => string;
+
+  // Selección: la barra de acciones masivas y lo que se anuncia.
+  /** «1 seleccionada», «3 seleccionadas». */
+  readonly selectedCount: (count: number) => string;
+  readonly clearSelection: string;
+  /** Lo copiado con Ctrl+C: «3 filas copiadas». */
+  readonly copied: (rows: number) => string;
+
+  // Exportar: la acción principal es CSV.
+  readonly export: string;
+  readonly exportSelected: string;
+  readonly copyAll: string;
+
+  // Estados de la tabla entera.
+  readonly loading: string;
+  readonly loadFailed: string;
+
+  // Barra de estado.
+  /** «12 de 340 filas», o «12 filas» con `total` null. */
+  readonly rowsShown: (shown: number, total: number | null) => string;
+  /** La etiqueta del agregado: «Bultos seleccionados», «Promedio de bultos en pantalla». */
+  readonly aggregate: (
+    kind: 'sum' | 'avg' | 'count',
+    column: string,
+    scope: 'selected' | 'shown',
+  ) => string;
 }
 
 /** Solo lo que se muestra: ordenar y filtrar usan el valor crudo. Ver vault: Tabla §2. */

@@ -156,6 +156,68 @@ function tableMessages(): TableMessages {
     pageOf: (page, pages) =>
       transloco.translate('ds.table.pageOf', { page: String(page), pages: String(pages) }),
     rowsTotal: (total) => transloco.translate('ds.table.rowsTotal', { total }),
+    filters: (active) => transloco.translate('ds.table.filters', { active }),
+    get clearFilters() {
+      return transloco.translate('ds.table.clearFilters');
+    },
+    removeFilter: (column) => transloco.translate('ds.table.removeFilter', { column }),
+    get density() {
+      return transloco.translate('ds.table.density');
+    },
+    get densityMd() {
+      return transloco.translate('ds.table.densityMd');
+    },
+    get densitySm() {
+      return transloco.translate('ds.table.densitySm');
+    },
+    get setAll() {
+      return transloco.translate('ds.table.setAll');
+    },
+    get setNone() {
+      return transloco.translate('ds.table.setNone');
+    },
+    setSummary: (column, chosen, total) =>
+      chosen === total
+        ? transloco.translate('ds.table.setSummaryAll', { column })
+        : transloco.translate('ds.table.setSummary', { column, chosen, total }),
+    get columns() {
+      return transloco.translate('ds.table.columns');
+    },
+    resizeColumn: (column) => transloco.translate('ds.table.resizeColumn', { column }),
+    selectedCount: (count) => transloco.translate('ds.table.selectedCount', { count }),
+    get clearSelection() {
+      return transloco.translate('ds.table.clearSelection');
+    },
+    copied: (rows) => transloco.translate('ds.table.copied', { rows }),
+    get loading() {
+      return transloco.translate('ds.table.loading');
+    },
+    get loadFailed() {
+      return transloco.translate('ds.table.loadFailed');
+    },
+    get export() {
+      return transloco.translate('ds.table.export');
+    },
+    get exportSelected() {
+      return transloco.translate('ds.table.exportSelected');
+    },
+    get copyAll() {
+      return transloco.translate('ds.table.copyAll');
+    },
+    rowsShown: (shown, total) =>
+      total === null
+        ? transloco.translate('ds.table.rowsShown', { shown })
+        : transloco.translate('ds.table.rowsShownOf', { shown, total }),
+    // Una clave por combinación, literal: transloco-keys-manager lee la fuente (ver arriba).
+    aggregate: (kind, column, scope) => {
+      /** t(ds.table.sumSelected, ds.table.sumShown, ds.table.avgSelected, ds.table.avgShown, ds.table.countSelected, ds.table.countShown) */
+      const keys = {
+        sum: { selected: 'ds.table.sumSelected', shown: 'ds.table.sumShown' },
+        avg: { selected: 'ds.table.avgSelected', shown: 'ds.table.avgShown' },
+        count: { selected: 'ds.table.countSelected', shown: 'ds.table.countShown' },
+      } as const;
+      return transloco.translate(keys[kind][scope], { column });
+    },
   };
 }
 
@@ -231,6 +293,9 @@ function shortcutHelpMessages(): ShortcutHelpMessages {
       get cancel() {
         return transloco.translate('shell.shortcuts.actions.cancel');
       },
+      get filters() {
+        return transloco.translate('shell.shortcuts.actions.filters');
+      },
       get help() {
         return transloco.translate('shell.shortcuts.actions.help');
       },
@@ -279,7 +344,14 @@ function tableFormatters(): TableFormatters {
         return '';
       }
       const parsed = parseTableDate(value);
-      return parsed === null ? String(value) : locale.localizeDate(parsed);
+      // Día y mes con dos dígitos: en columna se leen alineados (16/03/2026).
+      return parsed === null
+        ? String(value)
+        : locale.localizeDate(parsed, undefined, {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+          });
     },
     number: (value) => {
       if (value === null || value === undefined || value === '') {

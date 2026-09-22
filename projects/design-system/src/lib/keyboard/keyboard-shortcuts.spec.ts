@@ -28,6 +28,7 @@ const MAP: ShortcutMap = {
     chord: ['Ctrl', 'S'],
   },
   cancel: { key: 'Escape', insideTextFields: true, chord: ['Esc'] },
+  filters: { key: 'r', alt: true, chord: ['Alt', 'R'] },
   help: { key: '?', chord: ['?'] },
 };
 
@@ -45,6 +46,7 @@ const MESSAGES: ShortcutHelpMessages = {
     create: 'Crear',
     save: 'Guardar',
     cancel: 'Cancelar',
+    filters: 'Filtros',
     help: 'Abrir esta lista',
   },
 };
@@ -367,7 +369,7 @@ describe('KeyboardShortcuts', () => {
 
       expect(dialog).not.toBeNull();
       const keys = [...dialog.querySelectorAll('kbd')].map((k) => k.textContent?.trim());
-      expect(keys).toEqual(['/', 'Alt', 'N', 'Ctrl', 'S', 'Esc', '?']);
+      expect(keys).toEqual(['/', 'Alt', 'N', 'Ctrl', 'S', 'Esc', 'Alt', 'R', '?']);
     });
 
     it('PACQ-04.3: an action added to the map appears without touching the dialog', async () => {

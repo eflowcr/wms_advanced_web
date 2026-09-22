@@ -202,7 +202,7 @@ test.describe('showroom capture rig', () => {
     // El panel del Select: el CSS de overlay del CDK llegó en el PR 2 y acá corre por primera vez en navegador.
     await page.goto('/design-system/foundations/spacing');
     await waitForMontserrat(page);
-    await page.locator('[data-demo-select] button').first().click();
+    await page.locator('[data-demo-select] [role="combobox"]').first().click();
     await page.waitForTimeout(300);
     await page.screenshot({ path: path.join(OUT, '24-select-open.png') });
     report.push(render('spacing page, select open', await measure(page)));
@@ -211,7 +211,7 @@ test.describe('showroom capture rig', () => {
     // página recién cargada no hay nada abierto.
     await page.goto('/design-system/components/select');
     await waitForMontserrat(page);
-    await page.locator('[data-demo-select] button').first().click();
+    await page.locator('[data-demo-select] [role="combobox"]').first().click();
     await page.waitForTimeout(300);
     await page.screenshot({ path: path.join(OUT, '25-select-page-open.png') });
 
@@ -224,7 +224,7 @@ test.describe('showroom capture rig', () => {
       style.top = 'calc(100vh - 90px)';
       style.width = '320px';
     });
-    await page.locator('[data-demo-select] button').first().click();
+    await page.locator('[data-demo-select] [role="combobox"]').first().click();
     await page.waitForTimeout(300);
     await page.screenshot({ path: path.join(OUT, '26-select-flipped.png') });
 

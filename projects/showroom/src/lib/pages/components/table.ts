@@ -15,9 +15,9 @@ import {
   EmptyTemplate,
   Table,
   TableColumn,
+  type BulkActionEvent,
   type RowActivateEvent,
   type RowMenuEvent,
-  type TableDensity,
   type TableQuery,
   type TableSource,
 } from '@ewms/design-system';
@@ -28,6 +28,7 @@ import { TokenValue } from '../../ui/token-value';
 import { ESTADOS, EXPEDICIONES, type ExpedicionRow } from './expediciones';
 import {
   ACCIONES_FILA,
+  ACCIONES_MASIVAS,
   CABECERAS,
   FuentePaginada,
   hijosPerezosos,
@@ -50,17 +51,20 @@ const CONSUMER_TEMPLATE = [
   '  [trackBy]="porId"',
   '  [selectable]="true"',
   '  [quickFilter]="true"',
-  '  [density]="densidad()"',
+  '  [columnChooser]="true"',
+  '  [exportable]="true"',
+  '  [bulkActions]="masivas"',
   '  ariaLabel="Expediciones"',
   '  (rowActivate)="abrir($event)"',
   '  (selectionChange)="seleccion.set($event)"',
+  '  (bulkAction)="masiva($event)"',
   '  (queryChange)="consulta.set($event)"',
   '>',
-  '  <ewms-column key="codigo" header="Código" width="md" [sortable]="true" [filterable]="true" />',
+  '  <ewms-column key="codigo" header="Código" width="md" pinned="start" [sortable]="true" [filterable]="true" />',
   '  <ewms-column key="cliente" header="Cliente / artículo" width="fill" [filterable]="true" />',
   '  <ewms-column key="fecha" header="Fecha" type="date" width="md" [sortable]="true" [filterable]="true" />',
-  '  <ewms-column key="bultos" header="Bultos" type="number" width="sm" [sortable]="true" [filterable]="true" />',
-  '  <ewms-column key="estado" header="Estado" type="badge" width="md" [badges]="ESTADOS" />',
+  '  <ewms-column key="bultos" header="Bultos" type="number" width="sm" aggregate="sum" [sortable]="true" [filterable]="true" />',
+  '  <ewms-column key="estado" header="Estado" type="badge" width="md" [badges]="ESTADOS" [filterable]="true" />',
   '',
   '  <ng-template ewmsEmpty>',
   '    <p>Ninguna expedición coincide con el filtro.</p>',
@@ -72,6 +76,8 @@ const CONSUMER_TEMPLATE = [
 const CONSUMER_COMPONENT = [
   'protected readonly expediciones = new ArrayTableSource(EXPEDICIONES);',
   'protected readonly porId = (row: ExpedicionRow) => row.id;',
+  'protected readonly masivas = ACCIONES_MASIVAS;',
+  'protected masiva(event: BulkActionEvent<ExpedicionRow>) { /* imprimir, anular… */ }',
 ].join('\n');
 
 const MATRIX_VARIANTS: readonly MatrixAxis[] = [
@@ -86,13 +92,15 @@ const MATRIX_STATES: readonly MatrixAxis[] = [
   { id: 'tint', label: 'Tinte de la fila' },
 ];
 
-/** Tintes de fila escritos completos para que Tailwind vea cada clase. */
+/** Tintes de fila escritos completos para que Tailwind vea cada clase. Solo las excepciones tiñen. */
 const TINTS: Readonly<Record<string, string>> = {
-  neutral: 'bg-neutral-surface',
+  neutral: 'bg-surface',
   warning: 'bg-warning-surface',
-  success: 'bg-success-surface',
+  success: 'bg-surface',
   danger: 'bg-danger-surface',
 };
+
+const TINTED: ReadonlySet<string> = new Set(['warning', 'danger']);
 
 const LABELS: Readonly<Record<string, string>> = {
   neutral: 'Pendiente',
@@ -145,7 +153,31 @@ const PROPS: readonly PropRow[] = [
     name: 'density',
     type: "'md' | 'sm'",
     default: "'md'",
-    description: 'Alto de fila por token: 40 px o 32 px.',
+    description: 'Con qué densidad arranca; después se elige en la barra. Alto de fila por token.',
+  },
+  {
+    name: 'columnChooser',
+    type: 'boolean',
+    default: 'false',
+    description: 'Selector de columnas en la barra. La última visible no se oculta.',
+  },
+  {
+    name: 'exportable',
+    type: 'boolean',
+    default: 'false',
+    description: 'Exportar: CSV en el cliente con ArrayTableSource; con fuente remota, (exportRequest).',
+  },
+  {
+    name: 'bulkActions',
+    type: 'readonly MenuItem[]',
+    default: '[]',
+    description: 'Acciones sobre lo seleccionado; la barra las muestra con «3 seleccionadas».',
+  },
+  {
+    name: 'ewms-column: pinned · hideable · aggregate',
+    type: "'start' | 'end' · boolean · 'sum' | 'avg' | 'count'",
+    default: 'null · true · null',
+    description: 'Fija la columna al borde, la saca del selector, o la suma al pie (solo number).',
   },
   {
     name: 'trackBy',
@@ -173,6 +205,24 @@ const PROPS: readonly PropRow[] = [
     description: 'La selección. Una salida, no un valor de formulario: la tabla no es un CVA.',
   },
   {
+    name: '(viewChange)',
+    type: 'TableView',
+    default: '—',
+    description: 'Columnas ocultas, anchos, fijadas y densidad: en memoria, para quien quiera guardarlas.',
+  },
+  {
+    name: '(bulkAction)',
+    type: '{ item, rows }',
+    default: '—',
+    description: 'La acción masiva elegida, con las filas seleccionadas de cualquier página.',
+  },
+  {
+    name: '(exportRequest)',
+    type: '{ query, columns, selectedOnly }',
+    default: '—',
+    description: 'Solo con fuente remota: la tabla no descarga, dice qué pidió el usuario.',
+  },
+  {
     name: '(queryChange)',
     type: 'TableQuery',
     default: '—',
@@ -193,6 +243,8 @@ const ANATOMY = [
   { part: 'Tinte de fila «Con incidencia»', token: '--color-danger-surface' },
   { part: 'Tinte de fila «En proceso»', token: '--color-warning-surface' },
   { part: 'Anillo de foco de la celda', token: '--focus-ring-shadow' },
+  { part: 'Alto máximo: la cabecera queda fija', token: '--table-max-height' },
+  { part: 'Paso de las flechas al redimensionar', token: '--col-resize-step' },
 ] as const;
 
 /**
@@ -239,6 +291,8 @@ export class ShowroomTable {
   // --------------------------------------------------------------- lote D
 
   protected readonly accionesFila = ACCIONES_FILA;
+  protected readonly masivas = ACCIONES_MASIVAS;
+  protected readonly ultimaMasiva = signal('(ninguna)');
   protected readonly hijosPerezosos = hijosPerezosos;
 
   /** Las cabeceras solas, para la demo de detalle y menú. */
@@ -277,7 +331,6 @@ export class ShowroomTable {
   protected readonly ultimaAccion = signal('(ninguna)');
   protected readonly ultimaDescarga = signal('(ninguna)');
 
-  protected readonly densidad = signal<TableDensity>('md');
   protected readonly seleccion = signal<readonly ExpedicionRow[]>([]);
   protected readonly consulta = signal<TableQuery | null>(null);
   protected readonly ultimaActivada = signal('(ninguna)');
@@ -313,6 +366,11 @@ export class ShowroomTable {
     this.ubicacionesCargadas.set(UBICACIONES_TOTAL);
   }
 
+  /** No hace nada: lo anota, como el resto de las demos. */
+  protected masiva(event: BulkActionEvent<ExpedicionRow>): void {
+    this.ultimaMasiva.set(`${event.item.label} · ${event.rows.length} expediciones`);
+  }
+
   protected elegir(event: RowMenuEvent<ExpedicionRow>): void {
     this.ultimaAccion.set(`${event.item.label} · ${event.row.codigo}`);
   }
@@ -335,12 +393,12 @@ export class ShowroomTable {
     return EXPEDICIONES.find((expedicion) => expedicion.id === row.id)?.hijos?.length ?? 0;
   }
 
-  protected setDensidad(density: TableDensity): void {
-    this.densidad.set(density);
-  }
-
   protected tintFor(variant: string): string {
     return TINTS[variant] ?? '';
+  }
+
+  protected isTinted(variant: string): boolean {
+    return TINTED.has(variant);
   }
 
   protected labelFor(variant: string): string {

@@ -9,6 +9,8 @@ export type ShortcutAction =
   | 'create'
   | 'save'
   | 'cancel'
+  /** Muestra u oculta la fila de filtros de la tabla con el foco (ver Tabla §12). */
+  | 'filters'
   | 'help';
 
 /**

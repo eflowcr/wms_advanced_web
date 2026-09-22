@@ -85,6 +85,7 @@ export const SHORTCUT_HELP_MESSAGES: ShortcutHelpMessages = {
     create: 'Crear un registro nuevo',
     save: 'Guardar el formulario activo',
     cancel: 'Cancelar lo que esté en curso, o cerrar lo que esté abierto',
+    filters: 'Mostrar u ocultar los filtros de la tabla',
     help: 'Abrir esta lista',
   },
 };
@@ -108,7 +109,46 @@ export const TABLE_MESSAGES: TableMessages = {
   nextPage: 'Página siguiente',
   pageOf: (page, pages) => `Página ${page} de ${pages}`,
   rowsTotal: (total) => (total === 1 ? '1 fila' : `${total} filas`),
+  filters: (active) => (active === 0 ? 'Filtros' : `Filtros (${active})`),
+  clearFilters: 'Limpiar filtros',
+  removeFilter: (column) => `Quitar el filtro ${column}`,
+  density: 'Densidad',
+  densityMd: 'Media',
+  densitySm: 'Compacta',
+  setAll: 'Todos',
+  setNone: 'Ninguno',
+  setSummary: (column, chosen, total) => {
+    if (chosen === total) {
+      return `${column}: todos`;
+    }
+    return chosen === 0 ? `${column}: ninguno` : `${column}: ${chosen} de ${total}`;
+  },
+  columns: 'Columnas',
+  resizeColumn: (column) => `Ancho de la columna ${column}`,
+  selectedCount: (count) => (count === 1 ? '1 seleccionada' : `${count} seleccionadas`),
+  clearSelection: 'Quitar selección',
+  copied: (rows) => (rows === 1 ? '1 fila copiada' : `${rows} filas copiadas`),
+  loading: 'Cargando…',
+  loadFailed: 'No se pudieron cargar las filas.',
+  export: 'Exportar',
+  exportSelected: 'CSV de lo seleccionado',
+  copyAll: 'Copiar al portapapeles',
+  rowsShown: (shown, total) =>
+    total === null ? `${shown} filas` : `${shown} de ${total} filas`,
+  aggregate: (kind, column, scope) => {
+    const where = scope === 'selected' ? 'seleccionados' : 'en pantalla';
+    if (kind === 'avg') {
+      return `Promedio de ${column.toLowerCase()} ${where}`;
+    }
+    return kind === 'count' ? `Filas con ${column.toLowerCase()} ${where}` : `${column} ${where}`;
+  },
 };
+
+const DATE_FORMAT = new Intl.DateTimeFormat('es', {
+  day: '2-digit',
+  month: '2-digit',
+  year: 'numeric',
+});
 
 /** `Intl` directo y no `transloco-locale`: la tabla solo pide dos funciones que devuelvan texto. */
 export const TABLE_FORMATTERS: TableFormatters = {
@@ -119,7 +159,8 @@ export const TABLE_FORMATTERS: TableFormatters = {
       return '';
     }
     const parsed = parseTableDate(value);
-    return parsed === null ? String(value) : new Intl.DateTimeFormat('es').format(parsed);
+    // Día y mes con dos dígitos: en columna, 16/03/2026 y 5/02/2026 se leen desalineados.
+    return parsed === null ? String(value) : DATE_FORMAT.format(parsed);
   },
   number: (value) => {
     if (value === null || value === undefined || value === '') {

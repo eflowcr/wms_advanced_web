@@ -1,82 +1,56 @@
-@if (searching()) {
-  <!-- RFE-01: un `<input>` que se tipea ya; es etiquetable, así que for/id. -->
-  <label [id]="labelId" [attr.for]="fieldId" class="block text-caption text-secondary mb-1">
-    {{ label() }}
-  </label>
-  <div #anchor class="relative">
-    <input
-      type="text"
-      role="combobox"
-      autocomplete="off"
-      [id]="fieldId"
-      [class]="fieldClasses()"
-      [style.borderColor]="borderColor()"
-      [style.fontSize]="fontSize()"
-      [disabled]="isDisabled()"
-      [placeholder]="placeholder()"
-      [value]="text()"
-      [attr.aria-expanded]="isOpen()"
-      aria-haspopup="listbox"
-      aria-autocomplete="list"
-      [attr.aria-controls]="controlsId()"
-      [attr.aria-activedescendant]="activeOptionId()"
-      [attr.aria-invalid]="effectiveState() === 'error' ? 'true' : null"
-      [attr.aria-describedby]="describedBy()"
-      (input)="onInput($event)"
-      (keydown)="onKeydown($event)"
-      (click)="onFieldClick()"
-      (focus)="onFocus()"
-      (blur)="onBlur()"
-    />
-    @if (hasChevron()) {
-      <span class="pointer-events-none absolute inset-y-0 right-3 flex items-center text-secondary">
-        <ewms-icon name="chevron-down" [size]="iconSize" />
-      </span>
-    }
-  </div>
-
-  <!--
-    RFE-08: el foco no sale del campo; esta región anuncia la búsqueda. `polite`, porque
-    `assertive` pisaría a quien tipea. Siempre presente: una que aparece con su primer mensaje se anuncia mal.
-  -->
-  <p [id]="statusId" class="sr-only" role="status" aria-live="polite">{{ announcement() }}</p>
-} @else {
-  <!-- Un botón no es etiquetable: aria-labelledby; el texto del gatillo es el valor. -->
-  <span [id]="labelId" class="block text-caption text-secondary mb-1">{{ label() }}</span>
-  <button
-    #anchor
-    type="button"
+<!-- RFE-01: un `<input>` que se tipea ya; es etiquetable, así que for/id. -->
+<label [id]="labelId" [attr.for]="fieldId" class="block text-caption text-secondary mb-1">
+  {{ label() }}
+</label>
+<div #anchor class="relative">
+  <input
+    type="text"
     role="combobox"
+    autocomplete="off"
     [id]="fieldId"
     [class]="fieldClasses()"
     [style.borderColor]="borderColor()"
     [style.fontSize]="fontSize()"
     [disabled]="isDisabled()"
-    [attr.aria-labelledby]="labelId"
+    [placeholder]="placeholder()"
+    [value]="text()"
     [attr.aria-expanded]="isOpen()"
     aria-haspopup="listbox"
+    aria-autocomplete="list"
     [attr.aria-controls]="controlsId()"
     [attr.aria-activedescendant]="activeOptionId()"
-    [attr.aria-invalid]="error() ? 'true' : null"
+    [attr.aria-invalid]="effectiveState() === 'error' ? 'true' : null"
     [attr.aria-describedby]="describedBy()"
-    (click)="onTriggerClick()"
+    (input)="onInput($event)"
     (keydown)="onKeydown($event)"
+    (click)="onFieldClick()"
+    (focus)="onFocus()"
     (blur)="onBlur()"
-  >
-    <span class="truncate" [class.text-secondary]="selectedLabel() === null">
-      {{ selectedLabel() ?? placeholder() }}
-    </span>
-    <!-- Decorativo; `sm` (16 px) en todo tamaño, como el prefijo del Input. -->
+  />
+  <!-- Decorativo: dice que despliega. `sm` en todo tamaño, como el prefijo del Input. -->
+  <span class="pointer-events-none absolute inset-y-0 right-3 flex items-center text-secondary">
     <ewms-icon name="chevron-down" [size]="iconSize" />
-  </button>
-}
+  </span>
+</div>
+
+<!--
+  RFE-08: el foco no sale del campo; esta región anuncia la búsqueda. `polite`, porque
+  `assertive` pisaría a quien tipea. Siempre presente: una que aparece con su primer mensaje se anuncia mal.
+-->
+<p [id]="statusId" class="sr-only" role="status" aria-live="polite">{{ announcement() }}</p>
 
 @if (hint()) {
-  <p [id]="hintId" class="mt-1 text-caption" [class]="hintClasses()">{{ hint() }}</p>
+  <p
+    [id]="hintId"
+    class="mt-1 text-caption"
+    [class]="effectiveState() === 'error' ? 'text-danger' : 'text-secondary'"
+  >
+    {{ hint() }}
+  </p>
 }
 
 <!-- En el flujo y no en el panel: Tab alcanza el reintento (PACQ-03.2). -->
-@if (status() === 'error') {
+@if (search.status() === 'error') {
   <div
     [id]="errorId"
     role="alert"
@@ -87,7 +61,7 @@
     <button
       type="button"
       class="rounded-sm px-2 py-1 cursor-pointer outline-none focus-visible:shadow-(--focus-ring-shadow) text-(color:--color-bg-primary) hover:text-(color:--color-bg-primary-hover)"
-      (click)="retry()"
+      (click)="search.retry()"
     >
       {{ words().retry }}
     </button>
@@ -111,7 +85,7 @@
         [attr.aria-selected]="$index === selectedIndex()"
         (mousedown)="onOptionMousedown($event)"
         (click)="choose(row)"
-        (mouseenter)="onOptionEnter($index)"
+        (mouseenter)="activeIndex.set($index)"
       >
         <span class="truncate">{{ labelOf(row) }}</span>
         @if ($index === selectedIndex()) {
@@ -120,19 +94,21 @@
       </li>
     }
 
-    @if (status() === 'searching') {
+    @if (search.status() === 'searching') {
       <li [class]="noteClasses" aria-hidden="true">
         <ewms-icon name="spinner" size="sm" />
         <span>{{ words().searching }}</span>
       </li>
     }
 
-    @if (status() === 'empty') {
+    @if (search.status() === 'empty') {
       <!-- RFE-03: repite el texto buscado, para no tener que volver a mirar el campo. -->
-      <li [class]="noteClasses" aria-hidden="true">{{ words().noResults(searchedText()) }}</li>
+      <li [class]="noteClasses" aria-hidden="true">
+        {{ words().noResults(search.searchedText()) }}
+      </li>
     }
 
-    @if (hasMore()) {
+    @if (search.hasMore()) {
       <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -->
       <li
         [id]="optionId(rows().length)"
@@ -141,8 +117,8 @@
         [class.bg-ghost-hover]="activeIndex() === rows().length"
         [attr.aria-selected]="false"
         (mousedown)="onOptionMousedown($event)"
-        (click)="loadMore()"
-        (mouseenter)="onOptionEnter(rows().length)"
+        (click)="search.more()"
+        (mouseenter)="activeIndex.set(rows().length)"
       >
         {{ words().more }}
       </li>

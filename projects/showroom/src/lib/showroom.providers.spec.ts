@@ -20,7 +20,9 @@ describe('the showroom dictionaries', () => {
     });
 
     it('formats an ISO date', () => {
-      expect(TABLE_FORMATTERS.date('2026-01-15')).toContain('2026');
+      // Día y mes con dos dígitos: en columna se leen alineados. La forma y no el orden: con el ICU
+      // recortado de Node el orden cae al locale raíz; el orden español lo afirma e2e.
+      expect(TABLE_FORMATTERS.date('2026-01-05')).toMatch(/^\d{2}\/\d{2}\/2026$/);
     });
 
     it('RETURNS THE RAW VALUE RATHER THAN "Invalid Date"', () => {
@@ -43,6 +45,27 @@ describe('the showroom dictionaries', () => {
       expect(TABLE_MESSAGES.pageOf(2, 5)).toBe('Página 2 de 5');
       expect(TABLE_MESSAGES.rowsTotal(1)).toBe('1 fila');
       expect(TABLE_MESSAGES.rowsTotal(12)).toBe('12 filas');
+    });
+
+    it('says what the toolbar filters, and how much of a set is chosen', () => {
+      expect(TABLE_MESSAGES.filters(0)).toBe('Filtros');
+      expect(TABLE_MESSAGES.filters(2)).toBe('Filtros (2)');
+      expect(TABLE_MESSAGES.removeFilter('Estado')).toBe('Quitar el filtro Estado');
+      expect(TABLE_MESSAGES.setSummary('Estado', 4, 4)).toBe('Estado: todos');
+      expect(TABLE_MESSAGES.setSummary('Estado', 2, 4)).toBe('Estado: 2 de 4');
+      expect(TABLE_MESSAGES.setSummary('Estado', 0, 4)).toBe('Estado: ninguno');
+    });
+
+    it('words the status bar: rows, selection, copies and each kind of aggregate', () => {
+      expect(TABLE_MESSAGES.rowsShown(12, 340)).toBe('12 de 340 filas');
+      expect(TABLE_MESSAGES.rowsShown(12, null)).toBe('12 filas');
+      expect(TABLE_MESSAGES.selectedCount(1)).toBe('1 seleccionada');
+      expect(TABLE_MESSAGES.selectedCount(3)).toBe('3 seleccionadas');
+      expect(TABLE_MESSAGES.copied(1)).toBe('1 fila copiada');
+      expect(TABLE_MESSAGES.copied(4)).toBe('4 filas copiadas');
+      expect(TABLE_MESSAGES.aggregate('sum', 'Bultos', 'selected')).toBe('Bultos seleccionados');
+      expect(TABLE_MESSAGES.aggregate('avg', 'Bultos', 'shown')).toBe('Promedio de bultos en pantalla');
+      expect(TABLE_MESSAGES.aggregate('count', 'Bultos', 'shown')).toBe('Filas con bultos en pantalla');
     });
 
     it('says how many results, with or without a total', () => {

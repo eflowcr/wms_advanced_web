@@ -169,7 +169,8 @@
         }
 
         <div class="flex flex-wrap items-end gap-3">
-          <div class="min-w-80 flex-1" #searchHost data-search-host>
+          <!-- basis y no min-w: con min-w-80 el buscador desbordaba a 390 px. -->
+          <div class="min-w-0 flex-1 basis-80" #searchHost data-search-host>
             <ewms-select
               label="Buscar una expedición"
               placeholder="Escaneá el código, o escribí tres letras"

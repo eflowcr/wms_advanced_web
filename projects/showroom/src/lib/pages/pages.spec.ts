@@ -781,16 +781,16 @@ describe('ShowroomSelect', () => {
     expect(page.isError('default')).toBe(false);
     expect(page.isDisabled('disabled')).toBe(true);
     expect(page.isDisabled('default')).toBe(false);
-    expect(page.chosenLabel()).toBe('Muelle 3');
+    expect(page.chosenLabel()).toBe('En preparación');
   });
 
   it('says so when the form holds a value no option carries', async () => {
     const { fixture } = await render(ShowroomSelect);
     const page = fixture.componentInstance as unknown as {
-      form: { controls: { ubicacion: { setValue(value: unknown): void } } };
+      form: { controls: { estado: { setValue(value: unknown): void } } };
       chosenLabel(): string;
     };
-    page.form.controls.ubicacion.setValue('una-que-no-existe');
+    page.form.controls.estado.setValue('una-que-no-existe');
     await fixture.whenStable();
     expect(page.chosenLabel()).toBe('(sin elegir)');
   });
@@ -1202,7 +1202,9 @@ describe('ShowroomSplitButton', () => {
   it('reports which output each gesture fired: the main action, then a menu choice', async () => {
     const { fixture, element } = await render(ShowroomSplitButton);
     const last = () => element.querySelector('[data-demo-last]')?.textContent;
-    const [main, trigger] = [...element.querySelectorAll<HTMLButtonElement>('[data-demo-split] button')];
+    const [main, trigger] = [
+      ...element.querySelectorAll<HTMLButtonElement>('[data-demo-split] button'),
+    ];
 
     main!.click();
     await fixture.whenStable();
@@ -1219,17 +1221,15 @@ describe('ShowroomSplitButton', () => {
 describe('ShowroomSelect, the three forms', () => {
   afterEach(clearOverlays);
 
-  it('renders a button, a local search and a remote search, all the real component', async () => {
+  it('renders three demos of the same text combobox: short, long and remote', async () => {
     const { element } = await render(ShowroomSelect);
-    expect(element.querySelector('[data-demo-select] button[role="combobox"]')).not.toBeNull();
+    expect(element.querySelector('[data-demo-select] input[role="combobox"]')).not.toBeNull();
     expect(element.querySelector('[data-demo-long] input[role="combobox"]')).not.toBeNull();
     expect(element.querySelector('[data-demo-search] input[role="combobox"]')).not.toBeNull();
     expect(element.querySelector('[data-demo-search-value]')?.textContent).toBe('(ninguno)');
     expect(element.querySelector('[data-queries]')).toBeNull();
     // Con semilla: la cantidad es un hecho de la página, no de la suerte.
-    expect(element.querySelector('[data-block="4-variantes"]')?.textContent).toContain(
-      '340 artículos',
-    );
+    expect(element.querySelector('[data-block="3-demo"]')?.textContent).toContain('340 artículos');
   });
 
   it('the buttons really change how the source behaves, and go back', async () => {
@@ -1311,9 +1311,9 @@ describe('ShowroomTable', () => {
     expect(snippet.trimEnd().split('\n').length).toBe(lines);
   });
 
-  it('shows the whole component behind it, and it is two lines', async () => {
+  it('shows the whole component behind it, and it is four lines: source, row id, bulk actions and their handler', async () => {
     const { element } = await render(ShowroomTable);
-    expect(element.querySelector('[data-component-lines]')?.textContent).toBe('2');
+    expect(element.querySelector('[data-component-lines]')?.textContent).toBe('4');
   });
 
   it('the snippet is what the page actually renders', async () => {
@@ -1336,18 +1336,6 @@ describe('ShowroomTable', () => {
 
     expect(element.querySelectorAll('[data-demo-table] tbody tr').length).toBeGreaterThan(before);
     expect(element.querySelectorAll('[data-demo-table] table').length).toBe(1);
-  });
-
-  it('changes density for real', async () => {
-    const { fixture, element } = await render(ShowroomTable);
-    expect(element.querySelector('[data-density-value]')?.textContent).toBe('md');
-
-    element.querySelector<HTMLButtonElement>('[data-density="sm"]')!.click();
-    await fixture.whenStable();
-
-    expect(element.querySelector('[data-density-value]')?.textContent).toBe('sm');
-    const row = element.querySelector<HTMLElement>('[data-demo-table] tbody tr');
-    expect(row?.style.height).toBe('var(--row-height-sm)');
   });
 
   it('reports what the last query asked for', async () => {
@@ -1405,18 +1393,16 @@ describe('ShowroomTable', () => {
     await fixture.whenStable();
     expect(element.querySelector('[data-selection-count]')?.textContent).toBe('1');
 
+    // La barra de la tabla ofrece las acciones masivas de la demo, y la demo anota la elegida.
+    element.querySelector<HTMLButtonElement>('[data-bulk-action="imprimir"] button')!.click();
+    await fixture.whenStable();
+    expect(element.querySelector('[data-bulk-choice]')?.textContent).toBe(
+      'Imprimir etiquetas · 1 expediciones',
+    );
+
     element.querySelector<HTMLButtonElement>('[data-demo-table] [data-sort="bultos"]')!.click();
     await fixture.whenStable();
     expect(element.querySelector('[data-query]')?.textContent).toContain('bultos asc');
-  });
-
-  it('goes back to the medium density', async () => {
-    const { fixture, element } = await render(ShowroomTable);
-    element.querySelector<HTMLButtonElement>('[data-density="sm"]')!.click();
-    await fixture.whenStable();
-    element.querySelector<HTMLButtonElement>('[data-density="md"]')!.click();
-    await fixture.whenStable();
-    expect(element.querySelector('[data-density-value]')?.textContent).toBe('md');
   });
 });
 
