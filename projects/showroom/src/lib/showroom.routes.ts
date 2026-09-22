@@ -129,6 +129,11 @@ export const showroomRoutes: Routes = [
           (await import('./pages/patterns/search-create-edit')).ShowroomSearchCreateEdit,
       },
       {
+        path: 'patterns/empty-state',
+        loadComponent: async () =>
+          (await import('./pages/patterns/empty-state')).ShowroomEmptyState,
+      },
+      {
         // Redirección permanente, no resto: la iconografía vivía en /design-system/iconografia y
         // la especificación §3 declara estables las URL (un enlace ya pegado debe seguir andando).
         path: 'iconografia',

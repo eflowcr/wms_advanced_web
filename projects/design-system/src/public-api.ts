@@ -48,6 +48,14 @@ export {
 export { EWMS_SELECT_MESSAGES } from './lib/select/select.types';
 export { SEARCH_PAGE_SIZE } from './lib/select/search-source';
 
+// Estado vacío (2026-09-22): uno para tabla, select y pantalla, con cuatro casos.
+export {
+  EmptyState,
+  type EmptyStateAction,
+  type EmptyStateKind,
+  type EmptyStateSize,
+} from './lib/empty-state/empty-state';
+
 // Badge (DS-3): fuera de la Tabla para que detalle, card y lista digan «con incidencia» igual.
 export { Badge } from './lib/badge/badge';
 export { type SemanticFamily } from './lib/feedback/feedback.types';

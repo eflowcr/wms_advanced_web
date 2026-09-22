@@ -12,7 +12,6 @@ import {
   Button,
   DESIGN_SYSTEM_VERSION,
   DetailTemplate,
-  EmptyTemplate,
   Table,
   TableColumn,
   type BulkActionEvent,
@@ -65,10 +64,6 @@ const CONSUMER_TEMPLATE = [
   '  <ewms-column key="fecha" header="Fecha" type="date" width="md" [sortable]="true" [filterable]="true" />',
   '  <ewms-column key="bultos" header="Bultos" type="number" width="sm" aggregate="sum" [sortable]="true" [filterable]="true" />',
   '  <ewms-column key="estado" header="Estado" type="badge" width="md" [badges]="ESTADOS" [filterable]="true" />',
-  '',
-  '  <ng-template ewmsEmpty>',
-  '    <p>Ninguna expedición coincide con el filtro.</p>',
-  '  </ng-template>',
   '</ewms-table>',
 ].join('\n');
 
@@ -257,7 +252,6 @@ const ANATOMY = [
     Badge,
     Button,
     DetailTemplate,
-    EmptyTemplate,
     Table,
     TableColumn,
     DemoFrame,

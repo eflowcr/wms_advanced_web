@@ -60,6 +60,11 @@ export interface TableMessages {
   // Estados de la tabla entera.
   readonly loading: string;
   readonly loadFailed: string;
+  /** Estado vacío sin filtros: «Todavía no hay filas». `ewmsEmpty` lo sobrescribe. */
+  readonly noData: string;
+  /** Con búsqueda o filtros activos, y su pista de una línea. */
+  readonly noResults: string;
+  readonly noResultsHint: string;
 
   // Barra de estado.
   /** «12 de 340 filas», o «12 filas» con `total` null. */

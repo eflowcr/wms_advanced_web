@@ -98,6 +98,9 @@ const MESSAGES: TableMessages = {
   copied: (rows) => `${rows} filas copiadas`,
   loading: 'Cargando…',
   loadFailed: 'No se pudo cargar la tabla.',
+  noData: 'Todavía no hay filas.',
+  noResults: 'Ninguna fila coincide.',
+  noResultsHint: 'Probá con otra búsqueda.',
   export: 'Exportar',
   exportSelected: 'CSV de lo seleccionado',
   copyAll: 'Copiar al portapapeles',
@@ -251,18 +254,15 @@ describe('Table', () => {
       expect(grid().getAttribute('role')).toBe('grid');
     });
 
-    it('is named, and says how many rows and columns it has', () => {
+    it('is named, says how many rows and columns it has, and draws one row per root', () => {
       expect(grid().getAttribute('aria-label')).toBe('Expediciones');
       expect(grid().getAttribute('aria-rowcount')).toBe('3');
       // Cuatro columnas declaradas más la casilla.
       expect(grid().getAttribute('aria-colcount')).toBe('5');
-    });
-
-    it('draws one row per root while everything is collapsed', () => {
       expect(bodyRows().length).toBe(3);
     });
 
-    it('shows the projected empty state when nothing matches', async () => {
+    it('with a search nothing matches: no-results, and its action clears search and filters', async () => {
       const search = fixture.nativeElement.querySelector(
         '[data-quick-filter] input',
       ) as HTMLInputElement;
@@ -270,8 +270,16 @@ describe('Table', () => {
       search.dispatchEvent(new Event('input'));
       await settle();
 
-      expect(emptyRow()?.textContent).toContain('Ninguna expedición coincide');
+      // `ewmsEmpty` es el «todavía no hay»: con búsqueda activa habla la tabla.
+      const empty = emptyRow()?.querySelector('[data-empty-state]') as HTMLElement;
+      expect(empty.dataset['emptyState']).toBe('no-results');
+      expect(empty.getAttribute('role')).toBe('status');
       expect(bodyRows().length).toBe(0);
+
+      (empty.querySelector('[data-empty-action] button') as HTMLButtonElement).click();
+      await settle();
+      expect(search.value).toBe('');
+      expect(bodyRows().length).toBe(3);
     });
   });
 
@@ -287,28 +295,18 @@ describe('Table', () => {
       expect(fixture.nativeElement.querySelector('[data-toggle="1"]')).toBeNull();
     });
 
-    it('expands into the SAME loop, one level deeper', async () => {
+    it('expands into the SAME loop one level deeper, says where each row sits, and collapses', async () => {
       toggle(0);
       await settle();
-
       expect(bodyRows().length).toBe(5);
       expect(bodyRows()[0]?.getAttribute('aria-expanded')).toBe('true');
       expect(bodyRows()[1]?.getAttribute('aria-level')).toBe('2');
       expect(bodyRows()[1]?.classList.contains('is-child')).toBe(true);
       expect(fixture.nativeElement.querySelectorAll('table').length).toBe(1);
-    });
-
-    it('says where each row sits among its siblings', async () => {
-      toggle(0);
-      await settle();
       expect(bodyRows()[1]?.getAttribute('aria-setsize')).toBe('2');
       expect(bodyRows()[1]?.getAttribute('aria-posinset')).toBe('1');
       expect(bodyRows()[3]?.getAttribute('aria-setsize')).toBe('3');
-    });
 
-    it('collapses again, and the children leave the DOM', async () => {
-      toggle(0);
-      await settle();
       toggle(0);
       await settle();
       expect(bodyRows().length).toBe(3);
@@ -994,7 +992,7 @@ describe('Table with a failing source', () => {
     expect(failure.textContent).toContain('No se pudo cargar la tabla.');
     expect(fixture.nativeElement.querySelector('[data-empty-row]')).toBeNull();
 
-    (failure.querySelector('[data-load-retry] button') as HTMLElement).click();
+    (failure.querySelector('[data-empty-action] button') as HTMLElement).click();
     fixture.detectChanges();
     await fixture.whenStable();
     fixture.detectChanges();

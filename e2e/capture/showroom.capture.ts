@@ -32,7 +32,12 @@ const ROUTES = [
   { name: '22-components-pagination', url: '/design-system/components/pagination' },
   { name: '23-components-split-button', url: '/design-system/components/split-button' },
   { name: '24-components-date-picker', url: '/design-system/components/date-picker' },
+  { name: '40-patterns-search-create-edit', url: '/design-system/patterns/search-create-edit' },
+  { name: '41-patterns-empty-state', url: '/design-system/patterns/empty-state' },
 ] as const;
+
+/** A 390 px, una pasada por las páginas que más cambian con el ancho. */
+const NARROW = ['21-components-table', '40-patterns-search-create-edit', '41-patterns-empty-state'];
 
 /**
  * Con la fuente de respaldo en pantalla todo ancho medido está mal. document.fonts.ready solo no
@@ -173,6 +178,17 @@ test.describe('showroom capture rig', () => {
       await page.setViewportSize({ width: 1440, height: 900 });
     });
   }
+
+  test('captures the narrow pass at 390 px', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    for (const route of ROUTES.filter((candidate) => NARROW.includes(candidate.name))) {
+      await page.goto(route.url);
+      await waitForMontserrat(page);
+      await page.waitForTimeout(250);
+      await page.screenshot({ path: path.join(OUT, `${route.name}-390.png`), fullPage: true });
+      report.push(`  ${route.name} ${await overflow(page, 390)}`);
+    }
+  });
 
   test('captures the states nothing shows on its own', async ({ page }) => {
     await page.goto('/design-system/components/button');

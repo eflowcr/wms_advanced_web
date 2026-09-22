@@ -30,6 +30,7 @@ import { ShowroomToast } from './components/toast';
 import { ShowroomToggle } from './components/toggle';
 import { ShowroomTooltip } from './components/tooltip';
 import { FLOW_BUDGETS } from './patterns/click-budget';
+import { ShowroomEmptyState } from './patterns/empty-state';
 import { ShowroomKeyboard } from './patterns/keyboard';
 import { ShowroomSearchCreateEdit } from './patterns/search-create-edit';
 import { ShowroomBrand } from './foundations/brand';
@@ -571,6 +572,7 @@ const PATTERNS: readonly { name: string; component: Type<unknown>; heading: stri
     component: ShowroomSearchCreateEdit,
     heading: 'Buscar, crear, editar',
   },
+  { name: 'ShowroomEmptyState', component: ShowroomEmptyState, heading: 'Estado vacío' },
 ];
 
 describe.each([...SHEETS, ...PATTERNS])('$name', ({ component, heading }) => {
@@ -1743,5 +1745,33 @@ describe('ShowroomKeyboard', () => {
       'Ningún layout raíz montó el motor',
     );
     expect(element.querySelectorAll('[data-demo-bindings] tr').length).toBe(0);
+  });
+});
+
+describe('ShowroomEmptyState', () => {
+  it('draws the four cases in both sizes, and its demo action runs', async () => {
+    const { fixture, element } = await render(ShowroomEmptyState);
+    const matrix = [...element.querySelectorAll('[data-block="5-matriz"] [data-empty-state]')];
+    expect(matrix.map((box) => box.getAttribute('data-empty-state'))).toEqual([
+      'no-data',
+      'no-data',
+      'no-results',
+      'no-results',
+      'error',
+      'error',
+      'no-access',
+      'no-access',
+    ]);
+    // Sin permiso no hay acción: el texto dice a quién pedirlo.
+    expect(matrix[6]?.querySelector('[data-empty-action]')).toBeNull();
+
+    const ran: string[] = [];
+    for (const button of element.querySelectorAll<HTMLButtonElement>('[data-empty-action] button')) {
+      button.click();
+      fixture.detectChanges();
+      ran.push(element.querySelector('[data-demo-last]')?.textContent ?? '');
+    }
+    // La demo y las seis de la matriz que tienen acción (no-access no tiene).
+    expect(ran).toEqual(['Crear', 'Crear', 'Crear', 'Limpiar filtros', 'Limpiar filtros', 'Reintentar', 'Reintentar']);
   });
 });

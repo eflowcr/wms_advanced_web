@@ -1,0 +1,189 @@
+<!-- Showroom solo en español, exento de i18n (compuerta 12): se declara para que el lector de pantalla no lo lea en inglés. -->
+<article class="flex flex-col gap-10" lang="es">
+  <!-- ============================================================ 1. Encabezado -->
+  <header class="flex flex-col gap-2" data-block="1-encabezado">
+    <div class="flex flex-wrap items-baseline gap-3">
+      <h1 class="text-h1">Estado vacío</h1>
+      <code class="font-mono text-primary">&lt;ewms-empty-state&gt;</code>
+    </div>
+    <ul class="flex flex-wrap gap-2 text-caption">
+      <li class="rounded-sm bg-secondary px-2 py-1 text-secondary">
+        Versión <span class="font-mono">{{ version }}</span>
+      </li>
+      <li class="rounded-sm bg-success-surface px-2 py-1 text-success">Construido y en verde</li>
+      <li class="rounded-sm bg-secondary px-2 py-1 text-secondary">
+        Ficha: <span class="font-mono">08-Sistema-de-Diseno/Componentes/Estado-Vacio.md</span>
+      </li>
+    </ul>
+  </header>
+
+  <!-- ================================================ 2. Qué resuelve / cuándo no -->
+  <section class="flex flex-col gap-4" aria-labelledby="es-purpose" data-block="2-proposito">
+    <h2 id="es-purpose" class="text-h2">Qué resuelve, y cuándo NO usarlo</h2>
+    <div class="grid grid-cols-[repeat(auto-fit,minmax(min(20rem,100%),1fr))] gap-4">
+      <div class="flex flex-col gap-2 rounded-md border border-default bg-surface p-4">
+        <h3 class="text-h3">Qué resuelve</h3>
+        <p>
+          <strong>Nada no es siempre lo mismo.</strong> «Todavía no hay», «tus filtros no dejan
+          ninguno», «falló» y «no podés verlo» piden acciones distintas. Un solo componente dice
+          cuál es y ofrece la única acción que sirve.
+        </p>
+        <p class="text-caption text-secondary">
+          La Tabla elige el caso sola: sin filtros es <code class="font-mono">no-data</code>, con
+          alguno <code class="font-mono">no-results</code> con «Limpiar filtros», y si la fuente
+          falla, <code class="font-mono">error</code> con «Reintentar». El Select usa
+          <code class="font-mono">no-results</code> en su panel.
+        </p>
+      </div>
+      <div class="flex flex-col gap-2 rounded-md border border-danger bg-danger-surface p-4">
+        <h3 class="text-h3">Cuándo NO usarlo</h3>
+        <ul class="flex flex-col gap-2">
+          <li>
+            <strong>Si algo falló al guardar</strong>, va un Banner o un Toast: el estado vacío
+            reemplaza contenido que no está, no avisa de una acción.
+          </li>
+          <li>
+            <strong>Si está cargando</strong>, va el indicador de carga: decir «no hay» antes de
+            saberlo es mentir.
+          </li>
+          <li>
+            <strong>Sin ilustraciones</strong> (fuera de alcance): un ícono del catálogo y una
+            frase.
+          </li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================= 3. Demo principal -->
+  <section class="flex flex-col gap-4" aria-labelledby="es-demo" data-block="3-demo">
+    <h2 id="es-demo" class="text-h2">Demo principal</h2>
+    <div class="grid grid-cols-[repeat(auto-fit,minmax(min(24rem,100%),1fr))] gap-6">
+      <ewms-demo-frame ground="surface" label="Una pantalla de expediciones sin ninguna">
+        <div data-demo-empty>
+          <ewms-empty-state
+            kind="no-data"
+            title="Todavía no hay expediciones"
+            description="Se crean al cerrar una ola de picking, o a mano."
+            [action]="crear"
+          />
+          <p class="text-center text-caption text-secondary" role="status">
+            Última acción: <span class="font-mono text-primary" data-demo-last>{{ last() }}</span>
+          </p>
+        </div>
+      </ewms-demo-frame>
+      <ewms-prop-table [rows]="props" caption="Propiedades de <ewms-empty-state>" />
+    </div>
+  </section>
+
+  <!-- =============================================================== 4. Variantes -->
+  <section class="flex flex-col gap-4" aria-labelledby="es-variants" data-block="4-variantes">
+    <h2 id="es-variants" class="text-h2">Variantes — los cuatro casos</h2>
+    <div
+      class="overflow-x-auto rounded-md border border-default outline-none focus-visible:shadow-(--focus-ring-shadow)"
+      tabindex="0"
+    >
+      <table class="w-full border-collapse text-caption" data-empty-cases>
+        <caption class="sr-only">Cuándo va cada caso</caption>
+        <thead>
+          <tr class="bg-secondary text-secondary">
+            <th scope="col" class="p-2 text-left">kind</th>
+            <th scope="col" class="p-2 text-left">Cuándo</th>
+            <th scope="col" class="p-2 text-left">Ícono</th>
+            <th scope="col" class="p-2 text-left">Acción</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of cases; track item.kind) {
+            <tr class="border-t border-default">
+              <th scope="row" class="p-2 text-left font-mono text-primary">{{ item.kind }}</th>
+              <td class="p-2">{{ item.when }}</td>
+              <td class="p-2 font-mono">{{ item.icon }}</td>
+              <td class="p-2">{{ item.action }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ========================================================= 5. Matriz de estados -->
+  <section class="flex flex-col gap-4" aria-labelledby="es-matrix" data-block="5-matriz">
+    <h2 id="es-matrix" class="text-h2">Matriz — cuatro casos en los dos tamaños</h2>
+    <ewms-state-matrix
+      [variants]="matrixVariants"
+      [states]="matrixSizes"
+      rowHeader="Caso"
+      caption="Cada caso de ewms-empty-state, compacto y de página"
+    >
+      <ng-template let-variant="variant" let-state="state">
+        @let item = caseOf(variant.id);
+        <div class="min-w-64 rounded-md border border-default bg-surface">
+          <ewms-empty-state
+            [kind]="kindOf(variant.id)"
+            [size]="sizeOf(state.id)"
+            [title]="item.title"
+            [description]="item.description"
+            [action]="actionOf(variant.id)"
+          />
+        </div>
+      </ng-template>
+    </ewms-state-matrix>
+  </section>
+
+  <!-- ================================================================ 6. Tamaños -->
+  <section class="flex flex-col gap-4" aria-labelledby="es-sizes" data-block="6-tamanos">
+    <h2 id="es-sizes" class="text-h2">Tamaños</h2>
+    <ul class="flex flex-col gap-2">
+      <li>
+        <strong><code class="font-mono">compact</code></strong> — dentro de una tabla, del panel de
+        un select o de una card. Título en H4, ícono <code class="font-mono">lg</code>, acción
+        <code class="font-mono">sm</code>. Es un párrafo, no un encabezado: no rompe el esquema de
+        la página.
+      </li>
+      <li>
+        <strong><code class="font-mono">page</code></strong> — la pantalla entera. Título en H3
+        como <code class="font-mono">&lt;h2&gt;</code>, ícono <code class="font-mono">xl</code>,
+        acción <code class="font-mono">md</code>.
+      </li>
+    </ul>
+  </section>
+
+  <!-- ===================================================== 7. Anatomía y tokens -->
+  <section class="flex flex-col gap-4" aria-labelledby="es-anatomy" data-block="7-anatomia">
+    <h2 id="es-anatomy" class="text-h2">Anatomía y tokens</h2>
+    <ul class="flex flex-col gap-2">
+      @for (item of anatomy; track item.token + item.part) {
+        <li class="flex flex-wrap items-center gap-3 rounded-md border border-default bg-surface p-3">
+          <span class="text-caption text-secondary">{{ item.part }}</span>
+          <ewms-token-value [token]="item.token" />
+        </li>
+      }
+    </ul>
+    <p class="text-caption text-secondary">
+      Sin token propio: tipografía, colores y espaciado son los de la escala. La acción es un
+      <code class="font-mono">&lt;ewms-button&gt;</code>.
+    </p>
+  </section>
+
+  <!-- ============================================== 8. Contrato para Angular -->
+  <section class="flex flex-col gap-4" aria-labelledby="es-contract" data-block="8-contrato">
+    <h2 id="es-contract" class="text-h2">Contrato para Angular</h2>
+    <pre
+      class="overflow-x-auto rounded-md border border-default bg-secondary p-4 font-mono text-mono text-primary outline-none focus-visible:shadow-(--focus-ring-shadow)"
+      tabindex="0"
+    ><code>{{ snippet }}</code></pre>
+    <h3 class="text-h3">Accesibilidad</h3>
+    <ul class="flex flex-col gap-2">
+      <li>
+        <code class="font-mono">no-results</code> y <code class="font-mono">error</code> llevan
+        <code class="font-mono">role="status"</code>: aparecen por algo que hizo el usuario
+        (filtrar, reintentar) y se anuncian <strong>sin mover el foco</strong>.
+      </li>
+      <li>
+        El ícono es decorativo: el título ya dice qué pasa. El color nunca es la única señal.
+      </li>
+      <li>La acción es un botón real: Tab la alcanza y Enter o Espacio la ejecutan.</li>
+    </ul>
+  </section>
+</article>

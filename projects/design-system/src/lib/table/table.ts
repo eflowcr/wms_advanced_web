@@ -32,6 +32,11 @@ import { familyTintClass } from '../feedback/feedback.types';
 import { Icon } from '../icon/icon';
 import { Button } from '../button/button';
 import { DatePicker } from '../date-picker/date-picker';
+import {
+  EmptyState,
+  type EmptyStateAction,
+  type EmptyStateKind,
+} from '../empty-state/empty-state';
 import { KeyboardShortcuts } from '../keyboard/keyboard-shortcuts';
 import { Input as TextInput } from '../input/input';
 import { Pagination } from '../pagination/pagination';
@@ -119,6 +124,7 @@ const TINTED_STATES: readonly RowState[] = ['danger', 'warning'];
     Badge,
     Checkbox,
     DatePicker,
+    EmptyState,
     Icon,
     Button,
     NgTemplateOutlet,
@@ -241,8 +247,28 @@ export class Table<T> implements TableContext {
   /** Cargando no vacía la tabla: las filas quedan, atenuadas, y el alto no se mueve. */
   protected readonly loadState = signal<'loading' | 'ready' | 'error'>('loading');
 
-  protected retryLoad(): void {
-    this.reload.update((attempt) => attempt + 1);
+  protected readonly retryAction = computed<EmptyStateAction>(() => ({
+    label: this.text().retry,
+    icon: 'refresh',
+    run: () => this.reload.update((attempt) => attempt + 1),
+  }));
+
+  /** Con búsqueda o filtros, vacío es «sin resultados» y se ofrece limpiarlos. */
+  protected readonly emptyKind = computed<EmptyStateKind>(() =>
+    this.search() !== '' || this.filtering.count() > 0 ? 'no-results' : 'no-data',
+  );
+
+  protected readonly clearAction = computed<EmptyStateAction>(() => ({
+    label: this.text().clearFilters,
+    run: () => this.clearQuery(),
+  }));
+
+  /** Búsqueda y filtros de columna a la vez: lo que dejó la tabla vacía. */
+  clearQuery(): void {
+    this.searchControl.setValue('', { emitEvent: false });
+    this.search.set('');
+    this.pageIndex.set(0);
+    this.filtering.clearAll();
   }
 
   protected readonly page = signal<TablePage<T>>({

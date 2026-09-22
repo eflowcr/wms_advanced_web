@@ -102,9 +102,13 @@
     }
 
     @if (search.status() === 'empty') {
-      <!-- RFE-03: repite el texto buscado, para no tener que volver a mirar el campo. -->
-      <li [class]="noteClasses" aria-hidden="true">
-        {{ words().noResults(search.searchedText()) }}
+      <!-- RFE-03: repite el texto buscado. Oculto al lector: ya lo dice la región viva del campo. -->
+      <li aria-hidden="true" data-select-empty>
+        <ewms-empty-state
+          size="compact"
+          kind="no-results"
+          [title]="words().noResults(search.searchedText())"
+        />
       </li>
     }
 

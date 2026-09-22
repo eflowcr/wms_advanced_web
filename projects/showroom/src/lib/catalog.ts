@@ -271,10 +271,10 @@ const PATTERNS: readonly CatalogEntry[] = [
   {
     id: 'pattern-empty',
     name: 'Estado vacío',
-    selector: null,
-    route: null,
-    status: 'gap',
-    note: 'Composición pendiente.',
+    selector: 'ewms-empty-state',
+    route: `${SHOWROOM_BASE}/patterns/empty-state`,
+    status: 'ready',
+    note: 'Un componente, cuatro casos: no hay, no coincide, falló, sin permiso. La tabla y el select lo eligen solos.',
   },
 ];
 

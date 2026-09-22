@@ -403,34 +403,36 @@
 
         @if (loadState() === 'error') {
           <!-- La fuente falló: se dice y se ofrece reintentar, no una tabla vacía que miente. -->
-          <tr role="row" data-load-error>
-            <td role="gridcell" [attr.colspan]="columnCount()" class="p-8">
-              <span class="flex items-center justify-center gap-2 text-p text-danger">
-                <ewms-icon name="circle-x" size="sm" />
-                {{ text().loadFailed }}
-                <ewms-button
-                  variant="secondary"
-                  size="sm"
-                  icon="refresh"
-                  data-load-retry
-                  (click)="retryLoad()"
-                >
-                  {{ text().retry }}
-                </ewms-button>
-              </span>
+          <tr role="row" class="bg-surface" data-load-error>
+            <td role="gridcell" [attr.colspan]="columnCount()">
+              <ewms-empty-state
+                size="compact"
+                kind="error"
+                [title]="text().loadFailed"
+                [action]="retryAction()"
+              />
             </td>
           </tr>
         } @else if (rows().length === 0) {
-          <tr role="row" data-empty-row>
-            <td role="gridcell" [attr.colspan]="columnCount()" class="p-8 text-center">
+          <tr role="row" class="bg-surface" data-empty-row>
+            <td role="gridcell" [attr.colspan]="columnCount()">
               @if (loadState() === 'loading') {
-                <span class="inline-flex items-center gap-2 text-secondary" data-loading-table>
+                <span class="flex items-center justify-center gap-2 p-8 text-secondary" data-loading-table>
                   <ewms-icon name="spinner" size="sm" />
                   {{ text().loading }}
                 </span>
-              } @else if (empty(); as template) {
-                <!-- Se proyecta: el texto vacío es de la pantalla, no de la biblioteca (ADR 0008). -->
+              } @else if (emptyKind() === 'no-data' && empty(); as template) {
+                <!-- `ewmsEmpty` sobrescribe solo el «todavía no hay»: sin resultados lo dice la tabla. -->
                 <ng-container [ngTemplateOutlet]="template.template" />
+              } @else {
+                <!-- La tabla elige el caso: sin filtros, `no-data`; con alguno, `no-results` que limpia. -->
+                <ewms-empty-state
+                  size="compact"
+                  [kind]="emptyKind()"
+                  [title]="emptyKind() === 'no-data' ? text().noData : text().noResults"
+                  [description]="emptyKind() === 'no-data' ? '' : text().noResultsHint"
+                  [action]="emptyKind() === 'no-data' ? null : clearAction()"
+                />
               }
             </td>
           </tr>

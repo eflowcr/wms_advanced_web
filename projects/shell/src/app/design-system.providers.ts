@@ -195,6 +195,15 @@ function tableMessages(): TableMessages {
     get loadFailed() {
       return transloco.translate('ds.table.loadFailed');
     },
+    get noData() {
+      return transloco.translate('ds.table.noData');
+    },
+    get noResults() {
+      return transloco.translate('ds.table.noResults');
+    },
+    get noResultsHint() {
+      return transloco.translate('ds.table.noResultsHint');
+    },
     get export() {
       return transloco.translate('ds.table.export');
     },

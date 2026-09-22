@@ -32,6 +32,7 @@ import {
   type FieldState,
 } from '../field/field.types';
 import { FormControlBase, provideValueAccessor } from '../forms/control-value-accessor';
+import { EmptyState } from '../empty-state/empty-state';
 import { Icon } from '../icon/icon';
 import { ScanDetector } from '../keyboard/scan-detector';
 import { moveActiveIndex } from '../listbox/listbox.types';
@@ -67,7 +68,7 @@ let nextSelectId = 0;
 @Component({
   selector: 'ewms-select',
   templateUrl: './select.html',
-  imports: [Icon],
+  imports: [EmptyState, Icon],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { class: 'block' },
   providers: [provideValueAccessor(() => Select)],

@@ -1737,7 +1737,7 @@ test.describe('DS-3 lote C: la tabla', () => {
     }
   });
 
-  test('the quick filter narrows the table, and the empty state is the projected one', async ({
+  test('the quick filter narrows the table; empty, the table says no-results and clears it', async ({
     page,
   }) => {
     await page.goto(TABLE);
@@ -1749,9 +1749,15 @@ test.describe('DS-3 lote C: la tabla', () => {
 
     await search.fill('no-existe-nada');
     await expect(page.locator(ROWS)).toHaveCount(0);
-    await expect(page.locator(`${DEMO} [data-empty-row]`)).toContainText(
-      'Ninguna expedición coincide',
-    );
+    const empty = page.locator(`${DEMO} [data-empty-row] [data-empty-state]`);
+    await expect(empty).toHaveAttribute('data-empty-state', 'no-results');
+    await expect(empty).toHaveAttribute('role', 'status');
+
+    // Con teclado: la acción es un botón real y limpia la búsqueda que dejó la tabla vacía.
+    await empty.locator('[data-empty-action] button').focus();
+    await page.keyboard.press('Enter');
+    await expect(search).toHaveValue('');
+    await expect(page.locator(ROWS)).toHaveCount(12);
   });
 
   test('selects every visible row from the header, and says so as mixed in between', async ({
