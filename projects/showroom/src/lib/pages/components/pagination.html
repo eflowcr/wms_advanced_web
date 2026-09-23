@@ -69,7 +69,6 @@
           [page]="pagina()"
           [pageCount]="paginas"
           [total]="total()"
-          [messages]="messages"
           (pageChange)="irA($event)"
         />
 
@@ -249,11 +248,12 @@
     <h3 class="text-h3">Los textos se proveen una vez</h3>
     <div class="flex flex-col gap-2 rounded-md border border-strong bg-secondary p-4">
       <p class="text-caption">
-        <code class="font-mono">PaginationMessages</code> se pasa como entrada porque este
-        componente puede vivir fuera de una tabla. Dentro de una, la tabla le pasa los suyos —los de
-        <code class="font-mono">EWMS_TABLE_MESSAGES</code>—, así que el consumidor no escribe
-        ninguno. Este catálogo hace exactamente eso: lee el mismo diccionario que la tabla, porque
-        dos juegos de palabras para el mismo control acaban diciendo cosas distintas.
+        <code class="font-mono">EWMS_PAGINATION_MESSAGES</code> se provee una sola vez por
+        aplicación, como el de la tabla o el del select: una pantalla con tres paginadores no
+        escribe el mismo diccionario tres veces. La entrada
+        <code class="font-mono">[messages]</code> es opcional y parcial, y solo sobrescribe lo que
+        una instancia necesite decir distinto. Sin proveedor el control funciona igual y queda
+        mudo. Dentro de una tabla no hay nada que pasar: el paginador pide los suyos.
       </p>
     </div>
 

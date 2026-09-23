@@ -6,7 +6,16 @@
     "outDir": "../../out-tsc/lib",
     "declaration": true,
     "declarationMap": true,
-    "types": []
+    "types": [],
+    /*
+     * Al EMPAQUETAR, las bibliotecas de las que depende se toman ya construidas: los alias del
+     * workspace apuntan al codigo fuente y ng-packagr metia esos archivos en este paquete
+     * («is not under rootDir»). `build:libs` las construye antes, en orden.
+     */
+    "paths": {
+      "@ewms/design-system": ["../../dist/design-system"],
+      "@ewms/shared": ["../../dist/shared"]
+    }
   },
   "include": ["src/**/*.ts"],
   "exclude": ["**/*.spec.ts"]

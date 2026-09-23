@@ -43,8 +43,6 @@ export interface FilterBarMessages {
   /** «Más filtros», o «Más filtros (2)» con filtros activos escondidos. */
   readonly moreFilters: (active: number) => string;
   readonly fewerFilters: string;
-  readonly clearFilters: string;
-  readonly removeFilter: (field: string) => string;
 }
 
 export const EWMS_FILTER_BAR_MESSAGES = new InjectionToken<FilterBarMessages>(

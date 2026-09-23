@@ -3,7 +3,9 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import {
   EWMS_DATE_PICKER_MESSAGES,
   EWMS_FILTER_BAR_MESSAGES,
+  EWMS_FILTER_CHIPS_MESSAGES,
   EWMS_FORM_MESSAGES,
+  EWMS_PAGINATION_MESSAGES,
   EWMS_FAVORITE_LABELS,
   EWMS_FAVORITES_STORE,
   EWMS_SELECT_MESSAGES,
@@ -18,7 +20,9 @@ import {
   type DatePickerMessages,
   type FavoriteLabelResolver,
   type FilterBarMessages,
+  type FilterChipsMessages,
   type FormMessages,
+  type PaginationMessages,
   type SelectMessages,
   type ShortcutHelpMessages,
   type SplitButtonMessages,
@@ -53,6 +57,14 @@ export function provideEwmsDesignSystem(): Provider[] {
     {
       provide: EWMS_FILTER_BAR_MESSAGES,
       useFactory: filterBarMessages,
+    },
+    {
+      provide: EWMS_FILTER_CHIPS_MESSAGES,
+      useFactory: filterChipsMessages,
+    },
+    {
+      provide: EWMS_PAGINATION_MESSAGES,
+      useFactory: paginationMessages,
     },
     {
       provide: EWMS_FORM_MESSAGES,
@@ -163,20 +175,10 @@ function tableMessages(): TableMessages {
     get sortedDescending() {
       return transloco.translate('ds.table.sortedDescending');
     },
-    get previousPage() {
-      return transloco.translate('ds.table.previousPage');
-    },
-    get nextPage() {
-      return transloco.translate('ds.table.nextPage');
-    },
-    pageOf: (page, pages) =>
-      transloco.translate('ds.table.pageOf', { page: String(page), pages: String(pages) }),
-    rowsTotal: (total) => transloco.translate('ds.table.rowsTotal', { total }),
     filters: (active) => transloco.translate('ds.table.filters', { active }),
     get clearFilters() {
       return transloco.translate('ds.table.clearFilters');
     },
-    removeFilter: (column) => transloco.translate('ds.table.removeFilter', { column }),
     get view() {
       return transloco.translate('ds.table.view');
     },
@@ -330,7 +332,6 @@ function formMessages(): FormMessages {
   };
 }
 
-/** Los chips repiten las palabras de la tabla: una sola forma de decir «Limpiar filtros». */
 function filterBarMessages(): FilterBarMessages {
   const transloco = inject(TranslocoService);
   return {
@@ -338,10 +339,33 @@ function filterBarMessages(): FilterBarMessages {
     get fewerFilters() {
       return transloco.translate('ds.filterBar.fewerFilters');
     },
+  };
+}
+
+/** Los mismos chips en la barra de la tabla y en la de pantalla: un solo diccionario. */
+function filterChipsMessages(): FilterChipsMessages {
+  const transloco = inject(TranslocoService);
+  return {
+    removeFilter: (column) => transloco.translate('ds.filterChips.removeFilter', { column }),
     get clearFilters() {
-      return transloco.translate('ds.table.clearFilters');
+      return transloco.translate('ds.filterChips.clearFilters');
     },
-    removeFilter: (field) => transloco.translate('ds.table.removeFilter', { column: field }),
+  };
+}
+
+/** El paginador es suyo, no de la tabla: cards, logs y colas de picking también paginan. */
+function paginationMessages(): PaginationMessages {
+  const transloco = inject(TranslocoService);
+  return {
+    get previousPage() {
+      return transloco.translate('ds.pagination.previousPage');
+    },
+    get nextPage() {
+      return transloco.translate('ds.pagination.nextPage');
+    },
+    pageOf: (page, pages) =>
+      transloco.translate('ds.pagination.pageOf', { page: String(page), pages: String(pages) }),
+    rowsTotal: (total) => transloco.translate('ds.pagination.rowsTotal', { total }),
   };
 }
 

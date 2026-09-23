@@ -6,7 +6,11 @@
     "outDir": "../../out-tsc/lib",
     "declaration": true,
     "declarationMap": true,
-    "types": []
+    "types": [],
+    // Como en showroom: al empaquetar, `@ewms/core` se toma ya construido y no desde el fuente.
+    "paths": {
+      "@ewms/core": ["../../dist/core"]
+    }
   },
   "include": ["src/**/*.ts"],
   "exclude": ["**/*.spec.ts"]

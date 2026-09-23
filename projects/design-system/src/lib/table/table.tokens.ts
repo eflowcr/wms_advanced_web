@@ -19,18 +19,13 @@ export interface TableMessages {
   readonly retry: string;
   readonly sortedAscending: string;
   readonly sortedDescending: string;
-  /** `pageOf` recibe la página y el total de páginas. */
-  readonly previousPage: string;
-  readonly nextPage: string;
-  readonly pageOf: (page: number, pages: number) => string;
-  readonly rowsTotal: (total: number) => string;
 
-  // Barra de herramientas. Ver vault: Tabla §12.
+  // Barra de herramientas. Ver vault: Tabla §12. El paginador y los chips piden los suyos por
+  // su propio token: la tabla ya no le pasa textos a ninguna pieza a mano.
   /** «Filtros», o «Filtros (2)» con filtros de columna activos. */
   readonly filters: (active: number) => string;
+  /** También la acción del estado vacío con filtros puestos. */
   readonly clearFilters: string;
-  /** Nombre del botón × de un chip: «Quitar el filtro Estado». */
-  readonly removeFilter: (column: string) => string;
   /** El botón que agrupa columnas, densidad y «Restablecer vista». */
   readonly view: string;
   readonly resetView: string;

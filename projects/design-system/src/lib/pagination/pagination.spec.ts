@@ -1,7 +1,7 @@
 import { Component, signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { expectNoAxeViolations } from '@ewms/testing';
-import { Pagination, type PaginationMessages } from './pagination';
+import { EWMS_PAGINATION_MESSAGES, Pagination, type PaginationMessages } from './pagination';
 
 const MESSAGES: PaginationMessages = {
   previousPage: 'Página anterior',
@@ -16,14 +16,12 @@ const MESSAGES: PaginationMessages = {
       [page]="page()"
       [pageCount]="pageCount()"
       [total]="total()"
-      [messages]="messages"
       (pageChange)="asked = $event"
     />
   `,
   imports: [Pagination],
 })
 class TestHost {
-  readonly messages = MESSAGES;
   readonly page = signal(0);
   readonly pageCount = signal(5);
   readonly total = signal<number | null>(97);
@@ -36,7 +34,10 @@ describe('Pagination', () => {
   let host: TestHost;
 
   beforeEach(async () => {
-    await TestBed.configureTestingModule({ imports: [TestHost, Pagination] }).compileComponents();
+    await TestBed.configureTestingModule({
+      imports: [TestHost, Pagination],
+      providers: [{ provide: EWMS_PAGINATION_MESSAGES, useValue: MESSAGES }],
+    }).compileComponents();
     fixture = TestBed.createComponent(TestHost);
     host = fixture.componentInstance;
     fixture.detectChanges();

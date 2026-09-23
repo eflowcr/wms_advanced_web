@@ -5,6 +5,8 @@ import { expectNoAxeViolations, pixels } from '@ewms/testing';
 import { By } from '@angular/platform-browser';
 import { defer, Observable, of, Subject, throwError } from 'rxjs';
 import { EWMS_DATE_PICKER_MESSAGES } from '../date-picker/date-picker.types';
+import { EWMS_FILTER_CHIPS_MESSAGES, type FilterChipsMessages } from '../filters/filter-chips';
+import { EWMS_PAGINATION_MESSAGES, type PaginationMessages } from '../pagination/pagination';
 import { EWMS_SPLIT_BUTTON_MESSAGES } from '../split-button/split-button.types';
 import { ShortcutsHost } from '../keyboard/shortcuts-host';
 import {
@@ -77,13 +79,8 @@ const MESSAGES: TableMessages = {
   retry: 'Reintentar',
   sortedAscending: 'Orden ascendente',
   sortedDescending: 'Orden descendente',
-  previousPage: 'Anterior',
-  nextPage: 'Siguiente',
-  pageOf: (page, pages) => `Página ${page} de ${pages}`,
-  rowsTotal: (total) => `${total} filas`,
   filters: (active) => (active === 0 ? 'Filtros' : `Filtros (${active})`),
   clearFilters: 'Limpiar filtros',
-  removeFilter: (column) => `Quitar el filtro ${column}`,
   view: 'Vista',
   resetView: 'Restablecer vista',
   expandAll: 'Expandir todo',
@@ -129,6 +126,19 @@ const MESSAGES: TableMessages = {
   aggregate: (kind, column, scope) => `${kind} ${column} ${scope}`,
 };
 
+// El paginador y los chips piden los suyos por su propio token, como el Select.
+const PAGE_WORDS: PaginationMessages = {
+  previousPage: 'Anterior',
+  nextPage: 'Siguiente',
+  pageOf: (page, pages) => `Página ${page} de ${pages}`,
+  rowsTotal: (total) => `${total} filas`,
+};
+
+const CHIP_WORDS: FilterChipsMessages = {
+  clearFilters: 'Limpiar filtros',
+  removeFilter: (column) => `Quitar el filtro ${column}`,
+};
+
 const DATE_WORDS = {
   chooseDate: 'Elegir fecha',
   previousMonth: 'Mes anterior',
@@ -143,6 +153,22 @@ const FORMATTERS: TableFormatters = {
   number: (value) => `n:${String(value)}`,
   date: (value) => `d:${String(value)}`,
 };
+
+/** Dos pasadas: la segunda pinta lo que la primera dejó pendiente. Estaba copiada seis veces. */
+async function stabilise(fixture: ComponentFixture<unknown>): Promise<void> {
+  fixture.detectChanges();
+  await fixture.whenStable();
+  fixture.detectChanges();
+}
+
+/** Los tokens que piden la tabla y sus piezas. Estaban copiados en los nueve `TestBed` del archivo. */
+const TABLE_PROVIDERS = [
+  { provide: EWMS_TABLE_MESSAGES, useValue: MESSAGES },
+  { provide: EWMS_PAGINATION_MESSAGES, useValue: PAGE_WORDS },
+  { provide: EWMS_FILTER_CHIPS_MESSAGES, useValue: CHIP_WORDS },
+  { provide: EWMS_DATE_PICKER_MESSAGES, useValue: DATE_WORDS },
+  { provide: EWMS_TABLE_FORMATTERS, useValue: FORMATTERS },
+];
 
 @Component({
   template: `
@@ -224,11 +250,7 @@ describe('Table', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [TestHost, Table, TableColumn, EmptyTemplate],
-      providers: [
-        { provide: EWMS_TABLE_MESSAGES, useValue: MESSAGES },
-        { provide: EWMS_DATE_PICKER_MESSAGES, useValue: DATE_WORDS },
-        { provide: EWMS_TABLE_FORMATTERS, useValue: FORMATTERS },
-      ],
+      providers: TABLE_PROVIDERS,
     }).compileComponents();
     fixture = TestBed.createComponent(TestHost);
     host = fixture.componentInstance;
@@ -237,11 +259,7 @@ describe('Table', () => {
     fixture.detectChanges();
   });
 
-  async function settle(): Promise<void> {
-    fixture.detectChanges();
-    await fixture.whenStable();
-    fixture.detectChanges();
-  }
+  const settle = (): Promise<void> => stabilise(fixture);
 
   function grid(): HTMLElement {
     return fixture.nativeElement.querySelector('table') as HTMLElement;
@@ -993,11 +1011,7 @@ describe('Table with a failing source', () => {
   async function mount(source: TableSource<Row>): Promise<ComponentFixture<TestHost>> {
     await TestBed.configureTestingModule({
       imports: [TestHost],
-      providers: [
-        { provide: EWMS_TABLE_MESSAGES, useValue: MESSAGES },
-        { provide: EWMS_DATE_PICKER_MESSAGES, useValue: DATE_WORDS },
-        { provide: EWMS_TABLE_FORMATTERS, useValue: FORMATTERS },
-      ],
+      providers: TABLE_PROVIDERS,
     }).compileComponents();
     const fixture = TestBed.createComponent(TestHost);
     fixture.componentInstance.source.set(source);
@@ -1096,11 +1110,7 @@ describe('Table with lazy children', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [LazyHost, Table, TableColumn],
-      providers: [
-        { provide: EWMS_TABLE_MESSAGES, useValue: MESSAGES },
-        { provide: EWMS_DATE_PICKER_MESSAGES, useValue: DATE_WORDS },
-        { provide: EWMS_TABLE_FORMATTERS, useValue: FORMATTERS },
-      ],
+      providers: TABLE_PROVIDERS,
     }).compileComponents();
     fixture = TestBed.createComponent(LazyHost);
     host = fixture.componentInstance;
@@ -1109,11 +1119,7 @@ describe('Table with lazy children', () => {
     fixture.detectChanges();
   });
 
-  async function settle(): Promise<void> {
-    fixture.detectChanges();
-    await fixture.whenStable();
-    fixture.detectChanges();
-  }
+  const settle = (): Promise<void> => stabilise(fixture);
 
   function toggle(): void {
     (fixture.nativeElement.querySelector('[data-toggle="0"]') as HTMLButtonElement).click();
@@ -1203,11 +1209,7 @@ describe('Table paging', () => {
   it('asks for one page at a time, moves between them, and without a total has no count', async () => {
     await TestBed.configureTestingModule({
       imports: [PagedHost],
-      providers: [
-        { provide: EWMS_TABLE_MESSAGES, useValue: MESSAGES },
-        { provide: EWMS_DATE_PICKER_MESSAGES, useValue: DATE_WORDS },
-        { provide: EWMS_TABLE_FORMATTERS, useValue: FORMATTERS },
-      ],
+      providers: TABLE_PROVIDERS,
     }).compileComponents();
     const fixture = TestBed.createComponent(PagedHost);
     const table = fixture.debugElement.query(By.directive(Table)).componentInstance as {
@@ -1287,11 +1289,7 @@ describe('Table master/detail', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [DetailHost, Table, TableColumn, DetailTemplate],
-      providers: [
-        { provide: EWMS_TABLE_MESSAGES, useValue: MESSAGES },
-        { provide: EWMS_DATE_PICKER_MESSAGES, useValue: DATE_WORDS },
-        { provide: EWMS_TABLE_FORMATTERS, useValue: FORMATTERS },
-      ],
+      providers: TABLE_PROVIDERS,
     }).compileComponents();
     fixture = TestBed.createComponent(DetailHost);
     host = fixture.componentInstance;
@@ -1300,11 +1298,7 @@ describe('Table master/detail', () => {
     fixture.detectChanges();
   });
 
-  async function settle(): Promise<void> {
-    fixture.detectChanges();
-    await fixture.whenStable();
-    fixture.detectChanges();
-  }
+  const settle = (): Promise<void> => stabilise(fixture);
 
   function toggle(rowIndex: number): HTMLButtonElement | null {
     return fixture.nativeElement.querySelector(`[data-detail-toggle="${rowIndex}"] button`);
@@ -1572,11 +1566,7 @@ const ROW_PIXELS = 40;
 async function hugeFixture(rows: readonly Big[]): Promise<ComponentFixture<HugeHost>> {
   await TestBed.configureTestingModule({
     imports: [HugeHost, Table, TableColumn],
-    providers: [
-      { provide: EWMS_TABLE_MESSAGES, useValue: MESSAGES },
-      { provide: EWMS_DATE_PICKER_MESSAGES, useValue: DATE_WORDS },
-      { provide: EWMS_TABLE_FORMATTERS, useValue: FORMATTERS },
-    ],
+    providers: TABLE_PROVIDERS,
   }).compileComponents();
 
   const fixture = TestBed.createComponent(HugeHost);
@@ -1601,11 +1591,7 @@ describe('Table virtualisation', () => {
     document.documentElement.style.removeProperty(ROW_HEIGHT_TOKEN);
   });
 
-  async function settle(): Promise<void> {
-    fixture.detectChanges();
-    await fixture.whenStable();
-    fixture.detectChanges();
-  }
+  const settle = (): Promise<void> => stabilise(fixture);
 
   function drawn(): HTMLElement[] {
     return [...fixture.nativeElement.querySelectorAll('[data-row]')] as HTMLElement[];
@@ -1738,10 +1724,7 @@ describe('Table and the `filters` shortcut', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [ShortcutHost, DialogModule],
-      providers: [
-        { provide: EWMS_TABLE_MESSAGES, useValue: MESSAGES },
-        { provide: EWMS_TABLE_FORMATTERS, useValue: FORMATTERS },
-      ],
+      providers: TABLE_PROVIDERS,
     }).compileComponents();
     fixture = TestBed.createComponent(ShortcutHost);
     document.body.appendChild(fixture.nativeElement);
@@ -1863,10 +1846,7 @@ describe('Table columns', () => {
     document.documentElement.style.setProperty('--col-fit-max-width', pixels(FIT));
     await TestBed.configureTestingModule({
       imports: [ColumnsHost],
-      providers: [
-        { provide: EWMS_TABLE_MESSAGES, useValue: MESSAGES },
-        { provide: EWMS_TABLE_FORMATTERS, useValue: FORMATTERS },
-      ],
+      providers: TABLE_PROVIDERS,
     }).compileComponents();
     fixture = TestBed.createComponent(ColumnsHost);
     document.body.appendChild(fixture.nativeElement);
@@ -1882,11 +1862,7 @@ describe('Table columns', () => {
     clearOverlays();
   });
 
-  async function settle(): Promise<void> {
-    fixture.detectChanges();
-    await fixture.whenStable();
-    fixture.detectChanges();
-  }
+  const settle = (): Promise<void> => stabilise(fixture);
 
   const headers = (): string[] =>
     [...fixture.nativeElement.querySelectorAll('thead tr:first-child th[data-col]')].map(
@@ -2176,8 +2152,7 @@ describe('Table export', () => {
     await TestBed.configureTestingModule({
       imports: [ExportHost],
       providers: [
-        { provide: EWMS_TABLE_MESSAGES, useValue: MESSAGES },
-        { provide: EWMS_TABLE_FORMATTERS, useValue: FORMATTERS },
+        ...TABLE_PROVIDERS,
         { provide: EWMS_SPLIT_BUTTON_MESSAGES, useValue: { moreActions: 'Más acciones' } },
       ],
     }).compileComponents();
@@ -2186,7 +2161,9 @@ describe('Table export', () => {
     await settle();
   });
 
-  afterEach(() => {
+  afterEach(async () => {
+    // `downloadCsv` revoca en la tarea siguiente: se le da esa vuelta antes de borrar los dobles.
+    await new Promise((resolve) => setTimeout(resolve));
     delete (URL as { createObjectURL?: unknown }).createObjectURL;
     delete (URL as { revokeObjectURL?: unknown }).revokeObjectURL;
     vi.restoreAllMocks();
@@ -2194,11 +2171,7 @@ describe('Table export', () => {
     clearOverlays();
   });
 
-  async function settle(): Promise<void> {
-    fixture.detectChanges();
-    await fixture.whenStable();
-    fixture.detectChanges();
-  }
+  const settle = (): Promise<void> => stabilise(fixture);
 
   const primary = (): HTMLButtonElement =>
     fixture.nativeElement.querySelector('[data-export] button') as HTMLButtonElement;

@@ -2,7 +2,9 @@ import { inject, signal, type Provider } from '@angular/core';
 import {
   EWMS_DATE_PICKER_MESSAGES,
   EWMS_FILTER_BAR_MESSAGES,
+  EWMS_FILTER_CHIPS_MESSAGES,
   EWMS_FORM_MESSAGES,
+  EWMS_PAGINATION_MESSAGES,
   EWMS_FAVORITE_LABELS,
   EWMS_SELECT_MESSAGES,
   EWMS_SHORTCUT_HELP_MESSAGES,
@@ -13,7 +15,9 @@ import {
   parseTableDate,
   type FavoriteLabelResolver,
   type FilterBarMessages,
+  type FilterChipsMessages,
   type FormMessages,
+  type PaginationMessages,
   type SelectMessages,
   type ShortcutHelpMessages,
   type TableFormatters,
@@ -33,6 +37,8 @@ export function provideShowroomDesignSystem(): Provider[] {
     { provide: EWMS_TABLE_FORMATTERS, useValue: TABLE_FORMATTERS },
     { provide: EWMS_SELECT_MESSAGES, useValue: SELECT_MESSAGES },
     { provide: EWMS_FILTER_BAR_MESSAGES, useValue: FILTER_BAR_MESSAGES },
+    { provide: EWMS_FILTER_CHIPS_MESSAGES, useValue: FILTER_CHIPS_MESSAGES },
+    { provide: EWMS_PAGINATION_MESSAGES, useValue: PAGINATION_MESSAGES },
     { provide: EWMS_FORM_MESSAGES, useValue: FORM_MESSAGES },
     { provide: EWMS_SHORTCUT_MAP, useValue: SHOWROOM_SHORTCUT_MAP },
     { provide: EWMS_SHORTCUT_HELP_MESSAGES, useValue: SHORTCUT_HELP_MESSAGES },
@@ -114,13 +120,8 @@ export const TABLE_MESSAGES: TableMessages = {
   retry: 'Reintentar',
   sortedAscending: 'Orden ascendente',
   sortedDescending: 'Orden descendente',
-  previousPage: 'Página anterior',
-  nextPage: 'Página siguiente',
-  pageOf: (page, pages) => `Página ${page} de ${pages}`,
-  rowsTotal: (total) => (total === 1 ? '1 fila' : `${total} filas`),
   filters: (active) => (active === 0 ? 'Filtros' : `Filtros (${active})`),
   clearFilters: 'Limpiar filtros',
-  removeFilter: (column) => `Quitar el filtro ${column}`,
   view: 'Vista',
   resetView: 'Restablecer vista',
   expandAll: 'Expandir todo',
@@ -232,12 +233,22 @@ export const FORM_MESSAGES: FormMessages = {
   requiredLegend: '* obligatorio',
 };
 
-/** Los chips comparten `clearFilters` y `removeFilter` con la tabla: una sola forma de decirlo. */
 export const FILTER_BAR_MESSAGES: FilterBarMessages = {
   moreFilters: (active) => (active === 0 ? 'Más filtros' : `Más filtros (${active})`),
   fewerFilters: 'Menos filtros',
+};
+
+/** Los mismos chips en la barra de la tabla y en la de pantalla: un solo diccionario. */
+export const FILTER_CHIPS_MESSAGES: FilterChipsMessages = {
   clearFilters: 'Limpiar filtros',
-  removeFilter: (field) => `Quitar el filtro ${field}`,
+  removeFilter: (column) => `Quitar el filtro ${column}`,
+};
+
+export const PAGINATION_MESSAGES: PaginationMessages = {
+  previousPage: 'Página anterior',
+  nextPage: 'Página siguiente',
+  pageOf: (page, pages) => `Página ${page} de ${pages}`,
+  rowsTotal: (total) => (total === 1 ? '1 fila' : `${total} filas`),
 };
 
 export const SELECT_MESSAGES: SelectMessages = {

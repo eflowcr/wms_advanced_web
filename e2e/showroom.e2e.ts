@@ -1,5 +1,6 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
+import { watchConsole } from './console-watch';
 
 /**
  * El showroom y las medidas que necesitan navegador: jsdom no maqueta y toda caja le da cero.
@@ -41,14 +42,12 @@ function round(value: number | undefined): number {
   return Math.round((value ?? 0) * 100) / 100;
 }
 
+/*
+ * Una prueba por página que solo abría la ruta y miraba el `h1` se borró (28): eso ya lo afirman
+ * «has no axe violations, and a clean console» —misma página, mismo `h1`— y, para las 28 de una
+ * vez, «every route in the catalogue answers, with a clean console» de `smoke`.
+ */
 test.describe('the showroom renders and is reachable', () => {
-  for (const { url, heading } of PAGES) {
-    test(`${url} renders its heading`, async ({ page }) => {
-      await page.goto(url);
-      await expect(page.getByRole('heading', { level: 1, name: heading })).toBeVisible();
-    });
-  }
-
   test('the retired routes still work', async ({ page }) => {
     // Las URL se declararon estables: un enlace ya compartido tiene que seguir abriendo.
     for (const [old, now, heading] of [
@@ -507,7 +506,9 @@ test.describe('the component sheets measure what they claim', () => {
 
 test.describe('accessibility', () => {
   for (const { url, heading } of PAGES) {
-    test(`${url} has no axe violations`, async ({ page }) => {
+    test(`${url} has no axe violations, and a clean console`, async ({ page }) => {
+      // La consola se vigila acá y no en una prueba aparte: esta ya abre cada página del catálogo.
+      const watch = await watchConsole(page);
       await page.goto(url);
       // Esperar la página y no solo las fuentes: la ruta es perezosa y axe sobre un documento sin
       // renderizar reporta unas sesenta violaciones que van y vienen con la carga de la máquina.
@@ -515,6 +516,7 @@ test.describe('accessibility', () => {
       await ready(page);
       const results = await new AxeBuilder({ page }).analyze();
       expect(results.violations).toEqual([]);
+      await watch.clean(url);
     });
   }
 });
@@ -1616,40 +1618,12 @@ test.describe('DS-3 lote C: la tabla', () => {
     await expect(page.locator('[data-activated]')).toContainText('cabecera');
   });
 
-  test('sorts by the raw number, not by the formatted text', async ({ page }) => {
-    await page.goto(TABLE);
-    await ready(page);
-
-    await page.locator(`${DEMO} [data-sort="bultos"]`).click();
-    await expect(page.locator('[data-query]')).toContainText('bultos asc');
-
-    const values = await page
-      .locator(`${ROWS} td:nth-child(5)`)
-      .evaluateAll((cells) =>
-        cells.map((cell) => Number((cell.textContent ?? '').replace(/\D/g, ''))),
-      );
-
-    // Ascendente como número: ordenar el texto localizado pone 1.200 antes que 900.
-    expect(values).toEqual([...values].sort((a, b) => a - b));
-  });
-
-  test('filters a number range with two boxes, and an empty box is unbounded', async ({ page }) => {
-    await page.goto(TABLE);
-    await ready(page);
-
-    // Ocultos por defecto: se abren con «Filtros».
-    await page.locator(`${DEMO} [data-filters-toggle] button`).click();
-    const boxes = page.locator(`${DEMO} [data-filter="bultos"] input`);
-    await expect(boxes).toHaveCount(2);
-
-    await boxes.nth(0).fill('100');
-    await expect(page.locator('[data-query]')).toContainText('bultos');
-    const withMin = await page.locator(ROWS).count();
-    expect(withMin).toBeLessThan(12);
-
-    await boxes.nth(0).fill('');
-    await expect(page.locator(ROWS)).toHaveCount(12);
-  });
+  /*
+   * Ordenar por el valor crudo y filtrar un rango con las dos cajas no necesitan navegador: son
+   * lógica, y los afirman `table.spec.ts` «SORTS BY THE RAW VALUE, not by the formatted text»,
+   * «filters text by substring (the whole query goes out), and a number range» y «A CLEARED BOX
+   * IS UNBOUNDED, NOT ZERO».
+   */
 
   test('the filters hide and come back with the button and Alt+R, and the chips never hide', async ({
     page,
@@ -1852,28 +1826,8 @@ test.describe('DS-3 lote C: la tabla', () => {
     }
   });
 
-  test('the quick filter narrows the table; empty, the table says no-results and clears it', async ({
-    page,
-  }) => {
-    await page.goto(TABLE);
-    await ready(page);
-
-    const search = page.locator(`${DEMO} [data-quick-filter] input`);
-    await search.fill('EXP-2026-0400');
-    await expect(page.locator(ROWS)).toHaveCount(1);
-
-    await search.fill('no-existe-nada');
-    await expect(page.locator(ROWS)).toHaveCount(0);
-    const empty = page.locator(`${DEMO} [data-empty-row] [data-empty-state]`);
-    await expect(empty).toHaveAttribute('data-empty-state', 'no-results');
-    await expect(empty).toHaveAttribute('role', 'status');
-
-    // Con teclado: la acción es un botón real y limpia la búsqueda que dejó la tabla vacía.
-    await empty.locator('[data-empty-action] button').focus();
-    await page.keyboard.press('Enter');
-    await expect(search).toHaveValue('');
-    await expect(page.locator(ROWS)).toHaveCount(12);
-  });
+  // La búsqueda rápida y el «sin resultados» con su acción los afirma `table.spec.ts` «with a
+  // search nothing matches: no-results, and its action clears search and filters».
 
   test('REORDERS A COLUMN by dragging its header, or with Alt+Shift+arrows, and says where', async ({
     page,
@@ -1974,19 +1928,8 @@ test.describe('DS-3 lote C: la tabla', () => {
     await expect(number).toHaveCSS('font-family', /Montserrat/);
   });
 
-  test('a coloured row also says its state in words', async ({ page }) => {
-    await page.goto(TABLE);
-    await ready(page);
-
-    // toHaveCount y no count(): el primero reintenta hasta que la tabla renderiza; el segundo lee
-    // el instante, que en una ruta perezosa es nada. Costó una prueba roja.
-    await expect(page.locator(`${DEMO} ewms-badge`)).toHaveCount(12);
-
-    // Cada fila teñida lleva insignia con icono y texto: el color nunca es la única señal (WCAG 1.4.1).
-    const tinted = page.locator(`${ROWS}.bg-row-danger`).first();
-    await expect(tinted.locator('ewms-badge')).toContainText('Con incidencia');
-    await expect(tinted.locator('ewms-badge svg')).toBeVisible();
-  });
+  // Que una fila teñida lleve además su insignia con texto (WCAG 1.4.1) lo afirma `table.spec.ts`
+  // «draws a badge from the dictionary; tints the row from THE SAME one, ONLY AN EXCEPTION».
 });
 
 test.describe('DS-3 lote D: detalle, menú, ventana y paginador', () => {
@@ -2033,19 +1976,9 @@ test.describe('DS-3 lote D: detalle, menú, ventana y paginador', () => {
       .toBe(true);
   });
 
-  test('the row menu opens from the kebab and from the right button', async ({ page }) => {
-    await page.goto(TABLE);
-    await ready(page);
-
-    await page.locator(`${DETALLE} [data-kebab="0"] button`).click();
-    await expect(page.locator('[role="menu"]')).toBeVisible();
-    await page.keyboard.press('Escape');
-    await expect(page.locator('[role="menu"]')).toHaveCount(0);
-
-    // El kebab existe porque trackpad y teléfono no tienen botón derecho; quien lo tiene espera que ande.
-    await page.locator(`${DETALLE} [data-row="1"]`).click({ button: 'right' });
-    await expect(page.locator('[role="menu"]')).toBeVisible();
-  });
+  // Que el menú abra por el kebab y por el botón derecho lo afirma `table.spec.ts` «opens on the
+  // kebab, with the entries it was given» y «replaces the browser menu on a right click rather
+  // than adding a second». Acá queda el camino de teclado, que sí necesita navegador.
 
   test('the menu opens with Shift+F10 and gives the focus back on Escape', async ({ page }) => {
     await page.goto(TABLE);
@@ -2072,30 +2005,12 @@ test.describe('DS-3 lote D: detalle, menú, ventana y paginador', () => {
     await expect(page.locator(`${DETALLE} [data-cell="0-0"]`)).toBeFocused();
   });
 
-  test('choosing an entry reports the row AND the entry', async ({ page }) => {
-    await page.goto(TABLE);
-    await ready(page);
-
-    await page.locator(`${DETALLE} [data-kebab="1"] button`).click();
-    await page.locator('[data-menu-item="anular"]').click();
-
-    await expect(page.locator('[data-menu-choice]')).toContainText('Anular');
-    await expect(page.locator('[data-menu-choice]')).toContainText('EXP-');
-    await expect(page.locator('[role="menu"]')).toHaveCount(0);
-  });
-
-  test('lazy children show a loading row and then a row that says it failed', async ({ page }) => {
-    await page.goto(TABLE);
-    await ready(page);
-
-    const demo = '[data-demo-perezosa]';
-    // La expedición con incidencia es la que nunca recibe hijos.
-    // Una sola fila abierta: sus filas de carga y de error son las únicas de la tabla.
-    await page.locator(`${demo} tr.bg-row-danger`).first().locator('[data-toggle]').click();
-    await expect(page.locator(`${demo} [data-loading]`)).toBeVisible();
-    await expect(page.locator(`${demo} [data-failed]`)).toBeVisible();
-    await expect(page.locator(`${demo} [data-retry]`)).toBeVisible();
-  });
+  /*
+   * Elegir una entrada del menú y las filas de carga y de fallo de los hijos perezosos no piden
+   * navegador: los afirman `table.spec.ts` «emits the row AND the entry, and closes», «draws the
+   * toggle before any child exists, a busy row on the way, then the children» y «shows the failure
+   * in line, expanded; folded it goes away; the retry can succeed».
+   */
 
   test('FIVE THOUSAND ROWS, A HANDFUL IN THE DOM, and the count is still five thousand', async ({
     page,

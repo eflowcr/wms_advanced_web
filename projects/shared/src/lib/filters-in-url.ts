@@ -58,9 +58,9 @@ export interface UrlFilterState {
 
 /**
  * Filtros de pantalla en los `queryParams`: un enlace filtrado se comparte, recargar no pierde
- * nada y «atrás» deshace el último filtro. Vive en `@ewms/shared` porque el sistema de diseño no
- * conoce el router (ADR: fronteras en eslint.config.js) y lo usan shell y showroom por igual.
- * Se llama desde un contexto de inyección. Ver vault: Patron-Filtros.
+ * nada y «atrás» deshace el último filtro. Se llama desde un contexto de inyección.
+ * Único ayudante del router que vive en `shared`, por la excepción estrecha del ADR 0014.
+ * Ver vault: 02-Arquitectura/Decisiones/0014 - Ayudantes del router en shared.md
  */
 export function filtersInUrl(keys: readonly string[]): UrlFilterState {
   const route = inject(ActivatedRoute);

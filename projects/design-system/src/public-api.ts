@@ -1,6 +1,19 @@
-// Única entrada legal a @ewms/design-system; src/lib/** está cercado en eslint.config.js.
+/*
+ * Única entrada legal a @ewms/design-system; src/lib/** está cercado en eslint.config.js.
+ *
+ * Criterio, uno solo: se exporta lo que necesita quien consume la biblioteca —el shell, el
+ * showroom, un dominio futuro o quien implemente una fuente del backend— y nada que solo exista
+ * para que la biblioteca funcione por dentro. Un tipo de contrato o de entrada pública se queda
+ * aunque hoy no lo importe nadie; un ayudante interno se va aunque sea útil.
+ * Ver vault: 02-Arquitectura/Anatomia del Workspace §design-system.
+ */
+
 export { DESIGN_SYSTEM_VERSION } from './lib/version';
+
+// Iconografía (ADR 0011): la tabla la genera `npm run icons:build`.
 export { Icon, type IconSize } from './lib/icon/icon';
+export { ICON_CATEGORIES, type IconCategory, type IconName } from './icons/icons.generated';
+
 export { Text, type TextVariant } from './lib/text/text';
 export {
   Button,
@@ -10,7 +23,7 @@ export {
 } from './lib/button/button';
 export { Tooltip, type TooltipPosition } from './lib/tooltip/tooltip';
 
-// Formulario (DS-2, Signal Forms desde 2026-09-22). `FieldSize` y `FieldState`
+// Campos (DS-2, Signal Forms desde 2026-09-22). `FieldSize` y `FieldState`
 // se exportan una vez: Input y Select comparten escala y un segundo nombre derivaría.
 export { type FieldSize, type FieldState } from './lib/field/field.types';
 export { Input, type InputType } from './lib/input/input';
@@ -18,13 +31,38 @@ export { Checkbox } from './lib/checkbox/checkbox';
 export { Radio } from './lib/radio/radio';
 export { RadioGroup } from './lib/radio/radio-group';
 export { Toggle } from './lib/toggle/toggle';
-export { ICON_CATEGORIES, type IconCategory, type IconName } from './icons/icons.generated';
+
+// Select (DS-2; siempre busca desde 2026-09-22, REQ-FE-DS3-001 v1.3): `options` filtra en
+// memoria, `SearchSource<T>` es el contrato para el backend.
+export {
+  Select,
+  type SearchDisplay,
+  type SearchPage,
+  type SearchSource,
+  type SelectMessages,
+  type SelectOption,
+} from './lib/select/select';
+export { EWMS_SELECT_MESSAGES } from './lib/select/select.types';
+export { SEARCH_PAGE_SIZE } from './lib/select/search-source';
+
+// Date picker (2026-09-21): calendario propio en el idioma de la app; valor ISO o `DateRange`.
+export {
+  DatePicker,
+  type DatePickerMessages,
+  type DatePickerMode,
+  type DatePickerValue,
+} from './lib/date-picker/date-picker';
+export { EWMS_DATE_PICKER_MESSAGES } from './lib/date-picker/date-picker.types';
 
 // Feedback (DS-3): banner y toast comparten `FeedbackVariant`. Info se pinta neutral:
 // el azul significa «acá se hace clic». Ver vault: Fundamentos de Marca.
 export { Banner, type FeedbackVariant } from './lib/banner/banner';
 export { ToastService } from './lib/toast/toast.service';
 export { ToastOutlet, type Toast } from './lib/toast/toast-outlet';
+
+// Badge (DS-3): fuera de la Tabla para que detalle, card y lista digan «con incidencia» igual.
+export { Badge } from './lib/badge/badge';
+export { type SemanticFamily } from './lib/feedback/feedback.types';
 
 // Cards (DS-3): opción dentro de `ewms-card-group`, contenedor en cualquier otro lado.
 export { Card } from './lib/card/card';
@@ -35,19 +73,20 @@ export { CardGroup } from './lib/card/card-group';
 export { DialogService, type OpenDialogOptions } from './lib/dialog/dialog.service';
 export { type ConfirmOptions, type DialogTone } from './lib/dialog/dialog.types';
 
-// Select (DS-2; siempre busca desde 2026-09-22, REQ-FE-DS3-001 v1.3): `options` filtra en
-// memoria, `SearchSource<T>` es el contrato para el backend.
+// Split button (2026-09-21): acción principal y alternativas, sobre el menú de la Tabla.
 export {
-  Select,
-  type SearchDisplay,
-  type SearchPage,
-  type SearchSource,
-  type SearchStatus,
-  type SelectMessages,
-  type SelectOption,
-} from './lib/select/select';
-export { EWMS_SELECT_MESSAGES } from './lib/select/select.types';
-export { SEARCH_PAGE_SIZE } from './lib/select/search-source';
+  SplitButton,
+  type SplitAction,
+  type SplitButtonMessages,
+} from './lib/split-button/split-button';
+export { EWMS_SPLIT_BUTTON_MESSAGES } from './lib/split-button/split-button.types';
+
+// Pagination (DS-3): aparte de la tabla, porque cards, logs y colas de picking también paginan.
+export {
+  EWMS_PAGINATION_MESSAGES,
+  Pagination,
+  type PaginationMessages,
+} from './lib/pagination/pagination';
 
 // Estado vacío (2026-09-22): uno para tabla, select y pantalla, con cuatro casos.
 export {
@@ -57,10 +96,9 @@ export {
   type EmptyStateSize,
 } from './lib/empty-state/empty-state';
 
-// Formulario (2026-09-22): las reglas en un solo lugar, sobre Signal Forms (ADR 0013).
+// Patrón Formulario (2026-09-22): las reglas en un solo lugar, sobre Signal Forms (ADR 0013).
 export {
   EWMS_FORM_MESSAGES,
-  NO_FORM_MESSAGES,
   type FormErrorKind,
   type FormErrorWriter,
   type FormErrorWriters,
@@ -69,8 +107,12 @@ export {
 export { FormPattern, type FormAction } from './lib/forms/form-pattern';
 export { confirmDiscard } from './lib/forms/confirm-discard';
 
-// Filtros (2026-09-22): los chips son de la tabla y de la barra de pantalla, la misma pieza.
-export { FilterChips, type FilterChip, type FilterChipsMessages } from './lib/filters/filter-chips';
+// Patrón Filtros (2026-09-22): la barra de pantalla. Los chips los dibujan la barra y la Tabla,
+// así que la pieza no se exporta; su diccionario sí, porque lo llena la aplicación.
+export {
+  EWMS_FILTER_CHIPS_MESSAGES,
+  type FilterChipsMessages,
+} from './lib/filters/filter-chips';
 export {
   EWMS_FILTER_BAR_MESSAGES,
   FilterBar,
@@ -80,12 +122,8 @@ export {
   type FilterValues,
 } from './lib/filters/filter-bar';
 
-// Badge (DS-3): fuera de la Tabla para que detalle, card y lista digan «con incidencia» igual.
-export { Badge } from './lib/badge/badge';
-export { type SemanticFamily } from './lib/feedback/feedback.types';
-
-// Table (DS-3): `TableSource<T>` es el contrato del backend. `ArrayTableSource` se exporta para
-// no reescribir filtrado y paginado en memoria. Textos y formatos son tokens (ADR 0008).
+// Tabla (DS-3), la pieza y sus plantillas: `*ewmsCell`, `*ewmsDetail` y `*ewmsEmpty` las escribe
+// el consumidor, así que las tres directivas se importan desde afuera.
 export {
   Table,
   CellTemplate,
@@ -93,15 +131,15 @@ export {
   EmptyTemplate,
   TableColumn,
   type CellContext,
-  type FlatRow,
 } from './lib/table/table';
-export { ArrayTableSource, matchesFilter, sortRows } from './lib/table/array-table-source';
+
+// Tabla, el contrato de datos: `TableSource<T>` es lo que implementa el backend, y los tres
+// guardas discriminan el `TableFilterValue` que le llega en la consulta.
+export { ArrayTableSource } from './lib/table/array-table-source';
 export {
-  emptyQuery,
   isDateRange,
   isNumberRange,
   isSetFilter,
-  readCell,
   type DateRange,
   type NumberRange,
   type SetFilter,
@@ -111,6 +149,8 @@ export {
   type TableSort,
   type TableSource,
 } from './lib/table/table-source';
+
+// Tabla, sus textos y formatos (ADR 0008), y los tipos de sus entradas y salidas.
 export {
   EWMS_TABLE_FORMATTERS,
   EWMS_TABLE_MESSAGES,
@@ -135,31 +175,10 @@ export {
   type TablePin,
   type TableView,
 } from './lib/table/table.types';
-export { expandableKeys, flattenTree, type FlattenOptions } from './lib/table/tree';
+// Las claves de `TableMessages.columnActions`, que llena el consumidor.
 export { type ColumnAction } from './lib/table/table-column-menu';
-export { menuItemClasses, moveMenuIndex } from './lib/menu/menu';
 
-// Split button (2026-09-21): acción principal y alternativas, sobre el menú de la Tabla.
-export {
-  SplitButton,
-  type SplitAction,
-  type SplitButtonMessages,
-} from './lib/split-button/split-button';
-export { EWMS_SPLIT_BUTTON_MESSAGES } from './lib/split-button/split-button.types';
-
-// Date picker (2026-09-21): calendario propio en el idioma de la app; valor ISO o `DateRange`.
-export {
-  DatePicker,
-  type DatePickerMessages,
-  type DatePickerMode,
-  type DatePickerValue,
-} from './lib/date-picker/date-picker';
-export { EWMS_DATE_PICKER_MESSAGES } from './lib/date-picker/date-picker.types';
-
-// Pagination (DS-3): aparte de la tabla, porque cards, logs y colas de picking también paginan.
-export { Pagination, type PaginationMessages } from './lib/pagination/pagination';
-
-// Keyboard (DS-4, REQ-FE-DS4-001): el motor vive acá y no en `core/`. Ver vault: Atajos-de-Teclado.
+// Atajos (DS-4, REQ-FE-DS4-001): el motor vive acá y no en `core/`. Ver vault: Atajos-de-Teclado.
 // `ScanDetector` se exporta para que nadie escriba una segunda respuesta a «¿es una pistola?».
 export {
   KeyboardShortcuts,
@@ -168,6 +187,8 @@ export {
   type Unregister,
 } from './lib/keyboard/keyboard-shortcuts';
 export { ShortcutsHost } from './lib/keyboard/shortcuts-host';
+// `SCAN_THRESHOLD_TOKEN` nombra el token CSS del umbral: el valor vive en `tokens.css`, y quien
+// tenga que ponerlo desde afuera —hoy la spec del showroom, que corre sin la hoja— no lo tipea.
 export {
   ScanDetector,
   SCAN_MIN_KEYSTROKES,
@@ -184,35 +205,25 @@ export {
   type ShortcutMap,
 } from './lib/keyboard/shortcuts.types';
 
-// Navigation (DS-5): ninguno conoce el router; navega el shell. `Viewport` se exporta para que
-// shell y navegación den una sola respuesta al punto de corte (si no, barra y rail a la vez).
+// Navegación (DS-5): ninguna pieza conoce el router; navega el shell. `Viewport` se exporta para
+// que shell y navegación den una sola respuesta al punto de corte (si no, barra y rail a la vez).
 export { NavRail } from './lib/navigation/nav-rail';
-export { NavBottom, BOTTOM_NAV_SLOTS } from './lib/navigation/nav-bottom';
+export { NavBottom } from './lib/navigation/nav-bottom';
 export { Tabs, type TabsMode } from './lib/navigation/tabs';
 export { Breadcrumbs } from './lib/navigation/breadcrumbs';
-export { Viewport, NAV_BOTTOM_BREAKPOINT_TOKEN } from './lib/navigation/viewport';
-export {
-  CRUMB_FOLD_THRESHOLD,
-  foldCrumbs,
-  isGroup,
-  parentOf,
-  visibleItems,
-  type Crumb,
-  type NavItem,
-  type Tab,
-} from './lib/navigation/navigation.types';
+export { Viewport } from './lib/navigation/viewport';
+export { parentOf, type Crumb, type NavItem, type Tab } from './lib/navigation/navigation.types';
 
 /*
  * Favoritos (DS-5, REQ-FE-DS4-002 v1.2): `InMemoryFavoritesStore` se exporta porque lo usan
  * shell y showroom. Se pierde al recargar (decisión del usuario, 2026-09-19, hasta el
  * Security Core); un E2E afirma la pérdida para que el backend obligue a actualizar la doc.
+ * `EWMS_FAVORITE_LABELS` (v1.3): el nombre de una ruta se pregunta al pintar, nunca se guarda.
  */
 export { Favorites } from './lib/favorites/favorites';
 export { FavoriteToggle } from './lib/favorites/favorite-toggle';
-export { FavoritesNav, FAVORITES_SHOWN } from './lib/favorites/favorites-nav';
+export { FavoritesNav } from './lib/favorites/favorites-nav';
 export { InMemoryFavoritesStore } from './lib/favorites/in-memory-favorites-store';
-// `EWMS_FAVORITE_LABELS` (REQ-FE-DS4-002 v1.3): el nombre de una ruta se pregunta al pintar,
-// nunca se guarda; cada aplicación pone sus palabras.
 export {
   EWMS_FAVORITE_LABELS,
   EWMS_FAVORITES_STORE,
