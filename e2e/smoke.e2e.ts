@@ -1,6 +1,7 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
-import { KEYBOARD, PAGES, SEARCH_CREATE_EDIT } from './routes';
+import { KEYBOARD, PAGES, SEARCH_CREATE_EDIT, UNDER_CONSTRUCTION } from './routes';
+import { watchConsole } from './console-watch';
 
 /**
  * Piso de la suite: corre en todo PR y todo push. Entra solo lo que, si falla, deja a nadie usar la app;
@@ -25,7 +26,8 @@ test.describe('the application is alive', () => {
 
   // Una sola prueba para todas las rutas: veinticuatro pagarían un contexto de navegador cada una
   // para saber solo si la ruta responde. La lista se importa, así una ruta nueva entra sola.
-  test('every route in the catalogue answers', async ({ page }) => {
+  test('every route in the catalogue answers, with a clean console', async ({ page }) => {
+    const watch = await watchConsole(page);
     for (const { url, heading } of PAGES) {
       const response = await page.goto(url);
       expect(response?.status(), `${url} no respondió`).toBeLessThan(400);
@@ -33,6 +35,7 @@ test.describe('the application is alive', () => {
         page.getByRole('heading', { level: 1, name: heading }),
         `${url} no renderizó su h1`,
       ).toBeVisible();
+      await watch.clean(url);
     }
   });
 });
@@ -134,13 +137,24 @@ test.describe('the App Shell', () => {
     await expect(page.locator('[data-page-heading]')).toBeFocused();
   });
 
-  test('a menu entry with no screen is a PAGE, never a 404', async ({ page }) => {
-    const response = await page.goto('/catalogos/transportistas');
+  test('a menu entry with no screen is a PAGE, never a 404, and says nothing to the console', async ({
+    page,
+  }) => {
+    const watch = await watchConsole(page);
+    for (const { url, heading } of UNDER_CONSTRUCTION) {
+      const response = await page.goto(url);
 
-    expect(response?.status()).toBeLessThan(400);
-    // No sirve main h1: la página anfitriona tiene un segundo main oculto (el aviso de fallo al arrancar).
-    await expect(page.locator('[data-page-heading]')).toBeVisible();
-    await expect(page).toHaveTitle(/Transportistas|Carriers/);
+      expect(response?.status(), `${url} no respondió`).toBeLessThan(400);
+      // No sirve main h1: la página anfitriona tiene un segundo main oculto (el aviso de fallo al arrancar).
+      // El h1 dice de quién es la pantalla: sin eso, el comodín que lleva al Dashboard pasaría.
+      const title = page.locator('[data-page-heading]');
+      await expect(title, `${url} no es su pantalla`).toHaveText(heading);
+      // WCAG 2.4.2: la pestaña dice la pantalla antes que la marca, y dice la misma que el h1.
+      await expect(page, `${url} no tituló la pestaña`).toHaveTitle(
+        `${await title.innerText()} · eWMS Advance`,
+      );
+      await watch.clean(url);
+    }
   });
 
   test('at 375 px the rail becomes the bottom bar, and the header does not scroll', async ({

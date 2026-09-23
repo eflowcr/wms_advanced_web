@@ -1,5 +1,6 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
+import { watchConsole } from './console-watch';
 
 /**
  * El showroom y las medidas que necesitan navegador: jsdom no maqueta y toda caja le da cero.
@@ -507,7 +508,9 @@ test.describe('the component sheets measure what they claim', () => {
 
 test.describe('accessibility', () => {
   for (const { url, heading } of PAGES) {
-    test(`${url} has no axe violations`, async ({ page }) => {
+    test(`${url} has no axe violations, and a clean console`, async ({ page }) => {
+      // La consola se vigila acá y no en una prueba aparte: esta ya abre cada página del catálogo.
+      const watch = await watchConsole(page);
       await page.goto(url);
       // Esperar la página y no solo las fuentes: la ruta es perezosa y axe sobre un documento sin
       // renderizar reporta unas sesenta violaciones que van y vienen con la carga de la máquina.
@@ -515,6 +518,7 @@ test.describe('accessibility', () => {
       await ready(page);
       const results = await new AxeBuilder({ page }).analyze();
       expect(results.violations).toEqual([]);
+      await watch.clean(url);
     });
   }
 });
