@@ -292,7 +292,7 @@
   --text-h3-weight: var(--weight-semibold);
   --text-h3-line-height: var(--ratio-1-3);
 
-  /* H4: mayúsculas las aplica el componente. Interlineado (pendiente). */
+  /* H4: mayúsculas las aplica el componente. Interlineado: el del cuerpo. */
   --text-h4-size: var(--size-14);
   --text-h4-weight: var(--weight-semibold);
 
@@ -300,18 +300,18 @@
   --text-p-weight: var(--weight-regular);
   --text-p-line-height: var(--ratio-1-5);
 
-  /* Caption: color text-secondary. Interlineado (pendiente). */
+  /* Caption: color text-secondary. Interlineado: el del cuerpo. */
   --text-caption-size: var(--size-12);
   --text-caption-weight: var(--weight-medium);
 
-  /* Mono: códigos, SKUs, lotes. Peso e interlineado (pendiente). */
+  /* Mono: códigos, SKUs, lotes. Peso e interlineado: los del cuerpo. */
   --text-mono-size: var(--size-13);
 
   /* Tamaños de la ficha del Botón (13 / 14 / 15). */
   --text-control-sm-size: var(--size-13);
   --text-control-md-size: var(--size-14);
   --text-control-lg-size: var(--size-15);
-  /* Sin confirmar: la ficha no fija peso; el 500 lo eligió la implementación. */
+  /* Peso de los controles (Botón, Input, Select): 500. */
   --text-control-weight: var(--weight-medium);
   /* Opción elegida del Select: el tema no tiene utilidades de peso y se lee como var().
    * Semántico porque un primitivo fuera de acá se rechaza. */

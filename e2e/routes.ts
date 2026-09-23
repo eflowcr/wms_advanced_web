@@ -28,6 +28,12 @@ export const FILTERS = '/design-system/patterns/filters';
 export const FORM = '/design-system/patterns/form';
 
 /**
+ * Presupuesto por ruta de las pruebas que recorren muchas en una sola: el tope de 30 s es de una
+ * prueba, no de 28 páginas, y con el servidor en frío la primera vuelta se lo comía entero.
+ */
+export const ROUTE_BUDGET_MS = 3_000;
+
+/**
  * Las rutas navegables del catálogo, patrones incluidos. Sumarla acá la somete a las cuatro
  * pruebas de showroom: título, sin desborde a 1440 y 1280, axe limpio y Tab una vez por control.
  */
