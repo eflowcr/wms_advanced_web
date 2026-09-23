@@ -312,7 +312,7 @@ test.describe('a scan never fires a shortcut', () => {
     await page.locator('[data-search-host] input').click();
     await resetPageCounter(page);
 
-    await page.keyboard.type('n/a?n', { delay: 5 });
+    await page.keyboard.type('n/a?n', { delay: 0 });
 
     await expect(page.locator('[data-expedicion-form]')).toHaveCount(0);
     await expect(page.locator('ewms-shortcut-help')).toHaveCount(0);

@@ -86,7 +86,8 @@ test.describe('the patterns still work, on the keyboard', () => {
     await page.goto(KEYBOARD);
     await page.getByRole('heading', { level: 1, name: 'Atajos de teclado' }).click();
 
-    await page.keyboard.type(`/${KNOWN_CODE}`, { delay: 5 });
+    // Sin demora, como una pistola: con 5 ms, en un runner cargado un hueco pasaba los 50 ms del umbral.
+    await page.keyboard.type(`/${KNOWN_CODE}`, { delay: 0 });
     await page.keyboard.press('Enter');
 
     await expect(page.getByRole('dialog')).toHaveCount(0);
