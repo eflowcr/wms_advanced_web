@@ -10,8 +10,8 @@ import { LANGUAGES, LanguageService, type Language } from '@ewms/core';
 import { TranslocoPipe } from '@jsverse/transloco';
 
 /**
- * Conmutador provisional (un <select> nativo) hasta que haya Botón y Select; cada idioma
- * escrito en el suyo. Muestra el aviso del caso A si un diccionario no carga.
+ * Conmutador de idioma con un <select> nativo; cada idioma escrito en el suyo. Muestra el
+ * aviso del caso A si un diccionario no carga.
  * Ver vault: 08-Sistema-de-Diseno/i18n.
  */
 @Component({
