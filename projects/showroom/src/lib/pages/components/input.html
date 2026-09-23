@@ -60,28 +60,27 @@
   <section class="flex flex-col gap-4" aria-labelledby="in-demo" data-block="3-demo">
     <h2 id="in-demo" class="text-h2">Demo principal</h2>
     <p class="text-secondary">
-      Dentro de un <strong>formulario reactivo de verdad</strong>. El componente es un
-      <code class="font-mono">ControlValueAccessor</code>: lo que debe demostrarse es que
-      <code class="font-mono">formControlName</code> le llega, que tipear actualiza el control y que
+      Dentro de un <strong>formulario de señales de verdad</strong>. El componente es un
+      <code class="font-mono">FormValueControl&lt;string&gt;</code>: lo que debe demostrarse es que
+      <code class="font-mono">[formField]</code> le llega, que tipear actualiza el campo y que
       salir del campo lo marca como tocado. Un input suelto no prueba ninguna de las tres.
     </p>
     <div class="grid grid-cols-[repeat(auto-fit,minmax(min(24rem,100%),1fr))] gap-6">
       <ewms-demo-frame ground="canvas" label="Un formulario real, con su valor en vivo">
-        <form [formGroup]="form" class="flex flex-col gap-4" data-demo-form>
+        <div class="flex flex-col gap-4" data-demo-form>
           <span data-focus-canvas>
             <ewms-input
-              formControlName="sku"
+              [formField]="form.sku"
               label="SKU del artículo"
               placeholder="ABC-12345-X"
               hint="Formato ABC-00000-X. Enfocame con Tab para ver el anillo."
-              [required]="true"
               (fieldFocus)="onFocus()"
               (fieldBlur)="onBlur()"
             />
           </span>
 
           <ewms-input
-            formControlName="clave"
+            [formField]="form.clave"
             type="password"
             label="Clave de operario"
             showPasswordLabel="Mostrar la clave"
@@ -90,7 +89,7 @@
           />
 
           <ewms-input
-            formControlName="busqueda"
+            [formField]="form.busqueda"
             type="search"
             label="Buscar ubicación"
             placeholder="Pasillo, estante o bulto"
@@ -115,14 +114,14 @@
               <dd class="font-mono text-primary">{{ focusCount() }} / {{ blurCount() }}</dd>
             </div>
           </dl>
-        </form>
+        </div>
       </ewms-demo-frame>
       <ewms-prop-table [rows]="props" caption="Propiedades de <ewms-input>" />
     </div>
     <p class="text-caption text-secondary">
-      El valor de arriba sale del <code class="font-mono">FormControl</code>, no de una copia local:
-      si el componente dejara de notificar al formulario, ese renglón se quedaría quieto mientras la
-      caja se llena de letras. <code class="font-mono">onTouched</code> se emite
+      El valor de arriba sale del campo del <code class="font-mono">form()</code>, no de una copia
+      local: si el componente dejara de escribirle, ese renglón se quedaría quieto mientras la
+      caja se llena de letras. <code class="font-mono">(touch)</code> se emite
       <strong>sólo en blur</strong>, nunca al cambiar el valor: un campo en el que alguien está
       escribiendo todavía no está «tocado», y marcarlo antes haría aparecer los mensajes de
       validación a media tecla.
@@ -301,8 +300,8 @@
     <h3 class="text-h3">Entradas</h3>
     <p class="text-secondary">
       Las de la tabla del bloque 3. <code class="font-mono">label</code> es la única requerida en el
-      tipo. <code class="font-mono">disabled</code> viene de
-      <code class="font-mono">FormControlBase</code> y se combina con el del formulario — ver abajo.
+      tipo. <code class="font-mono">disabled</code> y las demás entradas del contrato las llena el
+      <code class="font-mono">[formField]</code> — ver abajo.
     </p>
 
     <h3 class="text-h3">Salidas</h3>

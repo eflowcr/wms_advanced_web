@@ -21,9 +21,11 @@
       "errorSummary": "{count, plural, =1 {Revisá 1 campo} other {Revisá # campos}}",
       "errorSummaryLabel": "Error",
       "max": "El máximo es {{ max }}",
-      "maxlength": "Máximo {{ length }} caracteres",
+      "maxDate": "La fecha máxima es {{ date }}",
+      "maxLength": "Máximo {{ length }} caracteres",
       "min": "El mínimo es {{ min }}",
-      "minlength": "Mínimo {{ length }} caracteres",
+      "minDate": "La fecha mínima es {{ date }}",
+      "minLength": "Mínimo {{ length }} caracteres",
       "pattern": "El formato no es el esperado",
       "required": "Este campo es obligatorio",
       "requiredLegend": "* obligatorio"

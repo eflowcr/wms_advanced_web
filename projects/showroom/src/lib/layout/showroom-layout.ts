@@ -10,7 +10,6 @@ import {
   viewChild,
 } from '@angular/core';
 import { DOCUMENT } from '@angular/common';
-import { FormsModule } from '@angular/forms';
 import { NavigationEnd, Router, RouterLink, RouterOutlet } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { filter, map, startWith } from 'rxjs';
@@ -42,7 +41,7 @@ import { provideShowroomDesignSystem } from '../showroom.providers';
 @Component({
   selector: 'ewms-showroom-layout',
   templateUrl: './showroom-layout.html',
-  imports: [FormsModule, RouterLink, RouterOutlet, FavoritesNav, Select],
+  imports: [RouterLink, RouterOutlet, FavoritesNav, Select],
   changeDetection: ChangeDetectionStrategy.OnPush,
   // Diccionarios en el componente y no en la ruta: el inyector de elemento se recorre antes que
   // el de entorno, y en la ruta perdían contra los de `MainLayout` (se vio «Select the row» en la

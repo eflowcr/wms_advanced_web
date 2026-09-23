@@ -20,9 +20,7 @@ import {
   TemplateRef,
   viewChild,
   ViewContainerRef,
-  type Signal,
 } from '@angular/core';
-import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { of, type Observable } from 'rxjs';
 import { catchError, debounceTime, map, skip, switchMap, tap } from 'rxjs/operators';
@@ -136,7 +134,6 @@ const EMPTY_PAGE: TablePage<never> = { rows: [], page: 0, pageSize: 0, total: 0 
     Button,
     NgTemplateOutlet,
     Pagination,
-    ReactiveFormsModule,
     Tooltip,
     TablePopover,
     TableStatus,
@@ -281,7 +278,7 @@ export class Table<T> implements TableContext {
 
   /** Búsqueda y filtros de columna; los de pantalla los limpia quien los tiene. */
   clearQuery(): void {
-    this.searchControl.setValue('', { emitEvent: false });
+    this.searchText.set('');
     this.search.set('');
     this.pageIndex.set(0);
     this.filtering.clearAll();
@@ -378,7 +375,8 @@ export class Table<T> implements TableContext {
         this.loadState.set(failed ? 'error' : 'ready');
       });
 
-    this.typed(this.searchControl.valueChanges)
+    // `skip(1)`: `toObservable` arranca emitiendo lo que ya hay, y eso no es un cambio.
+    this.typed(toObservable(this.searchText).pipe(skip(1)))
       .pipe(takeUntilDestroyed())
       .subscribe((text) => {
         this.pageIndex.set(0);
@@ -669,9 +667,8 @@ export class Table<T> implements TableContext {
     return inAnyTable === null && first === host;
   }
 
-  readonly searchControl = new FormControl('', { nonNullable: true });
-
-  protected readonly searchText = this.search as Signal<string>;
+  /** Lo tipeado en la búsqueda rápida; `search` es lo mismo tras la espera del token. */
+  readonly searchText = signal('');
 
   protected toggleExpanded(flat: FlatRow<T>): void {
     this.tree.toggle(flat);

@@ -177,9 +177,8 @@
               hint="Probá «andes», «EXP-2026-04», o pegá un código entero terminado en Enter."
               [source]="source"
               [display]="display"
-              [ngModel]="chosen()"
-              (ngModelChange)="onChosen($event)"
-              name="expedicion"
+              [value]="chosen()"
+              (valueChange)="onChosen($any($event))"
             />
           </div>
 

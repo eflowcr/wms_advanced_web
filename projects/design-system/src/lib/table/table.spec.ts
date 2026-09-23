@@ -530,6 +530,7 @@ describe('Table', () => {
       ) as HTMLInputElement;
     }
 
+    /** Como el navegador: primero da vuelta la casilla, después avisa. */
     function tick(box: HTMLInputElement): void {
       box.checked = !box.checked;
       box.dispatchEvent(new Event('change'));
@@ -552,12 +553,11 @@ describe('Table', () => {
       await settle();
       expect(selectAll().getAttribute('aria-checked')).toBe('mixed');
 
-      selectAll().checked = true;
-      selectAll().dispatchEvent(new Event('change'));
+      tick(selectAll());
       await settle();
       expect(host.selection.length).toBe(3);
 
-      selectAll().dispatchEvent(new Event('change'));
+      tick(selectAll());
       await settle();
       expect(host.selection.length).toBe(0);
     });

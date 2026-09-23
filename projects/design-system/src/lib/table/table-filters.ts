@@ -1,7 +1,6 @@
-import { computed, DestroyRef, inject, signal } from '@angular/core';
+import { computed, DestroyRef, inject, signal, type WritableSignal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { FormControl } from '@angular/forms';
-import type { Observable } from 'rxjs';
+import { Subject, type Observable } from 'rxjs';
 import type { DatePickerValue } from '../date-picker/date-picker';
 import type { FilterChip } from '../filters/filter-chips';
 import type { TableColumn } from './column';
@@ -9,6 +8,12 @@ import { isDateRange, isNumberRange, isSetFilter, type TableFilterValue } from '
 import type { TableFormatters } from './table.tokens';
 
 export type FilterBound = 'text' | 'min' | 'max';
+
+/** Lo que se ve en la caja y lo que sale hacia el filtro, que llega tarde por la espera. */
+interface TextBox {
+  readonly value: WritableSignal<string>;
+  readonly typed: Subject<string>;
+}
 
 
 interface FiltersHost {
@@ -23,8 +28,8 @@ interface FiltersHost {
 }
 
 /**
- * Los filtros de columna de la Tabla: controles memorizados, el valor de cada uno y sus chips.
- * Interna; se crea en el contexto de inyección de la tabla. Ver vault: Tabla §12.
+ * Los filtros de columna de la Tabla: una señal memorizada por caja, el valor de cada una y sus
+ * chips. Interna; se crea en el contexto de inyección de la tabla. Ver vault: Tabla §12.
  */
 export class TableFilters {
   readonly values = signal<Readonly<Record<string, TableFilterValue>>>({});
@@ -45,40 +50,60 @@ export class TableFilters {
 
   private readonly destroyRef = inject(DestroyRef);
 
-  // Memorizados: la plantilla los pide en cada ciclo y uno nuevo borraría lo tipeado.
-  private readonly textControls = new Map<string, FormControl<string>>();
-  private readonly dateControls = new Map<string, FormControl<DatePickerValue>>();
+  // Memorizadas: la plantilla las pide en cada ciclo y una nueva borraría lo tipeado.
+  private readonly textBoxes = new Map<string, TextBox>();
+  private readonly dateBoxes = new Map<string, WritableSignal<DatePickerValue>>();
 
   constructor(private readonly host: FiltersHost) {}
 
-  control(column: TableColumn, bound: FilterBound): FormControl<string> {
-    const id = `${column.key()}:${bound}`;
-    const existing = this.textControls.get(id);
-    if (existing) {
-      return existing;
-    }
-    const control = new FormControl('', { nonNullable: true });
-    this.host
-      .typed(control.valueChanges)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((value) => this.onTyped(column, bound, value));
-    this.textControls.set(id, control);
-    return control;
+  /** Lo que muestra la caja, ya, sin esperar. */
+  boxValue(column: TableColumn, bound: FilterBound): string {
+    return this.textBox(column, bound).value();
   }
 
-  /** La fecha es un solo campo de rango: el date picker ya entrega el `DateRange`. */
-  dateControl(column: TableColumn): FormControl<DatePickerValue> {
-    const existing = this.dateControls.get(column.key());
+  /** Lo tipeado: se ve al instante y filtra tras la espera del token. */
+  typeInto(column: TableColumn, bound: FilterBound, value: string): void {
+    const box = this.textBox(column, bound);
+    box.value.set(value);
+    box.typed.next(value);
+  }
+
+  /** La fecha es un solo campo de rango: el date picker ya entrega el `DateRange`. Sin espera. */
+  dateValue(column: TableColumn): DatePickerValue {
+    return this.dateBox(column)();
+  }
+
+  pickDate(column: TableColumn, value: DatePickerValue): void {
+    this.dateBox(column).set(value);
+    const range = value !== null && typeof value === 'object' ? value : null;
+    this.write(column.key(), range && (range.from || range.to) ? range : undefined);
+  }
+
+  // Un `Subject` por caja y no uno compartido: con `debounceTime` común, tipear en «desde» y
+  // enseguida en «hasta» perdería el primero.
+  private textBox(column: TableColumn, bound: FilterBound): TextBox {
+    const id = `${column.key()}:${bound}`;
+    const existing = this.textBoxes.get(id);
     if (existing) {
       return existing;
     }
-    const control = new FormControl<DatePickerValue>(null);
-    control.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((value) => {
-      const range = value !== null && typeof value === 'object' ? value : null;
-      this.write(column.key(), range && (range.from || range.to) ? range : undefined);
-    });
-    this.dateControls.set(column.key(), control);
-    return control;
+    const box: TextBox = { value: signal(''), typed: new Subject<string>() };
+    this.host
+      .typed(box.typed)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((value) => this.onTyped(column, bound, value));
+    this.textBoxes.set(id, box);
+    return box;
+  }
+
+  private dateBox(column: TableColumn): WritableSignal<DatePickerValue> {
+    const existing = this.dateBoxes.get(column.key());
+    if (existing) {
+      return existing;
+    }
+    const box = signal<DatePickerValue>(null);
+    this.dateBoxes.set(column.key(), box);
+    return box;
   }
 
   write(key: string, value: TableFilterValue | undefined): void {
@@ -97,9 +122,10 @@ export class TableFilters {
   /** El × del chip: vacía también las cajas, o la fila de filtros mentiría al abrirse. */
   clear(key: string): void {
     for (const bound of ['text', 'min', 'max'] as const) {
-      this.textControls.get(`${key}:${bound}`)?.setValue('', { emitEvent: false });
+      // Solo la caja: empujar al `Subject` volvería a filtrar lo que `write` ya resolvió.
+      this.textBoxes.get(`${key}:${bound}`)?.value.set('');
     }
-    this.dateControls.get(key)?.setValue(null, { emitEvent: false });
+    this.dateBoxes.get(key)?.set(null);
     this.write(key, undefined);
   }
 

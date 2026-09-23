@@ -1,5 +1,4 @@
-import { InjectionToken, type Signal } from '@angular/core';
-import type { FormControl } from '@angular/forms';
+import { InjectionToken, type Signal, type WritableSignal } from '@angular/core';
 import type { TableColumn } from './column';
 import type { TableFilters } from './table-filters';
 import type { TableTreeState } from './table-tree-state';
@@ -15,7 +14,7 @@ export interface TableContext {
   readonly tableId: string;
   readonly text: Signal<TableMessages>;
   readonly quickFilter: Signal<boolean>;
-  readonly searchControl: FormControl<string>;
+  readonly searchText: WritableSignal<string>;
   readonly filtering: TableFilters;
   readonly anyFilterable: Signal<boolean>;
   readonly filtersOpen: Signal<boolean>;

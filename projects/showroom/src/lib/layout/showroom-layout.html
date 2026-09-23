@@ -100,8 +100,8 @@
         <ewms-select
           label="Ir a una página del catálogo"
           [options]="pages"
-          [ngModel]="activeRoute()"
-          (ngModelChange)="go($event)"
+          [value]="activeRoute()"
+          (valueChange)="go($any($event))"
         />
       </nav>
     }

@@ -8,7 +8,7 @@
         [label]="text.search"
         [hideLabel]="true"
         [placeholder]="text.search"
-        [formControl]="table.searchControl"
+        [(value)]="table.searchText"
       />
     </div>
   }
@@ -80,24 +80,15 @@
         </fieldset>
       }
 
-      <!-- items-start: estirado, el host del radio dejaba una zona muerta a la derecha del texto. -->
-      <fieldset class="flex flex-col items-start gap-2">
-        <legend class="mb-1 text-caption text-secondary">{{ text.density }}</legend>
-        <ewms-radio
-          [name]="table.tableId + '-density'"
-          value="md"
-          [label]="text.densityMd"
-          [formControl]="densityControl"
-          data-density="md"
-        />
-        <ewms-radio
-          [name]="table.tableId + '-density'"
-          value="sm"
-          [label]="text.densitySm"
-          [formControl]="densityControl"
-          data-density="sm"
-        />
-      </fieldset>
+      <ewms-radio-group
+        [label]="text.density"
+        [name]="table.tableId + '-density'"
+        [value]="table.densityChoice()"
+        (valueChange)="chooseDensity($event)"
+      >
+        <ewms-radio value="md" [label]="text.densityMd" data-density="md" />
+        <ewms-radio value="sm" [label]="text.densitySm" data-density="sm" />
+      </ewms-radio-group>
       @if (table.tree.anyExpandable()) {
         <div class="flex flex-wrap gap-2" data-tree-actions>
           <ewms-button variant="secondary" size="sm" data-expand-all (click)="table.tree.expandAll()">

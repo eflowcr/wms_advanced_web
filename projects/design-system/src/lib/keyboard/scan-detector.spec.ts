@@ -103,7 +103,7 @@ describe('ScanDetector', () => {
 
     it('holding an arrow key does not build a run', () => {
       // La regresión de origen: la repetición de tecla (~30 ms) armaba una ráfaga y el
-      // Enter de «elegir esta fila» se leía como escaneo. Ver vault: Search-Select.
+      // Enter de «elegir esta fila» se leía como escaneo. Ver vault: Select.
       for (let i = 0; i < 10; i += 1) {
         expect(detector.accept(key('ArrowDown'), THRESHOLD, 10_000 + i * 30)).toEqual({
           kind: 'key',

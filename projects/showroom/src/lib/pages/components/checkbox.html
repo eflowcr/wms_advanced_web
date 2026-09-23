@@ -324,33 +324,24 @@
     <h3 class="text-h3">La regla del disabled — la que más sorprende</h3>
     <div class="flex flex-col gap-2 rounded-md border border-strong bg-secondary p-4">
       <p>
-        <code class="font-mono">isDisabled = disabled() || disabledByForm()</code>.
-        <strong>Quien deshabilita gana, y nadie re-habilita.</strong>
+        <strong>Un solo dueño por vez.</strong> Fuera de un formulario, la entrada
+        <code class="font-mono">disabled</code>. Dentro de uno, la regla
+        <code class="font-mono">disabled(path.x, …)</code> del esquema.
       </p>
       <p class="text-caption">
-        Dos fuentes independientes pueden decir «esto no se toca»: la entrada
-        <code class="font-mono">disabled</code>, escrita por quien colocó el componente, y
-        <code class="font-mono">setDisabledState</code>, que Angular llama cuando el
-        <code class="font-mono">FormControl</code> está deshabilitado. No se fusionan: se combinan
-        con <strong>OR</strong>.
+        No se combinan porque Angular no lo permite: enlazar
+        <code class="font-mono">[disabled]</code> en el mismo nodo que
+        <code class="font-mono">[formField]</code> es un error de compilación (NG8022). El campo
+        tiene un dueño, y por eso nunca quedan dos fuentes en desacuerdo.
       </p>
       <p class="text-caption">
-        La alternativa —dejar que el formulario pise la entrada— hace que
-        <code class="font-mono">&lt;ewms-checkbox [disabled]="true" formControlName="x"&gt;</code> se
-        vuelva operable en cuanto el formulario habilite ese control, que es lo contrario de lo que
-        dice la plantilla. Deshabilitar es una propiedad de seguridad: la respuesta restrictiva es el
-        default correcto, y la permisiva es la que hay que argumentar.
-      </p>
-      <p class="text-caption">
-        <strong>Consecuencia, a propósito:</strong> quien escribe
-        <code class="font-mono">[disabled]="true"</code> fijo no puede ser re-habilitado por
-        <code class="font-mono">form.enable()</code>. La forma de que lo maneje el formulario es
-        <em>no pasar la entrada</em> — que es lo que hace un control dirigido por formulario.
+        La ganancia es la que buscaba la regla vieja del OR, por otro camino: quien escribe
+        <code class="font-mono">[disabled]="true"</code> no puede ser re-habilitado por el
+        formulario, porque el formulario no toca ese campo.
       </p>
       <p class="text-caption">
         Vale idéntico para el <strong>Radio</strong>, el <strong>Toggle</strong>, el
-        <strong>Input</strong> y el <strong>Select</strong>: está en
-        <code class="font-mono">FormControlBase</code>, escrito una sola vez.
+        <strong>Input</strong> y el <strong>Select</strong>.
       </p>
     </div>
 

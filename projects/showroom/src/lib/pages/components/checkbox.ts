@@ -76,7 +76,7 @@ const PROPS: readonly PropRow[] = [
     name: 'disabled',
     type: 'boolean',
     default: 'false',
-    description: 'De FormControlBase. Se combina con el del formulario con OR — ver el bloque 8.',
+    description: 'Fuera de un formulario. Dentro de uno lo pone la regla disabled() del esquema — ver el bloque 8.',
   },
   {
     name: '(checkedChange)',
@@ -89,7 +89,7 @@ const PROPS: readonly PropRow[] = [
 
 /**
  * /design-system/components/checkbox: ficha de ewms-checkbox, para leer junto a Radio y
- * Toggle (los tres son CVA sobre FormControlBase). Solo esta muestra el tercer estado.
+ * Toggle (los tres son FormCheckboxControl). Solo esta muestra el tercer estado.
  */
 @Component({
   selector: 'ewms-showroom-checkbox',
@@ -122,7 +122,7 @@ export class ShowroomCheckbox {
 
   protected readonly snippet = [
     '<ewms-checkbox',
-    '  formControlName="reetiquetar"',
+    '  [formField]="alta.reetiquetar"',
     "  [label]=\"'articulos.reetiquetar' | transloco\"",
     '  (checkedChange)="onToggle($event)"',
     '/>',

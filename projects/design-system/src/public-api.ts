@@ -10,12 +10,13 @@ export {
 } from './lib/button/button';
 export { Tooltip, type TooltipPosition } from './lib/tooltip/tooltip';
 
-// Formulario (DS-2), ControlValueAccessor por una base común. `FieldSize` y `FieldState`
+// Formulario (DS-2, Signal Forms desde 2026-09-22). `FieldSize` y `FieldState`
 // se exportan una vez: Input y Select comparten escala y un segundo nombre derivaría.
 export { type FieldSize, type FieldState } from './lib/field/field.types';
 export { Input, type InputType } from './lib/input/input';
 export { Checkbox } from './lib/checkbox/checkbox';
 export { Radio } from './lib/radio/radio';
+export { RadioGroup } from './lib/radio/radio-group';
 export { Toggle } from './lib/toggle/toggle';
 export { ICON_CATEGORIES, type IconCategory, type IconName } from './icons/icons.generated';
 
@@ -56,15 +57,16 @@ export {
   type EmptyStateSize,
 } from './lib/empty-state/empty-state';
 
-// Formulario (2026-09-22): las reglas en un solo lugar, sobre ReactiveForms.
+// Formulario (2026-09-22): las reglas en un solo lugar, sobre Signal Forms (ADR 0013).
 export {
   EWMS_FORM_MESSAGES,
   NO_FORM_MESSAGES,
-  type FormErrorKey,
+  type FormErrorKind,
   type FormErrorWriter,
+  type FormErrorWriters,
   type FormMessages,
 } from './lib/forms/form.types';
-export { FormPattern } from './lib/forms/form-pattern';
+export { FormPattern, type FormAction } from './lib/forms/form-pattern';
 export { confirmDiscard } from './lib/forms/confirm-discard';
 
 // Filtros (2026-09-22): los chips son de la tabla y de la barra de pantalla, la misma pieza.

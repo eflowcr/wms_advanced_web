@@ -1,6 +1,6 @@
 import { Component, LOCALE_ID, signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
-import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { disabled, form, FormField } from '@angular/forms/signals';
 import { expectNoAxeViolations } from '@ewms/testing';
 import { DatePicker, type DatePickerValue } from './date-picker';
 import { EWMS_DATE_PICKER_MESSAGES, type DatePickerMode } from './date-picker.types';
@@ -11,18 +11,23 @@ import { EWMS_DATE_PICKER_MESSAGES, type DatePickerMode } from './date-picker.ty
       label="Fecha de entrega"
       hint="Día y mes, como se escriben acá"
       [mode]="mode()"
-      [min]="min()"
-      [max]="max()"
-      [formControl]="control"
+      [minDate]="min()"
+      [maxDate]="max()"
+      [formField]="entrega"
     />
   `,
-  imports: [DatePicker, ReactiveFormsModule],
+  imports: [DatePicker, FormField],
 })
 class TestHost {
   readonly mode = signal<DatePickerMode>('single');
   readonly min = signal<string | null>(null);
   readonly max = signal<string | null>(null);
-  readonly control = new FormControl<DatePickerValue>('2026-03-16');
+  readonly locked = signal(false);
+  readonly model = signal<{ entrega: DatePickerValue }>({ entrega: '2026-03-16' });
+  readonly form = form(this.model, (path) => {
+    disabled(path.entrega, () => this.locked());
+  });
+  readonly entrega = this.form.entrega;
 }
 
 /** Con `viaLocaleId` el idioma llega por LOCALE_ID, el respaldo cuando el token no trae locale. */
@@ -69,6 +74,12 @@ describe('DatePicker', () => {
     fixture.nativeElement.querySelector('[data-date-trigger] button') as HTMLButtonElement;
   const dialog = () => document.querySelector<HTMLElement>('[role="dialog"]');
   const day = (iso: string) => document.querySelector<HTMLElement>(`[data-date="${iso}"]`)!;
+  const value = () => host().form.entrega().value();
+  /** `settle` incluido: el modelo llega al campo en un efecto, no en la misma vuelta. */
+  const setValue = async (next: DatePickerValue) => {
+    host().model.set({ entrega: next });
+    await settle();
+  };
 
   /** Saliendo del campo, o con Enter si `enter`: los dos caminos confirman lo escrito. */
   async function type(text: string, enter = false): Promise<void> {
@@ -100,19 +111,19 @@ describe('DatePicker', () => {
     expect(field().value).toBe('16/3/2026');
 
     await type('2/4/26', true);
-    expect(host().control.value).toBe('2026-04-02');
+    expect(value()).toBe('2026-04-02');
     expect(field().value).toBe('2/4/2026');
 
     // El 31 de febrero no existe, «1/2» está a medias y «mañana» no es una fecha: vuelve lo que
     // había, sin tocar el valor.
     for (const text of ['31/2/2026', '1/2', 'mañana']) {
       await type(text);
-      expect(host().control.value).toBe('2026-04-02');
+      expect(value()).toBe('2026-04-02');
       expect(field().value).toBe('2/4/2026');
     }
 
     await type('');
-    expect(host().control.value).toBeNull();
+    expect(value()).toBeNull();
   });
 
   it('in English reads month first, starts the week on Sunday and names the month in English', async () => {
@@ -121,7 +132,7 @@ describe('DatePicker', () => {
     expect(field().value).toBe('3/16/2026');
 
     await type('4/2/2026');
-    expect(host().control.value).toBe('2026-04-02');
+    expect(value()).toBe('2026-04-02');
 
     await open();
     expect(dialog()?.querySelector('h2')?.textContent).toContain('April 2026');
@@ -155,7 +166,7 @@ describe('DatePicker', () => {
     await press('ArrowLeft');
 
     await press('Enter');
-    expect(host().control.value).toBe('2026-03-21');
+    expect(value()).toBe('2026-03-21');
     expect(dialog()).toBeNull();
     expect(document.activeElement).toBe(trigger());
   });
@@ -169,14 +180,14 @@ describe('DatePicker', () => {
 
     await press('Escape');
     expect(dialog()).toBeNull();
-    expect(host().control.value).toBe('2026-03-16');
+    expect(value()).toBe('2026-03-16');
     expect(document.activeElement).toBe(trigger());
   });
 
   it('min and max: Alt+Down opens on the nearest allowed day; the rest is seen, not chosen', async () => {
     host().min.set('2026-03-10');
     host().max.set('2026-04-05');
-    host().control.setValue(null);
+    await setValue(null);
     await settle();
 
     field().focus();
@@ -191,7 +202,7 @@ describe('DatePicker', () => {
     expect(early.getAttribute('aria-disabled')).toBe('true');
     early.click();
     await settle();
-    expect(host().control.value).toBeNull();
+    expect(value()).toBeNull();
 
     document.querySelector<HTMLButtonElement>('[data-date-next] button')!.click();
     await settle();
@@ -201,7 +212,7 @@ describe('DatePicker', () => {
   it('range: two picks, in any order, make the table DateRange; typed too', async () => {
     host().mode.set('range');
     // Abre en el inicio del rango: sin valor abriría en el hoy real del reloj.
-    host().control.setValue({ from: '2026-03-16', to: '2026-03-16' });
+    await setValue({ from: '2026-03-16', to: '2026-03-16' });
     await settle();
 
     await open();
@@ -211,31 +222,31 @@ describe('DatePicker', () => {
     await press('ArrowLeft');
     await press('Enter');
 
-    expect(host().control.value).toEqual({ from: '2026-03-14', to: '2026-03-16' });
+    expect(value()).toEqual({ from: '2026-03-14', to: '2026-03-16' });
     expect(field().value).toBe('14/3/2026 – 16/3/2026');
 
     await type('1/4/2026 - 3/4/2026');
-    expect(host().control.value).toEqual({ from: '2026-04-01', to: '2026-04-03' });
+    expect(value()).toEqual({ from: '2026-04-01', to: '2026-04-03' });
     await type('5/4/2026 - 2/4/2026');
-    expect(host().control.value).toEqual({ from: '2026-04-02', to: '2026-04-05' });
+    expect(value()).toEqual({ from: '2026-04-02', to: '2026-04-05' });
     await type('7/4/2026');
-    expect(host().control.value).toEqual({ from: '2026-04-07', to: '2026-04-07' });
+    expect(value()).toEqual({ from: '2026-04-07', to: '2026-04-07' });
     await type('');
-    expect(host().control.value).toBeNull();
+    expect(value()).toBeNull();
   });
 
   it('passes axe closed, open on today, and disabled; the button toggles it', async () => {
     await expectNoAxeViolations(fixture.nativeElement);
 
     // Sin valor abre en el mes de hoy, con hoy marcado.
-    host().control.setValue(null);
+    await setValue(null);
     await open();
     expect(document.querySelector('[aria-current="date"]')).toBe(document.activeElement);
     await expectNoAxeViolations(document.querySelector('.cdk-overlay-container')!);
     await open();
     expect(dialog()).toBeNull();
 
-    host().control.disable();
+    host().locked.set(true);
     await settle();
     expect(field().disabled).toBe(true);
     expect(trigger().disabled).toBe(true);

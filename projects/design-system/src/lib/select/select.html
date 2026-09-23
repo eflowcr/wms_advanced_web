@@ -1,7 +1,7 @@
 <!-- RFE-01: un `<input>` que se tipea ya; es etiquetable, así que for/id. -->
 <label [id]="labelId" [attr.for]="fieldId" class="block text-caption text-secondary mb-1">
   {{ label() }}
-  @if (requiredByForm()) {
+  @if (required()) {
     <span aria-hidden="true">*</span>
   }
 </label>
@@ -14,7 +14,7 @@
     [class]="fieldClasses()"
     [style.borderColor]="borderColor()"
     [style.fontSize]="fontSize()"
-    [disabled]="isDisabled()"
+    [disabled]="disabled()"
     [placeholder]="placeholder()"
     [value]="text()"
     [attr.aria-expanded]="isOpen()"

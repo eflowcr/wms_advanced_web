@@ -1,7 +1,6 @@
 import { Component, signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
-import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { By } from '@angular/platform-browser';
+import { disabled as disabledRule, form, FormField } from '@angular/forms/signals';
 import { expectNoAxeViolations } from '@ewms/testing';
 import { Toggle } from './toggle';
 
@@ -35,11 +34,15 @@ class TestHost {
 }
 
 @Component({
-  template: ` <ewms-toggle [label]="'Modo compacto'" [formControl]="control" /> `,
-  imports: [Toggle, ReactiveFormsModule],
+  template: ` <ewms-toggle label="Modo compacto" [formField]="form.compacto" /> `,
+  imports: [Toggle, FormField],
 })
-class ReactiveHost {
-  readonly control = new FormControl(false);
+class FormHost {
+  readonly locked = signal(false);
+  readonly model = signal({ compacto: false });
+  readonly form = form(this.model, (path) => {
+    disabledRule(path.compacto, () => this.locked());
+  });
 }
 
 /**
@@ -80,9 +83,6 @@ describe('Toggle', () => {
     return root().querySelector('span[aria-hidden="true"]') as HTMLElement;
   }
 
-  function instance(): Toggle {
-    return fixture.debugElement.query(By.directive(Toggle)).componentInstance as Toggle;
-  }
 
   /** Como `getByRole` con nombre, en jsdom. */
   function switchByName(name: string): HTMLInputElement | null {
@@ -209,18 +209,9 @@ describe('Toggle', () => {
     });
   });
 
-  describe('Disabled, from either source', () => {
-    it('lets the disabled INPUT win over a form that enables the control', async () => {
+  describe('Disabled', () => {
+    it('applies the native disabled attribute from the entrada', async () => {
       host.disabled.set(true);
-      await settle();
-
-      instance().setDisabledState(false);
-      await settle();
-      expect(track().disabled).toBe(true);
-    });
-
-    it('is disabled by the form alone when the input says nothing', async () => {
-      instance().setDisabledState(true);
       await settle();
       expect(track().disabled).toBe(true);
     });
@@ -250,14 +241,12 @@ describe('Toggle', () => {
   });
 });
 
-describe('Toggle with a reactive form', () => {
-  let fixture: ComponentFixture<ReactiveHost>;
+describe('Toggle inside a signal form', () => {
+  let fixture: ComponentFixture<FormHost>;
 
   beforeEach(async () => {
-    await TestBed.configureTestingModule({
-      imports: [ReactiveHost, Toggle, ReactiveFormsModule],
-    }).compileComponents();
-    fixture = TestBed.createComponent(ReactiveHost);
+    await TestBed.configureTestingModule({ imports: [FormHost] }).compileComponents();
+    fixture = TestBed.createComponent(FormHost);
     fixture.detectChanges();
     await fixture.whenStable();
   });
@@ -271,36 +260,34 @@ describe('Toggle with a reactive form', () => {
     return (fixture.nativeElement as Element).querySelector('input') as HTMLInputElement;
   }
 
-  it('writes the form value into the switch', async () => {
-    fixture.componentInstance.control.setValue(true);
+  it('writes the form value into the switch, and a flip back into the form', async () => {
+    fixture.componentInstance.model.set({ compacto: true });
     await settle();
     expect(track().checked).toBe(true);
     expect(track().getAttribute('aria-checked')).toBe('true');
-  });
 
-  it('reports a flip back to the form', async () => {
     track().click();
     await settle();
-    expect(fixture.componentInstance.control.value).toBe(true);
+    expect(fixture.componentInstance.form.compacto().value()).toBe(false);
   });
 
-  it('follows setDisabledState in both directions', async () => {
-    fixture.componentInstance.control.disable();
+  it('follows the disabled rule of the schema in both directions', async () => {
+    fixture.componentInstance.locked.set(true);
     await settle();
     expect(track().disabled).toBe(true);
 
-    fixture.componentInstance.control.enable();
+    fixture.componentInstance.locked.set(false);
     await settle();
     expect(track().disabled).toBe(false);
   });
 
-  it('marks the control touched when the focus leaves, not on the flip', async () => {
+  it('marks the field touched when the focus leaves, not on the flip', async () => {
     track().click();
     await settle();
-    expect(fixture.componentInstance.control.touched).toBe(false);
+    expect(fixture.componentInstance.form.compacto().touched()).toBe(false);
 
     focusThenLeave(track());
     await settle();
-    expect(fixture.componentInstance.control.touched).toBe(true);
+    expect(fixture.componentInstance.form.compacto().touched()).toBe(true);
   });
 });

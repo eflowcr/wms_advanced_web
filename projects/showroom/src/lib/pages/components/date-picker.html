@@ -51,13 +51,13 @@
     <h2 id="dp-demo" class="text-h2">Demo principal</h2>
     <div class="grid grid-cols-[repeat(auto-fit,minmax(min(24rem,100%),1fr))] gap-6">
       <ewms-demo-frame ground="canvas" label="Una fecha, desde hoy">
-        <div class="flex max-w-80 flex-col gap-3" [formGroup]="form" data-demo-date>
+        <div class="flex max-w-80 flex-col gap-3" data-demo-date>
           <ewms-date-picker
             label="Fecha de entrega"
-            formControlName="entrega"
+            [formField]="form.entrega"
             placeholder="dd/mm/aaaa"
             hint="Escribila, o abrí el calendario con el botón."
-            [min]="today"
+            [minDate]="today"
           />
           <p class="text-caption text-secondary">
             Valor: <span class="font-mono text-primary" data-demo-date-value>{{ show(delivery()) }}</span>
@@ -77,8 +77,8 @@
       Escrito, va con una raya entre las dos fechas.
     </p>
     <ewms-demo-frame ground="canvas" label="Un período">
-      <div class="flex max-w-80 flex-col gap-3" [formGroup]="form" data-demo-range>
-        <ewms-date-picker label="Período" mode="range" formControlName="periodo" />
+      <div class="flex max-w-80 flex-col gap-3" data-demo-range>
+        <ewms-date-picker label="Período" mode="range" [formField]="form.periodo" />
         <p class="text-caption text-secondary">
           Valor: <span class="font-mono text-primary" data-demo-range-value>{{ show(period()) }}</span>
         </p>

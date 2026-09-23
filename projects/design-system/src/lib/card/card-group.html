@@ -1,4 +1,18 @@
 <!-- Sin encabezado visible: suele ir bajo una etiqueta de campo que ya dibujó la página. -->
-<div role="radiogroup" [attr.aria-label]="label()" class="flex flex-wrap gap-4">
+<div
+  role="radiogroup"
+  [attr.aria-label]="label()"
+  [attr.aria-required]="required() ? 'true' : null"
+  [attr.aria-invalid]="showError() ? 'true' : null"
+  [attr.aria-describedby]="describedBy()"
+  class="flex flex-wrap gap-4"
+>
   <ng-content />
 </div>
+
+<!-- Uno por grupo, no uno por card: el mensaje es del campo. -->
+@if (note()) {
+  <p [id]="noteId" class="mt-1 text-caption" [class]="showError() ? 'text-danger' : 'text-secondary'">
+    {{ note() }}
+  </p>
+}

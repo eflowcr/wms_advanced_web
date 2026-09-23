@@ -1,5 +1,4 @@
 import { Component, signal } from '@angular/core';
-import { FormsModule } from '@angular/forms';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { expectNoAxeViolations } from '@ewms/testing';
@@ -54,17 +53,23 @@ class TestHost {
 /** Formulario, campo y botón reales (DS-5): el envío es del navegador, no de un atributo. */
 @Component({
   template: `
-    <form data-form (ngSubmit)="submits = submits + 1">
+    <!-- El evento nativo, sin NgForm: lo que se prueba es que el botón envíe el formulario. -->
+    <form data-form (submit)="onSubmit($event)">
       <input data-field name="codigo" />
       <ewms-button [type]="type()" [loading]="loading()">Guardar</ewms-button>
     </form>
   `,
-  imports: [Button, FormsModule],
+  imports: [Button],
 })
 class FormHost {
   readonly type = signal<'button' | 'submit'>('submit');
   readonly loading = signal(false);
   submits = 0;
+
+  onSubmit(event: Event): void {
+    event.preventDefault();
+    this.submits += 1;
+  }
 }
 
 describe('Button, inside a form', () => {

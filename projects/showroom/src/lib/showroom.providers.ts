@@ -20,6 +20,7 @@ import {
   type TableMessages,
 } from '@ewms/design-system';
 import { CATALOG } from './catalog';
+import { SHIPMENT_CODE } from './pages/patterns/expedicion.rules';
 import { SHOWROOM_SHORTCUT_MAP } from './shortcuts.map';
 
 /**
@@ -176,6 +177,13 @@ export const TABLE_MESSAGES: TableMessages = {
   },
 };
 
+/** Los límites de fecha se leen como los de la tabla: 16/03/2026. */
+const DATE_LIMIT_FORMAT = new Intl.DateTimeFormat('es', {
+  day: '2-digit',
+  month: '2-digit',
+  year: 'numeric',
+});
+
 const DATE_FORMAT = new Intl.DateTimeFormat('es', {
   day: '2-digit',
   month: '2-digit',
@@ -203,18 +211,22 @@ export const TABLE_FORMATTERS: TableFormatters = {
   },
 };
 
-/** Un mensaje por validador: el campo muestra el del que falló, en lugar de su hint. */
+/** Un mensaje por `kind`: el campo muestra el del validador que falló, en lugar de su hint. */
 export const FORM_MESSAGES: FormMessages = {
   errors: {
     required: () => 'Este campo es obligatorio',
-    minlength: (detail) => `Mínimo ${(detail as { requiredLength: number }).requiredLength} caracteres`,
-    maxlength: (detail) => `Máximo ${(detail as { requiredLength: number }).requiredLength} caracteres`,
-    min: (detail) => `El mínimo es ${(detail as { min: number }).min}`,
-    max: (detail) => `El máximo es ${(detail as { max: number }).max}`,
+    minLength: (limit) => `Mínimo ${limit} caracteres`,
+    maxLength: (limit) => `Máximo ${limit} caracteres`,
+    min: (limit) => `El mínimo es ${limit}`,
+    max: (limit) => `El máximo es ${limit}`,
+    minDate: (limit) => `La fecha mínima es ${DATE_LIMIT_FORMAT.format(limit as Date)}`,
+    maxDate: (limit) => `La fecha máxima es ${DATE_LIMIT_FORMAT.format(limit as Date)}`,
     pattern: () => 'El formato no es el esperado',
     email: () => 'Escribí un correo válido',
-    custom: (detail) => (typeof detail === 'string' ? detail : 'Revisá este campo'),
+    // `kind` del proyecto: el validador de `expedicion.rules.ts` no lleva su texto encima.
+    [SHIPMENT_CODE]: () => 'El código va como EXP-2026-0000',
   },
+  customError: () => 'Revisá este campo',
   errorSummary: (count) => (count === 1 ? 'Revisá 1 campo' : `Revisá ${count} campos`),
   errorSummaryLabel: 'Error',
   requiredLegend: '* obligatorio',

@@ -1,0 +1,25 @@
+<!--
+  `fieldset` con `legend` y no un div con título: el par es lo que nombra a un grupo de radios
+  sin `aria-*` de por medio. `items-start`: estirada, cada opción deja una zona muerta a la
+  derecha de su texto, que se ve clickeable y no lo es. Asterisco `aria-hidden`: el `required`
+  de los nativos ya lo anuncia.
+-->
+<fieldset
+  class="flex flex-col items-start gap-2 border-0 p-0"
+  [attr.aria-describedby]="describedBy()"
+>
+  <legend [class]="hideLabel() ? 'sr-only' : 'mb-1 text-caption text-secondary'">
+    {{ label() }}
+    @if (required()) {
+      <span aria-hidden="true">*</span>
+    }
+  </legend>
+  <ng-content />
+</fieldset>
+
+<!-- Uno por grupo, no uno por opción: el mensaje es del campo. -->
+@if (note()) {
+  <p [id]="noteId" class="mt-1 text-caption" [class]="showError() ? 'text-danger' : 'text-secondary'">
+    {{ note() }}
+  </p>
+}

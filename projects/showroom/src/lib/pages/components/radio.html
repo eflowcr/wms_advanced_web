@@ -63,19 +63,13 @@
     <h2 id="ra-demo" class="text-h2">Demo principal</h2>
     <div class="grid grid-cols-[repeat(auto-fit,minmax(min(24rem,100%),1fr))] gap-6">
       <ewms-demo-frame ground="canvas" label="Un grupo real, dentro de un formulario reactivo">
-        <form [formGroup]="form" class="flex flex-col gap-3" data-demo-group>
-          <!-- fieldset con legend, no título y div: el grupo es lo que tiene nombre. -->
-          <fieldset class="flex flex-col gap-2 border-0 p-0">
-            <legend class="mb-1 text-caption text-secondary">Tipo de recepción</legend>
+        <div class="flex flex-col gap-3" data-demo-group>
+          <!-- El grupo es el campo: el fieldset con su legend lo dibuja él. -->
+          <ewms-radio-group label="Tipo de recepción" [formField]="form.tipo">
             @for (option of options; track option.value) {
-              <ewms-radio
-                formControlName="tipo"
-                name="tipo-recepcion"
-                [value]="option.value"
-                [label]="option.label"
-              />
+              <ewms-radio [value]="option.value" [label]="option.label" />
             }
-          </fieldset>
+          </ewms-radio-group>
           <dl class="flex flex-col gap-1 rounded-md border border-default bg-surface p-3 text-caption">
             <div class="flex flex-wrap gap-2">
               <dt class="text-secondary">Valor del control:</dt>
@@ -86,9 +80,12 @@
               <dd class="text-primary">{{ chosenLabel() }}</dd>
             </div>
           </dl>
-        </form>
+        </div>
       </ewms-demo-frame>
-      <ewms-prop-table [rows]="props" caption="Propiedades de <ewms-radio>" />
+      <div class="flex flex-col gap-6">
+        <ewms-prop-table [rows]="groupProps" caption="Propiedades de <ewms-radio-group>" />
+        <ewms-prop-table [rows]="props" caption="Propiedades de <ewms-radio>" />
+      </div>
     </div>
     <div class="flex flex-col gap-2 rounded-md border border-strong bg-secondary p-4">
       <h3 class="text-h4">
@@ -142,12 +139,15 @@
       >
         <ng-template let-variant="variant" let-state="state">
           <span [class]="forced(state.id)">
-            <ewms-radio
-              [formControl]="controlFor(variant.id, state.id)"
-              [name]="cellName(variant.id, state.id)"
-              [value]="cellValue"
-              [ariaLabel]="variant.label + ', ' + state.label"
-            />
+            <ewms-radio-group
+              [label]="variant.label + ', ' + state.label"
+              [hideLabel]="true"
+              [value]="cellFor(variant.id, state.id)()"
+              (valueChange)="cellFor(variant.id, state.id).set($event)"
+              [disabled]="state.id === 'disabled'"
+            >
+              <ewms-radio [value]="cellValue" [ariaLabel]="variant.label + ', ' + state.label" />
+            </ewms-radio-group>
           </span>
         </ng-template>
       </ewms-state-matrix>
@@ -158,11 +158,12 @@
       está rota; el estado no tiene nada que agregar ahí.
     </p>
     <p class="text-caption text-secondary">
-      Cada celda es <strong>su propio grupo de uno</strong>, con su propio
-      <code class="font-mono">name</code> y su propio control. No es ceremonia: como
-      <code class="font-mono">checked</code> se deriva, a una celda no se le puede <em>decir</em> que
-      se vea elegida —tiene que ser de verdad la elegida de su grupo—; y si todas compartieran un
-      control, clickear cualquier celda «Sin elegir» las encendería todas a la vez.
+      Cada celda es <strong>su propio <code class="font-mono">ewms-radio-group</code></strong>, con
+      su propio valor. No es ceremonia: como <code class="font-mono">checked</code> se deriva, a una
+      celda no se le puede <em>decir</em> que se vea elegida —tiene que ser de verdad la elegida de
+      su grupo—; y si todas compartieran un valor, clickear cualquier celda «Sin elegir» las
+      encendería todas a la vez. El <code class="font-mono">name</code> lo genera cada grupo, así
+      que ni hace falta nombrarlos.
     </p>
   </section>
 
@@ -178,16 +179,15 @@
     </div>
     <ewms-demo-frame ground="surface">
       <div class="flex flex-wrap items-center gap-6" data-measure-box>
-<!--
-          Grupo propio de uno, no el control de la demo: un mismo FormControl en dos
-          accesores deja a dos componentes peleando por escribirlo.
-        -->
-        <ewms-radio
-          [formControl]="controlFor('on', 'medida')"
-          name="medida"
-          [value]="cellValue"
+<!-- Grupo propio de uno, no el de la demo: compartir el valor los ataría. -->
+        <ewms-radio-group
           label="La caja medida"
-        />
+          [hideLabel]="true"
+          [value]="cellFor('on', 'medida')()"
+          (valueChange)="cellFor('on', 'medida').set($event)"
+        >
+          <ewms-radio [value]="cellValue" label="La caja medida" />
+        </ewms-radio-group>
         <dl class="flex flex-col gap-1 text-caption">
           <div class="flex flex-wrap gap-2">
             <dt class="text-secondary">Caja renderizada:</dt>
@@ -296,22 +296,20 @@
     <h3 class="text-h3">La regla del disabled</h3>
     <div class="flex flex-col gap-2 rounded-md border border-strong bg-secondary p-4">
       <p>
-        <code class="font-mono">isDisabled = disabled() || disabledByForm()</code>.
-        <strong>Quien deshabilita gana, y nadie re-habilita.</strong> La entrada
-        <code class="font-mono">disabled</code> y el
-        <code class="font-mono">setDisabledState</code> del formulario no se fusionan: se combinan
-        con OR.
+        <code class="font-mono">isDisabled = disabled() || group.disabled()</code>.
+        <strong>Quien deshabilita gana, y nadie re-habilita.</strong> El
+        <code class="font-mono">disabled</code> de la opción y el del grupo no se fusionan: se
+        combinan con OR.
       </p>
       <p class="text-caption">
-        Dejar que el formulario pisara la entrada haría que
-        <code class="font-mono">[disabled]="true"</code> se volviera operable en cuanto el formulario
-        habilitara el control — lo contrario de lo que dice la plantilla. Deshabilitar es una
-        propiedad de seguridad: la respuesta restrictiva es el default correcto.
+        Dentro de un formulario, quien deshabilita el grupo es la regla
+        <code class="font-mono">disabled(path.tipo, …)</code> del esquema, no una entrada: Angular
+        prohíbe enlazar <code class="font-mono">[disabled]</code> en el mismo nodo que
+        <code class="font-mono">[formField]</code>, para que el campo tenga un solo dueño.
       </p>
       <p class="text-caption">
-        Para que lo maneje el formulario, <strong>no pases la entrada</strong>. Es lo mismo en el
-        Checkbox, el Toggle, el Input y el Select: vive en
-        <code class="font-mono">FormControlBase</code>, escrito una sola vez.
+        Deshabilitar es una propiedad de seguridad: la respuesta restrictiva es el default
+        correcto. Es lo mismo en el Checkbox, el Toggle, el Input y el Select.
       </p>
     </div>
 

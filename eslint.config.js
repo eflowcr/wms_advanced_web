@@ -56,6 +56,26 @@ const NO_TRANSLATION_LIBRARY = {
     'Receive the text as an input, already translated by the consumer.',
 };
 
+/**
+ * Los formularios del proyecto son Signal Forms (ADR 0013). La API vieja se borró entera en
+ * STG-FORMS; esta regla impide que vuelva de a poco, que es como vuelven estas cosas.
+ */
+const NO_LEGACY_FORMS = [
+  {
+    // `regex` y no `group`: un `group` de '@angular/forms' matchea la carpeta entera y se
+    // llevaría puesto '@angular/forms/signals', que es justo el que hay que usar. De
+    // `@angular/forms` salen `ReactiveFormsModule`, `FormsModule`, `FormControl`, `FormGroup`,
+    // `FormBuilder`, `NgControl`, `NG_VALUE_ACCESSOR` y `ControlValueAccessor`; del otro, la
+    // capa de compatibilidad que el ADR 0013 descartó.
+    regex: '^@angular/forms(/signals-compat)?$',
+    message:
+      'Los formularios van sobre Signal Forms: importá de `@angular/forms/signals`. Un campo ' +
+      'implementa FormValueControl o FormCheckboxControl con model(); el estado que no es un ' +
+      'formulario vive en signal()s. Sin capa de compatibilidad. Ver vault: ' +
+      '02-Arquitectura/Decisiones/0013 - Formularios con Signal Forms.md',
+  },
+];
+
 function restrict(project, forbidden, allowedText, extraPatterns) {
   return [
     'error',
@@ -254,24 +274,35 @@ module.exports = tseslint.config(
   // ------------------------------------------------------------ las fronteras
   // Cada llamada emite la regla de producción y después la de specs, así el override
   // de specs siempre queda detrás de la config que acota.
-  ...boundary('shared', ['@ewms/*', ...DOMAINS], []),
-  ...boundary('api-client', ['@ewms/*', ...DOMAINS], []),
+  ...boundary('shared', ['@ewms/*', ...DOMAINS], [], [...NO_LEGACY_FORMS]),
+  ...boundary('api-client', ['@ewms/*', ...DOMAINS], [], [...NO_LEGACY_FORMS]),
   ...boundary(
     'design-system',
     ['@ewms/core', '@ewms/api-client', '@ewms/showroom', '@ewms/testing', ...DOMAINS],
     ['@ewms/shared'],
-    [NO_TRANSLATION_LIBRARY],
+    [NO_TRANSLATION_LIBRARY, ...NO_LEGACY_FORMS],
   ),
   ...boundary(
     'showroom',
     ['@ewms/core', '@ewms/api-client', '@ewms/testing', ...DOMAINS],
     ['@ewms/design-system', '@ewms/shared'],
+    [...NO_LEGACY_FORMS],
   ),
   ...boundary(
     'core',
     ['@ewms/design-system', '@ewms/showroom', '@ewms/testing', ...DOMAINS],
     ['@ewms/shared', '@ewms/api-client'],
+    [...NO_LEGACY_FORMS],
   ),
+
+  // `shell` y `testing` no pasan por `boundary` (no tienen frontera de @ewms/*), pero la
+  // API vieja de formularios tampoco entra por ahí.
+  {
+    files: ['projects/shell/**/*.ts', 'projects/testing/**/*.ts'],
+    rules: {
+      '@typescript-eslint/no-restricted-imports': ['error', { patterns: [...NO_LEGACY_FORMS] }],
+    },
+  },
 
   /*
    * El único import profundo permitido hacia projects/ no se configura acá: es un

@@ -2,12 +2,12 @@ import {
   afterNextRender,
   ChangeDetectionStrategy,
   Component,
+  computed,
   ElementRef,
   inject,
   signal,
 } from '@angular/core';
-import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { form as signalForm, FormField } from '@angular/forms/signals';
 import { Button, Card, CardGroup, DESIGN_SYSTEM_VERSION, Icon } from '@ewms/design-system';
 import { DemoFrame } from '../../ui/demo-frame';
 import { PropTable, type PropRow } from '../../ui/prop-table';
@@ -80,7 +80,7 @@ const PROPS: readonly PropRow[] = [
     type: 'boolean',
     default: 'false',
     description:
-      'Heredado de FormControlBase, combinado con el del formulario por OR. Deshabilita todas las cards y vacía la parada de tabulación.',
+      'Se suma con OR al de cada card. Deshabilita todas las cards y vacía la parada de tabulación. Dentro de un formulario lo pone la regla disabled() del esquema.',
   },
   {
     name: '[ewmsCardHeader]',
@@ -127,7 +127,7 @@ const ANATOMY = [
     Card,
     CardGroup,
     Icon,
-    ReactiveFormsModule,
+    FormField,
     DemoFrame,
     PropTable,
     StateMatrix,
@@ -146,13 +146,10 @@ export class ShowroomCard {
   protected readonly props = PROPS;
   protected readonly anatomy = ANATOMY;
 
-  protected readonly form = new FormGroup({
-    almacen: new FormControl<unknown>('central'),
-  });
+  protected readonly model = signal<{ almacen: string | null }>({ almacen: 'central' });
+  protected readonly form = signalForm(this.model);
 
-  protected readonly chosen = toSignal(this.form.controls.almacen.valueChanges, {
-    initialValue: this.form.controls.almacen.value,
-  });
+  protected readonly chosen = computed(() => this.form.almacen().value());
 
   /** Paradas de tabulador reales del grupo, contadas en el DOM. */
   protected readonly tabStops = signal(NOT_MEASURED);
@@ -161,7 +158,7 @@ export class ShowroomCard {
 
   protected readonly snippet = [
     '<ewms-card-group',
-    '  formControlName="almacen"',
+    '  [formField]="alta.almacen"',
     "  [label]=\"'recepciones.almacen' | transloco\"",
     '>',
     '  @for (almacen of almacenes(); track almacen.id) {',

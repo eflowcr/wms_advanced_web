@@ -10,19 +10,21 @@ import {
   Injector,
   input,
   output,
-  signal,
   ViewContainerRef,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { FormGroupDirective } from '@angular/forms';
+import { submit, type FieldTree } from '@angular/forms/signals';
 import { Banner } from '../banner/banner';
 import { KeyboardShortcuts } from '../keyboard/keyboard-shortcuts';
 import { EWMS_FORM_MESSAGES, NO_FORM_MESSAGES } from './form.types';
 
+/** Lo que corre al enviar. Devuelve una promesa y el botón queda en carga hasta que resuelva. */
+export type FormAction = () => void | Promise<unknown>;
+
 /** Un campo con error, tal como lo va a leer quien mira el resumen. */
 interface InvalidField {
   readonly label: string;
-  readonly element: HTMLElement;
+  readonly focus: () => void;
 }
 
 /**
@@ -48,7 +50,7 @@ interface InvalidField {
               type="button"
               class="cursor-pointer rounded-sm underline outline-none focus-visible:shadow-(--focus-ring-shadow)"
               [attr.data-form-error]="index"
-              (click)="choose.emit(field.element)"
+              (click)="choose.emit(field)"
             >
               {{ field.label }}
             </button>
@@ -64,35 +66,61 @@ export class FormErrors {
   readonly fields = input<readonly InvalidField[]>([]);
   readonly title = input<string>('');
   readonly severityLabel = input<string>('');
-  readonly choose = output<HTMLElement>();
+  readonly choose = output<InvalidField>();
 }
 
 /**
- * Las reglas del formulario en un solo lugar, sobre `ReactiveForms`: se valida al salir del campo
- * y al enviar, nunca mientras se escribe; **Guardar nunca se deshabilita**, y al enviar con
- * errores se muestra el resumen y se enfoca. Ver vault: Patron-Formulario.
+ * Las reglas del formulario en un solo lugar, sobre Signal Forms (ADR 0013): se valida al salir
+ * del campo y al enviar, nunca mientras se escribe; **Guardar nunca se deshabilita**, y al enviar
+ * con errores se muestra el resumen y se enfoca. Ver vault: Patron-Formulario.
  */
 @Directive({
   selector: 'form[ewmsForm]',
   exportAs: 'ewmsForm',
-  host: { '(submit)': 'onSubmit($event)' },
+  // `data-ewms-form` porque `[ewmsForm]` es un enlace y no deja atributo: `ownsShortcut` busca
+  // los formularios de la página por el DOM.
+  host: { '(submit)': 'onSubmit($event)', novalidate: '', 'data-ewms-form': '' },
 })
-export class FormPattern {
-  /** Se emite solo si el formulario es válido. No `(submit)`: ese es el evento nativo. */
-  readonly formSubmit = output<void>();
+export class FormPattern<T> {
+  /** El árbol del formulario: `<form [ewmsForm]="alta">`. */
+  readonly form = input.required<FieldTree<T>>({ alias: 'ewmsForm' });
+
+  /**
+   * Corre solo si el formulario es válido; `submit()` se encarga de esa mitad. Con el prefijo en
+   * el nombre y no por alias: `no-input-rename` solo deja el alias que es el selector.
+   */
+  readonly ewmsFormAction = input.required<FormAction>();
 
   /** Sin banner de resumen: para un formulario de dos campos, donde el error ya se ve. */
   readonly summary = input<boolean>(true);
 
   private readonly host = inject<ElementRef<HTMLFormElement>>(ElementRef);
-  private readonly group = inject(FormGroupDirective);
   private readonly viewContainerRef = inject(ViewContainerRef);
   private readonly injector = inject(Injector);
   private readonly words = inject(EWMS_FORM_MESSAGES, { optional: true }) ?? NO_FORM_MESSAGES;
 
   /** El botón de envío se ata a esto: `[loading]="alta.busy()"`. Antidoble envío. */
-  private readonly sending = signal(false);
-  readonly busy = computed(() => this.sending());
+  readonly busy = computed(() => this.form()().submitting());
+
+  /** Un campo por error, sin repetir: `errorSummary()` puede traer dos del mismo campo. */
+  private readonly invalidFields = computed<readonly InvalidField[]>(() => {
+    const seen = new Set<unknown>();
+    const fields: InvalidField[] = [];
+    for (const error of this.form()().errorSummary()) {
+      // `fieldTree` es el árbol; invocarlo da su estado. Dos errores del mismo campo, un enlace.
+      const tree = error.fieldTree;
+      if (seen.has(tree)) {
+        continue;
+      }
+      seen.add(tree);
+      const element = tree().formFieldBindings()[0]?.element;
+      fields.push({
+        label: element ? labelOf(element) : '',
+        focus: () => tree().focusBoundControl(),
+      });
+    }
+    return fields;
+  });
 
   private errors: { destroy(): void; setInput(name: string, value: unknown): void } | null = null;
 
@@ -108,23 +136,19 @@ export class FormPattern {
     inject(DestroyRef).onDestroy(() => this.errors?.destroy());
   }
 
-  /** Lo llama el consumidor cuando su guardado terminó, salga bien o mal. */
-  done(): void {
-    this.sending.set(false);
-  }
-
   protected onSubmit(event: Event): void {
     event.preventDefault();
-    if (this.group.form.invalid) {
-      // Tocar todo hace visible cada mensaje: hasta acá solo se veían los campos visitados.
-      this.group.form.markAllAsTouched();
-      // Tras pintar: los campos marcan `aria-invalid` recién entonces, y de ahí sale el resumen.
-      afterNextRender(() => this.showErrors(), { injector: this.injector });
-      return;
-    }
-    this.clearErrors();
-    this.sending.set(true);
-    this.formSubmit.emit();
+    // `submit` marca todo como tocado —de ahí salen los mensajes de los campos no visitados— y
+    // solo corre la acción si el formulario es válido. `submitting()` da el antidoble envío.
+    void submit(this.form(), {
+      action: async () => {
+        this.clearErrors();
+        await this.ewmsFormAction()();
+        return undefined;
+      },
+      // Tras pintar: los mensajes existen recién entonces, y el resumen los nombra.
+      onInvalid: () => afterNextRender(() => this.showErrors(), { injector: this.injector }),
+    });
   }
 
   /** Contesta el formulario que tiene el foco; con el foco fuera de todos, el primero (como la Tabla). */
@@ -134,17 +158,10 @@ export class FormPattern {
     if (active !== null && form.contains(active)) {
       return true;
     }
-    const inAnyForm = active?.closest('form[ewmsForm]') ?? null;
-    return inAnyForm === null && form.ownerDocument.querySelector('form[ewmsForm]') === form;
-  }
-
-  /** Los campos en error, en el orden en que se leen; el nombre sale de su etiqueta. */
-  private invalidFields(): readonly InvalidField[] {
-    const form = this.host.nativeElement;
-    return [...form.querySelectorAll<HTMLElement>('[aria-invalid="true"]')].map((element) => ({
-      element,
-      label: labelOf(element),
-    }));
+    const inAnyForm = active?.closest('form[data-ewms-form]') ?? null;
+    return (
+      inAnyForm === null && form.ownerDocument.querySelector('form[data-ewms-form]') === form
+    );
   }
 
   private showErrors(): void {
@@ -154,9 +171,12 @@ export class FormPattern {
     }
     if (this.errors === null) {
       const created = this.viewContainerRef.createComponent(FormErrors);
-      created.instance.choose.subscribe((element: HTMLElement) => element.focus());
+      created.instance.choose.subscribe((field: InvalidField) => field.focus());
       // Arriba del formulario: el resumen se lee antes que los campos que resume.
-      this.host.nativeElement.insertBefore(created.location.nativeElement, this.host.nativeElement.firstChild);
+      this.host.nativeElement.insertBefore(
+        created.location.nativeElement,
+        this.host.nativeElement.firstChild,
+      );
       this.errors = created;
     }
     this.errors.setInput('fields', fields);
@@ -172,16 +192,17 @@ export class FormPattern {
 }
 
 /**
- * La etiqueta del campo: la del `<label>` que lo nombra, o su nombre accesible. Sin el mensaje de
- * error, que en la casilla y el toggle vive dentro del mismo `<label>`, ni el asterisco.
+ * La etiqueta del campo: la del `<label>` o `<legend>` que lo nombra, o su nombre accesible. Sin
+ * el mensaje de error, que en la casilla y el toggle vive dentro del mismo `<label>`, ni el asterisco.
  */
 function labelOf(element: HTMLElement): string {
-  const label = (element as HTMLInputElement).labels?.[0];
-  if (label === undefined) {
-    return clean(element.getAttribute('aria-label') ?? '');
+  const label = element.querySelector('label, legend');
+  if (label === null) {
+    // Sin etiqueta propia (el grupo de cards): su nombre accesible.
+    return clean(element.querySelector('[aria-label]')?.getAttribute('aria-label') ?? '');
   }
   const copy = label.cloneNode(true) as HTMLElement;
-  for (const note of copy.querySelectorAll('[id^="ewms-field-error"]')) {
+  for (const note of copy.querySelectorAll('[data-field-note]')) {
     note.remove();
   }
   return clean(copy.textContent ?? '');

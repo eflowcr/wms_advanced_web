@@ -1,4 +1,15 @@
-import { ChangeDetectionStrategy, Component, computed, input, output, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  ElementRef,
+  inject,
+  input,
+  model,
+  output,
+  signal,
+} from '@angular/core';
+import type { FormValueControl, ValidationError } from '@angular/forms/signals';
 import {
   FIELD_BASE_CLASSES,
   FIELD_FONT_SIZES,
@@ -10,7 +21,7 @@ import {
   type FieldSize,
   type FieldState,
 } from '../field/field.types';
-import { FormControlBase, provideValueAccessor } from '../forms/control-value-accessor';
+import { fieldErrorText } from '../forms/field-note';
 import { Icon } from '../icon/icon';
 import { Button } from '../button/button';
 import {
@@ -34,9 +45,11 @@ let nextInputId = 0;
   imports: [Icon, Button],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { class: 'block' },
-  providers: [provideValueAccessor(() => Input)],
 })
-export class Input extends FormControlBase<string> {
+export class Input implements FormValueControl<string> {
+  /** Con `[formField]` lo llena el formulario; fuera de uno, `[(value)]`. */
+  readonly value = model<string>('');
+
   readonly type = input<InputType>('text');
   readonly size = input<FieldSize>('md');
 
@@ -53,10 +66,17 @@ export class Input extends FormControlBase<string> {
 
   readonly hint = input<string>('');
 
+  /** Solo dibujo, para las demos del catálogo: quien valida es el formulario. */
   readonly state = input<FieldState>('default');
 
+  // Del contrato `FormValueControl`: el `[formField]` las llena solo. Ninguna que no se lea acá.
+  readonly errors = input<readonly ValidationError[]>([]);
+  readonly invalid = input<boolean>(false);
+  readonly touched = input<boolean>(false);
   /** Asterisco junto a la etiqueta, más el atributo nativo. */
   readonly required = input<boolean>(false);
+  readonly disabled = input<boolean>(false);
+  readonly readonly = input<boolean>(false);
 
   /** Nombre accesible del botón mostrar/ocultar; sin él no se pinta. Ver vault: Input. */
   readonly showPasswordLabel = input<string>('');
@@ -64,6 +84,9 @@ export class Input extends FormControlBase<string> {
 
   /** Igual, para el botón que vacía una búsqueda. */
   readonly clearLabel = input<string>('');
+
+  /** Al perder el foco, nunca al ganarlo: el formulario marca «tocado» con esto. */
+  readonly touch = output<void>();
 
   /**
    * Prefijadas: el nombre nativo choca con el evento DOM (no-output-native) y uno de los dos es
@@ -78,26 +101,30 @@ export class Input extends FormControlBase<string> {
   protected readonly baseClasses = FIELD_BASE_CLASSES;
   protected readonly iconSize = FIELD_ICON_SIZE;
 
-  /** Sin entrada de valor: siembra con cadena vacía y la cambia `writeValue`. */
-  protected readonly valueSource = signal('');
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
 
   private readonly focused = signal(false);
 
   private readonly passwordVisible = signal(false);
 
-  /** Cualquiera de las tres vías de deshabilitar alcanza, como en `FormControlBase.isDisabled`. */
+  /** Se valida al salir del campo y al enviar, nunca mientras se escribe. */
+  protected readonly showError = computed(() => this.invalid() && this.touched());
+
+  protected readonly fieldError = fieldErrorText(this.errors, this.showError);
+
   protected readonly effectiveState = computed<FieldState>(() => {
-    if (this.isDisabled()) {
+    if (this.disabled()) {
       return 'disabled';
     }
     // El validador que falló manda sobre `state`: el error es del formulario, no del dibujo.
-    return this.fieldError() ? 'error' : this.state();
+    if (this.showError() || this.state() === 'error') {
+      return 'error';
+    }
+    return this.readonly() ? 'readonly' : this.state();
   });
 
   /** El mensaje del validador reemplaza al hint: dos líneas debajo del campo se pisan. */
   protected readonly note = computed(() => this.fieldError() || this.hint());
-
-  protected readonly showRequired = computed(() => this.required() || this.requiredByForm());
 
   protected readonly isTextarea = computed(() => this.type() === 'textarea');
   protected readonly isSearch = computed(() => this.type() === 'search');
@@ -120,7 +147,7 @@ export class Input extends FormControlBase<string> {
 
   /** Solo con algo que borrar: sobre un campo vacío sería un control que no hace nada. */
   protected readonly hasClearButton = computed(
-    () => this.isSearch() && Boolean(this.clearLabel()) && this.controlValue().length > 0,
+    () => this.isSearch() && Boolean(this.clearLabel()) && this.value().length > 0,
   );
 
   protected readonly hasSuffix = computed(() => this.hasPasswordToggle() || this.hasClearButton());
@@ -182,9 +209,17 @@ export class Input extends FormControlBase<string> {
     this.isInvalid() ? 'text-danger' : 'text-secondary',
   );
 
+
+  /**
+   * Del contrato `FormUiControl`: el control real y no el host, que no es enfocable. De acá entra
+   * el foco cuando el resumen de errores llama a `focusBoundControl()`.
+   */
+  focus(options?: FocusOptions): void {
+    this.host.nativeElement.querySelector<HTMLElement>('input, textarea')?.focus(options);
+  }
   protected onInput(event: Event): void {
     const target = event.target as HTMLInputElement | HTMLTextAreaElement;
-    this.commit(target.value);
+    this.value.set(target.value);
   }
 
   protected onFocus(): void {
@@ -195,7 +230,7 @@ export class Input extends FormControlBase<string> {
   /** Único lugar que marca «tocado»: antes, la validación aparecería en medio de la escritura. */
   protected onBlur(): void {
     this.focused.set(false);
-    this.markTouched();
+    this.touch.emit();
     this.fieldBlur.emit();
   }
 
@@ -204,8 +239,7 @@ export class Input extends FormControlBase<string> {
     this.passwordVisible.update((visible) => !visible);
   }
 
-  /** Con `commit`: una escritura suelta dejaría al formulario con el valor viejo. */
   protected clear(): void {
-    this.commit('');
+    this.value.set('');
   }
 }

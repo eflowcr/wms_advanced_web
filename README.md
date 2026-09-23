@@ -1,8 +1,13 @@
 # eWMS Advance — frontend
 
-Angular workspace for the eWMS Advance WMS. This repository holds the **DS-0
-scaffold**: the workspace, the empty libraries with their boundaries, and every
-CI gate wired and blocking. It ships no product screens yet.
+Angular workspace for the eWMS Advance WMS: the web console shell, the
+`@ewms/design-system` component library with its internal catalogue at
+`/design-system`, and every CI gate wired and blocking. Product screens arrive
+with the first business domain, once the backend exists; until then the menu
+destinations render an "under construction" page.
+
+Design decisions, component specs and the working log live in the team vault
+(Obsidian), not in this repository.
 
 ## Runtime
 
@@ -30,8 +35,11 @@ npm start        # http://localhost:4200
 | `npm run build:libs` | ng-packagr build of every library |
 | `npm run typecheck` | `tsc` in full strict mode |
 | `npm run lint` | ESLint, including the boundary and security rules, zero warnings |
-| `npm test` | Vitest + coverage thresholds + axe-core |
-| `npm run e2e` | Playwright smoke tests |
+| `npm test` | Vitest per library + coverage thresholds + axe-core, then the tool tests |
+| `npm run lint:tokens` / `lint:icons` / `lint:i18n` / `lint:shortcuts` / `lint:click-budget` | The project's own CI gates |
+| `npm run e2e:smoke` | Playwright: the app boots, every route answers, the patterns work by keyboard |
+| `npm run e2e:showroom` | Playwright: the whole catalogue (axe, keyboard, overflow, behaviour) |
+| `npm run showroom:capture` | Screenshots of every catalogue page, for review; not a test |
 | `npm run audit:ci` | `npm audit --audit-level=high` |
 | `npm run vault:check-tokens -- <vault>` | Lists `--color-*` names cited in the docs vault that `tokens.css` does not define. Manual tool, **not a CI gate**: the vault is outside this repo |
 
@@ -40,10 +48,10 @@ npm start        # http://localhost:4200
 ```
 projects/
   shell/            the application (app + layout/ + pages/)
-  design-system/    @ewms/design-system   primitives and tokens (DS-1, DS-2)
+  design-system/    @ewms/design-system   tokens, components, patterns
   showroom/         @ewms/showroom        internal route /design-system, not Storybook
   core/             @ewms/core            cross-cutting runtime concerns
-  shared/           @ewms/shared          leaf utilities, depends on nothing
+  shared/           @ewms/shared          leaf utilities (filters in the URL), depends on nothing
   api-client/       @ewms/api-client      generated from OpenAPI, depends on nothing
   testing/          @ewms/testing         dev-only test helpers
 e2e/                Playwright specs (*.e2e.ts)
@@ -57,8 +65,8 @@ by hand, in a pull request, like any other code. Nothing generates it and
 nothing syncs it.
 
 **No component may contain a raw design value.** If a token is missing, it gets
-added to `tokens.css` first — never inlined into a component "for now". DS-1
-fills the file and adds the CI gate that fails a build containing raw values.
+added to `tokens.css` first — never inlined into a component "for now".
+`npm run lint:tokens` fails the build on a raw value.
 
 Figma is archived design reference, not a live dependency. Where Figma and this
 file disagree, this file wins: it is what compiles. See ADR 0005 (which
@@ -107,14 +115,17 @@ These rules are **ESLint errors that fail CI**, not a good-faith agreement. See
 
 ## Conventions
 
-- **Code in English, UI in Spanish.** Folders, files, classes, properties and
-  models are English, matching the database tables. Spanish lives only in i18n
-  files.
+- **Identifiers in English; comments and UI in Spanish.** Folders, files,
+  classes, properties and models are English, matching the database tables.
+  UI text lives in the i18n files; code comments are Spanish, short, and point
+  to the vault for the long reason.
 - Files in kebab-case, with no type suffix: `button.ts`, never
   `button.component.ts`.
 - Selector prefixes: `ewms-` for the design system, `app-` for the shell.
   Domain prefixes (`inv-`, `sec-`) arrive with `projects/domains/`.
 - Standalone components and lazy routes only. No NgModules.
-- Signals by default: `input()`, `output()`, `computed()`. Signal Forms and the
-  Resource API over `ReactiveFormsModule` and manual subscriptions.
+- Signals by default: `input()`, `output()`, `computed()`.
+- Forms: **Signal Forms** (ADR 0013). A field implements `FormValueControl` or
+  `FormCheckboxControl` with `model()`, and the `[ewmsForm]` pattern submits with
+  `submit()`. Importing `@angular/forms` is a lint error.
 - OnPush is the Angular 22 default and is not configured per component.

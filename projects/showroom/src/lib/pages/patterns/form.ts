@@ -1,5 +1,20 @@
-import { ChangeDetectionStrategy, Component, signal, viewChild } from '@angular/core';
-import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  inject,
+  Injector,
+  runInInjectionContext,
+  signal,
+} from '@angular/core';
+import {
+  email,
+  form,
+  FormField,
+  minLength,
+  required,
+  requiredError,
+  validate,
+} from '@angular/forms/signals';
 import {
   Button,
   Checkbox,
@@ -15,6 +30,7 @@ import {
 import { DemoFrame } from '../../ui/demo-frame';
 import { PropTable, type PropRow } from '../../ui/prop-table';
 import { ESTADO_OPTIONS } from './expedicion-form';
+import { numberRange, shipmentCode } from './expedicion.rules';
 
 const ALMACENES: readonly SelectOption[] = [
   { value: 'central', label: 'Central' },
@@ -24,22 +40,25 @@ const ALMACENES: readonly SelectOption[] = [
 /** Verificada contra form-pattern.ts. */
 const PROPS: readonly PropRow[] = [
   {
-    name: 'ewmsForm',
-    type: 'directiva sobre <form [formGroup]>',
-    default: '—',
-    description: 'Envío, validación al enviar, resumen de errores y Ctrl+S. Se exporta como ewmsForm.',
+    name: '[ewmsForm]',
+    type: 'FieldTree<T>',
+    default: '— (requerido)',
+    description:
+      'El árbol del form(). Envío, validación al enviar, resumen de errores y Ctrl+S. Se exporta como ewmsForm.',
   },
   {
-    name: '(formSubmit)',
-    type: 'void',
-    default: '—',
-    description: 'Solo si el formulario es válido. No se llama (submit): ese es el evento nativo.',
+    name: '[ewmsFormAction]',
+    type: '() => void | Promise<unknown>',
+    default: '— (requerido)',
+    description:
+      'Lo que corre al enviar. submit() la llama solo si el formulario es válido; si devuelve una promesa, el botón queda en carga hasta que resuelva.',
   },
   {
     name: 'busy()',
     type: 'Signal<boolean>',
     default: 'false',
-    description: 'El botón de envío se ata a esto; vuelve a false cuando el consumidor llama done().',
+    description:
+      'El submitting() del propio formulario: el botón de envío se ata a esto y no hace falta avisar cuando terminó.',
   },
   {
     name: 'summary',
@@ -51,7 +70,8 @@ const PROPS: readonly PropRow[] = [
     name: 'EWMS_FORM_MESSAGES',
     type: 'token',
     default: '— (opcional)',
-    description: 'Un mensaje por validador (required, minlength, …, custom) y las palabras del resumen.',
+    description:
+      'Un mensaje por kind (required, minLength, …, más los del proyecto) y las palabras del resumen.',
   },
   {
     name: 'confirmDiscard(form, opciones)',
@@ -61,9 +81,23 @@ const PROPS: readonly PropRow[] = [
   },
 ];
 
+/** Lo que edita la demo. Los tipos salen de acá y el form() los sigue de extremo a extremo. */
+interface AltaExpedicion {
+  codigo: string;
+  cliente: string;
+  correo: string;
+  almacen: string;
+  fecha: string | null;
+  estado: string;
+  /** Texto: `ewms-input` entrega lo que el DOM le da, y el DOM da dígitos. */
+  bultos: string;
+  urgente: boolean;
+  etiquetas: boolean;
+}
+
 /**
- * /design-system/patterns/form: las reglas del formulario, sobre ReactiveForms y sin reescribir
- * los campos. Guarda nada: anota lo que recibió, como el resto de las demos.
+ * /design-system/patterns/form: las reglas del formulario, sobre Signal Forms (ADR 0013). Guarda
+ * nada: anota lo que recibió, como el resto de las demos.
  */
 @Component({
   selector: 'ewms-showroom-form',
@@ -74,72 +108,89 @@ const PROPS: readonly PropRow[] = [
     DatePicker,
     DemoFrame,
     EwmsInput,
+    FormField,
     FormPattern,
     PropTable,
-    ReactiveFormsModule,
     Select,
     Toggle,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ShowroomForm {
+  private readonly injector = inject(Injector);
+
   protected readonly version = DESIGN_SYSTEM_VERSION;
   protected readonly props = PROPS;
   protected readonly almacenes = ALMACENES;
   protected readonly estados = ESTADO_OPTIONS;
 
-  protected readonly form = new FormGroup({
-    codigo: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.pattern(/^EXP-\d{4}-\d{4}$/)],
-    }),
-    cliente: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.minLength(3)],
-    }),
-    correo: new FormControl('', { nonNullable: true, validators: [Validators.email] }),
-    almacen: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
-    fecha: new FormControl<string | null>(null),
-    estado: new FormControl<string>('pendiente', { nonNullable: true }),
-    bultos: new FormControl(1, {
-      nonNullable: true,
-      validators: [Validators.min(1), Validators.max(999)],
-    }),
-    urgente: new FormControl(false, { nonNullable: true }),
-    etiquetas: new FormControl(false, { nonNullable: true, validators: [Validators.requiredTrue] }),
+  protected readonly model = signal<AltaExpedicion>({
+    codigo: '',
+    cliente: '',
+    correo: '',
+    almacen: '',
+    fecha: null,
+    estado: 'pendiente',
+    bultos: '1',
+    urgente: false,
+    etiquetas: false,
   });
 
-  private readonly pattern = viewChild.required(FormPattern);
+  protected readonly alta = form(this.model, (path) => {
+    required(path.codigo);
+    // `shipmentCode` es una función de esquema del proyecto, con su `kind` y su mensaje por token.
+    shipmentCode(path.codigo);
+    required(path.cliente);
+    minLength(path.cliente, 3);
+    email(path.correo);
+    required(path.almacen);
+    numberRange(path.bultos, { min: 1, max: 999 });
+    // El equivalente de `requiredTrue`: `required` mira si está vacío, y `false` no lo está.
+    validate(path.etiquetas, ({ value }) => (value() ? undefined : requiredError()));
+  });
 
   /** Lo último que recibió el consumidor, que acá es esta misma página. */
   protected readonly saved = signal('(todavía nada)');
   protected readonly left = signal('(todavía nada)');
 
-  /** El guardado de verdad tarda; mientras, «Guardar» queda en carga y no se puede pulsar dos veces. */
-  protected guardar(): void {
-    const value = this.form.getRawValue();
-    setTimeout(() => {
-      this.saved.set(`${value.codigo} · ${value.cliente}`);
-      this.pattern().done();
-      this.form.markAsPristine();
-    }, 600);
-  }
+  /**
+   * El guardado de verdad tarda; mientras, «Guardar» queda en carga y no se puede pulsar dos
+   * veces. Devolver la promesa alcanza: `submit()` mira `submitting()` por su cuenta.
+   */
+  protected readonly guardar = async (): Promise<void> => {
+    const value = this.model();
+    await new Promise((resolve) => setTimeout(resolve, 600));
+    this.saved.set(`${value.codigo} · ${value.cliente}`);
+    // Guardado: deja de estar sucio, así «Salir» no pregunta por nada.
+    this.alta().reset(value);
+  };
 
-  /** Lo que haría el `canDeactivate` del router: pregunta solo si hay cambios sin guardar. */
+  /**
+   * Lo que haría el `canDeactivate` del router: pregunta solo si hay cambios sin guardar.
+   * `runInInjectionContext` porque esto sale de un clic y `confirmDiscard` inyecta el diálogo;
+   * al `canDeactivate` el router ya se lo da (NG0203 si falta).
+   */
   protected async salir(): Promise<void> {
-    const leave = await confirmDiscard(this.form, {
-      title: 'Hay cambios sin guardar',
-      body: 'Si salís ahora se pierden. ¿Salir igual?',
-      confirmLabel: 'Salir sin guardar',
-      cancelLabel: 'Seguir editando',
-      tone: 'danger',
-    });
+    const leave = await runInInjectionContext(this.injector, () =>
+      confirmDiscard(this.alta, {
+        title: 'Hay cambios sin guardar',
+        body: 'Si salís ahora se pierden. ¿Salir igual?',
+        confirmLabel: 'Salir sin guardar',
+        cancelLabel: 'Seguir editando',
+        tone: 'danger',
+      }),
+    );
     this.left.set(leave ? 'salió sin guardar' : 'se quedó');
   }
 
   protected readonly snippet = [
-    '<form [formGroup]="alta" ewmsForm #form="ewmsForm" (formSubmit)="guardar()">',
-    '  <ewms-input label="Código" formControlName="codigo" />',
+    'alta = form(this.model, (path) => {',
+    '  required(path.codigo);',
+    '  shipmentCode(path.codigo);   // función de esquema del proyecto',
+    '});',
+    '',
+    '<form [ewmsForm]="alta" [ewmsFormAction]="guardar" #form="ewmsForm">',
+    '  <ewms-input label="Código" [formField]="alta.codigo" />',
     '  …',
     '  <ewms-button type="submit" [loading]="form.busy()">Guardar</ewms-button>',
     '</form>',

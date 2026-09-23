@@ -1,5 +1,16 @@
-import { ChangeDetectionStrategy, Component, computed, input, signal } from '@angular/core';
-import { FormControlBase, provideValueAccessor } from '../forms/control-value-accessor';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  ElementRef,
+  inject,
+  input,
+  model,
+  output,
+  signal,
+} from '@angular/core';
+import type { FormValueControl, ValidationError } from '@angular/forms/signals';
+import { fieldErrorText, fieldNoteId } from '../forms/field-note';
 import type { CardGroupMember } from './card.types';
 
 /**
@@ -11,21 +22,44 @@ import type { CardGroupMember } from './card.types';
   templateUrl: './card-group.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { class: 'block' },
-  providers: [provideValueAccessor(() => CardGroup)],
 })
-export class CardGroup extends FormControlBase<unknown> {
-  /** Siembra el control; después manda `writeValue`. */
-  readonly value = input<unknown>(null);
+export class CardGroup implements FormValueControl<unknown> {
+  /** Con `[formField]` lo llena el formulario; fuera de uno, `[(value)]`. */
+  readonly value = model<unknown>(null);
 
   /** Obligatorio, como el nombre de cualquier control. */
   readonly label = input.required<string>();
 
-  protected readonly valueSource = this.value;
+  readonly hint = input<string>('');
+
+  // Del contrato `FormValueControl`: el `[formField]` las llena solo.
+  readonly errors = input<readonly ValidationError[]>([]);
+  readonly invalid = input<boolean>(false);
+  readonly touched = input<boolean>(false);
+  readonly required = input<boolean>(false);
+  readonly disabled = input<boolean>(false);
+
+  /** Al salir del grupo, nunca al entrar: el formulario marca «tocado» con esto. */
+  readonly touch = output<void>();
+
+  protected readonly noteId = fieldNoteId('ewms-card-group');
+
+  /** Se valida al salir del grupo y al enviar, nunca al mover las flechas. */
+  protected readonly showError = computed(() => this.invalid() && this.touched());
+
+  protected readonly fieldError = fieldErrorText(this.errors, this.showError);
+
+  /** El mensaje del validador reemplaza al hint, como en el Input. */
+  protected readonly note = computed(() => this.fieldError() || this.hint());
+
+  protected readonly describedBy = computed(() => (this.note() ? this.noteId : null));
+
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
 
   /** Orden de construcción = orden del DOM. */
   private readonly members = signal<readonly CardGroupMember[]>([]);
 
-  readonly selectedValue = computed(() => this.controlValue());
+  readonly selectedValue = this.value.asReadonly();
 
   /** La elegida o la primera elegible: `null` sacaría al grupo del tab justo al empezar vacío. */
   readonly tabbableValue = computed<unknown>(() => {
@@ -37,6 +71,16 @@ export class CardGroup extends FormControlBase<unknown> {
     return (selected ?? enabled[0])?.optionValue() ?? null;
   });
 
+  /**
+   * Del contrato `FormUiControl`: la card de la parada de Tab. De acá entra el foco desde el
+   * resumen de errores.
+   */
+  focus(options?: FocusOptions): void {
+    this.host.nativeElement
+      .querySelector<HTMLElement>('[role="radio"][tabindex="0"]')
+      ?.focus(options);
+  }
+
   register(member: CardGroupMember): void {
     this.members.update((current) => [...current, member]);
   }
@@ -46,16 +90,16 @@ export class CardGroup extends FormControlBase<unknown> {
   }
 
   memberDisabled(member: CardGroupMember): boolean {
-    return this.isDisabled() || member.ownDisabled();
+    return this.disabled() || member.ownDisabled();
   }
 
   /** Se ignora si el grupo está deshabilitado. */
   select(value: unknown): void {
-    if (this.isDisabled()) {
+    if (this.disabled()) {
       return;
     }
-    this.commit(value);
-    this.markTouched();
+    this.value.set(value);
+    this.touch.emit();
   }
 
   /**

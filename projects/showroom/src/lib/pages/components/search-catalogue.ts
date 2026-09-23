@@ -80,7 +80,7 @@ export type SourceBehaviour =
 /**
  * Fuente de la demo en memoria con latencia simulada, sin MSW: servir su worker
  * lo mandaría a producción con fetch a un origen real (HG-02). Con backend, solo
- * cambia esta clase. Ver vault: 08-Sistema-de-Diseno/Componentes/Search-Select.
+ * cambia esta clase. Ver vault: 08-Sistema-de-Diseno/Componentes/Select.
  */
 export class CatalogueSource implements SearchSource<Article> {
   constructor(
