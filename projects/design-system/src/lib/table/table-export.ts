@@ -67,8 +67,12 @@ export function downloadCsv(name: string, csv: string, document: Document): void
   const link = document.createElement('a');
   link.href = url;
   link.download = `${name}.csv`;
+  document.body.append(link);
   link.click();
-  URL.revokeObjectURL(url);
+  link.remove();
+  // Revocar en la misma vuelta que el click() cancela la descarga que el navegador todavía no
+  // empezó a leer: se libera en la tarea siguiente, cuando ya tomó el blob.
+  setTimeout(() => URL.revokeObjectURL(url));
 }
 
 function isoDate(date: Date): string {

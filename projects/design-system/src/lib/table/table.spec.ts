@@ -2186,7 +2186,9 @@ describe('Table export', () => {
     await settle();
   });
 
-  afterEach(() => {
+  afterEach(async () => {
+    // `downloadCsv` revoca en la tarea siguiente: se le da esa vuelta antes de borrar los dobles.
+    await new Promise((resolve) => setTimeout(resolve));
     delete (URL as { createObjectURL?: unknown }).createObjectURL;
     delete (URL as { revokeObjectURL?: unknown }).revokeObjectURL;
     vi.restoreAllMocks();
