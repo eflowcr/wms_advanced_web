@@ -170,7 +170,6 @@
 <!-- Los chips son la misma pieza que la barra de filtros de pantalla (ver vault: Patron-Filtros). -->
 <ewms-filter-chips
   [chips]="table.filtering.chips()"
-  [messages]="text"
   (remove)="table.filtering.clear($event)"
   (clearAll)="table.filtering.clearAll()"
 />

@@ -15,7 +15,7 @@
       icon="chevron-left"
       size="sm"
       variant="secondary"
-      [label]="messages().previousPage"
+      [label]="text().previousPage"
       [disabled]="atStart()"
       data-previous-page
       (click)="previous()"
@@ -25,7 +25,7 @@
       icon="chevron-right"
       size="sm"
       variant="secondary"
-      [label]="messages().nextPage"
+      [label]="text().nextPage"
       [disabled]="atEnd()"
       data-next-page
       (click)="next()"

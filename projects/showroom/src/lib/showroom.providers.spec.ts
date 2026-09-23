@@ -1,7 +1,9 @@
 import { Injector, signal } from '@angular/core';
 import { EWMS_FAVORITE_LABELS, type FavoriteLabelResolver } from '@ewms/design-system';
 import {
+  FILTER_CHIPS_MESSAGES,
   FORM_MESSAGES,
+  PAGINATION_MESSAGES,
   provideShowroomDesignSystem,
   SELECT_MESSAGES,
   TABLE_FORMATTERS,
@@ -43,15 +45,15 @@ describe('the showroom dictionaries', () => {
 
   describe('messages', () => {
     it('counts pages and rows in words', () => {
-      expect(TABLE_MESSAGES.pageOf(2, 5)).toBe('Página 2 de 5');
-      expect(TABLE_MESSAGES.rowsTotal(1)).toBe('1 fila');
-      expect(TABLE_MESSAGES.rowsTotal(12)).toBe('12 filas');
+      expect(PAGINATION_MESSAGES.pageOf(2, 5)).toBe('Página 2 de 5');
+      expect(PAGINATION_MESSAGES.rowsTotal(1)).toBe('1 fila');
+      expect(PAGINATION_MESSAGES.rowsTotal(12)).toBe('12 filas');
     });
 
     it('says what the toolbar filters, and how much of a set is chosen', () => {
       expect(TABLE_MESSAGES.filters(0)).toBe('Filtros');
       expect(TABLE_MESSAGES.filters(2)).toBe('Filtros (2)');
-      expect(TABLE_MESSAGES.removeFilter('Estado')).toBe('Quitar el filtro Estado');
+      expect(FILTER_CHIPS_MESSAGES.removeFilter('Estado')).toBe('Quitar el filtro Estado');
       expect(TABLE_MESSAGES.setSummary('Estado', 4, 4)).toBe('Estado: todos');
       expect(TABLE_MESSAGES.setSummary('Estado', 2, 4)).toBe('Estado: 2 de 4');
       expect(TABLE_MESSAGES.setSummary('Estado', 0, 4)).toBe('Estado: ninguno');

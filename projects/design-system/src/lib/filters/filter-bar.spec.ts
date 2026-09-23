@@ -3,6 +3,7 @@ import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { expectNoAxeViolations } from '@ewms/testing';
 import { EWMS_DATE_PICKER_MESSAGES } from '../date-picker/date-picker.types';
 import { EWMS_SELECT_MESSAGES } from '../select/select.types';
+import { EWMS_FILTER_CHIPS_MESSAGES, type FilterChipsMessages } from './filter-chips';
 import {
   EWMS_FILTER_BAR_MESSAGES,
   FilterBar,
@@ -14,6 +15,9 @@ import {
 const MESSAGES: FilterBarMessages = {
   moreFilters: (active) => (active === 0 ? 'Más filtros' : `Más filtros (${active})`),
   fewerFilters: 'Menos filtros',
+};
+
+const CHIP_MESSAGES: FilterChipsMessages = {
   clearFilters: 'Limpiar filtros',
   removeFilter: (field) => `Quitar el filtro ${field}`,
 };
@@ -60,6 +64,7 @@ describe('FilterBar', () => {
       imports: [TestHost],
       providers: [
         { provide: EWMS_FILTER_BAR_MESSAGES, useValue: MESSAGES },
+        { provide: EWMS_FILTER_CHIPS_MESSAGES, useValue: CHIP_MESSAGES },
         { provide: EWMS_SELECT_MESSAGES, useValue: { noResults: () => '', results: () => '' } },
         {
           provide: EWMS_DATE_PICKER_MESSAGES,

@@ -1,10 +1,5 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import {
-  DESIGN_SYSTEM_VERSION,
-  EWMS_TABLE_MESSAGES,
-  Pagination,
-  type PaginationMessages,
-} from '@ewms/design-system';
+import { ChangeDetectionStrategy, Component, computed, signal } from '@angular/core';
+import { DESIGN_SYSTEM_VERSION, Pagination } from '@ewms/design-system';
 import { DemoFrame } from '../../ui/demo-frame';
 import { PropTable, type PropRow } from '../../ui/prop-table';
 import { TokenValue } from '../../ui/token-value';
@@ -30,9 +25,10 @@ const PROPS: readonly PropRow[] = [
   },
   {
     name: 'messages',
-    type: 'PaginationMessages',
-    default: '— (obligatorio)',
-    description: 'Los textos. El sistema de diseño no habla ningún idioma (ADR 0008).',
+    type: 'Partial<PaginationMessages> | null',
+    default: 'null',
+    description:
+      'Sobrescribe, en esta instancia, los textos de EWMS_PAGINATION_MESSAGES (ADR 0008).',
   },
   {
     name: 'pageChange',
@@ -66,9 +62,6 @@ const FILAS = 163;
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ShowroomPagination {
-  /** Mismo diccionario que la tabla: dos juegos de textos para un control terminan discrepando. */
-  private readonly tableMessages = inject(EWMS_TABLE_MESSAGES);
-
   protected readonly version = DESIGN_SYSTEM_VERSION;
   protected readonly props = PROPS;
   protected readonly anatomy = ANATOMY;
@@ -78,13 +71,6 @@ export class ShowroomPagination {
   protected readonly conTotal = signal(true);
 
   protected readonly total = computed(() => (this.conTotal() ? FILAS : null));
-
-  protected readonly messages: PaginationMessages = {
-    previousPage: this.tableMessages.previousPage,
-    nextPage: this.tableMessages.nextPage,
-    pageOf: this.tableMessages.pageOf,
-    rowsTotal: this.tableMessages.rowsTotal,
-  };
 
   protected irA(page: number): void {
     this.pagina.set(page);

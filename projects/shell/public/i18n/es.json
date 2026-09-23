@@ -15,6 +15,10 @@
       "fewerFilters": "Menos filtros",
       "moreFilters": "{active, plural, =0 {Más filtros} other {Más filtros (#)}}"
     },
+    "filterChips": {
+      "clearFilters": "Limpiar filtros",
+      "removeFilter": "Quitar el filtro {{ column }}"
+    },
     "form": {
       "custom": "Revisá este campo",
       "email": "Escribí un correo válido",
@@ -29,6 +33,12 @@
       "pattern": "El formato no es el esperado",
       "required": "Este campo es obligatorio",
       "requiredLegend": "* obligatorio"
+    },
+    "pagination": {
+      "nextPage": "Página siguiente",
+      "pageOf": "Página {{ page }} de {{ pages }}",
+      "previousPage": "Página anterior",
+      "rowsTotal": "{total, plural, =0 {Sin filas} one {# fila} other {# filas}}"
     },
     "select": {
       "error": "No se pudo consultar el catálogo.",
@@ -85,20 +95,15 @@
       "loadingChildren": "Cargando las líneas…",
       "moveEarlier": "Subir {{ column }}",
       "moveLater": "Bajar {{ column }}",
-      "nextPage": "Página siguiente",
       "noData": "Todavía no hay filas.",
       "noResults": "Ninguna fila coincide.",
       "noResultsHint": "Probá con otra búsqueda o limpiá los filtros.",
-      "pageOf": "Página {{ page }} de {{ pages }}",
-      "previousPage": "Página anterior",
-      "removeFilter": "Quitar el filtro {{ column }}",
       "resetView": "Restablecer vista",
       "resizeColumn": "Ancho de la columna {{ column }}",
       "retry": "Reintentar",
       "rowMenu": "Acciones de la fila",
       "rowsShown": "{shown, plural, one {# fila} other {# filas}}",
       "rowsShownOf": "{{ shown }} de {total, plural, one {# fila} other {# filas}}",
-      "rowsTotal": "{total, plural, =0 {Sin filas} one {# fila} other {# filas}}",
       "search": "Buscar en la tabla",
       "selectAll": "Seleccionar todas las filas visibles",
       "selectRow": "Seleccionar la fila",

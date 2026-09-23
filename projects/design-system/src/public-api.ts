@@ -70,7 +70,12 @@ export { FormPattern, type FormAction } from './lib/forms/form-pattern';
 export { confirmDiscard } from './lib/forms/confirm-discard';
 
 // Filtros (2026-09-22): los chips son de la tabla y de la barra de pantalla, la misma pieza.
-export { FilterChips, type FilterChip, type FilterChipsMessages } from './lib/filters/filter-chips';
+export {
+  EWMS_FILTER_CHIPS_MESSAGES,
+  FilterChips,
+  type FilterChip,
+  type FilterChipsMessages,
+} from './lib/filters/filter-chips';
 export {
   EWMS_FILTER_BAR_MESSAGES,
   FilterBar,
@@ -157,7 +162,11 @@ export {
 export { EWMS_DATE_PICKER_MESSAGES } from './lib/date-picker/date-picker.types';
 
 // Pagination (DS-3): aparte de la tabla, porque cards, logs y colas de picking también paginan.
-export { Pagination, type PaginationMessages } from './lib/pagination/pagination';
+export {
+  EWMS_PAGINATION_MESSAGES,
+  Pagination,
+  type PaginationMessages,
+} from './lib/pagination/pagination';
 
 // Keyboard (DS-4, REQ-FE-DS4-001): el motor vive acá y no en `core/`. Ver vault: Atajos-de-Teclado.
 // `ScanDetector` se exporta para que nadie escriba una segunda respuesta a «¿es una pistola?».

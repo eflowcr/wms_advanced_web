@@ -5,6 +5,8 @@ import { expectNoAxeViolations, pixels } from '@ewms/testing';
 import { By } from '@angular/platform-browser';
 import { defer, Observable, of, Subject, throwError } from 'rxjs';
 import { EWMS_DATE_PICKER_MESSAGES } from '../date-picker/date-picker.types';
+import { EWMS_FILTER_CHIPS_MESSAGES, type FilterChipsMessages } from '../filters/filter-chips';
+import { EWMS_PAGINATION_MESSAGES, type PaginationMessages } from '../pagination/pagination';
 import { EWMS_SPLIT_BUTTON_MESSAGES } from '../split-button/split-button.types';
 import { ShortcutsHost } from '../keyboard/shortcuts-host';
 import {
@@ -77,13 +79,8 @@ const MESSAGES: TableMessages = {
   retry: 'Reintentar',
   sortedAscending: 'Orden ascendente',
   sortedDescending: 'Orden descendente',
-  previousPage: 'Anterior',
-  nextPage: 'Siguiente',
-  pageOf: (page, pages) => `Página ${page} de ${pages}`,
-  rowsTotal: (total) => `${total} filas`,
   filters: (active) => (active === 0 ? 'Filtros' : `Filtros (${active})`),
   clearFilters: 'Limpiar filtros',
-  removeFilter: (column) => `Quitar el filtro ${column}`,
   view: 'Vista',
   resetView: 'Restablecer vista',
   expandAll: 'Expandir todo',
@@ -127,6 +124,19 @@ const MESSAGES: TableMessages = {
   copyAll: 'Copiar al portapapeles',
   rowsShown: (shown, total) => (total === null ? `${shown} filas` : `${shown} de ${total} filas`),
   aggregate: (kind, column, scope) => `${kind} ${column} ${scope}`,
+};
+
+// El paginador y los chips piden los suyos por su propio token, como el Select.
+const PAGE_WORDS: PaginationMessages = {
+  previousPage: 'Anterior',
+  nextPage: 'Siguiente',
+  pageOf: (page, pages) => `Página ${page} de ${pages}`,
+  rowsTotal: (total) => `${total} filas`,
+};
+
+const CHIP_WORDS: FilterChipsMessages = {
+  clearFilters: 'Limpiar filtros',
+  removeFilter: (column) => `Quitar el filtro ${column}`,
 };
 
 const DATE_WORDS = {
@@ -226,6 +236,8 @@ describe('Table', () => {
       imports: [TestHost, Table, TableColumn, EmptyTemplate],
       providers: [
         { provide: EWMS_TABLE_MESSAGES, useValue: MESSAGES },
+        { provide: EWMS_PAGINATION_MESSAGES, useValue: PAGE_WORDS },
+        { provide: EWMS_FILTER_CHIPS_MESSAGES, useValue: CHIP_WORDS },
         { provide: EWMS_DATE_PICKER_MESSAGES, useValue: DATE_WORDS },
         { provide: EWMS_TABLE_FORMATTERS, useValue: FORMATTERS },
       ],
@@ -995,6 +1007,8 @@ describe('Table with a failing source', () => {
       imports: [TestHost],
       providers: [
         { provide: EWMS_TABLE_MESSAGES, useValue: MESSAGES },
+        { provide: EWMS_PAGINATION_MESSAGES, useValue: PAGE_WORDS },
+        { provide: EWMS_FILTER_CHIPS_MESSAGES, useValue: CHIP_WORDS },
         { provide: EWMS_DATE_PICKER_MESSAGES, useValue: DATE_WORDS },
         { provide: EWMS_TABLE_FORMATTERS, useValue: FORMATTERS },
       ],
@@ -1098,6 +1112,8 @@ describe('Table with lazy children', () => {
       imports: [LazyHost, Table, TableColumn],
       providers: [
         { provide: EWMS_TABLE_MESSAGES, useValue: MESSAGES },
+        { provide: EWMS_PAGINATION_MESSAGES, useValue: PAGE_WORDS },
+        { provide: EWMS_FILTER_CHIPS_MESSAGES, useValue: CHIP_WORDS },
         { provide: EWMS_DATE_PICKER_MESSAGES, useValue: DATE_WORDS },
         { provide: EWMS_TABLE_FORMATTERS, useValue: FORMATTERS },
       ],
@@ -1205,6 +1221,8 @@ describe('Table paging', () => {
       imports: [PagedHost],
       providers: [
         { provide: EWMS_TABLE_MESSAGES, useValue: MESSAGES },
+        { provide: EWMS_PAGINATION_MESSAGES, useValue: PAGE_WORDS },
+        { provide: EWMS_FILTER_CHIPS_MESSAGES, useValue: CHIP_WORDS },
         { provide: EWMS_DATE_PICKER_MESSAGES, useValue: DATE_WORDS },
         { provide: EWMS_TABLE_FORMATTERS, useValue: FORMATTERS },
       ],
@@ -1289,6 +1307,8 @@ describe('Table master/detail', () => {
       imports: [DetailHost, Table, TableColumn, DetailTemplate],
       providers: [
         { provide: EWMS_TABLE_MESSAGES, useValue: MESSAGES },
+        { provide: EWMS_PAGINATION_MESSAGES, useValue: PAGE_WORDS },
+        { provide: EWMS_FILTER_CHIPS_MESSAGES, useValue: CHIP_WORDS },
         { provide: EWMS_DATE_PICKER_MESSAGES, useValue: DATE_WORDS },
         { provide: EWMS_TABLE_FORMATTERS, useValue: FORMATTERS },
       ],
@@ -1574,6 +1594,8 @@ async function hugeFixture(rows: readonly Big[]): Promise<ComponentFixture<HugeH
     imports: [HugeHost, Table, TableColumn],
     providers: [
       { provide: EWMS_TABLE_MESSAGES, useValue: MESSAGES },
+      { provide: EWMS_PAGINATION_MESSAGES, useValue: PAGE_WORDS },
+      { provide: EWMS_FILTER_CHIPS_MESSAGES, useValue: CHIP_WORDS },
       { provide: EWMS_DATE_PICKER_MESSAGES, useValue: DATE_WORDS },
       { provide: EWMS_TABLE_FORMATTERS, useValue: FORMATTERS },
     ],
@@ -1740,6 +1762,8 @@ describe('Table and the `filters` shortcut', () => {
       imports: [ShortcutHost, DialogModule],
       providers: [
         { provide: EWMS_TABLE_MESSAGES, useValue: MESSAGES },
+        { provide: EWMS_PAGINATION_MESSAGES, useValue: PAGE_WORDS },
+        { provide: EWMS_FILTER_CHIPS_MESSAGES, useValue: CHIP_WORDS },
         { provide: EWMS_TABLE_FORMATTERS, useValue: FORMATTERS },
       ],
     }).compileComponents();
@@ -1865,6 +1889,8 @@ describe('Table columns', () => {
       imports: [ColumnsHost],
       providers: [
         { provide: EWMS_TABLE_MESSAGES, useValue: MESSAGES },
+        { provide: EWMS_PAGINATION_MESSAGES, useValue: PAGE_WORDS },
+        { provide: EWMS_FILTER_CHIPS_MESSAGES, useValue: CHIP_WORDS },
         { provide: EWMS_TABLE_FORMATTERS, useValue: FORMATTERS },
       ],
     }).compileComponents();
@@ -2177,6 +2203,8 @@ describe('Table export', () => {
       imports: [ExportHost],
       providers: [
         { provide: EWMS_TABLE_MESSAGES, useValue: MESSAGES },
+        { provide: EWMS_PAGINATION_MESSAGES, useValue: PAGE_WORDS },
+        { provide: EWMS_FILTER_CHIPS_MESSAGES, useValue: CHIP_WORDS },
         { provide: EWMS_TABLE_FORMATTERS, useValue: FORMATTERS },
         { provide: EWMS_SPLIT_BUTTON_MESSAGES, useValue: { moreActions: 'Más acciones' } },
       ],

@@ -1,4 +1,12 @@
-import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  InjectionToken,
+  computed,
+  inject,
+  input,
+  output,
+} from '@angular/core';
 import { Icon } from '../icon/icon';
 
 /** Un filtro activo, para su chip: columna o campo, y el valor ya legible. */
@@ -8,12 +16,22 @@ export interface FilterChip {
   readonly value: string;
 }
 
-/** Las palabras de los chips, ya traducidas: las dan la tabla o la barra de filtros. */
+/** Textos ya traducidos, provistos una vez por token (ADR 0008). */
 export interface FilterChipsMessages {
   /** Nombre del × de un chip: «Quitar el filtro Estado». */
   readonly removeFilter: (column: string) => string;
   readonly clearFilters: string;
 }
+
+export const EWMS_FILTER_CHIPS_MESSAGES = new InjectionToken<FilterChipsMessages>(
+  'EWMS_FILTER_CHIPS_MESSAGES',
+);
+
+/** Sin proveedor los chips andan igual; solo se quedan mudos, como el Select. */
+export const NO_FILTER_CHIPS_MESSAGES: FilterChipsMessages = {
+  removeFilter: () => '',
+  clearFilters: '',
+};
 
 /**
  * Los chips de los filtros activos y «Limpiar filtros»: la misma pieza en la barra de la tabla
@@ -39,7 +57,7 @@ export interface FilterChipsMessages {
             <button
               type="button"
               class="inline-flex cursor-pointer rounded-full p-0.5 text-secondary outline-none hover:bg-ghost-hover focus-visible:shadow-(--focus-ring-shadow)"
-              [attr.aria-label]="messages().removeFilter(chip.column)"
+              [attr.aria-label]="text().removeFilter(chip.column)"
               (click)="remove.emit(chip.key)"
             >
               <ewms-icon name="x" size="sm" />
@@ -53,7 +71,7 @@ export interface FilterChipsMessages {
             data-clear-filters
             (click)="clearAll.emit()"
           >
-            {{ messages().clearFilters }}
+            {{ text().clearFilters }}
           </button>
         </li>
       </ul>
@@ -62,7 +80,16 @@ export interface FilterChipsMessages {
 })
 export class FilterChips {
   readonly chips = input.required<readonly FilterChip[]>();
-  readonly messages = input.required<FilterChipsMessages>();
+
+  /** Pisa, en esta instancia, los textos de `EWMS_FILTER_CHIPS_MESSAGES` (ADR 0008). */
+  readonly messages = input<Partial<FilterChipsMessages> | null>(null);
+
+  private readonly providedMessages = inject(EWMS_FILTER_CHIPS_MESSAGES, { optional: true });
+
+  protected readonly text = computed<FilterChipsMessages>(() => ({
+    ...(this.providedMessages ?? NO_FILTER_CHIPS_MESSAGES),
+    ...(this.messages() ?? {}),
+  }));
 
   /** La clave del chip cuyo × se pulsó. */
   readonly remove = output<string>();

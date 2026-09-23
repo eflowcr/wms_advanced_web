@@ -15,6 +15,10 @@
       "fewerFilters": "Fewer filters",
       "moreFilters": "{active, plural, =0 {More filters} other {More filters (#)}}"
     },
+    "filterChips": {
+      "clearFilters": "Clear filters",
+      "removeFilter": "Remove the {{ column }} filter"
+    },
     "form": {
       "custom": "Check this field",
       "email": "Write a valid email",
@@ -29,6 +33,12 @@
       "pattern": "The format is not the expected one",
       "required": "This field is required",
       "requiredLegend": "* required"
+    },
+    "pagination": {
+      "nextPage": "Next page",
+      "pageOf": "Page {{ page }} of {{ pages }}",
+      "previousPage": "Previous page",
+      "rowsTotal": "{total, plural, =0 {No rows} one {# row} other {# rows}}"
     },
     "select": {
       "error": "The catalogue could not be reached.",
@@ -85,20 +95,15 @@
       "loadingChildren": "Loading the lines…",
       "moveEarlier": "Move {{ column }} up",
       "moveLater": "Move {{ column }} down",
-      "nextPage": "Next page",
       "noData": "There are no rows yet.",
       "noResults": "No rows match.",
       "noResultsHint": "Try another search or clear the filters.",
-      "pageOf": "Page {{ page }} of {{ pages }}",
-      "previousPage": "Previous page",
-      "removeFilter": "Remove the {{ column }} filter",
       "resetView": "Reset view",
       "resizeColumn": "{{ column }} column width",
       "retry": "Retry",
       "rowMenu": "Row actions",
       "rowsShown": "{shown, plural, one {# row} other {# rows}}",
       "rowsShownOf": "{{ shown }} of {total, plural, one {# row} other {# rows}}",
-      "rowsTotal": "{total, plural, =0 {No rows} one {# row} other {# rows}}",
       "search": "Search the table",
       "selectAll": "Select every visible row",
       "selectRow": "Select the row",
