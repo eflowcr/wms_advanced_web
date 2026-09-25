@@ -132,15 +132,15 @@
             {{ clicks() }}
           </strong>
         </p>
-        <button
-          type="button"
-          class="h-10 rounded-md border border-default bg-surface px-3 text-p text-primary outline-none hover:bg-ghost-hover focus-visible:shadow-(--focus-ring-shadow)"
+        <ewms-button
+          variant="secondary"
+          size="sm"
           data-not-a-flow-click
           data-reset-clicks
           (click)="resetCounter()"
         >
           Poner el contador a cero
-        </button>
+        </ewms-button>
         <p class="text-caption text-secondary">
           Cuenta lo que §2.1 llama un clic: una pulsación sobre un control que
           <strong>avanza el flujo</strong> —abrir un panel incluido—. El teclado no suma, y por eso
@@ -230,15 +230,15 @@
         </ewms-table>
 
         <div class="flex flex-wrap items-center gap-3">
-          <button
-            type="button"
-            class="h-10 rounded-md border border-default bg-surface px-3 text-p text-primary outline-none hover:bg-ghost-hover focus-visible:shadow-(--focus-ring-shadow)"
+          <ewms-button
+            variant="secondary"
+            size="sm"
             data-not-a-flow-click
             data-toggle-failure
             (click)="toggleFailure()"
           >
             {{ failing() ? 'Que la fuente vuelva a responder' : 'Hacer que la fuente falle' }}
-          </button>
+          </ewms-button>
           <p class="text-caption text-secondary">
             Tampoco cuenta: romper la fuente a propósito es parte de la demostración, no del flujo
             de nadie.

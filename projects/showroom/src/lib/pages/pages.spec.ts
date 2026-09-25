@@ -109,7 +109,7 @@ describe('ShowroomLayout', () => {
 
   it('filters the catalogue as you type, by name and by selector', async () => {
     const { fixture, element } = await render(ShowroomLayout);
-    const search = element.querySelector<HTMLInputElement>('#showroom-search');
+    const search = element.querySelector<HTMLInputElement>('[data-showroom-search] input');
     const count = () => element.querySelectorAll('[data-sidebar] nav li').length;
 
     // Dos desde DS-5: «Toggle» por nombre y «Favoritos» por su selector
@@ -132,7 +132,7 @@ describe('ShowroomLayout', () => {
 
   it('says so when nothing matches, instead of showing an empty panel', async () => {
     const { fixture, element } = await render(ShowroomLayout);
-    const search = element.querySelector<HTMLInputElement>('#showroom-search');
+    const search = element.querySelector<HTMLInputElement>('[data-showroom-search] input');
     search!.value = 'zzzz-no-existe';
     search!.dispatchEvent(new Event('input'));
     await fixture.whenStable();
@@ -1534,7 +1534,7 @@ describe('ShowroomTable — composición avanzada', () => {
     // prueba en e2e: acá no hay hoja de estilos, ni altura de fila, ni ventana, y 5000 filas
     // en jsdom son 5000 filas.
     expect(element.querySelector('[data-loaded-count]')?.textContent).toContain('60');
-    expect(element.querySelector<HTMLButtonElement>('[data-load-all]')?.disabled).toBe(false);
+    expect(element.querySelector<HTMLButtonElement>('[data-load-all] button')?.disabled).toBe(false);
     expect(element.querySelector('[data-load-all]')?.textContent).toContain('5000');
   });
 });

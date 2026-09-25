@@ -816,8 +816,8 @@ test.describe('keyboard only', () => {
         `${url}: a composite widget is not exactly one tab stop`,
       ).toEqual([]);
 
-      // WCAG 2.4.7: box-shadow (--focus-ring-shadow) o contorno. La grilla de /foundations/icons usa
-      // contorno de token en sus setenta celdas para no invadir la vecina como una sombra de 3px.
+      // WCAG 2.4.7: box-shadow (--focus-ring-shadow) o contorno. Las celdas de la Tabla usan
+      // contorno de token para no invadir la vecina como una sombra de 3px.
       // Atrapó un span enfocable sin estilo de foco en la página del tooltip.
       expect(
         stops
@@ -871,13 +871,15 @@ test.describe('keyboard only', () => {
     for (let i = 0; i < 6; i += 1) {
       await page.keyboard.press('Tab');
       presses += 1;
-      const isSearch = await page.evaluate(() => document.activeElement?.id === 'showroom-search');
+      const isSearch = await page.evaluate(
+        () => document.activeElement?.closest('[data-showroom-search]') != null,
+      );
       if (isSearch) {
         break;
       }
     }
 
-    await expect(page.locator('#showroom-search')).toBeFocused();
+    await expect(page.locator('[data-showroom-search] input')).toBeFocused();
     expect(
       presses,
       'Tab presses from the top of the document via the skip link',
@@ -904,9 +906,10 @@ test.describe('keyboard only', () => {
     await ready(page);
 
     await stampFocusable(page);
+    const search = await page.locator('[data-showroom-search] input').getAttribute('data-kbd');
     const stops = await walkTabCycle(page);
     const chain = stops.map((stop) => stop.label).join(' -> ');
-    const index = stops.findIndex((stop) => stop.label.includes('#showroom-search'));
+    const index = stops.findIndex((stop) => stop.kbd === search);
 
     expect(index, `the search was never reached by Tab. Order: ${chain}`).toBeGreaterThanOrEqual(0);
 

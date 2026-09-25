@@ -386,15 +386,15 @@
     <ewms-demo-frame ground="canvas" label="Filas sintéticas, virtualizadas">
       <div class="flex flex-col gap-3" data-demo-virtual>
         <div class="flex flex-wrap items-center gap-3">
-          <button
-            type="button"
-            class="cursor-pointer rounded-sm border border-strong bg-surface px-2 py-1 text-caption text-primary outline-none focus-visible:shadow-(--focus-ring-shadow) disabled:cursor-not-allowed disabled:border-default disabled:text-disabled"
+          <ewms-button
+            variant="secondary"
+            size="sm"
             data-load-all
             [disabled]="ubicacionesCargadas() === ubicacionesTotal"
             (click)="cargarTodas()"
           >
             Cargar {{ ubicacionesTotal }} ubicaciones
-          </button>
+          </ewms-button>
           <span class="font-mono text-caption text-primary" data-loaded-count>
             {{ ubicacionesCargadas() }} filas en la fuente
           </span>

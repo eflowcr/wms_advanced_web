@@ -36,16 +36,12 @@
       />
 
       <div class="flex flex-col gap-2">
-        <label class="text-caption text-secondary" for="showroom-search">
-          Buscar por nombre o selector
-        </label>
-        <input
-          id="showroom-search"
+        <ewms-input
           type="search"
-          class="h-10 rounded-control border border-strong bg-surface px-3 text-p text-primary outline-none focus-visible:shadow-(--focus-ring-shadow)"
+          label="Buscar por nombre o selector"
           placeholder="boton, ewms-input..."
-          [value]="query()"
-          (input)="onSearch($event)"
+          data-showroom-search
+          [(value)]="query"
         />
         @if (filtering()) {
           <p class="text-caption text-secondary" role="status">{{ matches() }} resultado(s)</p>

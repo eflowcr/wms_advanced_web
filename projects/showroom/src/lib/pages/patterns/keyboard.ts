@@ -1,7 +1,9 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
+  Button,
   DESIGN_SYSTEM_VERSION,
+  Input,
   isSingleCharacter,
   KeyboardShortcuts,
   SCAN_MIN_KEYSTROKES,
@@ -118,7 +120,7 @@ const LOG_LENGTH = 12;
 // `unregistered`, y Ctrl+S igual debe impedir que el navegador guarde la página.
 @Component({
   selector: 'ewms-showroom-keyboard',
-  imports: [DemoFrame, PropTable, TokenValue],
+  imports: [Button, Input, DemoFrame, PropTable, TokenValue],
   templateUrl: './keyboard.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

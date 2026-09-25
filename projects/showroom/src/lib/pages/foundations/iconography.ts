@@ -6,7 +6,7 @@ import {
   inject,
   signal,
 } from '@angular/core';
-import { Icon, ICON_CATEGORIES, type IconName, type IconSize } from '@ewms/design-system';
+import { Button, Icon, ICON_CATEGORIES, type IconName, type IconSize } from '@ewms/design-system';
 import { DemoFrame } from '../../ui/demo-frame';
 import { TokenValue } from '../../ui/token-value';
 
@@ -32,7 +32,7 @@ const TOP_BAR: readonly IconName[] = [
  */
 @Component({
   selector: 'ewms-showroom-iconography',
-  imports: [Icon, DemoFrame, TokenValue],
+  imports: [Button, Icon, DemoFrame, TokenValue],
   templateUrl: './iconography.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

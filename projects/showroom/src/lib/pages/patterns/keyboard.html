@@ -90,22 +90,13 @@
         }
 
         <div class="flex flex-wrap items-end gap-4">
-          <label class="flex flex-col gap-1 text-caption text-secondary">
-            Un campo de texto, para ver la regla de «ningún atajo acá dentro»
-            <input
-              id="kb-field"
-              type="text"
-              class="h-10 w-72 rounded-md border border-default bg-surface px-3 text-p text-primary outline-none focus-visible:shadow-(--focus-ring-shadow)"
-              placeholder="Escribí una n, una barra, un signo de pregunta…"
-            />
-          </label>
-          <button
-            type="button"
-            class="h-10 rounded-md border border-default bg-secondary px-3 text-p text-primary outline-none hover:bg-(--color-bg-secondary-hover) focus-visible:shadow-(--focus-ring-shadow)"
-            (click)="clear()"
-          >
-            Limpiar el registro
-          </button>
+          <ewms-input
+            class="w-72"
+            size="sm"
+            label="Un campo de texto, para ver la regla de «ningún atajo acá dentro»"
+            placeholder="Escribí una n, una barra, un signo de pregunta…"
+          />
+          <ewms-button variant="secondary" size="sm" (click)="clear()">Limpiar el registro</ewms-button>
         </div>
 
         <dl class="grid grid-cols-[repeat(auto-fit,minmax(min(12rem,100%),1fr))] gap-3">

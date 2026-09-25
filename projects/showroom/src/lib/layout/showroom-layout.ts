@@ -13,7 +13,7 @@ import { DOCUMENT } from '@angular/common';
 import { NavigationEnd, Router, RouterLink, RouterOutlet } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { filter, map, startWith } from 'rxjs';
-import { DESIGN_SYSTEM_VERSION, FavoritesNav, Select, Viewport } from '@ewms/design-system';
+import { DESIGN_SYSTEM_VERSION, FavoritesNav, Input, Select, Viewport } from '@ewms/design-system';
 import type { Favorite, SelectOption } from '@ewms/design-system';
 import { CATALOG, countEntries, filterCatalog, STATUS_LABELS, type CatalogEntry } from '../catalog';
 
@@ -33,15 +33,12 @@ import { provideShowroomDesignSystem } from '../showroom.providers';
 
 /**
  * Marco propio del showroom (barra lateral, búsqueda, versión), dentro del `MainLayout` del shell.
- * Su cromo no usa componentes del DS: la herramienta que diagnostica no puede depender de lo
- * que diagnostica (Ver vault: Showroom - Especificacion §5).
+ * Sus controles son del sistema, como los de toda pantalla (Ver vault: Showroom - Especificacion §5).
  */
-// Excepciones: `ewms-favorites-nav` desde DS-5 (REQ-FE-DS4-002 RFE-04 lo quiere fijo en la
-// navegación) y `ewms-select` desde el 2026-09-21, que reemplaza la barra en pantallas angostas.
 @Component({
   selector: 'ewms-showroom-layout',
   templateUrl: './showroom-layout.html',
-  imports: [RouterLink, RouterOutlet, FavoritesNav, Select],
+  imports: [RouterLink, RouterOutlet, FavoritesNav, Input, Select],
   changeDetection: ChangeDetectionStrategy.OnPush,
   // Diccionarios en el componente y no en la ruta: el inyector de elemento se recorre antes que
   // el de entorno, y en la ruta perdían contra los de `MainLayout` (se vio «Select the row» en la
@@ -115,10 +112,6 @@ export class ShowroomLayout {
     if (typeof route === 'string' && route !== this.activeRoute()) {
       void this.router.navigateByUrl(route);
     }
-  }
-
-  protected onSearch(event: Event): void {
-    this.query.set((event.target as HTMLInputElement).value);
   }
 
   /** El bloque no navega, emite; navega quien sabe qué es una ruta (acá, el catálogo). */

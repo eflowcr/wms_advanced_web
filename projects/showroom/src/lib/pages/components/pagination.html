@@ -73,14 +73,9 @@
         />
 
         <div class="flex flex-wrap items-center gap-3">
-          <button
-            type="button"
-            class="cursor-pointer rounded-sm border border-strong bg-surface px-2 py-1 text-caption text-primary outline-none focus-visible:shadow-(--focus-ring-shadow)"
-            data-toggle-total
-            (click)="alternarTotal()"
-          >
+          <ewms-button variant="secondary" size="sm" data-toggle-total (click)="alternarTotal()">
             {{ conTotal() ? 'Quitar el total' : 'Devolver el total' }}
-          </button>
+          </ewms-button>
           <span class="font-mono text-caption text-primary" data-page-value>
             page = {{ pagina() }}
           </span>

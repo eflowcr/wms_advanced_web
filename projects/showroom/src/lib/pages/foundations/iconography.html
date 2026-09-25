@@ -72,18 +72,12 @@
       </h2>
       <ul class="grid grid-cols-[repeat(auto-fill,minmax(min(8rem,100%),1fr))] gap-2">
         @for (name of group.names; track name) {
-          <li>
-            <button
-              type="button"
-              class="flex w-full flex-col items-center gap-2 rounded-md p-4 text-primary hover:bg-ghost-hover focus-visible:outline-2 focus-visible:outline-focus"
-              [attr.data-icon-name]="name"
-              (click)="copy(name)"
-            >
-              <ewms-icon [name]="name" size="xl" />
-              <span class="text-caption font-mono">
-                <span class="sr-only">Copiar nombre </span>{{ name }}
-              </span>
-            </button>
+          <!-- El ícono se mira; el nombre se copia. El botón es del sistema, con su anillo de foco. -->
+          <li class="flex flex-col items-center gap-2 rounded-md p-4 text-primary">
+            <ewms-icon [name]="name" size="xl" />
+            <ewms-button variant="link" size="sm" [attr.data-icon-name]="name" (click)="copy(name)">
+              <span class="sr-only">Copiar nombre </span><span class="font-mono">{{ name }}</span>
+            </ewms-button>
           </li>
         }
       </ul>
