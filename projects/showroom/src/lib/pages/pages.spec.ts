@@ -1726,13 +1726,14 @@ describe('ShowroomNavigation', () => {
   it('the rail asks for the other width and the page grants it', async () => {
     const { fixture, element } = await render(ShowroomNavigation);
     expect(rail(element, 'dashboard').textContent?.trim()).toBe('Dashboard');
+    expect(rail(element, 'dashboard').getAttribute('aria-label')).toBeNull();
 
     element.querySelector<HTMLButtonElement>('[data-nav-rail-toggle]')!.click();
     await fixture.whenStable();
 
-    // Colapsado: se van las etiquetas, quedan los destinos.
+    // Plegado: quedan los destinos, con el nombre en aria-label (abierto, el texto es el nombre).
     expect(rail(element, 'dashboard')).not.toBeNull();
-    expect(rail(element, 'dashboard').textContent?.trim()).toBe('');
+    expect(rail(element, 'dashboard').getAttribute('aria-label')).toBe('Dashboard');
   });
 
   it('a crumb reports itself and the page says which: a miga does not navigate', async () => {

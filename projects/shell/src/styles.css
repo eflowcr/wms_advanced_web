@@ -128,10 +128,6 @@
   --background-color-row-danger: var(--color-row-danger);
   --background-color-row-warning: var(--color-row-warning);
   --background-color-overlay: var(--color-overlay);
-  --background-color-nav: var(--color-nav-bg);
-  --background-color-nav-row-hover: var(--color-nav-row-hover);
-  --background-color-nav-row-active: var(--color-nav-row-active);
-  --background-color-nav-row-active-hover: var(--color-nav-row-active-hover);
   --background-color-chip: var(--color-chip-bg);
   --background-color-chip-hover: var(--color-chip-bg-hover);
   --background-color-chip-active: var(--color-chip-active);
@@ -143,7 +139,6 @@
   --text-color-disabled: var(--color-text-disabled);
   --text-color-on-dark: var(--color-text-on-dark);
   --text-color-on-primary: var(--color-text-on-primary);
-  --text-color-nav-row-active: var(--color-nav-row-active-text);
   --text-color-chip: var(--color-chip-text);
   --text-color-chip-active: var(--color-chip-active-text);
   --text-color-danger: var(--color-danger-text);

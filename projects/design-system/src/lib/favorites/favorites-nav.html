@@ -6,13 +6,13 @@
   [attr.aria-label]="label()"
 >
   @if (expanded()) {
-    <h2 class="px-2 pb-2 text-caption uppercase">{{ label() }}</h2>
+    <h2 class="px-4 pb-2 text-caption uppercase">{{ label() }}</h2>
   }
 
   @if (shown().length === 0) {
     <!-- Vacío explica cómo llenarlo; plegado, una estrella lleva esas palabras como nombre. -->
     @if (expanded()) {
-      <p class="px-2 text-caption" data-favorites-empty>{{ emptyLabel() }}</p>
+      <p class="px-4 text-caption" data-favorites-empty>{{ emptyLabel() }}</p>
     } @else {
       <!-- Sin foco ni tooltip: `role="img"` con nombre; un `tabindex="0"` sería una parada vacía. -->
       <div class="flex justify-center py-2" data-favorites-empty>
@@ -26,8 +26,8 @@
         <li>
           <button
             type="button"
-            class="flex w-full items-center gap-3 rounded-sm py-2 text-left text-p outline-none focus-visible:shadow-(--focus-ring-shadow) aria-[current=page]:bg-primary aria-[current=page]:text-h4 aria-[current=page]:text-on-primary"
-            [class]="(expanded() ? 'px-2' : 'justify-center px-1') + ' ' + tone().hover"
+            class="flex w-full items-center gap-4 rounded-lg py-2 text-left text-p outline-none focus-visible:shadow-(--focus-ring-shadow) aria-[current=page]:text-h4"
+            [class]="rowClasses(row.favorite.route)"
             [attr.data-favorite]="row.favorite.route"
             [attr.aria-label]="expanded() ? null : row.label"
             [attr.aria-current]="activeRoute() === row.favorite.route ? 'page' : null"

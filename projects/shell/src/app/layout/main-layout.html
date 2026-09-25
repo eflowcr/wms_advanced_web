@@ -30,8 +30,8 @@
           variant="ghost"
           data-rail-toggle
           [label]="'shell.nav.toggleMenu' | transloco"
-          [expanded]="railExpanded()"
-          (click)="onRailExpandedChange(!railExpanded())"
+          [expanded]="menuOpen()"
+          (click)="onMenuOpenChange(!menuOpen())"
         />
       }
 
@@ -111,36 +111,45 @@
 
   <div class="flex min-h-0 flex-1">
     @if (viewport.isWide()) {
+      <!--
+        Fijo bajo la cabecera y con su propio desplazamiento: la página corre y el menú no. Entre la
+        barra inferior y 1280 px, abierto es un cajón sobre el contenido (--breakpoint-nav-drawer).
+      -->
       <ewms-nav-rail
-        class="shrink-0"
+        class="sticky top-(--shell-header-height) h-(--shell-body-height) shrink-0"
         [items]="navItems()"
         [label]="'shell.nav.mainMenu' | transloco"
         [activeId]="activeId()"
-        [expanded]="railExpanded()"
+        [expanded]="menuOpen()"
+        [drawer]="!viewport.panelFits()"
         (itemSelect)="onNavItemSelect($event)"
-        (expandedChange)="onRailExpandedChange($event)"
+        (expandedChange)="onMenuOpenChange($event)"
       >
         <!-- Lugar fijo de favoritos en la navegación (REQ-FE-DS4-002 RFE-04). -->
         <ewms-favorites-nav
           navRailTop
-          ground="navy"
+          ground="surface"
           [label]="'shell.favorites.title' | transloco"
           [emptyLabel]="'shell.favorites.empty' | transloco"
-          [expanded]="railExpanded()"
+          [expanded]="menuOpen()"
           [activeRoute]="pageRoute()"
           (favoriteSelect)="onFavoriteSelect($event)"
         />
 
         <!-- Credenciales como dato de `SessionContext`, asiento del Security Core. -->
         <div navRailFooter class="flex flex-col gap-2 px-4 py-3">
-          @if (railExpanded()) {
+          @if (menuOpen()) {
             <p class="text-caption" data-shell-credentials>
               {{ session.company().code }} / {{ session.warehouse().code }} -
               {{ session.warehouse().name }}
             </p>
+            <!--
+              El navy y no el de color: su trazo más claro da 17.01:1 sobre surface; la «e» azul del
+              de color, 4.65:1. El PNG trae mucho margen: `object-cover` recorta al trazo.
+            -->
             <img
-              class="h-6 w-auto self-start"
-              src="/brand/eprac/eprac-blanco.png"
+              class="h-6 w-24 self-start object-cover"
+              src="/brand/eprac/eprac-navy.png"
               [alt]="session.company().name"
             />
           } @else {

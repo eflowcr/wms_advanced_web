@@ -1,8 +1,22 @@
+<!-- Velo del cajón, el mismo de la hoja inferior: `<button>` real fuera del orden de Tab; duplica Escape. -->
+@if (drawerOpen()) {
+  <button
+    type="button"
+    class="fixed inset-0 z-10 bg-overlay"
+    data-nav-drawer-veil
+    tabindex="-1"
+    aria-hidden="true"
+    (click)="close()"
+  ></button>
+}
+
 <!-- Rail y panel son el mismo árbol a dos anchos (token). `ul`/`li` reales con roles de árbol: acá andan las flechas. -->
 <nav
-  class="flex h-full flex-col bg-brand-navy text-on-dark"
-  [class]="expanded() ? 'w-(--nav-panel-width)' : 'w-(--nav-rail-width)'"
+  #panel
+  class="flex flex-col bg-surface text-primary"
+  [class]="panelClasses()"
   [attr.aria-label]="label()"
+  [attr.data-nav-drawer]="drawerOpen() ? '' : null"
 >
   <!-- Favoritos (REQ-FE-DS4-002 RFE-04): el rail solo ofrece el hueco. -->
   <div class="shrink-0">
@@ -11,6 +25,7 @@
 
   <ul
     class="min-h-0 flex-1 list-none overflow-y-auto overflow-x-hidden py-2"
+    [class]="expanded() ? 'px-2' : 'p-0.5'"
     role="tree"
     [id]="treeId"
     [attr.aria-label]="label()"
@@ -39,7 +54,7 @@
   </ul>
 
   <!-- Credenciales y logo del cliente. -->
-  <div class="shrink-0 border-t border-strong">
+  <div class="shrink-0 border-t border-default">
     <ng-content select="[navRailFooter]" />
   </div>
 
@@ -48,7 +63,7 @@
     <div class="flex shrink-0 p-2" [class.justify-center]="!expanded()">
       <button
         type="button"
-        class="flex items-center justify-center rounded-sm p-2 outline-none hover:bg-primary-hover focus-visible:shadow-(--focus-ring-shadow)"
+        class="flex items-center justify-center rounded-sm p-2 outline-none hover:bg-ghost-hover focus-visible:shadow-(--focus-ring-shadow)"
         data-nav-rail-toggle
         [attr.aria-label]="toggleLabel()"
         [attr.aria-expanded]="expanded()"
@@ -61,17 +76,20 @@
   }
 </nav>
 
-<!-- `aria-label` solo plegada: el tooltip no es nombre accesible (WCAG 4.1.2). Ver vault: Navegacion. -->
+<!--
+  `aria-label` solo plegada: el tooltip no es nombre accesible (WCAG 4.1.2), y la etiqueta corta
+  que se ve está dentro de ese nombre (WCAG 2.5.3). Ver vault: Navegacion.
+-->
 <ng-template #row let-item let-child="child">
   <button
     type="button"
     role="treeitem"
-    class="flex w-full items-center gap-3 rounded-sm py-2 pr-2 text-left text-p outline-none hover:bg-primary-hover focus-visible:shadow-(--focus-ring-shadow) aria-[current=page]:bg-primary aria-[current=page]:text-h4 aria-[current=page]:text-on-primary"
-    [class]="expanded() ? (child ? 'pl-10' : 'pl-4') : 'justify-center pl-2'"
+    class="flex w-full rounded-lg text-left outline-none focus-visible:shadow-(--focus-ring-shadow)"
+    [class]="rowClasses(item, child)"
     [attr.data-nav-item]="item.id"
     [attr.aria-label]="expanded() ? null : item.label"
     [tabindex]="focusTarget() === item.id ? 0 : -1"
-    [attr.aria-current]="activeId() === item.id && !isGroup(item) ? 'page' : null"
+    [attr.aria-current]="isCurrent(item) ? 'page' : null"
     [attr.aria-selected]="activeId() === item.id"
     [attr.aria-expanded]="isGroup(item) ? isOpen(item) : null"
     [attr.aria-level]="child ? 2 : 1"
@@ -96,6 +114,10 @@
       @if (isGroup(item)) {
         <ewms-icon [name]="isOpen(item) ? 'chevron-up' : 'chevron-down'" size="sm" />
       }
+    } @else {
+      <span class="max-w-full truncate" data-nav-short-label>{{
+        item.shortLabel ?? item.label
+      }}</span>
     }
   </button>
 </ng-template>

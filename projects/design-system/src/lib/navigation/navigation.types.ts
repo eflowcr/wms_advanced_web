@@ -8,6 +8,11 @@ export interface NavItem {
   /** Estable entre pintados: es el idioma de `activeId` e `itemSelect`. */
   readonly id: string;
   readonly label: string;
+  /**
+   * Plegado, bajo el ícono; sin ella va `label` recortada. Tiene que estar dentro de `label`: el
+   * nombre accesible sigue siendo `label` y debe contener lo que se ve (WCAG 2.5.3).
+   */
+  readonly shortLabel?: string;
   readonly icon: IconName;
   /** Ausente en un grupo. Cadena a propósito: los tipos de `Router` arrastrarían el router. */
   readonly route?: string;

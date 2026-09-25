@@ -122,7 +122,6 @@
 
   /* Capas: un número sin unidad, como los pesos. El overlay del CDK vive en 1000. */
   --z-20: 20;
-  --z-30: 30;
   --z-40: 40;
 
   /* 'Montserrat' se auto-hospeda en projects/shell/public/fonts (@font-face en styles.css). */
@@ -190,14 +189,9 @@
   --color-neutral-border: var(--navy-81);
   --color-neutral-text: var(--navy-28);
 
-  /* Marco claro (decisión del usuario, 2026-09-25): el navy pasa al activo. Contrastes medidos
-   * en la ficha Navegacion. */
-  --color-nav-bg: var(--navy-100);
-  --color-nav-row-hover: var(--navy-95);
-  --color-nav-row-active: var(--navy-7);
-  --color-nav-row-active-hover: var(--navy-28);
-  --color-nav-row-active-text: var(--navy-100);
-  /* Chip en reposo: navy-91 y no bg-secondary, que contra el lienzo da 1.05:1 y no se ve. */
+  /* Marco claro (decisión del usuario, 2026-09-25): el menú usa surface, ghost-hover y el
+   * brand-navy con on-dark para el activo, que ya existían. Contrastes en la ficha Navegacion.
+   * Chip en reposo: navy-91 y no bg-secondary, que contra el lienzo da 1.05:1 y no se ve. */
   --color-chip-bg: var(--navy-91);
   --color-chip-bg-hover: var(--navy-81);
   --color-chip-text: var(--navy-7);
@@ -261,11 +255,13 @@
   --tab-indicator-width: var(--size-3);
   --duration-nav: var(--ms-200);
   --ease-nav: var(--ease-out);
+  /* La única animación del marco: el cajón entra deslizándose. Una propiedad y no tres utilidades:
+   * duración y curva por clase registraban @property y sumaban ~450 B a la hoja inicial. */
+  --transition-nav-drawer: translate var(--duration-nav) var(--ease-nav);
 
-  /* Capas del marco: cabecera y tira fijas, cajón con su velo encima, y el salto al contenido
-   * por encima de todo porque aparece sobre la cabecera. */
+  /* Capas del marco: cabecera y tira fijas, y el salto al contenido por encima porque aparece
+   * sobre la cabecera. El cajón y su velo van debajo de la cabecera, como la hoja inferior. */
   --layer-shell: var(--z-20);
-  --layer-nav-drawer: var(--z-30);
   --layer-skip-link: var(--z-40);
 
   /* Barra inferior: 64 deja un objetivo táctil holgado sobre el 24x24 de WCAG 2.5.8. */

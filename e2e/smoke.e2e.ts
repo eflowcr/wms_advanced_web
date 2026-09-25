@@ -1,12 +1,6 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
-import {
-  KEYBOARD,
-  PAGES,
-  ROUTE_BUDGET_MS,
-  SEARCH_CREATE_EDIT,
-  UNDER_CONSTRUCTION,
-} from './routes';
+import { KEYBOARD, PAGES, ROUTE_BUDGET_MS, SEARCH_CREATE_EDIT, UNDER_CONSTRUCTION } from './routes';
 import { watchConsole } from './console-watch';
 
 /**
@@ -52,7 +46,9 @@ test.describe('the patterns still work, on the keyboard', () => {
   // el diálogo abre con foco y Ctrl+S guarda el formulario y no la página del navegador.
   test('buscar, crear y editar, sin tocar el ratón', async ({ page }) => {
     await page.goto(SEARCH_CREATE_EDIT);
-    await expect(page.getByRole('heading', { level: 1, name: 'Buscar, crear, editar' })).toBeVisible();
+    await expect(
+      page.getByRole('heading', { level: 1, name: 'Buscar, crear, editar' }),
+    ).toBeVisible();
 
     // Crear va primero a propósito: Alt+N no dispara dentro de un campo (REQ-FE-DS4-001 PACQ-02.5)
     // y elegir un resultado deja el foco en el buscador, así que buscar antes haría fallar la prueba.
@@ -190,6 +186,44 @@ test.describe('the App Shell', () => {
     await page.keyboard.press('Escape');
     await expect(sheet).toHaveCount(0);
     await expect(more).toBeFocused();
+  });
+
+  test('at 1024 px the open menu is a drawer: it traps the focus, and Escape or the veil give it back', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1024, height: 768 });
+    await page.goto('/');
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+
+    // Entre la barra inferior y 1280 px el menú llega plegado y en el flujo (decisión del usuario, 2026-09-25).
+    const drawer = page.locator('[data-nav-drawer]');
+    await expect(page.locator('ewms-nav-rail')).toBeVisible();
+    await expect(drawer).toHaveCount(0);
+
+    const hamburger = page.locator('[data-rail-toggle] button');
+    await hamburger.click();
+    await expect(drawer).toBeVisible();
+    await expect(hamburger).toHaveAttribute('aria-expanded', 'true');
+
+    // Atrapado: ni Tab ni Shift+Tab lo sacan del cajón.
+    const inside = (): Promise<boolean> =>
+      drawer.evaluate((el) => el.contains(document.activeElement));
+    await expect.poll(inside).toBe(true);
+    for (const key of ['Tab', 'Tab', 'Tab', 'Shift+Tab', 'Shift+Tab', 'Shift+Tab']) {
+      await page.keyboard.press(key);
+      expect(await inside(), `${key} left the drawer`).toBe(true);
+    }
+
+    await page.keyboard.press('Escape');
+    await expect(drawer).toHaveCount(0);
+    await expect(hamburger).toBeFocused();
+
+    // El velo cierra igual, por el mismo camino.
+    await hamburger.click();
+    await expect(drawer).toBeVisible();
+    await page.locator('[data-nav-drawer-veil]').click({ position: { x: 700, y: 400 } });
+    await expect(drawer).toHaveCount(0);
+    await expect(hamburger).toBeFocused();
   });
 
   test('a favourite is ONE click from anywhere, and is lost on reload', async ({ page }) => {

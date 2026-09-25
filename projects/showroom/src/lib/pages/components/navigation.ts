@@ -25,7 +25,8 @@ type OpenTab = Omit<Tab, 'label'>;
 /**
  * t(showroom.navigation.props.rail.items, showroom.navigation.props.rail.label,
  *   showroom.navigation.props.rail.activeId, showroom.navigation.props.rail.expanded,
- *   showroom.navigation.props.rail.toggleLabel, showroom.navigation.props.rail.itemSelect,
+ *   showroom.navigation.props.rail.toggleLabel, showroom.navigation.props.rail.drawer,
+ *   showroom.navigation.props.rail.itemSelect,
  *   showroom.navigation.props.rail.expandedChange, showroom.navigation.props.rail.top,
  *   showroom.navigation.props.rail.footer)
  */
@@ -59,6 +60,12 @@ const RAIL_PROPS: readonly PropRow[] = [
     type: 'string',
     default: "''",
     description: 'showroom.navigation.props.rail.toggleLabel',
+  },
+  {
+    name: 'drawer',
+    type: 'boolean',
+    default: 'false',
+    description: 'showroom.navigation.props.rail.drawer',
   },
   {
     name: 'itemSelect',

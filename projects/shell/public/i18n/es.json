@@ -166,6 +166,10 @@
       "rates": "Tarifas",
       "serials": "Series",
       "settings": "Configuración",
+      "short": {
+        "designSystem": "Diseño",
+        "settings": "Config"
+      },
       "suppliers": "Proveedores",
       "units": "Unidades",
       "users": "Usuarios",

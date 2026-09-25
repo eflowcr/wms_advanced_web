@@ -1382,11 +1382,12 @@
       "crumbsCaption": "Properties of <ewms-breadcrumbs>",
       "rail": {
         "activeId": "Which screen you are on. It opens the group that contains it.",
-        "expanded": "A 232 panel or a 72 rail. The consumer decides; the rail only asks.",
+        "drawer": "Medium screens, between the bottom bar and 1280 px: open, the panel lies over the content with a veil, traps the focus, and <kbd>Escape</kbd> or the veil ask to close it; on closing, the focus goes back to whoever opened it. Folded, it stays in the flow.",
+        "expanded": "A 240 panel or a 72 rail. The consumer decides; the rail only asks.",
         "expandedChange": "The requested width. The rail does not change it by itself.",
         "footer": "Projected slot, at the foot. Credentials and the customer's logo in the App Shell.",
         "itemSelect": "A chosen destination. A group never emits: it opens.",
-        "items": "<b>Required.</b> The tree. An item with <code>children</code> is a group: it opens, it does not navigate.",
+        "items": "<b>Required.</b> The tree. An item with <code>children</code> is a group: it opens, it does not navigate. With <code>shortLabel</code>, the folded rail shows that label under the icon; it must be inside <code>label</code>, which stays the name (WCAG 2.5.3).",
         "label": "<b>Required.</b> The name of the landmark, already translated. A page has more than one nav.",
         "toggleLabel": "Name of the width button at the foot of the rail, already translated. Empty, the button is not drawn: in the app the only toggle is the header hamburger.",
         "top": "Projected slot, above the tree. The favourites block goes there; the rail does not know what it is."

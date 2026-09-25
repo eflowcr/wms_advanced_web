@@ -15,7 +15,14 @@ const TREE: readonly NavItem[] = [
       { id: 'clients', label: 'Clientes', icon: 'operator', route: '/clientes' },
     ],
   },
-  { id: 'design', label: 'Sistema de diseño', icon: 'controls', route: '/design-system', badge: 3 },
+  {
+    id: 'design',
+    label: 'Sistema de diseño',
+    shortLabel: 'Diseño',
+    icon: 'controls',
+    route: '/design-system',
+    badge: 3,
+  },
 ];
 
 @Component({
@@ -26,6 +33,7 @@ const TREE: readonly NavItem[] = [
       [toggleLabel]="toggleLabel()"
       [activeId]="activeId()"
       [expanded]="expanded()"
+      [drawer]="drawer()"
       (itemSelect)="chosen = $event.id"
       (expandedChange)="askedWidth = $event"
     >
@@ -40,6 +48,7 @@ class TestHost {
   readonly activeId = signal<string | null>(null);
   readonly expanded = signal(true);
   readonly toggleLabel = signal('Contraer el menú');
+  readonly drawer = signal(false);
 
   chosen: string | null = null;
   askedWidth: boolean | null = null;
@@ -197,15 +206,23 @@ describe('NavRail', () => {
       await settle();
     });
 
-    it('hides the labels', () => {
+    it('shows the short label under the icon, or the label itself when there is none', () => {
+      // La mini guía de YouTube: ícono arriba, etiqueta chica abajo (decisión del usuario, 2026-09-25).
+      expect(row('design').querySelector('[data-nav-short-label]')?.textContent?.trim()).toBe(
+        'Diseño',
+      );
+      expect(row('dashboard').querySelector('[data-nav-short-label]')?.textContent?.trim()).toBe(
+        'Dashboard',
+      );
       expect(fixture.nativeElement.textContent).not.toContain('Sistema de diseño');
     });
 
     it('BUT EVERY ROW STILL HAS A NAME, which the tooltip alone does NOT give it', async () => {
-      // Plegado no hay texto y el tooltip no nombra: eran dieciséis botones sin nombre
-      // (WCAG 4.1.2), invisibles para axe. Ver vault: Navegacion.
-      expect(row('design').textContent?.trim()).toBe('');
+      // Plegado se ve la etiqueta corta y el tooltip no nombra: el nombre es la etiqueta entera
+      // (WCAG 4.1.2) y contiene lo que se ve (WCAG 2.5.3). Ver vault: Navegacion.
+      expect(row('design').textContent?.trim()).toBe('Diseño');
       expect(row('design').getAttribute('aria-label')).toBe('Sistema de diseño');
+      expect(row('design').getAttribute('aria-label')?.toLowerCase()).toContain('diseño');
 
       await expectNoAxeViolations(fixture.nativeElement);
     });
@@ -238,6 +255,88 @@ describe('NavRail', () => {
     expect(fixture.nativeElement.querySelector('[data-nav-rail-toggle]')).toBeNull();
     // El árbol sigue entero: solo se va el botón.
     expect(rows()).toHaveLength(3);
+  });
+
+  describe('as a drawer, between the bottom bar and the drawer breakpoint', () => {
+    const panel = (): HTMLElement | null =>
+      fixture.nativeElement.querySelector('[data-nav-drawer]');
+    const veil = (): HTMLElement | null =>
+      fixture.nativeElement.querySelector('[data-nav-drawer-veil]');
+    let opener: HTMLButtonElement;
+
+    beforeEach(async () => {
+      // El foco solo se mueve dentro del documento: la hamburguesa es un botón de afuera.
+      document.body.appendChild(fixture.nativeElement);
+      opener = document.createElement('button');
+      document.body.appendChild(opener);
+      host.drawer.set(true);
+      host.expanded.set(false);
+      await settle();
+    });
+
+    afterEach(() => {
+      opener.remove();
+      fixture.nativeElement.remove();
+    });
+
+    async function open(): Promise<void> {
+      opener.focus();
+      host.expanded.set(true);
+      await settle();
+    }
+
+    it('closed, it is the folded rail in the flow: no panel over the page, no veil', () => {
+      expect(panel()).toBeNull();
+      expect(veil()).toBeNull();
+      expect(rows().length).toBeGreaterThan(0);
+    });
+
+    it('open, it lies over the page with a veil, and the trap is built around THIS panel', async () => {
+      await open();
+
+      expect(panel()).not.toBeNull();
+      expect(veil()?.getAttribute('aria-hidden')).toBe('true');
+      // Las anclas del CDK, como en la hoja inferior: dónde cae el foco lo prueba la E2E.
+      expect(panel()?.parentElement?.querySelectorAll('.cdk-focus-trap-anchor').length).toBe(2);
+    });
+
+    it('Escape asks to close it, and the focus goes back to whoever opened it', async () => {
+      await open();
+      panel()?.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }),
+      );
+      expect(host.askedWidth).toBe(false);
+
+      // El ancho es del consumidor: cerrarlo es darle la razón.
+      host.expanded.set(false);
+      await settle();
+      expect(panel()).toBeNull();
+      expect(document.activeElement).toBe(opener);
+    });
+
+    it('the veil asks to close it too', async () => {
+      await open();
+      veil()?.click();
+
+      expect(host.askedWidth).toBe(false);
+    });
+
+    it('Escape means nothing to the rail when it is not an open drawer', async () => {
+      host.drawer.set(false);
+      host.expanded.set(true);
+      await settle();
+      row('dashboard').dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }),
+      );
+
+      expect(host.askedWidth).toBeNull();
+    });
+
+    it('has no axe violations while open', async () => {
+      await open();
+
+      await expectNoAxeViolations(fixture.nativeElement);
+    });
   });
 
   it('has no axe violations, open group and all', async () => {

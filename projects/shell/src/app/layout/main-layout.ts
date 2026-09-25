@@ -99,8 +99,16 @@ export class MainLayout {
     return off ? '' : binding.chord.join('+');
   });
 
-  /** Rail colapsado o panel expandido; solo en memoria. */
+  /** Desde el corte del cajón: panel abierto o rail plegado; solo en memoria. */
   protected readonly railExpanded = signal(true);
+
+  /** Pantalla media: el cajón empieza cerrado y su estado no pisa el del panel. */
+  protected readonly drawerOpen = signal(false);
+
+  /** Lo que la hamburguesa muestra y cambia, según el ancho. */
+  protected readonly menuOpen = computed(() =>
+    this.viewport.panelFits() ? this.railExpanded() : this.drawerOpen(),
+  );
 
   /** Lo que anuncia la región viva tras un cambio de ruta. */
   protected readonly routeAnnouncement = signal('');
@@ -235,11 +243,14 @@ export class MainLayout {
 
   protected onNavItemSelect(item: NavItem): void {
     if (item.route !== undefined) {
+      // El cajón se cierra al elegir, como en YouTube; el foco lo lleva la navegación al `h1`.
+      this.drawerOpen.set(false);
       void this.router.navigateByUrl(item.route);
     }
   }
 
   protected onFavoriteSelect(favorite: Favorite): void {
+    this.drawerOpen.set(false);
     void this.router.navigateByUrl(favorite.route);
   }
 
@@ -259,8 +270,8 @@ export class MainLayout {
     }
   }
 
-  protected onRailExpandedChange(expanded: boolean): void {
-    this.railExpanded.set(expanded);
+  protected onMenuOpenChange(open: boolean): void {
+    (this.viewport.panelFits() ? this.railExpanded : this.drawerOpen).set(open);
   }
 
   protected favoritesCount(): number {
@@ -293,6 +304,9 @@ export class MainLayout {
       id: entry.id,
       label: this.transloco.translate(entry.labelKey),
       icon: entry.icon,
+      ...(entry.shortLabelKey === undefined
+        ? {}
+        : { shortLabel: this.transloco.translate(entry.shortLabelKey) }),
     };
     // Spread y no `route: undefined`: con `exactOptionalPropertyTypes` no son el
     // mismo tipo, y esa diferencia sostiene que un grupo no tiene ruta.

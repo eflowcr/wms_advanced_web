@@ -166,6 +166,10 @@
       "rates": "Rates",
       "serials": "Serial numbers",
       "settings": "Settings",
+      "short": {
+        "designSystem": "Design",
+        "settings": "Settings"
+      },
       "suppliers": "Suppliers",
       "units": "Units",
       "users": "Users",
