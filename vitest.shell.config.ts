@@ -1,15 +1,15 @@
 import { projectRunner } from './vitest.shared';
 
 /**
- * shell. Medido 2026-09-25: 96.17 / 92.59 / 91.66 / 96.58, truncado; sin core ni design-system, que
- * la corrida cubría de paso y se miden en la suya. Ver vault: Integracion Continua.md §8.
+ * shell. Medido 2026-09-25: 99.33 / 97.36 / 98.73 / 99.61, truncado; sin core, design-system ni
+ * showroom, que la corrida cubría de paso y se miden en la suya. Ver vault: Integracion Continua.md §8.
  */
 export default projectRunner(
   {
-    statements: 96,
-    branches: 92,
-    functions: 91,
-    lines: 96,
+    statements: 99,
+    branches: 97,
+    functions: 98,
+    lines: 99,
   },
-  ['**/design-system/**', '**/core/**'],
+  ['**/design-system/**', '**/core/**', '**/showroom/**'],
 );

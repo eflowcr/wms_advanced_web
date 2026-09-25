@@ -1,12 +1,37 @@
-import type { Routes } from '@angular/router';
+import { inject } from '@angular/core';
+import type { Route, Routes } from '@angular/router';
+import { TranslocoService } from '@jsverse/transloco';
+import { map, type Observable } from 'rxjs';
+import { catalogKeyFor, SHOWROOM_BASE, SHOWROOM_SCOPE } from './catalog';
+
+/**
+ * El diccionario del catálogo antes de dibujar nada: el menú y el título se traducen en
+ * TypeScript. Después, un cambio de idioma lo recarga junto con el raíz (`LanguageService`).
+ */
+function loadCatalogDictionary(): Observable<boolean> {
+  const transloco = inject(TranslocoService);
+  return transloco.load(`${SHOWROOM_SCOPE}/${transloco.getActiveLang()}`).pipe(map(() => true));
+}
+
+/** Cada página se titula con su nombre en el catálogo (WCAG 2.4.2): la pestaña dice cuál es. */
+function withTitles(routes: Routes): Routes {
+  const titled = (route: Route): Route => {
+    const key = catalogKeyFor(`${SHOWROOM_BASE}/${route.path}`);
+    return key === null ? route : { ...route, data: { titleKey: key } };
+  };
+  return routes.map((route) =>
+    route.children === undefined ? route : { ...route, children: route.children.map(titled) },
+  );
+}
 
 /**
  * Rutas perezosas que el shell monta en /design-system. En inglés sin excepción: una ruta es
  * identificador, no texto (Ver vault: Showroom - Especificacion §3, 2026-09-17).
  */
-export const showroomRoutes: Routes = [
+export const showroomRoutes: Routes = withTitles([
   {
     path: '',
+    canActivate: [loadCatalogDictionary],
     loadComponent: async () => (await import('./layout/showroom-layout')).ShowroomLayout,
     children: [
       {
@@ -150,4 +175,4 @@ export const showroomRoutes: Routes = [
       },
     ],
   },
-];
+]);

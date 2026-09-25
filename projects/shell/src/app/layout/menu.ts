@@ -122,8 +122,9 @@ export function routeMatches(url: string, route: string | undefined): boolean {
  * mismo: dos copias darían nombres distintos a la pestaña y al favorito de una pantalla.
  */
 export function menuEntryFor(url: string): MenuEntry | undefined {
+  // Sin ruta no pasa el filtro: routeMatches ya descartó las entradas de grupo.
   return MENU_DESTINATIONS.filter((entry) => routeMatches(url, entry.route)).sort(
-    (a, b) => (b.route?.length ?? 0) - (a.route?.length ?? 0),
+    (a, b) => b.route!.length - a.route!.length,
   )[0];
 }
 

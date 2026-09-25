@@ -1,5 +1,4 @@
-<!-- Showroom solo en español, exento de i18n (compuerta 12): se declara para que el lector de pantalla no lo lea en inglés. -->
-<div class="grid items-start bg-canvas" [class]="gridClasses()" lang="es">
+<div class="grid items-start bg-canvas" [class]="gridClasses()">
   <!--
     <div> y no <aside> ni <main>: el shell ya pone el <main> y un segundo duplica el landmark.
     El único landmark propio es el <nav> de abajo.
@@ -16,10 +15,11 @@
           class="text-h3 text-primary rounded-sm outline-none focus-visible:shadow-(--focus-ring-shadow)"
           routerLink="/design-system"
         >
-          Sistema de diseño
+          {{ 'shell.menu.designSystem' | transloco }}
         </a>
         <p class="text-caption text-secondary">
-          <span class="font-mono">&#64;ewms/design-system</span> v{{ version }}
+          <span class="font-mono">&#64;ewms/design-system</span>
+          {{ 'showroom.layout.version' | transloco: { version } }}
         </p>
       </div>
 
@@ -29,8 +29,8 @@
     -->
       <ewms-favorites-nav
         ground="surface"
-        label="Favoritos"
-        emptyLabel="Marcá una página con ★"
+        [label]="'showroom.layout.favorites' | transloco"
+        [emptyLabel]="'showroom.layout.favoritesEmpty' | transloco"
         [activeRoute]="activeRoute()"
         (favoriteSelect)="onFavorite($event)"
       />
@@ -38,20 +38,22 @@
       <div class="flex flex-col gap-2">
         <ewms-input
           type="search"
-          label="Buscar por nombre o selector"
-          placeholder="boton, ewms-input..."
+          [label]="'showroom.layout.search.label' | transloco"
+          [placeholder]="'showroom.layout.search.placeholder' | transloco"
           data-showroom-search
           [(value)]="query"
         />
         @if (filtering()) {
-          <p class="text-caption text-secondary" role="status">{{ matches() }} resultado(s)</p>
+          <p class="text-caption text-secondary" role="status">
+            {{ 'showroom.layout.search.results' | transloco: { count: matches() } }}
+          </p>
         }
       </div>
 
-      <nav class="flex flex-col gap-5" aria-label="Páginas del catálogo">
+      <nav class="flex flex-col gap-5" [attr.aria-label]="'showroom.layout.pages' | transloco">
         @for (section of sections(); track section.id) {
           <div class="flex flex-col gap-1">
-            <h2 class="text-h4 text-secondary uppercase">{{ section.title }}</h2>
+            <h2 class="text-h4 text-secondary uppercase">{{ section.title | transloco }}</h2>
             <ul class="flex flex-col">
               @for (entry of section.entries; track entry.id) {
                 <li>
@@ -62,11 +64,14 @@
                       [routerLink]="entry.route"
                       [attr.aria-current]="isCurrent(entry) ? 'page' : null"
                     >
-                      {{ entry.name }}
+                      {{ entry.name | transloco }}
                     </a>
                   } @else {
-                    <span class="block px-2 py-1 text-p text-secondary" [attr.title]="entry.note">
-                      {{ entry.name }} {{ statusLabels[entry.status] }}
+                    <span
+                      class="block px-2 py-1 text-p text-secondary"
+                      [attr.title]="entry.note | transloco"
+                    >
+                      {{ entry.name | transloco }} {{ statusLabels[entry.status] | transloco }}
                     </span>
                   }
                 </li>
@@ -75,7 +80,7 @@
           </div>
         }
         @if (matches() === 0) {
-          <p class="text-p text-secondary">Nada coincide con la búsqueda.</p>
+          <p class="text-p text-secondary">{{ 'showroom.layout.search.none' | transloco }}</p>
         }
       </nav>
     </div>
@@ -92,10 +97,10 @@
   <div class="flex min-w-0 flex-col gap-4" [class]="wide() ? 'p-8' : 'p-4'">
     @if (!wide()) {
       <!-- El selector del sistema, que busca: el catálogo tiene más de siete páginas. -->
-      <nav aria-label="Páginas del catálogo" data-catalog-picker>
+      <nav [attr.aria-label]="'showroom.layout.pages' | transloco" data-catalog-picker>
         <ewms-select
-          label="Ir a una página del catálogo"
-          [options]="pages"
+          [label]="'showroom.layout.picker' | transloco"
+          [options]="pages()"
           [value]="activeRoute()"
           (valueChange)="go($any($event))"
         />

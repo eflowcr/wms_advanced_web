@@ -1,6 +1,6 @@
 import { Dialog, type DialogConfig, type DialogRef } from '@angular/cdk/dialog';
 import type { ComponentType } from '@angular/cdk/portal';
-import { inject, Injectable } from '@angular/core';
+import { inject, Injectable, type Injector } from '@angular/core';
 import { ConfirmDialog } from './confirm-dialog';
 import { DialogContainer } from './dialog-container';
 import {
@@ -22,6 +22,11 @@ export interface OpenDialogOptions<D> {
   readonly ariaLabel?: string;
   /** Id del encabezado; preferido sobre `ariaLabel`. */
   readonly ariaLabelledBy?: string;
+  /**
+   * El inyector de quien abre: el componente ve los textos y servicios de su pantalla. Sin él,
+   * solo los de la raíz, y un formulario queda sin los `EWMS_FORM_MESSAGES` que provee el layout.
+   */
+  readonly injector?: Injector;
 }
 
 /**
@@ -63,6 +68,7 @@ export class DialogService {
       ...(options.data === undefined ? {} : { data: options.data }),
       ...(options.ariaLabel === undefined ? {} : { ariaLabel: options.ariaLabel }),
       ...(options.ariaLabelledBy === undefined ? {} : { ariaLabelledBy: options.ariaLabelledBy }),
+      ...(options.injector === undefined ? {} : { injector: options.injector }),
     });
 
     this.wireDismissal(ref, dismissOnBackdrop, undefined);

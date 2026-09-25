@@ -1,85 +1,55 @@
-import { Injector, signal } from '@angular/core';
-import { EWMS_FAVORITE_LABELS, type FavoriteLabelResolver } from '@ewms/design-system';
+import { Component, EnvironmentInjector, inject, Injector, signal } from '@angular/core';
+import { TestBed } from '@angular/core/testing';
 import {
-  FILTER_CHIPS_MESSAGES,
-  FORM_MESSAGES,
-  PAGINATION_MESSAGES,
-  provideShowroomDesignSystem,
-  SELECT_MESSAGES,
-  TABLE_FORMATTERS,
-  TABLE_MESSAGES,
-} from './showroom.providers';
+  DialogService,
+  EWMS_FAVORITE_LABELS,
+  EWMS_FORM_MESSAGES,
+  EWMS_SHORTCUT_MAP,
+  EWMS_TABLE_MESSAGES,
+  type FavoriteLabelResolver,
+} from '@ewms/design-system';
+import { provideI18nTesting } from '@ewms/testing';
+import { TranslocoService } from '@jsverse/transloco';
+import { firstValueFrom } from 'rxjs';
+import { provideShipmentCodeMessage, SHIPMENT_CODE } from './pages/patterns/expedicion.rules';
+import { provideShowroomDesignSystem } from './showroom.providers';
+import {
+  loadShowroomScope,
+  provideDesignSystemTextsTesting,
+  SHOWROOM_DICTIONARIES,
+  useSpanishBrowser,
+} from './showroom.testing';
+import { SHOWROOM_SHORTCUT_MAP } from './shortcuts.map';
 
-// Los diccionarios del catálogo prueban que el patrón de tokens funciona dos veces: el shell
-// llena las mismas interfaces desde `core/i18n` y acá con `Intl` y literales.
-describe('the showroom dictionaries', () => {
-  describe('formatters', () => {
-    it('turns a number into text, and takes a numeric string too', () => {
-      // El separador no se afirma: este Node trae ICU recortado y `Intl` cae al locale raíz
-      // (`1200` sin separador). La agrupación visible la verifica e2e en el navegador.
-      expect(TABLE_FORMATTERS.number(1200)).toContain('1');
-      expect(TABLE_FORMATTERS.number(1200)).toContain('200');
-      expect(TABLE_FORMATTERS.number('900')).toContain('900');
-    });
+async function start(): Promise<EnvironmentInjector> {
+  useSpanishBrowser();
+  TestBed.configureTestingModule({
+    providers: [provideI18nTesting(SHOWROOM_DICTIONARIES), provideDesignSystemTextsTesting()],
+  });
+  await loadShowroomScope();
+  return TestBed.inject(EnvironmentInjector);
+}
 
-    it('formats an ISO date', () => {
-      // Día y mes con dos dígitos: en columna se leen alineados. La forma y no el orden: con el ICU
-      // recortado de Node el orden cae al locale raíz; el orden español lo afirma e2e.
-      expect(TABLE_FORMATTERS.date('2026-01-05')).toMatch(/^\d{2}\/\d{2}\/2026$/);
-    });
+/** Cambia de idioma con el diccionario del catálogo ya cargado, como hace `LanguageService`. */
+async function switchTo(lang: 'es' | 'en'): Promise<void> {
+  const transloco = TestBed.inject(TranslocoService);
+  await firstValueFrom(transloco.load(lang));
+  await firstValueFrom(transloco.load(`showroom/${lang}`));
+  transloco.setActiveLang(lang);
+}
 
-    it('RETURNS THE RAW VALUE RATHER THAN "Invalid Date"', () => {
-      // La fuente puede traer formas inesperadas: el texto crudo es información;
-      // «Invalid Date» es la tabla culpando al dato.
-      expect(TABLE_FORMATTERS.date('mañana')).toBe('mañana');
-      expect(TABLE_FORMATTERS.number('no es un número')).toBe('no es un número');
-    });
+describe('provideShowroomDesignSystem', () => {
+  afterEach(() => vi.restoreAllMocks());
 
-    it('shows nothing for nothing, rather than a zero or the word null', () => {
-      for (const empty of [null, undefined, '']) {
-        expect(TABLE_FORMATTERS.date(empty)).toBe('');
-        expect(TABLE_FORMATTERS.number(empty)).toBe('');
-      }
-    });
+  it('leaves the design-system texts to the application: it provides no EWMS_*_MESSAGES', () => {
+    const alone = Injector.create({ providers: provideShowroomDesignSystem() });
+    expect(alone.get(EWMS_TABLE_MESSAGES, null)).toBeNull();
+    expect(alone.get(EWMS_FORM_MESSAGES, null)).toBeNull();
   });
 
-  describe('messages', () => {
-    it('counts pages and rows in words', () => {
-      expect(PAGINATION_MESSAGES.pageOf(2, 5)).toBe('Página 2 de 5');
-      expect(PAGINATION_MESSAGES.rowsTotal(1)).toBe('1 fila');
-      expect(PAGINATION_MESSAGES.rowsTotal(12)).toBe('12 filas');
-    });
-
-    it('says what the toolbar filters, and how much of a set is chosen', () => {
-      expect(TABLE_MESSAGES.filters(0)).toBe('Filtros');
-      expect(TABLE_MESSAGES.filters(2)).toBe('Filtros (2)');
-      expect(FILTER_CHIPS_MESSAGES.removeFilter('Estado')).toBe('Quitar el filtro Estado');
-      expect(TABLE_MESSAGES.setSummary('Estado', 4, 4)).toBe('Estado: todos');
-      expect(TABLE_MESSAGES.setSummary('Estado', 2, 4)).toBe('Estado: 2 de 4');
-      expect(TABLE_MESSAGES.setSummary('Estado', 0, 4)).toBe('Estado: ninguno');
-    });
-
-    it('words the status bar: rows, selection, copies and each kind of aggregate', () => {
-      expect(TABLE_MESSAGES.rowsShown(12, 340)).toBe('12 de 340 filas');
-      expect(TABLE_MESSAGES.rowsShown(12, null)).toBe('12 filas');
-      expect(TABLE_MESSAGES.selectedCount(1)).toBe('1 seleccionada');
-      expect(TABLE_MESSAGES.selectedCount(3)).toBe('3 seleccionadas');
-      expect(TABLE_MESSAGES.copied(1)).toBe('1 fila copiada');
-      expect(TABLE_MESSAGES.copied(4)).toBe('4 filas copiadas');
-      expect(TABLE_MESSAGES.aggregate('sum', 'Bultos', 'selected')).toBe('Bultos seleccionados');
-      expect(TABLE_MESSAGES.aggregate('avg', 'Bultos', 'shown')).toBe('Promedio de bultos en pantalla');
-      expect(TABLE_MESSAGES.aggregate('count', 'Bultos', 'shown')).toBe('Filas con bultos en pantalla');
-    });
-
-    it('says how many results, with or without a total', () => {
-      // `null` es un total legítimo y el mensaje lo refleja.
-      expect(SELECT_MESSAGES.results(3, 340)).toBe('3 de 340 resultados');
-      expect(SELECT_MESSAGES.results(3, null)).toBe('3 resultados');
-    });
-
-    it('repeats the text that was searched', () => {
-      expect(SELECT_MESSAGES.noResults('caja')).toContain('caja');
-    });
+  it('keeps its own shortcut map, which registers `create` without the shell', () => {
+    const alone = Injector.create({ providers: provideShowroomDesignSystem() });
+    expect(alone.get(EWMS_SHORTCUT_MAP)).toBe(SHOWROOM_SHORTCUT_MAP);
   });
 });
 
@@ -88,9 +58,15 @@ describe('the showroom dictionaries', () => {
 describe("the showroom's favourite labels", () => {
   const BUTTON = '/design-system/components/button';
 
-  function resolverUnder(parent?: FavoriteLabelResolver): FavoriteLabelResolver {
+  afterEach(() => vi.restoreAllMocks());
+
+  function resolverUnder(
+    environment: EnvironmentInjector,
+    parent?: FavoriteLabelResolver,
+  ): FavoriteLabelResolver {
     const above = Injector.create({
       providers: parent === undefined ? [] : [{ provide: EWMS_FAVORITE_LABELS, useValue: parent }],
+      parent: environment,
     });
     return Injector.create({ providers: provideShowroomDesignSystem(), parent: above }).get(
       EWMS_FAVORITE_LABELS,
@@ -102,42 +78,88 @@ describe("the showroom's favourite labels", () => {
     iconFor: (route) => (route === '/catalogos/articulos' ? 'package' : null),
   };
 
-  it('names a catalogue page by its entry, whatever is above', () => {
-    expect(resolverUnder().labelFor(BUTTON)()).toBe('Botón');
-    expect(resolverUnder(application).labelFor(BUTTON)()).toBe('Botón');
+  it('names a catalogue page by its entry, whatever is above', async () => {
+    const environment = await start();
+    expect(resolverUnder(environment).labelFor(BUTTON)()).toBe('Botón');
+    expect(resolverUnder(environment, application).labelFor(BUTTON)()).toBe('Botón');
     // El catálogo no tiene íconos propios: el bloque dibuja el neutro.
-    expect(resolverUnder(application).iconFor(BUTTON)).toBeNull();
+    expect(resolverUnder(environment, application).iconFor(BUTTON)).toBeNull();
   });
 
-  it("asks the application for a screen that is not the catalogue's", () => {
-    const labels = resolverUnder(application);
+  it('follows the language, without being asked again', async () => {
+    const environment = await start();
+    const label = resolverUnder(environment).labelFor(BUTTON);
+
+    await switchTo('en');
+
+    expect(label()).toBe('Button');
+  });
+
+  it("asks the application for a screen that is not the catalogue's", async () => {
+    const labels = resolverUnder(await start(), application);
     expect(labels.labelFor('/catalogos/articulos')()).toBe('Artículos');
     expect(labels.iconFor('/catalogos/articulos')).toBe('package');
   });
 
-  it('alone, an unknown route resolves to nothing -- and the block shows the route', () => {
-    const labels = resolverUnder();
+  it('alone, an unknown route resolves to nothing -- and the block shows the route', async () => {
+    const labels = resolverUnder(await start());
     expect(labels.labelFor('/no-existe')()).toBe('');
     expect(labels.iconFor('/no-existe')).toBeNull();
   });
 });
 
-describe('los mensajes del formulario', () => {
-  it('escribe un mensaje por kind, con el límite que puso el validador', () => {
-    const write = FORM_MESSAGES.errors;
-    expect(write.required(null)).toBe('Este campo es obligatorio');
-    expect(write.minLength(3)).toBe('Mínimo 3 caracteres');
-    expect(write.maxLength(8)).toBe('Máximo 8 caracteres');
-    expect(write.min(1)).toBe('El mínimo es 1');
-    expect(write.max(999)).toBe('El máximo es 999');
-    expect(write.minDate(new Date(2026, 2, 16))).toBe('La fecha mínima es 16/03/2026');
-    expect(write.maxDate(new Date(2026, 2, 16))).toBe('La fecha máxima es 16/03/2026');
-    expect(write.pattern(null)).toBe('El formato no es el esperado');
-    expect(write.email(null)).toBe('Escribí un correo válido');
-    // Los nueve de Angular más el del proyecto; cualquier otro cae en el genérico.
-    expect(write['shipmentCode']?.(null)).toBe('El código va como EXP-2026-0000');
-    expect(FORM_MESSAGES.customError(null)).toBe('Revisá este campo');
-    expect(FORM_MESSAGES.errorSummary(1)).toBe('Revisá 1 campo');
-    expect(FORM_MESSAGES.errorSummary(3)).toBe('Revisá 3 campos');
+// Donde se usa: en el componente del formulario, en la página o dentro de un diálogo.
+@Component({ template: '', providers: [provideShipmentCodeMessage()] })
+class UsesShipmentCode {
+  readonly messages = inject(EWMS_FORM_MESSAGES);
+}
+
+describe('el mensaje del código de expedición', () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  it('suma su kind a los mensajes de arriba, sin tocar el resto', async () => {
+    const environment = await start();
+    const above = environment.get(EWMS_FORM_MESSAGES);
+    const messages = TestBed.createComponent(UsesShipmentCode).componentInstance.messages;
+
+    expect(messages.errors[SHIPMENT_CODE]?.(null)).toBe('El código tiene la forma EXP-2026-0000');
+    expect(messages.errors.required(null)).toBe(above.errors.required(null));
+    expect(messages.customError(null)).toBe(above.customError(null));
+    expect(messages.errorSummary(3)).toBe(above.errorSummary(3));
+    expect(messages.errorSummaryLabel).toBe(above.errorSummaryLabel);
+    expect(messages.requiredLegend).toBe(above.requiredLegend);
+  });
+
+  it('sigue al idioma: no copia los textos del momento', async () => {
+    await start();
+    const messages = TestBed.createComponent(UsesShipmentCode).componentInstance.messages;
+
+    await switchTo('en');
+
+    expect(messages.errors[SHIPMENT_CODE]?.(null)).toBe('The code looks like EXP-2026-0000');
+  });
+
+  // Como en la aplicación: los textos del sistema los provee el layout, no la raíz, y Alt+N abre el
+  // formulario en un diálogo. Sin el inyector de la pantalla el formulario no llegaba a abrirse.
+  it('también dentro de un diálogo abierto con el inyector de la pantalla', async () => {
+    useSpanishBrowser();
+    TestBed.configureTestingModule({ providers: [provideI18nTesting(SHOWROOM_DICTIONARIES)] });
+    await loadShowroomScope();
+
+    @Component({ template: '', providers: [provideDesignSystemTextsTesting()] })
+    class Screen {
+      readonly injector = inject(Injector);
+    }
+
+    const screen = TestBed.createComponent(Screen).componentInstance;
+    const ref = TestBed.inject(DialogService).open<void, undefined, UsesShipmentCode>(
+      UsesShipmentCode,
+      { injector: screen.injector },
+    );
+    const messages = ref.componentInstance!.messages;
+
+    expect(messages.errors[SHIPMENT_CODE]?.(null)).toBe('El código tiene la forma EXP-2026-0000');
+    expect(messages.errors.required(null)).toBe('Este campo es obligatorio');
+    ref.close();
   });
 });

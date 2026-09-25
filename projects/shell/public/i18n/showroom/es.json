@@ -1,0 +1,144 @@
+{
+  "catalog": {
+    "badge": {
+      "name": "Badge",
+      "note": "Icono y texto, siempre los dos. Nació en la Tabla y se usa fuera de ella."
+    },
+    "banner": {
+      "name": "Banner",
+      "note": "Mensaje en el flujo, cuatro severidades. Info se llama Info y se pinta neutral."
+    },
+    "brand": {
+      "name": "Marca",
+      "note": "Logo, variantes, fondos, tamaño mínimo, área de resguardo y usos incorrectos."
+    },
+    "button": {
+      "name": "Botón",
+      "note": "Cinco variantes, tres tamaños, solo ícono cuadrado y el patrón anti-doble-envío."
+    },
+    "cards": {
+      "name": "Card",
+      "note": "Dos usos bajo un nombre: opción dentro de un grupo, contenedor fuera de él. Lo decide el inyector."
+    },
+    "checkbox": {
+      "name": "Checkbox",
+      "note": "Caja de 18×18 con tercer estado indeterminado, para el «seleccionar todos»."
+    },
+    "colors": {
+      "name": "Color",
+      "note": "Primitivos y semánticos, con el contraste calculado en vivo."
+    },
+    "datePicker": {
+      "name": "Date picker",
+      "note": "Fecha o período en el idioma de la app, escrita o elegida con el teclado. Valor ISO."
+    },
+    "favorites": {
+      "name": "Favoritos",
+      "note": "La estrella y el bloque fijo del sidebar. En memoria hasta que exista el Security Core."
+    },
+    "icons": {
+      "name": "Iconografía",
+      "note": "Catálogo cerrado de 71 iconos Tabler, con el trazo compensado por tamaño."
+    },
+    "input": {
+      "name": "Input",
+      "note": "Cinco tipos, FormValueControl<string>, y la altura compartida con el Botón del mismo tamaño."
+    },
+    "modal": {
+      "name": "Modal / Dialog",
+      "note": "Confirmación como promesa y formulario como componente, sobre el dialog del CDK."
+    },
+    "navigation": {
+      "name": "Navegación",
+      "note": "Rail, pestañas y migas, sincronizadas y sin router. La barra inferior, con su costo escrito."
+    },
+    "pagination": {
+      "name": "Paginación",
+      "note": "Anterior, siguiente y dónde está. Componente propio: la tabla es solo su primer consumidor."
+    },
+    "patternEmpty": {
+      "name": "Estado vacío",
+      "note": "Un componente, cuatro casos: no hay, no coincide, falló, sin permiso. La tabla y el select lo eligen solos."
+    },
+    "patternFilters": {
+      "name": "Filtros",
+      "note": "Filtros de pantalla que van a la fuente y viven en la URL; los chips son los de la tabla."
+    },
+    "patternForm": {
+      "name": "Formulario",
+      "note": "Validar al salir y al enviar, resumen de errores, Ctrl+S y cambios sin guardar. Guardar nunca se deshabilita."
+    },
+    "patternKeyboard": {
+      "name": "Atajos de teclado",
+      "note": "Registro por acción, un solo listener, y la ráfaga de escáner que no dispara nada."
+    },
+    "patternSearchCreateEdit": {
+      "name": "Buscar, crear, editar",
+      "note": "La pantalla de ejemplo: el presupuesto de clics, medido en vivo sobre componentes que ya existían."
+    },
+    "pending": "(pendiente)",
+    "radio": {
+      "name": "Radio",
+      "note": "La misma caja que el Checkbox, agrupada por name nativo y sin tercer estado."
+    },
+    "sections": {
+      "components": "Componentes",
+      "foundations": "Fundamentos",
+      "patterns": "Patrones"
+    },
+    "select": {
+      "name": "Select",
+      "note": "El único selector, y siempre busca: en memoria filtra al escribir; con fuente pagina y resuelve un escaneo."
+    },
+    "spacing": {
+      "name": "Espaciado, radios y elevación",
+      "note": "Base 4, los cinco radios, las tres alturas de control y las tres sombras."
+    },
+    "splitButton": {
+      "name": "Split button",
+      "note": "Acción principal y alternativas a un clic: «Descargar / PDF / Excel / CSV». El menú es el de la Tabla."
+    },
+    "table": {
+      "name": "Tabla de datos",
+      "note": "Columnas declaradas, árbol aplanado, filtros por tipo y el teclado de un treegrid."
+    },
+    "text": {
+      "name": "Texto",
+      "note": "Las siete variantes semánticas, y por qué el nivel visual no se separa del nivel del documento."
+    },
+    "toast": {
+      "name": "Toast",
+      "note": "Cola compartida con una sola región viva. Es un servicio, no una etiqueta."
+    },
+    "toggle": {
+      "name": "Toggle",
+      "note": "Pista de 44×24 con pulgar de 20. Aplica al tocar: si hay un Guardar al lado, va Checkbox."
+    },
+    "tooltip": {
+      "name": "Tooltip",
+      "note": "Directiva, no componente. Las tres reglas de la 1.4.13 y la trampa del nombre disabled."
+    },
+    "typography": {
+      "name": "Tipografía",
+      "note": "Montserrat y la escala H1-H4 / P / Caption / Mono, al tamaño real."
+    }
+  },
+  "form": {
+    "errors": {
+      "shipmentCode": "El código tiene la forma EXP-2026-0000"
+    }
+  },
+  "layout": {
+    "favorites": "Favoritos en el catálogo",
+    "favoritesEmpty": "Marque una página con ★",
+    "pages": "Páginas del catálogo",
+    "picker": "Ir a una página del catálogo",
+    "search": {
+      "label": "Buscar por nombre o selector",
+      "none": "Nada coincide con la búsqueda.",
+      "placeholder": "botón, ewms-input…",
+      "results": "{count, plural, one {# resultado} other {# resultados}}"
+    },
+    "version": "v{{ version }}"
+  }
+}

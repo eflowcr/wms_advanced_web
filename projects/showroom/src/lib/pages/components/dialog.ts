@@ -144,6 +144,13 @@ const PROPS: readonly PropRow[] = [
     default: 'undefined',
     description: 'El id del encabezado dentro del componente. Preferible a ariaLabel.',
   },
+  {
+    name: '· injector',
+    type: 'Injector',
+    default: 'la raíz',
+    description:
+      'El de la pantalla que abre: el componente ve sus textos y servicios. Un formulario lo necesita.',
+  },
 ];
 
 const ANATOMY = [

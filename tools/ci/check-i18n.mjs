@@ -3,7 +3,8 @@
  *
  *   1. Claves usadas contra definidas (`transloco-keys-manager find`), en los dos
  *      sentidos. Una clave armada por concatenación aparece como sobrante.
- *   2. Todo diccionario tiene exactamente las claves del diccionario por defecto.
+ *   2. Todo diccionario tiene exactamente las claves del diccionario por defecto de su grupo:
+ *      el raíz y cada scope (`<scope>/<lang>.json`) se comparan por separado.
  *   3. Formato canónico como un lockfile (claves ordenadas, 2 espacios, LF, salto final;
  *      lo arregla `npm run i18n:format`), segmentos en camelCase, hojas no vacías e ICU
  *      válido según el intérprete de @ewms/core, que se importa para no discrepar.
@@ -33,18 +34,22 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '.
 const SCAN_DIR = 'projects';
 export const TRANSLATIONS_DIR = 'projects/shell/public/i18n';
 
-/** Rutas que la regla 12 no mira. Cada entrada lleva su razón escrita al lado. */
+/**
+ * Rutas que la regla 12 no mira, y en qué control: `keys` (claves usadas contra definidas) o
+ * `templates` (texto quemado). Cada entrada lleva su razón escrita al lado.
+ */
 const EXEMPT = [
   {
     prefix: 'projects/showroom/',
+    controls: ['templates'],
     reason:
-      'The showroom is an internal development tool, not product UI: translating it is cost ' +
-      'with no reader (decided 2026-09-15, Showroom - Especificacion.md §8). The exemption ' +
-      'covers only the text of the catalogue pages themselves; text a component shows to ' +
-      'an end user still arrives translated from its consumer.',
+      'The catalogue is being moved to its own dictionary scope (user decision 2026-09-25, ' +
+      'Showroom - Especificacion.md §8): its keys are already checked; its pages keep this ' +
+      'exemption from the template check only until they are keyed, in this same branch.',
   },
   {
     prefix: 'projects/testing/',
+    controls: ['keys', 'templates'],
     reason: 'Dev-only test support. Never rendered to a user and never shipped.',
   },
 ];
@@ -70,8 +75,10 @@ const KEY_SEGMENT = /^[a-z][a-zA-Z0-9]*$/;
 
 // ------------------------------------------------------------------ utilidades
 
-function isExempt(file) {
-  return EXEMPT.some(({ prefix }) => file.startsWith(prefix));
+function isExempt(file, control) {
+  return EXEMPT.some(
+    ({ prefix, controls }) => controls.includes(control) && file.startsWith(prefix),
+  );
 }
 
 async function listFiles(dir, extensions) {
@@ -139,6 +146,37 @@ export function compareKeySets(reference, other) {
     missing: [...referenceKeys].filter((key) => !otherKeys.has(key)).sort(),
     extra: [...otherKeys].filter((key) => !referenceKeys.has(key)).sort(),
   };
+}
+
+/**
+ * Agrupa los diccionarios por scope: `es.json` es del raíz (scope null), `showroom/es.json` del
+ * scope `showroom`. Cada grupo necesita un archivo por idioma de LANGUAGES, y nada más.
+ */
+export function dictionaryGroups(paths, languages = LANGUAGES) {
+  const groups = new Map([[null, new Map()]]);
+  const problems = [];
+  for (const relative of paths) {
+    const parts = relative.split('/');
+    const lang = parts.pop().replace(/\.json$/, '');
+    const scope = parts.length ? parts.join('/') : null;
+    if (!languages.includes(lang)) {
+      problems.push(`${relative}: '${lang}' is not a language in LANGUAGES.`);
+      continue;
+    }
+    if (!groups.has(scope)) {
+      groups.set(scope, new Map());
+    }
+    groups.get(scope).set(lang, relative);
+  }
+  for (const [scope, files] of groups) {
+    for (const lang of languages.filter((candidate) => !files.has(candidate))) {
+      problems.push(
+        `${scope === null ? '' : `${scope}/`}${lang}.json is missing. Every language in LANGUAGES ` +
+          'needs its dictionary, in the root and in every scope.',
+      );
+    }
+  }
+  return { groups, problems };
 }
 
 // -------------------------------------------- control 3: formato y estructura
@@ -265,25 +303,29 @@ async function hostPages() {
 
 // ------------------------------------------------------------------ compuerta
 
+/** Los diccionarios leídos, por grupo: `[{ scope, dictionaries: Map<lang, { file, raw, data }> }]`. */
 async function readDictionaries() {
   const problems = [];
-  const dictionaries = new Map();
-  for (const lang of LANGUAGES) {
-    const file = `${TRANSLATIONS_DIR}/${lang}.json`;
-    let raw;
-    try {
-      raw = await readFile(path.join(ROOT, file), 'utf8');
-    } catch {
-      report(problems, file, 0, `is missing. Every language in LANGUAGES needs its dictionary.`);
-      continue;
+  const paths = (await listFiles(TRANSLATIONS_DIR, new Set(['.json']))).map((file) =>
+    file.slice(TRANSLATIONS_DIR.length + 1),
+  );
+  const { groups, problems: layout } = dictionaryGroups(paths);
+  layout.forEach((message) => report(problems, TRANSLATIONS_DIR, 0, message));
+  const result = [];
+  for (const [scope, files] of groups) {
+    const dictionaries = new Map();
+    for (const [lang, relative] of files) {
+      const file = `${TRANSLATIONS_DIR}/${relative}`;
+      const raw = await readFile(path.join(ROOT, file), 'utf8');
+      try {
+        dictionaries.set(lang, { file, raw, data: JSON.parse(raw.replace(/^\uFEFF/, '')) });
+      } catch (error) {
+        report(problems, file, 0, `is not valid JSON: ${error.message}`);
+      }
     }
-    try {
-      dictionaries.set(lang, { file, raw, data: JSON.parse(raw.replace(/^\uFEFF/, '')) });
-    } catch (error) {
-      report(problems, file, 0, `is not valid JSON: ${error.message}`);
-    }
+    result.push({ scope, dictionaries });
   }
-  return { dictionaries, problems };
+  return { groups: result, problems };
 }
 
 /**
@@ -294,7 +336,7 @@ async function readDictionaries() {
 async function checkUsedKeys() {
   const problems = [];
   const sources = (await listFiles(SCAN_DIR, new Set(['.ts', '.html']))).filter(
-    (file) => !isTestFile(file) && !isExempt(file),
+    (file) => !isTestFile(file) && !isExempt(file, 'keys'),
   );
   const mirror = await mkdtemp(path.join(tmpdir(), 'ewms-i18n-'));
   try {
@@ -342,7 +384,12 @@ async function checkUsedKeys() {
   return problems;
 }
 
-function checkSameKeys(dictionaries) {
+/** Control 2 sobre todos los grupos: cada uno contra el diccionario por defecto de su grupo. */
+export function checkSameKeys(groups) {
+  return groups.flatMap(({ scope, dictionaries }) => checkGroupKeys(scope, dictionaries));
+}
+
+function checkGroupKeys(scope, dictionaries) {
   const problems = [];
   const reference = dictionaries.get(DEFAULT_LANGUAGE);
   if (!reference) {
@@ -372,14 +419,18 @@ function checkSameKeys(dictionaries) {
   }
   if (!problems.length) {
     const count = flattenKeys(reference.data).length;
-    console.log(`i18n: ${[...dictionaries.keys()].join(', ')} share the same ${count} keys.`);
+    const where = scope === null ? 'root' : `scope ${scope}`;
+    console.log(
+      `i18n: ${where}: ${[...dictionaries.keys()].join(', ')} share the same ${count} keys.`,
+    );
   }
   return problems;
 }
 
-async function checkFormat(dictionaries, write) {
+async function checkFormat(groups, write) {
   const problems = [];
-  for (const { file, raw, data } of dictionaries.values()) {
+  const all = groups.flatMap(({ dictionaries }) => [...dictionaries.values()]);
+  for (const { file, raw, data } of all) {
     for (const problem of checkStructure(data)) {
       report(problems, file, 0, problem);
     }
@@ -410,7 +461,7 @@ async function checkTemplates() {
   const problems = [];
   const hosts = new Set(await hostPages());
   const files = (await listFiles(SCAN_DIR, new Set(['.html', '.ts']))).filter(
-    (file) => !isExempt(file) && !isTestFile(file) && !hosts.has(file),
+    (file) => !isExempt(file, 'templates') && !isTestFile(file) && !hosts.has(file),
   );
   let templates = 0;
   for (const file of files) {
@@ -433,7 +484,9 @@ async function checkTemplates() {
   if (!problems.length) {
     console.log(
       `i18n: no hardcoded text in ${templates} template(s) ` +
-        `(exempt: ${EXEMPT.map(({ prefix }) => prefix).join(', ')}; host pages: ${[...hosts].join(', ')}).`,
+        `(exempt: ${EXEMPT.filter(({ controls }) => controls.includes('templates'))
+          .map(({ prefix }) => prefix)
+          .join(', ')}; host pages: ${[...hosts].join(', ')}).`,
     );
   }
   return problems;
@@ -441,14 +494,14 @@ async function checkTemplates() {
 
 async function main() {
   const write = process.argv.includes('--write');
-  const { dictionaries, problems } = await readDictionaries();
+  const { groups, problems } = await readDictionaries();
   if (write) {
-    problems.push(...(await checkFormat(dictionaries, true)));
+    problems.push(...(await checkFormat(groups, true)));
   } else {
     problems.push(
       ...(await checkUsedKeys()),
-      ...checkSameKeys(dictionaries),
-      ...(await checkFormat(dictionaries, false)),
+      ...checkSameKeys(groups),
+      ...(await checkFormat(groups, false)),
       ...(await checkTemplates()),
     );
   }

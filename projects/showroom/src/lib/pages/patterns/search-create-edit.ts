@@ -6,6 +6,7 @@ import {
   DestroyRef,
   ElementRef,
   inject,
+  Injector,
   signal,
   viewChild,
 } from '@angular/core';
@@ -55,6 +56,7 @@ const FLOW_CONTROLS =
 })
 export class ShowroomSearchCreateEdit {
   private readonly dialogs = inject(DialogService);
+  private readonly injector = inject(Injector);
   private readonly toasts = inject(ToastService);
   private readonly shortcuts = inject(KeyboardShortcuts);
 
@@ -129,7 +131,7 @@ export class ShowroomSearchCreateEdit {
 
     const ref = this.dialogs.open<ExpedicionDraft | undefined, ExpedicionDraft, ExpedicionForm>(
       ExpedicionForm,
-      { data: draft, ariaLabelledBy: 'ewms-expedicion-form-title' },
+      { data: draft, ariaLabelledBy: 'ewms-expedicion-form-title', injector: this.injector },
     );
 
     const result = await new Promise<ExpedicionDraft | undefined>((resolve) => {

@@ -1,0 +1,144 @@
+{
+  "catalog": {
+    "badge": {
+      "name": "Badge",
+      "note": "Icon and text, always both. Born in the Table and used outside it."
+    },
+    "banner": {
+      "name": "Banner",
+      "note": "A message in the flow, four severities. Info is called Info and painted neutral."
+    },
+    "brand": {
+      "name": "Brand",
+      "note": "Logo, variants, backgrounds, minimum size, clear space and misuse."
+    },
+    "button": {
+      "name": "Button",
+      "note": "Five variants, three sizes, a square icon-only box and the double-submit guard."
+    },
+    "cards": {
+      "name": "Card",
+      "note": "Two uses under one name: an option inside a group, a container outside it. The injector decides."
+    },
+    "checkbox": {
+      "name": "Checkbox",
+      "note": "An 18×18 box with a third, indeterminate state, for “select all”."
+    },
+    "colors": {
+      "name": "Colour",
+      "note": "Primitive and semantic tokens, with the contrast worked out live."
+    },
+    "datePicker": {
+      "name": "Date picker",
+      "note": "A date or a period in the app’s language, typed or picked with the keyboard. ISO value."
+    },
+    "favorites": {
+      "name": "Favourites",
+      "note": "The star and the fixed block in the sidebar. In memory until the Security Core exists."
+    },
+    "icons": {
+      "name": "Iconography",
+      "note": "A closed catalogue of 71 Tabler icons, with the stroke compensated by size."
+    },
+    "input": {
+      "name": "Input",
+      "note": "Five types, FormValueControl<string>, and the height it shares with the Button of the same size."
+    },
+    "modal": {
+      "name": "Modal / Dialog",
+      "note": "A confirmation as a promise and a form as a component, on top of the CDK dialog."
+    },
+    "navigation": {
+      "name": "Navigation",
+      "note": "Rail, tabs and breadcrumbs, in step and without a router. The bottom bar, with its cost written down."
+    },
+    "pagination": {
+      "name": "Pagination",
+      "note": "Previous, next and where you are. A component of its own: the table is just its first consumer."
+    },
+    "patternEmpty": {
+      "name": "Empty state",
+      "note": "One component, four cases: nothing there, no match, failed, no permission. The table and the select pick it themselves."
+    },
+    "patternFilters": {
+      "name": "Filters",
+      "note": "Screen filters that go to the source and live in the URL; the chips are the table’s."
+    },
+    "patternForm": {
+      "name": "Form",
+      "note": "Validate on leaving a field and on submit, an error summary, Ctrl+S and unsaved changes. Save is never disabled."
+    },
+    "patternKeyboard": {
+      "name": "Keyboard shortcuts",
+      "note": "Registration by action, a single listener, and the scanner burst that triggers nothing."
+    },
+    "patternSearchCreateEdit": {
+      "name": "Search, create, edit",
+      "note": "The sample screen: the click budget, measured live on components that already existed."
+    },
+    "pending": "(pending)",
+    "radio": {
+      "name": "Radio",
+      "note": "The same box as the Checkbox, grouped by the native name and with no third state."
+    },
+    "sections": {
+      "components": "Components",
+      "foundations": "Foundations",
+      "patterns": "Patterns"
+    },
+    "select": {
+      "name": "Select",
+      "note": "The only picker, and it always searches: in memory it filters as you type; with a source it pages and resolves a scan."
+    },
+    "spacing": {
+      "name": "Spacing, radii and elevation",
+      "note": "A base of 4, the five radii, the three control heights and the three shadows."
+    },
+    "splitButton": {
+      "name": "Split button",
+      "note": "A main action and its alternatives one click away: “Download / PDF / Excel / CSV”. The menu is the Table’s."
+    },
+    "table": {
+      "name": "Data table",
+      "note": "Declared columns, a flattened tree, filters by type and the keyboard of a treegrid."
+    },
+    "text": {
+      "name": "Text",
+      "note": "The seven semantic variants, and why the visual level is not split from the document level."
+    },
+    "toast": {
+      "name": "Toast",
+      "note": "A shared queue with a single live region. It is a service, not a tag."
+    },
+    "toggle": {
+      "name": "Toggle",
+      "note": "A 44×24 track with a 20 thumb. It applies on touch: if there is a Save next to it, it should be a Checkbox."
+    },
+    "tooltip": {
+      "name": "Tooltip",
+      "note": "A directive, not a component. The three rules of 1.4.13 and the trap of the name disabled."
+    },
+    "typography": {
+      "name": "Typography",
+      "note": "Montserrat and the H1-H4 / P / Caption / Mono scale, at actual size."
+    }
+  },
+  "form": {
+    "errors": {
+      "shipmentCode": "The code looks like EXP-2026-0000"
+    }
+  },
+  "layout": {
+    "favorites": "Favourites in the catalogue",
+    "favoritesEmpty": "Mark a page with ★",
+    "pages": "Catalogue pages",
+    "picker": "Go to a catalogue page",
+    "search": {
+      "label": "Search by name or selector",
+      "none": "Nothing matches the search.",
+      "placeholder": "button, ewms-input…",
+      "results": "{count, plural, one {# result} other {# results}}"
+    },
+    "version": "v{{ version }}"
+  }
+}

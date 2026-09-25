@@ -31,7 +31,7 @@ import { DemoFrame } from '../../ui/demo-frame';
 import { DocTable } from '../../ui/doc-table';
 import { PropTable, type PropRow } from '../../ui/prop-table';
 import { ESTADO_OPTIONS } from './expedicion-form';
-import { numberRange, shipmentCode } from './expedicion.rules';
+import { numberRange, provideShipmentCodeMessage, shipmentCode } from './expedicion.rules';
 
 const ALMACENES: readonly SelectOption[] = [
   { value: 'central', label: 'Central' },
@@ -117,6 +117,7 @@ interface AltaExpedicion {
     Toggle,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  providers: [provideShipmentCodeMessage()],
 })
 export class ShowroomForm {
   private readonly injector = inject(Injector);

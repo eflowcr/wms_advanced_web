@@ -15,12 +15,13 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { filter, map, startWith } from 'rxjs';
 import { DESIGN_SYSTEM_VERSION, FavoritesNav, Input, Select, Viewport } from '@ewms/design-system';
 import type { Favorite, SelectOption } from '@ewms/design-system';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { CATALOG, countEntries, filterCatalog, STATUS_LABELS, type CatalogEntry } from '../catalog';
 
 /** Toda entrada con página, para el selector de pantallas angostas. */
-const PAGES: readonly SelectOption[] = CATALOG.flatMap((section) => section.entries)
-  .filter((entry) => entry.route !== null)
-  .map((entry) => ({ label: entry.name, value: entry.route }));
+const WITH_PAGE = CATALOG.flatMap((section) => section.entries).filter(
+  (entry) => entry.route !== null,
+);
 
 /** La primera entrada de cada ruta: es la única que se marca como actual. */
 const FIRST_BY_ROUTE = new Map<string, string>();
@@ -38,7 +39,7 @@ import { provideShowroomDesignSystem } from '../showroom.providers';
 @Component({
   selector: 'ewms-showroom-layout',
   templateUrl: './showroom-layout.html',
-  imports: [RouterLink, RouterOutlet, FavoritesNav, Input, Select],
+  imports: [RouterLink, RouterOutlet, FavoritesNav, Input, Select, TranslocoPipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   // Diccionarios en el componente y no en la ruta: el inyector de elemento se recorre antes que
   // el de entorno, y en la ruta perdían contra los de `MainLayout` (se vio «Select the row» en la
@@ -52,10 +53,22 @@ export class ShowroomLayout {
 
   private readonly router = inject(Router);
   private readonly document = inject(DOCUMENT);
+  private readonly transloco = inject(TranslocoService);
+
+  /** Leída por lo que se traduce en TypeScript, para seguir un cambio de idioma sin recargar. */
+  private readonly lang = toSignal(this.transloco.langChanges$, {
+    initialValue: this.transloco.getActiveLang(),
+  });
   private readonly sidebar = viewChild<ElementRef<HTMLElement>>('sidebar');
 
   protected readonly wide = inject(Viewport).isWide;
-  protected readonly pages = PAGES;
+  protected readonly pages = computed<readonly SelectOption[]>(() => {
+    this.lang();
+    return WITH_PAGE.map((entry) => ({
+      label: this.transloco.translate(entry.name),
+      value: entry.route,
+    }));
+  });
 
   protected readonly gridClasses = computed(() =>
     this.wide() ? 'grid-cols-[17rem_minmax(0,1fr)]' : 'grid-cols-1',
@@ -85,8 +98,14 @@ export class ShowroomLayout {
 
   protected readonly query = signal('');
 
-  /** El catálogo filtrado. Una sola lista: la barra lateral no se desvía del índice. */
-  protected readonly sections = computed(() => filterCatalog(this.query()));
+  /**
+   * El catálogo filtrado por el nombre en el idioma activo y por el selector. Una sola lista: la
+   * barra lateral no se desvía del índice.
+   */
+  protected readonly sections = computed(() => {
+    this.lang();
+    return filterCatalog(this.query(), (entry) => this.transloco.translate(entry.name));
+  });
   protected readonly matches = computed(() => countEntries(this.sections()));
   protected readonly filtering = computed(() => this.query().trim().length > 0);
 

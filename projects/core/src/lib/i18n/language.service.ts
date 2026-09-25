@@ -7,8 +7,9 @@ import {
   signal,
   type Signal,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TranslocoService } from '@jsverse/transloco';
-import { firstValueFrom } from 'rxjs';
+import { filter, firstValueFrom, forkJoin } from 'rxjs';
 import { DEFAULT_LANGUAGE, isLanguage, LANGUAGES, type Language } from './language.types';
 
 /** Clave de localStorage de la preferencia. */
@@ -45,6 +46,22 @@ export class LanguageService {
   private readonly storage = inject(LANGUAGE_STORAGE);
   private readonly failed = signal<Language | null>(null);
   private request = 0;
+
+  /** Scopes ya cargados (el catálogo, un dominio): un cambio de idioma los trae con el raíz. */
+  private readonly scopes = new Set<string>();
+
+  constructor() {
+    this.transloco.events$
+      .pipe(
+        filter((event) => event.type === 'translationLoadSuccess'),
+        takeUntilDestroyed(),
+      )
+      .subscribe(({ payload }) => {
+        if (payload.scope) {
+          this.scopes.add(payload.scope);
+        }
+      });
+  }
 
   readonly languages: readonly Language[] = LANGUAGES;
 
@@ -108,14 +125,16 @@ export class LanguageService {
   }
 
   /**
-   * Carga antes de cambiar, sin un cuadro con texto faltante. Una llamada adelantada dice
-   * 'overtaken' aunque haya fallado: solo la última habla por lo que hay en pantalla.
+   * Carga antes de cambiar, sin un cuadro con texto faltante: el diccionario raíz y los scopes ya
+   * cargados, o nada. Una llamada adelantada dice 'overtaken' aunque haya fallado: solo la última
+   * habla por lo que hay en pantalla.
    */
   private async apply(language: Language): Promise<Outcome> {
     const request = ++this.request;
     let loaded = true;
     try {
-      await firstValueFrom(this.transloco.load(language));
+      const scopes = [...this.scopes].map((scope) => this.transloco.load(scope + '/' + language));
+      await firstValueFrom(forkJoin([this.transloco.load(language), ...scopes]));
     } catch {
       // Con el fallback de Transloco apagado, este es el único lugar que maneja el fallo.
       loaded = false;

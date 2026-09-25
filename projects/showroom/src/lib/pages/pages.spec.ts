@@ -1,4 +1,10 @@
-import { provideZonelessChangeDetection, signal, type Type } from '@angular/core';
+import {
+  provideZonelessChangeDetection,
+  signal,
+  type EnvironmentProviders,
+  type Provider,
+  type Type,
+} from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { provideRouter, Router } from '@angular/router';
@@ -13,9 +19,17 @@ import {
   type FavoriteLabelResolver,
   type FilterValues,
 } from '@ewms/design-system';
-import { expectNoAxeViolations } from '@ewms/testing';
+import { expectNoAxeViolations, provideI18nTesting } from '@ewms/testing';
+import { TranslocoService } from '@jsverse/transloco';
+import { firstValueFrom } from 'rxjs';
 import { ShowroomLayout } from '../layout/showroom-layout';
 import { provideShowroomDesignSystem } from '../showroom.providers';
+import {
+  loadShowroomScope,
+  provideDesignSystemTextsTesting,
+  SHOWROOM_DICTIONARIES,
+  useSpanishBrowser,
+} from '../showroom.testing';
 import { ShowroomBanner } from './components/banner';
 import { ShowroomButton } from './components/button';
 import { ShowroomCard } from './components/card';
@@ -57,13 +71,26 @@ function provideApplicationFavorites() {
   return [{ provide: EWMS_FAVORITES_STORE, useClass: InMemoryFavoritesStore }, Favorites];
 }
 
+/**
+ * Lo que en la aplicación ponen el shell y la ruta: i18n con los diccionarios reales, los textos
+ * del design system (sin ellos la prueba falla al inyectar, no en una aserción) y el catálogo.
+ */
+function provideCatalogue(): (Provider | EnvironmentProviders)[] {
+  return [
+    provideI18nTesting(SHOWROOM_DICTIONARIES),
+    provideDesignSystemTextsTesting(),
+    provideShowroomDesignSystem(),
+    provideApplicationFavorites(),
+  ];
+}
+
 async function render<T>(component: Type<T>) {
+  useSpanishBrowser();
   await TestBed.configureTestingModule({
     imports: [component],
-    // Los mismos proveedores que instala la ruta. Los textos del DS se proveen por
-    // inyección: sin ellos la prueba falla al inyectar, no en una aserción.
-    providers: [provideRouter([]), provideShowroomDesignSystem(), provideApplicationFavorites()],
+    providers: [provideRouter([]), provideCatalogue()],
   }).compileComponents();
+  await loadShowroomScope();
   const fixture = TestBed.createComponent(component);
   await fixture.whenStable();
   return { fixture, element: fixture.nativeElement as HTMLElement };
@@ -139,9 +166,44 @@ describe('ShowroomLayout', () => {
     expect(element.textContent).toContain('Nada coincide con la búsqueda');
   });
 
-  it('declares Spanish, so a screen reader does not read it with English phonetics', async () => {
+  it('pins no language of its own: the frame speaks the one the application has on', async () => {
     const { element } = await render(ShowroomLayout);
-    expect(element.querySelector('[lang="es"]')).not.toBeNull();
+    expect(element.firstElementChild?.hasAttribute('lang')).toBe(false);
+    expect(element.querySelector('[data-sidebar] a')?.textContent?.trim()).toBe(
+      'Sistema de diseño',
+    );
+  });
+
+  it('finds a page by its name in the active language, and by its selector in any', async () => {
+    const { fixture, element } = await render(ShowroomLayout);
+    const search = element.querySelector<HTMLInputElement>('[data-showroom-search] input')!;
+    const names = () =>
+      [...element.querySelectorAll('[data-sidebar] nav li a')].map((link) =>
+        link.textContent?.trim(),
+      );
+    const transloco = TestBed.inject(TranslocoService);
+    await firstValueFrom(transloco.load('en'));
+    await firstValueFrom(transloco.load('showroom/en'));
+    transloco.setActiveLang('en');
+    await fixture.whenStable();
+
+    search.value = 'button';
+    search.dispatchEvent(new Event('input'));
+    await fixture.whenStable();
+    expect(names()).toContain('Button');
+
+    search.value = 'botón';
+    search.dispatchEvent(new Event('input'));
+    await fixture.whenStable();
+    expect(names()).toEqual([]);
+
+    search.value = 'ewms-select';
+    search.dispatchEvent(new Event('input'));
+    await fixture.whenStable();
+    expect(names()).toEqual(['Select']);
+    expect(element.querySelector('[data-sidebar] [role="status"]')?.textContent?.trim()).toBe(
+      '1 result',
+    );
   });
 
   /** Marca una ruta en la lista de la aplicación, como lo hace la estrella del encabezado. */
@@ -173,14 +235,18 @@ describe('ShowroomLayout', () => {
       labelFor: (route) => signal(route === '/catalogos/articulos' ? 'Artículos' : '').asReadonly(),
       iconFor: () => 'package',
     };
+    useSpanishBrowser();
     await TestBed.configureTestingModule({
       imports: [ShowroomLayout],
       providers: [
         provideRouter([]),
+        provideI18nTesting(SHOWROOM_DICTIONARIES),
+        provideDesignSystemTextsTesting(),
         provideApplicationFavorites(),
         { provide: EWMS_FAVORITE_LABELS, useValue: application },
       ],
     }).compileComponents();
+    await loadShowroomScope();
     const fixture = TestBed.createComponent(ShowroomLayout);
     await fixture.whenStable();
     const element = fixture.nativeElement as HTMLElement;
@@ -232,6 +298,7 @@ describe('ShowroomLayout', () => {
 
   it('the block marks the page you are on, and follows you when you move', async () => {
     // `aria-current` sale de la URL que el layout lee del router; la estrella ya no está acá.
+    useSpanishBrowser();
     await TestBed.configureTestingModule({
       imports: [ShowroomLayout],
       providers: [
@@ -240,10 +307,10 @@ describe('ShowroomLayout', () => {
           { path: 'design-system/components/button', children: [] },
           { path: 'design-system/components/card', children: [] },
         ]),
-        provideShowroomDesignSystem(),
-        provideApplicationFavorites(),
+        provideCatalogue(),
       ],
     }).compileComponents();
+    await loadShowroomScope();
     const router = TestBed.inject(Router);
     await router.navigateByUrl('/design-system/components/button');
 

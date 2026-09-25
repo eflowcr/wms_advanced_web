@@ -9,7 +9,9 @@ import { describe, it } from 'node:test';
 import {
   canonicalJson,
   checkStructure,
+  checkSameKeys,
   compareKeySets,
+  dictionaryGroups,
   findHardcodedText,
   flattenKeys,
   inlineTemplates,
@@ -87,6 +89,65 @@ describe('compareKeySets', () => {
       missing: ['common.actions.cancel'],
       extra: ['common.actions.delete'],
     });
+  });
+});
+
+describe('dictionaryGroups', () => {
+  const LANGS = ['es', 'en'];
+
+  it('groups the root and each scope, one file per language', () => {
+    const { groups, problems } = dictionaryGroups(
+      ['es.json', 'en.json', 'showroom/es.json', 'showroom/en.json'],
+      LANGS,
+    );
+    assert.deepEqual(problems, []);
+    assert.deepEqual(
+      [...groups].map(([scope, files]) => [scope, Object.fromEntries(files)]),
+      [
+        [null, { es: 'es.json', en: 'en.json' }],
+        ['showroom', { es: 'showroom/es.json', en: 'showroom/en.json' }],
+      ],
+    );
+  });
+
+  it('names the language a scope lacks, as it does for the root', () => {
+    const { problems } = dictionaryGroups(['es.json', 'showroom/es.json'], LANGS);
+    assert.deepEqual(problems, [
+      'en.json is missing. Every language in LANGUAGES needs its dictionary, in the root and in every scope.',
+      'showroom/en.json is missing. Every language in LANGUAGES needs its dictionary, in the root and in every scope.',
+    ]);
+  });
+
+  it('rejects a file for a language the application does not have', () => {
+    const { problems } = dictionaryGroups(['es.json', 'en.json', 'showroom/fr.json'], LANGS);
+    assert.deepEqual(problems, ["showroom/fr.json: 'fr' is not a language in LANGUAGES."]);
+  });
+
+  it('compares each scope against its own reference, never against the root', () => {
+    const dictionary = (file, data) => ({ file, raw: '', data });
+    const problems = checkSameKeys([
+      {
+        scope: null,
+        dictionaries: new Map([
+          ['es', dictionary('es.json', { common: { save: 'Guardar' } })],
+          ['en', dictionary('en.json', { common: { save: 'Save' } })],
+        ]),
+      },
+      {
+        scope: 'showroom',
+        dictionaries: new Map([
+          ['es', dictionary('showroom/es.json', { catalog: { button: 'Botón', text: 'Texto' } })],
+          ['en', dictionary('showroom/en.json', { catalog: { button: 'Button' } })],
+        ]),
+      },
+    ]);
+    assert.deepEqual(problems, [
+      {
+        file: 'showroom/en.json',
+        line: 0,
+        message: 'lacks 1 key(s) that showroom/es.json has: catalog.text',
+      },
+    ]);
   });
 });
 

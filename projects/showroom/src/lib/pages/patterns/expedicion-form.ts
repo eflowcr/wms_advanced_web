@@ -10,7 +10,7 @@ import {
   type SelectOption,
 } from '@ewms/design-system';
 import type { EstadoExpedicion } from '../components/expediciones';
-import { shipmentCode } from './expedicion.rules';
+import { provideShipmentCodeMessage, shipmentCode } from './expedicion.rules';
 
 /** Lo que edita el formulario; un registro nuevo llega con los campos en blanco. */
 export interface ExpedicionDraft {
@@ -40,6 +40,7 @@ export const ESTADO_OPTIONS: readonly SelectOption[] = [
   templateUrl: './expedicion-form.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { class: 'contents' },
+  providers: [provideShipmentCodeMessage()],
 })
 export class ExpedicionForm {
   private readonly dialogRef = inject<DialogRef<ExpedicionDraft | undefined>>(DialogRef);

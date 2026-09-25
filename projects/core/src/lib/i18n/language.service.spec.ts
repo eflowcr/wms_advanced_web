@@ -1,8 +1,9 @@
 import { ApplicationInitStatus } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideI18nTesting } from '@ewms/testing';
-import { TranslocoService } from '@jsverse/transloco';
+import { TranslocoService, type Translation } from '@jsverse/transloco';
 import { TranslocoLocaleService } from '@jsverse/transloco-locale';
+import { firstValueFrom } from 'rxjs';
 import {
   DictionaryUnavailableError,
   LANGUAGE_STORAGE,
@@ -62,7 +63,7 @@ function browserLanguage(value: string): void {
 /** Dejar un idioma fuera de los diccionarios hace fallar su carga. */
 async function start(
   storage: Storage = new MemoryStorage(),
-  dictionaries: Partial<typeof DICTIONARIES> = DICTIONARIES,
+  dictionaries: Readonly<Record<string, Translation>> = DICTIONARIES,
 ): Promise<LanguageService> {
   TestBed.configureTestingModule({
     providers: [
@@ -241,6 +242,53 @@ describe('LanguageService', () => {
       browserLanguage('en-US');
 
       await expect(start(storage, {})).rejects.toMatchObject({ language: 'es' });
+    });
+  });
+
+  describe('a scope already loaded (the catalogue, a domain)', () => {
+    const WITH_SCOPE = {
+      ...DICTIONARIES,
+      'showroom/es': { title: 'Catálogo' },
+      'showroom/en': { title: 'Catalogue' },
+    };
+
+    it('comes along with a change of language, so nothing is left half translated', async () => {
+      browserLanguage('es-CR');
+      const service = await start(storage, WITH_SCOPE);
+      const transloco = TestBed.inject(TranslocoService);
+      await firstValueFrom(transloco.load('showroom/es'));
+
+      await service.use('en');
+
+      expect(service.active()).toBe('en');
+      expect(transloco.translate('showroom.title')).toBe('Catalogue');
+    });
+
+    it('is case A when it does not load: the language on screen stays, nothing is saved', async () => {
+      browserLanguage('es-CR');
+      const service = await start(storage, {
+        ...DICTIONARIES,
+        'showroom/es': WITH_SCOPE['showroom/es'],
+      });
+      const transloco = TestBed.inject(TranslocoService);
+      await firstValueFrom(transloco.load('showroom/es'));
+
+      await service.use('en');
+
+      expect(service.active()).toBe('es');
+      expect(transloco.translate('showroom.title')).toBe('Catálogo');
+      expect(storage.getItem(LANGUAGE_STORAGE_KEY)).toBeNull();
+      expect(service.unavailable()).toBe('en');
+    });
+
+    it('is not fetched for a language change until something loads it', async () => {
+      browserLanguage('es-CR');
+      const service = await start(storage, DICTIONARIES);
+
+      await service.use('en');
+
+      expect(service.active()).toBe('en');
+      expect(service.unavailable()).toBeNull();
     });
   });
 

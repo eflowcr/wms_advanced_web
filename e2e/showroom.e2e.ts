@@ -1796,8 +1796,9 @@ test.describe('DS-3 lote C: la tabla', () => {
     const bultos = page.locator(`${ROWS} td:nth-child(5)`);
     const numbers = (await bultos.allTextContents()).map((text) => Number(text.replace(/\D/g, '')));
     const onScreen = numbers.reduce((total, value) => total + value, 0);
+    // es-CR, el locale de la app en español (LANGUAGE_LOCALES): agrupa también los de cuatro cifras.
     await expect(status.locator('[data-aggregate="bultos"]')).toHaveText(
-      `Bultos en pantalla: ${new Intl.NumberFormat('es').format(onScreen)}`,
+      `Bultos en pantalla: ${new Intl.NumberFormat('es-CR').format(onScreen)}`,
     );
 
     const boxes = page.locator(`${ROWS} input[type="checkbox"]`);
@@ -1805,7 +1806,7 @@ test.describe('DS-3 lote C: la tabla', () => {
     await boxes.nth(1).click();
     await expect(status.locator('[data-status-selected]')).toHaveText('2 seleccionadas');
     await expect(status.locator('[data-aggregate="bultos"]')).toHaveText(
-      `Bultos seleccionados: ${new Intl.NumberFormat('es').format(numbers[0]! + numbers[1]!)}`,
+      `Bultos seleccionados: ${new Intl.NumberFormat('es-CR').format(numbers[0]! + numbers[1]!)}`,
     );
   });
 

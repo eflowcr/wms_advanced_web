@@ -31,7 +31,7 @@
 
   @for (section of catalog; track section.id) {
     <section class="flex flex-col gap-4" [attr.aria-labelledby]="'index-' + section.id">
-      <h2 [id]="'index-' + section.id" class="text-h2">{{ section.title }}</h2>
+      <h2 [id]="'index-' + section.id" class="text-h2">{{ section.title | transloco }}</h2>
       <ul class="grid grid-cols-[repeat(auto-fill,minmax(min(18rem,100%),1fr))] gap-3">
         @for (entry of section.entries; track entry.id) {
           <li
@@ -44,19 +44,19 @@
                 <a
                   class="rounded-sm text-primary outline-none focus-visible:shadow-(--focus-ring-shadow)"
                   [routerLink]="entry.route"
-                  >{{ entry.name }}</a
+                  >{{ entry.name | transloco }}</a
                 >
               } @else {
                 <span class="text-secondary">
-                  {{ entry.name }}
-                  <span class="text-caption">{{ statusLabels[entry.status] }}</span>
+                  {{ entry.name | transloco }}
+                  <span class="text-caption">{{ statusLabels[entry.status] | transloco }}</span>
                 </span>
               }
             </p>
             @if (entry.selector) {
               <p class="font-mono text-caption text-secondary">{{ entry.selector }}</p>
             }
-            <p class="text-caption text-secondary">{{ entry.note }}</p>
+            <p class="text-caption text-secondary">{{ entry.note | transloco }}</p>
           </li>
         }
       </ul>

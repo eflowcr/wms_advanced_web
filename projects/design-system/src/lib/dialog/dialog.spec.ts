@@ -1,5 +1,5 @@
 import { DialogModule } from '@angular/cdk/dialog';
-import { Component, inject } from '@angular/core';
+import { Component, inject, InjectionToken, Injector } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { expectNoAxeViolations } from '@ewms/testing';
 import { DialogService } from './dialog.service';
@@ -261,6 +261,32 @@ describe('DialogService', () => {
       host.dialogs.open<string, undefined, FormDialog>(FormDialog, { ariaLabel: 'Editar' });
       await settle();
       expect(box()?.getAttribute('aria-label')).toBe('Editar');
+    });
+
+    // El shell provee los textos del sistema en su layout, no en la raíz: sin el inyector de quien
+    // abre, un formulario en un diálogo quedaba mudo.
+    it('sees what its opener sees when given the opener injector, and only the root without it', async () => {
+      const SCREEN_TEXT = new InjectionToken<string>('screen text');
+
+      @Component({ template: '' })
+      class ReadsScreen {
+        readonly text = inject(SCREEN_TEXT, { optional: true });
+      }
+
+      @Component({ template: '', providers: [{ provide: SCREEN_TEXT, useValue: 'de la pantalla' }] })
+      class Screen {
+        readonly injector = inject(Injector);
+      }
+
+      const screen = TestBed.createComponent(Screen).componentInstance;
+      const inherited = host.dialogs.open<void, undefined, ReadsScreen>(ReadsScreen, {
+        injector: screen.injector,
+      });
+      const alone = host.dialogs.open<void, undefined, ReadsScreen>(ReadsScreen);
+      await settle();
+
+      expect(inherited.componentInstance?.text).toBe('de la pantalla');
+      expect(alone.componentInstance?.text).toBeNull();
     });
   });
 

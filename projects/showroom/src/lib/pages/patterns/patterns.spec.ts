@@ -3,7 +3,14 @@ import { Component } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { SCAN_THRESHOLD_TOKEN, ShortcutsHost } from '@ewms/design-system';
+import { provideI18nTesting } from '@ewms/testing';
 import { provideShowroomDesignSystem } from '../../showroom.providers';
+import {
+  loadShowroomScope,
+  provideDesignSystemTextsTesting,
+  SHOWROOM_DICTIONARIES,
+  useSpanishBrowser,
+} from '../../showroom.testing';
 import { ShowroomKeyboard } from './keyboard';
 import { ShowroomSearchCreateEdit } from './search-create-edit';
 
@@ -55,10 +62,16 @@ describe('the DS-4 pattern pages, driven', () => {
   });
 
   async function mount<T>(host: new () => T): Promise<ComponentFixture<T>> {
+    useSpanishBrowser();
     await TestBed.configureTestingModule({
       imports: [host, DialogModule],
-      providers: [provideRouter([])],
+      providers: [
+        provideRouter([]),
+        provideI18nTesting(SHOWROOM_DICTIONARIES),
+        provideDesignSystemTextsTesting(),
+      ],
     }).compileComponents();
+    await loadShowroomScope();
     const fixture = TestBed.createComponent(host);
     // En el document, para que el foco y el overlay tengan dónde vivir.
     document.body.appendChild(fixture.nativeElement);
