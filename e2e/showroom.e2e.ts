@@ -1442,7 +1442,7 @@ test.describe('el patrón Formulario', () => {
 
     await page.locator(`${DEMO} [data-form-save] button`).click();
     const summary = page.locator('[data-form-errors]');
-    await expect(summary).toContainText('Revisá 4 campos');
+    await expect(summary).toContainText('Revise 4 campos');
     await expect(page.locator('ewms-form-errors')).toBeFocused();
     // Cada campo dice qué le falta, en lugar de su hint.
     await expect(page.locator(`${DEMO} [data-form-codigo] p`)).toHaveText('Este campo es obligatorio');
@@ -1508,7 +1508,7 @@ test.describe('DS-3 lote C: la tabla', () => {
     expect(printed).toBe(snippet.trimEnd().split('\n').length);
     // El techo de la comanda para la demo de expediciones: si falla, se corrige la API, no la página.
     expect(printed).toBeLessThanOrEqual(40);
-    await expect(page.locator('[data-component-lines]')).toHaveText('4');
+    await expect(page.locator('[data-component-lines]')).toHaveText('5');
   });
 
   test('a row is exactly as tall as an input of the same size', async ({ page }) => {

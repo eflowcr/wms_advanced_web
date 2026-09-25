@@ -40,14 +40,6 @@ export const TRANSLATIONS_DIR = 'projects/shell/public/i18n';
  */
 const EXEMPT = [
   {
-    prefix: 'projects/showroom/',
-    controls: ['templates'],
-    reason:
-      'The catalogue is being moved to its own dictionary scope (user decision 2026-09-25, ' +
-      'Showroom - Especificacion.md §8): its keys are already checked; its pages keep this ' +
-      'exemption from the template check only until they are keyed, in this same branch.',
-  },
-  {
     prefix: 'projects/testing/',
     controls: ['keys', 'templates'],
     reason: 'Dev-only test support. Never rendered to a user and never shipped.',

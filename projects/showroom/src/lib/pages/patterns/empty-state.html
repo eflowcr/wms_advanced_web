@@ -1,55 +1,46 @@
-<!-- Showroom solo en español, exento de i18n (compuerta 12): se declara para que el lector de pantalla no lo lea en inglés. -->
-<article class="flex flex-col gap-10" lang="es">
+<article class="flex flex-col gap-10">
   <!-- ============================================================ 1. Encabezado -->
   <header class="flex flex-col gap-2" data-block="1-encabezado">
     <div class="flex flex-wrap items-baseline gap-3">
-      <h1 class="text-h1">Estado vacío</h1>
+      <h1 class="text-h1">{{ 'showroom.catalog.patternEmpty.name' | transloco }}</h1>
       <code class="font-mono text-primary">&lt;ewms-empty-state&gt;</code>
     </div>
     <ul class="flex flex-wrap gap-2 text-caption">
-      <li class="rounded-sm bg-secondary px-2 py-1 text-secondary">
-        Versión <span class="font-mono">{{ version }}</span>
+      <li
+        class="rounded-sm bg-secondary px-2 py-1 text-secondary"
+        [ewmsProse]="'showroom.common.header.version' | transloco: { version }"
+      ></li>
+      <li class="rounded-sm bg-success-surface px-2 py-1 text-success">
+        {{ 'showroom.common.header.built' | transloco }}
       </li>
-      <li class="rounded-sm bg-success-surface px-2 py-1 text-success">Construido y en verde</li>
-      <li class="rounded-sm bg-secondary px-2 py-1 text-secondary">
-        Ficha: <span class="font-mono">08-Sistema-de-Diseno/Componentes/Estado-Vacio.md</span>
-      </li>
+      <li
+        class="rounded-sm bg-secondary px-2 py-1 text-secondary"
+        [ewmsProse]="
+          'showroom.common.header.sheet'
+            | transloco: { path: '08-Sistema-de-Diseno/Componentes/Estado-Vacio.md' }
+        "
+      ></li>
     </ul>
   </header>
 
   <!-- ================================================ 2. Qué resuelve / cuándo no -->
   <section class="flex flex-col gap-4" aria-labelledby="es-purpose" data-block="2-proposito">
-    <h2 id="es-purpose" class="text-h2">Qué resuelve, y cuándo NO usarlo</h2>
+    <h2 id="es-purpose" class="text-h2">{{ 'showroom.common.sections.purpose' | transloco }}</h2>
     <div class="grid grid-cols-[repeat(auto-fit,minmax(min(20rem,100%),1fr))] gap-4">
       <div class="flex flex-col gap-2 rounded-md border border-default bg-surface p-4">
-        <h3 class="text-h3">Qué resuelve</h3>
-        <p>
-          <strong>Nada no es siempre lo mismo.</strong> «Todavía no hay», «tus filtros no dejan
-          ninguno», «falló» y «no podés verlo» piden acciones distintas. Un solo componente dice
-          cuál es y ofrece la única acción que sirve.
-        </p>
-        <p class="text-caption text-secondary">
-          La Tabla elige el caso sola: sin filtros es <code class="font-mono">no-data</code>, con
-          alguno <code class="font-mono">no-results</code> con «Limpiar filtros», y si la fuente
-          falla, <code class="font-mono">error</code> con «Reintentar». El Select usa
-          <code class="font-mono">no-results</code> en su panel.
-        </p>
+        <h3 class="text-h3">{{ 'showroom.common.sections.solves' | transloco }}</h3>
+        <p [ewmsProse]="'showroom.patternEmpty.purpose.solves' | transloco"></p>
+        <p
+          class="text-caption text-secondary"
+          [ewmsProse]="'showroom.patternEmpty.purpose.tableAndSelect' | transloco"
+        ></p>
       </div>
       <div class="flex flex-col gap-2 rounded-md border border-danger bg-danger-surface p-4">
-        <h3 class="text-h3">Cuándo NO usarlo</h3>
+        <h3 class="text-h3">{{ 'showroom.common.sections.avoid' | transloco }}</h3>
         <ul class="flex flex-col gap-2">
-          <li>
-            <strong>Si algo falló al guardar</strong>, va un Banner o un Toast: el estado vacío
-            reemplaza contenido que no está, no avisa de una acción.
-          </li>
-          <li>
-            <strong>Si está cargando</strong>, va el indicador de carga: decir «no hay» antes de
-            saberlo es mentir.
-          </li>
-          <li>
-            <strong>Sin ilustraciones</strong> (fuera de alcance): un ícono del catálogo y una
-            frase.
-          </li>
+          <li [ewmsProse]="'showroom.patternEmpty.purpose.saveFailed' | transloco"></li>
+          <li [ewmsProse]="'showroom.patternEmpty.purpose.loading' | transloco"></li>
+          <li [ewmsProse]="'showroom.patternEmpty.purpose.illustrations' | transloco"></li>
         </ul>
       </div>
     </div>
@@ -57,40 +48,41 @@
 
   <!-- ========================================================= 3. Demo principal -->
   <section class="flex flex-col gap-4" aria-labelledby="es-demo" data-block="3-demo">
-    <h2 id="es-demo" class="text-h2">Demo principal</h2>
+    <h2 id="es-demo" class="text-h2">{{ 'showroom.common.sections.demo' | transloco }}</h2>
     <div class="grid grid-cols-[repeat(auto-fit,minmax(min(24rem,100%),1fr))] gap-6">
-      <ewms-demo-frame ground="surface" label="Una pantalla de expediciones sin ninguna">
+      <ewms-demo-frame ground="surface" [label]="'showroom.patternEmpty.demo.frame' | transloco">
         <div data-demo-empty>
           <ewms-empty-state
             kind="no-data"
-            title="Todavía no hay expediciones"
-            description="Se crean al cerrar una ola de picking, o a mano."
-            [action]="crear"
+            [title]="'showroom.patternEmpty.cases.noData.title' | transloco"
+            [description]="'showroom.patternEmpty.cases.noData.description' | transloco"
+            [action]="crear()"
           />
           <p class="text-center text-caption text-secondary" role="status">
-            Última acción: <span class="font-mono text-primary" data-demo-last>{{ last() }}</span>
+            {{ 'showroom.patternEmpty.demo.last' | transloco }}
+            <span class="font-mono text-primary" data-demo-last>{{ last() | transloco }}</span>
           </p>
         </div>
       </ewms-demo-frame>
-      <ewms-prop-table [rows]="props" caption="Propiedades de <ewms-empty-state>" />
+      <ewms-prop-table
+        [rows]="props"
+        [caption]="'showroom.patternEmpty.props.caption' | transloco"
+      />
     </div>
   </section>
 
   <!-- =============================================================== 4. Variantes -->
   <section class="flex flex-col gap-4" aria-labelledby="es-variants" data-block="4-variantes">
-    <h2 id="es-variants" class="text-h2">Variantes — los cuatro casos</h2>
+    <h2 id="es-variants" class="text-h2">
+      {{ 'showroom.patternEmpty.variants.title' | transloco }}
+    </h2>
     <div
       class="overflow-x-auto rounded-md border border-default outline-none focus-visible:shadow-(--focus-ring-shadow)"
       tabindex="0"
     >
       <ewms-doc-table
-        caption="Cuándo va cada caso"
-        [columns]="[
-          { id: 'kind', label: 'kind' },
-          { id: 'when', label: 'Cuándo' },
-          { id: 'icon', label: 'Ícono' },
-          { id: 'action', label: 'Acción' },
-        ]"
+        [caption]="'showroom.patternEmpty.variants.caption' | transloco"
+        [columns]="caseColumns"
         [rows]="cases"
         data-empty-cases
       >
@@ -100,13 +92,13 @@
               <span class="font-mono">{{ item.kind }}</span>
             }
             @case ('when') {
-              {{ item.when }}
+              {{ item.when | transloco }}
             }
             @case ('icon') {
-              <span class="font-mono">{{ item.icon }}</span>
+              <span class="font-mono">{{ item.icon | transloco }}</span>
             }
             @default {
-              {{ item.action }}
+              {{ item.action | transloco }}
             }
           }
         </ng-template>
@@ -116,12 +108,12 @@
 
   <!-- ========================================================= 5. Matriz de estados -->
   <section class="flex flex-col gap-4" aria-labelledby="es-matrix" data-block="5-matriz">
-    <h2 id="es-matrix" class="text-h2">Matriz — cuatro casos en los dos tamaños</h2>
+    <h2 id="es-matrix" class="text-h2">{{ 'showroom.patternEmpty.matrix.title' | transloco }}</h2>
     <ewms-state-matrix
       [variants]="matrixVariants"
       [states]="matrixSizes"
-      rowHeader="Caso"
-      caption="Cada caso de ewms-empty-state, compacto y de página"
+      [rowHeader]="matrixRowHeader"
+      [caption]="'showroom.patternEmpty.matrix.caption' | transloco"
     >
       <ng-template let-variant="variant" let-state="state">
         @let item = caseOf(variant.id);
@@ -129,8 +121,8 @@
           <ewms-empty-state
             [kind]="kindOf(variant.id)"
             [size]="sizeOf(state.id)"
-            [title]="item.title"
-            [description]="item.description"
+            [title]="item.title | transloco"
+            [description]="item.description | transloco"
             [action]="actionOf(variant.id)"
           />
         </div>
@@ -140,57 +132,44 @@
 
   <!-- ================================================================ 6. Tamaños -->
   <section class="flex flex-col gap-4" aria-labelledby="es-sizes" data-block="6-tamanos">
-    <h2 id="es-sizes" class="text-h2">Tamaños</h2>
+    <h2 id="es-sizes" class="text-h2">{{ 'showroom.common.sections.sizes' | transloco }}</h2>
     <ul class="flex flex-col gap-2">
-      <li>
-        <strong><code class="font-mono">compact</code></strong> — dentro de una tabla, del panel de
-        un select o de una card. Título en H4, ícono <code class="font-mono">lg</code>, acción
-        <code class="font-mono">sm</code>. Es un párrafo, no un encabezado: no rompe el esquema de
-        la página.
-      </li>
-      <li>
-        <strong><code class="font-mono">page</code></strong> — la pantalla entera. Título en H3
-        como <code class="font-mono">&lt;h2&gt;</code>, ícono <code class="font-mono">xl</code>,
-        acción <code class="font-mono">md</code>.
-      </li>
+      <li [ewmsProse]="'showroom.patternEmpty.sizes.compact' | transloco"></li>
+      <li [ewmsProse]="'showroom.patternEmpty.sizes.page' | transloco"></li>
     </ul>
   </section>
 
   <!-- ===================================================== 7. Anatomía y tokens -->
   <section class="flex flex-col gap-4" aria-labelledby="es-anatomy" data-block="7-anatomia">
-    <h2 id="es-anatomy" class="text-h2">Anatomía y tokens</h2>
+    <h2 id="es-anatomy" class="text-h2">{{ 'showroom.common.sections.anatomy' | transloco }}</h2>
     <ul class="flex flex-col gap-2">
       @for (item of anatomy; track item.token + item.part) {
-        <li class="flex flex-wrap items-center gap-3 rounded-md border border-default bg-surface p-3">
-          <span class="text-caption text-secondary">{{ item.part }}</span>
+        <li
+          class="flex flex-wrap items-center gap-3 rounded-md border border-default bg-surface p-3"
+        >
+          <span class="text-caption text-secondary">{{ item.part | transloco }}</span>
           <ewms-token-value [token]="item.token" />
         </li>
       }
     </ul>
-    <p class="text-caption text-secondary">
-      Sin token propio: tipografía, colores y espaciado son los de la escala. La acción es un
-      <code class="font-mono">&lt;ewms-button&gt;</code>.
-    </p>
+    <p
+      class="text-caption text-secondary"
+      [ewmsProse]="'showroom.patternEmpty.anatomy.noToken' | transloco"
+    ></p>
   </section>
 
   <!-- ============================================== 8. Contrato para Angular -->
   <section class="flex flex-col gap-4" aria-labelledby="es-contract" data-block="8-contrato">
-    <h2 id="es-contract" class="text-h2">Contrato para Angular</h2>
+    <h2 id="es-contract" class="text-h2">{{ 'showroom.common.sections.contract' | transloco }}</h2>
     <pre
       class="overflow-x-auto rounded-md border border-default bg-secondary p-4 font-mono text-mono text-primary outline-none focus-visible:shadow-(--focus-ring-shadow)"
       tabindex="0"
     ><code>{{ snippet }}</code></pre>
-    <h3 class="text-h3">Accesibilidad</h3>
+    <h3 class="text-h3">{{ 'showroom.common.sections.a11y' | transloco }}</h3>
     <ul class="flex flex-col gap-2">
-      <li>
-        <code class="font-mono">no-results</code> y <code class="font-mono">error</code> llevan
-        <code class="font-mono">role="status"</code>: aparecen por algo que hizo el usuario
-        (filtrar, reintentar) y se anuncian <strong>sin mover el foco</strong>.
-      </li>
-      <li>
-        El ícono es decorativo: el título ya dice qué pasa. El color nunca es la única señal.
-      </li>
-      <li>La acción es un botón real: Tab la alcanza y Enter o Espacio la ejecutan.</li>
+      <li [ewmsProse]="'showroom.patternEmpty.a11y.status' | transloco"></li>
+      <li>{{ 'showroom.patternEmpty.a11y.icon' | transloco }}</li>
+      <li>{{ 'showroom.patternEmpty.a11y.action' | transloco }}</li>
     </ul>
   </section>
 </article>

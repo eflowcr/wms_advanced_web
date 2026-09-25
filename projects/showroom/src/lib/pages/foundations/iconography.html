@@ -1,30 +1,17 @@
-<!-- Showroom solo en español, exento de i18n (compuerta 12): se declara para que el lector de pantalla no lo lea en inglés. -->
-<article class="flex flex-col gap-10" lang="es">
+<article class="flex flex-col gap-10">
   <header class="flex flex-col gap-2">
-    <h1 class="text-h1">Iconografía</h1>
-    <p class="text-secondary">
-      Tabler outline (MIT), grid de 24×24 con trazo 2, más los iconos de dominio propios dibujados
-      sobre la misma grilla. Todos pasan por <code class="font-mono">&lt;ewms-icon&gt;</code> y
-      heredan el color del contenedor.
-    </p>
+    <h1 class="text-h1">{{ 'showroom.catalog.icons.name' | transloco }}</h1>
+    <p class="text-secondary" [ewmsProse]="'showroom.icons.header.intro' | transloco"></p>
   </header>
 
   <aside class="flex flex-col gap-2 rounded-md border border-strong bg-secondary p-4">
-    <h2 class="text-h4">El catálogo es cerrado</h2>
-    <p>
-      Solo existen los {{ total }} iconos de abajo, y un nombre fuera de la lista no compila. Agregar
-      uno es editar <code class="font-mono">icons.manifest.json</code> y correr
-      <code class="font-mono">npm run icons:build</code>, en un PR. Nunca se pega un
-      <code class="font-mono">&lt;svg&gt;</code> en una plantilla: la compuerta 11 de CI lo bloquea.
-    </p>
+    <h2 class="text-h4">{{ 'showroom.icons.closed.title' | transloco }}</h2>
+    <p [ewmsProse]="'showroom.icons.closed.body' | transloco: { total }"></p>
   </aside>
 
   <section class="flex flex-col gap-4" aria-labelledby="iconography-sizes">
-    <h2 id="iconography-sizes" class="text-h2">Tamaños y compensación de trazo</h2>
-    <p class="text-secondary">
-      El trazo baja a medida que el icono crece, para que el grosor visible se mantenga parejo junto
-      al texto. Valores leídos en vivo de <code class="font-mono">tokens.css</code>.
-    </p>
+    <h2 id="iconography-sizes" class="text-h2">{{ 'showroom.icons.sizes.title' | transloco }}</h2>
+    <p class="text-secondary" [ewmsProse]="'showroom.icons.sizes.intro' | transloco"></p>
     <ewms-demo-frame ground="canvas">
       <ul class="grid grid-cols-[repeat(auto-fit,minmax(min(24rem,100%),1fr))] gap-6">
         @for (size of sizes; track size) {
@@ -42,20 +29,19 @@
   </section>
 
   <section class="flex flex-col gap-4" aria-labelledby="iconography-grounds">
-    <h2 id="iconography-grounds" class="text-h2">Sobre fondo claro y sobre navy</h2>
-    <p class="text-secondary">
-      En la barra superior los iconos van invertidos. El icono no cambia: cambia el color del
-      contenedor.
-    </p>
+    <h2 id="iconography-grounds" class="text-h2">
+      {{ 'showroom.icons.grounds.title' | transloco }}
+    </h2>
+    <p class="text-secondary">{{ 'showroom.icons.grounds.intro' | transloco }}</p>
     <div class="grid grid-cols-[repeat(auto-fit,minmax(min(18rem,100%),1fr))] gap-4">
-      <ewms-demo-frame ground="surface" label="Heredando text-primary">
+      <ewms-demo-frame ground="surface" [label]="'showroom.icons.grounds.light' | transloco">
         <ul class="flex flex-wrap items-center gap-6">
           @for (name of topBar; track name) {
             <li><ewms-icon [name]="name" size="lg" /></li>
           }
         </ul>
       </ewms-demo-frame>
-      <ewms-demo-frame ground="navy" label="Heredando text-on-dark">
+      <ewms-demo-frame ground="navy" [label]="'showroom.icons.grounds.dark' | transloco">
         <ul class="flex flex-wrap items-center gap-6">
           @for (name of topBar; track name) {
             <li><ewms-icon [name]="name" size="lg" /></li>
@@ -68,7 +54,8 @@
   @for (group of groups; track group.id) {
     <section class="flex flex-col gap-4" [attr.aria-labelledby]="'iconography-' + group.id">
       <h2 [id]="'iconography-' + group.id" class="text-h2">
-        {{ group.title }} <span class="text-secondary">({{ group.names.length }})</span>
+        {{ group.title | transloco }}
+        <span class="text-secondary">({{ group.names.length }})</span>
       </h2>
       <ul class="grid grid-cols-[repeat(auto-fill,minmax(min(8rem,100%),1fr))] gap-2">
         @for (name of group.names; track name) {
@@ -76,7 +63,8 @@
           <li class="flex flex-col items-center gap-2 rounded-md p-4 text-primary">
             <ewms-icon [name]="name" size="xl" />
             <ewms-button variant="link" size="sm" [attr.data-icon-name]="name" (click)="copy(name)">
-              <span class="sr-only">Copiar nombre </span><span class="font-mono">{{ name }}</span>
+              <span class="sr-only">{{ 'showroom.icons.copyName' | transloco }} </span
+              ><span class="font-mono">{{ name }}</span>
             </ewms-button>
           </li>
         }
@@ -86,7 +74,7 @@
 
   <p class="text-caption text-secondary" role="status">
     @if (copied(); as name) {
-      Copiado: <code class="font-mono">{{ name }}</code>
+      {{ 'showroom.icons.copied' | transloco }} <code class="font-mono">{{ name }}</code>
     }
   </p>
 </article>

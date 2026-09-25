@@ -5,52 +5,58 @@ import {
   FilterBar,
   Table,
   TableColumn,
+  type BadgeDictionary,
   type FilterField,
   type FilterValues,
 } from '@ewms/design-system';
 import { filtersInUrl } from '@ewms/shared';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { DemoFrame } from '../../ui/demo-frame';
 import { PropTable, type PropRow } from '../../ui/prop-table';
-import { ESTADOS, EXPEDICIONES, type ExpedicionRow } from '../components/expediciones';
+import { Prose } from '../../ui/prose';
+import { translated, type Translate } from '../../ui/translated';
+import { injectEstados } from '../components/expediciones';
+import { ALMACENES, CLIENTES, FILAS, type FilaConAlmacen } from './filters.fixtures';
 
-/** La demo de la tabla, con el almacén que un filtro de pantalla necesita y la tabla no tiene. */
-interface FilaConAlmacen extends ExpedicionRow {
-  readonly almacen: string;
+/**
+ * Cinco campos: los tres primeros a la vista, los otros dos detrás de «Más filtros». Las
+ * etiquetas siguen al idioma; las opciones de almacén y cliente son registros y van tal cual.
+ * t(showroom.patternFilters.fields.warehouse, showroom.patternFilters.fields.period,
+ *   showroom.patternFilters.fields.status, showroom.patternFilters.fields.customer,
+ *   showroom.patternFilters.fields.search)
+ */
+function campos(t: Translate, estados: BadgeDictionary): readonly FilterField[] {
+  return [
+    {
+      kind: 'select',
+      key: 'almacen',
+      label: t('showroom.patternFilters.fields.warehouse'),
+      options: ALMACENES,
+    },
+    { kind: 'date-range', key: 'fecha', label: t('showroom.patternFilters.fields.period') },
+    {
+      kind: 'select',
+      key: 'estado',
+      label: t('showroom.patternFilters.fields.status'),
+      options: Object.entries(estados).map(([value, badge]) => ({ label: badge.label, value })),
+    },
+    {
+      kind: 'select',
+      key: 'cliente',
+      label: t('showroom.patternFilters.fields.customer'),
+      options: CLIENTES,
+    },
+    { kind: 'search', key: 'texto', label: t('showroom.patternFilters.fields.search') },
+  ];
 }
 
-const ALMACENES = [
-  { label: 'Central', value: 'central' },
-  { label: 'Norte', value: 'norte' },
-];
-
-const FILAS: readonly FilaConAlmacen[] = EXPEDICIONES.map((fila, indice) => ({
-  ...fila,
-  almacen: indice % 2 === 0 ? 'central' : 'norte',
-}));
-
-const CLIENTES = [...new Set(FILAS.map((fila) => fila.cliente))].map((cliente) => ({
-  label: cliente,
-  value: cliente,
-}));
-
-/** Cinco campos: los tres primeros a la vista, los otros dos detrás de «Más filtros». */
-const CAMPOS: readonly FilterField[] = [
-  { kind: 'select', key: 'almacen', label: 'Almacén', options: ALMACENES },
-  { kind: 'date-range', key: 'fecha', label: 'Período del documento' },
-  {
-    kind: 'select',
-    key: 'estado',
-    label: 'Estado del proceso',
-    options: Object.entries(ESTADOS).map(([value, badge]) => ({ label: badge.label, value })),
-  },
-  { kind: 'select', key: 'cliente', label: 'Cliente', options: CLIENTES },
-  { kind: 'search', key: 'texto', label: 'Buscar por código' },
-];
-
-const CLAVES = CAMPOS.map((campo) => campo.key);
+const CLAVES = ['almacen', 'fecha', 'estado', 'cliente', 'texto'];
 
 /** Los filtros van a la fuente: la tabla recibe las filas que quedan, no un filtro. */
-function filtrar(filas: readonly FilaConAlmacen[], valores: FilterValues): readonly FilaConAlmacen[] {
+function filtrar(
+  filas: readonly FilaConAlmacen[],
+  valores: FilterValues,
+): readonly FilaConAlmacen[] {
   return filas.filter((fila) =>
     Object.entries(valores).every(([clave, valor]) => {
       if (clave === 'fecha' && typeof valor === 'object') {
@@ -67,37 +73,43 @@ function filtrar(filas: readonly FilaConAlmacen[], valores: FilterValues): reado
   );
 }
 
-/** Verificada contra filter-bar.ts. */
+/**
+ * Verificada contra filter-bar.ts. Lo obligatorio lo dice la descripción: el default es código
+ * literal.
+ * t(showroom.patternFilters.props.fields, showroom.patternFilters.props.value,
+ *   showroom.patternFilters.props.valueChange, showroom.patternFilters.props.screenFilters,
+ *   showroom.patternFilters.props.filtersCleared)
+ */
 const PROPS: readonly PropRow[] = [
   {
     name: 'fields',
     type: 'readonly FilterField[]',
-    default: '— (requerido)',
-    description: 'select, date-range o search. Los tres primeros a la vista; el resto, en «Más filtros».',
+    default: '—',
+    description: 'showroom.patternFilters.props.fields',
   },
   {
     name: 'value',
     type: 'FilterValues',
     default: '{}',
-    description: 'Por clave. Manda el valor: llega de la URL, de un enlace compartido o de limpiar.',
+    description: 'showroom.patternFilters.props.value',
   },
   {
     name: '(valueChange)',
     type: 'FilterValues',
     default: '—',
-    description: 'Al cambiar un campo, con la espera por token para el texto. Sin botón «Aplicar».',
+    description: 'showroom.patternFilters.props.valueChange',
   },
   {
     name: 'ewms-table: screenFilters',
     type: 'number',
     default: '0',
-    description: 'Cuántos filtros de pantalla hay puestos: con alguno, vacío es «sin resultados».',
+    description: 'showroom.patternFilters.props.screenFilters',
   },
   {
     name: 'ewms-table: (filtersCleared)',
     type: 'void',
     default: '—',
-    description: '«Limpiar filtros» del estado vacío: la pantalla limpia además los suyos.',
+    description: 'showroom.patternFilters.props.filtersCleared',
   },
 ];
 
@@ -108,14 +120,14 @@ const PROPS: readonly PropRow[] = [
 @Component({
   selector: 'ewms-showroom-filters',
   templateUrl: './filters.html',
-  imports: [FilterBar, Table, TableColumn, DemoFrame, PropTable],
+  imports: [FilterBar, Table, TableColumn, DemoFrame, PropTable, Prose, TranslocoPipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ShowroomFilters {
   protected readonly version = DESIGN_SYSTEM_VERSION;
   protected readonly props = PROPS;
-  protected readonly campos = CAMPOS;
-  protected readonly estados = ESTADOS;
+  protected readonly estados = injectEstados();
+  protected readonly campos = translated((t) => campos(t, this.estados()));
 
   /** Los filtros viven en la URL: un enlace filtrado se comparte y «atrás» deshace el último. */
   private readonly url = filtersInUrl(CLAVES);

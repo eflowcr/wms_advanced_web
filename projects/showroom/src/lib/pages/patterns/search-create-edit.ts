@@ -25,9 +25,12 @@ import {
   type RowActivateEvent,
   type SearchDisplay,
 } from '@ewms/design-system';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { DemoFrame } from '../../ui/demo-frame';
-import { DocTable } from '../../ui/doc-table';
-import { ESTADOS, EXPEDICIONES, type ExpedicionRow } from '../components/expediciones';
+import { DocTable, type DocColumn } from '../../ui/doc-table';
+import { Prose } from '../../ui/prose';
+import { injectEstados, type ExpedicionRow } from '../components/expediciones';
+import { EXPEDICIONES } from '../components/expediciones.fixtures';
 import { FLOW_BUDGETS, type FlowId } from './click-budget';
 import { ExpedicionForm, type ExpedicionDraft } from './expedicion-form';
 import { ExpedicionSource } from './expedicion-source';
@@ -42,6 +45,89 @@ const FLOW_CONTROLS =
   'button, a[href], input, select, textarea, [role="button"], [role="option"], [role="switch"]';
 
 /**
+ * t(showroom.patternSearchCreateEdit.budget.columns.name,
+ *   showroom.patternSearchCreateEdit.budget.columns.max,
+ *   showroom.patternSearchCreateEdit.budget.columns.from)
+ */
+const BUDGET_COLUMNS: readonly DocColumn[] = [
+  { id: 'name', label: 'showroom.patternSearchCreateEdit.budget.columns.name' },
+  { id: 'max', label: 'showroom.patternSearchCreateEdit.budget.columns.max' },
+  { id: 'from', label: 'showroom.patternSearchCreateEdit.budget.columns.from' },
+];
+
+/**
+ * t(showroom.patternSearchCreateEdit.variants.columns.flow,
+ *   showroom.patternSearchCreateEdit.variants.columns.mouse,
+ *   showroom.patternSearchCreateEdit.variants.columns.keyboard)
+ */
+const PATH_COLUMNS: readonly DocColumn[] = [
+  { id: 'flow', label: 'showroom.patternSearchCreateEdit.variants.columns.flow' },
+  { id: 'mouse', label: 'showroom.patternSearchCreateEdit.variants.columns.mouse' },
+  { id: 'keyboard', label: 'showroom.patternSearchCreateEdit.variants.columns.keyboard' },
+];
+
+/**
+ * Los dos caminos de cada flujo; la plantilla arma la clave con el id.
+ * t(showroom.patternSearchCreateEdit.variants.flows.search.flow,
+ *   showroom.patternSearchCreateEdit.variants.flows.search.mouse,
+ *   showroom.patternSearchCreateEdit.variants.flows.search.keyboard,
+ *   showroom.patternSearchCreateEdit.variants.flows.create.flow,
+ *   showroom.patternSearchCreateEdit.variants.flows.create.mouse,
+ *   showroom.patternSearchCreateEdit.variants.flows.create.keyboard,
+ *   showroom.patternSearchCreateEdit.variants.flows.edit.flow,
+ *   showroom.patternSearchCreateEdit.variants.flows.edit.mouse,
+ *   showroom.patternSearchCreateEdit.variants.flows.edit.keyboard,
+ *   showroom.patternSearchCreateEdit.variants.flows.cancel.flow,
+ *   showroom.patternSearchCreateEdit.variants.flows.cancel.mouse,
+ *   showroom.patternSearchCreateEdit.variants.flows.cancel.keyboard)
+ */
+const PATH_ROWS: readonly FlowId[] = ['search', 'create', 'edit', 'cancel'];
+
+/**
+ * t(showroom.patternSearchCreateEdit.states.columns.situation,
+ *   showroom.patternSearchCreateEdit.states.columns.how,
+ *   showroom.patternSearchCreateEdit.states.columns.why)
+ */
+const SITUATION_COLUMNS: readonly DocColumn[] = [
+  { id: 'situation', label: 'showroom.patternSearchCreateEdit.states.columns.situation' },
+  { id: 'how', label: 'showroom.patternSearchCreateEdit.states.columns.how' },
+  { id: 'why', label: 'showroom.patternSearchCreateEdit.states.columns.why' },
+];
+
+/**
+ * Qué hace la pantalla con cada situación; la plantilla arma la clave con el id.
+ * t(showroom.patternSearchCreateEdit.states.rows.saved.situation,
+ *   showroom.patternSearchCreateEdit.states.rows.saved.how,
+ *   showroom.patternSearchCreateEdit.states.rows.saved.why,
+ *   showroom.patternSearchCreateEdit.states.rows.failing.situation,
+ *   showroom.patternSearchCreateEdit.states.rows.failing.how,
+ *   showroom.patternSearchCreateEdit.states.rows.failing.why,
+ *   showroom.patternSearchCreateEdit.states.rows.unknown.situation,
+ *   showroom.patternSearchCreateEdit.states.rows.unknown.how,
+ *   showroom.patternSearchCreateEdit.states.rows.unknown.why,
+ *   showroom.patternSearchCreateEdit.states.rows.cancelled.situation,
+ *   showroom.patternSearchCreateEdit.states.rows.cancelled.how,
+ *   showroom.patternSearchCreateEdit.states.rows.cancelled.why,
+ *   showroom.patternSearchCreateEdit.states.rows.none.situation,
+ *   showroom.patternSearchCreateEdit.states.rows.none.how,
+ *   showroom.patternSearchCreateEdit.states.rows.none.why)
+ */
+const SITUATIONS = ['saved', 'failing', 'unknown', 'cancelled', 'none'] as const;
+
+/**
+ * Lo que la pantalla escribe al vuelo: los dos toasts y el cliente con que completa un alta sin él.
+ * Constantes con marcador, no literales en translate().
+ * t(showroom.patternSearchCreateEdit.demo.toasts.saved,
+ *   showroom.patternSearchCreateEdit.demo.toasts.unknownCode,
+ *   showroom.patternSearchCreateEdit.demo.noCustomer)
+ */
+const MESSAGES = {
+  saved: 'showroom.patternSearchCreateEdit.demo.toasts.saved',
+  unknownCode: 'showroom.patternSearchCreateEdit.demo.toasts.unknownCode',
+  noCustomer: 'showroom.patternSearchCreateEdit.demo.noCustomer',
+} as const;
+
+/**
  * Pantalla ejemplo de REQ-FE-DS4-003 RFE-02: solo compone piezas ya publicadas; el presupuesto
  * se cumple ensamblando el sistema. Ver vault: Patron-Buscar-Crear-Editar.
  */
@@ -50,7 +136,7 @@ const FLOW_CONTROLS =
 // del CDK); la regla de oyente global único es del teclado, y ese sigue siendo del motor.
 @Component({
   selector: 'ewms-showroom-search-create-edit',
-  imports: [Banner, Button, DemoFrame, DocTable, Select, Table, TableColumn],
+  imports: [Banner, Button, DemoFrame, DocTable, Prose, Select, Table, TableColumn, TranslocoPipe],
   templateUrl: './search-create-edit.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -59,11 +145,17 @@ export class ShowroomSearchCreateEdit {
   private readonly injector = inject(Injector);
   private readonly toasts = inject(ToastService);
   private readonly shortcuts = inject(KeyboardShortcuts);
+  private readonly transloco = inject(TranslocoService);
 
   protected readonly version = DESIGN_SYSTEM_VERSION;
   protected readonly budgets = FLOW_BUDGETS;
+  protected readonly budgetColumns = BUDGET_COLUMNS;
+  protected readonly pathColumns = PATH_COLUMNS;
+  protected readonly pathRows = PATH_ROWS;
+  protected readonly situationColumns = SITUATION_COLUMNS;
+  protected readonly situations = SITUATIONS;
   protected readonly budgetId = (budget: (typeof FLOW_BUDGETS)[number]): string => budget.id;
-  protected readonly estados = ESTADOS;
+  protected readonly estados = injectEstados();
 
   /** Las expediciones como estado: guardar una cambia la tabla y la búsqueda. */
   private readonly rows = signal<readonly ExpedicionRow[]>(CABECERAS);
@@ -181,7 +273,7 @@ export class ShowroomSearchCreateEdit {
         id: `EXP-NEW-${this.rows().length}`,
         nivel: 'cabecera',
         codigo: draft.codigo || 'EXP-2026-XXXX',
-        cliente: draft.cliente || 'Sin cliente',
+        cliente: draft.cliente || this.transloco.translate(MESSAGES.noCustomer),
         fecha: '2026-03-01',
         bultos: 0,
         estado: draft.estado,
@@ -200,14 +292,14 @@ export class ShowroomSearchCreateEdit {
     }
 
     this.lastSaved.set(draft.codigo);
-    this.toasts.show('success', `Guardada la expedición ${draft.codigo}.`);
+    this.toasts.show('success', this.transloco.translate(MESSAGES.saved, { code: draft.codigo }));
   }
 
   /** Llegó un código completo: elige la expedición que nombra, o avisa si no hay ninguna. */
   private resolveScan(code: string): void {
     const match = this.rows().find((row) => row.codigo.toLowerCase() === code.trim().toLowerCase());
     if (match === undefined) {
-      this.toasts.show('warning', `Ningún registro con el código ${code}.`);
+      this.toasts.show('warning', this.transloco.translate(MESSAGES.unknownCode, { code }));
       return;
     }
     this.chosen.set(match);

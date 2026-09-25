@@ -7,17 +7,21 @@ import {
   input,
   TemplateRef,
 } from '@angular/core';
+import { TranslocoPipe } from '@jsverse/transloco';
 
-/** Una columna: `id` para que la plantilla de celda decida, `label` para el encabezado. */
+/** Una columna: `id` para que la plantilla de celda decida, `label` es la clave del encabezado. */
 export interface DocColumn {
   readonly id: string;
   readonly label: string;
 }
 
-/** Las dos columnas de «Anatomía y tokens», iguales en toda ficha. */
+/**
+ * Las dos columnas de «Anatomía y tokens», iguales en toda ficha.
+ * t(showroom.common.anatomy.part, showroom.common.anatomy.token)
+ */
 export const ANATOMY_COLUMNS: readonly DocColumn[] = [
-  { id: 'part', label: 'Parte' },
-  { id: 'token', label: 'Token, cadena y valor' },
+  { id: 'part', label: 'showroom.common.anatomy.part' },
+  { id: 'token', label: 'showroom.common.anatomy.token' },
 ];
 
 /** Lo que recibe la plantilla de una celda: la fila y la columna. */
@@ -34,7 +38,7 @@ export interface DocCell<R> {
 @Component({
   selector: 'ewms-doc-table',
   templateUrl: './doc-table.html',
-  imports: [NgTemplateOutlet],
+  imports: [NgTemplateOutlet, TranslocoPipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { class: 'block min-w-0' },
 })

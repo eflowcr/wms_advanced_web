@@ -1,178 +1,187 @@
-<!-- Showroom solo en español, exento de i18n (compuerta 12): se declara para que el lector de pantalla no lo lea en inglés. -->
-<article class="flex flex-col gap-10" lang="es">
+<article class="flex flex-col gap-10">
   <!-- ============================================================ 1. Encabezado -->
   <header class="flex flex-col gap-2" data-block="1-encabezado">
     <div class="flex flex-wrap items-baseline gap-3">
-      <h1 class="text-h1">Botón</h1>
+      <h1 class="text-h1">{{ 'showroom.catalog.button.name' | transloco }}</h1>
       <code class="font-mono text-primary">&lt;ewms-button&gt;</code>
     </div>
     <ul class="flex flex-wrap gap-2 text-caption">
-      <li class="rounded-sm bg-secondary px-2 py-1 text-secondary">
-        Versión <span class="font-mono">{{ version }}</span>
+      <li
+        class="rounded-sm bg-secondary px-2 py-1 text-secondary"
+        [ewmsProse]="'showroom.common.header.version' | transloco: { version }"
+      ></li>
+      <li class="rounded-sm bg-success-surface px-2 py-1 text-success">
+        {{ 'showroom.common.header.built' | transloco }}
       </li>
-      <li class="rounded-sm bg-success-surface px-2 py-1 text-success">Construido y en verde</li>
-      <li class="rounded-sm bg-secondary px-2 py-1 text-secondary">
-        Ficha: <span class="font-mono">08-Sistema-de-Diseno/Componentes/Boton.md</span>
-      </li>
+      <li
+        class="rounded-sm bg-secondary px-2 py-1 text-secondary"
+        [ewmsProse]="
+          'showroom.common.header.sheet'
+            | transloco: { path: '08-Sistema-de-Diseno/Componentes/Boton.md' }
+        "
+      ></li>
     </ul>
   </header>
 
   <!-- ================================================ 2. Qué resuelve / cuándo no -->
   <section class="flex flex-col gap-4" aria-labelledby="btn-purpose" data-block="2-proposito">
-    <h2 id="btn-purpose" class="text-h2">Qué resuelve, y cuándo NO usarlo</h2>
+    <h2 id="btn-purpose" class="text-h2">{{ 'showroom.common.sections.purpose' | transloco }}</h2>
     <div class="grid grid-cols-[repeat(auto-fit,minmax(min(20rem,100%),1fr))] gap-4">
       <div class="flex flex-col gap-2 rounded-md border border-default bg-surface p-4">
-        <h3 class="text-h3">Qué resuelve</h3>
-        <p>
-          Dispara una <strong>acción</strong> en la pantalla actual: guardar, confirmar, filtrar,
-          eliminar. El énfasis lo da la variante, no el tamaño ni el color elegido a mano.
-        </p>
-        <p class="text-caption text-secondary">
-          Trae además el patrón anti-doble-envío, que es la razón por la que un operario no crea dos
-          recepciones por hacer doble clic.
-        </p>
+        <h3 class="text-h3">{{ 'showroom.common.sections.solves' | transloco }}</h3>
+        <p [ewmsProse]="'showroom.button.purpose.solves' | transloco"></p>
+        <p
+          class="text-caption text-secondary"
+          [ewmsProse]="'showroom.button.purpose.doubleSubmit' | transloco"
+        ></p>
       </div>
       <div class="flex flex-col gap-2 rounded-md border border-danger bg-danger-surface p-4">
-        <h3 class="text-h3">Cuándo NO usarlo</h3>
+        <h3 class="text-h3">{{ 'showroom.common.sections.avoid' | transloco }}</h3>
         <ul class="flex flex-col gap-2">
-          <li>
-            <strong>Si navega, es un link.</strong> Un botón que lleva a otra URL rompe abrir en
-            pestaña nueva, copiar el enlace y el botón «atrás». Si el resultado es una dirección,
-            va un <code class="font-mono">&lt;a&gt;</code>.
-          </li>
-          <li>
-            <strong>Si hay lugar para texto, va texto.</strong> Solo ícono
-            (<code class="font-mono">iconOnly</code>) es para cuando la palabra no entra —filas,
-            barras densas—, no para cuando queda más prolijo.
-          </li>
-          <li>
-            <strong>Si hay más de una Primary en la vista</strong>, ninguna es la principal. Las
-            demás son Secondary.
-          </li>
+          <li [ewmsProse]="'showroom.button.purpose.navigates' | transloco"></li>
+          <li [ewmsProse]="'showroom.button.purpose.textFirst' | transloco"></li>
+          <li [ewmsProse]="'showroom.button.purpose.onePrimary' | transloco"></li>
         </ul>
       </div>
     </div>
-    <ewms-demo-frame ground="canvas" label="Con texto y solo ícono: el mismo componente">
+    <ewms-demo-frame ground="canvas" [label]="'showroom.button.purpose.frame' | transloco">
       <!--
         Controles fijos y prosa flexible: sin eso la fila apretaba el botón
         hasta partir su etiqueta en dos líneas.
       -->
       <div class="flex flex-wrap items-center gap-4">
         <span class="shrink-0">
-          <ewms-button variant="secondary">Con texto</ewms-button>
+          <ewms-button variant="secondary">
+            {{ 'showroom.button.purpose.withText' | transloco }}
+          </ewms-button>
         </span>
         <span data-demo-tooltip class="shrink-0">
-          <ewms-button [iconOnly]="true" icon="trash" label="Eliminar" variant="ghost" />
+          <ewms-button
+            [iconOnly]="true"
+            icon="trash"
+            [label]="'showroom.button.purpose.delete' | transloco"
+            variant="ghost"
+          />
         </span>
         <span data-demo-iconbutton-loading class="shrink-0">
           <ewms-button
             [iconOnly]="true"
             icon="trash"
-            label="Eliminando"
+            [label]="'showroom.button.purpose.deleting' | transloco"
             variant="ghost"
             [loading]="true"
           />
         </span>
-        <span class="min-w-64 flex-1 text-caption text-secondary">
-          Solo ícono pone su <code class="font-mono">label</code> como nombre y como tooltip: pasale
-          el foco con Tab y aparece. El segundo está en Loading y mide exactamente lo mismo que el
-          primero.
-        </span>
+        <span
+          class="min-w-64 flex-1 text-caption text-secondary"
+          [ewmsProse]="'showroom.button.purpose.iconOnlyNote' | transloco"
+        ></span>
       </div>
     </ewms-demo-frame>
   </section>
 
   <!-- ========================================================= 3. Demo principal -->
   <section class="flex flex-col gap-4" aria-labelledby="btn-demo" data-block="3-demo">
-    <h2 id="btn-demo" class="text-h2">Demo principal</h2>
+    <h2 id="btn-demo" class="text-h2">{{ 'showroom.common.sections.demo' | transloco }}</h2>
     <div class="grid grid-cols-[repeat(auto-fit,minmax(min(24rem,100%),1fr))] gap-6">
-      <ewms-demo-frame ground="canvas" label="Sobre fondo de aplicación, a tamaño real">
+      <ewms-demo-frame ground="canvas" [label]="'showroom.button.demo.canvasFrame' | transloco">
         <div class="flex flex-col items-start gap-4">
-          <ewms-button variant="primary" size="md" icon="check">Guardar cambios</ewms-button>
+          <ewms-button variant="primary" size="md" icon="check">
+            {{ 'showroom.button.demo.saveChanges' | transloco }}
+          </ewms-button>
           <span data-focus-canvas>
-            <ewms-button variant="secondary" size="md">Enfocame con Tab</ewms-button>
+            <ewms-button variant="secondary" size="md">
+              {{ 'showroom.button.demo.focusMe' | transloco }}
+            </ewms-button>
           </span>
         </div>
       </ewms-demo-frame>
-      <ewms-prop-table [rows]="props" caption="Propiedades de <ewms-button>" />
+      <ewms-prop-table [rows]="props" [caption]="'showroom.button.props.caption' | transloco" />
     </div>
 
-    <ewms-demo-frame ground="surface" label="El mismo control sobre superficie blanca">
+    <ewms-demo-frame ground="surface" [label]="'showroom.button.demo.surfaceFrame' | transloco">
       <span data-focus-surface>
-        <ewms-button variant="secondary" size="md">Enfocame con Tab</ewms-button>
+        <ewms-button variant="secondary" size="md">
+          {{ 'showroom.button.demo.focusMe' | transloco }}
+        </ewms-button>
       </span>
     </ewms-demo-frame>
-    <p class="text-caption text-secondary">
-      Los dos de arriba están para mirar el anillo de foco sobre los dos fondos: el anillo lleva una
-      separación de 2 px pintada con <code class="font-mono">--color-surface</code>, que sobre una
-      tarjeta blanca es invisible y sobre el canvas gris no tiene por qué serlo.
-    </p>
+    <p
+      class="text-caption text-secondary"
+      [ewmsProse]="'showroom.button.demo.focusRing' | transloco"
+    ></p>
   </section>
 
   <!-- =============================================================== 4. Variantes -->
   <section class="flex flex-col gap-4" aria-labelledby="btn-variants" data-block="4-variantes">
-    <h2 id="btn-variants" class="text-h2">Variantes</h2>
+    <h2 id="btn-variants" class="text-h2">{{ 'showroom.common.sections.variants' | transloco }}</h2>
     <ewms-demo-frame ground="canvas">
       <ul class="flex flex-col gap-4">
         @for (variant of variants; track variant.id) {
           <li class="flex flex-wrap items-center gap-4" [attr.data-variant]="variant.id">
-            <span class="w-28 shrink-0 text-caption text-secondary">{{ variant.label }}</span>
-            <ewms-button [variant]="variantFor(variant.id)" size="md">Guardar</ewms-button>
+            <span class="w-28 shrink-0 text-caption text-secondary">{{
+              variant.label | transloco
+            }}</span>
+            <ewms-button [variant]="variantFor(variant.id)" size="md">
+              {{ 'showroom.button.sample.save' | transloco }}
+            </ewms-button>
             <ewms-button [variant]="variantFor(variant.id)" size="md" icon="download">
-              Con icono
+              {{ 'showroom.button.sample.withIcon' | transloco }}
             </ewms-button>
           </li>
         }
       </ul>
     </ewms-demo-frame>
-    <p class="text-caption text-secondary">
-      Los nombres son canónicos: <strong>Danger</strong>, nunca «Destructive» ni «Delete». Y no
-      existe la variante «custom» — un componente con ese nombre termina siendo el basurero de todo
-      lo que no encajó en otro lado.
-    </p>
-    <p class="text-caption text-secondary">
-      El <strong>Ghost oscurece su texto en hover</strong>: pasa de
-      <code class="font-mono">--color-bg-primary</code> a
-      <code class="font-mono">--color-bg-primary-hover</code>, el mismo gesto con el que el Primary
-      oscurece su fondo. No es una excepción: el azul de marca sobre
-      <code class="font-mono">--color-ghost-hover</code> mide 4.38:1 y la 1.4.3 pide 4.5:1; el tono
-      de hover mide 5.65:1.
-    </p>
-    <p class="text-caption text-secondary" data-link-note>
-      <strong>Link</strong> es un botón con cara de texto: sin fondo ni borde, en Small y Medium,
-      para una acción dentro de un aviso o de una línea —reintentar, limpiar los filtros, ir al
-      campo con error—. Hace algo; si llevara a otra dirección, sería un
-      <code class="font-mono">&lt;a&gt;</code>. Descansa en
-      <code class="font-mono">--color-bg-primary-hover</code> y en hover se subraya: el azul de
-      marca mide 4.31:1 sobre <code class="font-mono">--color-danger-surface</code>, donde vive el
-      reintento del Select, y el tono de hover, 5.54:1.
-    </p>
+    <p
+      class="text-caption text-secondary"
+      [ewmsProse]="'showroom.button.variants.canonical' | transloco"
+    ></p>
+    <p
+      class="text-caption text-secondary"
+      [ewmsProse]="'showroom.button.variants.ghostHover' | transloco"
+    ></p>
+    <p
+      class="text-caption text-secondary"
+      data-link-note
+      [ewmsProse]="'showroom.button.variants.link' | transloco"
+    ></p>
   </section>
 
   <!-- ============================================================ 4b. Solo ícono -->
   <section class="flex flex-col gap-4" aria-labelledby="btn-icon-only" data-block="4b-solo-icono">
-    <h2 id="btn-icon-only" class="text-h2">Solo ícono</h2>
-    <p class="text-secondary">
-      Con <code class="font-mono">[iconOnly]="true"</code> el botón pierde el texto y gana dos
-      reglas: <strong>la caja es cuadrada</strong> —la altura de control usada también como
-      ancho— y <strong><code class="font-mono">label</code> es obligatoria</strong>: es el nombre
-      accesible y el tooltip, que se pone solo. Sin <code class="font-mono">label</code>, el modo
-      desarrollo tira un error.
-    </p>
-    <ewms-demo-frame ground="canvas" label="El caso real: una fila de tabla">
+    <h2 id="btn-icon-only" class="text-h2">
+      {{ 'showroom.button.iconOnly.title' | transloco }}
+    </h2>
+    <p class="text-secondary" [ewmsProse]="'showroom.button.iconOnly.intro' | transloco"></p>
+    <ewms-demo-frame ground="canvas" [label]="'showroom.button.iconOnly.rowFrame' | transloco">
       <div
         class="flex flex-wrap items-center gap-3 rounded-md border border-default bg-surface p-3"
         data-demo-row
       >
         <span class="min-w-48 flex-1 font-mono text-caption text-primary">
-          SKU-04871-B · A-04-17
+          {{ rowSample.sku }} · {{ rowSample.location }}
         </span>
-        <ewms-button [iconOnly]="true" variant="ghost" icon="edit" label="Editar artículo" />
-        <ewms-button [iconOnly]="true" variant="ghost" icon="download" label="Descargar etiqueta" />
-        <ewms-button [iconOnly]="true" variant="danger" icon="trash" label="Eliminar artículo" />
+        <ewms-button
+          [iconOnly]="true"
+          variant="ghost"
+          icon="edit"
+          [label]="'showroom.button.iconOnly.editItem' | transloco"
+        />
+        <ewms-button
+          [iconOnly]="true"
+          variant="ghost"
+          icon="download"
+          [label]="'showroom.button.iconOnly.downloadLabel' | transloco"
+        />
+        <ewms-button
+          [iconOnly]="true"
+          variant="danger"
+          icon="trash"
+          [label]="'showroom.button.iconOnly.deleteItem' | transloco"
+        />
       </div>
     </ewms-demo-frame>
-    <ewms-demo-frame ground="canvas" label="Tres tamaños, cuadrados">
+    <ewms-demo-frame ground="canvas" [label]="'showroom.button.iconOnly.sizesFrame' | transloco">
       <ul class="flex flex-wrap items-end gap-8">
         @for (sample of iconSizes(); track sample.size) {
           <li class="flex flex-col items-start gap-2" [attr.data-icon-size-sample]="sample.size">
@@ -181,36 +190,33 @@
               variant="secondary"
               icon="trash"
               [size]="sample.size"
-              [label]="'Eliminar, tamaño ' + sample.label"
+              [label]="
+                'showroom.button.iconOnly.deleteSize'
+                  | transloco: { size: (sample.label | transloco) }
+              "
             />
             <span class="text-caption text-secondary">
-              {{ sample.label }} · <span class="font-mono">{{ sample.height }}</span>
+              {{ sample.label | transloco }} · <span class="font-mono">{{ sample.height }}</span>
             </span>
           </li>
         }
       </ul>
     </ewms-demo-frame>
-    <p class="text-caption text-secondary">
-      Un conmutador (la estrella de favoritos) pasa <code class="font-mono">pressed</code>; un
-      disparador de menú o panel, <code class="font-mono">expanded</code> y
-      <code class="font-mono">controls</code>. Son entradas y no atributos: sobre
-      <code class="font-mono">&lt;ewms-button&gt;</code> caerían en un elemento sin rol.
-    </p>
+    <p
+      class="text-caption text-secondary"
+      [ewmsProse]="'showroom.button.iconOnly.toggles' | transloco"
+    ></p>
   </section>
 
   <!-- ========================================================= 5. Matriz de estados -->
   <section class="flex flex-col gap-4" aria-labelledby="btn-matrix" data-block="5-matriz">
-    <h2 id="btn-matrix" class="text-h2">Matriz de estados</h2>
-    <p class="text-secondary">
-      Renderizada de verdad, no capturas. <strong>Disabled</strong> y <strong>Loading</strong> son
-      entradas reales del componente. <strong>Hover</strong> y <strong>Focus</strong> no se pueden
-      dejar quietos, así que cada celda recibe el mismo token que aplicaría su propia regla.
-    </p>
+    <h2 id="btn-matrix" class="text-h2">{{ 'showroom.common.sections.states' | transloco }}</h2>
+    <p class="text-secondary" [ewmsProse]="'showroom.button.states.intro' | transloco"></p>
     <ewms-demo-frame ground="canvas">
       <ewms-state-matrix
         [variants]="variants"
         [states]="states"
-        caption="Cinco variantes por cinco estados"
+        [caption]="'showroom.button.states.caption' | transloco"
       >
         <ng-template let-variant="variant" let-state="state">
           <span [class]="forced(variant.id, state.id)">
@@ -220,20 +226,15 @@
               [disabled]="state.id === 'disabled'"
               [loading]="state.id === 'loading'"
             >
-              Guardar
+              {{ 'showroom.button.sample.save' | transloco }}
             </ewms-button>
           </span>
         </ng-template>
       </ewms-state-matrix>
     </ewms-demo-frame>
 
-    <h3 class="text-h3">El patrón anti-doble-envío</h3>
-    <p class="text-secondary">
-      Un click entra en Loading y vuelve solo. Mientras carga, el contenido se oculta con
-      <code class="font-mono">visibility</code> y no con <code class="font-mono">display</code>, así
-      que <strong>la caja no cambia de tamaño</strong> y nada de al lado se mueve. El contador es la
-      prueba: por más veces que lo pulses mientras gira, sube una sola vez.
-    </p>
+    <h3 class="text-h3">{{ 'showroom.button.doubleSubmit.title' | transloco }}</h3>
+    <p class="text-secondary" [ewmsProse]="'showroom.button.doubleSubmit.intro' | transloco"></p>
     <ewms-demo-frame ground="canvas">
       <div class="flex flex-wrap items-center gap-4">
         <!--
@@ -248,58 +249,55 @@
             icon="check"
             [loading]="submitting()"
             (click)="submit()"
-            >Confirmar recepción</ewms-button
+            >{{ 'showroom.button.doubleSubmit.confirm' | transloco }}</ewms-button
           >
         </span>
         <span class="text-caption text-secondary" role="status" aria-live="polite">
-          Envíos registrados: {{ submitCount() }}
+          {{ 'showroom.button.doubleSubmit.count' | transloco: { count: submitCount() } }}
         </span>
       </div>
     </ewms-demo-frame>
-    <p class="text-caption text-secondary">
-      Mientras carga el botón conserva el foco: se deshabilita con
-      <code class="font-mono">aria-disabled</code> y no con el atributo nativo, porque el nativo lo
-      saca del orden de tabulación justo cuando acaba de recibir Enter y el foco caería al
-      <code class="font-mono">&lt;body&gt;</code>.
-    </p>
+    <p
+      class="text-caption text-secondary"
+      [ewmsProse]="'showroom.button.doubleSubmit.focus' | transloco"
+    ></p>
   </section>
 
   <!-- ================================================================ 6. Tamaños -->
   <section class="flex flex-col gap-4" aria-labelledby="btn-sizes" data-block="6-tamanos">
-    <h2 id="btn-sizes" class="text-h2">Tamaños</h2>
+    <h2 id="btn-sizes" class="text-h2">{{ 'showroom.common.sections.sizes' | transloco }}</h2>
     <ewms-demo-frame ground="canvas">
       <ul class="flex flex-wrap items-end gap-8">
         @for (sample of sizes(); track sample.size) {
           <li class="flex flex-col items-start gap-2" [attr.data-size-sample]="sample.size">
-            <ewms-button variant="primary" [size]="sample.size" icon="check">Guardar</ewms-button>
+            <ewms-button variant="primary" [size]="sample.size" icon="check">
+              {{ 'showroom.button.sample.save' | transloco }}
+            </ewms-button>
             <span class="text-caption text-secondary">
-              {{ sample.label }} · <span class="font-mono">{{ sample.height }}</span>
+              {{ sample.label | transloco }} · <span class="font-mono">{{ sample.height }}</span>
             </span>
           </li>
         }
       </ul>
     </ewms-demo-frame>
-    <p class="text-caption text-secondary">
-      Las alturas de arriba están <strong>medidas sobre el botón renderizado</strong>, no escritas
-      en la página: el bloque existe para demostrar 32/40/48, y un número transcrito no demuestra
-      nada. El icono baja a <code class="font-mono">sm</code> en Small y se queda en
-      <code class="font-mono">md</code> en Medium y Large, para que no desequilibre una barra de
-      herramientas.
-    </p>
+    <p
+      class="text-caption text-secondary"
+      [ewmsProse]="'showroom.button.sizes.measured' | transloco"
+    ></p>
   </section>
 
   <!-- ==================================================== 7. Anatomía y tokens -->
   <section class="flex flex-col gap-4" aria-labelledby="btn-anatomy" data-block="7-anatomia">
-    <h2 id="btn-anatomy" class="text-h2">Anatomía y tokens</h2>
-    <p class="text-secondary">
-      Qué token controla cada parte, leído en vivo. Es el bloque que conecta el componente con
-      <code class="font-mono">tokens.css</code>: si un valor de acá no coincide con lo que se ve
-      arriba, uno de los dos está mal.
-    </p>
-    <ewms-doc-table caption="Tokens que consume &lt;ewms-button&gt;" [columns]="anatomyColumns" [rows]="anatomy">
+    <h2 id="btn-anatomy" class="text-h2">{{ 'showroom.common.sections.anatomy' | transloco }}</h2>
+    <p class="text-secondary" [ewmsProse]="'showroom.button.anatomy.intro' | transloco"></p>
+    <ewms-doc-table
+      [caption]="'showroom.button.anatomy.caption' | transloco"
+      [columns]="anatomyColumns"
+      [rows]="anatomy"
+    >
       <ng-template let-row let-column="column">
         @if (column.id === 'part') {
-          {{ row.part }}
+          {{ row.part | transloco }}
         } @else {
           <ewms-token-value [token]="row.token" [swatch]="true" />
         }
@@ -309,93 +307,42 @@
 
   <!-- ============================================== 8. Contrato para Angular -->
   <section class="flex flex-col gap-4" aria-labelledby="btn-contract" data-block="8-contrato">
-    <h2 id="btn-contract" class="text-h2">Contrato para Angular</h2>
+    <h2 id="btn-contract" class="text-h2">{{ 'showroom.common.sections.contract' | transloco }}</h2>
 
-    <h3 class="text-h3">Entradas</h3>
-    <p class="text-secondary">
-      Las doce de la tabla del bloque 3, todas <code class="font-mono">input()</code> de señales.
-    </p>
+    <h3 class="text-h3">{{ 'showroom.common.sections.inputs' | transloco }}</h3>
+    <p class="text-secondary" [ewmsProse]="'showroom.button.contract.inputs' | transloco"></p>
 
-    <h3 class="text-h3">Salidas</h3>
+    <h3 class="text-h3">{{ 'showroom.common.sections.outputs' | transloco }}</h3>
     <div class="flex flex-col gap-2 rounded-md border border-warning bg-warning-surface p-4">
-      <p>
-        <strong>Ninguna.</strong>&ngsp;<code class="font-mono">&lt;ewms-button&gt;</code> no declara
-        ningún <code class="font-mono">output()</code>. Se escucha el
-        <code class="font-mono">(click)</code> nativo, que burbujea desde el
-        <code class="font-mono">&lt;button&gt;</code> interno; cuando el control está
-        <code class="font-mono">disabled</code> o <code class="font-mono">loading</code>, el
-        componente detiene el evento antes de que salga.
-      </p>
-      <p class="text-caption">
-        La ficha del vault declaraba
-        <code class="font-mono">(click): EventEmitter&lt;MouseEvent&gt;</code> hasta el 2026-09-21.
-        <strong>Ganó el código</strong> y se corrigió la ficha: un
-        <code class="font-mono">output</code> llamado <code class="font-mono">click</code> se
-        superpone al evento nativo del mismo nombre y deja dos caminos para una sola cosa.
-      </p>
+      <p [ewmsProse]="'showroom.button.contract.outputs' | transloco"></p>
+      <p class="text-caption" [ewmsProse]="'showroom.button.contract.vaultFix' | transloco"></p>
     </div>
 
-    <h3 class="text-h3">Uso típico</h3>
+    <h3 class="text-h3">{{ 'showroom.common.sections.usage' | transloco }}</h3>
     <pre
       class="overflow-x-auto rounded-md border border-default bg-secondary p-4 font-mono text-mono text-primary outline-none focus-visible:shadow-(--focus-ring-shadow)"
       tabindex="0"
     ><code>{{ snippet }}</code></pre>
-    <p class="text-caption text-secondary">
-      El texto llega traducido desde el consumidor: el sistema de diseño no habla ningún idioma. El
-      icono se pasa por nombre del catálogo cerrado, no como <code class="font-mono">string</code>.
-    </p>
+    <p
+      class="text-caption text-secondary"
+      [ewmsProse]="'showroom.button.contract.translated' | transloco"
+    ></p>
 
-    <h3 class="text-h3">Enviar un formulario (DS-5)</h3>
+    <h3 class="text-h3">{{ 'showroom.button.submit.title' | transloco }}</h3>
     <div class="flex flex-col gap-2 rounded-md border border-strong bg-secondary p-4">
-      <p class="text-caption">
-        <code class="font-mono">type</code> vale <code class="font-mono">'button'</code> por
-        defecto, y eso <strong>no cambia</strong>: un botón sólo envía si alguien lo escribió a
-        propósito. Lo que se cerró en DS-5 es el costo que esa regla tenía y que apareció
-        construyendo la pantalla de ejemplo de DS-4 —
-        <strong
-          >un formulario de varios campos sin botón de envío tampoco se envía con
-          <kbd class="font-mono">Enter</kbd></strong
-        >, porque el envío implícito del navegador necesita que exista un botón de envío. Guardar
-        era el clic o <kbd class="font-mono">Ctrl</kbd>+<kbd class="font-mono">S</kbd>, y
-        <kbd class="font-mono">Enter</kbd> dentro de un campo, que es lo que hace todo el mundo, no
-        hacía nada.
-      </p>
-      <p class="text-caption">
-        Con <code class="font-mono">type="submit"</code> hay <strong>un solo camino</strong> y tres
-        maneras de entrar en él: <kbd class="font-mono">Enter</kbd> en cualquier campo, el botón, y
-        el atajo — que llama a <code class="font-mono">requestSubmit()</code> y no a
-        <code class="font-mono">click()</code>, porque pulsar un botón es una forma de enviar y no
-        el envío. Los tres levantan un <code class="font-mono">submit</code>, así que lo que se
-        agregue al envío mañana —una validación, un guard, una confirmación— les aplica a los tres.
-        El patrón anti-doble-envío no cambia: <code class="font-mono">loading</code> bloquea el
-        segundo.
-      </p>
+      <p class="text-caption" [ewmsProse]="'showroom.button.submit.defaultType' | transloco"></p>
+      <p class="text-caption" [ewmsProse]="'showroom.button.submit.onePath' | transloco"></p>
     </div>
 
-    <h3 class="text-h3">Accesibilidad</h3>
+    <h3 class="text-h3">{{ 'showroom.common.sections.a11y' | transloco }}</h3>
     <ul class="flex flex-col gap-2">
-      <li>
-        Anillo de foco visible en las cuatro variantes, con
-        <code class="font-mono">:focus-visible</code>: aparece con el teclado y no con el ratón.
-        Nunca <code class="font-mono">outline: none</code> sin reemplazo.
-      </li>
-      <li>
-        En Loading: <code class="font-mono">aria-busy="true"</code>,
-        <code class="font-mono">aria-disabled="true"</code>, y el nombre accesible se mantiene por
-        <code class="font-mono">aria-labelledby</code> aunque el contenido esté oculto — el cálculo
-        del nombre sigue la referencia aunque el nodo no se vea.
-      </li>
-      <li>El icono de un botón con texto es decorativo y no entra en el nombre.</li>
-      <li>
-        Solo ícono: el nombre es <code class="font-mono">aria-label</code> y el tooltip lo repite con
-        <code class="font-mono">aria-hidden</code>, para que el lector lo diga una sola vez.
-      </li>
+      <li [ewmsProse]="'showroom.button.a11y.focusRing' | transloco"></li>
+      <li [ewmsProse]="'showroom.button.a11y.loading' | transloco"></li>
+      <li [ewmsProse]="'showroom.button.a11y.decorativeIcon' | transloco"></li>
+      <li [ewmsProse]="'showroom.button.a11y.iconOnly' | transloco"></li>
     </ul>
 
-    <h3 class="text-h3">Bloques que no aplican</h3>
-    <p class="text-secondary">
-      Ninguno: los ocho aplican a este componente. La sección se deja escrita igual, porque en otras
-      fichas sí va a haber huecos y el hueco visible es información.
-    </p>
+    <h3 class="text-h3">{{ 'showroom.common.sections.notApplicable' | transloco }}</h3>
+    <p class="text-secondary" [ewmsProse]="'showroom.button.notApplicable' | transloco"></p>
   </section>
 </article>

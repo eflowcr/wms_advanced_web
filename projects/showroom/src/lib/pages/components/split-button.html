@@ -1,46 +1,41 @@
-<!-- Showroom solo en español, exento de i18n (compuerta 12): se declara para que el lector de pantalla no lo lea en inglés. -->
-<article class="flex flex-col gap-10" lang="es">
+<article class="flex flex-col gap-10">
   <!-- ============================================================ 1. Encabezado -->
   <header class="flex flex-col gap-2" data-block="1-encabezado">
     <div class="flex flex-wrap items-baseline gap-3">
-      <h1 class="text-h1">Split button</h1>
+      <h1 class="text-h1">{{ 'showroom.catalog.splitButton.name' | transloco }}</h1>
       <code class="font-mono text-primary">&lt;ewms-split-button&gt;</code>
     </div>
     <ul class="flex flex-wrap gap-2 text-caption">
-      <li class="rounded-sm bg-secondary px-2 py-1 text-secondary">
-        Versión <span class="font-mono">{{ version }}</span>
+      <li
+        class="rounded-sm bg-secondary px-2 py-1 text-secondary"
+        [ewmsProse]="'showroom.common.header.version' | transloco: { version }"
+      ></li>
+      <li class="rounded-sm bg-success-surface px-2 py-1 text-success">
+        {{ 'showroom.common.header.built' | transloco }}
       </li>
-      <li class="rounded-sm bg-success-surface px-2 py-1 text-success">Construido y en verde</li>
-      <li class="rounded-sm bg-secondary px-2 py-1 text-secondary">
-        Ficha: <span class="font-mono">08-Sistema-de-Diseno/Componentes/Split-Button.md</span>
-      </li>
+      <li
+        class="rounded-sm bg-secondary px-2 py-1 text-secondary"
+        [ewmsProse]="
+          'showroom.common.header.sheet'
+            | transloco: { path: '08-Sistema-de-Diseno/Componentes/Split-Button.md' }
+        "
+      ></li>
     </ul>
   </header>
 
   <!-- ================================================ 2. Qué resuelve / cuándo no -->
   <section class="flex flex-col gap-4" aria-labelledby="sb-purpose" data-block="2-proposito">
-    <h2 id="sb-purpose" class="text-h2">Qué resuelve, y cuándo NO usarlo</h2>
+    <h2 id="sb-purpose" class="text-h2">{{ 'showroom.common.sections.purpose' | transloco }}</h2>
     <div class="grid grid-cols-[repeat(auto-fit,minmax(min(20rem,100%),1fr))] gap-4">
       <div class="flex flex-col gap-2 rounded-md border border-default bg-surface p-4">
-        <h3 class="text-h3">Qué resuelve</h3>
-        <p>
-          Una acción que se usa casi siempre de la misma forma, con <strong>alternativas a un
-          clic</strong>: «Descargar» baja el PDF, y la flecha ofrece Excel o CSV. Son dos
-          <code class="font-mono">&lt;ewms-button&gt;</code> pegados; el menú es el mismo de la
-          fila de la Tabla.
-        </p>
+        <h3 class="text-h3">{{ 'showroom.common.sections.solves' | transloco }}</h3>
+        <p [ewmsProse]="'showroom.splitButton.purpose.solves' | transloco"></p>
       </div>
       <div class="flex flex-col gap-2 rounded-md border border-danger bg-danger-surface p-4">
-        <h3 class="text-h3">Cuándo NO usarlo</h3>
+        <h3 class="text-h3">{{ 'showroom.common.sections.avoid' | transloco }}</h3>
         <ul class="flex flex-col gap-2">
-          <li>
-            <strong>Si las alternativas pesan igual</strong>, no hay acción principal: van botones
-            separados o un Select.
-          </li>
-          <li>
-            <strong>Si el menú mezcla verbos</strong> («Descargar», «Eliminar»), es el menú de fila,
-            no un split: acá todo es la misma acción con otra forma.
-          </li>
+          <li [ewmsProse]="'showroom.splitButton.purpose.sameWeight' | transloco"></li>
+          <li [ewmsProse]="'showroom.splitButton.purpose.mixedVerbs' | transloco"></li>
         </ul>
       </div>
     </div>
@@ -48,108 +43,95 @@
 
   <!-- ========================================================= 3. Demo principal -->
   <section class="flex flex-col gap-4" aria-labelledby="sb-demo" data-block="3-demo">
-    <h2 id="sb-demo" class="text-h2">Demo principal</h2>
+    <h2 id="sb-demo" class="text-h2">{{ 'showroom.common.sections.demo' | transloco }}</h2>
     <div class="grid grid-cols-[repeat(auto-fit,minmax(min(24rem,100%),1fr))] gap-6">
-      <ewms-demo-frame ground="canvas" label="Exportar una lista de expediciones">
+      <ewms-demo-frame ground="canvas" [label]="'showroom.splitButton.demo.frame' | transloco">
         <div class="flex flex-col items-start gap-4" data-demo-split>
           <ewms-split-button
-            label="Descargar"
+            [label]="'showroom.splitButton.demo.download' | transloco"
             icon="download"
-            [actions]="formats"
+            [actions]="formats()"
             (primary)="export('pdf')"
             (action)="export($event)"
           />
           <p class="text-caption text-secondary" role="status">
-            Último pedido: <span class="font-mono text-primary" data-demo-last>{{ last() }}</span>
+            {{ 'showroom.splitButton.demo.last' | transloco }}
+            <span class="font-mono text-primary" data-demo-last>{{
+              last() ?? ('showroom.splitButton.demo.nothingYet' | transloco)
+            }}</span>
           </p>
         </div>
       </ewms-demo-frame>
-      <ewms-prop-table [rows]="props" caption="Propiedades de <ewms-split-button>" />
+      <ewms-prop-table
+        [rows]="props"
+        [caption]="'showroom.splitButton.props.caption' | transloco"
+      />
     </div>
-    <p class="text-caption text-secondary">
-      Probalo con teclado: Tab hasta la flecha, <kbd class="font-mono">↓</kbd> abre en la primera
-      opción, las flechas recorren saltando «Etiquetas», <kbd class="font-mono">Enter</kbd> elige y
-      <kbd class="font-mono">Esc</kbd> cierra devolviendo el foco a la flecha.
-    </p>
+    <p
+      class="text-caption text-secondary"
+      [ewmsProse]="'showroom.splitButton.demo.keyboard' | transloco"
+    ></p>
   </section>
 
   <!-- =============================================================== 4. Variantes -->
   <section class="flex flex-col gap-4" aria-labelledby="sb-variants" data-block="4-variantes">
-    <h2 id="sb-variants" class="text-h2">Variantes</h2>
+    <h2 id="sb-variants" class="text-h2">{{ 'showroom.common.sections.variants' | transloco }}</h2>
     <div class="flex flex-col gap-2 rounded-md border border-strong bg-secondary p-4">
-      <h3 class="text-h4">No aplica — siempre Secondary</h3>
-      <p>
-        Un split ofrece una elección; la acción principal de la pantalla es otra, y va Primary.
-        Dos Primary juntas dejan de decir cuál es la principal.
-      </p>
+      <h3 class="text-h4">{{ 'showroom.splitButton.variants.title' | transloco }}</h3>
+      <p [ewmsProse]="'showroom.splitButton.variants.why' | transloco"></p>
     </div>
   </section>
 
   <!-- ========================================================= 5. Matriz de estados -->
   <section class="flex flex-col gap-4" aria-labelledby="sb-matrix" data-block="5-matriz">
-    <h2 id="sb-matrix" class="text-h2">Matriz de estados</h2>
+    <h2 id="sb-matrix" class="text-h2">{{ 'showroom.common.sections.states' | transloco }}</h2>
     <div class="flex flex-col gap-2 rounded-md border border-strong bg-secondary p-4">
-      <h3 class="text-h4">Los del Botón</h3>
-      <p>
-        Cada mitad es un <code class="font-mono">&lt;ewms-button&gt;</code> Secondary, con su hover,
-        foco, deshabilitado y carga, que están en la matriz del Botón. Abierto, la flecha anuncia
-        <code class="font-mono">aria-expanded="true"</code>.
-      </p>
+      <h3 class="text-h4">{{ 'showroom.splitButton.states.title' | transloco }}</h3>
+      <p [ewmsProse]="'showroom.splitButton.states.halves' | transloco"></p>
     </div>
   </section>
 
   <!-- ================================================================ 6. Tamaños -->
   <section class="flex flex-col gap-4" aria-labelledby="sb-sizes" data-block="6-tamanos">
-    <h2 id="sb-sizes" class="text-h2">Tamaños</h2>
+    <h2 id="sb-sizes" class="text-h2">{{ 'showroom.common.sections.sizes' | transloco }}</h2>
     <div class="flex flex-col gap-2 rounded-md border border-strong bg-secondary p-4">
-      <h3 class="text-h4">No aplica — Medium</h3>
-      <p>
-        40 px, la altura de control por defecto: vive en barras de herramientas junto a otros
-        botones Medium. Un tamaño configurable llega cuando un consumidor lo pida.
-      </p>
+      <h3 class="text-h4">{{ 'showroom.splitButton.sizes.title' | transloco }}</h3>
+      <p [ewmsProse]="'showroom.splitButton.sizes.height' | transloco"></p>
     </div>
   </section>
 
   <!-- ===================================================== 7. Anatomía y tokens -->
   <section class="flex flex-col gap-4" aria-labelledby="sb-anatomy" data-block="7-anatomia">
-    <h2 id="sb-anatomy" class="text-h2">Anatomía y tokens</h2>
+    <h2 id="sb-anatomy" class="text-h2">{{ 'showroom.common.sections.anatomy' | transloco }}</h2>
     <ul class="flex flex-col gap-2">
       @for (item of anatomy; track item.token) {
-        <li class="flex flex-wrap items-center gap-3 rounded-md border border-default bg-surface p-3">
-          <span class="text-caption text-secondary">{{ item.part }}</span>
+        <li
+          class="flex flex-wrap items-center gap-3 rounded-md border border-default bg-surface p-3"
+        >
+          <span class="text-caption text-secondary">{{ item.part | transloco }}</span>
           <ewms-token-value [token]="item.token" />
         </li>
       }
     </ul>
-    <p class="text-caption text-secondary">
-      Sin token propio: las esquinas interiores se enderezan y el borde entre los dos se dibuja una
-      sola vez. El menú es <span class="font-mono">lib/menu/</span>, el mismo de la Tabla.
-    </p>
+    <p
+      class="text-caption text-secondary"
+      [ewmsProse]="'showroom.splitButton.anatomy.noToken' | transloco"
+    ></p>
   </section>
 
   <!-- ============================================== 8. Contrato para Angular -->
   <section class="flex flex-col gap-4" aria-labelledby="sb-contract" data-block="8-contrato">
-    <h2 id="sb-contract" class="text-h2">Contrato para Angular</h2>
+    <h2 id="sb-contract" class="text-h2">{{ 'showroom.common.sections.contract' | transloco }}</h2>
     <pre
       class="overflow-x-auto rounded-md border border-default bg-secondary p-4 font-mono text-mono text-primary outline-none focus-visible:shadow-(--focus-ring-shadow)"
       tabindex="0"
     ><code>{{ snippet }}</code></pre>
-    <h3 class="text-h3">Accesibilidad</h3>
+    <h3 class="text-h3">{{ 'showroom.common.sections.a11y' | transloco }}</h3>
     <ul class="flex flex-col gap-2">
-      <li>
-        Patrón APG <em>menu button</em>: la flecha es un botón con nombre (el
-        <code class="font-mono">moreActions</code> de
-        <code class="font-mono">EWMS_SPLIT_BUTTON_MESSAGES</code>),
-        <code class="font-mono">aria-expanded</code> y <code class="font-mono">aria-controls</code>.
-      </li>
-      <li>
-        <kbd class="font-mono">Enter</kbd>, <kbd class="font-mono">Espacio</kbd> y
-        <kbd class="font-mono">↓</kbd> abren en la primera opción; <kbd class="font-mono">↑</kbd>, en
-        la última. El foco entra al menú y <code class="font-mono">aria-activedescendant</code>
-        marca la opción; <kbd class="font-mono">Esc</kbd> cierra y lo devuelve a la flecha.
-      </li>
+      <li [ewmsProse]="'showroom.splitButton.a11y.pattern' | transloco"></li>
+      <li [ewmsProse]="'showroom.splitButton.a11y.keys' | transloco"></li>
     </ul>
-    <h3 class="text-h3">Bloques que no aplican</h3>
-    <p class="text-secondary">Variantes y tamaños: escritos arriba en vez de borrados.</p>
+    <h3 class="text-h3">{{ 'showroom.common.sections.notApplicable' | transloco }}</h3>
+    <p class="text-secondary">{{ 'showroom.splitButton.notApplicable' | transloco }}</p>
   </section>
 </article>

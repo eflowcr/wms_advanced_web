@@ -10,9 +10,12 @@ import {
   type ButtonSize,
   type SelectOption,
 } from '@ewms/design-system';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { DemoFrame } from '../../ui/demo-frame';
+import { Prose } from '../../ui/prose';
 import { TokenReader } from '../../ui/token-reader';
 import { TokenValue } from '../../ui/token-value';
+import { LOCATION_OPTIONS } from './spacing.fixtures';
 
 /** Un paso de la escala de espaciado, al ancho que le da el multiplicador. */
 interface SpacingStep {
@@ -23,12 +26,14 @@ interface SpacingStep {
 interface RadiusSample {
   readonly token: string;
   readonly utility: string;
+  /** Clave del diccionario. */
   readonly use: string;
   readonly signature: boolean;
 }
 
 interface ControlHeight {
   readonly size: ButtonSize;
+  /** Clave del diccionario. */
   readonly label: string;
   readonly utility: string;
   readonly padding: string;
@@ -49,44 +54,59 @@ const STEPS: readonly SpacingStep[] = [
   { steps: 24, utility: 'w-24' },
 ];
 
+/**
+ * t(showroom.spacing.radii.uses.sm, showroom.spacing.radii.uses.control,
+ *   showroom.spacing.radii.uses.md, showroom.spacing.radii.uses.lg,
+ *   showroom.spacing.radii.uses.full)
+ */
 const RADII: readonly RadiusSample[] = [
   {
     token: '--radius-sm',
     utility: 'rounded-sm',
-    use: 'Chips, badges, muestras chicas.',
+    use: 'showroom.spacing.radii.uses.sm',
     signature: false,
   },
   {
     token: '--radius-control',
     utility: 'rounded-control',
-    use: 'Botón, Input y Select. Los tres el mismo, siempre.',
+    use: 'showroom.spacing.radii.uses.control',
     signature: true,
   },
   {
     token: '--radius-md',
     utility: 'rounded-md',
-    use: 'Cards, paneles, marcos de demo.',
+    use: 'showroom.spacing.radii.uses.md',
     signature: false,
   },
-  { token: '--radius-lg', utility: 'rounded-lg', use: 'Modales.', signature: false },
+  {
+    token: '--radius-lg',
+    utility: 'rounded-lg',
+    use: 'showroom.spacing.radii.uses.lg',
+    signature: false,
+  },
   {
     token: '--radius-full',
     utility: 'rounded-full',
-    use: 'Track y thumb del Toggle, avatares.',
+    use: 'showroom.spacing.radii.uses.full',
     signature: false,
   },
 ];
 
+/** t(showroom.common.sizes.sm, showroom.common.sizes.md, showroom.common.sizes.lg) */
 const HEIGHTS: readonly ControlHeight[] = [
-  { size: 'sm', label: 'Small', utility: 'h-8', padding: 'px-3' },
-  { size: 'md', label: 'Medium', utility: 'h-10', padding: 'px-4' },
-  { size: 'lg', label: 'Large', utility: 'h-12', padding: 'px-5' },
+  { size: 'sm', label: 'showroom.common.sizes.sm', utility: 'h-8', padding: 'px-3' },
+  { size: 'md', label: 'showroom.common.sizes.md', utility: 'h-10', padding: 'px-4' },
+  { size: 'lg', label: 'showroom.common.sizes.lg', utility: 'h-12', padding: 'px-5' },
 ];
 
+/**
+ * t(showroom.spacing.elevation.uses.sm, showroom.spacing.elevation.uses.md,
+ *   showroom.spacing.elevation.uses.lg)
+ */
 const ELEVATIONS = [
-  { token: '--shadow-sm', utility: 'shadow-sm', use: 'Card en reposo.' },
-  { token: '--shadow-md', utility: 'shadow-md', use: 'Dropdown, popover, Select abierto.' },
-  { token: '--shadow-lg', utility: 'shadow-lg', use: 'Modal.' },
+  { token: '--shadow-sm', utility: 'shadow-sm', use: 'showroom.spacing.elevation.uses.sm' },
+  { token: '--shadow-md', utility: 'shadow-md', use: 'showroom.spacing.elevation.uses.md' },
+  { token: '--shadow-lg', utility: 'shadow-lg', use: 'showroom.spacing.elevation.uses.lg' },
 ] as const;
 
 /**
@@ -95,7 +115,19 @@ const ELEVATIONS = [
  */
 @Component({
   selector: 'ewms-showroom-spacing',
-  imports: [Button, Checkbox, Input, Radio, RadioGroup, Select, Toggle, DemoFrame, TokenValue],
+  imports: [
+    Button,
+    Checkbox,
+    Input,
+    Radio,
+    RadioGroup,
+    Select,
+    Toggle,
+    DemoFrame,
+    Prose,
+    TokenValue,
+    TranslocoPipe,
+  ],
   templateUrl: './spacing.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -107,11 +139,7 @@ export class ShowroomSpacing {
   protected readonly heights = HEIGHTS;
   protected readonly elevations = ELEVATIONS;
 
-  protected readonly options: readonly SelectOption[] = [
-    { value: 'a', label: 'Almacén central' },
-    { value: 'b', label: 'Muelle 3' },
-    { value: 'c', label: 'Cuarentena' },
-  ];
+  protected readonly options: readonly SelectOption[] = LOCATION_OPTIONS;
 
   /** Multiplicador base leído en vivo; todo número de abajo se deriva de él. */
   protected readonly base = signal('…');

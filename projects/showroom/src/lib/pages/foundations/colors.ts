@@ -1,6 +1,8 @@
 import { afterNextRender, ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { DemoFrame } from '../../ui/demo-frame';
-import { DocTable } from '../../ui/doc-table';
+import { DocTable, type DocColumn } from '../../ui/doc-table';
+import { Prose } from '../../ui/prose';
 import { TokenReader } from '../../ui/token-reader';
 import { TokenValue } from '../../ui/token-value';
 import { AA_NON_TEXT, AA_TEXT, formatRatio, verdict, type ContrastVerdict } from '../../ui/tokens';
@@ -14,7 +16,9 @@ interface ToneRamp {
 /** Semánticos agrupados por rol; el agrupamiento es intención, no valor. */
 interface RoleGroup {
   readonly id: string;
+  /** Clave del diccionario. */
   readonly title: string;
+  /** Clave del diccionario. */
   readonly note: string;
   readonly tokens: readonly string[];
 }
@@ -26,6 +30,7 @@ interface ContrastPair {
   readonly minimum: number;
   /** WCAG 1.4.3 exime al control deshabilitado y un divisor decorativo no es control: otra pregunta, no una falla suave. */
   readonly exempt: boolean;
+  /** Clave del diccionario. */
   readonly note: string;
 }
 
@@ -36,17 +41,28 @@ interface ContrastResult extends ContrastPair {
 
 const FAMILIES = ['navy', 'blue', 'red', 'orange', 'green'];
 
+/**
+ * t(showroom.colors.semantic.roles.brand.title, showroom.colors.semantic.roles.brand.note,
+ *   showroom.colors.semantic.roles.text.title, showroom.colors.semantic.roles.text.note,
+ *   showroom.colors.semantic.roles.surfaces.title, showroom.colors.semantic.roles.surfaces.note,
+ *   showroom.colors.semantic.roles.borders.title, showroom.colors.semantic.roles.borders.note,
+ *   showroom.colors.semantic.roles.action.title, showroom.colors.semantic.roles.action.note,
+ *   showroom.colors.semantic.roles.dangerButton.title,
+ *   showroom.colors.semantic.roles.dangerButton.note,
+ *   showroom.colors.semantic.roles.families.title, showroom.colors.semantic.roles.families.note,
+ *   showroom.colors.semantic.roles.states.title, showroom.colors.semantic.roles.states.note)
+ */
 const ROLES: readonly RoleGroup[] = [
   {
     id: 'brand',
-    title: 'Marca',
-    note: 'El azul significa «se hace clic». Nada informativo, decorativo ni de estado lo usa.',
+    title: 'showroom.colors.semantic.roles.brand.title',
+    note: 'showroom.colors.semantic.roles.brand.note',
     tokens: ['--color-brand-navy', '--color-brand-blue'],
   },
   {
     id: 'text',
-    title: 'Texto',
-    note: 'Cinco roles, no cinco grises: cada uno dice sobre qué superficie vive.',
+    title: 'showroom.colors.semantic.roles.text.title',
+    note: 'showroom.colors.semantic.roles.text.note',
     tokens: [
       '--color-text-primary',
       '--color-text-secondary',
@@ -57,8 +73,8 @@ const ROLES: readonly RoleGroup[] = [
   },
   {
     id: 'surfaces',
-    title: 'Superficies',
-    note: 'La superficie no se separa del canvas por color (1.07:1) sino por borde o sombra.',
+    title: 'showroom.colors.semantic.roles.surfaces.title',
+    note: 'showroom.colors.semantic.roles.surfaces.note',
     tokens: [
       '--color-canvas',
       '--color-surface',
@@ -68,14 +84,14 @@ const ROLES: readonly RoleGroup[] = [
   },
   {
     id: 'borders',
-    title: 'Bordes',
-    note: 'El primero es divisor decorativo y nunca el borde de un control; los otros dos sí lo son.',
+    title: 'showroom.colors.semantic.roles.borders.title',
+    note: 'showroom.colors.semantic.roles.borders.note',
     tokens: ['--color-border', '--color-border-strong', '--color-border-strong-hover'],
   },
   {
     id: 'action',
-    title: 'Acción',
-    note: 'hover = base mezclada 15 % con negro, active = 28 %, disabled ≈ 85 % con blanco.',
+    title: 'showroom.colors.semantic.roles.action.title',
+    note: 'showroom.colors.semantic.roles.action.note',
     tokens: [
       '--color-bg-primary',
       '--color-bg-primary-hover',
@@ -86,8 +102,8 @@ const ROLES: readonly RoleGroup[] = [
   },
   {
     id: 'danger-button',
-    title: 'Botón de peligro',
-    note: 'Es el fondo del botón, no la severidad: la severidad es --color-danger-solid.',
+    title: 'showroom.colors.semantic.roles.dangerButton.title',
+    note: 'showroom.colors.semantic.roles.dangerButton.note',
     tokens: [
       '--color-bg-danger',
       '--color-bg-danger-hover',
@@ -97,8 +113,8 @@ const ROLES: readonly RoleGroup[] = [
   },
   {
     id: 'families',
-    title: 'Familias semánticas',
-    note: 'Cuatro tokens por familia: un banner necesita fondo, borde, icono y texto. No existe familia info.',
+    title: 'showroom.colors.semantic.roles.families.title',
+    note: 'showroom.colors.semantic.roles.families.note',
     tokens: [
       '--color-danger-solid',
       '--color-danger-surface',
@@ -120,8 +136,8 @@ const ROLES: readonly RoleGroup[] = [
   },
   {
     id: 'states',
-    title: 'Estados y superficies',
-    note: 'El overlay es navy translúcido y no negro: el negro apaga la escena, el navy la tiñe.',
+    title: 'showroom.colors.semantic.roles.states.title',
+    note: 'showroom.colors.semantic.roles.states.note',
     tokens: [
       '--color-focus-ring',
       '--color-focus-ring-on-dark',
@@ -133,218 +149,262 @@ const ROLES: readonly RoleGroup[] = [
 
 // Qué pares medir es intención de diseño y se escribe acá; cuánto dan sale de los tokens
 // computados. Si un token rompe un contraste, la tabla lo dice en la próxima recarga.
+/**
+ * t(showroom.colors.contrast.notes.primaryOnSurface,
+ *   showroom.colors.contrast.notes.primaryOnCanvas, showroom.colors.contrast.notes.activeOption,
+ *   showroom.colors.contrast.notes.caption, showroom.colors.contrast.notes.secondaryWorst,
+ *   showroom.colors.contrast.notes.secondaryOnSecondary, showroom.colors.contrast.notes.navyBars,
+ *   showroom.colors.contrast.notes.primaryButton, showroom.colors.contrast.notes.primaryHover,
+ *   showroom.colors.contrast.notes.primaryActive, showroom.colors.contrast.notes.dangerButton,
+ *   showroom.colors.contrast.notes.onDangerSolid, showroom.colors.contrast.notes.onWarningSolid,
+ *   showroom.colors.contrast.notes.onSuccessSolid, showroom.colors.contrast.notes.familyText,
+ *   showroom.colors.contrast.notes.neutralBadge, showroom.colors.contrast.notes.controlBorder,
+ *   showroom.colors.contrast.notes.controlBorderOnCanvas,
+ *   showroom.colors.contrast.notes.controlBorderHover,
+ *   showroom.colors.contrast.notes.controlBorderHoverWorst,
+ *   showroom.colors.contrast.notes.focusRing, showroom.colors.contrast.notes.focusRingOnCanvas,
+ *   showroom.colors.contrast.notes.focusRingOnDark, showroom.colors.contrast.notes.divider,
+ *   showroom.colors.contrast.notes.disabledPrimary, showroom.colors.contrast.notes.disabledDanger,
+ *   showroom.colors.contrast.notes.disabledOnSecondary, showroom.colors.contrast.notes.toggleThumb)
+ */
 const PAIRS: readonly ContrastPair[] = [
   {
     foreground: '--color-text-primary',
     background: '--color-surface',
     minimum: AA_TEXT,
     exempt: false,
-    note: 'Texto principal sobre la superficie blanca.',
+    note: 'showroom.colors.contrast.notes.primaryOnSurface',
   },
   {
     foreground: '--color-text-primary',
     background: '--color-canvas',
     minimum: AA_TEXT,
     exempt: false,
-    note: 'Texto principal sobre el canvas.',
+    note: 'showroom.colors.contrast.notes.primaryOnCanvas',
   },
   {
     foreground: '--color-text-primary',
     background: '--color-ghost-hover',
     minimum: AA_TEXT,
     exempt: false,
-    note: 'La opción activa del panel del Select lleva este fondo.',
+    note: 'showroom.colors.contrast.notes.activeOption',
   },
   {
     foreground: '--color-text-secondary',
     background: '--color-surface',
     minimum: AA_TEXT,
     exempt: false,
-    note: 'Caption y metadatos sobre superficie: es texto de 12 px.',
+    note: 'showroom.colors.contrast.notes.caption',
   },
   {
     foreground: '--color-text-secondary',
     background: '--color-canvas',
     minimum: AA_TEXT,
     exempt: false,
-    note: 'El peor caso del texto secundario.',
+    note: 'showroom.colors.contrast.notes.secondaryWorst',
   },
   {
     foreground: '--color-text-secondary',
     background: '--color-bg-secondary',
     minimum: AA_TEXT,
     exempt: false,
-    note: 'Texto secundario sobre superficie secundaria.',
+    note: 'showroom.colors.contrast.notes.secondaryOnSecondary',
   },
   {
     foreground: '--color-text-on-dark',
     background: '--color-brand-navy',
     minimum: AA_TEXT,
     exempt: false,
-    note: 'Barra superior y rail navy.',
+    note: 'showroom.colors.contrast.notes.navyBars',
   },
   {
     foreground: '--color-text-on-primary',
     background: '--color-bg-primary',
     minimum: AA_TEXT,
     exempt: false,
-    note: 'Texto del botón Primary.',
+    note: 'showroom.colors.contrast.notes.primaryButton',
   },
   {
     foreground: '--color-text-on-primary',
     background: '--color-bg-primary-hover',
     minimum: AA_TEXT,
     exempt: false,
-    note: 'Primary en hover.',
+    note: 'showroom.colors.contrast.notes.primaryHover',
   },
   {
     foreground: '--color-text-on-primary',
     background: '--color-bg-primary-active',
     minimum: AA_TEXT,
     exempt: false,
-    note: 'Primary en active.',
+    note: 'showroom.colors.contrast.notes.primaryActive',
   },
   {
     foreground: '--color-text-on-primary',
     background: '--color-bg-danger',
     minimum: AA_TEXT,
     exempt: false,
-    note: 'Texto del botón Danger. Es el caso que obligó a que este token sea blanco y no text-on-dark.',
+    note: 'showroom.colors.contrast.notes.dangerButton',
   },
   {
     foreground: '--color-text-on-primary',
     background: '--color-danger-solid',
     minimum: AA_TEXT,
     exempt: false,
-    note: 'Blanco sobre la severidad danger.',
+    note: 'showroom.colors.contrast.notes.onDangerSolid',
   },
   {
     foreground: '--color-text-on-primary',
     background: '--color-warning-solid',
     minimum: AA_TEXT,
     exempt: false,
-    note: 'Blanco sobre la severidad warning.',
+    note: 'showroom.colors.contrast.notes.onWarningSolid',
   },
   {
     foreground: '--color-text-on-primary',
     background: '--color-success-solid',
     minimum: AA_TEXT,
     exempt: false,
-    note: 'Blanco sobre la severidad success.',
+    note: 'showroom.colors.contrast.notes.onSuccessSolid',
   },
   {
     foreground: '--color-danger-text',
     background: '--color-danger-surface',
     minimum: AA_TEXT,
     exempt: false,
-    note: 'Texto de la familia sobre su propia superficie.',
+    note: 'showroom.colors.contrast.notes.familyText',
   },
   {
     foreground: '--color-warning-text',
     background: '--color-warning-surface',
     minimum: AA_TEXT,
     exempt: false,
-    note: 'Texto de la familia sobre su propia superficie.',
+    note: 'showroom.colors.contrast.notes.familyText',
   },
   {
     foreground: '--color-success-text',
     background: '--color-success-surface',
     minimum: AA_TEXT,
     exempt: false,
-    note: 'Texto de la familia sobre su propia superficie.',
+    note: 'showroom.colors.contrast.notes.familyText',
   },
   {
     foreground: '--color-neutral-text',
     background: '--color-neutral-surface',
     minimum: AA_TEXT,
     exempt: false,
-    note: 'Badge neutral: surface + text, nunca solid + blanco.',
+    note: 'showroom.colors.contrast.notes.neutralBadge',
   },
   {
     foreground: '--color-border-strong',
     background: '--color-surface',
     minimum: AA_NON_TEXT,
     exempt: false,
-    note: 'Borde que define un control (WCAG 1.4.11).',
+    note: 'showroom.colors.contrast.notes.controlBorder',
   },
   {
     foreground: '--color-border-strong',
     background: '--color-canvas',
     minimum: AA_NON_TEXT,
     exempt: false,
-    note: 'El mismo borde sobre el canvas.',
+    note: 'showroom.colors.contrast.notes.controlBorderOnCanvas',
   },
   {
     foreground: '--color-border-strong-hover',
     background: '--color-surface',
     minimum: AA_NON_TEXT,
     exempt: false,
-    note: 'Hover del borde de control.',
+    note: 'showroom.colors.contrast.notes.controlBorderHover',
   },
   {
     foreground: '--color-border-strong-hover',
     background: '--color-bg-secondary',
     minimum: AA_NON_TEXT,
     exempt: false,
-    note: 'El peor caso del hover del borde.',
+    note: 'showroom.colors.contrast.notes.controlBorderHoverWorst',
   },
   {
     foreground: '--color-focus-ring',
     background: '--color-surface',
     minimum: AA_NON_TEXT,
     exempt: false,
-    note: 'El anillo contrasta contra la superficie, no contra el control: por eso lleva separación.',
+    note: 'showroom.colors.contrast.notes.focusRing',
   },
   {
     foreground: '--color-focus-ring',
     background: '--color-canvas',
     minimum: AA_NON_TEXT,
     exempt: false,
-    note: 'El anillo sobre el canvas.',
+    note: 'showroom.colors.contrast.notes.focusRingOnCanvas',
   },
   {
     foreground: '--color-focus-ring-on-dark',
     background: '--color-brand-navy',
     minimum: AA_NON_TEXT,
     exempt: false,
-    note: 'Existe porque el azul de marca sobre navy queda sin aire.',
+    note: 'showroom.colors.contrast.notes.focusRingOnDark',
   },
   {
     foreground: '--color-border',
     background: '--color-surface',
     minimum: AA_NON_TEXT,
     exempt: true,
-    note: 'Divisor decorativo: exento. Nunca el borde de un control.',
+    note: 'showroom.colors.contrast.notes.divider',
   },
   {
     foreground: '--color-text-disabled',
     background: '--color-bg-primary-disabled',
     minimum: AA_TEXT,
     exempt: true,
-    note: 'Control deshabilitado: exento de 1.4.3. Anotado como pendiente de producto en la ficha del Botón.',
+    note: 'showroom.colors.contrast.notes.disabledPrimary',
   },
   {
     foreground: '--color-text-disabled',
     background: '--color-bg-danger-disabled',
     minimum: AA_TEXT,
     exempt: true,
-    note: 'El mismo cálculo para Danger deshabilitado.',
+    note: 'showroom.colors.contrast.notes.disabledDanger',
   },
   {
     foreground: '--color-text-disabled',
     background: '--color-bg-secondary',
     minimum: AA_TEXT,
     exempt: true,
-    note: 'Texto deshabilitado sobre superficie secundaria.',
+    note: 'showroom.colors.contrast.notes.disabledOnSecondary',
   },
   {
     foreground: '--color-text-on-primary',
     background: '--color-bg-primary-disabled',
     minimum: AA_NON_TEXT,
     exempt: true,
-    note: 'El thumb del Toggle encendido y deshabilitado, contra su track.',
+    note: 'showroom.colors.contrast.notes.toggleThumb',
   },
 ];
+
+/**
+ * t(showroom.colors.contrast.columns.sample, showroom.colors.contrast.columns.foreground,
+ *   showroom.colors.contrast.columns.background, showroom.colors.contrast.columns.ratio,
+ *   showroom.colors.contrast.columns.minimum, showroom.colors.contrast.columns.verdict,
+ *   showroom.colors.contrast.columns.note)
+ */
+const CONTRAST_COLUMNS: readonly DocColumn[] = [
+  { id: 'sample', label: 'showroom.colors.contrast.columns.sample' },
+  { id: 'foreground', label: 'showroom.colors.contrast.columns.foreground' },
+  { id: 'background', label: 'showroom.colors.contrast.columns.background' },
+  { id: 'ratio', label: 'showroom.colors.contrast.columns.ratio' },
+  { id: 'minimum', label: 'showroom.colors.contrast.columns.minimum' },
+  { id: 'verdict', label: 'showroom.colors.contrast.columns.verdict' },
+  { id: 'note', label: 'showroom.colors.contrast.columns.note' },
+];
+
+/**
+ * t(showroom.colors.contrast.verdicts.pass, showroom.colors.contrast.verdicts.fail,
+ *   showroom.colors.contrast.verdicts.exempt)
+ */
+const VERDICT_LABELS: Readonly<Record<ContrastVerdict, string>> = {
+  pass: 'showroom.colors.contrast.verdicts.pass',
+  fail: 'showroom.colors.contrast.verdicts.fail',
+  exempt: 'showroom.colors.contrast.verdicts.exempt',
+};
 
 /**
  * Las dos capas de color y si pasan contraste. Los primitivos se leen de la hoja en vivo;
@@ -352,7 +412,7 @@ const PAIRS: readonly ContrastPair[] = [
  */
 @Component({
   selector: 'ewms-showroom-colors',
-  imports: [DemoFrame, DocTable, TokenValue],
+  imports: [DemoFrame, DocTable, Prose, TokenValue, TranslocoPipe],
   templateUrl: './colors.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -360,6 +420,7 @@ export class ShowroomColors {
   private readonly reader = inject(TokenReader);
 
   protected readonly roles = ROLES;
+  protected readonly contrastColumns = CONTRAST_COLUMNS;
 
   protected readonly ramps = signal<readonly ToneRamp[]>([]);
   protected readonly translucent = signal<readonly string[]>([]);
@@ -394,15 +455,9 @@ export class ShowroomColors {
     }
   }
 
+  /** Clave del nombre de un veredicto; la plantilla la traduce. */
   protected verdictLabel(value: ContrastVerdict): string {
-    switch (value) {
-      case 'pass':
-        return 'pasa';
-      case 'fail':
-        return 'FALLA';
-      case 'exempt':
-        return 'exento';
-    }
+    return VERDICT_LABELS[value];
   }
 
   /** Muestra de cualquier token, primitivos incluidos, sin que el valor llegue al fuente. */

@@ -5,18 +5,30 @@
 
 import { computedOf, formatBox, orNotMeasured, rectOf } from './measure';
 
-/** Tokens de ambos controles de selección, en el orden en que los muestran las páginas. */
+/**
+ * Tokens de ambos controles de selección, en el orden en que los muestran las páginas.
+ * `part` es la clave del texto: la traduce la celda de cada página.
+ * t(showroom.common.selection.anatomy.uncheckedBackground,
+ *   showroom.common.selection.anatomy.uncheckedBorder,
+ *   showroom.common.selection.anatomy.checkedFill, showroom.common.selection.anatomy.glyph,
+ *   showroom.common.selection.anatomy.borderWidth,
+ *   showroom.common.selection.anatomy.disabledBackground,
+ *   showroom.common.selection.anatomy.disabledBorder,
+ *   showroom.common.selection.anatomy.disabledChecked,
+ *   showroom.common.selection.anatomy.focusRing,
+ *   showroom.common.selection.anatomy.focusRingColour)
+ */
 export const SELECTION_ANATOMY = [
-  { part: 'Fondo sin marcar', token: '--color-surface' },
-  { part: 'Borde sin marcar', token: '--color-border-strong' },
-  { part: 'Fondo y borde al marcar, y borde en hover', token: '--color-bg-primary' },
-  { part: 'Check, guion y punto interior', token: '--color-text-on-primary' },
-  { part: 'Ancho del borde de la caja', token: '--border-width-selection' },
-  { part: 'Fondo deshabilitado sin marcar', token: '--color-bg-secondary' },
-  { part: 'Borde deshabilitado sin marcar', token: '--color-border' },
-  { part: 'Fondo y borde deshabilitado al marcar, y texto de la fila', token: '--color-text-disabled' },
-  { part: 'Anillo de foco (las dos bandas)', token: '--focus-ring-shadow' },
-  { part: 'Color del anillo', token: '--color-focus-ring' },
+  { part: 'showroom.common.selection.anatomy.uncheckedBackground', token: '--color-surface' },
+  { part: 'showroom.common.selection.anatomy.uncheckedBorder', token: '--color-border-strong' },
+  { part: 'showroom.common.selection.anatomy.checkedFill', token: '--color-bg-primary' },
+  { part: 'showroom.common.selection.anatomy.glyph', token: '--color-text-on-primary' },
+  { part: 'showroom.common.selection.anatomy.borderWidth', token: '--border-width-selection' },
+  { part: 'showroom.common.selection.anatomy.disabledBackground', token: '--color-bg-secondary' },
+  { part: 'showroom.common.selection.anatomy.disabledBorder', token: '--color-border' },
+  { part: 'showroom.common.selection.anatomy.disabledChecked', token: '--color-text-disabled' },
+  { part: 'showroom.common.selection.anatomy.focusRing', token: '--focus-ring-shadow' },
+  { part: 'showroom.common.selection.anatomy.focusRingColour', token: '--color-focus-ring' },
 ] as const;
 
 /**

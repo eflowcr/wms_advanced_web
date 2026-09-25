@@ -10,188 +10,230 @@ import {
   type NavItem,
   type Tab,
 } from '@ewms/design-system';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { DemoFrame } from '../../ui/demo-frame';
-import { DocTable } from '../../ui/doc-table';
+import { DocTable, type DocColumn } from '../../ui/doc-table';
 import { PropTable, type PropRow } from '../../ui/prop-table';
+import { Prose } from '../../ui/prose';
 import { TokenValue } from '../../ui/token-value';
+import { translated } from '../../ui/translated';
+import { DEEP_TRAIL_RECORDS, RAIL_FOOTER_SESSION } from './navigation.fixtures';
+
+/** Una pestaña abierta sin su etiqueta: la etiqueta sale del árbol traducido. */
+type OpenTab = Omit<Tab, 'label'>;
 
 /**
- * Árbol real del App Shell, recortado: un grupo con muchos hijos y otro con pocos
- * es la forma que complica la navegación; tres ítems planos no enseñarían nada.
+ * t(showroom.navigation.props.rail.items, showroom.navigation.props.rail.label,
+ *   showroom.navigation.props.rail.activeId, showroom.navigation.props.rail.expanded,
+ *   showroom.navigation.props.rail.toggleLabel, showroom.navigation.props.rail.itemSelect,
+ *   showroom.navigation.props.rail.expandedChange, showroom.navigation.props.rail.top,
+ *   showroom.navigation.props.rail.footer)
  */
-const TREE: readonly NavItem[] = [
-  { id: 'dashboard', label: 'Dashboard', icon: 'dashboard', route: '/dashboard' },
-  {
-    id: 'catalogs',
-    label: 'Catálogos',
-    icon: 'inventory',
-    children: [
-      { id: 'articles', label: 'Artículos', icon: 'package', route: '/catalogos/articulos' },
-      { id: 'clients', label: 'Clientes', icon: 'operator', route: '/catalogos/clientes' },
-      { id: 'locations', label: 'Ubicaciones', icon: 'location', route: '/catalogos/ubicaciones' },
-      { id: 'lots', label: 'Lotes', icon: 'lot', route: '/catalogos/lotes', badge: 4 },
-    ],
-  },
-  {
-    id: 'settings',
-    label: 'Configuración',
-    icon: 'settings',
-    children: [
-      { id: 'users', label: 'Usuarios', icon: 'operator', route: '/configuracion/usuarios' },
-      { id: 'params', label: 'Parámetros', icon: 'controls', route: '/configuracion/parametros' },
-    ],
-  },
-];
-
-/** La raíz de la miga. Lo único del camino que no sale del árbol. */
-const ROOT_CRUMB: Crumb = { label: 'Inicio', route: '#' };
-
-/** Siete niveles: el caso que la ficha nombraba como pendiente de truncado. */
-const DEEP_TRAIL: readonly Crumb[] = [
-  { label: 'Inicio', route: '/' },
-  { label: 'Almacenes', route: '/almacenes' },
-  { label: 'CEDI ePRAC', route: '/almacenes/cedi' },
-  { label: 'Zona A', route: '/almacenes/cedi/a' },
-  { label: 'Pasillo 1', route: '/almacenes/cedi/a/1' },
-  { label: 'Rack 12', route: '/almacenes/cedi/a/1/12' },
-  { label: 'Ubicación A1-12-03' },
-];
-
 const RAIL_PROPS: readonly PropRow[] = [
   {
     name: 'items',
     type: 'readonly NavItem[]',
-    default: '— (obligatorio)',
-    description: 'El árbol. Un ítem con children es un grupo: abre, no navega.',
+    default: '—',
+    description: 'showroom.navigation.props.rail.items',
   },
   {
     name: 'label',
     type: 'string',
-    default: '— (obligatorio)',
-    description: 'El nombre del landmark, ya traducido. Obligatorio: una página tiene más de un nav.',
+    default: '—',
+    description: 'showroom.navigation.props.rail.label',
   },
   {
     name: 'activeId',
     type: 'string | null',
     default: 'null',
-    description: 'Cuál es la pantalla en la que estás. Abre el grupo que la contiene.',
+    description: 'showroom.navigation.props.rail.activeId',
   },
   {
     name: 'expanded',
     type: 'boolean',
     default: 'true',
-    description: 'Panel de 232 o rail de 72. Lo decide el consumidor; el rail sólo lo pide.',
+    description: 'showroom.navigation.props.rail.expanded',
   },
   {
     name: 'toggleLabel',
     type: 'string',
-    default: '— (obligatorio)',
-    description: 'Nombre del control que cambia el ancho, ya traducido.',
+    default: '—',
+    description: 'showroom.navigation.props.rail.toggleLabel',
   },
   {
     name: 'itemSelect',
     type: 'output<NavItem>',
     default: '—',
-    description: 'Un destino elegido. Un grupo nunca emite: abre.',
+    description: 'showroom.navigation.props.rail.itemSelect',
   },
   {
     name: 'expandedChange',
     type: 'output<boolean>',
     default: '—',
-    description: 'El ancho pedido. El rail no se lo cambia solo.',
+    description: 'showroom.navigation.props.rail.expandedChange',
   },
   {
     name: '[navRailTop]',
-    type: 'ranura proyectada',
+    type: 'ng-content',
     default: '—',
-    description: 'Encima del árbol. Ahí va el bloque de favoritos; el rail no sabe qué es.',
+    description: 'showroom.navigation.props.rail.top',
   },
   {
     name: '[navRailFooter]',
-    type: 'ranura proyectada',
+    type: 'ng-content',
     default: '—',
-    description: 'Al pie. Credenciales y logo del cliente en el App Shell.',
+    description: 'showroom.navigation.props.rail.footer',
   },
 ];
 
+/**
+ * t(showroom.navigation.props.tabs.tabs, showroom.navigation.props.tabs.mode,
+ *   showroom.navigation.props.tabs.activeId, showroom.navigation.props.tabs.label,
+ *   showroom.navigation.props.tabs.tabSelect, showroom.navigation.props.tabs.tabClose)
+ */
 const TABS_PROPS: readonly PropRow[] = [
   {
     name: 'tabs',
     type: 'readonly Tab[]',
-    default: '— (obligatorio)',
-    description: '{ id, label, closable?, disabled? }. Cerrable salvo que diga lo contrario.',
+    default: '—',
+    description: 'showroom.navigation.props.tabs.tabs',
   },
   {
     name: 'mode',
     type: "'section' | 'document'",
     default: "'section'",
-    description: 'Subrayado para subsecciones; tarjeta cerrable para el MDI del App Shell.',
+    description: 'showroom.navigation.props.tabs.mode',
   },
   {
     name: 'activeId',
     type: 'string | null',
     default: 'null',
-    description: 'Cuál está seleccionada. El panel lo pone el consumidor.',
+    description: 'showroom.navigation.props.tabs.activeId',
   },
   {
     name: 'label',
     type: 'string',
-    default: '— (obligatorio)',
-    description: 'Nombre del tablist, ya traducido.',
+    default: '—',
+    description: 'showroom.navigation.props.tabs.label',
   },
   {
     name: 'tabSelect',
     type: 'output<Tab>',
     default: '—',
-    description: 'La pestaña elegida. No cambia la selección por su cuenta.',
+    description: 'showroom.navigation.props.tabs.tabSelect',
   },
   {
     name: 'tabClose',
     type: 'output<Tab>',
     default: '—',
-    description: 'La pestaña que se pidió cerrar. Cerrarla es del consumidor.',
+    description: 'showroom.navigation.props.tabs.tabClose',
   },
 ];
 
+/**
+ * t(showroom.navigation.props.crumbs.items, showroom.navigation.props.crumbs.label,
+ *   showroom.navigation.props.crumbs.expandLabel, showroom.navigation.props.crumbs.crumbSelect)
+ */
 const CRUMB_PROPS: readonly PropRow[] = [
   {
     name: 'items',
     type: 'readonly Crumb[]',
-    default: '— (obligatorio)',
-    description: 'El camino. El último es la página actual y no es enlace.',
+    default: '—',
+    description: 'showroom.navigation.props.crumbs.items',
   },
   {
     name: 'label',
     type: 'string',
-    default: '— (obligatorio)',
-    description: 'Nombre del landmark, ya traducido.',
+    default: '—',
+    description: 'showroom.navigation.props.crumbs.label',
   },
   {
     name: 'expandLabel',
     type: '(hidden: number) => string',
-    default: '— (obligatorio)',
-    description: 'Cómo se llama el pliegue, con cuántos niveles esconde. Ya traducido.',
+    default: '—',
+    description: 'showroom.navigation.props.crumbs.expandLabel',
   },
   {
     name: 'crumbSelect',
     type: 'output<Crumb>',
     default: '—',
-    description: 'El nivel elegido. La miga no navega.',
+    description: 'showroom.navigation.props.crumbs.crumbSelect',
   },
 ];
 
+/**
+ * t(showroom.navigation.anatomy.parts.railBackground, showroom.navigation.anatomy.parts.textOnNavy,
+ *   showroom.navigation.anatomy.parts.activePill, showroom.navigation.anatomy.parts.activeText,
+ *   showroom.navigation.anatomy.parts.railWidth, showroom.navigation.anatomy.parts.panelWidth,
+ *   showroom.navigation.anatomy.parts.tabHeight, showroom.navigation.anatomy.parts.bottomHeight,
+ *   showroom.navigation.anatomy.parts.bottomBreakpoint,
+ *   showroom.navigation.anatomy.parts.focusRingOnNavy)
+ */
 const ANATOMY: readonly { readonly part: string; readonly token: string }[] = [
-  { part: 'Fondo del rail y de la barra inferior', token: '--color-brand-navy' },
-  { part: 'Texto e iconos sobre navy', token: '--color-text-on-dark' },
-  { part: 'Pastilla del ítem activo', token: '--color-bg-primary' },
-  { part: 'Texto del ítem activo', token: '--color-text-on-primary' },
-  { part: 'Ancho del rail colapsado', token: '--nav-rail-width' },
-  { part: 'Ancho del panel expandido', token: '--nav-panel-width' },
-  { part: 'Alto de una pestaña', token: '--tab-height' },
-  { part: 'Alto de la barra inferior', token: '--nav-bottom-height' },
-  { part: 'Punto de corte de la barra inferior', token: '--breakpoint-nav-bottom' },
-  { part: 'Anillo de foco sobre navy', token: '--color-focus-ring-on-dark' },
+  { part: 'showroom.navigation.anatomy.parts.railBackground', token: '--color-brand-navy' },
+  { part: 'showroom.navigation.anatomy.parts.textOnNavy', token: '--color-text-on-dark' },
+  { part: 'showroom.navigation.anatomy.parts.activePill', token: '--color-bg-primary' },
+  { part: 'showroom.navigation.anatomy.parts.activeText', token: '--color-text-on-primary' },
+  { part: 'showroom.navigation.anatomy.parts.railWidth', token: '--nav-rail-width' },
+  { part: 'showroom.navigation.anatomy.parts.panelWidth', token: '--nav-panel-width' },
+  { part: 'showroom.navigation.anatomy.parts.tabHeight', token: '--tab-height' },
+  { part: 'showroom.navigation.anatomy.parts.bottomHeight', token: '--nav-bottom-height' },
+  { part: 'showroom.navigation.anatomy.parts.bottomBreakpoint', token: '--breakpoint-nav-bottom' },
+  {
+    part: 'showroom.navigation.anatomy.parts.focusRingOnNavy',
+    token: '--color-focus-ring-on-dark',
+  },
 ];
+
+/**
+ * t(showroom.navigation.states.columns.state, showroom.navigation.states.columns.seen,
+ *   showroom.navigation.states.columns.why)
+ */
+const STATE_COLUMNS: readonly DocColumn[] = [
+  { id: 'state', label: 'showroom.navigation.states.columns.state' },
+  { id: 'seen', label: 'showroom.navigation.states.columns.seen' },
+  { id: 'why', label: 'showroom.navigation.states.columns.why' },
+];
+
+/**
+ * Una fila por estado; la plantilla arma la clave con el id.
+ * t(showroom.navigation.states.railCollapsed.name, showroom.navigation.states.railCollapsed.seen,
+ *   showroom.navigation.states.railCollapsed.why, showroom.navigation.states.activeItem.name,
+ *   showroom.navigation.states.activeItem.seen, showroom.navigation.states.activeItem.why,
+ *   showroom.navigation.states.groupWithActive.name,
+ *   showroom.navigation.states.groupWithActive.seen,
+ *   showroom.navigation.states.groupWithActive.why, showroom.navigation.states.tabNotClosable.name,
+ *   showroom.navigation.states.tabNotClosable.seen, showroom.navigation.states.tabNotClosable.why,
+ *   showroom.navigation.states.tabDisabled.name, showroom.navigation.states.tabDisabled.seen,
+ *   showroom.navigation.states.tabDisabled.why, showroom.navigation.states.singleCrumb.name,
+ *   showroom.navigation.states.singleCrumb.seen, showroom.navigation.states.singleCrumb.why,
+ *   showroom.navigation.states.bottomNoOverflow.name,
+ *   showroom.navigation.states.bottomNoOverflow.seen,
+ *   showroom.navigation.states.bottomNoOverflow.why)
+ */
+const STATES = [
+  'railCollapsed',
+  'activeItem',
+  'groupWithActive',
+  'tabNotClosable',
+  'tabDisabled',
+  'singleCrumb',
+  'bottomNoOverflow',
+] as const;
+
+/** El ítem con ese id, en el primer nivel o en un grupo. */
+function find(tree: readonly NavItem[], id: string): NavItem | null {
+  for (const item of tree) {
+    if (item.id === id) {
+      return item;
+    }
+    const child = item.children?.find((candidate) => candidate.id === id);
+    if (child !== undefined) {
+      return child;
+    }
+  }
+  return null;
+}
 
 /**
  * /design-system/components/navigation: rail, miga y pestañas sincronizados a propósito,
@@ -201,32 +243,152 @@ const ANATOMY: readonly { readonly part: string; readonly token: string }[] = [
 @Component({
   selector: 'ewms-showroom-navigation',
   templateUrl: './navigation.html',
-  imports: [NavRail, NavBottom, Tabs, Breadcrumbs, DemoFrame, DocTable, PropTable, TokenValue],
+  imports: [
+    NavRail,
+    NavBottom,
+    Tabs,
+    Breadcrumbs,
+    DemoFrame,
+    DocTable,
+    PropTable,
+    Prose,
+    TokenValue,
+    TranslocoPipe,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ShowroomNavigation {
   protected readonly version = DESIGN_SYSTEM_VERSION;
-  protected readonly tree = TREE;
   protected readonly railProps = RAIL_PROPS;
   protected readonly tabsProps = TABS_PROPS;
   protected readonly crumbProps = CRUMB_PROPS;
   protected readonly anatomy = ANATOMY;
-  protected readonly deepTrail = DEEP_TRAIL;
+  protected readonly stateColumns = STATE_COLUMNS;
+  protected readonly states = STATES;
+  protected readonly session = RAIL_FOOTER_SESSION;
+
+  /**
+   * Árbol real del App Shell, recortado: un grupo con muchos hijos y otro con pocos
+   * es la forma que complica la navegación; tres ítems planos no enseñarían nada.
+   * t(showroom.navigation.demo.tree.dashboard, showroom.navigation.demo.tree.catalogs,
+   *   showroom.navigation.demo.tree.articles, showroom.navigation.demo.tree.clients,
+   *   showroom.navigation.demo.tree.locations, showroom.navigation.demo.tree.lots,
+   *   showroom.navigation.demo.tree.settings, showroom.navigation.demo.tree.users,
+   *   showroom.navigation.demo.tree.params)
+   */
+  protected readonly tree = translated((t): readonly NavItem[] => [
+    {
+      id: 'dashboard',
+      label: t('showroom.navigation.demo.tree.dashboard'),
+      icon: 'dashboard',
+      route: '/dashboard',
+    },
+    {
+      id: 'catalogs',
+      label: t('showroom.navigation.demo.tree.catalogs'),
+      icon: 'inventory',
+      children: [
+        {
+          id: 'articles',
+          label: t('showroom.navigation.demo.tree.articles'),
+          icon: 'package',
+          route: '/catalogos/articulos',
+        },
+        {
+          id: 'clients',
+          label: t('showroom.navigation.demo.tree.clients'),
+          icon: 'operator',
+          route: '/catalogos/clientes',
+        },
+        {
+          id: 'locations',
+          label: t('showroom.navigation.demo.tree.locations'),
+          icon: 'location',
+          route: '/catalogos/ubicaciones',
+        },
+        {
+          id: 'lots',
+          label: t('showroom.navigation.demo.tree.lots'),
+          icon: 'lot',
+          route: '/catalogos/lotes',
+          badge: 4,
+        },
+      ],
+    },
+    {
+      id: 'settings',
+      label: t('showroom.navigation.demo.tree.settings'),
+      icon: 'settings',
+      children: [
+        {
+          id: 'users',
+          label: t('showroom.navigation.demo.tree.users'),
+          icon: 'operator',
+          route: '/configuracion/usuarios',
+        },
+        {
+          id: 'params',
+          label: t('showroom.navigation.demo.tree.params'),
+          icon: 'controls',
+          route: '/configuracion/parametros',
+        },
+      ],
+    },
+  ]);
+
+  /**
+   * La raíz de la miga. Lo único del camino que no sale del árbol.
+   * t(showroom.navigation.demo.home)
+   */
+  private readonly rootCrumb = translated((t): Crumb => ({
+    label: t('showroom.navigation.demo.home'),
+    route: '#',
+  }));
+
+  /**
+   * Siete niveles: el caso que la ficha nombraba como pendiente de truncado. Los nombres del
+   * almacén hacia abajo son registros (navigation.fixtures.ts); lo que la interfaz nombra, no.
+   * t(showroom.navigation.demo.home, showroom.navigation.variants.crumbs.warehouses,
+   *   showroom.navigation.variants.crumbs.location)
+   */
+  protected readonly deepTrail = translated((t): readonly Crumb[] => [
+    { label: t('showroom.navigation.demo.home'), route: '/' },
+    { label: t('showroom.navigation.variants.crumbs.warehouses'), route: '/almacenes' },
+    { label: DEEP_TRAIL_RECORDS.warehouse, route: '/almacenes/cedi' },
+    { label: DEEP_TRAIL_RECORDS.zone, route: '/almacenes/cedi/a' },
+    { label: DEEP_TRAIL_RECORDS.aisle, route: '/almacenes/cedi/a/1' },
+    { label: DEEP_TRAIL_RECORDS.rack, route: '/almacenes/cedi/a/1/12' },
+    {
+      label: t('showroom.navigation.variants.crumbs.location', {
+        code: DEEP_TRAIL_RECORDS.location,
+      }),
+    },
+  ]);
 
   protected readonly expanded = signal(true);
   protected readonly activeId = signal('articles');
 
   /** Las pestañas abiertas. En el App Shell esto lo lleva `TabsService`. */
-  protected readonly openTabs = signal<readonly Tab[]>([
-    { id: 'articles', label: 'Artículos' },
-    { id: 'dashboard', label: 'Dashboard', closable: false },
+  private readonly open = signal<readonly OpenTab[]>([
+    { id: 'articles' },
+    { id: 'dashboard', closable: false },
   ]);
 
-  protected readonly sectionTabs: readonly Tab[] = [
-    { id: 'detail', label: 'Detalle' },
-    { id: 'history', label: 'Historial' },
-    { id: 'audit', label: 'Auditoría', disabled: true },
-  ];
+  /** Las abiertas con su etiqueta: sale del árbol, así cambia con el idioma. */
+  protected readonly openTabs = computed<readonly Tab[]>(() => {
+    const tree = this.tree();
+    return this.open().map((tab) => ({ ...tab, label: find(tree, tab.id)?.label ?? tab.id }));
+  });
+
+  /**
+   * t(showroom.navigation.variants.tabs.detail, showroom.navigation.variants.tabs.history,
+   *   showroom.navigation.variants.tabs.audit)
+   */
+  protected readonly sectionTabs = translated((t): readonly Tab[] => [
+    { id: 'detail', label: t('showroom.navigation.variants.tabs.detail') },
+    { id: 'history', label: t('showroom.navigation.variants.tabs.history') },
+    { id: 'audit', label: t('showroom.navigation.variants.tabs.audit'), disabled: true },
+  ]);
   protected readonly sectionActive = signal('detail');
 
   /**
@@ -234,25 +396,31 @@ export class ShowroomNavigation {
    * fuente de verdad que mentía al agregar un hijo.
    */
   protected readonly crumbs = computed<readonly Crumb[]>(() => {
+    const tree = this.tree();
+    const root = this.rootCrumb();
     const active = this.activeId();
-    const item = this.find(active);
+    const item = find(tree, active);
     if (item === null) {
       return [];
     }
-    const parent = parentOf(TREE, active);
+    const parent = parentOf(tree, active);
     return parent === null
-      ? [ROOT_CRUMB, { label: item.label }]
-      : [ROOT_CRUMB, { label: parent.label }, { label: item.label }];
+      ? [root, { label: item.label }]
+      : [root, { label: parent.label }, { label: item.label }];
   });
 
-  protected readonly expandLabel = (hidden: number): string =>
-    `Mostrar ${hidden} niveles ocultos`;
+  /** t(showroom.navigation.demo.expand) */
+  protected readonly expandLabel = translated(
+    (t) =>
+      (hidden: number): string =>
+        t('showroom.navigation.demo.expand', { hidden }),
+  );
 
   /** Elegir en el rail: cambia la miga y abre la pestaña si no estaba. */
   protected onItemSelect(item: NavItem): void {
     this.activeId.set(item.id);
-    this.openTabs.update((tabs) =>
-      tabs.some((tab) => tab.id === item.id) ? tabs : [...tabs, { id: item.id, label: item.label }],
+    this.open.update((tabs) =>
+      tabs.some((tab) => tab.id === item.id) ? tabs : [...tabs, { id: item.id }],
     );
   }
 
@@ -266,10 +434,10 @@ export class ShowroomNavigation {
    * vacía y el foco en su sitio, nunca perdido en el body.
    */
   protected onTabClose(closed: Tab): void {
-    const tabs = this.openTabs();
+    const tabs = this.open();
     const index = tabs.findIndex((tab) => tab.id === closed.id);
     const rest = tabs.filter((tab) => tab.id !== closed.id);
-    this.openTabs.set(rest);
+    this.open.set(rest);
 
     if (this.activeId() === closed.id && rest.length > 0) {
       const neighbour = rest[Math.min(index, rest.length - 1)];
@@ -289,17 +457,4 @@ export class ShowroomNavigation {
   }
 
   protected readonly lastCrumb = signal<string | null>(null);
-
-  private find(id: string): NavItem | null {
-    for (const item of TREE) {
-      if (item.id === id) {
-        return item;
-      }
-      const child = item.children?.find((candidate) => candidate.id === id);
-      if (child !== undefined) {
-        return child;
-      }
-    }
-    return null;
-  }
 }

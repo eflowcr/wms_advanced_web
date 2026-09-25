@@ -1,57 +1,63 @@
 import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import { DESIGN_SYSTEM_VERSION, SplitButton, type SplitAction } from '@ewms/design-system';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { DemoFrame } from '../../ui/demo-frame';
 import { PropTable, type PropRow } from '../../ui/prop-table';
+import { Prose } from '../../ui/prose';
 import { TokenValue } from '../../ui/token-value';
+import { translated } from '../../ui/translated';
 
-/** Verificada contra split-button.ts. */
+/**
+ * Verificada contra split-button.ts.
+ * t(showroom.splitButton.props.label, showroom.splitButton.props.icon,
+ *   showroom.splitButton.props.actions, showroom.splitButton.props.primary,
+ *   showroom.splitButton.props.action)
+ */
 const PROPS: readonly PropRow[] = [
   {
     name: 'label',
     type: 'string',
-    default: '— (requerido)',
-    description: 'Texto de la acción principal, ya traducido. También nombra el menú.',
+    default: '—',
+    description: 'showroom.splitButton.props.label',
   },
   {
     name: 'icon',
     type: 'IconName | null',
     default: 'null',
-    description: 'Ícono de la acción principal, del catálogo cerrado.',
+    description: 'showroom.splitButton.props.icon',
   },
   {
     name: 'actions',
     type: 'readonly SplitAction[]',
     default: '[]',
-    description: '{ id, label, icon?, disabled? }. Una deshabilitada se ve y las flechas la saltan.',
+    description: 'showroom.splitButton.props.actions',
   },
   {
     name: '(primary)',
     type: 'output<void>',
     default: '—',
-    description: 'La acción principal: el botón con texto.',
+    description: 'showroom.splitButton.props.primary',
   },
   {
     name: '(action)',
     type: 'output<string>',
     default: '—',
-    description: 'El id de la alternativa elegida en el menú.',
+    description: 'showroom.splitButton.props.action',
   },
 ];
 
+/**
+ * t(showroom.splitButton.anatomy.parts.buttons, showroom.splitButton.anatomy.parts.border,
+ *   showroom.splitButton.anatomy.parts.menuSurface, showroom.splitButton.anatomy.parts.menuElevation,
+ *   showroom.splitButton.anatomy.parts.activeRow, showroom.splitButton.anatomy.parts.focusRing)
+ */
 const ANATOMY: readonly { readonly part: string; readonly token: string }[] = [
-  { part: 'Los dos botones: variante Secondary', token: '--color-bg-secondary' },
-  { part: 'Borde, uno solo entre los dos', token: '--color-border-strong' },
-  { part: 'Fondo del menú', token: '--color-surface' },
-  { part: 'Elevación del menú', token: '--shadow-md' },
-  { part: 'Fila activa del menú', token: '--color-ghost-hover' },
-  { part: 'Anillo de foco', token: '--focus-ring-shadow' },
-];
-
-const FORMATS: readonly SplitAction[] = [
-  { id: 'pdf', label: 'PDF', icon: 'file-text' },
-  { id: 'xlsx', label: 'Excel' },
-  { id: 'csv', label: 'CSV' },
-  { id: 'label', label: 'Etiquetas (sin impresora)', icon: 'label-print', disabled: true },
+  { part: 'showroom.splitButton.anatomy.parts.buttons', token: '--color-bg-secondary' },
+  { part: 'showroom.splitButton.anatomy.parts.border', token: '--color-border-strong' },
+  { part: 'showroom.splitButton.anatomy.parts.menuSurface', token: '--color-surface' },
+  { part: 'showroom.splitButton.anatomy.parts.menuElevation', token: '--shadow-md' },
+  { part: 'showroom.splitButton.anatomy.parts.activeRow', token: '--color-ghost-hover' },
+  { part: 'showroom.splitButton.anatomy.parts.focusRing', token: '--focus-ring-shadow' },
 ];
 
 /**
@@ -61,21 +67,37 @@ const FORMATS: readonly SplitAction[] = [
 @Component({
   selector: 'ewms-showroom-split-button',
   templateUrl: './split-button.html',
-  imports: [SplitButton, DemoFrame, PropTable, TokenValue],
+  imports: [SplitButton, DemoFrame, PropTable, Prose, TokenValue, TranslocoPipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ShowroomSplitButton {
   protected readonly version = DESIGN_SYSTEM_VERSION;
   protected readonly props = PROPS;
   protected readonly anatomy = ANATOMY;
-  protected readonly formats = FORMATS;
 
-  /** Lo último que se pidió, para que se vea qué salida disparó cada gesto. */
-  protected readonly last = signal('(todavía nada)');
+  /**
+   * El menú recibe las etiquetas ya traducidas. PDF, Excel y CSV son nombres de formato: no se
+   * traducen.
+   * t(showroom.splitButton.demo.labels)
+   */
+  protected readonly formats = translated((t): readonly SplitAction[] => [
+    { id: 'pdf', label: 'PDF', icon: 'file-text' },
+    { id: 'xlsx', label: 'Excel' },
+    { id: 'csv', label: 'CSV' },
+    {
+      id: 'label',
+      label: t('showroom.splitButton.demo.labels'),
+      icon: 'label-print',
+      disabled: true,
+    },
+  ]);
+
+  /** Lo último que se pidió, para que se vea qué salida disparó cada gesto. `null` hasta el primero. */
+  protected readonly last = signal<string | null>(null);
 
   protected readonly snippet = [
     '<ewms-split-button',
-    "  [label]=\"'comun.descargar' | transloco\"",
+    '  [label]="\'comun.descargar\' | transloco"',
     '  icon="download"',
     '  [actions]="formatos()"',
     '  (primary)="exportar(\'pdf\')"',

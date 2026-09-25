@@ -9,7 +9,7 @@
       <tr>
         @for (column of columns(); track column.id) {
           <th scope="col" class="border-b border-default p-2 text-left text-secondary">
-            {{ column.label }}
+            {{ column.label | transloco }}
           </th>
         }
       </tr>

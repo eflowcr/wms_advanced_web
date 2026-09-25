@@ -1,58 +1,47 @@
-<!-- Showroom solo en español, exento de i18n (compuerta 12): se declara para que el lector de pantalla no lo lea en inglés. -->
-<article class="flex flex-col gap-10" lang="es">
+<article class="flex flex-col gap-10">
   <!-- ============================================================ 1. Encabezado -->
   <header class="flex flex-col gap-2" data-block="1-encabezado">
     <div class="flex flex-wrap items-baseline gap-3">
-      <h1 class="text-h1">Radio</h1>
+      <h1 class="text-h1">{{ 'showroom.catalog.radio.name' | transloco }}</h1>
       <code class="font-mono text-primary">&lt;ewms-radio&gt;</code>
     </div>
     <ul class="flex flex-wrap gap-2 text-caption">
-      <li class="rounded-sm bg-secondary px-2 py-1 text-secondary">
-        Versión <span class="font-mono">{{ version }}</span>
+      <li
+        class="rounded-sm bg-secondary px-2 py-1 text-secondary"
+        [ewmsProse]="'showroom.common.header.version' | transloco: { version }"
+      ></li>
+      <li class="rounded-sm bg-success-surface px-2 py-1 text-success">
+        {{ 'showroom.common.header.built' | transloco }}
       </li>
-      <li class="rounded-sm bg-success-surface px-2 py-1 text-success">Construido y en verde</li>
-      <li class="rounded-sm bg-secondary px-2 py-1 text-secondary">
-        Ficha: <span class="font-mono">08-Sistema-de-Diseno/Componentes/Checkbox-Radio.md</span>
-      </li>
+      <li
+        class="rounded-sm bg-secondary px-2 py-1 text-secondary"
+        [ewmsProse]="
+          'showroom.common.header.sheet'
+            | transloco: { path: '08-Sistema-de-Diseno/Componentes/Checkbox-Radio.md' }
+        "
+      ></li>
     </ul>
   </header>
 
   <!-- ================================================ 2. Qué resuelve / cuándo no -->
   <section class="flex flex-col gap-4" aria-labelledby="ra-purpose" data-block="2-proposito">
-    <h2 id="ra-purpose" class="text-h2">Qué resuelve, y cuándo NO usarlo</h2>
+    <h2 id="ra-purpose" class="text-h2">{{ 'showroom.common.sections.purpose' | transloco }}</h2>
     <div class="grid grid-cols-[repeat(auto-fit,minmax(min(20rem,100%),1fr))] gap-4">
       <div class="flex flex-col gap-2 rounded-md border border-default bg-surface p-4">
-        <h3 class="text-h3">Qué resuelve</h3>
-        <p>
-          <strong>Una opción entre varias</strong>, excluyentes. Misma caja de 18×18, mismo borde,
-          mismo anillo de foco y misma fila-como-área-clickeable que el Checkbox; un círculo en vez
-          de un cuadrado redondeado, y un punto en vez de un check.
-        </p>
-        <p class="text-caption text-secondary">
-          <strong>La agrupación es la nativa.</strong> Los radios que comparten
-          <code class="font-mono">name</code> se excluyen entre sí porque lo hace el navegador, no
-          porque el componente lleve un registro: marcar uno desmarca a sus hermanos
-          <em>antes</em> de que corra una línea de Angular.
-        </p>
+        <h3 class="text-h3">{{ 'showroom.common.sections.solves' | transloco }}</h3>
+        <p [ewmsProse]="'showroom.radio.purpose.solves' | transloco"></p>
+        <p
+          class="text-caption text-secondary"
+          [ewmsProse]="'showroom.radio.purpose.native' | transloco"
+        ></p>
       </div>
       <div class="flex flex-col gap-2 rounded-md border border-danger bg-danger-surface p-4">
-        <h3 class="text-h3">Cuándo NO usarlo</h3>
+        <h3 class="text-h3">{{ 'showroom.common.sections.avoid' | transloco }}</h3>
         <ul class="flex flex-col gap-2">
-          <li>
-            <strong>Si se puede elegir más de una, va Checkbox.</strong>
-          </li>
-          <li>
-            <strong>Si son muchas opciones, va Select.</strong> Una lista de quince radios es una
-            pantalla que hay que recorrer entera antes de decidir.
-          </li>
-          <li>
-            <strong>Si hay que poder deseleccionar, no es un radio.</strong> Un grupo de radios no
-            vuelve a vacío una vez elegido: eso es un checkbox, o un select con placeholder.
-          </li>
-          <li>
-            <strong>Sin <code class="font-mono">name</code> no es un radio</strong>, es un radio en
-            un grupo de uno — o sea, un checkbox que no se puede apagar. Por eso es requerido.
-          </li>
+          <li [ewmsProse]="'showroom.radio.purpose.notMultiple' | transloco"></li>
+          <li [ewmsProse]="'showroom.radio.purpose.notMany' | transloco"></li>
+          <li [ewmsProse]="'showroom.radio.purpose.notClearable' | transloco"></li>
+          <li [ewmsProse]="'showroom.radio.purpose.notWithoutName' | transloco"></li>
         </ul>
       </div>
     </div>
@@ -60,288 +49,215 @@
 
   <!-- ========================================================= 3. Demo principal -->
   <section class="flex flex-col gap-4" aria-labelledby="ra-demo" data-block="3-demo">
-    <h2 id="ra-demo" class="text-h2">Demo principal</h2>
+    <h2 id="ra-demo" class="text-h2">{{ 'showroom.common.sections.demo' | transloco }}</h2>
     <div class="grid grid-cols-[repeat(auto-fit,minmax(min(24rem,100%),1fr))] gap-6">
-      <ewms-demo-frame ground="canvas" label="Un grupo real, dentro de un formulario reactivo">
+      <ewms-demo-frame ground="canvas" [label]="'showroom.radio.demo.frame' | transloco">
         <div class="flex flex-col gap-3" data-demo-group>
           <!-- El grupo es el campo: el fieldset con su legend lo dibuja él. -->
-          <ewms-radio-group label="Tipo de recepción" [formField]="form.tipo">
-            @for (option of options; track option.value) {
+          <ewms-radio-group
+            [label]="'showroom.radio.demo.groupLabel' | transloco"
+            [formField]="form.tipo"
+          >
+            @for (option of options(); track option.value) {
               <ewms-radio [value]="option.value" [label]="option.label" />
             }
           </ewms-radio-group>
-          <dl class="flex flex-col gap-1 rounded-md border border-default bg-surface p-3 text-caption">
+          <dl
+            class="flex flex-col gap-1 rounded-md border border-default bg-surface p-3 text-caption"
+          >
             <div class="flex flex-wrap gap-2">
-              <dt class="text-secondary">Valor del control:</dt>
+              <dt class="text-secondary">{{ 'showroom.radio.demo.controlValue' | transloco }}</dt>
               <dd class="font-mono text-primary" data-demo-value>{{ chosen() }}</dd>
             </div>
             <div class="flex flex-wrap gap-2">
-              <dt class="text-secondary">Etiqueta correspondiente:</dt>
+              <dt class="text-secondary">{{ 'showroom.radio.demo.matchingLabel' | transloco }}</dt>
               <dd class="text-primary">{{ chosenLabel() }}</dd>
             </div>
           </dl>
         </div>
       </ewms-demo-frame>
       <div class="flex flex-col gap-6">
-        <ewms-prop-table [rows]="groupProps" caption="Propiedades de <ewms-radio-group>" />
-        <ewms-prop-table [rows]="props" caption="Propiedades de <ewms-radio>" />
+        <ewms-prop-table
+          [rows]="groupProps"
+          [caption]="'showroom.radio.groupProps.caption' | transloco"
+        />
+        <ewms-prop-table [rows]="props" [caption]="'showroom.radio.props.caption' | transloco" />
       </div>
     </div>
     <div class="flex flex-col gap-2 rounded-md border border-strong bg-secondary p-4">
+      <!-- El span lleva la prosa: un encabezado vacío en la plantilla no pasa elements-content. -->
       <h3 class="text-h4">
-        El <code class="font-mono">value</code> del grupo NO es el
-        <code class="font-mono">value</code> de este componente
+        <span [ewmsProse]="'showroom.radio.demo.valueNoteTitle' | transloco"></span>
       </h3>
-      <p class="text-caption">
-        <code class="font-mono">value</code> es <strong>lo que esta opción aporta</strong> cuando es
-        la elegida; el valor del control es el <code class="font-mono">value</code> de la opción que
-        esté elegida en ese momento. Por eso
-        <code class="font-mono">checked</code> se <strong>deriva por comparación</strong> y no es una
-        entrada: dos fuentes de verdad para «¿es ésta la elegida?» es exactamente cómo un grupo de
-        radios termina con dos puntos.
-      </p>
+      <p class="text-caption" [ewmsProse]="'showroom.radio.demo.valueNote' | transloco"></p>
     </div>
   </section>
 
   <!-- =============================================================== 4. Variantes -->
   <section class="flex flex-col gap-4" aria-labelledby="ra-variants" data-block="4-variantes">
-    <h2 id="ra-variants" class="text-h2">Variantes</h2>
+    <h2 id="ra-variants" class="text-h2">{{ 'showroom.common.sections.variants' | transloco }}</h2>
     <div class="flex flex-col gap-2 rounded-md border border-strong bg-secondary p-4">
-      <h3 class="text-h4">No aplica</h3>
-      <p>
-        No hay <code class="font-mono">variant</code>, igual que el Checkbox. Y a diferencia del
-        Checkbox, <strong>tampoco hay un tercer valor</strong>: un radio está elegido o no lo está.
-      </p>
-      <p class="text-caption">
-        Esa ausencia es la única diferencia real de expresión entre los dos controles de selección,
-        que por lo demás comparten hasta el archivo de estilos. El Checkbox tiene
-        <code class="font-mono">indeterminate</code> porque una casilla puede hablar
-        <em>de un conjunto de otras cosas</em>; un radio sólo habla de sí mismo.
-      </p>
+      <h3 class="text-h4">{{ 'showroom.common.notApplicable' | transloco }}</h3>
+      <p [ewmsProse]="'showroom.radio.variants.none' | transloco"></p>
+      <p
+        class="text-caption"
+        [ewmsProse]="'showroom.radio.variants.onlyDifference' | transloco"
+      ></p>
     </div>
   </section>
 
   <!-- ========================================================= 5. Matriz de estados -->
   <section class="flex flex-col gap-4" aria-labelledby="ra-matrix" data-block="5-matriz">
-    <h2 id="ra-matrix" class="text-h2">Matriz de estados</h2>
-    <p class="text-secondary">
-      Dos valores por cuatro estados. Hover y Focus se fuerzan con el mismo token que aplicaría su
-      propia regla; <strong>Disabled es real</strong>, y además llega
-      <em>por el formulario</em> —<code class="font-mono">setDisabledState</code>— que es la mitad
-      del OR del bloque 8 que menos se ejercita.
-    </p>
+    <h2 id="ra-matrix" class="text-h2">{{ 'showroom.common.sections.states' | transloco }}</h2>
+    <p class="text-secondary" [ewmsProse]="'showroom.radio.states.intro' | transloco"></p>
     <ewms-demo-frame ground="canvas">
       <ewms-state-matrix
         [variants]="values"
         [states]="states"
-        rowHeader="Valor"
-        caption="Dos valores por cuatro estados"
+        [rowHeader]="rowHeader"
+        [caption]="'showroom.radio.states.caption' | transloco"
       >
         <ng-template let-variant="variant" let-state="state">
           <span [class]="forced(state.id)">
             <ewms-radio-group
-              [label]="variant.label + ', ' + state.label"
+              [label]="(variant.label | transloco) + ', ' + (state.label | transloco)"
               [hideLabel]="true"
               [value]="cellFor(variant.id, state.id)()"
               (valueChange)="cellFor(variant.id, state.id).set($event)"
               [disabled]="state.id === 'disabled'"
             >
-              <ewms-radio [value]="cellValue" [ariaLabel]="variant.label + ', ' + state.label" />
+              <ewms-radio
+                [value]="cellValue"
+                [ariaLabel]="(variant.label | transloco) + ', ' + (state.label | transloco)"
+              />
             </ewms-radio-group>
           </span>
         </ng-template>
       </ewms-state-matrix>
     </ewms-demo-frame>
-    <p class="text-caption text-secondary">
-      <strong>La columna Hover sólo cambia algo en la primera fila</strong>, igual que en el
-      Checkbox: el hover pinta el borde de azul, y en «Elegido» el borde ya es azul. La celda no
-      está rota; el estado no tiene nada que agregar ahí.
-    </p>
-    <p class="text-caption text-secondary">
-      Cada celda es <strong>su propio <code class="font-mono">ewms-radio-group</code></strong>, con
-      su propio valor. No es ceremonia: como <code class="font-mono">checked</code> se deriva, a una
-      celda no se le puede <em>decir</em> que se vea elegida —tiene que ser de verdad la elegida de
-      su grupo—; y si todas compartieran un valor, clickear cualquier celda «Sin elegir» las
-      encendería todas a la vez. El <code class="font-mono">name</code> lo genera cada grupo, así
-      que ni hace falta nombrarlos.
-    </p>
+    <p
+      class="text-caption text-secondary"
+      [ewmsProse]="'showroom.radio.states.hoverColumn' | transloco"
+    ></p>
+    <p
+      class="text-caption text-secondary"
+      [ewmsProse]="'showroom.radio.states.ownGroup' | transloco"
+    ></p>
   </section>
 
   <!-- ================================================================ 6. Tamaños -->
   <section class="flex flex-col gap-4" aria-labelledby="ra-sizes" data-block="6-tamanos">
-    <h2 id="ra-sizes" class="text-h2">Tamaños</h2>
+    <h2 id="ra-sizes" class="text-h2">{{ 'showroom.common.sections.sizes' | transloco }}</h2>
     <div class="flex flex-col gap-2 rounded-md border border-strong bg-secondary p-4">
-      <h3 class="text-h4">Uno solo, y es el del Checkbox</h3>
-      <p>
-        18×18 px, borde de 1.5 px, punto interior de 8×8. No usa la escala 32 / 40 / 48: se
-        dimensiona para sentarse al lado de una línea de texto, no para alinearse con un botón.
-      </p>
+      <h3 class="text-h4">{{ 'showroom.radio.sizes.title' | transloco }}</h3>
+      <p [ewmsProse]="'showroom.radio.sizes.single' | transloco"></p>
     </div>
     <ewms-demo-frame ground="surface">
       <div class="flex flex-wrap items-center gap-6" data-measure-box>
-<!-- Grupo propio de uno, no el de la demo: compartir el valor los ataría. -->
+        <!-- Grupo propio de uno, no el de la demo: compartir el valor los ataría. -->
         <ewms-radio-group
-          label="La caja medida"
+          [label]="'showroom.radio.sizes.measured' | transloco"
           [hideLabel]="true"
           [value]="cellFor('on', 'medida')()"
           (valueChange)="cellFor('on', 'medida').set($event)"
         >
-          <ewms-radio [value]="cellValue" label="La caja medida" />
+          <ewms-radio [value]="cellValue" [label]="'showroom.radio.sizes.measured' | transloco" />
         </ewms-radio-group>
         <dl class="flex flex-col gap-1 text-caption">
           <div class="flex flex-wrap gap-2">
-            <dt class="text-secondary">Caja renderizada:</dt>
+            <dt class="text-secondary">{{ 'showroom.radio.sizes.box.size' | transloco }}</dt>
             <dd class="font-mono text-primary">{{ box().size }}</dd>
           </div>
           <div class="flex flex-wrap gap-2">
-            <dt class="text-secondary">Borde declarado:</dt>
+            <dt class="text-secondary">{{ 'showroom.radio.sizes.box.declared' | transloco }}</dt>
             <dd class="font-mono text-primary">{{ box().declared }}</dd>
           </div>
           <div class="flex flex-wrap gap-2">
-            <dt class="text-secondary">Valor del token:</dt>
+            <dt class="text-secondary">{{ 'showroom.radio.sizes.box.token' | transloco }}</dt>
             <dd class="font-mono text-primary">{{ box().token }}</dd>
           </div>
           <div class="flex flex-wrap gap-2">
-            <dt class="text-secondary">Borde que pinta el navegador:</dt>
+            <dt class="text-secondary">{{ 'showroom.radio.sizes.box.used' | transloco }}</dt>
             <dd class="font-mono text-primary">{{ box().used }}</dd>
           </div>
         </dl>
       </div>
     </ewms-demo-frame>
-    <p class="text-caption text-secondary">
-      Los dos últimos no coinciden: el token declara uno y medio, y Chromium redondea hacia abajo un
-      borde sub-pixel. Lo que el componente debe es el token; lo que el
-      navegador hace con él es del navegador. Está explicado con más detalle en la ficha del
-      Checkbox, que comparte esta misma caja.
-    </p>
+    <p
+      class="text-caption text-secondary"
+      [ewmsProse]="'showroom.radio.sizes.mismatch' | transloco"
+    ></p>
   </section>
 
   <!-- ==================================================== 7. Anatomía y tokens -->
   <section class="flex flex-col gap-4" aria-labelledby="ra-anatomy" data-block="7-anatomia">
-    <h2 id="ra-anatomy" class="text-h2">Anatomía y tokens</h2>
-    <p class="text-secondary">
-      <strong>Idéntica a la del Checkbox</strong>, y no por copiarla: las dos páginas leen la misma
-      constante, porque los dos componentes leen el mismo
-      <code class="font-mono">selection.types.ts</code>. Sólo el radio de esquina y el glifo están
-      escritos dos veces en la librería.
-    </p>
-    <ewms-doc-table caption="Tokens que consume &lt;ewms-radio&gt;" [columns]="anatomyColumns" [rows]="anatomy">
+    <h2 id="ra-anatomy" class="text-h2">{{ 'showroom.common.sections.anatomy' | transloco }}</h2>
+    <p class="text-secondary" [ewmsProse]="'showroom.radio.anatomy.intro' | transloco"></p>
+    <ewms-doc-table
+      [caption]="'showroom.radio.anatomy.caption' | transloco"
+      [columns]="anatomyColumns"
+      [rows]="anatomy"
+    >
       <ng-template let-row let-column="column">
         @if (column.id === 'part') {
-          {{ row.part }}
+          {{ row.part | transloco }}
         } @else {
           <ewms-token-value [token]="row.token" [swatch]="true" />
         }
       </ng-template>
     </ewms-doc-table>
-    <p class="text-caption text-secondary">
-      El punto interior es un <code class="font-mono">&lt;span&gt;</code> redondo, no un
-      <code class="font-mono">&lt;ewms-icon&gt;</code>: es un círculo lleno sin geometría, y un icono
-      sería un documento SVG entero para dibujar ocho píxeles.
-    </p>
+    <p
+      class="text-caption text-secondary"
+      [ewmsProse]="'showroom.radio.anatomy.dot' | transloco"
+    ></p>
   </section>
 
   <!-- ============================================== 8. Contrato para Angular -->
   <section class="flex flex-col gap-4" aria-labelledby="ra-contract" data-block="8-contrato">
-    <h2 id="ra-contract" class="text-h2">Contrato para Angular</h2>
+    <h2 id="ra-contract" class="text-h2">{{ 'showroom.common.sections.contract' | transloco }}</h2>
 
-    <h3 class="text-h3">Entradas</h3>
-    <p class="text-secondary">
-      Las cinco de la tabla del bloque 3. <strong>Dos son requeridas en el tipo</strong>:
-      <code class="font-mono">value</code> y <code class="font-mono">name</code>.
-    </p>
+    <h3 class="text-h3">{{ 'showroom.common.sections.inputs' | transloco }}</h3>
+    <p class="text-secondary" [ewmsProse]="'showroom.radio.contract.inputs' | transloco"></p>
 
-    <h3 class="text-h3">Salidas</h3>
+    <h3 class="text-h3">{{ 'showroom.common.sections.outputs' | transloco }}</h3>
     <div class="flex flex-col gap-2 rounded-md border border-warning bg-warning-surface p-4">
-      <p>
-        <code class="font-mono">(valueChange)</code>, con el <code class="font-mono">value</code> de
-        esta opción. <strong>NO se llama <code class="font-mono">(change)</code></strong>: es un
-        nombre de evento nativo, burbujea, y una salida que lo comparta entrega en un mismo binding
-        este valor <em>y</em> el <code class="font-mono">Event</code> crudo.
-      </p>
-      <p class="text-caption">
-        Y como en el Checkbox y el Toggle, el componente llama
-        <code class="font-mono">stopPropagation()</code> sobre el
-        <code class="font-mono">change</code> nativo: el
-        <code class="font-mono">&lt;input&gt;</code> de adentro es detalle de implementación y sus
-        eventos no son parte de la API. Dejarlo salir sería publicar un segundo evento que nadie
-        documentó y que el próximo cambio interno rompe.
-      </p>
+      <p [ewmsProse]="'showroom.radio.contract.outputs' | transloco"></p>
+      <p
+        class="text-caption"
+        [ewmsProse]="'showroom.radio.contract.stopPropagation' | transloco"
+      ></p>
     </div>
 
-    <h3 class="text-h3">Uso típico</h3>
+    <h3 class="text-h3">{{ 'showroom.common.sections.usage' | transloco }}</h3>
     <pre
       class="overflow-x-auto rounded-md border border-default bg-secondary p-4 font-mono text-mono text-primary outline-none focus-visible:shadow-(--focus-ring-shadow)"
       tabindex="0"
     ><code>{{ snippet }}</code></pre>
 
-    <h3 class="text-h3">La regla del disabled</h3>
+    <h3 class="text-h3">{{ 'showroom.radio.disabledRule.title' | transloco }}</h3>
     <div class="flex flex-col gap-2 rounded-md border border-strong bg-secondary p-4">
-      <p>
-        <code class="font-mono">isDisabled = disabled() || group.disabled()</code>.
-        <strong>Quien deshabilita gana, y nadie re-habilita.</strong> El
-        <code class="font-mono">disabled</code> de la opción y el del grupo no se fusionan: se
-        combinan con OR.
-      </p>
-      <p class="text-caption">
-        Dentro de un formulario, quien deshabilita el grupo es la regla
-        <code class="font-mono">disabled(path.tipo, …)</code> del esquema, no una entrada: Angular
-        prohíbe enlazar <code class="font-mono">[disabled]</code> en el mismo nodo que
-        <code class="font-mono">[formField]</code>, para que el campo tenga un solo dueño.
-      </p>
-      <p class="text-caption">
-        Deshabilitar es una propiedad de seguridad: la respuesta restrictiva es el default
-        correcto. Es lo mismo en el Checkbox, el Toggle, el Input y el Select.
-      </p>
+      <p [ewmsProse]="'showroom.radio.disabledRule.or' | transloco"></p>
+      <p class="text-caption" [ewmsProse]="'showroom.radio.disabledRule.form' | transloco"></p>
+      <p class="text-caption" [ewmsProse]="'showroom.radio.disabledRule.safety' | transloco"></p>
     </div>
 
-    <h3 class="text-h3">Accesibilidad</h3>
+    <h3 class="text-h3">{{ 'showroom.common.sections.a11y' | transloco }}</h3>
     <ul class="flex flex-col gap-2">
-      <li>
-        El <code class="font-mono">&lt;label&gt;</code>&ngsp;<strong>envuelve</strong> el control, así que
-        toda la fila es el área clickeable y el texto es el nombre accesible, sin par
-        <code class="font-mono">for</code>/<code class="font-mono">id</code> que mantener.
-      </li>
-      <li>
-        <code class="font-mono">aria-checked</code> sincronizado con el estado, para que no dependa
-        del color.
-      </li>
-      <li>
-        El grupo se nombra con <code class="font-mono">&lt;fieldset&gt;</code> y
-        <code class="font-mono">&lt;legend&gt;</code>, como en la demo: el nombre de cada opción dice
-        <em>qué opción es</em>, y el del grupo dice <em>de qué se está eligiendo</em>.
-      </li>
-      <li>
-        Sin <code class="font-mono">aria-disabled</code> al lado del
-        <code class="font-mono">disabled</code> nativo: se anunciaría dos veces.
-      </li>
+      <li [ewmsProse]="'showroom.radio.a11y.wraps' | transloco"></li>
+      <li [ewmsProse]="'showroom.radio.a11y.ariaChecked' | transloco"></li>
+      <li [ewmsProse]="'showroom.radio.a11y.fieldset' | transloco"></li>
+      <li [ewmsProse]="'showroom.radio.a11y.noAriaDisabled' | transloco"></li>
     </ul>
 
-    <h3 class="text-h3">Errores comunes</h3>
+    <h3 class="text-h3">{{ 'showroom.common.sections.mistakes' | transloco }}</h3>
     <ul class="flex flex-col gap-2">
-      <li>
-        <strong>Escuchar <code class="font-mono">(change)</code>.</strong> Es
-        <code class="font-mono">(valueChange)</code>, y el nativo está frenado adentro.
-      </li>
-      <li>
-        <strong>Buscar un <code class="font-mono">checked</code> para escribir.</strong> No existe:
-        se deriva de comparar el valor del control con el
-        <code class="font-mono">value</code> de la opción.
-      </li>
-      <li>
-        <strong>Olvidar el <code class="font-mono">name</code>, o repetirlo entre grupos
-        distintos.</strong> Lo primero no compila; lo segundo hace que dos grupos que no tienen nada
-        que ver se desmarquen entre sí.
-      </li>
-      <li>
-        <strong>Poner <code class="font-mono">[disabled]="true"</code> y esperar que
-        <code class="font-mono">form.enable()</code> lo devuelva.</strong> No lo devuelve.
-      </li>
+      <li [ewmsProse]="'showroom.radio.mistakes.change' | transloco"></li>
+      <li [ewmsProse]="'showroom.radio.mistakes.checked' | transloco"></li>
+      <li [ewmsProse]="'showroom.radio.mistakes.name' | transloco"></li>
+      <li [ewmsProse]="'showroom.radio.mistakes.enable' | transloco"></li>
     </ul>
 
-    <h3 class="text-h3">Bloques que no aplican</h3>
-    <p class="text-secondary">
-      Uno: <strong>variantes</strong>. Está escrito arriba en lugar de borrado.
-    </p>
+    <h3 class="text-h3">{{ 'showroom.common.sections.notApplicable' | transloco }}</h3>
+    <p class="text-secondary" [ewmsProse]="'showroom.radio.notApplicable' | transloco"></p>
   </section>
 </article>

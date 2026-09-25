@@ -1,7 +1,7 @@
 <ewms-doc-table [caption]="caption()" [columns]="columns()" [rows]="variants()" align="middle">
   <ng-template let-variant let-column="column">
     @if (column.id === rowColumn) {
-      {{ variant.label }}
+      {{ variant.label | transloco }}
     } @else {
       <ng-container
         [ngTemplateOutlet]="cell()"

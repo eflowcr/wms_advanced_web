@@ -1,56 +1,46 @@
-<!-- Showroom solo en español, exento de i18n (compuerta 12): se declara para que el lector de pantalla no lo lea en inglés. -->
-<article class="flex flex-col gap-10" lang="es">
+<article class="flex flex-col gap-10">
   <!-- ============================================================ 1. Encabezado -->
   <header class="flex flex-col gap-2" data-block="1-encabezado">
     <div class="flex flex-wrap items-baseline gap-3">
-      <h1 class="text-h1">Select</h1>
+      <h1 class="text-h1">{{ 'showroom.catalog.select.name' | transloco }}</h1>
       <code class="font-mono text-primary">&lt;ewms-select&gt;</code>
     </div>
     <ul class="flex flex-wrap gap-2 text-caption">
-      <li class="rounded-sm bg-secondary px-2 py-1 text-secondary">
-        Versión <span class="font-mono">{{ version }}</span>
+      <li
+        class="rounded-sm bg-secondary px-2 py-1 text-secondary"
+        [ewmsProse]="'showroom.common.header.version' | transloco: { version }"
+      ></li>
+      <li class="rounded-sm bg-success-surface px-2 py-1 text-success">
+        {{ 'showroom.common.header.built' | transloco }}
       </li>
-      <li class="rounded-sm bg-success-surface px-2 py-1 text-success">Construido y en verde</li>
-      <li class="rounded-sm bg-secondary px-2 py-1 text-secondary">
-        Ficha: <span class="font-mono">08-Sistema-de-Diseno/Componentes/Select.md</span>
-      </li>
+      <li
+        class="rounded-sm bg-secondary px-2 py-1 text-secondary"
+        [ewmsProse]="
+          'showroom.common.header.sheet'
+            | transloco: { path: '08-Sistema-de-Diseno/Componentes/Select.md' }
+        "
+      ></li>
     </ul>
   </header>
 
   <!-- ================================================ 2. Qué resuelve / cuándo no -->
   <section class="flex flex-col gap-4" aria-labelledby="se-purpose" data-block="2-proposito">
-    <h2 id="se-purpose" class="text-h2">Qué resuelve, y cuándo NO usarlo</h2>
+    <h2 id="se-purpose" class="text-h2">{{ 'showroom.common.sections.purpose' | transloco }}</h2>
     <div class="grid grid-cols-[repeat(auto-fit,minmax(min(20rem,100%),1fr))] gap-4">
       <div class="flex flex-col gap-2 rounded-md border border-default bg-surface p-4">
-        <h3 class="text-h3">Qué resuelve</h3>
-        <p>
-          Elección <strong>única</strong>, con panel flotante, y es <strong>el único selector del
-          sistema</strong>, y <strong>siempre busca</strong>: sirve para tres estados, para veinte
-          ubicaciones y para decenas de miles de artículos del backend, con el mismo campo y el mismo
-          teclado.
-        </p>
-        <p class="text-caption text-secondary">
-          La caja es la de <code class="font-mono">&lt;ewms-input&gt;</code> —mismas alturas,
-          padding, radio y bordes— porque un select casi siempre está en una fila con un input y un
-          botón. El panel es un overlay del <strong>CDK de Angular</strong>, con volteo cuando no
-          entra abajo.
-        </p>
+        <h3 class="text-h3">{{ 'showroom.common.sections.solves' | transloco }}</h3>
+        <p [ewmsProse]="'showroom.select.purpose.solves' | transloco"></p>
+        <p
+          class="text-caption text-secondary"
+          [ewmsProse]="'showroom.select.purpose.scope' | transloco"
+        ></p>
       </div>
       <div class="flex flex-col gap-2 rounded-md border border-danger bg-danger-surface p-4">
-        <h3 class="text-h3">Cuándo NO usarlo</h3>
+        <h3 class="text-h3">{{ 'showroom.common.sections.avoid' | transloco }}</h3>
         <ul class="flex flex-col gap-2">
-          <li>
-            <strong>Si son dos o tres opciones visibles de un vistazo, va Radio.</strong> Esconder
-            tres opciones detrás de un click es trabajo de más para quien completa el formulario.
-          </li>
-          <li>
-            <strong>Si el valor se puede escribir libre, va Input.</strong> Buscar filtra una lista;
-            no acepta un texto que no esté en ella.
-          </li>
-          <li>
-            <strong>Si hay que elegir varias, todavía no existe.</strong> El multi-select con chips
-            está en la ficha como pendiente.
-          </li>
+          <li [ewmsProse]="'showroom.select.purpose.notRadio' | transloco"></li>
+          <li [ewmsProse]="'showroom.select.purpose.notInput' | transloco"></li>
+          <li [ewmsProse]="'showroom.select.purpose.notMulti' | transloco"></li>
         </ul>
       </div>
     </div>
@@ -58,59 +48,60 @@
 
   <!-- ========================================================= 3. Demo principal -->
   <section class="flex flex-col gap-4" aria-labelledby="se-demo" data-block="3-demo">
-    <h2 id="se-demo" class="text-h2">Demo principal: tres listas, un solo campo</h2>
-    <p class="text-secondary">
-      <strong>Abrilos.</strong> Los tres son el mismo componente y se usan igual: un clic o la flecha
-      abajo abre la lista, escribir la filtra, las flechas eligen y Enter confirma. Lo único que cambia
-      es de dónde salen las opciones.
-    </p>
+    <h2 id="se-demo" class="text-h2">{{ 'showroom.select.demo.title' | transloco }}</h2>
+    <p class="text-secondary" [ewmsProse]="'showroom.select.demo.intro' | transloco"></p>
     <div class="grid grid-cols-[repeat(auto-fit,minmax(min(20rem,100%),1fr))] gap-6">
-      <ewms-demo-frame ground="canvas" label="Lista corta: tres estados">
+      <ewms-demo-frame ground="canvas" [label]="'showroom.select.demo.short.frame' | transloco">
         <div class="flex flex-col gap-3" data-demo-select>
           <ewms-select
             [formField]="form.estado"
-            label="Estado de la expedición"
-            placeholder="Elegí un estado"
-            hint="Flecha abajo abre, flecha elige, Enter confirma."
-            [options]="states3"
+            [label]="'showroom.select.demo.short.label' | transloco"
+            [placeholder]="'showroom.select.demo.short.placeholder' | transloco"
+            [hint]="'showroom.select.demo.short.hint' | transloco"
+            [options]="states3()"
           />
           <p class="text-caption text-secondary">
-            Valor del control: <span class="font-mono text-primary" data-demo-value>{{ chosen() }}</span>
-            · <span>{{ chosenLabel() }}</span>
+            {{ 'showroom.select.demo.controlValue' | transloco }}
+            <span class="font-mono text-primary" data-demo-value>{{ chosen() }}</span>
+            · <span>{{ chosenLabel() ?? ('showroom.select.demo.notChosen' | transloco) }}</span>
           </p>
         </div>
       </ewms-demo-frame>
 
-      <ewms-demo-frame ground="canvas" label="Lista larga: veinticuatro racks en memoria">
+      <ewms-demo-frame ground="canvas" [label]="'showroom.select.demo.long.frame' | transloco">
         <div class="flex flex-col gap-3" data-demo-long>
           <ewms-select
             [formField]="form.rack"
-            label="Rack de destino"
-            placeholder="Escribí «C» o «rack 04»"
-            hint="Al abrirlo se ven todos; al escribir se filtran, sin esperar a nadie."
+            [label]="'showroom.select.demo.long.label' | transloco"
+            [placeholder]="'showroom.select.demo.long.placeholder' | transloco"
+            [hint]="'showroom.select.demo.long.hint' | transloco"
             [options]="locations"
           />
           <p class="text-caption text-secondary">
-            Valor del control:
-            <span class="font-mono text-primary" data-demo-long-value>{{ rack() ?? '(ninguno)' }}</span>
+            {{ 'showroom.select.demo.controlValue' | transloco }}
+            <span class="font-mono text-primary" data-demo-long-value>{{
+              rack() ?? ('showroom.select.demo.none' | transloco)
+            }}</span>
           </p>
         </div>
       </ewms-demo-frame>
 
-      <ewms-demo-frame ground="canvas" label="Fuente remota: busca, pagina y resuelve un escaneo">
+      <ewms-demo-frame ground="canvas" [label]="'showroom.select.demo.remote.frame' | transloco">
         <div class="flex flex-col gap-3" data-demo-search>
           <ewms-select
             [formField]="form.articulo"
             [source]="source()"
             [display]="display"
-            label="Artículo"
-            placeholder="Escaneá o escribí el código"
-            hint="Probá «caja», «film», o un código entero terminado en Enter."
+            [label]="'showroom.select.demo.remote.label' | transloco"
+            [placeholder]="'showroom.select.demo.remote.placeholder' | transloco"
+            [hint]="'showroom.select.demo.remote.hint' | transloco"
           />
           <p class="text-caption text-secondary">
-            Valor del control:
-            <span class="text-primary" data-demo-search-value>{{ articleLabel() }}</span>
-            · {{ article() ? 'el registro entero, no su texto' : 'null' }}
+            {{ 'showroom.select.demo.controlValue' | transloco }}
+            <span class="text-primary" data-demo-search-value>{{
+              articleLabel() ?? ('showroom.select.demo.none' | transloco)
+            }}</span>
+            · {{ article() ? ('showroom.select.demo.remote.wholeRecord' | transloco) : 'null' }}
           </p>
         </div>
       </ewms-demo-frame>
@@ -118,38 +109,61 @@
 
     <div class="grid grid-cols-[repeat(auto-fit,minmax(min(20rem,100%),1fr))] gap-4">
       <div class="flex flex-col gap-2 rounded-md border border-strong bg-secondary p-3">
-        <p class="text-h4">Cómo se porta la fuente remota</p>
+        <p class="text-h4">{{ 'showroom.select.demo.behaviour.title' | transloco }}</p>
         <div class="flex flex-wrap gap-2">
-          <ewms-button variant="secondary" size="sm" data-behaviour="normal" (click)="setBehaviour('normal')">
-            Normal
+          <ewms-button
+            variant="secondary"
+            size="sm"
+            data-behaviour="normal"
+            (click)="setBehaviour('normal')"
+          >
+            {{ 'showroom.select.demo.behaviour.normal' | transloco }}
           </ewms-button>
-          <ewms-button variant="secondary" size="sm" data-behaviour="slow" (click)="setBehaviour('slow')">
-            Más lenta que el tiempo de espera
+          <ewms-button
+            variant="secondary"
+            size="sm"
+            data-behaviour="slow"
+            (click)="setBehaviour('slow')"
+          >
+            {{ 'showroom.select.demo.behaviour.slow' | transloco }}
           </ewms-button>
-          <ewms-button variant="secondary" size="sm" data-behaviour="failing" (click)="setBehaviour('failing')">
-            Que falle
+          <ewms-button
+            variant="secondary"
+            size="sm"
+            data-behaviour="failing"
+            (click)="setBehaviour('failing')"
+          >
+            {{ 'showroom.select.demo.behaviour.failing' | transloco }}
           </ewms-button>
           <!-- Secondary y no Ghost: el Ghost sobre el fondo secundario da 4.31:1, bajo AA (axe). -->
           <ewms-button variant="secondary" size="sm" data-toggle-counts (click)="toggleCounts()">
-            {{ counts() ? 'Que deje de contar (total: null)' : 'Que vuelva a contar' }}
+            @if (counts()) {
+              {{ 'showroom.select.demo.behaviour.stopCounting' | transloco }}
+            } @else {
+              {{ 'showroom.select.demo.behaviour.countAgain' | transloco }}
+            }
           </ewms-button>
         </div>
         <p class="text-caption text-secondary">
-          Comportamiento actual:
+          {{ 'showroom.select.demo.behaviour.current' | transloco }}
           <span class="font-mono" data-behaviour-value>{{ behaviour() }}</span> ·
-          <span class="font-mono" data-counts-value>{{ counts() ? 'total: número' : 'total: null' }}</span>
+          <span class="font-mono" data-counts-value>{{
+            counts() ? ('showroom.select.demo.behaviour.totalNumber' | transloco) : 'total: null'
+          }}</span>
         </p>
       </div>
 
       <div class="flex flex-col gap-2 rounded-md border border-default bg-surface p-3">
         <div class="flex items-baseline justify-between gap-2">
-          <p class="text-h4">Lo que la fuente recibió</p>
+          <p class="text-h4">{{ 'showroom.select.demo.queries.title' | transloco }}</p>
           <ewms-button variant="secondary" size="sm" data-clear-queries (click)="clearQueries()">
-            Limpiar
+            {{ 'showroom.select.demo.queries.clear' | transloco }}
           </ewms-button>
         </div>
         @if (queries().length === 0) {
-          <p class="text-caption text-secondary">Todavía nada.</p>
+          <p class="text-caption text-secondary">
+            {{ 'showroom.select.demo.queries.nothing' | transloco }}
+          </p>
         } @else {
           <ol class="flex flex-col gap-1 text-caption" data-queries>
             @for (query of queries(); track $index) {
@@ -157,179 +171,187 @@
             }
           </ol>
         }
-        <p class="text-caption text-secondary">
-          Escribí cinco letras seguidas rápido y mirá: <strong>una sola consulta</strong>, no cinco.
-          Ese es el retardo de entrada, y es un token. Páginas de {{ pageSize }}. El catálogo es
-          sintético: {{ catalogueSize }} artículos generados con semilla, ningún dato real.
-        </p>
+        <p
+          class="text-caption text-secondary"
+          [ewmsProse]="
+            'showroom.select.demo.queries.debounce' | transloco: { pageSize, count: catalogueSize }
+          "
+        ></p>
       </div>
     </div>
 
-    <ewms-prop-table [rows]="props" caption="Propiedades de <ewms-select>" />
-    <p class="text-caption text-secondary">
-      Lo que sube al formulario es el <code class="font-mono">value</code> de la opción, no su
-      <code class="font-mono">label</code>. <code class="font-mono">value</code> es
-      <code class="font-mono">unknown</code> a propósito: un id, un código, un miembro de un enum o un
-      objeto entero son todos legítimos, y estrecharlo obligaría a cada consumidor a un cast.
-    </p>
+    <ewms-prop-table [rows]="props" [caption]="'showroom.select.props.caption' | transloco" />
+    <p
+      class="text-caption text-secondary"
+      [ewmsProse]="'showroom.select.props.valueNote' | transloco"
+    ></p>
   </section>
 
   <!-- =============================================================== 4. Variantes -->
   <section class="flex flex-col gap-4" aria-labelledby="se-variants" data-block="4-variantes">
-    <h2 id="se-variants" class="text-h2">Variantes</h2>
-    <p class="text-secondary">
-      No hay <code class="font-mono">variant</code> de énfasis ni modo sin búsqueda: las tres demos de
-      arriba son las tres formas, y difieren solo en de dónde salen las opciones.
-    </p>
+    <h2 id="se-variants" class="text-h2">{{ 'showroom.common.sections.variants' | transloco }}</h2>
+    <p class="text-secondary" [ewmsProse]="'showroom.select.variants.intro' | transloco"></p>
 
     <div class="grid grid-cols-[repeat(auto-fit,minmax(min(20rem,100%),1fr))] gap-4">
       <div class="flex flex-col gap-2 rounded-md border border-default bg-surface p-4">
-        <h3 class="text-h4">Qué pasa con una pistola</h3>
-        <p class="text-caption">
-          Una ráfaga de teclas por debajo del umbral, terminada en
-          <kbd class="font-mono">Enter</kbd>, se reconoce como escaneo y <strong>busca de
-          inmediato</strong>. Si vuelve <strong>un único registro que coincide exacto</strong>, se
-          elige <strong>sin abrir el panel</strong>. Cero clics.
-        </p>
-        <p class="text-caption text-secondary">
-          Probalo pegando <span class="font-mono">{{ sampleCode }}</span> en el artículo y apretando
-          Enter: un pegado llega como una ráfaga, que es justo lo que se está detectando.
-        </p>
+        <h3 class="text-h4">{{ 'showroom.select.variants.scanner.title' | transloco }}</h3>
+        <p
+          class="text-caption"
+          [ewmsProse]="'showroom.select.variants.scanner.burst' | transloco"
+        ></p>
+        <p
+          class="text-caption text-secondary"
+          [ewmsProse]="'showroom.select.variants.scanner.tryIt' | transloco: { code: sampleCode }"
+        ></p>
       </div>
       <div class="flex flex-col gap-2 rounded-md border border-warning bg-warning-surface p-4">
-        <h3 class="text-h4">Y qué pasa cuando no es exacto</h3>
-        <p class="text-caption">
-          Si coinciden varios, ninguno, o la coincidencia no es exacta, el panel se abre con lo que
-          haya y no se elige nada. Una persona escribiendo rápido <strong>no</strong> es una pistola:
-          el umbral está en 50 ms por tecla, y <strong>es una propuesta a calibrar contra el lector
-          real</strong>, no una medición.
-        </p>
+        <h3 class="text-h4">{{ 'showroom.select.variants.notExact.title' | transloco }}</h3>
+        <p
+          class="text-caption"
+          [ewmsProse]="'showroom.select.variants.notExact.body' | transloco"
+        ></p>
       </div>
     </div>
 
-    <h3 class="text-h3">Seleccionada y activa son independientes</h3>
+    <h3 class="text-h3">{{ 'showroom.select.variants.selectedActive.title' | transloco }}</h3>
     <div class="grid grid-cols-[repeat(auto-fit,minmax(min(18rem,100%),1fr))] gap-4">
       <div class="flex flex-col gap-2 rounded-md border border-default bg-surface p-4">
-        <h4 class="text-h4">Seleccionada</h4>
-        <p class="text-caption">
-          «Este es el valor actual»: texto en azul de acción, semibold, y un check a la derecha.
-          Sobrevive a cerrar el panel.
-        </p>
+        <h4 class="text-h4">
+          {{ 'showroom.select.variants.selectedActive.selected.title' | transloco }}
+        </h4>
+        <p
+          class="text-caption"
+          [ewmsProse]="'showroom.select.variants.selectedActive.selected.body' | transloco"
+        ></p>
       </div>
       <div class="flex flex-col gap-2 rounded-md border border-default bg-surface p-4">
-        <h4 class="text-h4">Activa</h4>
-        <p class="text-caption">
-          «Acá está el teclado»: el mismo fondo <code class="font-mono">ghost-hover</code> que
-          produce el mouse, para que una lista recorrida con flechas se vea igual que una recorrida
-          con el puntero. Desaparece al cerrar.
-        </p>
+        <h4 class="text-h4">
+          {{ 'showroom.select.variants.selectedActive.active.title' | transloco }}
+        </h4>
+        <p
+          class="text-caption"
+          [ewmsProse]="'showroom.select.variants.selectedActive.active.body' | transloco"
+        ></p>
       </div>
     </div>
-    <p class="text-caption text-secondary">
-      Una fila suele ser las dos cosas a la vez —al abrir, la activa arranca en la seleccionada— y por
-      eso se confunden. Son dos, y se pintan distinto.
-    </p>
+    <p
+      class="text-caption text-secondary"
+      [ewmsProse]="'showroom.select.variants.selectedActive.both' | transloco"
+    ></p>
 
-    <h3 class="text-h3">Con la etiqueta oculta</h3>
-    <p class="text-secondary">
-      Con <code class="font-mono">[hideLabel]="true"</code> la etiqueta sale de la vista y queda para
-      la ayuda técnica, unida por for/id como en el Input: el combobox y la lista siguen teniendo
-      nombre. Es para donde algo visible ya la dice —el conmutador de idioma de la cabecera, un
-      filtro junto a su título—, no para ahorrar lugar.
-    </p>
-    <ewms-demo-frame ground="canvas" label="Un filtro en una barra, con su título al lado">
+    <h3 class="text-h3">{{ 'showroom.select.variants.hiddenLabel.title' | transloco }}</h3>
+    <p
+      class="text-secondary"
+      [ewmsProse]="'showroom.select.variants.hiddenLabel.body' | transloco"
+    ></p>
+    <ewms-demo-frame
+      ground="canvas"
+      [label]="'showroom.select.variants.hiddenLabel.frame' | transloco"
+    >
       <div class="flex flex-wrap items-center gap-3" data-demo-hidden-label>
-        <span class="text-caption text-secondary" aria-hidden="true">Almacén</span>
-        <ewms-select class="w-56" size="sm" label="Almacén" [hideLabel]="true" [options]="options" />
+        <span class="text-caption text-secondary" aria-hidden="true">{{
+          'showroom.select.variants.hiddenLabel.warehouse' | transloco
+        }}</span>
+        <ewms-select
+          class="w-56"
+          size="sm"
+          [label]="'showroom.select.variants.hiddenLabel.warehouse' | transloco"
+          [hideLabel]="true"
+          [options]="options"
+        />
       </div>
     </ewms-demo-frame>
   </section>
 
   <!-- ========================================================= 5. Matriz de estados -->
   <section class="flex flex-col gap-4" aria-labelledby="se-matrix" data-block="5-matriz">
-    <h2 id="se-matrix" class="text-h2">Matriz de estados</h2>
-    <p class="text-secondary">
-      Los estados del <strong>campo cerrado</strong>, contra los tres tamaños. Los doce son
-      entradas reales: ninguna celda está pintada con una clase.
-    </p>
+    <h2 id="se-matrix" class="text-h2">{{ 'showroom.common.sections.states' | transloco }}</h2>
+    <p class="text-secondary" [ewmsProse]="'showroom.select.states.intro' | transloco"></p>
     <ewms-demo-frame ground="canvas">
       <ewms-state-matrix
         [variants]="states"
         [states]="sizes"
-        rowHeader="Estado"
-        caption="Cuatro estados del campo por tres tamaños"
+        [rowHeader]="statesRowHeader"
+        [caption]="'showroom.select.states.caption' | transloco"
       >
         <ng-template let-variant="variant" let-state="state">
           <ewms-select
-            [label]="variant.label + ' ' + state.label"
+            [label]="(variant.label | transloco) + ' ' + (state.label | transloco)"
             [options]="options"
             [size]="sizeFor(state.id)"
             [value]="valueFor(variant.id)"
             [error]="isError(variant.id)"
             [disabled]="isDisabled(variant.id)"
-            placeholder="Elegí"
+            [placeholder]="'showroom.select.states.placeholder' | transloco"
           />
         </ng-template>
       </ewms-state-matrix>
     </ewms-demo-frame>
-    <p class="text-caption text-secondary">
-      <strong>Faltan Focus y Open, y faltan por razones distintas.</strong> Focus, por lo mismo que
-      en el Input: el color del borde es un estilo en línea atado a una señal del componente, y una
-      clase envolvente no puede ganarle. Open, porque <em>no se puede</em>: el panel vive en un
-      overlay del CDK fuera de la tabla, y sólo hay uno.
-    </p>
-    <p class="text-caption text-secondary">
-      Open recibe además <strong>el mismo tratamiento visual que Focus</strong>, y eso no cuesta
-      nada: mientras el panel está arriba, el foco no se movió del campo.
-    </p>
+    <p
+      class="text-caption text-secondary"
+      [ewmsProse]="'showroom.select.states.missing' | transloco"
+    ></p>
+    <p
+      class="text-caption text-secondary"
+      [ewmsProse]="'showroom.select.states.openLikeFocus' | transloco"
+    ></p>
 
-    <h3 class="text-h3">Los estados de la búsqueda</h3>
+    <h3 class="text-h3">{{ 'showroom.select.searchStates.title' | transloco }}</h3>
     <ewms-demo-frame ground="canvas">
       <ewms-state-matrix
         [variants]="searchVariants"
         [states]="searchColumns"
-        rowHeader="Estado"
-        caption="Los cinco estados de la búsqueda, y qué hace cada uno"
+        [rowHeader]="statesRowHeader"
+        [caption]="'showroom.select.searchStates.caption' | transloco"
       >
         <ng-template let-variant="variant" let-state="state">
-          <span class="text-caption text-primary">{{ fact(variant.id, state.id) }}</span>
+          <span class="text-caption text-primary">{{
+            fact(variant.id, state.id) | transloco
+          }}</span>
         </ng-template>
       </ewms-state-matrix>
     </ewms-demo-frame>
-    <p class="text-caption text-secondary">
-      Una tabla de hechos y no componentes vivos: cinco selectores en una grilla comparten un único
-      overlay y ninguno se queda quieto. Se rompen de verdad con los botones de la fuente remota.
-      <strong>«Sin resultados» y «error del servicio» no comparten ni la rama ni el lugar</strong>:
-      confundirlos hace que una caída parezca un almacén vacío. El error va en el flujo, bajo el
-      campo, donde un <kbd class="font-mono">Tab</kbd> alcanza el reintento.
-    </p>
+    <p
+      class="text-caption text-secondary"
+      [ewmsProse]="'showroom.select.searchStates.note' | transloco"
+    ></p>
   </section>
 
   <!-- ================================================================ 6. Tamaños -->
   <section class="flex flex-col gap-4" aria-labelledby="se-sizes" data-block="6-tamanos">
-    <h2 id="se-sizes" class="text-h2">Tamaños</h2>
-    <p class="text-secondary">
-      Tres alturas, <strong>un solo tamaño de chevron</strong>. Las dos cosas están medidas abajo.
-    </p>
+    <h2 id="se-sizes" class="text-h2">{{ 'showroom.common.sections.sizes' | transloco }}</h2>
+    <p class="text-secondary" [ewmsProse]="'showroom.select.sizes.intro' | transloco"></p>
     <ewms-demo-frame ground="canvas">
       <ul class="flex flex-col gap-5">
         @for (sample of chevrons(); track sample.size) {
           <li class="flex flex-col gap-2">
             <span class="block max-w-96" [attr.data-chevron-sample]="sample.size">
               <ewms-select
-                [label]="'Ubicación, tamaño ' + sample.label"
+                [label]="
+                  'showroom.select.sizes.fieldLabel'
+                    | transloco: { size: (sample.label | transloco) }
+                "
                 [options]="options"
                 [size]="sample.size"
                 value="central"
               />
             </span>
             <span class="text-caption text-secondary">
-              {{ sample.label }} · campo <span class="font-mono">{{ sample.trigger }}</span> ·
-              chevron <span class="font-mono">{{ sample.chevron }}</span>
+              {{ sample.label | transloco }} ·
+              {{ 'showroom.select.sizes.field' | transloco }}
+              <span class="font-mono">{{ sample.trigger }}</span> ·
+              {{ 'showroom.select.sizes.chevron' | transloco }}
+              <span class="font-mono">{{ sample.chevron }}</span>
               @if (sample.sameChevron) {
-                · <span class="rounded-sm bg-success-surface px-1 text-success">16 px, como los otros dos</span>
+                ·
+                <span class="rounded-sm bg-success-surface px-1 text-success">{{
+                  'showroom.select.sizes.sameChevron' | transloco
+                }}</span>
               } @else {
-                · <span class="rounded-sm bg-danger-surface px-1 text-danger">no son 16 px</span>
+                ·
+                <span class="rounded-sm bg-danger-surface px-1 text-danger">{{
+                  'showroom.select.sizes.notSame' | transloco
+                }}</span>
               }
             </span>
           </li>
@@ -337,252 +359,114 @@
       </ul>
     </ewms-demo-frame>
     <div class="flex flex-col gap-2 rounded-md border border-strong bg-secondary p-4">
-      <h3 class="text-h4">Por qué el chevron no crece</h3>
-      <p class="text-caption">
-        La ficha pedía 14 / 16 / 18 px, y <strong>el 14 no existe</strong>: la escala de iconos del
-        sistema es <code class="font-mono">sm</code> 16 / <code class="font-mono">md</code> 18 /
-        <code class="font-mono">lg</code> 20 / <code class="font-mono">xl</code> 24. Se fijó
-        <code class="font-mono">sm</code> en los tres, igual que el icono prefijo del Input.
-      </p>
-      <p class="text-caption">
-        La razón es la regla que la propia ficha declara: <em>«Select siempre usa la misma escala que
-        Input, para poder alinear filas de formulario mixtas»</em>. Escalar el chevron a 18 px en
-        Large rompería esa alineación justo en la fila que la regla existe para proteger.
-      </p>
+      <h3 class="text-h4">{{ 'showroom.select.sizes.why.title' | transloco }}</h3>
+      <p class="text-caption" [ewmsProse]="'showroom.select.sizes.why.scale' | transloco"></p>
+      <p class="text-caption" [ewmsProse]="'showroom.select.sizes.why.rule' | transloco"></p>
     </div>
   </section>
 
   <!-- ==================================================== 7. Anatomía y tokens -->
   <section class="flex flex-col gap-4" aria-labelledby="se-anatomy" data-block="7-anatomia">
-    <h2 id="se-anatomy" class="text-h2">Anatomía y tokens</h2>
-    <p class="text-secondary">
-      Qué token controla cada parte, leído en vivo. Las alturas, el padding y la escala tipográfica
-      son las del Input —importadas, no copiadas— y el Input las toma a su vez del Botón.
-    </p>
-    <ewms-doc-table caption="Tokens que consume &lt;ewms-select&gt;" [columns]="anatomyColumns" [rows]="anatomy">
+    <h2 id="se-anatomy" class="text-h2">{{ 'showroom.common.sections.anatomy' | transloco }}</h2>
+    <p class="text-secondary" [ewmsProse]="'showroom.select.anatomy.intro' | transloco"></p>
+    <ewms-doc-table
+      [caption]="'showroom.select.anatomy.caption' | transloco"
+      [columns]="anatomyColumns"
+      [rows]="anatomy"
+    >
       <ng-template let-row let-column="column">
         @if (column.id === 'part') {
-          {{ row.part }}
+          {{ row.part | transloco }}
         } @else {
           <ewms-token-value [token]="row.token" [swatch]="true" />
         }
       </ng-template>
     </ewms-doc-table>
 
-    <h3 class="text-h3">El panel: ancho y volteo</h3>
+    <h3 class="text-h3">{{ 'showroom.select.panel.title' | transloco }}</h3>
     <ul class="flex flex-col gap-2">
-      <li>
-        <strong>El panel mide lo mismo que el campo</strong>, y el ancho se lee al abrir, no se
-        guarda: el campo cambia de ancho con el layout que lo rodea.
-      </li>
-      <li>
-        La lista además lleva <code class="font-mono">w-full</code>, y es estructural: la hoja
-        prebuilt del CDK hace de <code class="font-mono">.cdk-overlay-pane</code> un contenedor
-        flex, y un ítem flex se dimensiona por su contenido. Sin eso la lista salía más angosta que
-        el campo al que pertenece — que es exactamente lo que mostró el primer render de este código
-        en un navegador.
-      </li>
-      <li>
-        <strong>Voltea hacia arriba cuando no entra abajo.</strong> La lista de posiciones tiene dos
-        entradas y el CDK se queda con la primera que entra. Está probado en el E2E, cerca del borde
-        inferior.
-      </li>
-      <li>
-        Una lista larga hace scroll dentro del panel; eso <strong>no</strong> es un límite a cuántas
-        opciones se pueden pasar, cosa que la ficha prohíbe. El scroll virtual para listas de más de
-        cien está en la ficha y deliberadamente no está construido: es una optimización sin
-        consumidor todavía.
-      </li>
+      <li [ewmsProse]="'showroom.select.panel.width' | transloco"></li>
+      <li [ewmsProse]="'showroom.select.panel.wFull' | transloco"></li>
+      <li [ewmsProse]="'showroom.select.panel.flip' | transloco"></li>
+      <li [ewmsProse]="'showroom.select.panel.scroll' | transloco"></li>
     </ul>
   </section>
 
   <!-- ============================================== 8. Contrato para Angular -->
   <section class="flex flex-col gap-4" aria-labelledby="se-contract" data-block="8-contrato">
-    <h2 id="se-contract" class="text-h2">Contrato para Angular</h2>
+    <h2 id="se-contract" class="text-h2">{{ 'showroom.common.sections.contract' | transloco }}</h2>
 
-    <h3 class="text-h3">Entradas</h3>
-    <p class="text-secondary">
-      Las de la tabla del bloque 3. <code class="font-mono">label</code> es la única requerida en
-      el tipo; <code class="font-mono">options</code> y <code class="font-mono">source</code> juntos
-      son un error en modo desarrollo.
-    </p>
-    <p class="text-caption text-secondary">
-      Los textos de la búsqueda (buscando, sin resultados, error, reintentar, más) no son entradas:
-      se proveen una vez con <code class="font-mono">EWMS_SELECT_MESSAGES</code>, que el shell llena
-      con transloco y el showroom en español. Sin ellos el campo funciona igual, pero la región viva
-      queda muda.
-    </p>
+    <h3 class="text-h3">{{ 'showroom.common.sections.inputs' | transloco }}</h3>
+    <p class="text-secondary" [ewmsProse]="'showroom.select.contract.inputs' | transloco"></p>
+    <p
+      class="text-caption text-secondary"
+      [ewmsProse]="'showroom.select.contract.messages' | transloco"
+    ></p>
     <pre
       class="overflow-x-auto rounded-md border border-default bg-secondary p-4 font-mono text-mono text-primary outline-none focus-visible:shadow-(--focus-ring-shadow)"
       tabindex="0"
     ><code>{{ sourceSnippet }}</code></pre>
-    <p class="text-caption text-secondary">
-      <code class="font-mono">SearchSource&lt;T&gt;</code> no es una abstracción sobre un endpoint:
-      es el contrato que el endpoint de catálogo tiene que cumplir (REQ-FE-DS3-001 RFE-02). Pasar a
-      un backend real cambia esa clase y nada más.
-    </p>
+    <p
+      class="text-caption text-secondary"
+      [ewmsProse]="'showroom.select.contract.sourceContract' | transloco"
+    ></p>
 
-    <h3 class="text-h3">Salidas</h3>
+    <h3 class="text-h3">{{ 'showroom.common.sections.outputs' | transloco }}</h3>
     <div class="flex flex-col gap-2 rounded-md border border-warning bg-warning-surface p-4">
-      <p>
-        <strong>Dos, y una la declara <code class="font-mono">model()</code>:</strong>
-        <code class="font-mono">(valueChange)</code> y <code class="font-mono">(touch)</code>. El
-        valor viaja por <code class="font-mono">[formField]</code> dentro de un formulario y por
-        <code class="font-mono">[(value)]</code> fuera de uno.
-      </p>
-      <p class="text-caption">
-        Y <strong>no hay <code class="font-mono">(change)</code> nativo que se escape</strong>: acá
-        no hay <code class="font-mono">&lt;select&gt;</code> del navegador. El campo es un
-        <code class="font-mono">&lt;input role="combobox"&gt;</code> y el panel una
-        <code class="font-mono">&lt;ul role="listbox"&gt;</code>, así que el evento que sí burbujea
-        —y que en el Checkbox, el Radio y el Toggle hay que frenar— acá directamente no existe.
-      </p>
-      <p class="text-caption">
-        Los otros tres controles de selección sí publican un output
-        (<code class="font-mono">(checkedChange)</code>, <code class="font-mono">(valueChange)</code>)
-        <em>además</em> del formulario, porque tienen un <code class="font-mono">&lt;input&gt;</code>
-        nativo adentro cuyo <code class="font-mono">change</code> hay que detener. El Select no tiene
-        de qué defenderse.
-      </p>
+      <p [ewmsProse]="'showroom.select.contract.outputs.count' | transloco"></p>
+      <p
+        class="text-caption"
+        [ewmsProse]="'showroom.select.contract.outputs.noChange' | transloco"
+      ></p>
+      <p
+        class="text-caption"
+        [ewmsProse]="'showroom.select.contract.outputs.others' | transloco"
+      ></p>
     </div>
 
-    <h3 class="text-h3">Uso típico</h3>
+    <h3 class="text-h3">{{ 'showroom.common.sections.usage' | transloco }}</h3>
     <pre
       class="overflow-x-auto rounded-md border border-default bg-secondary p-4 font-mono text-mono text-primary outline-none focus-visible:shadow-(--focus-ring-shadow)"
       tabindex="0"
     ><code>{{ snippet }}</code></pre>
 
-    <h3 class="text-h3">Accesibilidad: el teclado, y qué anuncia cada parte</h3>
+    <h3 class="text-h3">{{ 'showroom.select.a11y.title' | transloco }}</h3>
     <ewms-doc-table
-      caption="El contrato de teclado: uno solo, sobre el campo"
-      [columns]="[
-        { id: 'key', label: 'Tecla' },
-        { id: 'closed', label: 'Cerrado' },
-        { id: 'open', label: 'Abierto' },
-      ]"
-      [rows]="['↓ / ↑', 'Enter', 'Escape', 'Letras', 'Tab']"
+      [caption]="'showroom.select.keyboard.caption' | transloco"
+      [columns]="keyboardColumns"
+      [rows]="keyboardRows"
     >
       <ng-template let-row let-column="column">
-        @switch (column.id) {
-          @case ('key') {
-            {{ row }}
-          }
-          @case ('closed') {
-            @switch (row) {
-              @case ('↓ / ↑') {
-                ↓ abre la lista entera (con <code class="font-mono">options</code>) o reabre los
-                resultados (con <code class="font-mono">source</code>).
-              }
-              @case ('Enter') {
-                Del formulario. Tras una ráfaga de escáner, busca sin esperar.
-              }
-              @case ('Escape') {
-                —
-              }
-              @case ('Letras') {
-                Escriben en el campo y filtran: al instante en memoria, tras el retardo de entrada
-                contra la fuente. Vaciar la caja no borra el valor elegido.
-              }
-              @default {
-                Sale del control.
-              }
-            }
-          }
-          @default {
-            @switch (row) {
-              @case ('↓ / ↑') {
-                Mueve la fila activa. <strong>No da la vuelta</strong> en los extremos: dar la vuelta
-                convierte «mantener la flecha» en un bucle sin señal de que la lista terminó.
-              }
-              @case ('Enter') {
-                Elige la fila activa y cierra.
-              }
-              @case ('Escape') {
-                Cierra <strong>sin tocar el valor</strong>. Es descarte, y nada más.
-              }
-              @case ('Letras') {
-                Igual que cerrado.
-              }
-              @default {
-                Cierra sin elegir: el foco va camino a otro lado.
-              }
-            }
-          }
+        @if (column.id === 'key') {
+          {{ 'showroom.select.keyboard.' + row + '.key' | transloco }}
+        } @else {
+          <span
+            [ewmsProse]="'showroom.select.keyboard.' + row + '.' + column.id | transloco"
+          ></span>
         }
       </ng-template>
     </ewms-doc-table>
     <div class="flex flex-col gap-2 rounded-md border border-warning bg-warning-surface p-4">
-      <h4 class="text-h4">Lo que NO hay</h4>
-      <p class="text-caption">
-        <strong>No hay Home / End</strong>: nunca estuvo en el contrato. Se documenta el hueco en vez
-        de describir un teclado que el componente no tiene. Cuando busca, <kbd class="font-mono">Enter</kbd>
-        sin fila activa es del formulario: tragarlo rompería enviar con teclado.
-      </p>
+      <h4 class="text-h4">{{ 'showroom.select.keyboard.missing.title' | transloco }}</h4>
+      <p class="text-caption" [ewmsProse]="'showroom.select.keyboard.missing.body' | transloco"></p>
     </div>
     <ul class="flex flex-col gap-2">
-      <li>
-        <strong>El foco nunca sale del campo.</strong> El panel no es enfocable y nada dentro de él
-        lo es; las flechas mueven una fila <em>activa</em> y
-        <code class="font-mono">aria-activedescendant</code> le dice a la tecnología asistiva cuál
-        es. Es el patrón de las ARIA Authoring Practices para un combobox con lista, y hace
-        que «el foco vuelve al campo al cerrar» sea cierto <em>por construcción</em> y no por una
-        llamada a <code class="font-mono">focus()</code> que hay que acordarse de disparar en las
-        cuatro salidas.
-      </li>
-      <li>
-        Qué anuncia cada parte: el campo es <code class="font-mono">role="combobox"</code> con
-        <code class="font-mono">aria-haspopup="listbox"</code> y
-        <code class="font-mono">aria-autocomplete="list"</code>; su <em>nombre</em> es el label
-        visible (por <code class="font-mono">for</code>/<code class="font-mono">id</code>) y su
-        <em>valor</em> es la etiqueta de lo elegido. Una región viva anuncia cuántos resultados hay. El panel es <code class="font-mono">role="listbox"</code> y cada fila
-        <code class="font-mono">role="option"</code> con
-        <code class="font-mono">aria-selected</code>.
-      </li>
-      <li>
-        <code class="font-mono">aria-controls</code> existe <strong>sólo mientras el panel está en
-        el documento</strong>: apuntar a un id que no existe es un valor inválido, y un atributo
-        inválido es peor que uno ausente.
-      </li>
-      <li>
-        Un click sobre una opción llama <code class="font-mono">preventDefault()</code> en
-        <code class="font-mono">mousedown</code>, porque el foco se mueve ahí, antes del click. Eso
-        es lo que mantiene <code class="font-mono">aria-activedescendant</code> con sentido.
-      </li>
+      <li [ewmsProse]="'showroom.select.a11y.focus' | transloco"></li>
+      <li [ewmsProse]="'showroom.select.a11y.announces' | transloco"></li>
+      <li [ewmsProse]="'showroom.select.a11y.controls' | transloco"></li>
+      <li [ewmsProse]="'showroom.select.a11y.mousedown' | transloco"></li>
     </ul>
 
-    <h3 class="text-h3">Errores comunes</h3>
+    <h3 class="text-h3">{{ 'showroom.common.sections.mistakes' | transloco }}</h3>
     <ul class="flex flex-col gap-2">
-      <li>
-        <strong>Buscar un <code class="font-mono">(change)</code>.</strong> No existe, y tampoco hay
-        uno nativo escapándose: no hay <code class="font-mono">&lt;select&gt;</code> del navegador
-        acá. El valor se escucha por el formulario.
-      </li>
-      <li>
-        <strong>Esperar que <code class="font-mono">Escape</code> revierta.</strong> No revierte:
-        <em>descarta</em>. El valor que el panel estaba mostrando se queda exactamente como estaba,
-        porque cerrar no pasa ni cerca del commit.
-      </li>
-      <li>
-        <strong>Cargar miles de opciones en memoria.</strong> Filtran, pero se renderizan todas al
-        abrir: una lista de cientos va con <code class="font-mono">source</code>, que pagina.
-      </li>
-      <li>
-        <strong>Pasar el <code class="font-mono">label</code> como
-        <code class="font-mono">value</code>.</strong> Lo que sube al formulario es
-        <code class="font-mono">value</code>; el label es sólo lo que se lee.
-      </li>
-      <li>
-        <strong>Poner <code class="font-mono">[disabled]="true"</code> y esperar que
-        <code class="font-mono">form.enable()</code> lo devuelva.</strong> No lo devuelve:
-        <code class="font-mono">isDisabled = disabled() || disabledByForm()</code>. Quien deshabilita
-        gana, y nadie re-habilita.
-      </li>
+      <li [ewmsProse]="'showroom.select.mistakes.change' | transloco"></li>
+      <li [ewmsProse]="'showroom.select.mistakes.escape' | transloco"></li>
+      <li [ewmsProse]="'showroom.select.mistakes.thousands' | transloco"></li>
+      <li [ewmsProse]="'showroom.select.mistakes.labelAsValue' | transloco"></li>
+      <li [ewmsProse]="'showroom.select.mistakes.disabled' | transloco"></li>
     </ul>
 
-    <h3 class="text-h3">Bloques que no aplican</h3>
-    <p class="text-secondary">
-      Ninguno. Variantes de énfasis no hay, pero el bloque 4 muestra las tres formas que toma según
-      de dónde salen las opciones.
-    </p>
+    <h3 class="text-h3">{{ 'showroom.common.sections.notApplicable' | transloco }}</h3>
+    <p class="text-secondary" [ewmsProse]="'showroom.select.notApplicable' | transloco"></p>
   </section>
 </article>

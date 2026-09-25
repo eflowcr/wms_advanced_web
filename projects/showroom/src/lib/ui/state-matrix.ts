@@ -7,9 +7,10 @@ import {
   input,
   TemplateRef,
 } from '@angular/core';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { DocTable, type DocColumn } from './doc-table';
 
-/** Etiqueta de un eje de la matriz; la plantilla de celda decide por `id`. */
+/** Un eje de la matriz: `label` es la clave del texto; la plantilla de celda decide por `id`. */
 export interface MatrixAxis {
   readonly id: string;
   readonly label: string;
@@ -29,7 +30,7 @@ export interface MatrixCell {
 @Component({
   selector: 'ewms-state-matrix',
   templateUrl: './state-matrix.html',
-  imports: [DocTable, NgTemplateOutlet],
+  imports: [DocTable, NgTemplateOutlet, TranslocoPipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class StateMatrix {
@@ -39,10 +40,11 @@ export class StateMatrix {
   readonly caption = input.required<string>();
 
   /**
-   * Encabezado de la columna de filas. Es entrada porque el eje no siempre son variantes
+   * Clave del encabezado de la columna de filas. Es entrada porque el eje no siempre son variantes
    * (Texto cruza variante con elemento; Input, estado con tamaño).
+   * t(showroom.common.matrix.variant)
    */
-  readonly rowHeader = input<string>('Variante');
+  readonly rowHeader = input<string>('showroom.common.matrix.variant');
 
   readonly cell = contentChild.required<TemplateRef<MatrixCell>>(TemplateRef);
 

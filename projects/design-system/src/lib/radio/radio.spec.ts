@@ -8,7 +8,7 @@ import { RadioGroup } from './radio-group';
 
 const MESSAGES: FormMessages = {
   ...NO_FORM_MESSAGES,
-  errors: { ...NO_FORM_MESSAGES.errors, required: () => 'Elegí un tipo de recepción' },
+  errors: { ...NO_FORM_MESSAGES.errors, required: () => 'Elija un tipo de recepción' },
 };
 
 /** El grupo dentro de un formulario de señales, como se usa de verdad. */
@@ -177,7 +177,7 @@ describe('RadioGroup', () => {
       await settle();
 
       expect(host.form.tipo().touched()).toBe(true);
-      expect(note()).toBe('Elegí un tipo de recepción');
+      expect(note()).toBe('Elija un tipo de recepción');
       // Un mensaje por grupo, no uno por opción.
       expect(root().querySelectorAll('p')).toHaveLength(1);
     });

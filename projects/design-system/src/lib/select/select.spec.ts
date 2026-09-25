@@ -254,7 +254,7 @@ describe('Select, options in memory', () => {
     await press('Escape');
 
     host.error.set(true);
-    host.hint.set('Elegí una bodega');
+    host.hint.set('Elija una bodega');
     await settle();
     const errorBorder = field().style.borderColor;
     expect(field().getAttribute('aria-invalid')).toBe('true');
@@ -274,7 +274,7 @@ describe('Select, options in memory', () => {
   });
 
   it('passes axe closed with a hint, and open', async () => {
-    host.hint.set('Elegí una bodega');
+    host.hint.set('Elija una bodega');
     await settle();
     await expectNoAxeViolations(fixture.nativeElement);
 
@@ -494,7 +494,7 @@ describe('Select, a backend source (REQ-FE-DS3-001)', () => {
     });
 
     it('PACQ-03.2/3: the error carries a retry in the flow, which repeats the query', async () => {
-      host.hint.set('Escaneá o escribí el código');
+      host.hint.set('Escanee o escriba el código');
       await type('SKU');
       await waitForDelay();
       source.fail();

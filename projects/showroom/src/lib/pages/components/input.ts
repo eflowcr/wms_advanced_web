@@ -16,9 +16,11 @@ import {
   type FieldState,
   type InputType,
 } from '@ewms/design-system';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { DemoFrame } from '../../ui/demo-frame';
 import { ANATOMY_COLUMNS, DocTable } from '../../ui/doc-table';
 import { PropTable, type PropRow } from '../../ui/prop-table';
+import { Prose } from '../../ui/prose';
 import { StateMatrix, type MatrixAxis } from '../../ui/state-matrix';
 import { TokenValue } from '../../ui/token-value';
 import { formatHeight, rectOf, sameHeight } from './measure';
@@ -27,19 +29,28 @@ import { formatHeight, rectOf, sameHeight } from './measure';
  * Solo estados que son entradas reales. Sin Focus: el borde es un estilo en línea
  * atado a la señal de foco y el envoltorio no lo puede pisar; mostraría el anillo con
  * el borde equivocado. El foco real se muestra con Tab en el bloque 3.
+ * t(showroom.common.states.default, showroom.common.states.error,
+ *   showroom.common.states.disabled, showroom.common.states.readOnly)
  */
 const STATES: readonly MatrixAxis[] = [
-  { id: 'default', label: 'Default' },
-  { id: 'error', label: 'Error' },
-  { id: 'disabled', label: 'Disabled' },
-  { id: 'readonly', label: 'Read-only' },
+  { id: 'default', label: 'showroom.common.states.default' },
+  { id: 'error', label: 'showroom.common.states.error' },
+  { id: 'disabled', label: 'showroom.common.states.disabled' },
+  { id: 'readonly', label: 'showroom.common.states.readOnly' },
 ];
 
+/** t(showroom.common.sizes.sm, showroom.common.sizes.md, showroom.common.sizes.lg) */
 const SIZES: readonly MatrixAxis[] = [
-  { id: 'sm', label: 'Small' },
-  { id: 'md', label: 'Medium' },
-  { id: 'lg', label: 'Large' },
+  { id: 'sm', label: 'showroom.common.sizes.sm' },
+  { id: 'md', label: 'showroom.common.sizes.md' },
+  { id: 'lg', label: 'showroom.common.sizes.lg' },
 ];
+
+/**
+ * La matriz cruza estado con tamaño: la columna de filas nombra estados, no variantes.
+ * t(showroom.input.states.rowHeader)
+ */
+const ROW_HEADER = 'showroom.input.states.rowHeader';
 
 const STATE_BY_ID: Readonly<Record<string, FieldState>> = {
   default: 'default',
@@ -56,139 +67,138 @@ const SIZE_BY_ID: Readonly<Record<string, FieldSize>> = {
 
 interface TypeSample {
   readonly type: InputType;
-  readonly label: string;
   readonly note: string;
 }
 
+/**
+ * t(showroom.input.variants.notes.text, showroom.input.variants.notes.number,
+ *   showroom.input.variants.notes.password, showroom.input.variants.notes.search,
+ *   showroom.input.variants.notes.textarea)
+ */
 const TYPES: readonly TypeSample[] = [
-  { type: 'text', label: 'text', note: 'El default. Alineado a la izquierda.' },
-  {
-    type: 'number',
-    label: 'number',
-    note: 'Alineado a la derecha: los números se comparan dígito a dígito.',
-  },
-  {
-    type: 'password',
-    label: 'password',
-    note: 'Botón sufijo de mostrar/ocultar. Sólo aparece con sus dos textos.',
-  },
-  {
-    type: 'search',
-    label: 'search',
-    note: 'Icono prefijo, y botón de limpiar cuando hay algo que limpiar.',
-  },
-  {
-    type: 'textarea',
-    label: 'textarea',
-    note: 'Otro elemento, mismo borde y mismo radio. Sin redimensionar a mano.',
-  },
+  { type: 'text', note: 'showroom.input.variants.notes.text' },
+  { type: 'number', note: 'showroom.input.variants.notes.number' },
+  { type: 'password', note: 'showroom.input.variants.notes.password' },
+  { type: 'search', note: 'showroom.input.variants.notes.search' },
+  { type: 'textarea', note: 'showroom.input.variants.notes.textarea' },
 ];
 
-/** Verificada contra input.ts, no contra la ficha: dos filas corrigen la ficha (bloque 8). */
+/**
+ * Verificada contra input.ts, no contra la ficha: dos filas corrigen la ficha (bloque 8).
+ * t(showroom.input.props.label, showroom.input.props.type, showroom.input.props.size,
+ *   showroom.input.props.placeholder, showroom.input.props.hint, showroom.input.props.state,
+ *   showroom.input.props.required, showroom.input.props.disabled,
+ *   showroom.input.props.showPasswordLabel, showroom.input.props.hidePasswordLabel,
+ *   showroom.input.props.clearLabel, showroom.input.props.fieldFocus,
+ *   showroom.input.props.fieldBlur)
+ */
 const PROPS: readonly PropRow[] = [
   {
     name: 'label',
     type: 'string',
-    default: '— (requerido)',
-    description:
-      'Requerido, y renderizado como un <label for> de verdad. Un placeholder no es un nombre: desaparece al primer carácter y varios lectores de pantalla no lo anuncian nunca.',
+    default: '—',
+    description: 'showroom.input.props.label',
   },
   {
     name: 'type',
     type: "'text' | 'number' | 'password' | 'search' | 'textarea'",
     default: "'text'",
-    description: 'Los cinco del bloque 4.',
+    description: 'showroom.input.props.type',
   },
   {
     name: 'size',
     type: "'sm' | 'md' | 'lg'",
     default: "'md'",
-    description: 'Las mismas tres alturas de control que el Botón y el Select: 32 / 40 / 48.',
+    description: 'showroom.input.props.size',
   },
   {
     name: 'placeholder',
     type: 'string',
     default: "''",
-    description: 'Texto de ejemplo dentro del campo. Nunca sustituye al label.',
+    description: 'showroom.input.props.placeholder',
   },
   {
     name: 'hint',
     type: 'string',
     default: "''",
-    description:
-      'Ayuda bajo el campo, conectada con aria-describedby. Se pone en color danger cuando state="error".',
+    description: 'showroom.input.props.hint',
   },
   {
     name: 'state',
     type: "'default' | 'error' | 'disabled' | 'readonly'",
     default: "'default'",
-    description:
-      'Puramente visual: el componente no valida nada. Quien decide si un valor está mal es el formulario padre.',
+    description: 'showroom.input.props.state',
   },
   {
     name: 'required',
     type: 'boolean',
     default: 'false',
-    description: 'Pinta el asterisco junto al label y pone el atributo nativo.',
+    description: 'showroom.input.props.required',
   },
   {
     name: 'disabled',
     type: 'boolean',
     default: 'false',
-    description:
-      'Dentro de un formulario lo pone la regla disabled() del esquema: Angular prohíbe enlazar [disabled] en el mismo nodo que [formField].',
+    description: 'showroom.input.props.disabled',
   },
   {
     name: 'showPasswordLabel',
     type: 'string',
     default: "''",
-    description:
-      'Nombre accesible del botón de mostrar contraseña, ya traducido. Sin él (y sin hidePasswordLabel) el botón NO se renderiza.',
+    description: 'showroom.input.props.showPasswordLabel',
   },
   {
     name: 'hidePasswordLabel',
     type: 'string',
     default: "''",
-    description: 'El mismo contrato, para ocultar.',
+    description: 'showroom.input.props.hidePasswordLabel',
   },
   {
     name: 'clearLabel',
     type: 'string',
     default: "''",
-    description:
-      'Nombre accesible de la × que vacía un campo de búsqueda. Sin él el botón no se renderiza.',
+    description: 'showroom.input.props.clearLabel',
   },
   {
     name: '(fieldFocus)',
     type: 'output<void>',
     default: '—',
-    description:
-      'Prefijado a propósito: (focus) nativo burbujea hasta el mismo binding del consumidor. Ver el bloque 8.',
+    description: 'showroom.input.props.fieldFocus',
   },
   {
     name: '(fieldBlur)',
     type: 'output<void>',
     default: '—',
-    description: 'Lo mismo para (blur). Es también donde el formulario recibe onTouched.',
+    description: 'showroom.input.props.fieldBlur',
   },
 ];
 
+/**
+ * t(showroom.input.anatomy.parts.background, showroom.input.anatomy.parts.border,
+ *   showroom.input.anatomy.parts.focusBorder, showroom.input.anatomy.parts.errorBorder,
+ *   showroom.input.anatomy.parts.focusRing, showroom.input.anatomy.parts.ringColor,
+ *   showroom.input.anatomy.parts.mutedBackground, showroom.input.anatomy.parts.disabledText,
+ *   showroom.input.anatomy.parts.text, showroom.input.anatomy.parts.secondaryText,
+ *   showroom.input.anatomy.parts.errorHint, showroom.input.anatomy.parts.readOnlyBorder,
+ *   showroom.input.anatomy.parts.radius, showroom.input.anatomy.parts.fontSize,
+ *   showroom.input.anatomy.parts.prefixIcon)
+ */
 const ANATOMY = [
-  { part: 'Fondo del campo', token: '--color-surface' },
-  { part: 'Borde en default', token: '--color-border-strong' },
-  { part: 'Borde en foco', token: '--color-bg-primary' },
-  { part: 'Borde en error', token: '--color-bg-danger' },
-  { part: 'Anillo de foco (las dos bandas)', token: '--focus-ring-shadow' },
-  { part: 'Color del anillo', token: '--color-focus-ring' },
-  { part: 'Fondo deshabilitado y de sólo lectura', token: '--color-bg-secondary' },
-  { part: 'Texto deshabilitado', token: '--color-text-disabled' },
-  { part: 'Texto ingresado', token: '--color-text-primary' },
-  { part: 'Label, hint e iconos', token: '--color-text-secondary' },
-  { part: 'Hint en error', token: '--color-danger-text' },
-  { part: 'Borde en sólo lectura', token: '--color-border' },
-  { part: 'Radio de esquina', token: '--radius-control' },
-  { part: 'Tipografía, tamaño Medium', token: '--text-control-md-size' },
-  { part: 'Icono decorativo (prefijo), los tres tamaños', token: '--size-icon-sm' },
+  { part: 'showroom.input.anatomy.parts.background', token: '--color-surface' },
+  { part: 'showroom.input.anatomy.parts.border', token: '--color-border-strong' },
+  { part: 'showroom.input.anatomy.parts.focusBorder', token: '--color-bg-primary' },
+  { part: 'showroom.input.anatomy.parts.errorBorder', token: '--color-bg-danger' },
+  { part: 'showroom.input.anatomy.parts.focusRing', token: '--focus-ring-shadow' },
+  { part: 'showroom.input.anatomy.parts.ringColor', token: '--color-focus-ring' },
+  { part: 'showroom.input.anatomy.parts.mutedBackground', token: '--color-bg-secondary' },
+  { part: 'showroom.input.anatomy.parts.disabledText', token: '--color-text-disabled' },
+  { part: 'showroom.input.anatomy.parts.text', token: '--color-text-primary' },
+  { part: 'showroom.input.anatomy.parts.secondaryText', token: '--color-text-secondary' },
+  { part: 'showroom.input.anatomy.parts.errorHint', token: '--color-danger-text' },
+  { part: 'showroom.input.anatomy.parts.readOnlyBorder', token: '--color-border' },
+  { part: 'showroom.input.anatomy.parts.radius', token: '--radius-control' },
+  { part: 'showroom.input.anatomy.parts.fontSize', token: '--text-control-md-size' },
+  { part: 'showroom.input.anatomy.parts.prefixIcon', token: '--size-icon-sm' },
 ] as const;
 
 /** Altura de control, medida contra el Button del mismo tamaño. */
@@ -213,8 +223,10 @@ interface SizeSample {
     DemoFrame,
     DocTable,
     PropTable,
+    Prose,
     StateMatrix,
     TokenValue,
+    TranslocoPipe,
   ],
   templateUrl: './input.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -225,6 +237,7 @@ export class ShowroomInput {
   protected readonly version = DESIGN_SYSTEM_VERSION;
   protected readonly states = STATES;
   protected readonly sizes = SIZES;
+  protected readonly rowHeader = ROW_HEADER;
   protected readonly types = TYPES;
   protected readonly props = PROPS;
   protected readonly anatomy = ANATOMY;
@@ -251,10 +264,11 @@ export class ShowroomInput {
   protected readonly focusCount = signal(0);
   protected readonly blurCount = signal(0);
 
+  /** t(showroom.common.sizes.sm, showroom.common.sizes.md, showroom.common.sizes.lg) */
   protected readonly measured = signal<readonly SizeSample[]>([
-    { size: 'sm', label: 'Small', input: '…', button: '…', aligned: false },
-    { size: 'md', label: 'Medium', input: '…', button: '…', aligned: false },
-    { size: 'lg', label: 'Large', input: '…', button: '…', aligned: false },
+    { size: 'sm', label: 'showroom.common.sizes.sm', input: '…', button: '…', aligned: false },
+    { size: 'md', label: 'showroom.common.sizes.md', input: '…', button: '…', aligned: false },
+    { size: 'lg', label: 'showroom.common.sizes.lg', input: '…', button: '…', aligned: false },
   ]);
 
   protected readonly snippet = [

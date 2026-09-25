@@ -1,64 +1,53 @@
-<!-- Showroom solo en español, exento de i18n (compuerta 12): se declara para que el lector de pantalla no lo lea en inglés. -->
-<article class="flex flex-col gap-10" lang="es">
+<article class="flex flex-col gap-10">
   <!-- ============================================================ 1. Encabezado -->
   <header class="flex flex-col gap-2" data-block="1-encabezado">
     <div class="flex flex-wrap items-baseline gap-3">
-      <h1 class="text-h1">Navegación</h1>
+      <h1 class="text-h1">{{ 'showroom.catalog.navigation.name' | transloco }}</h1>
       <code class="font-mono text-primary"
         >&lt;ewms-nav-rail&gt; &lt;ewms-tabs&gt; &lt;ewms-breadcrumbs&gt;</code
       >
     </div>
     <ul class="flex flex-wrap gap-2 text-caption">
-      <li class="rounded-sm bg-secondary px-2 py-1 text-secondary">
-        Versión <span class="font-mono">{{ version }}</span>
+      <li
+        class="rounded-sm bg-secondary px-2 py-1 text-secondary"
+        [ewmsProse]="'showroom.common.header.version' | transloco: { version }"
+      ></li>
+      <li class="rounded-sm bg-success-surface px-2 py-1 text-success">
+        {{ 'showroom.common.header.built' | transloco }}
       </li>
-      <li class="rounded-sm bg-success-surface px-2 py-1 text-success">Construido y en verde</li>
-      <li class="rounded-sm bg-secondary px-2 py-1 text-secondary">
-        Ficha: <span class="font-mono">08-Sistema-de-Diseno/Componentes/Navegacion.md</span>
-      </li>
-      <li class="rounded-sm bg-secondary px-2 py-1 text-secondary">
-        Armado: <span class="font-mono">App-Shell.md</span>
-      </li>
+      <li
+        class="rounded-sm bg-secondary px-2 py-1 text-secondary"
+        [ewmsProse]="
+          'showroom.common.header.sheet'
+            | transloco: { path: '08-Sistema-de-Diseno/Componentes/Navegacion.md' }
+        "
+      ></li>
+      <li
+        class="rounded-sm bg-secondary px-2 py-1 text-secondary"
+        [ewmsProse]="'showroom.navigation.header.assembly' | transloco"
+      ></li>
     </ul>
   </header>
 
   <!-- ================================================ 2. Qué resuelve / cuándo no -->
   <section class="flex flex-col gap-4" aria-labelledby="nav-purpose" data-block="2-proposito">
-    <h2 id="nav-purpose" class="text-h2">Qué resuelve, y cuándo NO usarlo</h2>
+    <h2 id="nav-purpose" class="text-h2">{{ 'showroom.common.sections.purpose' | transloco }}</h2>
     <div class="grid grid-cols-[repeat(auto-fit,minmax(min(20rem,100%),1fr))] gap-4">
       <div class="flex flex-col gap-2 rounded-md border border-default bg-surface p-4">
-        <h3 class="text-h3">Qué resuelve</h3>
-        <p>
-          <strong>Las tres maneras de moverse por una aplicación</strong>, como piezas
-          independientes: el árbol del menú, las pestañas de lo que tenés abierto y el camino hasta
-          donde estás.
-        </p>
-        <p>
-          <strong>Ninguna conoce el router.</strong> Reciben los ítems por entrada, dicen cuál está
-          activo y emiten lo que se eligió. Esta misma página lo demuestra: no hay un solo
-          <code class="font-mono">routerLink</code> acá, y las tres funcionan.
-        </p>
-        <p class="text-caption text-secondary">
-          El <strong>armado</strong> —conectarlas al router, al menú real y a los permisos— es el
-          App Shell, y vive en el <code class="font-mono">shell</code>, no acá.
-        </p>
+        <h3 class="text-h3">{{ 'showroom.common.sections.solves' | transloco }}</h3>
+        <p [ewmsProse]="'showroom.navigation.purpose.solves' | transloco"></p>
+        <p [ewmsProse]="'showroom.navigation.purpose.noRouter' | transloco"></p>
+        <p
+          class="text-caption text-secondary"
+          [ewmsProse]="'showroom.navigation.purpose.assembly' | transloco"
+        ></p>
       </div>
       <div class="flex flex-col gap-2 rounded-md border border-danger bg-danger-surface p-4">
-        <h3 class="text-h3">Cuándo NO usarlo</h3>
+        <h3 class="text-h3">{{ 'showroom.common.sections.avoid' | transloco }}</h3>
         <ul class="flex flex-col gap-2">
-          <li>
-            <strong>Las migas no son el botón «atrás».</strong> Muestran dónde estás en la
-            jerarquía, no por dónde pasaste. Si el camino depende de cómo llegaste, no es una miga.
-          </li>
-          <li>
-            <strong><code class="font-mono">mode="section"</code> no cierra nada.</strong> Una
-            subsección de una pantalla no se cierra; lo que se cierra es un documento.
-          </li>
-          <li>
-            <strong>Un grupo no es un destino.</strong> Un ítem con
-            <code class="font-mono">children</code> abre. Hacer que además navegue vuelve la
-            respuesta a «¿qué hace esto?» dependiente de dónde hiciste clic.
-          </li>
+          <li [ewmsProse]="'showroom.navigation.purpose.notBack' | transloco"></li>
+          <li [ewmsProse]="'showroom.navigation.purpose.sectionCloses' | transloco"></li>
+          <li [ewmsProse]="'showroom.navigation.purpose.groupNotDestination' | transloco"></li>
         </ul>
       </div>
     </div>
@@ -66,207 +55,157 @@
 
   <!-- ========================================================= 3. Demo principal -->
   <section class="flex flex-col gap-4" aria-labelledby="nav-demo" data-block="3-demo">
-    <h2 id="nav-demo" class="text-h2">Demo: las tres sincronizadas</h2>
-    <p>
-      Elegir en el rail cambia la miga y abre la pestaña. Elegir una pestaña mueve el rail. Es
-      <strong>un solo estado</strong>, y vive acá, en quien compone — que es exactamente lo que hace
-      falta saber para montar el App Shell.
-    </p>
+    <h2 id="nav-demo" class="text-h2">{{ 'showroom.navigation.demo.title' | transloco }}</h2>
+    <p [ewmsProse]="'showroom.navigation.demo.intro' | transloco"></p>
 
-    <ewms-demo-frame ground="surface" label="Rail + pestañas + migas, un estado">
+    <ewms-demo-frame ground="surface" [label]="'showroom.navigation.demo.frame' | transloco">
       <div class="flex min-h-96 gap-0 overflow-hidden rounded-md border border-default">
         <ewms-nav-rail
-          [items]="tree"
-          label="Menú principal de ejemplo"
-          toggleLabel="Contraer o expandir el menú"
+          [items]="tree()"
+          [label]="'showroom.navigation.demo.railLabel' | transloco"
+          [toggleLabel]="'showroom.navigation.demo.toggleLabel' | transloco"
           [activeId]="activeId()"
           [expanded]="expanded()"
           (itemSelect)="onItemSelect($event)"
           (expandedChange)="onExpandedChange($event)"
         >
           <p navRailTop class="border-b border-strong px-4 py-3 text-caption uppercase">
-            Acá va el bloque de favoritos
+            {{ 'showroom.navigation.demo.favourites' | transloco }}
           </p>
-          <p navRailFooter class="px-4 py-3 text-caption">ePrac / 0001 - CEDI_ePRAC</p>
+          <p navRailFooter class="px-4 py-3 text-caption">{{ session }}</p>
         </ewms-nav-rail>
 
         <div class="flex min-w-0 flex-1 flex-col gap-4 bg-canvas p-4">
           <ewms-tabs
             [tabs]="openTabs()"
             mode="document"
-            label="Documentos abiertos"
+            [label]="'showroom.navigation.demo.tabsLabel' | transloco"
             [activeId]="activeId()"
-            scrollBackLabel="Ver las pestañas anteriores"
-            scrollForwardLabel="Ver las pestañas siguientes"
+            [scrollBackLabel]="'showroom.navigation.demo.scrollBack' | transloco"
+            [scrollForwardLabel]="'showroom.navigation.demo.scrollForward' | transloco"
             (tabSelect)="onTabSelect($event)"
             (tabClose)="onTabClose($event)"
           />
 
           <ewms-breadcrumbs
             [items]="crumbs()"
-            label="Ruta de la página de ejemplo"
-            [expandLabel]="expandLabel"
+            [label]="'showroom.navigation.demo.crumbsLabel' | transloco"
+            [expandLabel]="expandLabel()"
             (crumbSelect)="onCrumbSelect($event)"
           />
 
           <div class="rounded-md border border-default bg-surface p-4">
-            <p class="text-caption text-secondary">Acá iría el <code class="font-mono">&lt;router-outlet&gt;</code></p>
+            <p
+              class="text-caption text-secondary"
+              [ewmsProse]="'showroom.navigation.demo.outlet' | transloco"
+            ></p>
             <p class="text-h3" data-demo-active>{{ activeId() }}</p>
             @if (lastCrumb()) {
-              <p class="text-caption text-secondary">
-                Última miga elegida: <strong>{{ lastCrumb() }}</strong>
-              </p>
+              <p
+                class="text-caption text-secondary"
+                [ewmsProse]="
+                  'showroom.navigation.demo.lastCrumb' | transloco: { crumb: lastCrumb() }
+                "
+              ></p>
             }
           </div>
         </div>
       </div>
     </ewms-demo-frame>
 
-    <p class="text-caption text-secondary">
-      Cerrar la pestaña activa pasa la selección a la vecina. Cerrar la última deja la lista vacía y
-      el foco donde estaba, nunca perdido en el <code class="font-mono">body</code>. «Dashboard» no
-      se cierra: lo dice <code class="font-mono">closable: false</code>.
-    </p>
+    <p
+      class="text-caption text-secondary"
+      [ewmsProse]="'showroom.navigation.demo.closing' | transloco"
+    ></p>
   </section>
 
   <!-- ============================================================ 4. Variantes -->
   <section class="flex flex-col gap-4" aria-labelledby="nav-variants" data-block="4-variantes">
-    <h2 id="nav-variants" class="text-h2">Variantes</h2>
+    <h2 id="nav-variants" class="text-h2">
+      {{ 'showroom.common.sections.variants' | transloco }}
+    </h2>
 
-    <h3 class="text-h3">Pestañas: dos modos, un componente</h3>
-    <ewms-demo-frame ground="canvas" label="mode=&quot;section&quot; — subsecciones de una pantalla">
+    <h3 class="text-h3">{{ 'showroom.navigation.variants.tabs.title' | transloco }}</h3>
+    <ewms-demo-frame
+      ground="canvas"
+      [label]="'showroom.navigation.variants.tabs.frame' | transloco"
+    >
       <ewms-tabs
-        [tabs]="sectionTabs"
+        [tabs]="sectionTabs()"
         mode="section"
-        label="Secciones de la expedición"
+        [label]="'showroom.navigation.variants.tabs.label' | transloco"
         [activeId]="sectionActive()"
         (tabSelect)="sectionActive.set($event.id)"
       />
     </ewms-demo-frame>
-    <p class="text-caption text-secondary">
-      Mismo ARIA, misma navegación por flechas, otra pintura. Dos componentes serían dos teclados
-      que mantener en paso.
-    </p>
+    <p
+      class="text-caption text-secondary"
+      [ewmsProse]="'showroom.navigation.variants.tabs.note' | transloco"
+    ></p>
 
-    <h3 class="text-h3">Migas: el pliegue, a partir de cinco niveles</h3>
-    <ewms-demo-frame ground="canvas" label="Siete niveles, con el pliegue cerrado">
+    <h3 class="text-h3">{{ 'showroom.navigation.variants.crumbs.title' | transloco }}</h3>
+    <ewms-demo-frame
+      ground="canvas"
+      [label]="'showroom.navigation.variants.crumbs.frame' | transloco"
+    >
       <ewms-breadcrumbs
-        [items]="deepTrail"
-        label="Ruta profunda de ejemplo"
-        [expandLabel]="expandLabel"
+        [items]="deepTrail()"
+        [label]="'showroom.navigation.variants.crumbs.label' | transloco"
+        [expandLabel]="expandLabel()"
       />
     </ewms-demo-frame>
-    <p class="text-caption text-secondary">
-      El <strong>«…» es un botón</strong> y dice cuántos niveles esconde. Tres puntos que no se
-      pueden pulsar avisan de que el camino se acortó y no dan forma de recuperarlo. El primero y el
-      último nunca se pliegan: uno es la salida y el otro es dónde estás.
-    </p>
+    <p
+      class="text-caption text-secondary"
+      [ewmsProse]="'showroom.navigation.variants.crumbs.note' | transloco"
+    ></p>
 
-    <h3 class="text-h3">Pantalla angosta: la barra inferior</h3>
-    <ewms-demo-frame ground="surface" label="Por debajo de --breakpoint-nav-bottom">
+    <h3 class="text-h3">{{ 'showroom.navigation.variants.bottom.title' | transloco }}</h3>
+    <ewms-demo-frame
+      ground="surface"
+      [label]="'showroom.navigation.variants.bottom.frame' | transloco"
+    >
       <div class="relative h-96 overflow-hidden rounded-md border border-default">
         <ewms-nav-bottom
-          [items]="tree"
-          label="Navegación principal"
-          moreLabel="Más"
-          closeLabel="Cerrar el menú"
+          [items]="tree()"
+          [label]="'showroom.navigation.variants.bottom.label' | transloco"
+          [moreLabel]="'showroom.navigation.variants.bottom.more' | transloco"
+          [closeLabel]="'showroom.navigation.variants.bottom.close' | transloco"
           [activeId]="activeId()"
           (itemSelect)="onItemSelect($event)"
         >
-          <p navBottomTop class="px-4 py-3 text-caption uppercase">Acá va el bloque de favoritos</p>
+          <p navBottomTop class="px-4 py-3 text-caption uppercase">
+            {{ 'showroom.navigation.demo.favourites' | transloco }}
+          </p>
         </ewms-nav-bottom>
       </div>
     </ewms-demo-frame>
     <div class="rounded-md border border-warning bg-warning-surface p-4">
-      <p>
-        <strong>Decisión del usuario (2026-09-19): barra inferior, no drawer.</strong> El frente
-        propuso un drawer superpuesto y argumentó en contra de la barra; el usuario eligió la barra.
-        <strong>Lo que cuesta, dicho sin rodeos:</strong> una barra inferior lleva de tres a cinco
-        destinos de primer nivel, y este menú tiene cuatro de primero y
-        <strong>doce de segundo</strong>. Esos doce quedan a <strong>dos toques</strong> —«Más» y
-        después el destino—, uno más que en el rail, en el dispositivo donde un toque cuesta más.
-      </p>
-      <p class="mt-2 text-caption">
-        Lo que no se negocia es el foco: la hoja lo atrapa mientras está abierta, se cierra con
-        <code class="font-mono">Escape</code> y lo devuelve a «Más».
-      </p>
+      <p [ewmsProse]="'showroom.navigation.variants.bottom.decision' | transloco"></p>
+      <p
+        class="mt-2 text-caption"
+        [ewmsProse]="'showroom.navigation.variants.bottom.focus' | transloco"
+      ></p>
     </div>
   </section>
 
   <!-- ====================================================== 5. Matriz de estados -->
   <section class="flex flex-col gap-4" aria-labelledby="nav-states" data-block="5-matriz">
-    <h2 id="nav-states" class="text-h2">Matriz de estados</h2>
+    <h2 id="nav-states" class="text-h2">{{ 'showroom.common.sections.states' | transloco }}</h2>
     <ewms-doc-table
-      caption="Qué hace cada pieza en cada estado"
-      [columns]="[
-        { id: 'state', label: 'Estado' },
-        { id: 'seen', label: 'Qué se ve' },
-        { id: 'why', label: 'Por qué' },
-      ]"
-      [rows]="[
-        'Rail colapsado',
-        'Ítem activo',
-        'Grupo con la activa dentro',
-        'Pestaña no cerrable',
-        'Pestaña deshabilitada',
-        'Migas de un nivel',
-        'Barra inferior sin sobrantes',
-      ]"
+      [caption]="'showroom.navigation.states.caption' | transloco"
+      [columns]="stateColumns"
+      [rows]="states"
     >
       <ng-template let-row let-column="column">
         @switch (column.id) {
           @case ('state') {
-            {{ row }}
+            {{ 'showroom.navigation.states.' + row + '.name' | transloco }}
           }
           @case ('seen') {
-            @switch (row) {
-              @case ('Rail colapsado') {
-                Sólo iconos, cada uno con tooltip
-              }
-              @case ('Ítem activo') {
-                Pastilla azul y <code class="font-mono">aria-current="page"</code>
-              }
-              @case ('Grupo con la activa dentro') {
-                Se abre solo
-              }
-              @case ('Pestaña no cerrable') {
-                Sin «×» y sin <code class="font-mono">aria-keyshortcuts</code>
-              }
-              @case ('Pestaña deshabilitada') {
-                Gris, y las flechas la saltan
-              }
-              @case ('Migas de un nivel') {
-                Un solo texto, sin enlaces
-              }
-              @default {
-                No aparece «Más»
-              }
-            }
+            <span [ewmsProse]="'showroom.navigation.states.' + row + '.seen' | transloco"></span>
           }
           @default {
-            @switch (row) {
-              @case ('Rail colapsado') {
-                Un rail de glifos sin nombre sólo lo usa quien ya conoce el producto
-              }
-              @case ('Ítem activo') {
-                El color solo no basta; el atributo lo dice sin verlo
-              }
-              @case ('Grupo con la activa dentro') {
-                Un rail que no contiene la pantalla en la que estás no es una navegación
-              }
-              @case ('Pestaña no cerrable') {
-                Un atajo anunciado que no hace nada es peor que ninguno
-              }
-              @case ('Pestaña deshabilitada') {
-                Las flechas no deben dejarte parado en algo inerte
-              }
-              @case ('Migas de un nivel') {
-                Un enlace a donde ya estás no lleva a ninguna parte
-              }
-              @default {
-                Un control que abre una hoja vacía es un control que miente
-              }
-            }
+            <span [ewmsProse]="'showroom.navigation.states.' + row + '.why' | transloco"></span>
           }
         }
       </ng-template>
@@ -275,13 +214,8 @@
 
   <!-- =========================================================== 6. Tamaños -->
   <section class="flex flex-col gap-4" aria-labelledby="nav-sizes" data-block="6-tamanos">
-    <h2 id="nav-sizes" class="text-h2">Tamaños</h2>
-    <p>
-      Los tres números de la hoja de Figma del App Shell, y ninguno escrito en una plantilla: el
-      header mide <code class="font-mono">--shell-header-height</code>, el rail
-      <code class="font-mono">--nav-rail-width</code> y el panel
-      <code class="font-mono">--nav-panel-width</code>.
-    </p>
+    <h2 id="nav-sizes" class="text-h2">{{ 'showroom.common.sections.sizes' | transloco }}</h2>
+    <p [ewmsProse]="'showroom.navigation.sizes.intro' | transloco"></p>
     <ul class="flex flex-col gap-2">
       <li><ewms-token-value token="--nav-rail-width" /></li>
       <li><ewms-token-value token="--nav-panel-width" /></li>
@@ -291,90 +225,77 @@
       <li><ewms-token-value token="--breakpoint-nav-bottom" /></li>
     </ul>
     <div class="rounded-md border border-strong bg-secondary p-4">
-      <p class="text-caption">
-        <strong>El punto de corte es un token y se lee desde TypeScript</strong>, no como un
-        <code class="font-mono">md:</code> de Tailwind. Mapearlo al
-        <code class="font-mono">@theme</code> emite
-        <code class="font-mono">&#64;media (width &gt;= var(--breakpoint-nav-bottom))</code>, y una
-        propiedad personalizada no se sustituye dentro de una media query: compila, no falla nada, y
-        el diseño no cambia nunca. Lo lee <code class="font-mono">Viewport</code> con
-        <code class="font-mono">readPixels</code>, igual que el Toast lee su duración.
-      </p>
+      <p class="text-caption" [ewmsProse]="'showroom.navigation.sizes.breakpoint' | transloco"></p>
     </div>
   </section>
 
   <!-- ==================================================== 7. Anatomía y tokens -->
   <section class="flex flex-col gap-4" aria-labelledby="nav-anatomy" data-block="7-anatomia">
-    <h2 id="nav-anatomy" class="text-h2">Anatomía y tokens</h2>
+    <h2 id="nav-anatomy" class="text-h2">{{ 'showroom.common.sections.anatomy' | transloco }}</h2>
     <ul class="flex flex-col gap-2">
       @for (part of anatomy; track part.token) {
-        <li class="flex flex-wrap items-center gap-3 rounded-md border border-default bg-surface p-3">
-          <span class="min-w-64 text-p">{{ part.part }}</span>
+        <li
+          class="flex flex-wrap items-center gap-3 rounded-md border border-default bg-surface p-3"
+        >
+          <span class="min-w-64 text-p">{{ part.part | transloco }}</span>
           <ewms-token-value [token]="part.token" />
         </li>
       }
     </ul>
     <div class="rounded-md border border-strong bg-secondary p-4">
-      <p class="text-caption">
-        <strong>Los contrastes sobre navy están medidos</strong>, no supuestos:
-        <code class="font-mono">--color-text-on-dark</code> sobre
-        <code class="font-mono">--color-brand-navy</code>, el icono, y la pastilla activa. Los
-        números y el método están en el reporte de DS-5 y en
-        <span class="font-mono">Fundamentos de Marca</span>.
-      </p>
+      <p class="text-caption" [ewmsProse]="'showroom.navigation.anatomy.contrast' | transloco"></p>
     </div>
   </section>
 
   <!-- ============================================== 8. Contrato para Angular -->
   <section class="flex flex-col gap-4" aria-labelledby="nav-contract" data-block="8-contrato">
-    <h2 id="nav-contract" class="text-h2">Contrato para Angular</h2>
+    <h2 id="nav-contract" class="text-h2">
+      {{ 'showroom.common.sections.contract' | transloco }}
+    </h2>
 
-    <ewms-prop-table [rows]="railProps" caption="Propiedades de <ewms-nav-rail>" />
-    <ewms-prop-table [rows]="tabsProps" caption="Propiedades de <ewms-tabs>" />
-    <ewms-prop-table [rows]="crumbProps" caption="Propiedades de <ewms-breadcrumbs>" />
+    <ewms-prop-table
+      [rows]="railProps"
+      [caption]="'showroom.navigation.props.railCaption' | transloco"
+    />
+    <ewms-prop-table
+      [rows]="tabsProps"
+      [caption]="'showroom.navigation.props.tabsCaption' | transloco"
+    />
+    <ewms-prop-table
+      [rows]="crumbProps"
+      [caption]="'showroom.navigation.props.crumbsCaption' | transloco"
+    />
 
-    <h3 class="text-h3">Teclado</h3>
+    <h3 class="text-h3">{{ 'showroom.navigation.keyboard.title' | transloco }}</h3>
     <ul class="flex flex-col gap-2">
-      <li class="rounded-md border border-default bg-surface p-3">
-        <strong>El rail es UNA parada de tabulador.</strong> Patrón <em>treeview</em> de las
-        WAI-ARIA APG: <kbd>↑</kbd><kbd>↓</kbd> recorren, <kbd>→</kbd> abre un grupo o entra en él,
-        <kbd>←</kbd> lo cierra o sube al padre, <kbd>Home</kbd> y <kbd>End</kbd> saltan. Con
-        dieciséis destinos, un árbol donde <kbd>Tab</kbd> visita cada fila cuesta dieciséis
-        pulsaciones para pasar de largo, en todas las pantallas.
-      </li>
-      <li class="rounded-md border border-default bg-surface p-3">
-        <strong>Las pestañas también.</strong> <kbd>←</kbd><kbd>→</kbd> mueven y seleccionan,
-        <kbd>Home</kbd>/<kbd>End</kbd> saltan, y <kbd>Delete</kbd> cierra la activa si es cerrable.
-      </li>
-      <li class="rounded-md border border-default bg-surface p-3">
-        <strong>El «×» de una pestaña no es una parada de tabulador, y es deliberado.</strong> Un
-        <code class="font-mono">tablist</code> sólo puede contener
-        <code class="font-mono">tab</code>s: un botón de verdad ahí dentro es una violación crítica
-        de axe. La salida es la del propio APG para pestañas borrables — un glifo no focalizable
-        para el ratón y <kbd>Delete</kbd> para el teclado, anunciado con
-        <code class="font-mono">aria-keyshortcuts</code> para que se pueda descubrir. La función
-        está disponible en los dos medios, que es lo que pide la 2.1.1; lo que no hay es una segunda
-        parada por pestaña, y en una tira de doce documentos eso se agradece.
-      </li>
+      <li
+        class="rounded-md border border-default bg-surface p-3"
+        [ewmsProse]="'showroom.navigation.keyboard.rail' | transloco"
+      ></li>
+      <li
+        class="rounded-md border border-default bg-surface p-3"
+        [ewmsProse]="'showroom.navigation.keyboard.tabs' | transloco"
+      ></li>
+      <li
+        class="rounded-md border border-default bg-surface p-3"
+        [ewmsProse]="'showroom.navigation.keyboard.closeGlyph' | transloco"
+      ></li>
     </ul>
 
-    <h3 class="text-h3">Errores comunes</h3>
+    <h3 class="text-h3">{{ 'showroom.common.sections.mistakes' | transloco }}</h3>
     <ul class="flex flex-col gap-2">
-      <li class="rounded-md border border-danger bg-danger-surface p-3">
-        <strong>Importar <code class="font-mono">&#64;angular/router</code> en una pieza.</strong> Es
-        defecto, no preferencia: la pieza deja de poder mostrarse acá y hereda el árbol de rutas de
-        esta aplicación.
-      </li>
-      <li class="rounded-md border border-danger bg-danger-surface p-3">
-        <strong>Cerrar la pestaña desde el componente.</strong> Emite
-        <code class="font-mono">tabClose</code> y espera. La lista es una entrada, y quien la posee
-        es quien sabe si hay cambios sin guardar.
-      </li>
-      <li class="rounded-md border border-danger bg-danger-surface p-3">
-        <strong>Un <code class="font-mono">&lt;nav&gt;</code> sin nombre.</strong> Esta página tiene
-        cuatro; sin <code class="font-mono">aria-label</code> son cuatro entradas idénticas en la
-        lista de landmarks de un lector de pantalla.
-      </li>
+      <li
+        class="rounded-md border border-danger bg-danger-surface p-3"
+        [ewmsProse]="'showroom.navigation.mistakes.router' | transloco"
+      ></li>
+      <li
+        class="rounded-md border border-danger bg-danger-surface p-3"
+        [ewmsProse]="'showroom.navigation.mistakes.closeInside' | transloco"
+      ></li>
+      <li
+        class="rounded-md border border-danger bg-danger-surface p-3"
+        [ewmsProse]="'showroom.navigation.mistakes.unnamedNav' | transloco"
+      ></li>
     </ul>
   </section>
 </article>

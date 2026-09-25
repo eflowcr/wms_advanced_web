@@ -1,55 +1,46 @@
-<!-- Showroom solo en español, exento de i18n (compuerta 12): se declara para que el lector de pantalla no lo lea en inglés. -->
-<article class="flex flex-col gap-10" lang="es">
+<article class="flex flex-col gap-10">
   <!-- ============================================================ 1. Encabezado -->
   <header class="flex flex-col gap-2" data-block="1-encabezado">
     <div class="flex flex-wrap items-baseline gap-3">
-      <h1 class="text-h1">Banner</h1>
+      <h1 class="text-h1">{{ 'showroom.catalog.banner.name' | transloco }}</h1>
       <code class="font-mono text-primary">&lt;ewms-banner&gt;</code>
     </div>
     <ul class="flex flex-wrap gap-2 text-caption">
-      <li class="rounded-sm bg-secondary px-2 py-1 text-secondary">
-        Versión <span class="font-mono">{{ version }}</span>
+      <li
+        class="rounded-sm bg-secondary px-2 py-1 text-secondary"
+        [ewmsProse]="'showroom.common.header.version' | transloco: { version }"
+      ></li>
+      <li class="rounded-sm bg-success-surface px-2 py-1 text-success">
+        {{ 'showroom.common.header.built' | transloco }}
       </li>
-      <li class="rounded-sm bg-success-surface px-2 py-1 text-success">Construido y en verde</li>
-      <li class="rounded-sm bg-secondary px-2 py-1 text-secondary">
-        Ficha: <span class="font-mono">08-Sistema-de-Diseno/Componentes/Notificaciones.md</span>
-      </li>
+      <li
+        class="rounded-sm bg-secondary px-2 py-1 text-secondary"
+        [ewmsProse]="
+          'showroom.common.header.sheet'
+            | transloco: { path: '08-Sistema-de-Diseno/Componentes/Notificaciones.md' }
+        "
+      ></li>
     </ul>
   </header>
 
   <!-- ================================================ 2. Qué resuelve / cuándo no -->
   <section class="flex flex-col gap-4" aria-labelledby="ba-purpose" data-block="2-proposito">
-    <h2 id="ba-purpose" class="text-h2">Qué resuelve, y cuándo NO usarlo</h2>
+    <h2 id="ba-purpose" class="text-h2">{{ 'showroom.common.sections.purpose' | transloco }}</h2>
     <div class="grid grid-cols-[repeat(auto-fit,minmax(min(20rem,100%),1fr))] gap-4">
       <div class="flex flex-col gap-2 rounded-md border border-default bg-surface p-4">
-        <h3 class="text-h3">Qué resuelve</h3>
-        <p>
-          Un mensaje <strong>que vive en el layout</strong> y se queda hasta que alguien lo cierra.
-          Empuja el contenido hacia abajo, no hace overlay, y por eso sirve para una condición que
-          <em>sigue siendo cierta</em>: este almacén está en inventario cíclico, esta expedición
-          tiene una incidencia.
-        </p>
-        <p class="text-caption text-secondary">
-          Cuatro variantes semánticas. El icono lo elige el componente según la variante; el
-          consumidor no lo pasa.
-        </p>
+        <h3 class="text-h3">{{ 'showroom.common.sections.solves' | transloco }}</h3>
+        <p [ewmsProse]="'showroom.banner.purpose.solves' | transloco"></p>
+        <p
+          class="text-caption text-secondary"
+          [ewmsProse]="'showroom.banner.purpose.icon' | transloco"
+        ></p>
       </div>
       <div class="flex flex-col gap-2 rounded-md border border-danger bg-danger-surface p-4">
-        <h3 class="text-h3">Cuándo NO usarlo</h3>
+        <h3 class="text-h3">{{ 'showroom.common.sections.avoid' | transloco }}</h3>
         <ul class="flex flex-col gap-2">
-          <li>
-            <strong>Si el mensaje es algo que acaba de pasar, va Toast.</strong> «Guardado» no es
-            una condición: es un hecho que termina de contarse en tres segundos.
-          </li>
-          <li>
-            <strong>Si el error pertenece a un campo, va el <code class="font-mono">hint</code> del
-            Input.</strong> Un banner arriba de un formulario obliga a buscar cuál de los doce
-            campos falló.
-          </li>
-          <li>
-            <strong>Si hay que decidir antes de seguir, va Dialog.</strong> Un banner no bloquea, y
-            una acción destructiva necesita fricción.
-          </li>
+          <li [ewmsProse]="'showroom.banner.purpose.justHappened' | transloco"></li>
+          <li [ewmsProse]="'showroom.banner.purpose.fieldError' | transloco"></li>
+          <li [ewmsProse]="'showroom.banner.purpose.decide' | transloco"></li>
         </ul>
       </div>
     </div>
@@ -57,38 +48,39 @@
 
   <!-- ========================================================= 3. Demo principal -->
   <section class="flex flex-col gap-4" aria-labelledby="ba-demo" data-block="3-demo">
-    <h2 id="ba-demo" class="text-h2">Demo principal</h2>
+    <h2 id="ba-demo" class="text-h2">{{ 'showroom.common.sections.demo' | transloco }}</h2>
     <div class="grid grid-cols-[repeat(auto-fit,minmax(min(24rem,100%),1fr))] gap-6">
-      <ewms-demo-frame ground="canvas" label="Sobre el fondo de aplicación, tamaño real">
+      <ewms-demo-frame ground="canvas" [label]="'showroom.banner.demo.frame' | transloco">
         <div class="flex flex-col gap-3" data-demo-banner>
           <ewms-banner
             variant="warning"
-            title="Stock por debajo del mínimo"
-            description="SKU-88213 quedó en 4 unidades; el mínimo de reposición es 25."
-            severityLabel="Advertencia"
+            [title]="'showroom.banner.variants.warning.title' | transloco"
+            [description]="'showroom.banner.variants.warning.description' | transloco"
+            [severityLabel]="'showroom.banner.variants.warning.severity' | transloco"
             [dismissible]="true"
-            dismissLabel="Cerrar aviso"
+            [dismissLabel]="'showroom.banner.dismissLabel' | transloco"
             (dismiss)="onDismiss()"
           />
+          <!--
+            La cuenta queda en su span (la leen las pruebas); lo que la rodea son tres claves, y la
+            del medio es el plural.
+          -->
           <p class="text-caption text-secondary">
-            Cerrado <span class="font-mono" data-dismiss-count>{{ dismissCount() }}</span> vez(ces)
-            — y <strong>sigue en pantalla</strong>. El banner emite
-            <code class="font-mono">(dismiss)</code> y nada más: si desaparece o no lo decide quien
-            lo puso, porque sólo esa persona sabe si la condición terminó.
+            {{ 'showroom.banner.demo.dismissed.before' | transloco }}
+            <span class="font-mono" data-dismiss-count>{{ dismissCount() }}</span>
+            {{ 'showroom.banner.demo.dismissed.times' | transloco: { count: dismissCount() } }}
+            <span [ewmsProse]="'showroom.banner.demo.dismissed.after' | transloco"></span>
           </p>
         </div>
       </ewms-demo-frame>
-      <ewms-prop-table [rows]="props" caption="Propiedades de <ewms-banner>" />
+      <ewms-prop-table [rows]="props" [caption]="'showroom.banner.props.caption' | transloco" />
     </div>
   </section>
 
   <!-- =============================================================== 4. Variantes -->
   <section class="flex flex-col gap-4" aria-labelledby="ba-variants" data-block="4-variantes">
-    <h2 id="ba-variants" class="text-h2">Variantes</h2>
-    <p class="text-secondary">
-      Cuatro, y el nombre de la cuarta no coincide con el de su familia de color. Eso es
-      deliberado y es la decisión más importante de esta página.
-    </p>
+    <h2 id="ba-variants" class="text-h2">{{ 'showroom.common.sections.variants' | transloco }}</h2>
+    <p class="text-secondary" [ewmsProse]="'showroom.banner.variants.intro' | transloco"></p>
 
     <ewms-demo-frame ground="canvas">
       <div class="flex flex-col gap-3">
@@ -96,9 +88,9 @@
           <div [attr.data-icon-sample]="row.variant">
             <ewms-banner
               [variant]="row.variant"
-              [title]="row.title"
-              [description]="row.description"
-              [severityLabel]="row.severityLabel"
+              [title]="row.title | transloco"
+              [description]="row.description | transloco"
+              [severityLabel]="row.severityLabel | transloco"
             />
           </div>
         }
@@ -106,19 +98,14 @@
     </ewms-demo-frame>
 
     <ewms-doc-table
-      caption="Variante, familia de color y role — las tres columnas que suelen confundirse"
-      [columns]="[
-        { id: 'name', label: 'Variante' },
-        { id: 'family', label: 'Familia' },
-        { id: 'role', label: 'role' },
-        { id: 'icon', label: 'Icono' },
-      ]"
+      [caption]="'showroom.banner.variants.caption' | transloco"
+      [columns]="variantColumns"
       [rows]="variants"
     >
       <ng-template let-row let-column="column">
         @switch (column.id) {
           @case ('name') {
-            {{ row.name }}
+            {{ row.name | transloco }}
           }
           @case ('family') {
             <span class="font-mono">{{ row.family }}</span>
@@ -127,122 +114,106 @@
             <span class="font-mono">{{ row.role }}</span>
           }
           @default {
-            {{ row.severityLabel }}
+            {{ row.severityLabel | transloco }}
           }
         }
       </ng-template>
     </ewms-doc-table>
 
     <div class="flex flex-col gap-2 rounded-md border border-strong bg-secondary p-4">
-      <h3 class="text-h4">Info se llama Info y se pinta neutral</h3>
-      <p class="text-caption">
-        <strong>No existe una familia <code class="font-mono">info</code> de color</strong>, y no va
-        a existir. El azul de marca significa «se hace clic» y nada más; un azul informativo medía
-        <span class="font-mono">1.76:1</span> contra el azul de acción, o sea indistinguible en la
-        práctica. Con neutral nunca compiten.
-      </p>
-      <p class="text-caption">
-        Por eso el nombre público y la familia de tokens son dos cosas distintas, y hay
-        <strong>un solo lugar</strong> que las mapea
-        (<code class="font-mono">FEEDBACK_FAMILIES</code>).
-      </p>
+      <h3 class="text-h4">{{ 'showroom.banner.variants.infoNeutral.title' | transloco }}</h3>
+      <p
+        class="text-caption"
+        [ewmsProse]="'showroom.banner.variants.infoNeutral.noFamily' | transloco"
+      ></p>
+      <p
+        class="text-caption"
+        [ewmsProse]="'showroom.banner.variants.infoNeutral.oneMap' | transloco"
+      ></p>
     </div>
 
     <div class="flex flex-col gap-2 rounded-md border border-strong bg-secondary p-4">
       <h3 class="text-h4">
-        <code class="font-mono">alert</code> interrumpe,
-        <code class="font-mono">status</code> espera su turno
+        <span [ewmsProse]="'showroom.banner.variants.roles.title' | transloco"></span>
       </h3>
-      <p class="text-caption">
-        Danger y Warning son condiciones sobre las que hay que hacer algo, así que vale la pena
-        cortar lo que el lector de pantalla esté diciendo. Success e Info no: anunciar «guardado»
-        encima de la frase que alguien está escuchando es peor resultado que anunciarlo un momento
-        después. Darle <code class="font-mono">alert</code> a las cuatro por igual es el atajo que
-        la ficha prohíbe explícitamente.
-      </p>
+      <p class="text-caption" [ewmsProse]="'showroom.banner.variants.roles.why' | transloco"></p>
     </div>
   </section>
 
   <!-- ========================================================= 5. Matriz de estados -->
   <section class="flex flex-col gap-4" aria-labelledby="ba-matrix" data-block="5-matriz">
-    <h2 id="ba-matrix" class="text-h2">Matriz de estados</h2>
-    <p class="text-secondary">
-      Las cuatro variantes contra las tres formas que toma la caja. Las doce celdas son entradas
-      reales: ninguna está pintada con una clase.
-    </p>
+    <h2 id="ba-matrix" class="text-h2">{{ 'showroom.common.sections.states' | transloco }}</h2>
+    <p class="text-secondary" [ewmsProse]="'showroom.banner.states.intro' | transloco"></p>
     <ewms-demo-frame ground="canvas">
       <ewms-state-matrix
         [variants]="matrixVariants"
         [states]="matrixStates"
-        rowHeader="Variante"
-        caption="Cuatro variantes por tres formas de la caja"
+        [caption]="'showroom.banner.states.caption' | transloco"
       >
         <ng-template let-variant="variant" let-state="state">
           <ewms-banner
             [variant]="variantFor(variant.id)"
-            [title]="rowFor(variant.id).title"
-            [description]="descriptionFor(state.id, variant.id)"
-            [severityLabel]="rowFor(variant.id).severityLabel"
+            [title]="rowFor(variant.id).title | transloco"
+            [description]="descriptionFor(state.id, variant.id) | transloco"
+            [severityLabel]="rowFor(variant.id).severityLabel | transloco"
             [dismissible]="isDismissible(state.id)"
-            dismissLabel="Cerrar aviso"
+            [dismissLabel]="'showroom.banner.dismissLabel' | transloco"
           />
         </ng-template>
       </ewms-state-matrix>
     </ewms-demo-frame>
-    <p class="text-caption text-secondary">
-      <strong>No hay Hover, Focus ni Disabled, y no es un hueco.</strong> El banner no es un
-      control: no se pulsa, no recibe el foco y no se puede deshabilitar. Lo único enfocable que
-      contiene es su botón de cerrar, que es un
-      <code class="font-mono">&lt;ewms-button iconOnly&gt;</code> con su propia ficha y su propia
-      matriz.
-    </p>
+    <p
+      class="text-caption text-secondary"
+      [ewmsProse]="'showroom.banner.states.noInteraction' | transloco"
+    ></p>
   </section>
 
   <!-- ================================================================ 6. Tamaños -->
   <section class="flex flex-col gap-4" aria-labelledby="ba-sizes" data-block="6-tamanos">
-    <h2 id="ba-sizes" class="text-h2">Tamaños</h2>
+    <h2 id="ba-sizes" class="text-h2">{{ 'showroom.common.sections.sizes' | transloco }}</h2>
     <div class="flex flex-col gap-2 rounded-md border border-strong bg-secondary p-4">
-      <h3 class="text-h4">No aplica — el banner tiene un solo tamaño</h3>
-      <p>
-        No hay <code class="font-mono">size</code>. Un banner ocupa el ancho de su contenedor y
-        crece con su contenido; la única variable de altura es si lleva descripción o no, y eso
-        está en la matriz de arriba.
-      </p>
+      <h3 class="text-h4">{{ 'showroom.banner.sizes.title' | transloco }}</h3>
+      <p [ewmsProse]="'showroom.banner.sizes.fits' | transloco"></p>
     </div>
 
-    <h3 class="text-h3">Lo que sí es un número fijo: el icono</h3>
+    <h3 class="text-h3">{{ 'showroom.banner.sizes.icon.title' | transloco }}</h3>
     <ul class="flex flex-col gap-2">
       @for (sample of iconSamples(); track sample.variant) {
         <li class="text-caption text-secondary">
-          {{ sample.name }} · icono <span class="font-mono">{{ sample.box }}</span>
+          {{ 'showroom.banner.sizes.icon.sample' | transloco: { name: (sample.name | transloco) } }}
+          <span class="font-mono">{{ sample.box }}</span>
           @if (sample.isMd) {
-            · <span class="rounded-sm bg-success-surface px-1 text-success">18 px, el md del sistema</span>
+            ·
+            <span class="rounded-sm bg-success-surface px-1 text-success">{{
+              'showroom.banner.sizes.icon.isMd' | transloco
+            }}</span>
           } @else {
-            · <span class="rounded-sm bg-danger-surface px-1 text-danger">no son 18 px</span>
+            ·
+            <span class="rounded-sm bg-danger-surface px-1 text-danger">{{
+              'showroom.banner.sizes.icon.notMd' | transloco
+            }}</span>
           }
         </li>
       }
     </ul>
-    <p class="text-caption text-secondary">
-      Medido sobre el SVG renderizado de la sección de variantes, no escrito acá. El icono
-      <strong>no crece con la severidad</strong>: un Danger con el icono más grande que un Info es
-      exactamente el «arreglo» que alguien agrega seis meses después.
-    </p>
+    <p
+      class="text-caption text-secondary"
+      [ewmsProse]="'showroom.banner.sizes.icon.measured' | transloco"
+    ></p>
   </section>
 
   <!-- ==================================================== 7. Anatomía y tokens -->
   <section class="flex flex-col gap-4" aria-labelledby="ba-anatomy" data-block="7-anatomia">
-    <h2 id="ba-anatomy" class="text-h2">Anatomía y tokens</h2>
-    <p class="text-secondary">
-      Qué token controla cada parte, leído en vivo. Las cuatro familias tienen la misma forma
-      —<code class="font-mono">-surface</code>, <code class="font-mono">-border</code>,
-      <code class="font-mono">-text</code>, <code class="font-mono">-solid</code>— así que la tabla
-      muestra una y la regla vale para las cuatro.
-    </p>
-    <ewms-doc-table caption="Tokens que consume &lt;ewms-banner&gt;" [columns]="anatomyColumns" [rows]="anatomy">
+    <h2 id="ba-anatomy" class="text-h2">{{ 'showroom.common.sections.anatomy' | transloco }}</h2>
+    <p class="text-secondary" [ewmsProse]="'showroom.banner.anatomy.intro' | transloco"></p>
+    <ewms-doc-table
+      [caption]="'showroom.banner.anatomy.caption' | transloco"
+      [columns]="anatomyColumns"
+      [rows]="anatomy"
+    >
       <ng-template let-row let-column="column">
         @if (column.id === 'part') {
-          {{ row.part }}
+          {{ row.part | transloco }}
         } @else {
           <ewms-token-value [token]="row.token" [swatch]="true" />
         }
@@ -251,21 +222,15 @@
 
     <div class="flex flex-col gap-2 rounded-md border border-strong bg-secondary p-4">
       <h3 class="text-h4">
-        Qué token pinta el icono: se decidió midiendo, y es
-        <code class="font-mono">-text</code>
+        <span [ewmsProse]="'showroom.banner.anatomy.iconToken.title' | transloco"></span>
       </h3>
-      <p class="text-caption">
-        La ficha lo dejaba abierto entre <code class="font-mono">-text</code> y
-        <code class="font-mono">-solid</code>, con el criterio de los 3:1 de WCAG 1.4.11 contra la
-        <code class="font-mono">-surface</code> de la misma familia. Medido:
-      </p>
+      <p
+        class="text-caption"
+        [ewmsProse]="'showroom.banner.anatomy.iconToken.open' | transloco"
+      ></p>
       <ewms-doc-table
-        caption="Contraste contra la -surface de cada familia"
-        [columns]="[
-          { id: 'family', label: 'Familia' },
-          { id: 'text', label: '-text' },
-          { id: 'solid', label: '-solid' },
-        ]"
+        [caption]="'showroom.banner.anatomy.iconToken.caption' | transloco"
+        [columns]="iconTokenColumns"
         [rows]="[
           { family: 'danger', text: '5.58:1', solid: '4.28:1' },
           { family: 'warning', text: '5.34:1', solid: '4.13:1' },
@@ -287,79 +252,42 @@
           }
         </ng-template>
       </ewms-doc-table>
-      <p class="text-caption">
-        Las dos pasan, y gana <code class="font-mono">-text</code> por dos razones: tiene más
-        margen en las cuatro familias —<code class="font-mono">neutral</code> con
-        <code class="font-mono">-solid</code> queda en 3.71, muy cerca del piso— y es el color que
-        el contenedor ya pone, así que el icono lo hereda con
-        <code class="font-mono">currentColor</code> y el componente no escribe ningún color.
-      </p>
+      <p
+        class="text-caption"
+        [ewmsProse]="'showroom.banner.anatomy.iconToken.verdict' | transloco"
+      ></p>
     </div>
   </section>
 
   <!-- ============================================== 8. Contrato para Angular -->
   <section class="flex flex-col gap-4" aria-labelledby="ba-contract" data-block="8-contrato">
-    <h2 id="ba-contract" class="text-h2">Contrato para Angular</h2>
+    <h2 id="ba-contract" class="text-h2">{{ 'showroom.common.sections.contract' | transloco }}</h2>
 
-    <h3 class="text-h3">Entradas y salidas</h3>
-    <p class="text-secondary">
-      Las siete de la tabla del bloque 3. <code class="font-mono">title</code> y
-      <code class="font-mono">severityLabel</code> son las dos requeridas en el tipo.
-    </p>
+    <h3 class="text-h3">{{ 'showroom.banner.contract.title' | transloco }}</h3>
+    <p class="text-secondary" [ewmsProse]="'showroom.banner.contract.inputs' | transloco"></p>
 
-    <h3 class="text-h3">Uso típico</h3>
+    <h3 class="text-h3">{{ 'showroom.common.sections.usage' | transloco }}</h3>
     <pre
       class="overflow-x-auto rounded-md border border-default bg-secondary p-4 font-mono text-mono text-primary outline-none focus-visible:shadow-(--focus-ring-shadow)"
       tabindex="0"
     ><code>{{ snippet }}</code></pre>
 
-    <h3 class="text-h3">Accesibilidad</h3>
+    <h3 class="text-h3">{{ 'showroom.common.sections.a11y' | transloco }}</h3>
     <ul class="flex flex-col gap-2">
-      <li>
-        <strong>El color nunca es la única señal (WCAG 1.4.1).</strong> Quien no distingue las
-        cuatro superficies igual escucha «Advertencia» antes del mensaje, porque el icono lleva
-        <code class="font-mono">label</code> y es el único icono del sistema que nunca es
-        decorativo.
-      </li>
-      <li>
-        <strong>La caja entera es la región viva</strong>, no sólo el texto: un banner que apareció
-        tiene que anunciarse con su severidad, y la severidad es el nombre del icono.
-      </li>
-      <li>
-        <code class="font-mono">role</code> se ata a la variante —
-        <code class="font-mono">alert</code> para Danger y Warning,
-        <code class="font-mono">status</code> para Success e Info.
-      </li>
+      <li [ewmsProse]="'showroom.banner.a11y.colour' | transloco"></li>
+      <li [ewmsProse]="'showroom.banner.a11y.region' | transloco"></li>
+      <li [ewmsProse]="'showroom.banner.a11y.role' | transloco"></li>
     </ul>
 
-    <h3 class="text-h3">Errores comunes</h3>
+    <h3 class="text-h3">{{ 'showroom.common.sections.mistakes' | transloco }}</h3>
     <ul class="flex flex-col gap-2">
-      <li>
-        <strong>Buscar un <code class="font-mono">(close)</code>.</strong> Se llama
-        <code class="font-mono">(dismiss)</code>: <code class="font-mono">close</code> es un miembro
-        nativo de <code class="font-mono">window</code> y de
-        <code class="font-mono">&lt;dialog&gt;</code>, y ningún miembro público del sistema se llama
-        como algo nativo.
-      </li>
-      <li>
-        <strong>Esperar que se cierre solo al pulsar cerrar.</strong> No se cierra: emite. Quien lo
-        puso decide, porque «el usuario lo cerró» y «la condición terminó» son hechos distintos.
-      </li>
-      <li>
-        <strong>Pasarle un icono.</strong> No se puede, y es a propósito: la severidad la elige
-        quien llama, el dibujo lo pone el sistema. Así nadie termina con un triángulo sobre un
-        mensaje de éxito.
-      </li>
-      <li>
-        <strong>Usar <code class="font-mono">variant="info"</code> esperando azul.</strong> Info es
-        neutral. El azul significa «se hace clic».
-      </li>
+      <li [ewmsProse]="'showroom.banner.mistakes.close' | transloco"></li>
+      <li [ewmsProse]="'showroom.banner.mistakes.selfClosing' | transloco"></li>
+      <li [ewmsProse]="'showroom.banner.mistakes.icon' | transloco"></li>
+      <li [ewmsProse]="'showroom.banner.mistakes.infoBlue' | transloco"></li>
     </ul>
 
-    <h3 class="text-h3">Bloques que no aplican</h3>
-    <p class="text-secondary">
-      Uno: <strong>tamaños</strong>, porque el banner tiene uno solo. Está escrito arriba en lugar
-      de borrado.
-    </p>
+    <h3 class="text-h3">{{ 'showroom.common.sections.notApplicable' | transloco }}</h3>
+    <p class="text-secondary" [ewmsProse]="'showroom.banner.notApplicable' | transloco"></p>
   </section>
 </article>

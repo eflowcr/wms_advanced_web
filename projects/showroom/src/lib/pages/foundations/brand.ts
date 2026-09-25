@@ -1,8 +1,10 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { DemoFrame } from '../../ui/demo-frame';
+import { Prose } from '../../ui/prose';
 import { TokenValue } from '../../ui/token-value';
 
-/** Una de las tres formas de la marca eWMS. */
+/** Una de las tres formas de la marca eWMS. `name`, `alt` y `use` son claves del diccionario. */
 interface BrandShape {
   readonly id: string;
   readonly name: string;
@@ -24,7 +26,7 @@ const BRAND_BASE = '/brand';
 // documento), y la compuerta 11 y la CSP impiden incrustarlos. Así heredan el color del texto.
 @Component({
   selector: 'ewms-showroom-brand',
-  imports: [DemoFrame, TokenValue],
+  imports: [DemoFrame, Prose, TokenValue, TranslocoPipe],
   templateUrl: './brand.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -33,60 +35,74 @@ export class ShowroomBrand {
   protected readonly isotipoMono = `${BRAND_BASE}/ewms-isotipo-mono.svg`;
   protected readonly lockupMono = `${BRAND_BASE}/ewms-lockup-mono.svg`;
 
+  /**
+   * t(showroom.brand.shapes.logomark.name, showroom.brand.shapes.logomark.alt,
+   *   showroom.brand.shapes.logomark.use, showroom.brand.shapes.wordmark.name,
+   *   showroom.brand.shapes.wordmark.alt, showroom.brand.shapes.wordmark.use,
+   *   showroom.brand.shapes.lockup.name, showroom.brand.shapes.lockup.alt,
+   *   showroom.brand.shapes.lockup.use)
+   */
   protected readonly shapes: readonly BrandShape[] = [
     {
       id: 'isotipo',
-      name: 'Isotipo',
+      name: 'showroom.brand.shapes.logomark.name',
       file: `${BRAND_BASE}/ewms-isotipo.svg`,
       mono: `${BRAND_BASE}/ewms-isotipo-mono.svg`,
-      alt: 'Isotipo de eWMS: la "e" circular',
-      use: 'Cuando el espacio es cuadrado y la marca ya se estableció en la pantalla: favicon, avatar, rail colapsado.',
+      alt: 'showroom.brand.shapes.logomark.alt',
+      use: 'showroom.brand.shapes.logomark.use',
       height: 'h-16',
     },
     {
       id: 'wordmark',
-      name: 'Wordmark',
+      name: 'showroom.brand.shapes.wordmark.name',
       file: `${BRAND_BASE}/ewms-wordmark.svg`,
       mono: `${BRAND_BASE}/ewms-wordmark-mono.svg`,
-      alt: 'Wordmark de eWMS',
-      use: 'Cuando hace falta el nombre pero no el tagline, y el alto disponible es poco.',
+      alt: 'showroom.brand.shapes.wordmark.alt',
+      use: 'showroom.brand.shapes.wordmark.use',
       height: 'h-8',
     },
     {
       id: 'lockup',
-      name: 'Lockup',
+      name: 'showroom.brand.shapes.lockup.name',
       file: `${BRAND_BASE}/ewms-lockup.svg`,
       mono: `${BRAND_BASE}/ewms-lockup-mono.svg`,
-      alt: 'Lockup de eWMS: nombre y tagline "Warehouse Management System"',
-      use: 'En la primera aparición de la marca: pantalla de acceso, encabezado de un documento, portada de un reporte.',
+      alt: 'showroom.brand.shapes.lockup.alt',
+      use: 'showroom.brand.shapes.lockup.use',
       height: 'h-12',
     },
   ];
 
+  /**
+   * t(showroom.brand.eprac.fullColour.name, showroom.brand.eprac.fullColour.alt,
+   *   showroom.brand.eprac.fullColour.use, showroom.brand.eprac.navy.name,
+   *   showroom.brand.eprac.navy.alt, showroom.brand.eprac.navy.use,
+   *   showroom.brand.eprac.white.name, showroom.brand.eprac.white.alt,
+   *   showroom.brand.eprac.white.use)
+   */
   protected readonly eprac = [
     {
       id: 'fullcolor',
-      name: 'Fullcolor',
+      name: 'showroom.brand.eprac.fullColour.name',
       file: `${BRAND_BASE}/eprac/eprac-fullcolor.png`,
-      alt: 'Logo de ePRAC a color',
+      alt: 'showroom.brand.eprac.fullColour.alt',
       ground: 'surface' as const,
-      use: 'Sobre superficie clara, cuando la marca de la empresa va a color.',
+      use: 'showroom.brand.eprac.fullColour.use',
     },
     {
       id: 'navy',
-      name: 'Navy',
+      name: 'showroom.brand.eprac.navy.name',
       file: `${BRAND_BASE}/eprac/eprac-navy.png`,
-      alt: 'Logo de ePRAC en navy',
+      alt: 'showroom.brand.eprac.navy.alt',
       ground: 'surface' as const,
-      use: 'Sobre superficie clara, a una sola tinta.',
+      use: 'showroom.brand.eprac.navy.use',
     },
     {
       id: 'blanco',
-      name: 'Blanco',
+      name: 'showroom.brand.eprac.white.name',
       file: `${BRAND_BASE}/eprac/eprac-blanco.png`,
-      alt: 'Logo de ePRAC en blanco',
+      alt: 'showroom.brand.eprac.white.alt',
       ground: 'navy' as const,
-      use: 'Sobre el rail navy y sobre cualquier superficie oscura.',
+      use: 'showroom.brand.eprac.white.use',
     },
   ];
 

@@ -30,7 +30,7 @@ export interface FormMessages {
   readonly errors: FormErrorWriters;
   /** Un `kind` que la tabla no nombra y cuyo error no trae `message`. */
   readonly customError: FormErrorWriter;
-  /** Título del resumen al enviar con errores: «Revisá 2 campos». */
+  /** Título del resumen al enviar con errores: «Revise 2 campos». */
   readonly errorSummary: (count: number) => string;
   /** Nombre de la severidad del resumen, que ningún texto repite (WCAG 1.4.1). */
   readonly errorSummaryLabel: string;

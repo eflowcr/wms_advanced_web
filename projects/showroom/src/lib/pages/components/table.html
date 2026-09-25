@@ -1,57 +1,47 @@
-<!-- Showroom solo en español, exento de i18n (compuerta 12): se declara para que el lector de pantalla no lo lea en inglés. -->
-<article class="flex flex-col gap-10" lang="es">
+<article class="flex flex-col gap-10">
   <!-- ============================================================ 1. Encabezado -->
   <header class="flex flex-col gap-2" data-block="1-encabezado">
     <div class="flex flex-wrap items-baseline gap-3">
-      <h1 class="text-h1">Tabla de datos</h1>
+      <h1 class="text-h1">{{ 'showroom.catalog.table.name' | transloco }}</h1>
       <code class="font-mono text-primary">&lt;ewms-table&gt;</code>
       <code class="font-mono text-primary">&lt;ewms-column&gt;</code>
     </div>
     <ul class="flex flex-wrap gap-2 text-caption">
-      <li class="rounded-sm bg-secondary px-2 py-1 text-secondary">
-        Versión <span class="font-mono">{{ version }}</span>
+      <li
+        class="rounded-sm bg-secondary px-2 py-1 text-secondary"
+        [ewmsProse]="'showroom.common.header.version' | transloco: { version }"
+      ></li>
+      <li class="rounded-sm bg-success-surface px-2 py-1 text-success">
+        {{ 'showroom.common.header.built' | transloco }}
       </li>
-      <li class="rounded-sm bg-success-surface px-2 py-1 text-success">Construido y en verde</li>
-      <li class="rounded-sm bg-secondary px-2 py-1 text-secondary">
-        Ficha: <span class="font-mono">08-Sistema-de-Diseno/Componentes/Tabla.md</span>
-      </li>
+      <li
+        class="rounded-sm bg-secondary px-2 py-1 text-secondary"
+        [ewmsProse]="
+          'showroom.common.header.sheet'
+            | transloco: { path: '08-Sistema-de-Diseno/Componentes/Tabla.md' }
+        "
+      ></li>
     </ul>
   </header>
 
   <!-- ================================================ 2. Qué resuelve / cuándo no -->
   <section class="flex flex-col gap-4" aria-labelledby="ta-purpose" data-block="2-proposito">
-    <h2 id="ta-purpose" class="text-h2">Qué resuelve, y cuándo NO usarlo</h2>
+    <h2 id="ta-purpose" class="text-h2">{{ 'showroom.common.sections.purpose' | transloco }}</h2>
     <div class="grid grid-cols-[repeat(auto-fit,minmax(min(20rem,100%),1fr))] gap-4">
       <div class="flex flex-col gap-2 rounded-md border border-default bg-surface p-4">
-        <h3 class="text-h3">Qué resuelve</h3>
-        <p>
-          <strong>Es donde vive un operario ocho horas al día.</strong> Filas con jerarquía, estados
-          de un vistazo, orden, filtros por columna, selección múltiple y un teclado que no obliga a
-          tocar el ratón.
-        </p>
-        <p class="text-caption text-secondary">
-          La regla con la que se escribió cabe en una línea:
-          <strong>mucha capacidad, poco código en el consumidor</strong>. Lo que se ve abajo son
-          {{ templateLines() }} líneas de plantilla.
-        </p>
+        <h3 class="text-h3">{{ 'showroom.common.sections.solves' | transloco }}</h3>
+        <p [ewmsProse]="'showroom.table.purpose.solves' | transloco"></p>
+        <p
+          class="text-caption text-secondary"
+          [ewmsProse]="'showroom.table.purpose.rule' | transloco: { lines: templateLines() }"
+        ></p>
       </div>
       <div class="flex flex-col gap-2 rounded-md border border-danger bg-danger-surface p-4">
-        <h3 class="text-h3">Cuándo NO usarlo</h3>
+        <h3 class="text-h3">{{ 'showroom.common.sections.avoid' | transloco }}</h3>
         <ul class="flex flex-col gap-2">
-          <li>
-            <strong>Si son tres datos de un registro, va Card.</strong> Una tabla de una fila es una
-            ficha con cabeceras de más.
-          </li>
-          <li>
-            <strong>Si hay que elegir un registro entre miles, va el selector con búsqueda.</strong>
-            Recorrer una tabla con flechas para encontrar un SKU es el caso que ese componente
-            existe para evitar.
-          </li>
-          <li>
-            <strong>Si hay que editar en la celda, todavía no existe.</strong> Está declarado como
-            hueco: la edición en celda, la agrupación por columna y la exportación se reportan, no
-            se construyen.
-          </li>
+          <li [ewmsProse]="'showroom.table.purpose.notCard' | transloco"></li>
+          <li [ewmsProse]="'showroom.table.purpose.notPicker' | transloco"></li>
+          <li [ewmsProse]="'showroom.table.purpose.notEditing' | transloco"></li>
         </ul>
       </div>
     </div>
@@ -59,14 +49,10 @@
 
   <!-- ========================================================= 3. Demo principal -->
   <section class="flex flex-col gap-4" aria-labelledby="ta-demo" data-block="3-demo">
-    <h2 id="ta-demo" class="text-h2">Demo principal — expediciones, tres niveles</h2>
-    <p class="text-secondary">
-      <strong>Expandí una expedición, y después una línea.</strong> Cabecera → línea → serie o lote.
-      Doce expediciones sintéticas generadas con semilla, siempre las mismas; ningún dato real de
-      ningún cliente.
-    </p>
+    <h2 id="ta-demo" class="text-h2">{{ 'showroom.table.demo.title' | transloco }}</h2>
+    <p class="text-secondary" [ewmsProse]="'showroom.table.demo.intro' | transloco"></p>
 
-    <ewms-demo-frame ground="canvas" label="El componente real, con su fuente en memoria">
+    <ewms-demo-frame ground="canvas" [label]="'showroom.table.demo.frame' | transloco">
       <div class="flex flex-col gap-4" data-demo-table>
         <ewms-table
           [source]="expediciones"
@@ -77,8 +63,8 @@
           [quickFilter]="true"
           [columnChooser]="true"
           [exportable]="true"
-          [bulkActions]="masivas"
-          ariaLabel="Expediciones"
+          [bulkActions]="masivas()"
+          [ariaLabel]="'showroom.table.demo.ariaLabel' | transloco"
           (rowActivate)="abrir($event)"
           (selectionChange)="seleccion.set($event)"
           (bulkAction)="masiva($event)"
@@ -86,16 +72,21 @@
         >
           <ewms-column
             key="codigo"
-            header="Código"
+            [header]="'showroom.table.columns.code' | transloco"
             width="md"
             pinned="start"
             [sortable]="true"
             [filterable]="true"
           />
-          <ewms-column key="cliente" header="Cliente / artículo" width="fill" [filterable]="true" />
+          <ewms-column
+            key="cliente"
+            [header]="'showroom.table.columns.customerItem' | transloco"
+            width="fill"
+            [filterable]="true"
+          />
           <ewms-column
             key="fecha"
-            header="Fecha"
+            [header]="'showroom.table.columns.date' | transloco"
             type="date"
             width="md"
             [sortable]="true"
@@ -103,7 +94,7 @@
           />
           <ewms-column
             key="bultos"
-            header="Bultos"
+            [header]="'showroom.table.columns.packages' | transloco"
             type="number"
             width="sm"
             aggregate="sum"
@@ -112,10 +103,10 @@
           />
           <ewms-column
             key="estado"
-            header="Estado"
+            [header]="'showroom.table.columns.status' | transloco"
             type="badge"
             width="md"
-            [badges]="estados"
+            [badges]="estados()"
             [filterable]="true"
           />
         </ewms-table>
@@ -124,171 +115,185 @@
           class="flex flex-col gap-1 rounded-md border border-default bg-surface p-3 text-caption"
         >
           <div class="flex flex-wrap gap-2">
-            <dt class="text-secondary">Seleccionadas:</dt>
+            <dt class="text-secondary">{{ 'showroom.table.demo.selected' | transloco }}</dt>
             <dd class="font-mono text-primary" data-selection-count>{{ seleccion().length }}</dd>
           </div>
           <div class="flex flex-wrap gap-2">
-            <dt class="text-secondary">Última acción masiva:</dt>
+            <dt class="text-secondary">{{ 'showroom.table.demo.lastBulk' | transloco }}</dt>
             <dd class="text-primary" data-bulk-choice>{{ ultimaMasiva() }}</dd>
           </div>
           <div class="flex flex-wrap gap-2">
-            <dt class="text-secondary">Última fila activada:</dt>
+            <dt class="text-secondary">{{ 'showroom.table.demo.lastActivated' | transloco }}</dt>
             <dd class="text-primary" data-activated>{{ ultimaActivada() }}</dd>
           </div>
           <div class="flex flex-wrap gap-2">
-            <dt class="text-secondary">Lo que pidió la última consulta:</dt>
+            <dt class="text-secondary">{{ 'showroom.table.demo.lastQuery' | transloco }}</dt>
             <dd class="font-mono text-primary" data-query>{{ consultaResumen() }}</dd>
           </div>
         </dl>
       </div>
     </ewms-demo-frame>
 
-    <h3 class="text-h3">La plantilla que la produjo, tal cual</h3>
+    <h3 class="text-h3">{{ 'showroom.table.demo.templateTitle' | transloco }}</h3>
     <pre
       class="overflow-x-auto rounded-md border border-default bg-secondary p-4 font-mono text-mono text-primary outline-none focus-visible:shadow-(--focus-ring-shadow)"
       tabindex="0"
       data-consumer-template
     ><code>{{ consumerTemplate }}</code></pre>
     <p class="text-caption text-secondary">
-      <span class="font-mono" data-template-lines>{{ templateLines() }}</span> líneas, contadas
-      leyendo el bloque de arriba del DOM — no escritas a mano.
+      <span class="font-mono" data-template-lines>{{ templateLines() }}</span>
+      {{ 'showroom.table.demo.templateLines' | transloco }}
       @if (underCeiling()) {
         <span class="rounded-sm bg-success-surface px-1 text-success">
-          por debajo del techo de 40 que fija la comanda
+          {{ 'showroom.table.demo.underCeiling' | transloco }}
         </span>
       }
     </p>
 
-    <h3 class="text-h3">Y el componente entero</h3>
+    <h3 class="text-h3">{{ 'showroom.table.demo.componentTitle' | transloco }}</h3>
     <pre
       class="overflow-x-auto rounded-md border border-default bg-secondary p-4 font-mono text-mono text-primary outline-none focus-visible:shadow-(--focus-ring-shadow)"
       tabindex="0"
       data-consumer-component
     ><code>{{ consumerComponent }}</code></pre>
     <p class="text-caption text-secondary">
-      <span class="font-mono" data-component-lines>{{ componentLines() }}</span> líneas: la fuente,
-      cómo se identifica una fila, y las acciones masivas con lo que hace cada una, que es lógica de
-      la pantalla y no de la tabla. <strong>No hay ninguna función de estado ni de hijos</strong>:
-      los dos son nombres de propiedad, y el diccionario de estados ya estaba escrito para la columna
-      badge.
+      <span class="font-mono" data-component-lines>{{ componentLines() }}</span>
+      {{ 'showroom.table.demo.componentLines' | transloco }}
+      <span [ewmsProse]="'showroom.table.demo.noFunctions' | transloco"></span>
     </p>
 
-    <h3 class="text-h3">Los diferenciadores, uno por uno</h3>
-    <p class="text-secondary">
-      Todos están en la demo de arriba y ninguno pide plantilla: cada uno se enciende con un atributo
-      de la tabla o de una columna. Lo que el usuario configura vive en memoria y sale por una salida.
-    </p>
-    <ul class="grid grid-cols-[repeat(auto-fit,minmax(min(20rem,100%),1fr))] gap-4" data-differentiators>
+    <h3 class="text-h3">{{ 'showroom.table.differentiators.title' | transloco }}</h3>
+    <p class="text-secondary">{{ 'showroom.table.differentiators.intro' | transloco }}</p>
+    <ul
+      class="grid grid-cols-[repeat(auto-fit,minmax(min(20rem,100%),1fr))] gap-4"
+      data-differentiators
+    >
       <li class="flex flex-col gap-1 rounded-md border border-default bg-surface p-4">
-        <h4 class="text-h4">Filtros que se esconden</h4>
+        <h4 class="text-h4">
+          {{ 'showroom.table.differentiators.hiddenFilters.title' | transloco }}
+        </h4>
+        <p
+          class="text-caption"
+          [ewmsProse]="'showroom.table.differentiators.hiddenFilters.text' | transloco"
+        ></p>
+      </li>
+      <li class="flex flex-col gap-1 rounded-md border border-default bg-surface p-4">
+        <h4 class="text-h4">{{ 'showroom.table.differentiators.setFilter.title' | transloco }}</h4>
+        <p
+          class="text-caption"
+          [ewmsProse]="'showroom.table.differentiators.setFilter.text' | transloco"
+        ></p>
+      </li>
+      <li class="flex flex-col gap-1 rounded-md border border-default bg-surface p-4">
+        <h4 class="text-h4">{{ 'showroom.table.differentiators.columns.title' | transloco }}</h4>
+        <p
+          class="text-caption"
+          [ewmsProse]="'showroom.table.differentiators.columns.text' | transloco"
+        ></p>
+      </li>
+      <li class="flex flex-col gap-1 rounded-md border border-default bg-surface p-4">
+        <h4 class="text-h4">{{ 'showroom.table.differentiators.multiSort.title' | transloco }}</h4>
+        <p
+          class="text-caption"
+          [ewmsProse]="'showroom.table.differentiators.multiSort.text' | transloco"
+        ></p>
+      </li>
+      <li class="flex flex-col gap-1 rounded-md border border-default bg-surface p-4">
+        <h4 class="text-h4">
+          {{ 'showroom.table.differentiators.emptyState.title' | transloco }}
+        </h4>
         <p class="text-caption">
-          La fila de filtros está oculta: «Filtros» la muestra (o <kbd class="font-mono">Alt+R</kbd>
-          con el foco en la tabla). Ocultarla no borra nada: cada filtro activo queda como chip, y su
-          × lo quita. La barra son cuatro controles: buscar, Filtros, Vista y Exportar.
+          {{ 'showroom.table.differentiators.emptyState.text' | transloco }}
         </p>
       </li>
       <li class="flex flex-col gap-1 rounded-md border border-default bg-surface p-4">
-        <h4 class="text-h4">Filtro de conjunto</h4>
-        <p class="text-caption">
-          Estado se filtra con casillas de su diccionario, con «Todos» indeterminado: «Con incidencia»
-          más «En proceso» son dos clics. <code class="font-mono">[filterable]</code> en una columna
-          <code class="font-mono">badge</code>.
-        </p>
+        <h4 class="text-h4">{{ 'showroom.table.differentiators.selection.title' | transloco }}</h4>
+        <p
+          class="text-caption"
+          [ewmsProse]="'showroom.table.differentiators.selection.text' | transloco"
+        ></p>
       </li>
       <li class="flex flex-col gap-1 rounded-md border border-default bg-surface p-4">
-        <h4 class="text-h4">Columnas: reordenar, fijar, ajustar</h4>
-        <p class="text-caption">
-          Se arrastra la cabecera, o <kbd class="font-mono">Alt+Shift+←/→</kbd> con el foco en ella,
-          o Subir/Bajar en Vista. El ⋮ de cada cabecera (o <kbd class="font-mono">Shift+F10</kbd>)
-          ordena, fija, ajusta al contenido, mueve y oculta. Todo sale por
-          <code class="font-mono">(viewChange)</code>, y «Restablecer vista» lo deshace.
-        </p>
+        <h4 class="text-h4">{{ 'showroom.table.differentiators.statusBar.title' | transloco }}</h4>
+        <p
+          class="text-caption"
+          [ewmsProse]="'showroom.table.differentiators.statusBar.text' | transloco"
+        ></p>
       </li>
       <li class="flex flex-col gap-1 rounded-md border border-default bg-surface p-4">
-        <h4 class="text-h4">Orden por varias columnas</h4>
-        <p class="text-caption">
-          Clic ordena por una; <kbd class="font-mono">Shift+clic</kbd> suma otra, y la cabecera dice
-          su prioridad. La consulta lleva la lista entera.
-        </p>
+        <h4 class="text-h4">{{ 'showroom.table.differentiators.export.title' | transloco }}</h4>
+        <p
+          class="text-caption"
+          [ewmsProse]="'showroom.table.differentiators.export.text' | transloco"
+        ></p>
       </li>
       <li class="flex flex-col gap-1 rounded-md border border-default bg-surface p-4">
-        <h4 class="text-h4">Estado vacío que elige solo</h4>
+        <h4 class="text-h4">{{ 'showroom.table.differentiators.polish.title' | transloco }}</h4>
         <p class="text-caption">
-          Sin filtros, «todavía no hay»; con alguno, «ninguna coincide» con «Limpiar filtros»; si la
-          fuente falla, «Reintentar». Buscá algo que no exista en la demo.
-        </p>
-      </li>
-      <li class="flex flex-col gap-1 rounded-md border border-default bg-surface p-4">
-        <h4 class="text-h4">Selección con intención</h4>
-        <p class="text-caption">
-          Shift+clic marca un rango; la barra dice cuántas y ofrece las acciones masivas.
-          <kbd class="font-mono">Ctrl+C</kbd> copia lo marcado, o la fila enfocada, listo para
-          pegar en Excel.
-        </p>
-      </li>
-      <li class="flex flex-col gap-1 rounded-md border border-default bg-surface p-4">
-        <h4 class="text-h4">Barra de estado y agregados</h4>
-        <p class="text-caption">
-          Al pie: cuántas filas, cuántas seleccionadas, y Bultos sumados
-          (<code class="font-mono">aggregate="sum"</code>) sobre la selección si la hay, o sobre lo
-          que está en pantalla.
-        </p>
-      </li>
-      <li class="flex flex-col gap-1 rounded-md border border-default bg-surface p-4">
-        <h4 class="text-h4">Exportar</h4>
-        <p class="text-caption">
-          CSV de todo lo filtrado y ordenado, con BOM para que Excel lea los acentos; o solo lo
-          seleccionado, o al portapapeles. Con una fuente remota la tabla no descarga: emite
-          <code class="font-mono">(exportRequest)</code>.
-        </p>
-      </li>
-      <li class="flex flex-col gap-1 rounded-md border border-default bg-surface p-4">
-        <h4 class="text-h4">Pulido y estados</h4>
-        <p class="text-caption">
-          Solo las excepciones tiñen la fila, con una barra lateral que sobrevive a la selección;
-          números y fechas con dígitos alineados; un texto cortado muestra el completo al pasar o
-          al enfocar; la sombra de lo fijado aparece solo con algo debajo.
+          {{ 'showroom.table.differentiators.polish.text' | transloco }}
         </p>
       </li>
     </ul>
 
-    <ewms-prop-table [rows]="props" caption="Propiedades de <ewms-table>" />
+    <ewms-prop-table [rows]="props" [caption]="'showroom.table.props.caption' | transloco" />
 
     <!--
       Lo que sigue va dentro del bloque de demo: todas las fichas tienen los mismos
       ocho bloques y así se leen en serie.
     -->
-    <h3 class="text-h3">Composición avanzada</h3>
-    <p class="text-secondary">
-      Lo que la demo principal no enseña: el panel de detalle, el menú de fila, los hijos que tardan
-      en llegar, cinco mil filas y el paginador. Cada uno con su propia fuente sintética.
-    </p>
+    <h3 class="text-h3">{{ 'showroom.table.advanced.title' | transloco }}</h3>
+    <p class="text-secondary">{{ 'showroom.table.advanced.intro' | transloco }}</p>
 
     <!-- ------------------------------------------------- Detalle y menú de fila -->
-    <h4 class="text-h4">Detalle y menú de fila</h4>
-    <p class="text-caption text-secondary">
-      El <strong>chevron abre un panel</strong> que ocupa el ancho de la tabla; el
-      <strong>kebab abre el menú</strong>, y el botón derecho sobre la fila abre el mismo menú. Con
-      el teclado: <code class="font-mono">Shift+F10</code> o la tecla de menú, flechas para
-      recorrerlo, <code class="font-mono">Escape</code> devuelve el foco a la fila.
-    </p>
+    <h4 class="text-h4">{{ 'showroom.table.advanced.detail.title' | transloco }}</h4>
+    <p
+      class="text-caption text-secondary"
+      [ewmsProse]="'showroom.table.advanced.detail.intro' | transloco"
+    ></p>
 
-    <ewms-demo-frame ground="canvas" label="Panel de detalle y menú contextual">
+    <ewms-demo-frame ground="canvas" [label]="'showroom.table.advanced.detail.frame' | transloco">
       <div class="flex flex-col gap-4" data-demo-detalle>
         <ewms-table
           [source]="cabeceras"
           rowState="estado"
           [trackBy]="porId"
           [isRowMaster]="esMaestra"
-          [menuItems]="accionesFila"
-          ariaLabel="Expediciones con detalle"
+          [menuItems]="accionesFila()"
+          [ariaLabel]="'showroom.table.advanced.detail.ariaLabel' | transloco"
           (rowMenu)="elegir($event)"
         >
-          <ewms-column key="codigo" header="Código" width="md" [sortable]="true" />
-          <ewms-column key="cliente" header="Cliente" width="fill" />
-          <ewms-column key="bultos" header="Bultos" type="number" width="sm" [sortable]="true" />
-          <ewms-column key="estado" header="Estado" type="badge" width="md" [badges]="estados" />
-          <ewms-column key="acciones" header="Acciones" type="actions" width="sm" pinned="end" />
+          <ewms-column
+            key="codigo"
+            [header]="'showroom.table.columns.code' | transloco"
+            width="md"
+            [sortable]="true"
+          />
+          <ewms-column
+            key="cliente"
+            [header]="'showroom.table.columns.customer' | transloco"
+            width="fill"
+          />
+          <ewms-column
+            key="bultos"
+            [header]="'showroom.table.columns.packages' | transloco"
+            type="number"
+            width="sm"
+            [sortable]="true"
+          />
+          <ewms-column
+            key="estado"
+            [header]="'showroom.table.columns.status' | transloco"
+            type="badge"
+            width="md"
+            [badges]="estados()"
+          />
+          <ewms-column
+            key="acciones"
+            [header]="'showroom.table.columns.actions' | transloco"
+            type="actions"
+            width="sm"
+            pinned="end"
+          />
 
           <!--
             El panel no repite las columnas (para eso está el árbol): muestra lo que la
@@ -297,17 +302,23 @@
           <ng-template ewmsDetail [rowsFrom]="cabeceras" let-row>
             <div class="flex flex-wrap items-start justify-between gap-4">
               <dl class="grid grid-cols-2 gap-x-6 gap-y-1 text-caption">
-                <dt class="text-secondary">Expedición</dt>
+                <dt class="text-secondary">
+                  {{ 'showroom.table.advanced.detail.shipment' | transloco }}
+                </dt>
                 <dd class="font-mono text-primary">{{ row.codigo }}</dd>
-                <dt class="text-secondary">Cliente</dt>
+                <dt class="text-secondary">{{ 'showroom.table.columns.customer' | transloco }}</dt>
                 <dd class="text-primary">{{ row.cliente }}</dd>
-                <dt class="text-secondary">Líneas</dt>
+                <dt class="text-secondary">
+                  {{ 'showroom.table.advanced.detail.lines' | transloco }}
+                </dt>
                 <dd class="font-mono text-primary">{{ lineasDe(row) }}</dd>
-                <dt class="text-secondary">Bultos totales</dt>
+                <dt class="text-secondary">
+                  {{ 'showroom.table.advanced.detail.totalPackages' | transloco }}
+                </dt>
                 <dd class="font-mono text-primary">{{ row.bultos }}</dd>
               </dl>
               <ewms-button variant="secondary" size="sm" icon="download" (click)="descargar(row)">
-                Descargar
+                {{ 'showroom.table.advanced.detail.download' | transloco }}
               </ewms-button>
             </div>
           </ng-template>
@@ -317,11 +328,15 @@
           class="flex flex-col gap-1 rounded-md border border-default bg-surface p-3 text-caption"
         >
           <div class="flex flex-wrap gap-2">
-            <dt class="text-secondary">Última acción elegida:</dt>
+            <dt class="text-secondary">
+              {{ 'showroom.table.advanced.detail.lastAction' | transloco }}
+            </dt>
             <dd class="font-mono text-primary" data-menu-choice>{{ ultimaAccion() }}</dd>
           </div>
           <div class="flex flex-wrap gap-2">
-            <dt class="text-secondary">Última descarga pedida:</dt>
+            <dt class="text-secondary">
+              {{ 'showroom.table.advanced.detail.lastDownload' | transloco }}
+            </dt>
             <dd class="font-mono text-primary" data-download>{{ ultimaDescarga() }}</dd>
           </div>
         </dl>
@@ -329,61 +344,71 @@
     </ewms-demo-frame>
 
     <div class="flex flex-col gap-2 rounded-md border border-strong bg-secondary p-4">
-      <h5 class="text-h4">El detalle y el árbol son dos gestos, no uno</h5>
-      <p class="text-caption">
-        Un padre despliega <strong>más filas</strong>, en las mismas columnas. Una fila maestra
-        despliega <strong>un panel</strong>, con contenido propio que no repite las columnas. Un
-        solo control que a veces hiciera una cosa y a veces la otra sería un control que nadie puede
-        predecir, así que son dos botones distintos y una tabla puede tener los dos.
-      </p>
-      <p class="text-caption">
-        <strong>El panel no cuenta como fila.</strong> Está en el DOM, pero
-        <code class="font-mono">aria-rowcount</code> sigue diciendo cuántas expediciones hay: si
-        contara, abrir un detalle haría que la tabla «creciera» a oídos de un lector de pantalla.
-      </p>
+      <h5 class="text-h4">{{ 'showroom.table.advanced.gestures.title' | transloco }}</h5>
+      <p
+        class="text-caption"
+        [ewmsProse]="'showroom.table.advanced.gestures.rowsOrPanel' | transloco"
+      ></p>
+      <p
+        class="text-caption"
+        [ewmsProse]="'showroom.table.advanced.gestures.notARow' | transloco"
+      ></p>
     </div>
 
     <!-- ----------------------------------------------------- Hijos perezosos -->
-    <h4 class="text-h4">Hijos que llegan tarde, y que a veces no llegan</h4>
-    <p class="text-caption text-secondary">
-      <code class="font-mono">[children]</code> como función que devuelve un
-      <code class="font-mono">Observable</code>. La expedición <strong>con incidencia</strong> falla
-      siempre: se ve la fila de error y su botón de reintentar. Ninguno de los dos estados lo
-      escribe el consumidor.
-    </p>
+    <h4 class="text-h4">{{ 'showroom.table.advanced.lazy.title' | transloco }}</h4>
+    <p
+      class="text-caption text-secondary"
+      [ewmsProse]="'showroom.table.advanced.lazy.intro' | transloco"
+    ></p>
 
-    <ewms-demo-frame ground="canvas" label="Carga perezosa de hijos, con su estado de error">
+    <ewms-demo-frame ground="canvas" [label]="'showroom.table.advanced.lazy.frame' | transloco">
       <div data-demo-perezosa>
         <ewms-table
           [source]="perezosa"
           [children]="hijosPerezosos"
           rowState="estado"
           [trackBy]="porId"
-          ariaLabel="Expediciones con hijos perezosos"
+          [ariaLabel]="'showroom.table.advanced.lazy.ariaLabel' | transloco"
         >
-          <ewms-column key="codigo" header="Código" width="md" />
-          <ewms-column key="cliente" header="Cliente / artículo" width="fill" />
-          <ewms-column key="bultos" header="Bultos" type="number" width="sm" />
-          <ewms-column key="estado" header="Estado" type="badge" width="md" [badges]="estados" />
+          <ewms-column
+            key="codigo"
+            [header]="'showroom.table.columns.code' | transloco"
+            width="md"
+          />
+          <ewms-column
+            key="cliente"
+            [header]="'showroom.table.columns.customerItem' | transloco"
+            width="fill"
+          />
+          <ewms-column
+            key="bultos"
+            [header]="'showroom.table.columns.packages' | transloco"
+            type="number"
+            width="sm"
+          />
+          <ewms-column
+            key="estado"
+            [header]="'showroom.table.columns.status' | transloco"
+            type="badge"
+            width="md"
+            [badges]="estados()"
+          />
         </ewms-table>
       </div>
     </ewms-demo-frame>
 
     <!-- --------------------------------------------------- Cinco mil filas -->
-    <h4 class="text-h4">Cinco mil ubicaciones, con ventana</h4>
+    <h4 class="text-h4">{{ 'showroom.table.advanced.virtual.title' | transloco }}</h4>
+    <p
+      class="text-caption text-secondary"
+      [ewmsProse]="'showroom.table.advanced.virtual.intro' | transloco"
+    ></p>
     <p class="text-caption text-secondary">
-      <code class="font-mono">[virtual]="true"</code> dibuja sólo lo que se ve.
-      <code class="font-mono">aria-rowcount</code> sigue diciendo cuántas filas hay de verdad, y las
-      flechas recorren la tabla entera: la ventana es un detalle de implementación y el teclado no
-      debería notarla.
-    </p>
-    <p class="text-caption text-secondary">
-      La demo empieza con una muestra de sesenta y carga las cinco mil cuando se le piden: una ficha
-      del catálogo que construye cinco mil filas nada más abrirse es lenta para todo el mundo, mire
-      o no esta demo.
+      {{ 'showroom.table.advanced.virtual.sample' | transloco }}
     </p>
 
-    <ewms-demo-frame ground="canvas" label="Filas sintéticas, virtualizadas">
+    <ewms-demo-frame ground="canvas" [label]="'showroom.table.advanced.virtual.frame' | transloco">
       <div class="flex flex-col gap-3" data-demo-virtual>
         <div class="flex flex-wrap items-center gap-3">
           <ewms-button
@@ -393,10 +418,12 @@
             [disabled]="ubicacionesCargadas() === ubicacionesTotal"
             (click)="cargarTodas()"
           >
-            Cargar {{ ubicacionesTotal }} ubicaciones
+            {{ 'showroom.table.advanced.virtual.loadAll' | transloco: { total: ubicacionesTotal } }}
           </ewms-button>
           <span class="font-mono text-caption text-primary" data-loaded-count>
-            {{ ubicacionesCargadas() }} filas en la fuente
+            {{
+              'showroom.table.advanced.virtual.loaded' | transloco: { count: ubicacionesCargadas() }
+            }}
           </span>
         </div>
         <ewms-table
@@ -406,13 +433,23 @@
           [pageSize]="5000"
           [quickFilter]="true"
           density="sm"
-          ariaLabel="Ubicaciones"
+          [ariaLabel]="'showroom.table.advanced.virtual.ariaLabel' | transloco"
         >
-          <ewms-column key="codigo" header="Ubicación" width="md" [sortable]="true" />
-          <ewms-column key="pasillo" header="Pasillo" width="fill" [filterable]="true" />
+          <ewms-column
+            key="codigo"
+            [header]="'showroom.table.columns.location' | transloco"
+            width="md"
+            [sortable]="true"
+          />
+          <ewms-column
+            key="pasillo"
+            [header]="'showroom.table.columns.aisle' | transloco"
+            width="fill"
+            [filterable]="true"
+          />
           <ewms-column
             key="ocupacion"
-            header="Ocupación %"
+            [header]="'showroom.table.columns.occupancy' | transloco"
             type="number"
             width="sm"
             [sortable]="true"
@@ -423,44 +460,49 @@
     </ewms-demo-frame>
 
     <div class="flex flex-col gap-2 rounded-md border border-warning bg-warning-surface p-4">
-      <h5 class="text-h4">Desviación declarada: la ventana es propia, no del CDK</h5>
-      <p class="text-caption">
-        La comanda pedía <code class="font-mono">cdk-virtual-scroll-viewport</code>. Ese componente
-        coloca su contenido con un <code class="font-mono">transform</code> y mide el envoltorio:
-        envolver un <code class="font-mono">&lt;table&gt;</code> mueve la tabla entera —cabecera
-        incluida— y la cabecera pegajosa deja de estarlo. La guía del propio CDK es virtualizar una
-        lista de <code class="font-mono">div</code>, que aquí significaría renunciar a la semántica
-        de tabla: la relación cabecera/celda y las cuentas de filas y columnas. Para una tabla donde
-        un operario vive ocho horas, ese cambio va al revés.
-      </p>
-      <p class="text-caption">
-        Así que la ventana se calcula aquí, y es corta porque
-        <strong>el árbol ya está aplanado</strong>: desplazamiento entre altura de fila da la
-        primera, la altura de la caja da cuántas, y dos filas espaciadoras sostienen la barra de
-        desplazamiento. <strong>Se reporta, no se hace en silencio.</strong>
-      </p>
+      <h5 class="text-h4">{{ 'showroom.table.advanced.deviation.title' | transloco }}</h5>
+      <p class="text-caption" [ewmsProse]="'showroom.table.advanced.deviation.cdk' | transloco"></p>
+      <p
+        class="text-caption"
+        [ewmsProse]="'showroom.table.advanced.deviation.window' | transloco"
+      ></p>
     </div>
 
     <!-- ------------------------------------------------------- Paginación -->
-    <h4 class="text-h4">Paginación</h4>
-    <p class="text-caption text-secondary">
-      Cuando la fuente devuelve un <code class="font-mono">total</code>, la tabla monta
-      <code class="font-mono">&lt;ewms-pagination&gt;</code>. Si el total es
-      <code class="font-mono">null</code> —una fuente que no cuenta— no hay paginador, porque un
-      paginador sin última página miente sobre hasta dónde llega.
-    </p>
+    <h4 class="text-h4">{{ 'showroom.table.advanced.pagination.title' | transloco }}</h4>
+    <p
+      class="text-caption text-secondary"
+      [ewmsProse]="'showroom.table.advanced.pagination.intro' | transloco"
+    ></p>
 
-    <ewms-demo-frame ground="canvas" label="Una fuente que pagina de verdad">
+    <ewms-demo-frame
+      ground="canvas"
+      [label]="'showroom.table.advanced.pagination.frame' | transloco"
+    >
       <div data-demo-paginada>
         <ewms-table
           [source]="paginada"
           [trackBy]="porUbicacion"
           [pageSize]="25"
-          ariaLabel="Ubicaciones paginadas"
+          [ariaLabel]="'showroom.table.advanced.pagination.ariaLabel' | transloco"
         >
-          <ewms-column key="codigo" header="Ubicación" width="md" [sortable]="true" />
-          <ewms-column key="pasillo" header="Pasillo" width="fill" />
-          <ewms-column key="ocupacion" header="Ocupación %" type="number" width="sm" />
+          <ewms-column
+            key="codigo"
+            [header]="'showroom.table.columns.location' | transloco"
+            width="md"
+            [sortable]="true"
+          />
+          <ewms-column
+            key="pasillo"
+            [header]="'showroom.table.columns.aisle' | transloco"
+            width="fill"
+          />
+          <ewms-column
+            key="ocupacion"
+            [header]="'showroom.table.columns.occupancy' | transloco"
+            type="number"
+            width="sm"
+          />
         </ewms-table>
       </div>
     </ewms-demo-frame>
@@ -468,25 +510,16 @@
 
   <!-- =============================================================== 4. Variantes -->
   <section class="flex flex-col gap-4" aria-labelledby="ta-variants" data-block="4-variantes">
-    <h2 id="ta-variants" class="text-h2">Variantes</h2>
+    <h2 id="ta-variants" class="text-h2">{{ 'showroom.common.sections.variants' | transloco }}</h2>
     <div class="flex flex-col gap-2 rounded-md border border-strong bg-secondary p-4">
-      <h3 class="text-h4">No aplica — la tabla no tiene variantes visuales</h3>
-      <p>
-        Lo dice la nomenclatura del sistema: la tabla no sigue el patrón
-        <code class="font-mono">Componente/Variante/Tamaño/Estado</code> porque no tiene variantes.
-        Lo que sí define son dos sub-vocabularios: las clases de fila y el badge de estado.
-      </p>
+      <h3 class="text-h4">{{ 'showroom.table.variants.title' | transloco }}</h3>
+      <p [ewmsProse]="'showroom.table.variants.naming' | transloco"></p>
     </div>
 
-    <h3 class="text-h3">Los cinco tipos de columna</h3>
+    <h3 class="text-h3">{{ 'showroom.table.columnTypes.title' | transloco }}</h3>
     <ewms-doc-table
-      caption="El type decide cuatro cosas a la vez"
-      [columns]="[
-        { id: 'type', label: 'type' },
-        { id: 'align', label: 'Alineación' },
-        { id: 'font', label: 'Tipografía' },
-        { id: 'filter', label: 'Filtro' },
-      ]"
+      [caption]="'showroom.table.columnTypes.caption' | transloco"
+      [columns]="columnTypeColumns"
       [rows]="['text', 'number', 'date', 'badge', 'actions']"
     >
       <ng-template let-row let-column="column">
@@ -496,21 +529,21 @@
           }
           @case ('align') {
             @if (row === 'number' || row === 'actions') {
-              final
+              {{ 'showroom.table.columnTypes.align.end' | transloco }}
             } @else {
-              inicio
+              {{ 'showroom.table.columnTypes.align.start' | transloco }}
             }
           }
           @case ('font') {
             @switch (row) {
               @case ('text') {
-                sans
+                {{ 'showroom.table.columnTypes.font.sans' | transloco }}
               }
               @case ('number') {
-                mono
+                {{ 'showroom.table.columnTypes.font.mono' | transloco }}
               }
               @case ('date') {
-                mono
+                {{ 'showroom.table.columnTypes.font.mono' | transloco }}
               }
               @default {
                 —
@@ -520,16 +553,16 @@
           @default {
             @switch (row) {
               @case ('number') {
-                <strong>dos cajas, mín y máx</strong>
+                <strong>{{ 'showroom.table.columnTypes.filter.range' | transloco }}</strong>
               }
               @case ('date') {
-                <strong>dos fechas, desde y hasta</strong>
+                <strong>{{ 'showroom.table.columnTypes.filter.dates' | transloco }}</strong>
               }
               @case ('actions') {
                 —
               }
               @default {
-                una caja, «contiene»
+                {{ 'showroom.table.columnTypes.filter.contains' | transloco }}
               }
             }
           }
@@ -538,56 +571,28 @@
     </ewms-doc-table>
 
     <div class="flex flex-col gap-2 rounded-md border border-strong bg-secondary p-4">
-      <h3 class="text-h4">El filtro lo decide el tipo, y el consumidor no configura nada</h3>
-      <p class="text-caption">
-        Un rango escrito en una caja de texto es un filtro que no puede comparar: cada fuente
-        tendría que interpretar «100-900», y cada una lo interpretaría distinto. Una columna
-        <code class="font-mono">number</code> manda dos números y una
-        <code class="font-mono">date</code> manda dos fechas ISO. Eso es lo que viaja en
-        <code class="font-mono">TableQuery</code>, y eso es lo que se le va a pedir al backend.
-      </p>
-      <p class="text-caption">
-        <strong>Una caja vacía significa «sin límite», nunca cero.</strong> «Hasta 50» es un máximo
-        sin mínimo, y leer la caja vacía como 0 tiraría en silencio todas las filas de abajo.
-      </p>
+      <h3 class="text-h4">{{ 'showroom.table.filterByType.title' | transloco }}</h3>
+      <p class="text-caption" [ewmsProse]="'showroom.table.filterByType.range' | transloco"></p>
+      <p class="text-caption" [ewmsProse]="'showroom.table.filterByType.empty' | transloco"></p>
     </div>
 
     <div class="flex flex-col gap-2 rounded-md border border-strong bg-secondary p-4">
-      <h3 class="text-h4">La tabla no formatea: pide el formato</h3>
-      <p class="text-caption">
-        Formatear una fecha o una cantidad exige una configuración regional, y el sistema de diseño
-        <strong>no habla ningún idioma</strong> (ADR 0008). Así que define
-        <code class="font-mono">EWMS_TABLE_FORMATTERS</code> y no lo implementa: el
-        <em>shell</em> lo llena desde <code class="font-mono">core/i18n</code> con
-        <code class="font-mono">transloco-locale</code>, y este catálogo —que no puede importar
-        <code class="font-mono">core</code>— lo llena con <code class="font-mono">Intl</code>. El
-        mismo componente, dos implementaciones detrás de la misma interfaz.
-      </p>
-      <p class="text-caption">
-        <strong>El orden y el filtro trabajan siempre sobre el valor crudo.</strong> El formateador
-        decide cómo se ve y nada más: una columna de números con
-        <span class="font-mono">[1200, 900]</span> ordena
-        <span class="font-mono">900, 1200</span> aunque en pantalla diga
-        <span class="font-mono">1.200</span> y <span class="font-mono">900</span>. Ordenar por el
-        texto formateado es el error que hace que la gente deje de confiar en la columna.
-      </p>
+      <h3 class="text-h4">{{ 'showroom.table.formatting.title' | transloco }}</h3>
+      <p class="text-caption" [ewmsProse]="'showroom.table.formatting.locale' | transloco"></p>
+      <p class="text-caption" [ewmsProse]="'showroom.table.formatting.rawValue' | transloco"></p>
     </div>
   </section>
 
   <!-- ========================================================= 5. Matriz de estados -->
   <section class="flex flex-col gap-4" aria-labelledby="ta-matrix" data-block="5-matriz">
-    <h2 id="ta-matrix" class="text-h2">Matriz de estados</h2>
-    <p class="text-secondary">
-      Los cuatro estados de fila, con las señales que produce cada uno, salidas del mismo diccionario.
-      <strong>Solo las excepciones tiñen la fila</strong> —«Con incidencia» y «En proceso»—; las
-      demás llevan solo el badge. Con todas teñidas, ninguna llamaba la atención.
-    </p>
+    <h2 id="ta-matrix" class="text-h2">{{ 'showroom.common.sections.states' | transloco }}</h2>
+    <p class="text-secondary" [ewmsProse]="'showroom.table.states.intro' | transloco"></p>
     <ewms-demo-frame ground="surface">
       <ewms-state-matrix
         [variants]="matrixVariants"
         [states]="matrixStates"
-        rowHeader="Estado"
-        caption="Cada estado, y las dos señales que produce"
+        rowHeader="showroom.table.columns.status"
+        [caption]="'showroom.table.states.caption' | transloco"
       >
         <ng-template let-variant="variant" let-state="state">
           @if (isBadge(state.id)) {
@@ -599,33 +604,24 @@
               [attr.data-tint]="variant.id"
             >
               @if (!isTinted(variant.id)) {
-                sin tinte
+                {{ 'showroom.table.states.noTint' | transloco }}
               }
             </span>
           }
         </ng-template>
       </ewms-state-matrix>
     </ewms-demo-frame>
-    <h3 class="text-h3">La matriz de fila</h3>
-    <p class="text-secondary">
-      Fondo y marca de cada estado, con las clases que usa la tabla. Seleccionada gana al tinte;
-      la excepción conserva su barra lateral. Contraste AA medido para el texto y los badges sobre
-      cada fondo (en la ficha).
-    </p>
+    <h3 class="text-h3">{{ 'showroom.table.rowMatrix.title' | transloco }}</h3>
+    <p class="text-secondary">{{ 'showroom.table.rowMatrix.intro' | transloco }}</p>
     <div
       class="overflow-x-auto rounded-md border border-default bg-surface outline-none focus-visible:shadow-(--focus-ring-shadow)"
       tabindex="0"
     >
       <!-- Sobre superficie, como la tabla: sobre el lienzo, el hover no se distinguía del fondo. -->
       <ewms-doc-table
-        caption="Fondo y marca de cada estado de fila"
-        [columns]="[
-          { id: 'state', label: 'Estado' },
-          { id: 'background', label: 'Fondo' },
-          { id: 'mark', label: 'Marca' },
-          { id: 'sample', label: 'Muestra' },
-        ]"
-        [rows]="rowMatrix"
+        [caption]="'showroom.table.rowMatrix.caption' | transloco"
+        [columns]="rowMatrixColumns"
+        [rows]="rowMatrix()"
         data-row-matrix
       >
         <ng-template let-item let-column="column">
@@ -646,9 +642,14 @@
                   class="flex min-w-72 items-center gap-3 px-3 py-2"
                   [class]="item.row + ' ' + item.cell"
                 >
-                  <span class="text-p whitespace-nowrap text-primary">EXP-2026-0400</span>
-                  <span class="text-secondary">secundario</span>
-                  <ewms-badge variant="danger" label="Con incidencia" />
+                  <span class="text-p whitespace-nowrap text-primary">{{ sampleCode }}</span>
+                  <span class="text-secondary">
+                    {{ 'showroom.table.rowMatrix.secondary' | transloco }}
+                  </span>
+                  <ewms-badge
+                    variant="danger"
+                    [label]="'showroom.common.shipments.states.withIssue' | transloco"
+                  />
                 </span>
               </span>
             }
@@ -657,46 +658,31 @@
       </ewms-doc-table>
     </div>
     <div class="flex flex-col gap-2 rounded-md border border-strong bg-secondary p-4">
-      <h3 class="text-h4">El color nunca es la única señal (WCAG 1.4.1)</h3>
-      <p class="text-caption">
-        Toda fila coloreada por estado lleva <strong>además</strong> su badge, con icono y con
-        palabras. Quien no distingue los cuatro tintes lee «Con incidencia» igual, y quien usa un
-        lector de pantalla también.
-      </p>
-      <p class="text-caption">
-        Los iconos son <strong>los mismos cuatro</strong> que usan el Banner y el Toast: quien
-        aprendió que el círculo tachado es un error en un toast tiene que encontrarlo igual en una
-        fila.
-      </p>
+      <h3 class="text-h4">{{ 'showroom.table.colour.title' | transloco }}</h3>
+      <p class="text-caption" [ewmsProse]="'showroom.table.colour.badge' | transloco"></p>
+      <p class="text-caption" [ewmsProse]="'showroom.table.colour.icons' | transloco"></p>
     </div>
-    <p class="text-caption text-secondary">
-      <strong>Disabled no está en la matriz, y no es un hueco:</strong> una fila no se puede
-      deshabilitar, porque una fila no es un control. Hover y foco están arriba, con su fondo;
-      en la demo se recorren de verdad.
-    </p>
+    <p
+      class="text-caption text-secondary"
+      [ewmsProse]="'showroom.table.states.disabled' | transloco"
+    ></p>
   </section>
 
   <!-- ================================================================= 6. Tamaños -->
   <section class="flex flex-col gap-4" aria-labelledby="ta-sizes" data-block="6-tamanos">
-    <h2 id="ta-sizes" class="text-h2">Tamaños</h2>
-    <p class="text-secondary">
-      Dos densidades. Se eligen en el panel «Vista» de la barra de la tabla; <code class="font-mono">density</code> es el
-      valor con que arranca.
-    </p>
+    <h2 id="ta-sizes" class="text-h2">{{ 'showroom.common.sections.sizes' | transloco }}</h2>
+    <p class="text-secondary" [ewmsProse]="'showroom.table.sizes.intro' | transloco"></p>
     <ewms-doc-table
-      caption="El alto de fila, leído del token"
-      [columns]="[
-        { id: 'density', label: 'Densidad' },
-        { id: 'token', label: 'Token y valor' },
-      ]"
+      [caption]="'showroom.table.sizes.caption' | transloco"
+      [columns]="densityColumns"
       [rows]="['md', 'sm']"
     >
       <ng-template let-row let-column="column">
         @if (column.id === 'density') {
           @if (row === 'md') {
-            Media (default)
+            {{ 'showroom.table.sizes.medium' | transloco }}
           } @else {
-            Compacta
+            {{ 'showroom.table.sizes.compact' | transloco }}
           }
         } @else {
           <ewms-token-value [token]="row === 'md' ? '--row-height-md' : '--row-height-sm'" />
@@ -705,68 +691,49 @@
     </ewms-doc-table>
     <div class="flex flex-col gap-2 rounded-md border border-strong bg-secondary p-4">
       <h3 class="text-h4">
-        El alto de fila media <strong>es</strong> el alto del control
-        <code class="font-mono">md</code>
+        <span [ewmsProse]="'showroom.table.sizes.controlHeight.title' | transloco"></span>
       </h3>
-      <p class="text-caption">
-        Y no por casualidad: una celda tiene que poder contener un
-        <code class="font-mono">&lt;ewms-input&gt;</code> sin que la fila crezca. El E2E mide los
-        dos y afirma que coinciden, que es la única forma de que siga siendo cierto dentro de seis
-        meses.
-      </p>
+      <p
+        class="text-caption"
+        [ewmsProse]="'showroom.table.sizes.controlHeight.text' | transloco"
+      ></p>
     </div>
   </section>
 
   <!-- ===================================================== 7. Anatomía y tokens -->
   <section class="flex flex-col gap-4" aria-labelledby="ta-anatomy" data-block="7-anatomia">
-    <h2 id="ta-anatomy" class="text-h2">Anatomía y tokens</h2>
-    <ewms-doc-table caption="Tokens que consume &lt;ewms-table&gt;" [columns]="anatomyColumns" [rows]="anatomy">
+    <h2 id="ta-anatomy" class="text-h2">{{ 'showroom.common.sections.anatomy' | transloco }}</h2>
+    <ewms-doc-table
+      [caption]="'showroom.table.anatomy.caption' | transloco"
+      [columns]="anatomyColumns"
+      [rows]="anatomy"
+    >
       <ng-template let-row let-column="column">
         @if (column.id === 'part') {
-          {{ row.part }}
+          {{ row.part | transloco }}
         } @else {
           <ewms-token-value [token]="row.token" [swatch]="true" />
         }
       </ng-template>
     </ewms-doc-table>
 
-    <h3 class="text-h3">El árbol se aplana, y por eso hay un solo bucle</h3>
+    <h3 class="text-h3">{{ 'showroom.table.anatomy.flatTitle' | transloco }}</h3>
     <ul class="flex flex-col gap-2">
-      <li>
-        <code class="font-mono">flattenTree()</code> es una <strong>función pura</strong>, sin
-        Angular, sin señales y sin DOM, probada sola: dadas las raíces, cómo encontrar hijos y el
-        conjunto de filas expandidas, devuelve el arreglo que la plantilla recorre.
-      </li>
-      <li>
-        Eso es también <strong>lo que hará posible virtualizar sin trucos</strong>: el CDK necesita
-        una lista plana de longitud conocida, y ya la hay.
-      </li>
-      <li>
-        <strong>Una fila contraída no está en el DOM</strong>, no está escondida con CSS. Una fila
-        que no está en el DOM no la alcanza el Tab, no la lee un lector de pantalla y no cuenta para
-        <code class="font-mono">aria-rowcount</code> — y las tres cosas serían incorrectas para algo
-        que la persona contrajo.
-      </li>
-      <li>
-        El toggle vive <strong>dentro de la primera columna de datos</strong>, junto al texto, nunca
-        en una columna aparte; una fila sin hijos recibe un
-        <code class="font-mono">.tree-toggle-spacer</code> del mismo ancho para que el texto de
-        todas las filas empiece en el mismo sitio. Es el vocabulario que fija la Nomenclatura.
-      </li>
+      <li [ewmsProse]="'showroom.table.anatomy.flattenTree' | transloco"></li>
+      <li [ewmsProse]="'showroom.table.anatomy.virtualise' | transloco"></li>
+      <li [ewmsProse]="'showroom.table.anatomy.collapsed' | transloco"></li>
+      <li [ewmsProse]="'showroom.table.anatomy.toggle' | transloco"></li>
     </ul>
   </section>
 
   <!-- ============================================== 8. Contrato para Angular -->
   <section class="flex flex-col gap-4" aria-labelledby="ta-contract" data-block="8-contrato">
-    <h2 id="ta-contract" class="text-h2">Contrato para Angular</h2>
+    <h2 id="ta-contract" class="text-h2">{{ 'showroom.common.sections.contract' | transloco }}</h2>
 
-    <h3 class="text-h3">Teclado — el patrón treegrid, seguido y no reinventado</h3>
+    <h3 class="text-h3">{{ 'showroom.table.contract.keyboard.title' | transloco }}</h3>
     <ewms-doc-table
-      caption="Una sola parada de Tab para toda la tabla"
-      [columns]="[
-        { id: 'key', label: 'Tecla' },
-        { id: 'does', label: 'Qué hace' },
-      ]"
+      [caption]="'showroom.table.contract.keyboard.caption' | transloco"
+      [columns]="keyboardColumns"
       [rows]="['↑ / ↓', '→', '←', 'Home / End', 'Enter', 'Space']"
     >
       <ng-template let-row let-column="column">
@@ -775,87 +742,52 @@
         } @else {
           @switch (row) {
             @case ('↑ / ↓') {
-              Fila anterior o siguiente, misma columna.
+              {{ 'showroom.table.contract.keyboard.upDown' | transloco }}
             }
             @case ('→') {
-              En una fila padre contraída, <strong>expande</strong>. Si no, celda siguiente.
+              <span [ewmsProse]="'showroom.table.contract.keyboard.right' | transloco"></span>
             }
             @case ('←') {
-              En una fila padre expandida, <strong>contrae</strong>. Si no, celda anterior; en la
-              primera celda de una hija, va a la fila padre.
+              <span [ewmsProse]="'showroom.table.contract.keyboard.left' | transloco"></span>
             }
             @case ('Home / End') {
-              Primera o última celda de la fila. Con <kbd class="font-mono">Ctrl</kbd>, de la tabla.
+              <span [ewmsProse]="'showroom.table.contract.keyboard.homeEnd' | transloco"></span>
             }
             @case ('Enter') {
-              <code class="font-mono">(rowActivate)</code>. El doble clic hace lo mismo: dos
-              caminos, una acción.
+              <span [ewmsProse]="'showroom.table.contract.keyboard.enter' | transloco"></span>
             }
             @default {
-              Alterna la selección de la fila. También frena el scroll, que es lo último que quiere
-              quien está marcando filas.
+              {{ 'showroom.table.contract.keyboard.space' | transloco }}
             }
           }
         }
       </ng-template>
     </ewms-doc-table>
 
-    <h3 class="text-h3">Salidas</h3>
-    <p class="text-secondary">
-      Ninguna se llama como algo nativo:
-      <code class="font-mono">(rowActivate)</code> y no <code class="font-mono">(dblclick)</code>,
-      <code class="font-mono">(rowMenu)</code> y no <code class="font-mono">(contextmenu)</code>,
-      <code class="font-mono">(selectionChange)</code> y no <code class="font-mono">(change)</code>.
-      Es la regla que ya mordió tres veces en este sistema.
-    </p>
+    <h3 class="text-h3">{{ 'showroom.common.sections.outputs' | transloco }}</h3>
+    <p class="text-secondary" [ewmsProse]="'showroom.table.contract.outputs' | transloco"></p>
     <div class="flex flex-col gap-2 rounded-md border border-warning bg-warning-surface p-4">
-      <h4 class="text-h4">La tabla NO es un campo de formulario</h4>
-      <p class="text-caption">
-        Su selección es una <strong>salida</strong>, no un valor de formulario: lo que hay en una
-        tabla es una consulta, no un campo, y atarla con
-        <code class="font-mono">[formField]</code> sería un error de categoría.
-      </p>
-      <p class="text-caption">
-        La selección se guarda como un conjunto de
-        <strong>ids por <code class="font-mono">trackBy</code></strong
-        >, no de objetos: así sobrevive al cambio de página, que es justo cuando una selección
-        guardada por referencia se pierde sin avisar.
-      </p>
+      <h4 class="text-h4">{{ 'showroom.table.contract.notAField.title' | transloco }}</h4>
+      <p
+        class="text-caption"
+        [ewmsProse]="'showroom.table.contract.notAField.output' | transloco"
+      ></p>
+      <p
+        class="text-caption"
+        [ewmsProse]="'showroom.table.contract.notAField.trackBy' | transloco"
+      ></p>
     </div>
 
-    <h3 class="text-h3">Errores comunes</h3>
+    <h3 class="text-h3">{{ 'showroom.common.sections.mistakes' | transloco }}</h3>
     <ul class="flex flex-col gap-2">
-      <li>
-        <strong>Formatear el valor antes de pasarlo.</strong> Entonces el orden y el filtro trabajan
-        sobre el texto, y <span class="font-mono">1.200</span> viene antes que
-        <span class="font-mono">900</span>. El formateador es para ver, no para comparar.
-      </li>
-      <li>
-        <strong>Poner el toggle del árbol en una columna aparte.</strong> Vive dentro de la primera
-        columna de datos. Una columna sólo para el toggle desalinea el texto de todas las filas.
-      </li>
-      <li>
-        <strong>Esperar que «seleccionar todo» alcance lo que no se ve.</strong> Selecciona lo que
-        está en pantalla. Alcanzar filas que nadie miró es cómo se borran cuatrocientos registros
-        queriendo borrar veinte.
-      </li>
-      <li>
-        <strong>Usar <code class="font-mono">ewmsCell</code> para todo.</strong> Es la salida para
-        lo raro. Cinco tipos cubren lo que una tabla de WMS muestra de verdad, y cada uno trae su
-        celda, su alineación y su filtro.
-      </li>
-      <li>
-        <strong>Pasar el diccionario de estados dos veces.</strong> Con
-        <code class="font-mono">rowState="estado"</code>, el tinte lo lee de la misma columna
-        <code class="font-mono">badge</code>. Un segundo diccionario es un segundo sitio donde se
-        pueden contradecir.
-      </li>
+      <li [ewmsProse]="'showroom.table.mistakes.formatBefore' | transloco"></li>
+      <li [ewmsProse]="'showroom.table.mistakes.toggleColumn' | transloco"></li>
+      <li [ewmsProse]="'showroom.table.mistakes.selectAll' | transloco"></li>
+      <li [ewmsProse]="'showroom.table.mistakes.cellTemplate' | transloco"></li>
+      <li [ewmsProse]="'showroom.table.mistakes.twoDictionaries' | transloco"></li>
     </ul>
 
-    <h3 class="text-h3">Bloques que no aplican</h3>
-    <p class="text-secondary">
-      Uno: <strong>variantes</strong>, porque la tabla no tiene variantes visuales. Está escrito
-      arriba en lugar de borrado.
-    </p>
+    <h3 class="text-h3">{{ 'showroom.common.sections.notApplicable' | transloco }}</h3>
+    <p class="text-secondary" [ewmsProse]="'showroom.table.notApplicable' | transloco"></p>
   </section>
 </article>

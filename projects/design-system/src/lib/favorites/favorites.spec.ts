@@ -197,7 +197,7 @@ describe('Favorites', () => {
     />
     <ewms-favorites-nav
       label="Favoritos"
-      emptyLabel="Marcá una pantalla con la estrella"
+      emptyLabel="Marque una pantalla con la estrella"
       [expanded]="expanded()"
       [activeRoute]="activeRoute()"
       (favoriteSelect)="chosen = $event.route"
@@ -331,7 +331,7 @@ describe('the star and the block, together', () => {
 
     const empty = fixture.nativeElement.querySelector('[data-favorites-empty]') as HTMLElement;
     expect(empty.querySelector('svg')?.getAttribute('aria-label')).toBe(
-      'Marcá una pantalla con la estrella',
+      'Marque una pantalla con la estrella',
     );
     // Un `tabindex="0"` en algo que no es control: el defecto que halló la caminata de DS-2.
     expect(empty.querySelector('[tabindex]')).toBeNull();

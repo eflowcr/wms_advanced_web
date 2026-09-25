@@ -1,58 +1,46 @@
-<!-- Showroom solo en español, exento de i18n (compuerta 12): se declara para que el lector de pantalla no lo lea en inglés. -->
-<article class="flex flex-col gap-10" lang="es">
+<article class="flex flex-col gap-10">
   <!-- ============================================================ 1. Encabezado -->
   <header class="flex flex-col gap-2" data-block="1-encabezado">
     <div class="flex flex-wrap items-baseline gap-3">
-      <h1 class="text-h1">Checkbox</h1>
+      <h1 class="text-h1">{{ 'showroom.catalog.checkbox.name' | transloco }}</h1>
       <code class="font-mono text-primary">&lt;ewms-checkbox&gt;</code>
     </div>
     <ul class="flex flex-wrap gap-2 text-caption">
-      <li class="rounded-sm bg-secondary px-2 py-1 text-secondary">
-        Versión <span class="font-mono">{{ version }}</span>
+      <li
+        class="rounded-sm bg-secondary px-2 py-1 text-secondary"
+        [ewmsProse]="'showroom.common.header.version' | transloco: { version }"
+      ></li>
+      <li class="rounded-sm bg-success-surface px-2 py-1 text-success">
+        {{ 'showroom.common.header.built' | transloco }}
       </li>
-      <li class="rounded-sm bg-success-surface px-2 py-1 text-success">Construido y en verde</li>
-      <li class="rounded-sm bg-secondary px-2 py-1 text-secondary">
-        Ficha: <span class="font-mono">08-Sistema-de-Diseno/Componentes/Checkbox-Radio.md</span>
-      </li>
+      <li
+        class="rounded-sm bg-secondary px-2 py-1 text-secondary"
+        [ewmsProse]="
+          'showroom.common.header.sheet'
+            | transloco: { path: '08-Sistema-de-Diseno/Componentes/Checkbox-Radio.md' }
+        "
+      ></li>
     </ul>
   </header>
 
   <!-- ================================================ 2. Qué resuelve / cuándo no -->
   <section class="flex flex-col gap-4" aria-labelledby="cb-purpose" data-block="2-proposito">
-    <h2 id="cb-purpose" class="text-h2">Qué resuelve, y cuándo NO usarlo</h2>
+    <h2 id="cb-purpose" class="text-h2">{{ 'showroom.common.sections.purpose' | transloco }}</h2>
     <div class="grid grid-cols-[repeat(auto-fit,minmax(min(20rem,100%),1fr))] gap-4">
       <div class="flex flex-col gap-2 rounded-md border border-default bg-surface p-4">
-        <h3 class="text-h3">Qué resuelve</h3>
-        <p>
-          Una <strong>selección dentro de un formulario</strong>, que se confirma después con otra
-          cosa: un botón Guardar, una acción masiva, un envío. Caja de 18×18 con un check, un guion
-          o nada adentro.
-        </p>
-        <p class="text-caption text-secondary">
-          Es un <code class="font-mono">&lt;input type="checkbox"&gt;</code> nativo con
-          <code class="font-mono">appearance-none</code>, no un
-          <code class="font-mono">&lt;span&gt;</code> pintado: así vienen gratis el rol, la barra
-          espaciadora, el orden de tabulación, el anillo sobre el elemento que de verdad tiene el
-          foco y el nombre que le da el <code class="font-mono">&lt;label&gt;</code> que lo envuelve.
-        </p>
+        <h3 class="text-h3">{{ 'showroom.common.sections.solves' | transloco }}</h3>
+        <p [ewmsProse]="'showroom.checkbox.purpose.solves' | transloco"></p>
+        <p
+          class="text-caption text-secondary"
+          [ewmsProse]="'showroom.checkbox.purpose.native' | transloco"
+        ></p>
       </div>
       <div class="flex flex-col gap-2 rounded-md border border-danger bg-danger-surface p-4">
-        <h3 class="text-h3">Cuándo NO usarlo</h3>
+        <h3 class="text-h3">{{ 'showroom.common.sections.avoid' | transloco }}</h3>
         <ul class="flex flex-col gap-2">
-          <li>
-            <strong>Si aplica al tocarlo, va Toggle.</strong> Es la confusión más común de esta
-            librería, y no es sobre cómo se ven: el Toggle actúa en el momento, el Checkbox marca
-            algo que se confirma después. Equivocarse deja un botón Guardar al lado de una
-            configuración ya aplicada, o descarta en silencio una selección que alguien creía haber
-            hecho.
-          </li>
-          <li>
-            <strong>Si las opciones se excluyen entre sí, va Radio.</strong>
-          </li>
-          <li>
-            <strong>Si es una sola opción obligatoria</strong> —aceptar unos términos— revisá si no
-            debería ser un paso del flujo en vez de una casilla.
-          </li>
+          <li [ewmsProse]="'showroom.checkbox.purpose.notToggle' | transloco"></li>
+          <li [ewmsProse]="'showroom.checkbox.purpose.notRadio' | transloco"></li>
+          <li [ewmsProse]="'showroom.checkbox.purpose.notTerms' | transloco"></li>
         </ul>
       </div>
     </div>
@@ -60,17 +48,14 @@
 
   <!-- ========================================================= 3. Demo principal -->
   <section class="flex flex-col gap-4" aria-labelledby="cb-demo" data-block="3-demo">
-    <h2 id="cb-demo" class="text-h2">Demo principal</h2>
-    <p class="text-secondary">
-      El caso que justifica el tercer estado: una casilla de «seleccionar todos» sobre una lista
-      donde algunas filas están marcadas y otras no.
-    </p>
+    <h2 id="cb-demo" class="text-h2">{{ 'showroom.common.sections.demo' | transloco }}</h2>
+    <p class="text-secondary" [ewmsProse]="'showroom.checkbox.demo.intro' | transloco"></p>
     <div class="grid grid-cols-[repeat(auto-fit,minmax(min(24rem,100%),1fr))] gap-6">
-      <ewms-demo-frame ground="canvas" label="Checklist con «seleccionar todos»">
+      <ewms-demo-frame ground="canvas" [label]="'showroom.checkbox.demo.frame' | transloco">
         <div class="flex flex-col gap-3" data-demo-checklist>
           <div class="border-b border-default pb-3">
             <ewms-checkbox
-              label="Seleccionar todos"
+              [label]="'showroom.checkbox.demo.selectAll' | transloco"
               [checked]="allOn()"
               [indeterminate]="headerMixed()"
               (checkedChange)="toggleAll($event)"
@@ -80,87 +65,81 @@
             @for (row of rows(); track row.id) {
               <li>
                 <ewms-checkbox
-                  [label]="row.label"
+                  [label]="'showroom.checkbox.demo.relabel' | transloco: { sku: row.sku }"
                   [checked]="row.on"
                   (checkedChange)="toggleRow(row.id, $event)"
                 />
               </li>
             }
           </ul>
-          <p class="text-caption text-secondary" role="status" aria-live="polite">
-            Encabezado: marcado <span class="font-mono">{{ allOn() }}</span>, indeterminado
-            <span class="font-mono">{{ headerMixed() }}</span>.
-          </p>
+          <p
+            class="text-caption text-secondary"
+            role="status"
+            aria-live="polite"
+            [ewmsProse]="
+              'showroom.checkbox.demo.headerStatus'
+                | transloco: { checked: allOn(), mixed: headerMixed() }
+            "
+          ></p>
         </div>
       </ewms-demo-frame>
-      <ewms-prop-table [rows]="props" caption="Propiedades de <ewms-checkbox>" />
+      <ewms-prop-table [rows]="props" [caption]="'showroom.checkbox.props.caption' | transloco" />
     </div>
-    <p class="text-caption text-secondary">
-      Toda la fila es el área clickeable —caja, espacio y texto— porque el
-      <code class="font-mono">&lt;label&gt;</code>&ngsp;<strong>envuelve</strong> el control en vez de
-      apuntarlo con <code class="font-mono">for</code>/<code class="font-mono">id</code>. No hay par
-      de identificadores que mantener sincronizado, y el texto no es decoración al lado del control:
-      <em>es</em> parte del control.
-    </p>
-    <p class="text-caption text-secondary">
-      Al clickear una casilla el componente <strong>no borra</strong>&ngsp;<code class="font-mono">indeterminate</code> por su cuenta: es una afirmación del consumidor
-      sobre un conjunto de otras cosas, y sólo el consumidor sabe si este click la resolvió. Adivinar
-      haría parpadear la casilla de «seleccionar todo» fuera del estado mixto en un click que no
-      seleccionó todo.
-    </p>
+    <p
+      class="text-caption text-secondary"
+      [ewmsProse]="'showroom.checkbox.demo.wholeRow' | transloco"
+    ></p>
+    <p
+      class="text-caption text-secondary"
+      [ewmsProse]="'showroom.checkbox.demo.keepsIndeterminate' | transloco"
+    ></p>
   </section>
 
   <!-- =============================================================== 4. Variantes -->
   <section class="flex flex-col gap-4" aria-labelledby="cb-variants" data-block="4-variantes">
-    <h2 id="cb-variants" class="text-h2">Variantes</h2>
+    <h2 id="cb-variants" class="text-h2">{{ 'showroom.common.sections.variants' | transloco }}</h2>
     <div class="flex flex-col gap-2 rounded-md border border-strong bg-secondary p-4">
-      <h3 class="text-h4">No aplica</h3>
-      <p>
-        No hay <code class="font-mono">variant</code>: no existe «el checkbox primario». Lo que sí
-        hay son <strong>tres valores</strong> —sin marcar, marcado e indeterminado— y ése es el eje
-        de la matriz.
-      </p>
+      <h3 class="text-h4">{{ 'showroom.common.notApplicable' | transloco }}</h3>
+      <p [ewmsProse]="'showroom.checkbox.variants.none' | transloco"></p>
     </div>
-    <h3 class="text-h3">Con texto y sin texto</h3>
+    <h3 class="text-h3">{{ 'showroom.checkbox.variants.withAndWithoutText' | transloco }}</h3>
     <ewms-demo-frame ground="surface">
       <div class="flex flex-wrap items-center gap-8">
         <span data-variant="con-label">
-          <ewms-checkbox label="Con texto visible" [checked]="true" />
+          <ewms-checkbox
+            [label]="'showroom.checkbox.variants.visibleText' | transloco"
+            [checked]="true"
+          />
         </span>
         <span data-variant="con-arialabel">
-          <ewms-checkbox ariaLabel="Seleccionar la fila SKU-04871-B" [checked]="true" />
+          <ewms-checkbox
+            [ariaLabel]="'showroom.checkbox.variants.rowName' | transloco: { sku: 'SKU-04871-B' }"
+            [checked]="true"
+          />
         </span>
-        <span class="min-w-64 flex-1 text-caption text-secondary">
-          El segundo no tiene texto visible: su nombre lo da
-          <code class="font-mono">ariaLabel</code>, que existe porque la Tabla necesita una casilla
-          por fila y un «seleccionar todo» en el encabezado,
-          <strong>ninguno con texto al lado</strong>. Uno de los dos es obligatorio en la práctica: sin
-          ninguno, el control no tiene nombre accesible y axe falla. El tipo no puede decir «exactamente
-          uno de estos dos», así que lo afirma el spec.
-        </span>
+        <span
+          class="min-w-64 flex-1 text-caption text-secondary"
+          [ewmsProse]="'showroom.checkbox.variants.ariaLabelNote' | transloco"
+        ></span>
       </div>
     </ewms-demo-frame>
   </section>
 
   <!-- ========================================================= 5. Matriz de estados -->
   <section class="flex flex-col gap-4" aria-labelledby="cb-matrix" data-block="5-matriz">
-    <h2 id="cb-matrix" class="text-h2">Matriz de estados</h2>
-    <p class="text-secondary">
-      Los tres valores contra los cuatro estados. <strong>Disabled es una entrada real</strong>;
-      Hover y Focus no se pueden dejar quietos, así que cada celda recibe el mismo token que
-      aplicaría su propia regla.
-    </p>
+    <h2 id="cb-matrix" class="text-h2">{{ 'showroom.common.sections.states' | transloco }}</h2>
+    <p class="text-secondary" [ewmsProse]="'showroom.checkbox.states.intro' | transloco"></p>
     <ewms-demo-frame ground="canvas">
       <ewms-state-matrix
         [variants]="values"
         [states]="states"
-        rowHeader="Valor"
-        caption="Tres valores por cuatro estados"
+        [rowHeader]="rowHeader"
+        [caption]="'showroom.checkbox.states.caption' | transloco"
       >
         <ng-template let-variant="variant" let-state="state">
           <span [class]="forced(state.id)">
             <ewms-checkbox
-              [ariaLabel]="variant.label + ', ' + state.label"
+              [ariaLabel]="(variant.label | transloco) + ', ' + (state.label | transloco)"
               [checked]="isOn(variant.id)"
               [indeterminate]="isMixed(variant.id)"
               [disabled]="state.id === 'disabled'"
@@ -169,214 +148,129 @@
         </ng-template>
       </ewms-state-matrix>
     </ewms-demo-frame>
-    <p class="text-caption text-secondary">
-      <strong>Marcado e indeterminado se ven casi igual</strong>: misma caja azul, distinto glifo. Es
-      lo que pide la ficha, y es exactamente por eso que el estado
-      <em>no puede leerse del color</em> — y por eso
-      <code class="font-mono">aria-checked</code> lleva <code class="font-mono">mixed</code> y no un
-      booleano. Quien no está mirando la pantalla saca el estado de ahí y de ningún otro lado.
-    </p>
-    <p class="text-caption text-secondary">
-      Deshabilitado va primero y <strong>no tiene hover</strong>: un control que no se puede operar no
-      debe encenderse bajo el puntero.
-    </p>
-    <p class="text-caption text-secondary">
-      <strong>La columna Hover sólo cambia algo en la primera fila</strong>, y eso es correcto: el
-      hover pinta el borde de azul, y en «Marcado» e «Indeterminado» el borde
-      <em>ya</em> es azul. La celda no está rota; el estado no tiene nada que agregar ahí.
-    </p>
+    <p
+      class="text-caption text-secondary"
+      [ewmsProse]="'showroom.checkbox.states.sameBox' | transloco"
+    ></p>
+    <p
+      class="text-caption text-secondary"
+      [ewmsProse]="'showroom.checkbox.states.disabledFirst' | transloco"
+    ></p>
+    <p
+      class="text-caption text-secondary"
+      [ewmsProse]="'showroom.checkbox.states.hoverColumn' | transloco"
+    ></p>
   </section>
 
   <!-- ================================================================ 6. Tamaños -->
   <section class="flex flex-col gap-4" aria-labelledby="cb-sizes" data-block="6-tamanos">
-    <h2 id="cb-sizes" class="text-h2">Tamaños</h2>
+    <h2 id="cb-sizes" class="text-h2">{{ 'showroom.common.sections.sizes' | transloco }}</h2>
     <div class="flex flex-col gap-2 rounded-md border border-strong bg-secondary p-4">
-      <h3 class="text-h4">Uno solo — y no es la escala de controles</h3>
-      <p>
-        18×18 px, y punto. <strong>No usa la escala 32 / 40 / 48</strong> del Botón, el Input y el
-        Select, a propósito: un checkbox no se dimensiona para alinearse con un botón, se dimensiona
-        para sentarse al lado de una línea de texto.
-      </p>
+      <h3 class="text-h4">{{ 'showroom.checkbox.sizes.title' | transloco }}</h3>
+      <p [ewmsProse]="'showroom.checkbox.sizes.single' | transloco"></p>
     </div>
     <ewms-demo-frame ground="surface">
       <div class="flex flex-wrap items-center gap-6" data-measure-box>
-        <ewms-checkbox label="La caja medida" [checked]="true" />
+        <ewms-checkbox [label]="'showroom.checkbox.sizes.measured' | transloco" [checked]="true" />
         <dl class="flex flex-col gap-1 text-caption">
           <div class="flex flex-wrap gap-2">
-            <dt class="text-secondary">Caja renderizada:</dt>
+            <dt class="text-secondary">{{ 'showroom.checkbox.sizes.box.size' | transloco }}</dt>
             <dd class="font-mono text-primary">{{ box().size }}</dd>
           </div>
           <div class="flex flex-wrap gap-2">
-            <dt class="text-secondary">Borde declarado:</dt>
+            <dt class="text-secondary">
+              {{ 'showroom.checkbox.sizes.box.declared' | transloco }}
+            </dt>
             <dd class="font-mono text-primary">{{ box().declared }}</dd>
           </div>
           <div class="flex flex-wrap gap-2">
-            <dt class="text-secondary">Valor del token:</dt>
+            <dt class="text-secondary">{{ 'showroom.checkbox.sizes.box.token' | transloco }}</dt>
             <dd class="font-mono text-primary">{{ box().token }}</dd>
           </div>
           <div class="flex flex-wrap gap-2">
-            <dt class="text-secondary">Borde que pinta el navegador:</dt>
+            <dt class="text-secondary">{{ 'showroom.checkbox.sizes.box.used' | transloco }}</dt>
             <dd class="font-mono text-primary">{{ box().used }}</dd>
           </div>
         </dl>
       </div>
     </ewms-demo-frame>
     <div class="flex flex-col gap-2 rounded-md border border-warning bg-warning-surface p-4">
-      <h3 class="text-h4">Los dos últimos números no coinciden, y está bien que se vea</h3>
-      <p class="text-caption">
-        El token declara un borde de <strong>uno y medio</strong> y el navegador pinta
-        <strong>uno</strong>: Chromium redondea hacia abajo un borde sub-pixel, a cualquier densidad
-        de pantalla. Lo que el componente debe es
-        <strong>el token</strong>; lo que el navegador hace con él es del navegador — y por eso el
-        E2E afirma la <em>declaración</em> y no el valor usado, que si no estaría afirmando una regla
-        de redondeo ajena.
-      </p>
+      <h3 class="text-h4">{{ 'showroom.checkbox.sizes.mismatchTitle' | transloco }}</h3>
+      <p class="text-caption" [ewmsProse]="'showroom.checkbox.sizes.mismatch' | transloco"></p>
     </div>
   </section>
 
   <!-- ==================================================== 7. Anatomía y tokens -->
   <section class="flex flex-col gap-4" aria-labelledby="cb-anatomy" data-block="7-anatomia">
-    <h2 id="cb-anatomy" class="text-h2">Anatomía y tokens</h2>
-    <p class="text-secondary">
-      La misma lista que la del Radio, porque la comparten en el código: una caja, un borde, un
-      glifo y una fila que es el área clickeable, escritos una sola vez. Sólo el radio de esquina y
-      el glifo están escritos dos veces.
-    </p>
-    <ewms-doc-table caption="Tokens que consume &lt;ewms-checkbox&gt;" [columns]="anatomyColumns" [rows]="anatomy">
+    <h2 id="cb-anatomy" class="text-h2">{{ 'showroom.common.sections.anatomy' | transloco }}</h2>
+    <p class="text-secondary" [ewmsProse]="'showroom.checkbox.anatomy.intro' | transloco"></p>
+    <ewms-doc-table
+      [caption]="'showroom.checkbox.anatomy.caption' | transloco"
+      [columns]="anatomyColumns"
+      [rows]="anatomy"
+    >
       <ng-template let-row let-column="column">
         @if (column.id === 'part') {
-          {{ row.part }}
+          {{ row.part | transloco }}
         } @else {
           <ewms-token-value [token]="row.token" [swatch]="true" />
         }
       </ng-template>
     </ewms-doc-table>
-    <p class="text-caption text-secondary">
-      Lo único propio: el radio de esquina del checkbox es
-      <code class="font-mono">rounded-sm</code> (4 px). El Radio usa
-      <code class="font-mono">rounded-full</code>.
-    </p>
+    <p
+      class="text-caption text-secondary"
+      [ewmsProse]="'showroom.checkbox.anatomy.radius' | transloco"
+    ></p>
   </section>
 
   <!-- ============================================== 8. Contrato para Angular -->
   <section class="flex flex-col gap-4" aria-labelledby="cb-contract" data-block="8-contrato">
-    <h2 id="cb-contract" class="text-h2">Contrato para Angular</h2>
+    <h2 id="cb-contract" class="text-h2">{{ 'showroom.common.sections.contract' | transloco }}</h2>
 
-    <h3 class="text-h3">Entradas</h3>
-    <p class="text-secondary">
-      Las cinco de la tabla del bloque 3. Ninguna es requerida en el tipo, pero
-      <strong>uno de <code class="font-mono">label</code> o
-      <code class="font-mono">ariaLabel</code> lo es en la práctica</strong>.
-    </p>
+    <h3 class="text-h3">{{ 'showroom.common.sections.inputs' | transloco }}</h3>
+    <p class="text-secondary" [ewmsProse]="'showroom.checkbox.contract.inputs' | transloco"></p>
 
-    <h3 class="text-h3">Salidas</h3>
+    <h3 class="text-h3">{{ 'showroom.common.sections.outputs' | transloco }}</h3>
     <div class="flex flex-col gap-2 rounded-md border border-warning bg-warning-surface p-4">
-      <p>
-        <code class="font-mono">(checkedChange)</code>, y <strong>el nombre es
-        estructural</strong>. <code class="font-mono">change</code> es un evento nativo, y burbujea:
-        una salida con ese nombre pone dos cosas distintas en un solo binding —el booleano de este
-        componente <em>y</em> el <code class="font-mono">Event</code> crudo subiendo desde el
-        <code class="font-mono">&lt;input&gt;</code> de adentro— y el handler corre dos veces con dos
-        tipos de argumento. La regla <code class="font-mono">no-output-native</code> de ESLint lo
-        prohíbe justamente por eso.
-      </p>
-      <p class="text-caption">
-        Se detectó con una prueba que falló con
-        un <code class="font-mono">Event</code> crudo en vez del booleano, no con una revisión. La ficha pedía
-        <code class="font-mono">(change)</code>; ya quedó corregida.
-      </p>
-      <p class="text-caption">
-        Y hay una segunda mitad: el componente llama
-        <strong><code class="font-mono">stopPropagation()</code> sobre el
-        <code class="font-mono">change</code> nativo</strong>. Eso no es prolijidad. Este componente
-        publica <code class="font-mono">checkedChange</code>; el
-        <code class="font-mono">&lt;input&gt;</code> de adentro es detalle de implementación. Dejar
-        salir su evento le daría al consumidor un segundo evento no documentado, cuyo
-        <code class="font-mono">target</code> es ese elemento privado — algo a lo que atarse, de lo
-        que leer el flag, y que el próximo cambio interno rompe.
-      </p>
+      <p [ewmsProse]="'showroom.checkbox.contract.outputs' | transloco"></p>
+      <p class="text-caption" [ewmsProse]="'showroom.checkbox.contract.foundBy' | transloco"></p>
+      <p
+        class="text-caption"
+        [ewmsProse]="'showroom.checkbox.contract.stopPropagation' | transloco"
+      ></p>
     </div>
 
-    <h3 class="text-h3">Uso típico</h3>
+    <h3 class="text-h3">{{ 'showroom.common.sections.usage' | transloco }}</h3>
     <pre
       class="overflow-x-auto rounded-md border border-default bg-secondary p-4 font-mono text-mono text-primary outline-none focus-visible:shadow-(--focus-ring-shadow)"
       tabindex="0"
     ><code>{{ snippet }}</code></pre>
 
-    <h3 class="text-h3">La regla del disabled — la que más sorprende</h3>
+    <h3 class="text-h3">{{ 'showroom.checkbox.disabledRule.title' | transloco }}</h3>
     <div class="flex flex-col gap-2 rounded-md border border-strong bg-secondary p-4">
-      <p>
-        <strong>Un solo dueño por vez.</strong> Fuera de un formulario, la entrada
-        <code class="font-mono">disabled</code>. Dentro de uno, la regla
-        <code class="font-mono">disabled(path.x, …)</code> del esquema.
-      </p>
-      <p class="text-caption">
-        No se combinan porque Angular no lo permite: enlazar
-        <code class="font-mono">[disabled]</code> en el mismo nodo que
-        <code class="font-mono">[formField]</code> es un error de compilación (NG8022). El campo
-        tiene un dueño, y por eso nunca quedan dos fuentes en desacuerdo.
-      </p>
-      <p class="text-caption">
-        La ganancia es la que buscaba la regla vieja del OR, por otro camino: quien escribe
-        <code class="font-mono">[disabled]="true"</code> no puede ser re-habilitado por el
-        formulario, porque el formulario no toca ese campo.
-      </p>
-      <p class="text-caption">
-        Vale idéntico para el <strong>Radio</strong>, el <strong>Toggle</strong>, el
-        <strong>Input</strong> y el <strong>Select</strong>.
-      </p>
+      <p [ewmsProse]="'showroom.checkbox.disabledRule.oneOwner' | transloco"></p>
+      <p class="text-caption" [ewmsProse]="'showroom.checkbox.disabledRule.noMix' | transloco"></p>
+      <p class="text-caption" [ewmsProse]="'showroom.checkbox.disabledRule.gain' | transloco"></p>
+      <p class="text-caption" [ewmsProse]="'showroom.checkbox.disabledRule.same' | transloco"></p>
     </div>
 
-    <h3 class="text-h3">Accesibilidad</h3>
+    <h3 class="text-h3">{{ 'showroom.common.sections.a11y' | transloco }}</h3>
     <ul class="flex flex-col gap-2">
-      <li>
-        <code class="font-mono">aria-checked</code> lleva
-        <code class="font-mono">mixed</code> en indeterminado, no un booleano: la diferencia visual
-        entre marcado e indeterminado es un glifo dentro de una caja por lo demás idéntica.
-      </li>
-      <li>
-        <code class="font-mono">indeterminate</code>&ngsp;<strong>sólo existe como propiedad del
-        DOM</strong>. No hay atributo HTML: escribir
-        <code class="font-mono">indeterminate="true"</code> en una plantilla pone un atributo
-        desconocido, la caja se renderiza sin marcar, y nada en ningún lado reporta un problema. Hay
-        que asignarlo al elemento — acá con un <code class="font-mono">effect</code>, porque la
-        entrada cambia durante la vida del componente.
-      </li>
-      <li>
-        No hay <code class="font-mono">aria-disabled</code> al lado del
-        <code class="font-mono">disabled</code> nativo: el atributo nativo ya lleva el estado, y los
-        dos juntos lo anunciarían dos veces.
-      </li>
-      <li>
-        El glifo es un hermano superpuesto con
-        <code class="font-mono">pointer-events-none</code>, no un hijo: un
-        <code class="font-mono">&lt;input&gt;</code> no puede tener hijos, y así ningún pixel de la
-        caja tiene dos cosas peleándoselo.
-      </li>
+      <li [ewmsProse]="'showroom.checkbox.a11y.mixed' | transloco"></li>
+      <li [ewmsProse]="'showroom.checkbox.a11y.domProperty' | transloco"></li>
+      <li [ewmsProse]="'showroom.checkbox.a11y.noAriaDisabled' | transloco"></li>
+      <li [ewmsProse]="'showroom.checkbox.a11y.glyph' | transloco"></li>
     </ul>
 
-    <h3 class="text-h3">Errores comunes</h3>
+    <h3 class="text-h3">{{ 'showroom.common.sections.mistakes' | transloco }}</h3>
     <ul class="flex flex-col gap-2">
-      <li>
-        <strong>Escuchar <code class="font-mono">(change)</code>.</strong> No existe como salida, y
-        el nativo está frenado adentro. Es <code class="font-mono">(checkedChange)</code>.
-      </li>
-      <li>
-        <strong>Usarlo para algo que se aplica al instante.</strong> Eso es el Toggle.
-      </li>
-      <li>
-        <strong>Esperar que <code class="font-mono">indeterminate</code> se apague solo al
-        clickear.</strong> No se apaga: la afirmación es del consumidor.
-      </li>
-      <li>
-        <strong>Dejarlo sin <code class="font-mono">label</code> ni
-        <code class="font-mono">ariaLabel</code>.</strong> Compila, y no tiene nombre accesible.
-      </li>
+      <li [ewmsProse]="'showroom.checkbox.mistakes.change' | transloco"></li>
+      <li [ewmsProse]="'showroom.checkbox.mistakes.instant' | transloco"></li>
+      <li [ewmsProse]="'showroom.checkbox.mistakes.indeterminate' | transloco"></li>
+      <li [ewmsProse]="'showroom.checkbox.mistakes.noName' | transloco"></li>
     </ul>
 
-    <h3 class="text-h3">Bloques que no aplican</h3>
-    <p class="text-secondary">
-      Uno: <strong>variantes</strong>. Está escrito arriba en lugar de borrado.
-    </p>
+    <h3 class="text-h3">{{ 'showroom.common.sections.notApplicable' | transloco }}</h3>
+    <p class="text-secondary" [ewmsProse]="'showroom.checkbox.notApplicable' | transloco"></p>
   </section>
 </article>

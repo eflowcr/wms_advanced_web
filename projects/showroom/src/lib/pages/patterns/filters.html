@@ -1,54 +1,46 @@
-<!-- Showroom solo en español, exento de i18n (compuerta 12): se declara para que el lector de pantalla no lo lea en inglés. -->
-<article class="flex flex-col gap-10" lang="es">
+<article class="flex flex-col gap-10">
   <!-- ============================================================ 1. Encabezado -->
   <header class="flex flex-col gap-2" data-block="1-encabezado">
     <div class="flex flex-wrap items-baseline gap-3">
-      <h1 class="text-h1">Filtros</h1>
+      <h1 class="text-h1">{{ 'showroom.catalog.patternFilters.name' | transloco }}</h1>
       <code class="font-mono text-primary">&lt;ewms-filter-bar&gt;</code>
     </div>
     <ul class="flex flex-wrap gap-2 text-caption">
-      <li class="rounded-sm bg-secondary px-2 py-1 text-secondary">
-        Versión <span class="font-mono">{{ version }}</span>
+      <li
+        class="rounded-sm bg-secondary px-2 py-1 text-secondary"
+        [ewmsProse]="'showroom.common.header.version' | transloco: { version }"
+      ></li>
+      <li class="rounded-sm bg-success-surface px-2 py-1 text-success">
+        {{ 'showroom.common.header.built' | transloco }}
       </li>
-      <li class="rounded-sm bg-success-surface px-2 py-1 text-success">Construido y en verde</li>
-      <li class="rounded-sm bg-secondary px-2 py-1 text-secondary">
-        Ficha: <span class="font-mono">08-Sistema-de-Diseno/Componentes/Patron-Filtros.md</span>
-      </li>
+      <li
+        class="rounded-sm bg-secondary px-2 py-1 text-secondary"
+        [ewmsProse]="
+          'showroom.common.header.sheet'
+            | transloco: { path: '08-Sistema-de-Diseno/Componentes/Patron-Filtros.md' }
+        "
+      ></li>
     </ul>
   </header>
 
   <!-- ================================================ 2. Qué resuelve / cuándo no -->
   <section class="flex flex-col gap-4" aria-labelledby="fi-purpose" data-block="2-proposito">
-    <h2 id="fi-purpose" class="text-h2">Qué resuelve, y cuándo NO usarlo</h2>
+    <h2 id="fi-purpose" class="text-h2">{{ 'showroom.common.sections.purpose' | transloco }}</h2>
     <div class="grid grid-cols-[repeat(auto-fit,minmax(min(20rem,100%),1fr))] gap-4">
       <div class="flex flex-col gap-2 rounded-md border border-default bg-surface p-4">
-        <h3 class="text-h3">Qué resuelve</h3>
-        <p>
-          <strong>Los filtros que no son una columna</strong>: el almacén, el período del
-          documento, el estado del proceso. Van <strong>a la fuente</strong>, así que la tabla
-          recibe las filas que quedan; y viven en la <strong>URL</strong>, así que un enlace
-          filtrado se comparte y «atrás» deshace el último filtro.
-        </p>
-        <p class="text-caption text-secondary">
-          Aplica al cambiar un campo, sin botón «Aplicar»: el texto espera lo que dice
-          <code class="font-mono">--delay-search-input</code>.
-        </p>
+        <h3 class="text-h3">{{ 'showroom.common.sections.solves' | transloco }}</h3>
+        <p [ewmsProse]="'showroom.patternFilters.purpose.solves' | transloco"></p>
+        <p
+          class="text-caption text-secondary"
+          [ewmsProse]="'showroom.patternFilters.purpose.onChange' | transloco"
+        ></p>
       </div>
       <div class="flex flex-col gap-2 rounded-md border border-danger bg-danger-surface p-4">
-        <h3 class="text-h3">Cuándo NO usarlo</h3>
+        <h3 class="text-h3">{{ 'showroom.common.sections.avoid' | transloco }}</h3>
         <ul class="flex flex-col gap-2">
-          <li>
-            <strong>Si el filtro ES una columna</strong>, va en la fila de filtros de la
-            <code class="font-mono">&lt;ewms-table&gt;</code>: ahí se ve contra qué se filtra.
-          </li>
-          <li>
-            <strong>Si es una sola búsqueda</strong>, va el campo de búsqueda de la tabla; una
-            barra para un campo es una barra de más.
-          </li>
-          <li>
-            <strong>Si la pantalla no tiene URL propia</strong> (un panel dentro de un diálogo),
-            los filtros no van a la URL: quedan en memoria de quien los abre.
-          </li>
+          <li [ewmsProse]="'showroom.patternFilters.purpose.isAColumn' | transloco"></li>
+          <li [ewmsProse]="'showroom.patternFilters.purpose.singleSearch' | transloco"></li>
+          <li [ewmsProse]="'showroom.patternFilters.purpose.noUrl' | transloco"></li>
         </ul>
       </div>
     </div>
@@ -56,127 +48,128 @@
 
   <!-- ========================================================= 3. Demo principal -->
   <section class="flex flex-col gap-4" aria-labelledby="fi-demo" data-block="3-demo">
-    <h2 id="fi-demo" class="text-h2">Demo principal — filtros de pantalla y tabla</h2>
-    <p class="text-secondary">
-      <strong>Filtrá, copiá la URL de esta página y abrila en otra pestaña:</strong> se ve lo
-      mismo. «Atrás» deshace el último filtro. Con resultado vacío, la tabla dice «sin resultados»
-      y su «Limpiar filtros» limpia también los de pantalla.
-    </p>
+    <h2 id="fi-demo" class="text-h2">
+      {{ 'showroom.common.sections.demo' | transloco }} —
+      {{ 'showroom.patternFilters.demo.subject' | transloco }}
+    </h2>
+    <p class="text-secondary" [ewmsProse]="'showroom.patternFilters.demo.intro' | transloco"></p>
 
-    <ewms-demo-frame ground="canvas" label="Barra de filtros sobre la misma fuente en memoria">
+    <ewms-demo-frame ground="canvas" [label]="'showroom.patternFilters.demo.frame' | transloco">
       <div class="flex flex-col gap-4" data-demo-filters>
-        <ewms-filter-bar [fields]="campos" [value]="valor()" (valueChange)="aplicar($event)" />
+        <ewms-filter-bar [fields]="campos()" [value]="valor()" (valueChange)="aplicar($event)" />
 
         <ewms-table
           [source]="fuente()"
           [trackBy]="porId"
           [screenFilters]="activos()"
-          ariaLabel="Expediciones filtradas"
+          [ariaLabel]="'showroom.patternFilters.demo.table' | transloco"
           (filtersCleared)="limpiar()"
         >
-          <ewms-column key="codigo" header="Código" width="md" [sortable]="true" />
-          <ewms-column key="cliente" header="Cliente" width="fill" />
-          <ewms-column key="fecha" header="Fecha" type="date" width="md" [sortable]="true" />
-          <ewms-column key="bultos" header="Bultos" type="number" width="sm" [sortable]="true" />
-          <ewms-column key="estado" header="Estado" type="badge" width="md" [badges]="estados" />
+          <ewms-column
+            key="codigo"
+            [header]="'showroom.patternFilters.demo.columns.code' | transloco"
+            width="md"
+            [sortable]="true"
+          />
+          <ewms-column
+            key="cliente"
+            [header]="'showroom.patternFilters.demo.columns.customer' | transloco"
+            width="fill"
+          />
+          <ewms-column
+            key="fecha"
+            [header]="'showroom.patternFilters.demo.columns.date' | transloco"
+            type="date"
+            width="md"
+            [sortable]="true"
+          />
+          <ewms-column
+            key="bultos"
+            [header]="'showroom.patternFilters.demo.columns.packages' | transloco"
+            type="number"
+            width="sm"
+            [sortable]="true"
+          />
+          <ewms-column
+            key="estado"
+            [header]="'showroom.patternFilters.demo.columns.status' | transloco"
+            type="badge"
+            width="md"
+            [badges]="estados()"
+          />
         </ewms-table>
 
         <p class="text-caption text-secondary">
-          Filtros de pantalla puestos:
+          {{ 'showroom.patternFilters.demo.active' | transloco }}
           <span class="font-mono text-primary" data-active-filters>{{ activos() }}</span>
         </p>
       </div>
     </ewms-demo-frame>
-    <ewms-prop-table [rows]="props" caption="Propiedades de <ewms-filter-bar>" />
+    <ewms-prop-table
+      [rows]="props"
+      [caption]="'showroom.patternFilters.props.caption' | transloco"
+    />
   </section>
 
   <!-- =============================================================== 4. Variantes -->
   <section class="flex flex-col gap-4" aria-labelledby="fi-variants" data-block="4-variantes">
-    <h2 id="fi-variants" class="text-h2">Variantes — los tres campos</h2>
+    <h2 id="fi-variants" class="text-h2">
+      {{ 'showroom.common.sections.variants' | transloco }} —
+      {{ 'showroom.patternFilters.variants.subject' | transloco }}
+    </h2>
     <ul class="flex flex-col gap-2">
-      <li>
-        <strong><code class="font-mono">select</code></strong> — un valor de una lista
-        (<code class="font-mono">&lt;ewms-select&gt;</code>, que siempre busca). El chip muestra la
-        etiqueta de la opción, no su clave.
-      </li>
-      <li>
-        <strong><code class="font-mono">date-range</code></strong> — un período
-        (<code class="font-mono">&lt;ewms-date-picker mode="range"&gt;</code>). En la URL viaja
-        como <code class="font-mono">desde..hasta</code>, con cualquiera de los dos extremos.
-      </li>
-      <li>
-        <strong><code class="font-mono">search</code></strong> — texto libre
-        (<code class="font-mono">&lt;ewms-input type="search"&gt;</code>), con la espera por token.
-      </li>
+      <li [ewmsProse]="'showroom.patternFilters.variants.select' | transloco"></li>
+      <li [ewmsProse]="'showroom.patternFilters.variants.dateRange' | transloco"></li>
+      <li [ewmsProse]="'showroom.patternFilters.variants.search' | transloco"></li>
     </ul>
   </section>
 
   <!-- ========================================================= 5. Matriz de estados -->
   <section class="flex flex-col gap-4" aria-labelledby="fi-matrix" data-block="5-matriz">
-    <h2 id="fi-matrix" class="text-h2">Matriz de estados</h2>
+    <h2 id="fi-matrix" class="text-h2">{{ 'showroom.common.sections.states' | transloco }}</h2>
     <div class="flex flex-col gap-2 rounded-md border border-strong bg-secondary p-4">
-      <h3 class="text-h4">Los de sus campos</h3>
-      <p>
-        La barra no tiene estados propios: cada campo es un Select, un Date picker o un Input, con
-        la matriz de su ficha. Lo que la barra agrega es <strong>uno solo</strong>: un filtro puesto
-        se ve como chip, y el chip tiene su × (la misma pieza que usa la Tabla).
-      </p>
+      <h3 class="text-h4">{{ 'showroom.patternFilters.states.title' | transloco }}</h3>
+      <p [ewmsProse]="'showroom.patternFilters.states.chip' | transloco"></p>
     </div>
   </section>
 
   <!-- ================================================================ 6. Tamaños -->
   <section class="flex flex-col gap-4" aria-labelledby="fi-sizes" data-block="6-tamanos">
-    <h2 id="fi-sizes" class="text-h2">Tamaños</h2>
+    <h2 id="fi-sizes" class="text-h2">{{ 'showroom.common.sections.sizes' | transloco }}</h2>
     <div class="flex flex-col gap-2 rounded-md border border-strong bg-secondary p-4">
-      <h3 class="text-h4">No aplica — Small</h3>
-      <p>
-        Los campos van en <code class="font-mono">sm</code>, como los de la barra de la tabla: una
-        pantalla no puede tener dos alturas de control filtrando lo mismo.
-      </p>
+      <h3 class="text-h4">
+        {{ 'showroom.common.notApplicable' | transloco }} —
+        {{ 'showroom.common.sizes.sm' | transloco }}
+      </h3>
+      <p [ewmsProse]="'showroom.patternFilters.sizes.small' | transloco"></p>
     </div>
   </section>
 
   <!-- ===================================================== 7. Anatomía y tokens -->
   <section class="flex flex-col gap-4" aria-labelledby="fi-anatomy" data-block="7-anatomia">
-    <h2 id="fi-anatomy" class="text-h2">Anatomía y tokens</h2>
+    <h2 id="fi-anatomy" class="text-h2">{{ 'showroom.common.sections.anatomy' | transloco }}</h2>
     <ul class="flex flex-col gap-2">
-      <li>
-        <strong>Sin token propio.</strong> El ancho de cada campo sale de
-        <code class="font-mono">--col-width-md</code>; la espera del texto, de
-        <code class="font-mono">--delay-search-input</code>; los chips son los de la Tabla.
-      </li>
-      <li>
-        <strong>Dónde vive cada pieza:</strong>
-        <code class="font-mono">lib/filters/</code> en el sistema de diseño (barra y chips), y
-        <code class="font-mono">@ewms/shared</code> el ayudante de URL —el sistema de diseño no
-        conoce el router, y shell y showroom lo usan igual—.
-      </li>
+      <li [ewmsProse]="'showroom.patternFilters.anatomy.noToken' | transloco"></li>
+      <li [ewmsProse]="'showroom.patternFilters.anatomy.where' | transloco"></li>
     </ul>
   </section>
 
   <!-- ============================================== 8. Contrato para Angular -->
   <section class="flex flex-col gap-4" aria-labelledby="fi-contract" data-block="8-contrato">
-    <h2 id="fi-contract" class="text-h2">Contrato para Angular</h2>
+    <h2 id="fi-contract" class="text-h2">{{ 'showroom.common.sections.contract' | transloco }}</h2>
     <pre
       class="overflow-x-auto rounded-md border border-default bg-secondary p-4 font-mono text-mono text-primary outline-none focus-visible:shadow-(--focus-ring-shadow)"
       tabindex="0"
     ><code>{{ snippet }}</code></pre>
-    <p class="text-secondary">
-      Y en el componente, <code class="font-mono">filtersInUrl(claves)</code> da
-      <code class="font-mono">value()</code> y <code class="font-mono">set()</code>; la fuente se
-      arma con lo que queda.
-    </p>
-    <h3 class="text-h3">Accesibilidad</h3>
+    <p
+      class="text-secondary"
+      [ewmsProse]="'showroom.patternFilters.contract.inComponent' | transloco"
+    ></p>
+    <h3 class="text-h3">{{ 'showroom.common.sections.a11y' | transloco }}</h3>
     <ul class="flex flex-col gap-2">
-      <li>Cada campo lleva su etiqueta visible: un filtro sin nombre no se puede pedir.</li>
-      <li>
-        «Más filtros» es un botón con <code class="font-mono">aria-expanded</code>; los campos
-        escondidos no están en el DOM, así que Tab no los cruza.
-      </li>
-      <li>
-        El × de cada chip se nombra con su campo («Quitar el filtro Almacén»), y «Limpiar filtros»
-        es un botón real.
-      </li>
+      <li>{{ 'showroom.patternFilters.a11y.label' | transloco }}</li>
+      <li [ewmsProse]="'showroom.patternFilters.a11y.moreFilters' | transloco"></li>
+      <li [ewmsProse]="'showroom.patternFilters.a11y.chip' | transloco"></li>
     </ul>
   </section>
 </article>

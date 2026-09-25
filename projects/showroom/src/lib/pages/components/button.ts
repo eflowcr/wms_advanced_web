@@ -8,29 +8,42 @@ import {
   signal,
 } from '@angular/core';
 import { Button, DESIGN_SYSTEM_VERSION, type ButtonVariant } from '@ewms/design-system';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { DemoFrame } from '../../ui/demo-frame';
 import { ANATOMY_COLUMNS, DocTable } from '../../ui/doc-table';
 import { PropTable, type PropRow } from '../../ui/prop-table';
+import { Prose } from '../../ui/prose';
 import { StateMatrix, type MatrixAxis } from '../../ui/state-matrix';
 import { TokenValue } from '../../ui/token-value';
+import { ROW_SAMPLE } from './button.fixtures';
 
 /** Cuánto dura en Loading la demo de doble envío. */
 export const DEMO_LOADING_MS = 1800;
 
+/**
+ * Los nombres canónicos se leen igual en los dos idiomas, pero pasan por clave.
+ * t(showroom.button.variants.names.primary, showroom.button.variants.names.secondary,
+ *   showroom.button.variants.names.danger, showroom.button.variants.names.ghost,
+ *   showroom.button.variants.names.link)
+ */
 const VARIANTS: readonly MatrixAxis[] = [
-  { id: 'primary', label: 'Primary' },
-  { id: 'secondary', label: 'Secondary' },
-  { id: 'danger', label: 'Danger' },
-  { id: 'ghost', label: 'Ghost' },
-  { id: 'link', label: 'Link' },
+  { id: 'primary', label: 'showroom.button.variants.names.primary' },
+  { id: 'secondary', label: 'showroom.button.variants.names.secondary' },
+  { id: 'danger', label: 'showroom.button.variants.names.danger' },
+  { id: 'ghost', label: 'showroom.button.variants.names.ghost' },
+  { id: 'link', label: 'showroom.button.variants.names.link' },
 ];
 
+/**
+ * t(showroom.common.states.default, showroom.common.states.hover, showroom.common.states.focus,
+ *   showroom.common.states.disabled, showroom.common.states.loading)
+ */
 const STATES: readonly MatrixAxis[] = [
-  { id: 'default', label: 'Default' },
-  { id: 'hover', label: 'Hover' },
-  { id: 'focus', label: 'Focus' },
-  { id: 'disabled', label: 'Disabled' },
-  { id: 'loading', label: 'Loading' },
+  { id: 'default', label: 'showroom.common.states.default' },
+  { id: 'hover', label: 'showroom.common.states.hover' },
+  { id: 'focus', label: 'showroom.common.states.focus' },
+  { id: 'disabled', label: 'showroom.common.states.disabled' },
+  { id: 'loading', label: 'showroom.common.states.loading' },
 ];
 
 /** Lleva los ids de la plantilla a la unión del componente sin conversión. */
@@ -71,119 +84,137 @@ const FORCED: Readonly<Record<string, Readonly<Record<string, string>>>> = {
 /**
  * Verificada contra button.ts, no contra la ficha del vault: si discrepan gana el
  * código y se corrige la ficha (ver la nota sobre (click) en el bloque de contrato).
+ * t(showroom.button.props.variant, showroom.button.props.size, showroom.button.props.icon,
+ *   showroom.button.props.iconPosition, showroom.button.props.disabled,
+ *   showroom.button.props.loading, showroom.button.props.iconOnly, showroom.button.props.label,
+ *   showroom.button.props.pressedExpanded, showroom.button.props.controls,
+ *   showroom.button.props.type, showroom.button.props.content)
  */
 const PROPS: readonly PropRow[] = [
   {
     name: 'variant',
     type: "'primary' | 'secondary' | 'danger' | 'ghost' | 'link'",
     default: "'primary'",
-    description:
-      'El énfasis. Una sola Primary por vista o formulario. Link es texto sin caja, en sm y md, para acciones dentro de un aviso o una línea.',
+    description: 'showroom.button.props.variant',
   },
   {
     name: 'size',
     type: "'sm' | 'md' | 'lg'",
     default: "'md'",
-    description: 'Las tres alturas de control, compartidas con Input y Select.',
+    description: 'showroom.button.props.size',
   },
   {
     name: 'icon',
     type: 'IconName | null',
     default: 'null',
-    description:
-      'Nombre del catálogo cerrado. Un nombre fuera de la lista no compila. Se renderiza sin label: es decorativo, el texto del botón ya lo dice.',
+    description: 'showroom.button.props.icon',
   },
   {
     name: 'iconPosition',
     type: "'left' | 'right'",
     default: "'left'",
-    description: 'Sólo aplica si hay icono.',
+    description: 'showroom.button.props.iconPosition',
   },
   {
     name: 'disabled',
     type: 'boolean',
     default: 'false',
-    description: 'Independiente de loading. Usa el atributo nativo disabled.',
+    description: 'showroom.button.props.disabled',
   },
   {
     name: 'loading',
     type: 'boolean',
     default: 'false',
-    description:
-      'Oculta el contenido sin cambiar el tamaño, pone aria-busy y aria-disabled, e ignora el click. No usa el disabled nativo, para no perder el foco.',
+    description: 'showroom.button.props.loading',
   },
   {
     name: 'iconOnly',
     type: 'boolean',
     default: 'false',
-    description: 'Sin texto visible: caja cuadrada, y label pasa a ser el nombre y el tooltip.',
+    description: 'showroom.button.props.iconOnly',
   },
   {
     name: 'label',
     type: 'string | null',
     default: 'null',
-    description: 'Obligatoria con iconOnly (error en modo desarrollo). Llega traducida.',
+    description: 'showroom.button.props.label',
   },
   {
     name: 'pressed / expanded',
     type: 'boolean | null',
     default: 'null',
-    description: 'aria-pressed y aria-expanded. Null los deja fuera: no es un conmutador.',
+    description: 'showroom.button.props.pressedExpanded',
   },
   {
     name: 'controls',
     type: 'string | null',
     default: 'null',
-    description: 'aria-controls: el id del panel o menú que abre.',
+    description: 'showroom.button.props.controls',
   },
   {
     name: 'type',
     type: "'button' | 'submit'",
     default: "'button'",
-    description:
-      'Con submit, dentro de un <form>, Enter en cualquier campo envía. El default no cambia nada de lo que ya existía: un botón sólo envía si alguien lo escribió a propósito.',
+    description: 'showroom.button.props.type',
   },
   {
+    // El tipo es código; «texto proyectado» pasa a la descripción.
     name: '<ng-content>',
-    type: 'texto proyectado',
+    type: '—',
     default: '—',
-    description:
-      'El texto del botón. Llega traducido desde el consumidor: el sistema no habla ningún idioma.',
+    description: 'showroom.button.props.content',
   },
 ];
 
+/**
+ * t(showroom.button.anatomy.parts.primaryBackground, showroom.button.anatomy.parts.hoverBackground,
+ *   showroom.button.anatomy.parts.activeBackground, showroom.button.anatomy.parts.onPrimary,
+ *   showroom.button.anatomy.parts.secondaryBackground,
+ *   showroom.button.anatomy.parts.secondaryBorder, showroom.button.anatomy.parts.ghostHover,
+ *   showroom.button.anatomy.parts.linkText, showroom.button.anatomy.parts.dangerBackground,
+ *   showroom.button.anatomy.parts.disabledBackground, showroom.button.anatomy.parts.disabledText,
+ *   showroom.button.anatomy.parts.radius, showroom.button.anatomy.parts.focusRing,
+ *   showroom.button.anatomy.parts.focusRingColour, showroom.button.anatomy.parts.fontSize,
+ *   showroom.button.anatomy.parts.fontWeight, showroom.button.anatomy.parts.iconMedium,
+ *   showroom.button.anatomy.parts.iconSmall)
+ */
 const ANATOMY = [
-  { part: 'Fondo, variante Primary', token: '--color-bg-primary' },
-  { part: 'Fondo en hover', token: '--color-bg-primary-hover' },
-  { part: 'Fondo en active', token: '--color-bg-primary-active' },
-  { part: 'Texto e icono sobre Primary y Danger', token: '--color-text-on-primary' },
-  { part: 'Fondo, variante Secondary', token: '--color-bg-secondary' },
-  { part: 'Borde, variante Secondary', token: '--color-border-strong' },
-  { part: 'Fondo de Ghost en hover', token: '--color-ghost-hover' },
-  { part: 'Texto de Link, en reposo y en hover', token: '--color-bg-primary-hover' },
-  { part: 'Fondo, variante Danger', token: '--color-bg-danger' },
-  { part: 'Fondo deshabilitado (Primary)', token: '--color-bg-primary-disabled' },
-  { part: 'Texto deshabilitado', token: '--color-text-disabled' },
-  { part: 'Radio de esquina', token: '--radius-control' },
-  { part: 'Anillo de foco (las dos bandas)', token: '--focus-ring-shadow' },
-  { part: 'Color del anillo', token: '--color-focus-ring' },
-  { part: 'Tipografía, tamaño Medium', token: '--text-control-md-size' },
-  { part: 'Tipografía, peso', token: '--text-control-weight' },
-  { part: 'Icono en Medium y Large', token: '--size-icon-md' },
-  { part: 'Icono en Small', token: '--size-icon-sm' },
+  { part: 'showroom.button.anatomy.parts.primaryBackground', token: '--color-bg-primary' },
+  { part: 'showroom.button.anatomy.parts.hoverBackground', token: '--color-bg-primary-hover' },
+  { part: 'showroom.button.anatomy.parts.activeBackground', token: '--color-bg-primary-active' },
+  { part: 'showroom.button.anatomy.parts.onPrimary', token: '--color-text-on-primary' },
+  { part: 'showroom.button.anatomy.parts.secondaryBackground', token: '--color-bg-secondary' },
+  { part: 'showroom.button.anatomy.parts.secondaryBorder', token: '--color-border-strong' },
+  { part: 'showroom.button.anatomy.parts.ghostHover', token: '--color-ghost-hover' },
+  { part: 'showroom.button.anatomy.parts.linkText', token: '--color-bg-primary-hover' },
+  { part: 'showroom.button.anatomy.parts.dangerBackground', token: '--color-bg-danger' },
+  {
+    part: 'showroom.button.anatomy.parts.disabledBackground',
+    token: '--color-bg-primary-disabled',
+  },
+  { part: 'showroom.button.anatomy.parts.disabledText', token: '--color-text-disabled' },
+  { part: 'showroom.button.anatomy.parts.radius', token: '--radius-control' },
+  { part: 'showroom.button.anatomy.parts.focusRing', token: '--focus-ring-shadow' },
+  { part: 'showroom.button.anatomy.parts.focusRingColour', token: '--color-focus-ring' },
+  { part: 'showroom.button.anatomy.parts.fontSize', token: '--text-control-md-size' },
+  { part: 'showroom.button.anatomy.parts.fontWeight', token: '--text-control-weight' },
+  { part: 'showroom.button.anatomy.parts.iconMedium', token: '--size-icon-md' },
+  { part: 'showroom.button.anatomy.parts.iconSmall', token: '--size-icon-sm' },
 ] as const;
 
 interface SizeSample {
   readonly size: 'sm' | 'md' | 'lg';
+  /** Clave del nombre del tamaño. */
   readonly label: string;
   /** Medido sobre el botón renderizado, nunca escrito a mano. */
   readonly height: string;
 }
 
+/** t(showroom.common.sizes.sm, showroom.common.sizes.md, showroom.common.sizes.lg) */
 const SIZE_SAMPLES: readonly SizeSample[] = [
-  { size: 'sm', label: 'Small', height: '…' },
-  { size: 'md', label: 'Medium', height: '…' },
-  { size: 'lg', label: 'Large', height: '…' },
+  { size: 'sm', label: 'showroom.common.sizes.sm', height: '…' },
+  { size: 'md', label: 'showroom.common.sizes.md', height: '…' },
+  { size: 'lg', label: 'showroom.common.sizes.lg', height: '…' },
 ];
 
 /**
@@ -192,7 +223,7 @@ const SIZE_SAMPLES: readonly SizeSample[] = [
  */
 @Component({
   selector: 'ewms-showroom-button',
-  imports: [Button, DemoFrame, DocTable, PropTable, StateMatrix, TokenValue],
+  imports: [Button, DemoFrame, DocTable, PropTable, Prose, StateMatrix, TokenValue, TranslocoPipe],
   templateUrl: './button.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -205,6 +236,7 @@ export class ShowroomButton {
   protected readonly props = PROPS;
   protected readonly anatomy = ANATOMY;
   protected readonly anatomyColumns = ANATOMY_COLUMNS;
+  protected readonly rowSample = ROW_SAMPLE;
 
   protected readonly sizes = signal<readonly SizeSample[]>(SIZE_SAMPLES);
   protected readonly iconSizes = signal<readonly SizeSample[]>(SIZE_SAMPLES);
@@ -237,7 +269,11 @@ export class ShowroomButton {
   }
 
   /** Solo ícono se mide en los dos ejes: el bloque existe para probar que es cuadrado. */
-  private measure(samples: readonly SizeSample[], attribute: string, square: boolean): SizeSample[] {
+  private measure(
+    samples: readonly SizeSample[],
+    attribute: string,
+    square: boolean,
+  ): SizeSample[] {
     return samples.map((sample) => {
       const box = this.host.nativeElement
         .querySelector(`[${attribute}="${sample.size}"] button`)

@@ -1,17 +1,31 @@
 import { Component, signal, type Type } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { expectNoAxeViolations } from '@ewms/testing';
+import { expectNoAxeViolations, provideI18nTesting } from '@ewms/testing';
+import { TranslocoService } from '@jsverse/transloco';
+import { firstValueFrom } from 'rxjs';
+import { SHOWROOM_SCOPE } from '../catalog';
+import { loadShowroomScope, SHOWROOM_DICTIONARIES, useSpanishBrowser } from '../showroom.testing';
 import { DemoFrame } from './demo-frame';
 import { PropTable, type PropRow } from './prop-table';
+import { parseProse, Prose } from './prose';
 import { StateMatrix, type MatrixAxis } from './state-matrix';
 import { TokenValue } from './token-value';
+import { translated } from './translated';
 
+// Los widgets traducen las claves que reciben: se montan con los diccionarios reales, en español.
 async function render<T>(component: Type<T>) {
-  await TestBed.configureTestingModule({ imports: [component] }).compileComponents();
+  useSpanishBrowser();
+  await TestBed.configureTestingModule({
+    imports: [component],
+    providers: [provideI18nTesting(SHOWROOM_DICTIONARIES)],
+  }).compileComponents();
+  await loadShowroomScope();
   const fixture = TestBed.createComponent(component);
   await fixture.whenStable();
   return { fixture, element: fixture.nativeElement as HTMLElement };
 }
+
+afterEach(() => vi.restoreAllMocks());
 
 describe('DemoFrame', () => {
   @Component({
@@ -132,8 +146,18 @@ describe('TokenValue', () => {
 
 describe('PropTable', () => {
   const rows: readonly PropRow[] = [
-    { name: 'variant', type: "'primary'", default: "'primary'", description: 'El énfasis.' },
-    { name: 'size', type: "'md'", default: "'md'", description: 'La altura.' },
+    {
+      name: 'position',
+      type: "'top'",
+      default: "'top'",
+      description: 'showroom.tooltip.props.position',
+    },
+    {
+      name: 'describes',
+      type: 'boolean',
+      default: 'false',
+      description: 'showroom.tooltip.props.describes',
+    },
   ];
 
   @Component({
@@ -149,7 +173,17 @@ describe('PropTable', () => {
     expect(element.querySelectorAll('tbody tr')).toHaveLength(2);
     expect(element.querySelectorAll('thead th')).toHaveLength(4);
     expect(element.querySelector('caption')?.textContent?.trim()).toBe('Propiedades');
-    expect(element.textContent).toContain('El énfasis.');
+    const headers = [...element.querySelectorAll('thead th')].map((th) => th.textContent?.trim());
+    expect(headers).toEqual(['Propiedad', 'Tipo', 'Default', 'Qué hace']);
+    expect(element.textContent).toContain('Colocación preferida.');
+  });
+
+  it('writes the description with its marks: code is code', async () => {
+    const { element } = await render(Host);
+    const description = element.querySelectorAll('tbody tr')[1]?.lastElementChild;
+    const code = [...(description?.querySelectorAll('code') ?? [])].map((c) => c.textContent);
+    expect(code).toContain('aria-describedby');
+    expect(description?.textContent).not.toContain('<code>');
   });
 
   it('has no accessibility violations', async () => {
@@ -160,13 +194,13 @@ describe('PropTable', () => {
 
 describe('StateMatrix', () => {
   const variants: readonly MatrixAxis[] = [
-    { id: 'primary', label: 'Primary' },
-    { id: 'ghost', label: 'Ghost' },
+    { id: 'primary', label: 'showroom.common.sizes.sm' },
+    { id: 'ghost', label: 'showroom.common.sizes.lg' },
   ];
   const states: readonly MatrixAxis[] = [
-    { id: 'default', label: 'Default' },
-    { id: 'hover', label: 'Hover' },
-    { id: 'focus', label: 'Focus' },
+    { id: 'default', label: 'showroom.common.states.default' },
+    { id: 'hover', label: 'showroom.common.states.hover' },
+    { id: 'focus', label: 'showroom.common.states.focus' },
   ];
 
   @Component({
@@ -202,11 +236,138 @@ describe('StateMatrix', () => {
     const columns = [...element.querySelectorAll('thead th')].map((th) => th.textContent?.trim());
     expect(columns).toEqual(['Variante', 'Default', 'Hover', 'Focus']);
     const rows = [...element.querySelectorAll('tbody th')].map((th) => th.textContent?.trim());
-    expect(rows).toEqual(['Primary', 'Ghost']);
+    expect(rows).toEqual(['Small', 'Large']);
   });
 
   it('has no accessibility violations', async () => {
     const { element } = await render(Host);
     await expectNoAxeViolations(element);
+  });
+});
+
+describe('Prose', () => {
+  it('reads plain text as one text node', () => {
+    expect(parseProse('Sin marcas.')).toEqual({
+      nodes: [{ kind: 'text', text: 'Sin marcas.' }],
+      errors: [],
+    });
+  });
+
+  it('turns each mark into its node, and keeps the spaces the text brings', () => {
+    const { nodes, errors } = parseProse(
+      'Pulse <kbd>Esc</kbd> y <b>cierra <code>ewms-dialog</code></b>, <i>sin</i> <mono>1.2</mono>.',
+    );
+    expect(errors).toEqual([]);
+    expect(nodes).toEqual([
+      { kind: 'text', text: 'Pulse ' },
+      { kind: 'kbd', text: 'Esc' },
+      { kind: 'text', text: ' y ' },
+      {
+        kind: 'strong',
+        children: [
+          { kind: 'text', text: 'cierra ' },
+          { kind: 'code', text: 'ewms-dialog' },
+        ],
+      },
+      { kind: 'text', text: ', ' },
+      { kind: 'em', children: [{ kind: 'text', text: 'sin' }] },
+      { kind: 'text', text: ' ' },
+      { kind: 'mono', text: '1.2' },
+      { kind: 'text', text: '.' },
+    ]);
+  });
+
+  it('keeps everything inside code literal, markup included', () => {
+    expect(parseProse('<code><ewms-table></code> y <code><b></code>').nodes).toEqual([
+      { kind: 'code', text: '<ewms-table>' },
+      { kind: 'text', text: ' y ' },
+      { kind: 'code', text: '<b>' },
+    ]);
+  });
+
+  it('shows a mark without its closing tag as text, and says so', () => {
+    const { nodes, errors } = parseProse('Uno <b>dos');
+    expect(nodes).toEqual([
+      { kind: 'text', text: 'Uno ' },
+      { kind: 'text', text: '<b>dos' },
+    ]);
+    expect(errors).toEqual(['<b> without </b>']);
+  });
+
+  it('flattens an emphasis inside another one, and says so', () => {
+    const { nodes, errors } = parseProse('<b>uno <i>dos</i></b>');
+    expect(nodes).toEqual([
+      {
+        kind: 'strong',
+        children: [
+          { kind: 'text', text: 'uno ' },
+          { kind: 'text', text: 'dos' },
+        ],
+      },
+    ]);
+    expect(errors).toEqual(['<i> inside another emphasis']);
+  });
+
+  // Una marca rota en el diccionario se vería como texto crudo en una sola página: acá falla antes.
+  it('finds no broken mark in any text of the catalogue dictionary', () => {
+    const texts = (node: unknown, path: string): [string, string][] =>
+      typeof node === 'string'
+        ? [[path, node]]
+        : Object.entries(node as Record<string, unknown>).flatMap(([k, v]) =>
+            texts(v, path + '.' + k),
+          );
+    const dictionaries = [
+      ['es', SHOWROOM_DICTIONARIES[`${SHOWROOM_SCOPE}/es`]],
+      ['en', SHOWROOM_DICTIONARIES[`${SHOWROOM_SCOPE}/en`]],
+    ] as const;
+    const broken = dictionaries.flatMap(([lang, dictionary]) =>
+      texts(dictionary, lang)
+        .map(([path, text]) => [path, parseProse(text).errors] as const)
+        .filter(([, errors]) => errors.length > 0),
+    );
+    expect(broken).toEqual([]);
+  });
+
+  @Component({
+    imports: [Prose],
+    template: `<p [ewmsProse]="text()"></p>`,
+  })
+  class Host {
+    readonly text = signal('Pulse <kbd>Esc</kbd> para <b>cerrar <code>ewms-dialog</code></b>.');
+  }
+
+  it('builds the elements, without innerHTML and without adding a space', async () => {
+    const { element } = await render(Host);
+    const paragraph = element.querySelector('p');
+    expect(paragraph?.textContent).toBe('Pulse Esc para cerrar ewms-dialog.');
+    expect(paragraph?.querySelector('kbd')?.textContent).toBe('Esc');
+    expect(paragraph?.querySelector('strong code')?.textContent).toBe('ewms-dialog');
+  });
+
+  it('follows its text', async () => {
+    const { fixture, element } = await render(Host);
+    fixture.componentInstance.text.set('<i>otro</i>');
+    await fixture.whenStable();
+    expect(element.querySelector('p em')?.textContent).toBe('otro');
+    expect(element.querySelector('p strong')).toBeNull();
+  });
+});
+
+describe('translated', () => {
+  it('builds its value with the texts of the language on screen, and follows a change', async () => {
+    useSpanishBrowser();
+    TestBed.configureTestingModule({ providers: [provideI18nTesting(SHOWROOM_DICTIONARIES)] });
+    await loadShowroomScope();
+    const value = TestBed.runInInjectionContext(() =>
+      translated((translate) => ({ label: translate('showroom.common.sections.demo') })),
+    );
+    expect(value().label).toBe('Demo principal');
+
+    const transloco = TestBed.inject(TranslocoService);
+    await firstValueFrom(transloco.load('en'));
+    await firstValueFrom(transloco.load(`${SHOWROOM_SCOPE}/en`));
+    transloco.setActiveLang('en');
+
+    expect(value().label).toBe('Main demo');
   });
 });

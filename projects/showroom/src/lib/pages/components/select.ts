@@ -15,13 +15,15 @@ import {
   Select,
   type FieldSize,
   type SearchDisplay,
-  type SelectOption,
 } from '@ewms/design-system';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { DemoFrame } from '../../ui/demo-frame';
-import { ANATOMY_COLUMNS, DocTable } from '../../ui/doc-table';
+import { ANATOMY_COLUMNS, DocTable, type DocColumn } from '../../ui/doc-table';
 import { PropTable, type PropRow } from '../../ui/prop-table';
+import { Prose } from '../../ui/prose';
 import { StateMatrix, type MatrixAxis } from '../../ui/state-matrix';
 import { TokenValue } from '../../ui/token-value';
+import { translated } from '../../ui/translated';
 import { formatBox, formatHeight, rectOf, widthOf } from './measure';
 import {
   CATALOGUE,
@@ -30,23 +32,27 @@ import {
   type Article,
   type SourceBehaviour,
 } from './search-catalogue';
+import { LOCATION_OPTIONS, RACK_OPTIONS } from './select.fixtures';
 
 /**
  * Solo estados reales del campo cerrado. Sin Focus ni Open, por lo mismo que en
  * Input (borde en línea atado a una señal); además el panel abierto vive en un
  * overlay del CDK fuera de la tabla.
+ * t(showroom.common.states.default, showroom.select.states.withSelection,
+ *   showroom.common.states.error, showroom.common.states.disabled)
  */
 const STATES: readonly MatrixAxis[] = [
-  { id: 'default', label: 'Default' },
-  { id: 'selected', label: 'Con selección' },
-  { id: 'error', label: 'Error' },
-  { id: 'disabled', label: 'Disabled' },
+  { id: 'default', label: 'showroom.common.states.default' },
+  { id: 'selected', label: 'showroom.select.states.withSelection' },
+  { id: 'error', label: 'showroom.common.states.error' },
+  { id: 'disabled', label: 'showroom.common.states.disabled' },
 ];
 
+/** t(showroom.common.sizes.sm, showroom.common.sizes.md, showroom.common.sizes.lg) */
 const SIZES: readonly MatrixAxis[] = [
-  { id: 'sm', label: 'Small' },
-  { id: 'md', label: 'Medium' },
-  { id: 'lg', label: 'Large' },
+  { id: 'sm', label: 'showroom.common.sizes.sm' },
+  { id: 'md', label: 'showroom.common.sizes.md' },
+  { id: 'lg', label: 'showroom.common.sizes.lg' },
 ];
 
 const SIZE_BY_ID: Readonly<Record<string, FieldSize>> = { sm: 'sm', md: 'md', lg: 'lg' };
@@ -54,157 +60,209 @@ const SIZE_BY_ID: Readonly<Record<string, FieldSize>> = { sm: 'sm', md: 'md', lg
 /** Tamaño único del chevron en píxeles CSS: sm en todos los tamaños de campo. */
 const CHEVRON_SIZE = 16;
 
-const OPTIONS: readonly SelectOption[] = [
-  { value: 'central', label: 'Almacén central' },
-  { value: 'muelle-3', label: 'Muelle 3' },
-  { value: 'cuarentena', label: 'Cuarentena' },
-  { value: 'devoluciones', label: 'Devoluciones' },
-  { value: 'transito', label: 'En tránsito' },
-];
-
-/** La lista corta de la demo: con tres opciones se elige igual de rápido con teclado. */
-const STATES_3: readonly SelectOption[] = [
-  { value: 'abierta', label: 'Abierta' },
-  { value: 'preparacion', label: 'En preparación' },
-  { value: 'despachada', label: 'Despachada' },
-];
-
-/** Veinticuatro: la lista larga filtra en memoria, sin fuente. */
-const LOCATIONS: readonly SelectOption[] = Array.from({ length: 24 }, (_unused, index) => {
-  const aisle = String.fromCharCode(65 + Math.floor(index / 6));
-  const rack = String((index % 6) + 1).padStart(2, '0');
-  return { value: `${aisle}-${rack}`, label: `Pasillo ${aisle}, rack ${rack}` };
-});
-
-/** Los estados de la búsqueda no se pueden congelar: la matriz es una tabla de hechos. */
+/**
+ * Los estados de la búsqueda no se pueden congelar: la matriz es una tabla de hechos.
+ * t(showroom.select.searchStates.rows.idle, showroom.select.searchStates.rows.searching,
+ *   showroom.select.searchStates.rows.empty, showroom.select.searchStates.rows.error,
+ *   showroom.select.searchStates.rows.more)
+ */
 const SEARCH_VARIANTS: readonly MatrixAxis[] = [
-  { id: 'idle', label: 'Sin escribir' },
-  { id: 'searching', label: 'Buscando' },
-  { id: 'empty', label: 'Sin resultados' },
-  { id: 'error', label: 'Error del servicio' },
-  { id: 'more', label: 'Hay más páginas' },
+  { id: 'idle', label: 'showroom.select.searchStates.rows.idle' },
+  { id: 'searching', label: 'showroom.select.searchStates.rows.searching' },
+  { id: 'empty', label: 'showroom.select.searchStates.rows.empty' },
+  { id: 'error', label: 'showroom.select.searchStates.rows.error' },
+  { id: 'more', label: 'showroom.select.searchStates.rows.more' },
 ];
 
+/**
+ * t(showroom.select.searchStates.columns.where, showroom.select.searchStates.columns.announce,
+ *   showroom.select.searchStates.columns.value)
+ */
 const SEARCH_COLUMNS: readonly MatrixAxis[] = [
-  { id: 'where', label: 'Dónde se ve' },
-  { id: 'announce', label: 'Qué se anuncia' },
-  { id: 'value', label: 'Qué pasa con el valor' },
+  { id: 'where', label: 'showroom.select.searchStates.columns.where' },
+  { id: 'announce', label: 'showroom.select.searchStates.columns.announce' },
+  { id: 'value', label: 'showroom.select.searchStates.columns.value' },
 ];
 
+/**
+ * La clave de cada hecho, por fila y columna.
+ * t(showroom.select.searchStates.facts.idle.where, showroom.select.searchStates.facts.idle.announce,
+ *   showroom.select.searchStates.facts.idle.value,
+ *   showroom.select.searchStates.facts.searching.where,
+ *   showroom.select.searchStates.facts.searching.announce,
+ *   showroom.select.searchStates.facts.searching.value,
+ *   showroom.select.searchStates.facts.empty.where,
+ *   showroom.select.searchStates.facts.empty.announce,
+ *   showroom.select.searchStates.facts.empty.value,
+ *   showroom.select.searchStates.facts.error.where,
+ *   showroom.select.searchStates.facts.error.announce,
+ *   showroom.select.searchStates.facts.error.value,
+ *   showroom.select.searchStates.facts.more.where, showroom.select.searchStates.facts.more.announce,
+ *   showroom.select.searchStates.facts.more.value)
+ */
 const SEARCH_FACTS: Readonly<Record<string, Readonly<Record<string, string>>>> = {
   idle: {
-    where: 'Nada. El panel no está en el documento.',
-    announce: 'Nada: la región viva está vacía.',
-    value: 'Intacto.',
+    where: 'showroom.select.searchStates.facts.idle.where',
+    announce: 'showroom.select.searchStates.facts.idle.announce',
+    value: 'showroom.select.searchStates.facts.idle.value',
   },
   searching: {
-    where: 'Fila con spinner al final del panel.',
-    announce: '«Buscando…»',
-    value: 'Intacto.',
+    where: 'showroom.select.searchStates.facts.searching.where',
+    announce: 'showroom.select.searchStates.facts.searching.announce',
+    value: 'showroom.select.searchStates.facts.searching.value',
   },
   empty: {
-    where: 'Fila en el panel, repitiendo el texto buscado.',
-    announce: '«Sin resultados para «X»»',
-    value: 'Intacto. Un texto sin coincidencias no borra lo elegido.',
+    where: 'showroom.select.searchStates.facts.empty.where',
+    announce: 'showroom.select.searchStates.facts.empty.announce',
+    value: 'showroom.select.searchStates.facts.empty.value',
   },
   error: {
-    where: 'Bloque bajo el campo, en el flujo, con botón de reintento.',
-    announce: '«No se pudo consultar el catálogo»',
-    value: 'Intacto, y el texto escrito tampoco se pierde.',
+    where: 'showroom.select.searchStates.facts.error.where',
+    announce: 'showroom.select.searchStates.facts.error.announce',
+    value: 'showroom.select.searchStates.facts.error.value',
   },
   more: {
-    where: 'Última fila del panel, alcanzable con las flechas.',
-    announce: '«N de M» — o «N resultados» si la fuente no cuenta.',
-    value: 'Intacto hasta que se elige una fila.',
+    where: 'showroom.select.searchStates.facts.more.where',
+    announce: 'showroom.select.searchStates.facts.more.announce',
+    value: 'showroom.select.searchStates.facts.more.value',
   },
 };
 
-/** Verificada contra select.ts. */
+/**
+ * Verificada contra select.ts.
+ * t(showroom.select.props.label, showroom.select.props.hideLabel, showroom.select.props.options,
+ *   showroom.select.props.source, showroom.select.props.display, showroom.select.props.value,
+ *   showroom.select.props.size, showroom.select.props.placeholderHint,
+ *   showroom.select.props.errorDisabled, showroom.select.props.messages)
+ */
 const PROPS: readonly PropRow[] = [
   {
     name: 'label',
     type: 'string',
-    default: '— (requerido)',
-    description: 'Visible, unida al campo por for/id.',
+    default: '—',
+    description: 'showroom.select.props.label',
   },
   {
     name: 'hideLabel',
     type: 'boolean',
     default: 'false',
-    description:
-      'La etiqueta sale de la vista y queda para la ayuda técnica, unida por for/id: el campo y la lista conservan su nombre.',
+    description: 'showroom.select.props.hideLabel',
   },
   {
     name: 'options',
     type: 'readonly SelectOption[] | readonly T[]',
     default: 'null',
-    description: 'Lista cerrada en memoria: abre entera y filtra al escribir, sin espera.',
+    description: 'showroom.select.props.options',
   },
   {
     name: 'source',
     type: 'SearchSource<T>',
     default: 'null',
-    description: 'Fuente del backend, paginada. Excluye a options: los dos juntos son un error.',
+    description: 'showroom.select.props.source',
   },
   {
     name: 'display',
     type: 'SearchDisplay<T>',
     default: 'null',
-    description: 'label(item) y code(item). Con display el valor es el registro entero.',
+    description: 'showroom.select.props.display',
   },
   {
     name: 'value',
     type: 'unknown',
     default: 'null',
-    description: 'El valor elegido. Siembra el control; después manda el formulario.',
+    description: 'showroom.select.props.value',
   },
   {
     name: 'size',
     type: "'sm' | 'md' | 'lg'",
     default: "'md'",
-    description: 'La misma escala del Input y del Botón: 32 / 40 / 48.',
+    description: 'showroom.select.props.size',
   },
   {
     name: 'placeholder · hint',
     type: 'string',
     default: "''",
-    description: 'Ya traducidos. El hint va por aria-describedby y se pone danger con error.',
+    description: 'showroom.select.props.placeholderHint',
   },
   {
     name: 'error · disabled',
     type: 'boolean',
     default: 'false',
-    description: 'Visual el primero; disabled se suma por OR al del formulario.',
+    description: 'showroom.select.props.errorDisabled',
   },
   {
     name: 'messages',
     type: 'Partial<SelectMessages>',
     default: 'null',
-    description: 'Pisa en una instancia los textos de EWMS_SELECT_MESSAGES, que se proveen una vez.',
+    description: 'showroom.select.props.messages',
   },
 ];
 
+/**
+ * t(showroom.select.anatomy.parts.background, showroom.select.anatomy.parts.borderDefault,
+ *   showroom.select.anatomy.parts.borderFocus, showroom.select.anatomy.parts.borderError,
+ *   showroom.select.anatomy.parts.errorBlock, showroom.select.anatomy.parts.focusRing,
+ *   showroom.select.anatomy.parts.disabled, showroom.select.anatomy.parts.secondaryText,
+ *   showroom.select.anatomy.parts.activeOption, showroom.select.anatomy.parts.radius,
+ *   showroom.select.anatomy.parts.elevation, showroom.select.anatomy.parts.selectedWeight,
+ *   showroom.select.anatomy.parts.iconSize, showroom.select.anatomy.parts.inputDelay,
+ *   showroom.select.anatomy.parts.timeout, showroom.select.anatomy.parts.scanThreshold)
+ */
 const ANATOMY = [
-  { part: 'Fondo del campo y del panel', token: '--color-surface' },
-  { part: 'Borde default', token: '--color-border-strong' },
-  { part: 'Borde en foco y con el panel abierto', token: '--color-bg-primary' },
-  { part: 'Borde en error, también el del servicio', token: '--color-bg-danger' },
-  { part: 'Fondo del bloque de error del servicio', token: '--color-danger-surface' },
-  { part: 'Anillo de foco (las dos bandas)', token: '--focus-ring-shadow' },
-  { part: 'Fondo deshabilitado', token: '--color-bg-secondary' },
-  { part: 'Placeholder, chevron y hint', token: '--color-text-secondary' },
-  { part: 'Fondo de la opción activa y del hover', token: '--color-ghost-hover' },
-  { part: 'Radio del campo y del panel', token: '--radius-control' },
-  { part: 'Elevación del panel', token: '--shadow-md' },
-  { part: 'Peso de la opción seleccionada', token: '--text-control-selected-weight' },
-  { part: 'Chevron y check, los tres tamaños', token: '--size-icon-sm' },
-  { part: 'Retardo entre la última tecla y la consulta', token: '--delay-search-input' },
-  { part: 'Cuánto se tolera que tarde la fuente', token: '--timeout-search' },
-  { part: 'Umbral de ráfaga de escáner, por tecla', token: '--threshold-scan-keystroke' },
+  { part: 'showroom.select.anatomy.parts.background', token: '--color-surface' },
+  { part: 'showroom.select.anatomy.parts.borderDefault', token: '--color-border-strong' },
+  { part: 'showroom.select.anatomy.parts.borderFocus', token: '--color-bg-primary' },
+  { part: 'showroom.select.anatomy.parts.borderError', token: '--color-bg-danger' },
+  { part: 'showroom.select.anatomy.parts.errorBlock', token: '--color-danger-surface' },
+  { part: 'showroom.select.anatomy.parts.focusRing', token: '--focus-ring-shadow' },
+  { part: 'showroom.select.anatomy.parts.disabled', token: '--color-bg-secondary' },
+  { part: 'showroom.select.anatomy.parts.secondaryText', token: '--color-text-secondary' },
+  { part: 'showroom.select.anatomy.parts.activeOption', token: '--color-ghost-hover' },
+  { part: 'showroom.select.anatomy.parts.radius', token: '--radius-control' },
+  { part: 'showroom.select.anatomy.parts.elevation', token: '--shadow-md' },
+  {
+    part: 'showroom.select.anatomy.parts.selectedWeight',
+    token: '--text-control-selected-weight',
+  },
+  { part: 'showroom.select.anatomy.parts.iconSize', token: '--size-icon-sm' },
+  { part: 'showroom.select.anatomy.parts.inputDelay', token: '--delay-search-input' },
+  { part: 'showroom.select.anatomy.parts.timeout', token: '--timeout-search' },
+  { part: 'showroom.select.anatomy.parts.scanThreshold', token: '--threshold-scan-keystroke' },
 ] as const;
+
+/**
+ * t(showroom.select.keyboard.columns.key, showroom.select.keyboard.columns.closed,
+ *   showroom.select.keyboard.columns.open)
+ */
+const KEYBOARD_COLUMNS: readonly DocColumn[] = [
+  { id: 'key', label: 'showroom.select.keyboard.columns.key' },
+  { id: 'closed', label: 'showroom.select.keyboard.columns.closed' },
+  { id: 'open', label: 'showroom.select.keyboard.columns.open' },
+];
+
+/**
+ * El contrato de teclado, una fila por tecla; la plantilla arma la clave con el id y la columna.
+ * t(showroom.select.keyboard.arrows.key, showroom.select.keyboard.arrows.closed,
+ *   showroom.select.keyboard.arrows.open, showroom.select.keyboard.enter.key,
+ *   showroom.select.keyboard.enter.closed, showroom.select.keyboard.enter.open,
+ *   showroom.select.keyboard.escape.key, showroom.select.keyboard.escape.closed,
+ *   showroom.select.keyboard.escape.open, showroom.select.keyboard.letters.key,
+ *   showroom.select.keyboard.letters.closed, showroom.select.keyboard.letters.open,
+ *   showroom.select.keyboard.tab.key, showroom.select.keyboard.tab.closed,
+ *   showroom.select.keyboard.tab.open)
+ */
+const KEYBOARD_ROWS = ['arrows', 'enter', 'escape', 'letters', 'tab'] as const;
+
+/**
+ * Clave del scope del catálogo para cada consulta registrada. Constante y marcador, no el literal
+ * en translate(): el extractor lo daría por clave del diccionario raíz.
+ * t(showroom.select.demo.queries.entry)
+ */
+const QUERY_ENTRY = 'showroom.select.demo.queries.entry';
 
 interface ChevronSample {
   readonly size: FieldSize;
+  /** Clave del nombre del tamaño. */
   readonly label: string;
   readonly trigger: string;
   readonly chevron: string;
@@ -215,28 +273,57 @@ interface ChevronSample {
  * /design-system/components/select: el único selector, y siempre busca (decisión del usuario,
  * 2026-09-22). Tres demos sobre el mismo campo: lista corta, lista larga y fuente remota.
  */
+/** t(showroom.select.states.rowHeader) */
+const STATES_ROW_HEADER = 'showroom.select.states.rowHeader';
+
 @Component({
   selector: 'ewms-showroom-select',
-  imports: [Button, FormField, Select, DemoFrame, DocTable, PropTable, StateMatrix, TokenValue],
+  imports: [
+    Button,
+    FormField,
+    Select,
+    DemoFrame,
+    DocTable,
+    PropTable,
+    Prose,
+    StateMatrix,
+    TokenValue,
+    TranslocoPipe,
+  ],
   templateUrl: './select.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ShowroomSelect {
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
+  private readonly transloco = inject(TranslocoService);
 
   protected readonly version = DESIGN_SYSTEM_VERSION;
-  protected readonly states3 = STATES_3;
+  protected readonly statesRowHeader = STATES_ROW_HEADER;
   protected readonly states = STATES;
   protected readonly sizes = SIZES;
-  protected readonly options = OPTIONS;
-  protected readonly locations = LOCATIONS;
+  protected readonly options = LOCATION_OPTIONS;
+  protected readonly locations = RACK_OPTIONS;
   protected readonly props = PROPS;
   protected readonly anatomy = ANATOMY;
   protected readonly anatomyColumns = ANATOMY_COLUMNS;
   protected readonly searchVariants = SEARCH_VARIANTS;
   protected readonly searchColumns = SEARCH_COLUMNS;
+  protected readonly keyboardColumns = KEYBOARD_COLUMNS;
+  protected readonly keyboardRows = KEYBOARD_ROWS;
   protected readonly pageSize = SEARCH_PAGE_SIZE;
   protected readonly catalogueSize = CATALOGUE.length;
+
+  /**
+   * La lista corta de la demo: con tres opciones se elige igual de rápido con teclado. Son nombres
+   * de estado, que la interfaz traduce; siguen al idioma.
+   * t(showroom.select.demo.short.options.open, showroom.select.demo.short.options.preparing,
+   *   showroom.select.demo.short.options.dispatched)
+   */
+  protected readonly states3 = translated((t) => [
+    { value: 'abierta', label: t('showroom.select.demo.short.options.open') },
+    { value: 'preparacion', label: t('showroom.select.demo.short.options.preparing') },
+    { value: 'despachada', label: t('showroom.select.demo.short.options.dispatched') },
+  ]);
 
   protected readonly model = signal<{
     estado: string | null;
@@ -278,17 +365,36 @@ export class ShowroomSelect {
   /** Código existente del catálogo sintético, para las instrucciones de escaneo. */
   protected readonly sampleCode = CATALOGUE[42]?.code ?? '';
 
+  /** t(showroom.common.sizes.sm, showroom.common.sizes.md, showroom.common.sizes.lg) */
   protected readonly chevrons = signal<readonly ChevronSample[]>([
-    { size: 'sm', label: 'Small', trigger: '…', chevron: '…', sameChevron: false },
-    { size: 'md', label: 'Medium', trigger: '…', chevron: '…', sameChevron: false },
-    { size: 'lg', label: 'Large', trigger: '…', chevron: '…', sameChevron: false },
+    {
+      size: 'sm',
+      label: 'showroom.common.sizes.sm',
+      trigger: '…',
+      chevron: '…',
+      sameChevron: false,
+    },
+    {
+      size: 'md',
+      label: 'showroom.common.sizes.md',
+      trigger: '…',
+      chevron: '…',
+      sameChevron: false,
+    },
+    {
+      size: 'lg',
+      label: 'showroom.common.sizes.lg',
+      trigger: '…',
+      chevron: '…',
+      sameChevron: false,
+    },
   ]);
 
   protected readonly snippet = [
     '<!-- Lista cerrada en memoria: abre entera y filtra al escribir -->',
     '<ewms-select',
     '  [formField]="alta.estado"',
-    "  [label]=\"'recepciones.estado' | transloco\"",
+    '  [label]="\'recepciones.estado\' | transloco"',
     '  [options]="estados()"',
     '/>',
     '',
@@ -297,7 +403,7 @@ export class ShowroomSelect {
     '  [formField]="alta.articulo"',
     '  [source]="catalogo"',
     '  [display]="{ label: a => a.codigo, code: a => a.codigo }"',
-    "  [label]=\"'recepciones.articulo' | transloco\"",
+    '  [label]="\'recepciones.articulo\' | transloco"',
     '/>',
   ].join('\n');
 
@@ -349,17 +455,22 @@ export class ShowroomSelect {
     return id === 'disabled';
   }
 
-  /** Etiqueta de la opción que tiene el formulario, para la lectura en vivo. */
-  protected chosenLabel(): string {
+  /**
+   * Etiqueta de la opción que tiene el formulario, para la lectura en vivo; null si ninguna
+   * opción lleva ese valor (la plantilla dice «sin elegir»).
+   */
+  protected chosenLabel(): string | null {
     const value = this.chosen();
-    return STATES_3.find((option) => option.value === value)?.label ?? '(sin elegir)';
+    return this.states3().find((option) => option.value === value)?.label ?? null;
   }
 
+  /** El registro elegido como se lee; null si no hay (la plantilla dice «ninguno»). */
   protected readonly articleLabel = computed(() => {
     const article = this.article();
-    return article ? `${article.code} · ${article.name}` : '(ninguno)';
+    return article ? `${article.code} · ${article.name}` : null;
   });
 
+  /** Clave del hecho de una celda de la matriz de la búsqueda; vacía si la celda no existe. */
   protected fact(variantId: string, columnId: string): string {
     return SEARCH_FACTS[variantId]?.[columnId] ?? '';
   }
@@ -377,6 +488,7 @@ export class ShowroomSelect {
   }
 
   private recordQuery(query: string, page: number): void {
-    this.queries.update((current) => [`«${query}» · página ${page}`, ...current].slice(0, 6));
+    const entry = this.transloco.translate(QUERY_ENTRY, { query, page });
+    this.queries.update((current) => [entry, ...current].slice(0, 6));
   }
 }

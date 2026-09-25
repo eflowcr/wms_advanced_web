@@ -7,6 +7,7 @@ import {
   input,
   signal,
 } from '@angular/core';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { TokenReader } from './token-reader';
 import { referencedTokens, type TokenChain } from './tokens';
 
@@ -18,6 +19,7 @@ import { referencedTokens, type TokenChain } from './tokens';
 @Component({
   selector: 'ewms-token-value',
   templateUrl: './token-value.html',
+  imports: [TranslocoPipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { class: 'contents' },
 })

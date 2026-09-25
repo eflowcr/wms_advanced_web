@@ -1,65 +1,52 @@
-<!-- Showroom solo en español, exento de i18n (compuerta 12): se declara para que el lector de pantalla no lo lea en inglés. -->
-<article class="flex flex-col gap-10" lang="es">
+<article class="flex flex-col gap-10">
   <!-- ============================================================ 1. Encabezado -->
   <header class="flex flex-col gap-2" data-block="1-encabezado">
     <div class="flex flex-wrap items-baseline gap-3">
-      <h1 class="text-h1">Atajos de teclado</h1>
+      <h1 class="text-h1">{{ 'showroom.catalog.patternKeyboard.name' | transloco }}</h1>
       <code class="font-mono text-primary">KeyboardShortcuts</code>
       <code class="font-mono text-primary">[ewmsShortcutsHost]</code>
     </div>
     <ul class="flex flex-wrap gap-2 text-caption">
-      <li class="rounded-sm bg-secondary px-2 py-1 text-secondary">
-        Versión <span class="font-mono">{{ version }}</span>
+      <li
+        class="rounded-sm bg-secondary px-2 py-1 text-secondary"
+        [ewmsProse]="'showroom.common.header.version' | transloco: { version }"
+      ></li>
+      <li class="rounded-sm bg-success-surface px-2 py-1 text-success">
+        {{ 'showroom.common.header.built' | transloco }}
       </li>
-      <li class="rounded-sm bg-success-surface px-2 py-1 text-success">Construido y en verde</li>
-      <li class="rounded-sm bg-secondary px-2 py-1 text-secondary">
-        Ficha: <span class="font-mono">08-Sistema-de-Diseno/Componentes/Atajos-de-Teclado.md</span>
-      </li>
-      <li class="rounded-sm bg-secondary px-2 py-1 text-secondary">
-        REQ: <span class="font-mono">REQ-FE-DS4-001</span>
-      </li>
+      <li
+        class="rounded-sm bg-secondary px-2 py-1 text-secondary"
+        [ewmsProse]="
+          'showroom.common.header.sheet'
+            | transloco: { path: '08-Sistema-de-Diseno/Componentes/Atajos-de-Teclado.md' }
+        "
+      ></li>
+      <li
+        class="rounded-sm bg-secondary px-2 py-1 text-secondary"
+        [ewmsProse]="'showroom.patternKeyboard.header.req' | transloco: { id: 'REQ-FE-DS4-001' }"
+      ></li>
     </ul>
   </header>
 
   <!-- ================================================ 2. Qué resuelve / cuándo no -->
   <section class="flex flex-col gap-4" aria-labelledby="kb-purpose" data-block="2-proposito">
-    <h2 id="kb-purpose" class="text-h2">Qué resuelve, y cuándo NO usarlo</h2>
+    <h2 id="kb-purpose" class="text-h2">{{ 'showroom.common.sections.purpose' | transloco }}</h2>
     <div class="grid grid-cols-[repeat(auto-fit,minmax(min(20rem,100%),1fr))] gap-4">
       <div class="flex flex-col gap-2 rounded-md border border-default bg-surface p-4">
-        <h3 class="text-h3">Qué resuelve</h3>
-        <p>
-          Que las cuatro acciones que un operario repite todo el día —buscar, crear, guardar,
-          cancelar— se hagan <strong>sin soltar el teclado</strong>, con las mismas teclas en toda
-          la aplicación.
-        </p>
-        <p>
-          Y que una <strong>pistola de códigos de barras</strong>, que se presenta al sistema como
-          un teclado, no active ninguna por accidente. Ese es el requisito que manda: el modo de
-          fallo no es una molestia de interfaz, es un movimiento de inventario equivocado.
-        </p>
-        <p class="text-caption text-secondary">
-          Una pantalla registra <strong>la acción</strong>, nunca la tecla. El mapa acción → tecla
-          vive en un solo archivo por aplicación, y la ayuda de <kbd class="font-mono">?</kbd> lo
-          lee: agregar un atajo no obliga a tocar la ayuda.
-        </p>
+        <h3 class="text-h3">{{ 'showroom.common.sections.solves' | transloco }}</h3>
+        <p [ewmsProse]="'showroom.patternKeyboard.purpose.solves' | transloco"></p>
+        <p [ewmsProse]="'showroom.patternKeyboard.purpose.scanner' | transloco"></p>
+        <p
+          class="text-caption text-secondary"
+          [ewmsProse]="'showroom.patternKeyboard.purpose.byAction' | transloco"
+        ></p>
       </div>
       <div class="flex flex-col gap-2 rounded-md border border-danger bg-danger-surface p-4">
-        <h3 class="text-h3">Cuándo NO usarlo</h3>
+        <h3 class="text-h3">{{ 'showroom.common.sections.avoid' | transloco }}</h3>
         <ul class="flex flex-col gap-2">
-          <li>
-            <strong>Si el atajo es la única manera de hacer algo, está mal.</strong> WCAG 2.1.1:
-            todo lo que un atajo hace se tiene que poder hacer también con Tab y Enter. El atajo
-            acelera; no sustituye al botón.
-          </li>
-          <li>
-            <strong>Si es de una sola pantalla, todavía no va acá.</strong> Este mapa cubre los
-            atajos <em>globales</em>. Los de dominio llegan con el primer dominio vertical (DS-6).
-          </li>
-          <li>
-            <strong>No reemplaza una comprobación de permiso.</strong> Un atajo cuya acción el
-            usuario no puede ejecutar simplemente no se registra, y eso no autoriza nada: la
-            autorización es del backend.
-          </li>
+          <li [ewmsProse]="'showroom.patternKeyboard.purpose.notTheOnlyWay' | transloco"></li>
+          <li [ewmsProse]="'showroom.patternKeyboard.purpose.notOneScreen' | transloco"></li>
+          <li [ewmsProse]="'showroom.patternKeyboard.purpose.notAPermission' | transloco"></li>
         </ul>
       </div>
     </div>
@@ -67,25 +54,14 @@
 
   <!-- ========================================================= 3. Demo principal -->
   <section class="flex flex-col gap-4" aria-labelledby="kb-demo" data-block="3-demo">
-    <h2 id="kb-demo" class="text-h2">Demo principal</h2>
-    <p class="text-secondary">
-      El registro es <strong>el de verdad</strong>, el de la aplicación entera. Esta página no
-      instala ninguna escucha propia —no podría: la compuerta
-      <code class="font-mono">lint:shortcuts</code> falla el build ante un
-      <code class="font-mono">keydown</code> global fuera del motor— y lo que la tabla muestra es
-      <strong>lo que el motor concluyó</strong>, no una deducción aparte.
-    </p>
+    <h2 id="kb-demo" class="text-h2">{{ 'showroom.common.sections.demo' | transloco }}</h2>
+    <p class="text-secondary" [ewmsProse]="'showroom.patternKeyboard.demo.intro' | transloco"></p>
 
-    <ewms-demo-frame
-      ground="surface"
-      label="Pulsá teclas con el foco acá afuera, o dentro del campo"
-    >
+    <ewms-demo-frame ground="surface" [label]="'showroom.patternKeyboard.demo.frame' | transloco">
       <div class="flex flex-col gap-4" data-demo-keyboard>
         @if (!mounted()) {
           <p class="rounded-md border border-warning bg-warning-surface p-3 text-caption">
-            Ningún layout raíz montó el motor, así que no hay mapa contra el que despachar. Es un
-            estado real —una página renderizada sola en un banco de pruebas— y se dice, no se
-            disimula.
+            {{ 'showroom.patternKeyboard.demo.notMounted' | transloco }}
           </p>
         }
 
@@ -93,23 +69,31 @@
           <ewms-input
             class="w-72"
             size="sm"
-            label="Un campo de texto, para ver la regla de «ningún atajo acá dentro»"
-            placeholder="Escribí una n, una barra, un signo de pregunta…"
+            [label]="'showroom.patternKeyboard.demo.field.label' | transloco"
+            [placeholder]="'showroom.patternKeyboard.demo.field.placeholder' | transloco"
           />
-          <ewms-button variant="secondary" size="sm" (click)="clear()">Limpiar el registro</ewms-button>
+          <ewms-button variant="secondary" size="sm" (click)="clear()">
+            {{ 'showroom.patternKeyboard.demo.clear' | transloco }}
+          </ewms-button>
         </div>
 
         <dl class="grid grid-cols-[repeat(auto-fit,minmax(min(12rem,100%),1fr))] gap-3">
           <div class="rounded-md border border-default bg-canvas p-3">
-            <dt class="text-caption text-secondary">Veces que se disparó «search»</dt>
+            <dt class="text-caption text-secondary">
+              {{ 'showroom.patternKeyboard.demo.searchHits' | transloco }}
+            </dt>
             <dd class="font-mono text-h3 text-primary" data-demo-search-hits>{{ searchHits() }}</dd>
           </div>
           <div class="rounded-md border border-default bg-canvas p-3">
-            <dt class="text-caption text-secondary">Veces que se disparó «create»</dt>
+            <dt class="text-caption text-secondary">
+              {{ 'showroom.patternKeyboard.demo.createHits' | transloco }}
+            </dt>
             <dd class="font-mono text-h3 text-primary" data-demo-create-hits>{{ createHits() }}</dd>
           </div>
           <div class="rounded-md border border-default bg-canvas p-3">
-            <dt class="text-caption text-secondary">Último escaneo completo</dt>
+            <dt class="text-caption text-secondary">
+              {{ 'showroom.patternKeyboard.demo.lastScan' | transloco }}
+            </dt>
             <dd class="font-mono text-h3 text-primary" data-demo-last-scan>
               {{ lastScan() ?? '—' }}
             </dd>
@@ -119,12 +103,8 @@
         <!-- Región viva: quien más necesita saber qué pasó con su tecla es quien no ve cambiar la tabla. -->
         <div role="status" aria-live="polite" data-demo-log>
           <ewms-doc-table
-            caption="Las últimas pulsaciones, clasificadas por el motor"
-            [columns]="[
-              { id: 'key', label: 'Tecla' },
-              { id: 'action', label: 'Acción' },
-              { id: 'outcome', label: 'Qué pasó, y por qué' },
-            ]"
+            [caption]="'showroom.patternKeyboard.demo.log.caption' | transloco"
+            [columns]="logColumns"
             [rows]="log()"
           >
             <ng-template let-line let-column="column">
@@ -137,53 +117,42 @@
                 }
                 @default {
                   <span [class]="toneFor(line.outcome)">
-                    <span class="font-mono">{{ line.outcome }}</span> — {{ meaningOf(line.outcome) }}
+                    <span class="font-mono">{{ line.outcome }}</span> —
+                    {{ meaningOf(line.outcome) | transloco }}
                   </span>
                 }
               }
             </ng-template>
           </ewms-doc-table>
           @if (log().length === 0) {
-            <p class="p-2 text-caption text-secondary">
-              Todavía no llegó ninguna tecla. Probá con
-              <kbd class="font-mono">/</kbd>, <kbd class="font-mono">Alt</kbd> +
-              <kbd class="font-mono">N</kbd>, <kbd class="font-mono">Ctrl</kbd> +
-              <kbd class="font-mono">S</kbd> o <kbd class="font-mono">?</kbd>.
-            </p>
+            <p
+              class="p-2 text-caption text-secondary"
+              [ewmsProse]="'showroom.patternKeyboard.demo.log.empty' | transloco"
+            ></p>
           }
         </div>
       </div>
     </ewms-demo-frame>
 
     <div class="flex flex-col gap-2 rounded-md border border-default bg-surface p-4">
-      <h3 class="text-h4">Cómo se simula un escáner sin tener uno</h3>
-      <p class="text-caption">
-        Una pistola escribe el código carácter por carácter y cierra con Enter, a unos 5–20 ms por
-        tecla. Pegar un texto con <kbd class="font-mono">Ctrl</kbd> + <kbd class="font-mono">V</kbd>
-        <strong>no sirve</strong>: un pegado es un solo evento y no tiene intervalos que medir. La
-        prueba de extremo a extremo lo hace con
-        <code class="font-mono">page.keyboard.type(codigo, &#123; delay: 5 &#125;)</code> seguido de
-        Enter, que es lo más parecido a un lector que se puede escribir.
-      </p>
+      <h3 class="text-h4">{{ 'showroom.patternKeyboard.demo.simulate.title' | transloco }}</h3>
+      <p
+        class="text-caption"
+        [ewmsProse]="'showroom.patternKeyboard.demo.simulate.text' | transloco"
+      ></p>
     </div>
   </section>
 
   <!-- =============================================================== 4. Variantes -->
   <section class="flex flex-col gap-4" aria-labelledby="kb-variants" data-block="4-variantes">
-    <h2 id="kb-variants" class="text-h2">Variantes</h2>
-    <p class="text-secondary">
-      No son variantes visuales: son las <strong>cinco acciones del mapa</strong>, con lo que cada
-      binding declara sobre sí mismo. Leído del motor en vivo, no escrito acá.
-    </p>
+    <h2 id="kb-variants" class="text-h2">{{ 'showroom.common.sections.variants' | transloco }}</h2>
+    <p
+      class="text-secondary"
+      [ewmsProse]="'showroom.patternKeyboard.variants.intro' | transloco"
+    ></p>
     <ewms-doc-table
-      caption="El mapa que el motor está despachando ahora mismo"
-      [columns]="[
-        { id: 'action', label: 'Acción' },
-        { id: 'chord', label: 'Tecla' },
-        { id: 'single', label: '¿Una sola tecla?' },
-        { id: 'inside', label: '¿Dentro de un campo?' },
-        { id: 'registered', label: '¿Registrada acá?' },
-      ]"
+      [caption]="'showroom.patternKeyboard.variants.caption' | transloco"
+      [columns]="bindingColumns"
       [rows]="bindings()"
       data-demo-bindings
     >
@@ -196,46 +165,52 @@
             <span class="font-mono">{{ binding.chord }}</span>
           }
           @case ('single') {
-            {{ binding.singleKey ? 'Sí — sujeta al conmutador de 2.1.4' : 'No' }}
+            {{
+              (binding.singleKey
+                ? 'showroom.patternKeyboard.variants.singleYes'
+                : 'showroom.patternKeyboard.variants.no'
+              ) | transloco
+            }}
           }
           @case ('inside') {
-            {{ binding.insideTextFields ? 'Sí' : 'No' }}
+            {{
+              (binding.insideTextFields
+                ? 'showroom.patternKeyboard.variants.yes'
+                : 'showroom.patternKeyboard.variants.no'
+              ) | transloco
+            }}
           }
           @default {
-            {{ binding.registered ? 'Sí' : 'No — por eso «unregistered» se puede ver' }}
+            {{
+              (binding.registered
+                ? 'showroom.patternKeyboard.variants.yes'
+                : 'showroom.patternKeyboard.variants.unregisteredNo'
+              ) | transloco
+            }}
           }
         }
       </ng-template>
     </ewms-doc-table>
-    <p class="text-caption text-secondary">
-      <strong><code class="font-mono">save</code> se deja sin registrar a propósito.</strong>
-      <code class="font-mono">Ctrl</code> + <code class="font-mono">S</code> sigue impidiendo que el
-      navegador guarde la página —eso lo declara el binding y vale haya o no manejador—, y así se
-      puede ver en la tabla de arriba el desenlace <code class="font-mono">unregistered</code>, que
-      de otro modo nadie miraría nunca.
-    </p>
+    <p
+      class="text-caption text-secondary"
+      [ewmsProse]="'showroom.patternKeyboard.variants.saveUnregistered' | transloco"
+    ></p>
   </section>
 
   <!-- ==================================================== 5. Matriz de estados -->
   <section class="flex flex-col gap-4" aria-labelledby="kb-matrix" data-block="5-matriz">
-    <h2 id="kb-matrix" class="text-h2">Matriz de estados</h2>
-    <p class="text-secondary">
-      El orden de las comprobaciones <strong>es</strong> el diseño: cada fila solo se puede mover
-      aceptando un fallo que el requerimiento nombra.
-    </p>
+    <h2 id="kb-matrix" class="text-h2">{{ 'showroom.common.sections.states' | transloco }}</h2>
+    <p class="text-secondary" [ewmsProse]="'showroom.patternKeyboard.states.intro' | transloco"></p>
     <ewms-doc-table
-      caption="Los nueve desenlaces de una pulsación, en el orden en que se deciden"
-      [columns]="[
-        { id: 'outcome', label: 'Desenlace' },
-        { id: 'meaning', label: 'Qué significa' },
-      ]"
+      [caption]="'showroom.patternKeyboard.states.caption' | transloco"
+      [columns]="outcomeColumns"
       [rows]="outcomeRows"
     >
       <ng-template let-row let-column="column">
         @if (column.id === 'outcome') {
           <span class="font-mono">{{ row.outcome }}</span>
         } @else {
-          {{ row.meaning }}
+          {{ row.meaning | transloco }}
         }
       </ng-template>
     </ewms-doc-table>
@@ -243,98 +218,81 @@
 
   <!-- ============================================================= 6. Tamaños -->
   <section class="flex flex-col gap-4" aria-labelledby="kb-sizes" data-block="6-tamanos">
-    <h2 id="kb-sizes" class="text-h2">Tamaños</h2>
+    <h2 id="kb-sizes" class="text-h2">{{ 'showroom.common.sections.sizes' | transloco }}</h2>
     <div class="flex flex-col gap-2 rounded-md border border-strong bg-secondary p-4">
-      <h3 class="text-h4">No aplica — no es un control, es un motor</h3>
-      <p>
-        Lo único que se dibuja es el diálogo de ayuda, y toma su caja del Modal: un solo ancho, la
-        geometría y la elevación que ya decidió esa ficha. Un tamaño configurable acá sería un
-        segundo Modal con otro nombre.
-      </p>
+      <h3 class="text-h4">
+        {{ 'showroom.common.notApplicable' | transloco }} —
+        {{ 'showroom.patternKeyboard.sizes.reason' | transloco }}
+      </h3>
+      <p>{{ 'showroom.patternKeyboard.sizes.modal' | transloco }}</p>
     </div>
   </section>
 
   <!-- ===================================================== 7. Anatomía y tokens -->
   <section class="flex flex-col gap-4" aria-labelledby="kb-anatomy" data-block="7-anatomia">
-    <h2 id="kb-anatomy" class="text-h2">Anatomía y tokens</h2>
+    <h2 id="kb-anatomy" class="text-h2">{{ 'showroom.common.sections.anatomy' | transloco }}</h2>
     <ul class="flex flex-col gap-2">
       @for (item of anatomy; track item.token) {
         <li
           class="flex flex-wrap items-center gap-3 rounded-md border border-default bg-surface p-3"
         >
-          <span class="text-caption text-secondary">{{ item.part }}</span>
+          <span class="text-caption text-secondary">{{ item.part | transloco }}</span>
           <ewms-token-value [token]="item.token" />
         </li>
       }
     </ul>
     <div class="flex flex-col gap-2 rounded-md border border-default bg-surface p-4">
-      <h3 class="text-h4">
-        El umbral es configuración, y en el código no hay ningún número de milisegundos
-      </h3>
-      <p class="text-caption">
-        <code class="font-mono">--threshold-scan-keystroke</code> es el único valor que separa una
-        persona de una pistola, y es un token precisamente porque
-        <strong>todavía no se conoce el modelo de lector</strong> del piso de bodega. Los 50 ms de
-        hoy son una propuesta razonada —un humano rapidísimo sostiene unos 120 ms; un lector
-        industrial ronda los 5–20— y no una medición. Calibrarlo contra el lector real es un
-        pendiente declarado, no un olvido.
-      </p>
-      <p class="text-caption">
-        Además del intervalo hacen falta <strong>{{ minKeystrokes }} teclas seguidas</strong> por
-        debajo del umbral antes de que una racha cuente como escaneo. Dos no alcanzan: dos teclas
-        rápidas pasan cuando alguien escribe «SK» con las dos manos. Un código de barras nunca tiene
-        dos caracteres, así que pedir cuatro no le cuesta nada a un escaneo real.
-      </p>
+      <h3 class="text-h4">{{ 'showroom.patternKeyboard.anatomy.threshold.title' | transloco }}</h3>
+      <p
+        class="text-caption"
+        [ewmsProse]="'showroom.patternKeyboard.anatomy.threshold.proposal' | transloco"
+      ></p>
+      <p
+        class="text-caption"
+        [ewmsProse]="
+          'showroom.patternKeyboard.anatomy.threshold.minKeystrokes'
+            | transloco: { count: minKeystrokes }
+        "
+      ></p>
     </div>
   </section>
 
   <!-- ============================================== 8. Contrato para Angular -->
   <section class="flex flex-col gap-4" aria-labelledby="kb-contract" data-block="8-contrato">
-    <h2 id="kb-contract" class="text-h2">Contrato para Angular</h2>
+    <h2 id="kb-contract" class="text-h2">{{ 'showroom.common.sections.contract' | transloco }}</h2>
 
-    <ewms-prop-table [rows]="props" caption="API de KeyboardShortcuts y [ewmsShortcutsHost]" />
+    <ewms-prop-table
+      [rows]="props"
+      [caption]="'showroom.patternKeyboard.props.caption' | transloco"
+    />
 
-    <h3 class="text-h3">Las cinco reglas que no se negocian</h3>
+    <h3 class="text-h3">{{ 'showroom.patternKeyboard.rules.title' | transloco }}</h3>
     <ul class="flex flex-col gap-2">
-      <li class="rounded-md border border-default bg-surface p-3">
-        <strong>Ningún atajo dentro de un campo de texto</strong>, salvo el que su binding lo diga.
-        Hoy son dos: <code class="font-mono">cancel</code>, porque la mitad de las veces que alguien
-        quiere cancelar el foco está dentro del campo que está llenando; y
-        <code class="font-mono">save</code>, porque se pulsa Ctrl+S mientras se escribe
-        <em>en</em> el formulario que se quiere guardar.
-      </li>
-      <li class="rounded-md border border-default bg-surface p-3">
-        <strong>Ninguna tecla de una ráfaga activa un atajo.</strong> Y para el caso que la longitud
-        de la racha no puede atrapar —un código que <em>empieza</em> con una tecla de atajo— los
-        atajos de un solo carácter esperan un umbral antes de actuar. Si llega otra tecla dentro de
-        esa ventana, era una pistola y el atajo se cancela.
-      </li>
-      <li class="rounded-md border border-default bg-surface p-3">
-        <strong>Un solo listener en toda la aplicación.</strong> Montar un segundo
-        <code class="font-mono">[ewmsShortcutsHost]</code> lanza en el arranque en vez de duplicar
-        cada atajo en silencio, y la compuerta de código falla ante cualquier
-        <code class="font-mono">keydown</code> global fuera del motor.
-      </li>
-      <li class="rounded-md border border-default bg-surface p-3">
-        <strong>El mapa acción → tecla vive en un solo archivo por aplicación.</strong> Registrar
-        dos veces la misma acción lanza; un registro se retira solo cuando su pantalla se destruye.
-      </li>
-      <li class="rounded-md border border-default bg-surface p-3">
-        <strong>Los atajos de una sola tecla se pueden apagar</strong> desde la propia ayuda. Es
-        WCAG 2.2 <strong>2.1.4 (Character Key Shortcuts)</strong>, y no lo cubre la regla del campo
-        de texto: existe para quien usa entrada por voz, cuyas palabras se vuelven caracteres esté
-        donde esté el foco. La preferencia dura lo que dure la pestaña —recordarla necesita un
-        backend que todavía no existe.
-      </li>
+      <li
+        class="rounded-md border border-default bg-surface p-3"
+        [ewmsProse]="'showroom.patternKeyboard.rules.textField' | transloco"
+      ></li>
+      <li
+        class="rounded-md border border-default bg-surface p-3"
+        [ewmsProse]="'showroom.patternKeyboard.rules.burst' | transloco"
+      ></li>
+      <li
+        class="rounded-md border border-default bg-surface p-3"
+        [ewmsProse]="'showroom.patternKeyboard.rules.oneListener' | transloco"
+      ></li>
+      <li
+        class="rounded-md border border-default bg-surface p-3"
+        [ewmsProse]="'showroom.patternKeyboard.rules.oneFile' | transloco"
+      ></li>
+      <li
+        class="rounded-md border border-default bg-surface p-3"
+        [ewmsProse]="'showroom.patternKeyboard.rules.singleKey' | transloco"
+      ></li>
     </ul>
 
     <div class="flex flex-col gap-2 rounded-md border border-warning bg-warning-surface p-4">
-      <h3 class="text-h4">Hallazgo reportado: Alt+N y Ctrl+S contra un lector de pantalla</h3>
-      <p class="text-caption">
-        Las dos combinaciones están libres en Chrome sobre Windows, que es el navegador del piso de
-        bodega. Contra <strong>NVDA no se han probado</strong>, y el navegador definitivo tampoco
-        está fijado. Queda escrito en §15 del requerimiento en vez de darse por bueno.
-      </p>
+      <h3 class="text-h4">{{ 'showroom.patternKeyboard.finding.title' | transloco }}</h3>
+      <p class="text-caption" [ewmsProse]="'showroom.patternKeyboard.finding.text' | transloco"></p>
     </div>
   </section>
 </article>

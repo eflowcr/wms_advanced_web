@@ -9,39 +9,36 @@ import {
 } from '@angular/core';
 import { form as signalForm, FormField } from '@angular/forms/signals';
 import { Button, Card, CardGroup, DESIGN_SYSTEM_VERSION, Icon } from '@ewms/design-system';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { DemoFrame } from '../../ui/demo-frame';
-import { ANATOMY_COLUMNS, DocTable } from '../../ui/doc-table';
+import { ANATOMY_COLUMNS, DocTable, type DocColumn } from '../../ui/doc-table';
 import { PropTable, type PropRow } from '../../ui/prop-table';
+import { Prose } from '../../ui/prose';
 import { StateMatrix, type MatrixAxis } from '../../ui/state-matrix';
 import { TokenValue } from '../../ui/token-value';
+import { translated } from '../../ui/translated';
+import { CENTRAL, WAREHOUSES } from './card.fixtures';
 import { NOT_MEASURED } from './measure';
 
-interface Warehouse {
-  readonly value: string;
-  readonly name: string;
-  readonly meta: string;
-  readonly disabled: boolean;
-}
-
-/** Selector de almacén de la ficha; el cuarto no está disponible. */
-const WAREHOUSES: readonly Warehouse[] = [
-  { value: 'norte', name: 'Norte', meta: '4 muelles · 12 pasillos', disabled: false },
-  { value: 'central', name: 'Central', meta: '9 muelles · 34 pasillos', disabled: false },
-  { value: 'devoluciones', name: 'Devoluciones', meta: '1 muelle · 4 pasillos', disabled: false },
-  { value: 'sur', name: 'Sur', meta: 'En mantenimiento', disabled: true },
-];
-
+/** t(showroom.cards.states.option, showroom.cards.states.content) */
 const MATRIX_VARIANTS: readonly MatrixAxis[] = [
-  { id: 'option', label: 'Seleccionable (en grupo)' },
-  { id: 'content', label: 'De contenido (suelta)' },
+  { id: 'option', label: 'showroom.cards.states.option' },
+  { id: 'content', label: 'showroom.cards.states.content' },
 ];
 
+/**
+ * t(showroom.common.states.default, showroom.common.states.hover,
+ *   showroom.common.states.selected, showroom.common.states.disabled)
+ */
 const MATRIX_STATES: readonly MatrixAxis[] = [
-  { id: 'default', label: 'Default' },
-  { id: 'hover', label: 'Hover' },
-  { id: 'selected', label: 'Selected' },
-  { id: 'disabled', label: 'Disabled' },
+  { id: 'default', label: 'showroom.common.states.default' },
+  { id: 'hover', label: 'showroom.common.states.hover' },
+  { id: 'selected', label: 'showroom.common.states.selected' },
+  { id: 'disabled', label: 'showroom.common.states.disabled' },
 ];
+
+/** t(showroom.cards.states.rowHeader) */
+const MATRIX_ROW_HEADER = 'showroom.cards.states.rowHeader';
 
 /**
  * Hover forzado con el mismo token del componente. Vive en la página, no en el widget,
@@ -49,73 +46,99 @@ const MATRIX_STATES: readonly MatrixAxis[] = [
  */
 const FORCED_HOVER = '[&_[role=radio]]:border-(--color-border-strong)';
 
-/** Verificada contra card.ts y card-group.ts. */
+/**
+ * Verificada contra card.ts y card-group.ts.
+ * t(showroom.cards.props.optionValue, showroom.cards.props.cardDisabled, showroom.cards.props.value,
+ *   showroom.cards.props.label, showroom.cards.props.groupDisabled, showroom.cards.props.header,
+ *   showroom.cards.props.body, showroom.cards.props.footer)
+ */
 const PROPS: readonly PropRow[] = [
   {
     name: 'card: optionValue',
     type: 'unknown',
     default: 'null',
-    description:
-      'Cuánto vale esta card cuando es la elegida. Sin sentido fuera de un grupo. No se llama value: value es del grupo, que es a lo que se ata el formulario.',
+    description: 'showroom.cards.props.optionValue',
   },
   {
     name: 'card: disabled',
     type: 'boolean',
     default: 'false',
-    description: 'El disabled propio de la card. El del grupo se suma con OR, nunca se resta.',
+    description: 'showroom.cards.props.cardDisabled',
   },
   {
     name: 'group: value',
     type: 'unknown',
     default: 'null',
-    description: 'El valor elegido. Siembra el control; después manda writeValue, es decir el formulario.',
+    description: 'showroom.cards.props.value',
   },
   {
     name: 'group: label',
     type: 'string',
-    default: '— (requerido)',
-    description: 'Nombra el radiogroup para la tecnología asistiva. Ya traducido.',
+    default: '—',
+    description: 'showroom.cards.props.label',
   },
   {
     name: 'group: disabled',
     type: 'boolean',
     default: 'false',
-    description:
-      'Se suma con OR al de cada card. Deshabilita todas las cards y vacía la parada de tabulación. Dentro de un formulario lo pone la regla disabled() del esquema.',
+    description: 'showroom.cards.props.groupDisabled',
   },
   {
     name: '[ewmsCardHeader]',
-    type: 'proyección',
+    type: 'ng-content',
     default: '—',
-    description: 'Ranura del encabezado. Un atributo sobre cualquier elemento, no una directiva.',
+    description: 'showroom.cards.props.header',
   },
   {
-    name: '(contenido por defecto)',
-    type: 'proyección',
+    name: '<ng-content>',
+    type: 'ng-content',
     default: '—',
-    description:
-      'El cuerpo. Es la ranura por defecto, así que una card seleccionable se escribe con su contenido directamente adentro.',
+    description: 'showroom.cards.props.body',
   },
   {
     name: '[ewmsCardFooter]',
-    type: 'proyección',
+    type: 'ng-content',
     default: '—',
-    description: 'Ranura del pie, para las acciones primarias de una card de contenido.',
+    description: 'showroom.cards.props.footer',
   },
 ];
 
+/**
+ * t(showroom.cards.anatomy.parts.restBackground, showroom.cards.anatomy.parts.restBorder,
+ *   showroom.cards.anatomy.parts.hoverBorder, showroom.cards.anatomy.parts.chosenBackground,
+ *   showroom.cards.anatomy.parts.chosenBorder, showroom.cards.anatomy.parts.disabledBackground,
+ *   showroom.cards.anatomy.parts.disabledText, showroom.cards.anatomy.parts.focusRing,
+ *   showroom.cards.anatomy.parts.radius, showroom.cards.anatomy.parts.elevation)
+ */
 const ANATOMY = [
-  { part: 'Fondo en reposo', token: '--color-surface' },
-  { part: 'Borde en reposo', token: '--color-border' },
-  { part: 'Borde en hover (seleccionable)', token: '--color-border-strong' },
-  { part: 'Fondo de la elegida', token: '--color-row-selected' },
-  { part: 'Borde y check de la elegida', token: '--color-bg-primary' },
-  { part: 'Fondo deshabilitado', token: '--color-bg-secondary' },
-  { part: 'Texto deshabilitado', token: '--color-text-disabled' },
-  { part: 'Anillo de foco (las dos bandas)', token: '--focus-ring-shadow' },
-  { part: 'Radio de la caja', token: '--radius-md' },
-  { part: 'Elevación en reposo', token: '--shadow-sm' },
+  { part: 'showroom.cards.anatomy.parts.restBackground', token: '--color-surface' },
+  { part: 'showroom.cards.anatomy.parts.restBorder', token: '--color-border' },
+  { part: 'showroom.cards.anatomy.parts.hoverBorder', token: '--color-border-strong' },
+  { part: 'showroom.cards.anatomy.parts.chosenBackground', token: '--color-row-selected' },
+  { part: 'showroom.cards.anatomy.parts.chosenBorder', token: '--color-bg-primary' },
+  { part: 'showroom.cards.anatomy.parts.disabledBackground', token: '--color-bg-secondary' },
+  { part: 'showroom.cards.anatomy.parts.disabledText', token: '--color-text-disabled' },
+  { part: 'showroom.cards.anatomy.parts.focusRing', token: '--focus-ring-shadow' },
+  { part: 'showroom.cards.anatomy.parts.radius', token: '--radius-md' },
+  { part: 'showroom.cards.anatomy.parts.elevation', token: '--shadow-sm' },
 ] as const;
+
+/**
+ * Los adyacentes del hallazgo, medidos sobre --color-row-selected.
+ * t(showroom.cards.finding.columns.token, showroom.cards.finding.columns.ratio,
+ *   showroom.cards.finding.columns.aa)
+ */
+const CONTRAST_COLUMNS: readonly DocColumn[] = [
+  { id: 'token', label: 'showroom.cards.finding.columns.token' },
+  { id: 'ratio', label: 'showroom.cards.finding.columns.ratio' },
+  { id: 'aa', label: 'showroom.cards.finding.columns.aa' },
+];
+
+/** t(showroom.cards.keyboard.columns.key, showroom.cards.keyboard.columns.does) */
+const KEYBOARD_COLUMNS: readonly DocColumn[] = [
+  { id: 'key', label: 'showroom.cards.keyboard.columns.key' },
+  { id: 'does', label: 'showroom.cards.keyboard.columns.does' },
+];
 
 /**
  * /design-system/components/card: ficha de ewms-card y ewms-card-group. Lo que se mide es
@@ -132,8 +155,10 @@ const ANATOMY = [
     DemoFrame,
     DocTable,
     PropTable,
+    Prose,
     StateMatrix,
     TokenValue,
+    TranslocoPipe,
   ],
   templateUrl: './card.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -143,16 +168,27 @@ export class ShowroomCard {
 
   protected readonly version = DESIGN_SYSTEM_VERSION;
   protected readonly warehouses = WAREHOUSES;
+  /** El almacén de cada celda de la matriz: un registro, no un texto de la interfaz. */
+  protected readonly sample = CENTRAL;
   protected readonly matrixVariants = MATRIX_VARIANTS;
   protected readonly matrixStates = MATRIX_STATES;
+  protected readonly matrixRowHeader = MATRIX_ROW_HEADER;
   protected readonly props = PROPS;
   protected readonly anatomy = ANATOMY;
   protected readonly anatomyColumns = ANATOMY_COLUMNS;
+  protected readonly contrastColumns = CONTRAST_COLUMNS;
+  protected readonly keyboardColumns = KEYBOARD_COLUMNS;
 
   protected readonly model = signal<{ almacen: string | null }>({ almacen: 'central' });
   protected readonly form = signalForm(this.model);
 
   protected readonly chosen = computed(() => this.form.almacen().value());
+
+  /**
+   * Lo que dice la lectura en vivo cuando el formulario tiene un valor sin card.
+   * t(showroom.cards.demo.noWarehouse)
+   */
+  private readonly noWarehouse = translated((t) => t('showroom.cards.demo.noWarehouse'));
 
   /** Paradas de tabulador reales del grupo, contadas en el DOM. */
   protected readonly tabStops = signal(NOT_MEASURED);
@@ -162,7 +198,7 @@ export class ShowroomCard {
   protected readonly snippet = [
     '<ewms-card-group',
     '  [formField]="alta.almacen"',
-    "  [label]=\"'recepciones.almacen' | transloco\"",
+    '  [label]="\'recepciones.almacen\' | transloco"',
     '>',
     '  @for (almacen of almacenes(); track almacen.id) {',
     '    <ewms-card [optionValue]="almacen.id" [disabled]="!almacen.activo">',
@@ -191,7 +227,7 @@ export class ShowroomCard {
   /** Etiqueta del almacén que tiene el formulario, para la lectura en vivo. */
   protected chosenLabel(): string {
     const value = this.chosen();
-    return WAREHOUSES.find((warehouse) => warehouse.value === value)?.name ?? '(ninguno)';
+    return WAREHOUSES.find((warehouse) => warehouse.value === value)?.name ?? this.noWarehouse();
   }
 
   protected isOption(variantId: string): boolean {

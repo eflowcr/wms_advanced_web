@@ -11,7 +11,7 @@
         <code class="font-mono text-secondary">{{ row.default }}</code>
       }
       @default {
-        {{ row.description }}
+        <span [ewmsProse]="row.description | transloco"></span>
       }
     }
   </ng-template>

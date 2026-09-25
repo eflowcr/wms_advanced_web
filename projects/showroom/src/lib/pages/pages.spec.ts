@@ -575,7 +575,9 @@ describe('ShowroomButton', () => {
   });
 });
 
-describe('the pages declare Spanish', () => {
+// Desde el 2026-09-25 el catálogo se traduce (Showroom - Especificacion §8): ninguna página declara
+// un idioma propio, habla el de la aplicación, que pone <html lang>.
+describe('the pages speak the language of the application', () => {
   const pages: Type<unknown>[] = [
     ShowroomHome,
     ShowroomBrand,
@@ -584,12 +586,12 @@ describe('the pages declare Spanish', () => {
     ShowroomSpacing,
   ];
 
-  it('marks every page root as Spanish (the showroom is exempt from i18n)', async () => {
+  it('declares no language on any page root', async () => {
     for (const page of pages) {
       TestBed.resetTestingModule();
       TestBed.configureTestingModule({ providers: [provideZonelessChangeDetection()] });
       const { element } = await render(page);
-      expect(element.querySelector('[lang="es"]'), page.name).not.toBeNull();
+      expect(element.querySelector('article')?.hasAttribute('lang'), page.name).toBe(false);
     }
   });
 });
@@ -664,9 +666,11 @@ describe.each([...SHEETS, ...PATTERNS])('$name', ({ component, heading }) => {
     );
   });
 
-  it('declares Spanish, so a screen reader does not read it with English phonetics', async () => {
+  // Desde el 2026-09-25 el catálogo se traduce: la página habla el idioma de la aplicación, que
+  // declara <html lang>. Un lang="es" propio haría leer el inglés con fonética española.
+  it('declares no language of its own: it speaks the one of the application', async () => {
     const { element } = await render(component);
-    expect(element.querySelector('[lang="es"]')).not.toBeNull();
+    expect(element.querySelector('article')?.hasAttribute('lang')).toBe(false);
   });
 
   // 20 s y no 5: se prueba si axe encuentra violaciones, no cuánto tarda. La página de Tabla
@@ -867,16 +871,20 @@ describe('ShowroomSelect', () => {
   });
 
   it('says so when the form holds a value no option carries', async () => {
-    const { fixture } = await render(ShowroomSelect);
+    const { fixture, element } = await render(ShowroomSelect);
     const page = fixture.componentInstance as unknown as {
       model: {
         set(value: { estado: string | null; rack: null; articulo: null }): void;
       };
-      chosenLabel(): string;
+      chosenLabel(): string | null;
     };
     page.model.set({ estado: 'una-que-no-existe', rack: null, articulo: null });
     await fixture.whenStable();
-    expect(page.chosenLabel()).toBe('(sin elegir)');
+    // Ninguna opción la nombra; la plantilla escribe «sin elegir» en el idioma en pantalla.
+    expect(page.chosenLabel()).toBeNull();
+    expect(element.querySelector('[data-demo-value]')?.parentElement?.textContent).toContain(
+      '(sin elegir)',
+    );
   });
 });
 
@@ -1269,9 +1277,11 @@ describe('ShowroomDialog', () => {
       isGlyph(stateId: string): boolean;
       glyphFor(tone: string): unknown;
     };
-    expect(page.rowFor('no-such-tone').name).toBe('Info');
-    expect(page.fact('danger', 'confirm')).toBe('Danger');
-    expect(page.fact('danger', 'backdrop')).toBe('No cierra');
+    // Las filas guardan claves; lo que se ve es su texto.
+    const text = (key: string) => TestBed.inject(TranslocoService).translate(key);
+    expect(text(page.rowFor('no-such-tone').name)).toBe('Info');
+    expect(text(page.fact('danger', 'confirm'))).toBe('Danger');
+    expect(text(page.fact('danger', 'backdrop'))).toBe('No cierra');
     expect(page.fact('danger', 'glyph')).toBe('');
     expect(page.isGlyph('glyph')).toBe(true);
     expect(page.isGlyph('confirm')).toBe(false);
@@ -1380,8 +1390,10 @@ describe('ShowroomSelect, the three forms', () => {
     const page = fixture.componentInstance as unknown as {
       fact(variantId: string, columnId: string): string;
     };
-    expect(page.fact('error', 'where')).toContain('bajo el campo');
-    expect(page.fact('empty', 'value')).toContain('Intacto');
+    // La tabla de hechos guarda claves; lo que se ve es su texto.
+    const text = (key: string) => TestBed.inject(TranslocoService).translate(key);
+    expect(text(page.fact('error', 'where'))).toContain('bajo el campo');
+    expect(text(page.fact('empty', 'value'))).toContain('Intacto');
     expect(page.fact('no-such-state', 'where')).toBe('');
   });
 });
@@ -1410,9 +1422,10 @@ describe('ShowroomTable', () => {
     expect(snippet.trimEnd().split('\n').length).toBe(lines);
   });
 
-  it('shows the whole component behind it, and it is four lines: source, row id, bulk actions and their handler', async () => {
+  // Cinco desde el 2026-09-25: el diccionario de estados es una línea porque sigue al idioma.
+  it('shows the whole component behind it, and it is five lines: source, row id, states, bulk actions and their handler', async () => {
     const { element } = await render(ShowroomTable);
-    expect(element.querySelector('[data-component-lines]')?.textContent).toBe('4');
+    expect(element.querySelector('[data-component-lines]')?.textContent).toBe('5');
   });
 
   it('the snippet is what the page actually renders', async () => {
@@ -1507,8 +1520,9 @@ describe('ShowroomTable', () => {
     // La barra de la tabla ofrece las acciones masivas de la demo, y la demo anota la elegida.
     element.querySelector<HTMLButtonElement>('[data-bulk-action="imprimir"] button')!.click();
     await fixture.whenStable();
+    // Plural ICU: una expedición, en singular.
     expect(element.querySelector('[data-bulk-choice]')?.textContent).toBe(
-      'Imprimir etiquetas · 1 expediciones',
+      'Imprimir etiquetas · 1 expedición',
     );
 
     element.querySelector<HTMLButtonElement>('[data-demo-table] [data-sort="bultos"]')!.click();

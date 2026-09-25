@@ -46,7 +46,7 @@ const MESSAGES: FormMessages = {
     pattern: () => 'El formato no es el esperado',
   },
   customError: () => '',
-  errorSummary: (count) => `Revisá ${count} campos`,
+  errorSummary: (count) => `Revise ${count} campos`,
   errorSummaryLabel: 'Error',
   requiredLegend: '* obligatorio',
 };
@@ -146,7 +146,7 @@ describe('FormPattern', () => {
     // Todos los mensajes, aunque no se haya visitado el campo. Cliente no: `minLength` no
     // reclama un campo vacío, que es lo que debe hacer (para eso está `required`).
     expect(notes()).toEqual(['Este campo es obligatorio', 'Este campo es obligatorio']);
-    expect(summary()?.textContent).toContain('Revisá 2 campos');
+    expect(summary()?.textContent).toContain('Revise 2 campos');
     expect(document.activeElement?.tagName).toBe('EWMS-FORM-ERRORS');
 
     // Un enlace por campo, que enfoca el suyo.

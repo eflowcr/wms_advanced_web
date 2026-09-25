@@ -146,10 +146,10 @@ describe('the design-system texts the shell provides', () => {
     expect(write.minDate(new Date(2026, 2, 16))).toBe('La fecha mínima es 16/03/2026');
     expect(write.maxDate(new Date(2026, 2, 16))).toBe('La fecha máxima es 16/03/2026');
     expect(write.pattern(null)).toBe('El formato no es el esperado');
-    expect(write.email(null)).toBe('Escribí un correo válido');
-    expect(form.customError(null)).toBe('Revisá este campo');
-    expect(form.errorSummary(1)).toBe('Revisá 1 campo');
-    expect(form.errorSummary(3)).toBe('Revisá 3 campos');
+    expect(write.email(null)).toBe('Escriba un correo válido');
+    expect(form.customError(null)).toBe('Revise este campo');
+    expect(form.errorSummary(1)).toBe('Revise 1 campo');
+    expect(form.errorSummary(3)).toBe('Revise 3 campos');
     // Un límite que no es fecha no se escribe como «Invalid Date».
     expect(write.minDate('mañana')).toBe('La fecha mínima es ');
   });

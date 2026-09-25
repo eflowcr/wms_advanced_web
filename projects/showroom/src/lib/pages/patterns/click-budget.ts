@@ -27,42 +27,54 @@ export type FlowId = 'search' | 'create' | 'edit' | 'cancel' | 'favorite';
 
 export interface FlowBudget {
   readonly id: FlowId;
-  /** Se muestra en pantalla, en español como el resto del catálogo. */
+  /** Clave del diccionario del catálogo con el nombre que se muestra en pantalla. */
   readonly name: string;
   readonly max: number;
-  /** Desde dónde se cuenta el presupuesto. */
+  /** Clave de desde dónde se cuenta el presupuesto. */
   readonly from: string;
 }
 
+/**
+ * t(showroom.patternSearchCreateEdit.budget.flows.search.name,
+ *   showroom.patternSearchCreateEdit.budget.flows.search.from,
+ *   showroom.patternSearchCreateEdit.budget.flows.create.name,
+ *   showroom.patternSearchCreateEdit.budget.flows.create.from,
+ *   showroom.patternSearchCreateEdit.budget.flows.edit.name,
+ *   showroom.patternSearchCreateEdit.budget.flows.edit.from,
+ *   showroom.patternSearchCreateEdit.budget.flows.cancel.name,
+ *   showroom.patternSearchCreateEdit.budget.flows.cancel.from,
+ *   showroom.patternSearchCreateEdit.budget.flows.favorite.name,
+ *   showroom.patternSearchCreateEdit.budget.flows.favorite.from)
+ */
 export const FLOW_BUDGETS: readonly FlowBudget[] = [
   {
     id: 'search',
-    name: 'Buscar una expedición',
+    name: 'showroom.patternSearchCreateEdit.budget.flows.search.name',
     max: SEARCH_MAX_CLICKS,
-    from: 'Desde cualquier pantalla de la aplicación',
+    from: 'showroom.patternSearchCreateEdit.budget.flows.search.from',
   },
   {
     id: 'create',
-    name: 'Crear una expedición',
+    name: 'showroom.patternSearchCreateEdit.budget.flows.create.name',
     max: CREATE_MAX_CLICKS,
-    from: 'Desde la pantalla de su módulo',
+    from: 'showroom.patternSearchCreateEdit.budget.flows.create.from',
   },
   {
     id: 'edit',
-    name: 'Editar una existente',
+    name: 'showroom.patternSearchCreateEdit.budget.flows.edit.name',
     max: EDIT_MAX_CLICKS,
-    from: 'Desde la pantalla de su módulo, encontrarla incluida',
+    from: 'showroom.patternSearchCreateEdit.budget.flows.edit.from',
   },
   {
     id: 'cancel',
-    name: 'Cancelar lo que sea',
+    name: 'showroom.patternSearchCreateEdit.budget.flows.cancel.name',
     max: CANCEL_MAX_CLICKS,
-    from: 'Siempre. Con Escape, cero',
+    from: 'showroom.patternSearchCreateEdit.budget.flows.cancel.from',
   },
   {
     id: 'favorite',
-    name: 'Abrir un favorito',
+    name: 'showroom.patternSearchCreateEdit.budget.flows.favorite.name',
     max: OPEN_FAVORITE_MAX_CLICKS,
-    from: 'Desde cualquier pantalla, en el bloque fijo del rail',
+    from: 'showroom.patternSearchCreateEdit.budget.flows.favorite.from',
   },
 ];

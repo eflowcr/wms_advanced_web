@@ -7,35 +7,45 @@ import {
   signal,
 } from '@angular/core';
 import { DESIGN_SYSTEM_VERSION, Text, type TextVariant } from '@ewms/design-system';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { DemoFrame } from '../../ui/demo-frame';
-import { DocTable } from '../../ui/doc-table';
+import { DocTable, type DocColumn } from '../../ui/doc-table';
 import { PropTable, type PropRow } from '../../ui/prop-table';
+import { Prose } from '../../ui/prose';
 import { StateMatrix, type MatrixAxis } from '../../ui/state-matrix';
 import { TokenValue } from '../../ui/token-value';
+import { translated } from '../../ui/translated';
 import { computedOf, tagOf } from './measure';
+import { TEXT_SAMPLE } from './text.fixtures';
 
 /**
  * Filas de la matriz: las siete variantes. Los ids son la unión del componente,
  * así que renombrar una variante en la librería rompe este archivo al compilar.
+ * El nombre es código y se lee igual en los dos idiomas, pero la matriz lo pide por clave.
+ * t(showroom.text.variants.names.h1, showroom.text.variants.names.h2,
+ *   showroom.text.variants.names.h3, showroom.text.variants.names.h4,
+ *   showroom.text.variants.names.p, showroom.text.variants.names.caption,
+ *   showroom.text.variants.names.mono)
  */
 const VARIANTS: readonly MatrixAxis[] = [
-  { id: 'h1', label: 'h1' },
-  { id: 'h2', label: 'h2' },
-  { id: 'h3', label: 'h3' },
-  { id: 'h4', label: 'h4' },
-  { id: 'p', label: 'p' },
-  { id: 'caption', label: 'caption' },
-  { id: 'mono', label: 'mono' },
+  { id: 'h1', label: 'showroom.text.variants.names.h1' },
+  { id: 'h2', label: 'showroom.text.variants.names.h2' },
+  { id: 'h3', label: 'showroom.text.variants.names.h3' },
+  { id: 'h4', label: 'showroom.text.variants.names.h4' },
+  { id: 'p', label: 'showroom.text.variants.names.p' },
+  { id: 'caption', label: 'showroom.text.variants.names.caption' },
+  { id: 'mono', label: 'showroom.text.variants.names.mono' },
 ];
 
 /**
  * Columnas: no son estados, porque ewms-text no tiene hover, foco ni deshabilitado.
  * Cruzan el elemento que se renderiza con cómo se ve, que es justo el acople
  * que el componente existe para garantizar.
+ * t(showroom.text.states.element, showroom.text.states.sample)
  */
 const AXES: readonly MatrixAxis[] = [
-  { id: 'element', label: 'Elemento del documento' },
-  { id: 'sample', label: 'Cómo se ve' },
+  { id: 'element', label: 'showroom.text.states.element' },
+  { id: 'sample', label: 'showroom.text.states.sample' },
 ];
 
 const VARIANT_BY_ID: Readonly<Record<string, TextVariant>> = {
@@ -48,36 +58,46 @@ const VARIANT_BY_ID: Readonly<Record<string, TextVariant>> = {
   mono: 'mono',
 };
 
-/** Un texto de muestra por variante, para que la grilla no sea siete veces «Aa». */
-const SAMPLES: Readonly<Record<string, string>> = {
-  h1: 'Recepción de mercancía',
-  h2: 'Órdenes pendientes',
-  h3: 'Detalle del bulto',
-  h4: 'Ubicación',
-  p: 'El operario confirma la cantidad antes de cerrar.',
-  caption: 'Actualizado hace 3 minutos',
-  mono: 'SKU-04871-B',
-};
-
 /**
  * Verificada contra text.ts: una sola entrada, requerida, y sin input as.
  * Esa ausencia es el componente, por eso la tabla la dice explícitamente.
+ * t(showroom.text.props.variant, showroom.text.props.content)
  */
 const PROPS: readonly PropRow[] = [
   {
     name: 'variant',
     type: "'h1' | 'h2' | 'h3' | 'h4' | 'p' | 'caption' | 'mono'",
-    default: '— (requerido)',
-    description:
-      'Fija tamaño, peso e interlineado a la vez, y determina el elemento que se renderiza. No tiene default: elegir el nivel es LA decisión, y un default la escondería.',
+    default: '—',
+    description: 'showroom.text.props.variant',
   },
   {
+    // El tipo es código; «texto proyectado» pasa a la descripción.
     name: '<ng-content>',
-    type: 'texto proyectado',
+    type: '—',
     default: '—',
-    description:
-      'El texto, ya traducido por el consumidor: el sistema de diseño no habla ningún idioma.',
+    description: 'showroom.text.props.content',
   },
+];
+
+/**
+ * Bloque 7, primera tabla: lo que el navegador construyó para cada variante.
+ * t(showroom.common.matrix.variant, showroom.text.anatomy.columns.tag,
+ *   showroom.text.anatomy.columns.size, showroom.text.anatomy.columns.heading)
+ */
+const RENDERED_COLUMNS: readonly DocColumn[] = [
+  { id: 'variant', label: 'showroom.common.matrix.variant' },
+  { id: 'tag', label: 'showroom.text.anatomy.columns.tag' },
+  { id: 'size', label: 'showroom.text.anatomy.columns.size' },
+  { id: 'heading', label: 'showroom.text.anatomy.columns.heading' },
+];
+
+/**
+ * Bloque 7, segunda tabla: los tokens de cada variante.
+ * t(showroom.common.matrix.variant, showroom.common.anatomy.token)
+ */
+const TOKEN_COLUMNS: readonly DocColumn[] = [
+  { id: 'variant', label: 'showroom.common.matrix.variant' },
+  { id: 'tokens', label: 'showroom.common.anatomy.token' },
 ];
 
 /**
@@ -159,7 +179,7 @@ interface RenderedElement {
  */
 @Component({
   selector: 'ewms-showroom-text',
-  imports: [Text, DemoFrame, DocTable, PropTable, StateMatrix, TokenValue],
+  imports: [Text, DemoFrame, DocTable, PropTable, Prose, StateMatrix, TokenValue, TranslocoPipe],
   templateUrl: './text.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -171,6 +191,25 @@ export class ShowroomText {
   protected readonly axes = AXES;
   protected readonly props = PROPS;
   protected readonly tokens = TOKENS;
+  protected readonly renderedColumns = RENDERED_COLUMNS;
+  protected readonly tokenColumns = TOKEN_COLUMNS;
+  protected readonly sample = TEXT_SAMPLE;
+
+  /**
+   * Un texto de muestra por variante, para que la grilla no sea siete veces «Aa». El de mono
+   * es un código de artículo: dato del registro, sin traducir.
+   * t(showroom.text.samples.h1, showroom.text.samples.h2, showroom.text.samples.h3,
+   *   showroom.text.demo.location, showroom.text.samples.p, showroom.text.demo.updated)
+   */
+  private readonly samples = translated((t): Readonly<Record<string, string>> => ({
+    h1: t('showroom.text.samples.h1'),
+    h2: t('showroom.text.samples.h2'),
+    h3: t('showroom.text.samples.h3'),
+    h4: t('showroom.text.demo.location'),
+    p: t('showroom.text.samples.p'),
+    caption: t('showroom.text.demo.updated'),
+    mono: TEXT_SAMPLE.sku,
+  }));
 
   protected readonly rendered = signal<readonly RenderedElement[]>(
     VARIANTS.map((variant) => ({ variant: variant.id, tag: '…', fontSize: '…' })),
@@ -211,8 +250,9 @@ export class ShowroomText {
     return VARIANT_BY_ID[id] ?? 'p';
   }
 
+  /** El texto de muestra ya traducido; sigue al idioma. */
   protected sampleFor(id: string): string {
-    return SAMPLES[id] ?? '';
+    return this.samples()[id] ?? '';
   }
 
   /** Solo en los encabezados el acople tiene consecuencias. */
