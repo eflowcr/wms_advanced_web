@@ -127,6 +127,13 @@ const PROPS: readonly PropRow[] = [
     description: 'Visible, unida al campo por for/id.',
   },
   {
+    name: 'hideLabel',
+    type: 'boolean',
+    default: 'false',
+    description:
+      'La etiqueta sale de la vista y queda para la ayuda técnica, unida por for/id: el campo y la lista conservan su nombre.',
+  },
+  {
     name: 'options',
     type: 'readonly SelectOption[] | readonly T[]',
     default: 'null',

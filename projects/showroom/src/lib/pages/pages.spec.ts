@@ -763,6 +763,14 @@ describe('ShowroomSelect', () => {
     expect(matrix?.querySelectorAll('tbody ewms-select')).toHaveLength(12);
   });
 
+  it('shows the hidden label with the real component: out of sight, still naming the field', async () => {
+    const { element } = await render(ShowroomSelect);
+    const field = element.querySelector<HTMLInputElement>('[data-demo-hidden-label] input')!;
+    const label = element.querySelector(`[data-demo-hidden-label] label[for="${field.id}"]`);
+    expect(label?.textContent?.trim()).toBe('Almacén');
+    expect(label?.classList.contains('sr-only')).toBe(true);
+  });
+
   it('keeps the panel out of the page until it is opened', async () => {
     const { element } = await render(ShowroomSelect);
     // El panel es un overlay del CDK: nada en el DOM propio del componente.

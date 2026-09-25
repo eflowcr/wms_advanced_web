@@ -105,6 +105,7 @@ function unmount(fixture: ComponentFixture<unknown>): void {
       [options]="options()"
       [size]="size()"
       [label]="'Bodega'"
+      [hideLabel]="hideLabel()"
       [placeholder]="'Elegir bodega'"
       [hint]="hint()"
       [error]="error()"
@@ -116,6 +117,7 @@ function unmount(fixture: ComponentFixture<unknown>): void {
 class ListHost {
   readonly options = signal<readonly SelectOption[]>(WAREHOUSES);
   readonly size = signal<FieldSize>('md');
+  readonly hideLabel = signal(false);
   readonly hint = signal('');
   readonly error = signal(false);
   readonly locked = signal(false);
@@ -277,6 +279,23 @@ describe('Select, options in memory', () => {
     await expectNoAxeViolations(fixture.nativeElement);
 
     await openPanel();
+    await expectNoAxeViolations(document.querySelector('.cdk-overlay-container')!);
+  });
+
+  it('hides the label from sight only: the combobox and the list keep their name', async () => {
+    host.hideLabel.set(true);
+    await settle();
+
+    const label = fixture.nativeElement.querySelector(`label[for="${field().id}"]`) as HTMLElement;
+    expect(label.textContent?.trim()).toBe('Bodega');
+    expect(label.classList.contains('sr-only')).toBe(true);
+    expect(label.classList.contains('block')).toBe(false);
+    // `labels` es el cálculo del nombre por for/id que hace el navegador, y jsdom lo implementa.
+    expect([...(field().labels ?? [])]).toEqual([label]);
+    await expectNoAxeViolations(fixture.nativeElement);
+
+    await openPanel();
+    expect(listbox()?.getAttribute('aria-labelledby')).toBe(label.id);
     await expectNoAxeViolations(document.querySelector('.cdk-overlay-container')!);
   });
 });

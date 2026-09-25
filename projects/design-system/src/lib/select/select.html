@@ -1,5 +1,9 @@
-<!-- RFE-01: un `<input>` que se tipea ya; es etiquetable, así que for/id. -->
-<label [id]="labelId" [attr.for]="fieldId" class="block text-caption text-secondary mb-1">
+<!-- RFE-01: un `<input>` que se tipea ya; es etiquetable, así que for/id. Oculta, sigue nombrando. -->
+<label
+  [id]="labelId"
+  [attr.for]="fieldId"
+  [class]="hideLabel() ? 'sr-only' : 'block text-caption text-secondary mb-1'"
+>
   {{ label() }}
   @if (required()) {
     <span aria-hidden="true">*</span>

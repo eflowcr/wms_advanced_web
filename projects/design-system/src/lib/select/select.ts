@@ -93,6 +93,10 @@ export class Select<T = unknown>
 
   readonly size = input<FieldSize>('md');
   readonly label = input.required<string>();
+
+  /** Etiqueta solo para la ayuda técnica, atada por for/id como en el Input. */
+  readonly hideLabel = input<boolean>(false);
+
   readonly placeholder = input<string>('');
   readonly hint = input<string>('');
 

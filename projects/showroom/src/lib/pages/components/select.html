@@ -229,6 +229,20 @@
       Una fila suele ser las dos cosas a la vez —al abrir, la activa arranca en la seleccionada— y por
       eso se confunden. Son dos, y se pintan distinto.
     </p>
+
+    <h3 class="text-h3">Con la etiqueta oculta</h3>
+    <p class="text-secondary">
+      Con <code class="font-mono">[hideLabel]="true"</code> la etiqueta sale de la vista y queda para
+      la ayuda técnica, unida por for/id como en el Input: el combobox y la lista siguen teniendo
+      nombre. Es para donde algo visible ya la dice —el conmutador de idioma de la cabecera, un
+      filtro junto a su título—, no para ahorrar lugar.
+    </p>
+    <ewms-demo-frame ground="canvas" label="Un filtro en una barra, con su título al lado">
+      <div class="flex flex-wrap items-center gap-3" data-demo-hidden-label>
+        <span class="text-caption text-secondary" aria-hidden="true">Almacén</span>
+        <ewms-select class="w-56" size="sm" label="Almacén" [hideLabel]="true" [options]="options" />
+      </div>
+    </ewms-demo-frame>
   </section>
 
   <!-- ========================================================= 5. Matriz de estados -->
