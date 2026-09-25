@@ -10,6 +10,7 @@ import {
 import { form as signalForm, FormField } from '@angular/forms/signals';
 import { Button, Card, CardGroup, DESIGN_SYSTEM_VERSION, Icon } from '@ewms/design-system';
 import { DemoFrame } from '../../ui/demo-frame';
+import { ANATOMY_COLUMNS, DocTable } from '../../ui/doc-table';
 import { PropTable, type PropRow } from '../../ui/prop-table';
 import { StateMatrix, type MatrixAxis } from '../../ui/state-matrix';
 import { TokenValue } from '../../ui/token-value';
@@ -129,6 +130,7 @@ const ANATOMY = [
     Icon,
     FormField,
     DemoFrame,
+    DocTable,
     PropTable,
     StateMatrix,
     TokenValue,
@@ -145,6 +147,7 @@ export class ShowroomCard {
   protected readonly matrixStates = MATRIX_STATES;
   protected readonly props = PROPS;
   protected readonly anatomy = ANATOMY;
+  protected readonly anatomyColumns = ANATOMY_COLUMNS;
 
   protected readonly model = signal<{ almacen: string | null }>({ almacen: 'central' });
   protected readonly form = signalForm(this.model);

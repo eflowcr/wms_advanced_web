@@ -6,6 +6,7 @@ import {
   type EmptyStateKind,
 } from '@ewms/design-system';
 import { DemoFrame } from '../../ui/demo-frame';
+import { DocTable } from '../../ui/doc-table';
 import { PropTable, type PropRow } from '../../ui/prop-table';
 import { StateMatrix, type MatrixAxis } from '../../ui/state-matrix';
 import { TokenValue } from '../../ui/token-value';
@@ -120,7 +121,7 @@ const ANATOMY: readonly { readonly part: string; readonly token: string }[] = [
 @Component({
   selector: 'ewms-showroom-empty-state',
   templateUrl: './empty-state.html',
-  imports: [EmptyState, DemoFrame, PropTable, StateMatrix, TokenValue],
+  imports: [EmptyState, DemoFrame, DocTable, PropTable, StateMatrix, TokenValue],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ShowroomEmptyState {

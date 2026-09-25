@@ -898,6 +898,22 @@ describe('ShowroomRadio', () => {
     expect(new Set(names).size).toBe(names.length);
   });
 
+  it('keeps every matrix cell live: choosing an empty one marks it, and only it', async () => {
+    const { fixture, element } = await render(ShowroomRadio);
+    const radios = () => [
+      ...element.querySelectorAll<HTMLInputElement>('[data-block="5-matriz"] input[type="radio"]'),
+    ];
+    const empty = radios().find((radio) => !radio.checked && !radio.disabled)!;
+    const before = radios().filter((radio) => radio.checked).length;
+
+    empty.checked = true;
+    empty.dispatchEvent(new Event('change'));
+    await fixture.whenStable();
+
+    expect(empty.checked).toBe(true);
+    expect(radios().filter((radio) => radio.checked).length).toBe(before + 1);
+  });
+
   it('caches one value signal per cell, and forces only hover and focus', async () => {
     const { fixture } = await render(ShowroomRadio);
     const page = fixture.componentInstance as unknown as {
@@ -1723,8 +1739,8 @@ describe('ShowroomPagination', () => {
 describe('ShowroomSearchCreateEdit', () => {
   it('shows the four budgets, and shows the numbers the constants hold', async () => {
     const { element } = await render(ShowroomSearchCreateEdit);
-    const shown = [...element.querySelectorAll('[data-budget]')].map((row) => ({
-      id: row.getAttribute('data-budget'),
+    const shown = [...element.querySelectorAll('[data-budgets] tbody tr')].map((row) => ({
+      id: row.getAttribute('data-doc-row'),
       max: Number(row.querySelector('[data-budget-max]')?.textContent?.trim()),
     }));
 
@@ -1782,7 +1798,7 @@ describe('ShowroomKeyboard', () => {
     expect(element.querySelector('[data-demo-keyboard]')?.textContent).toContain(
       'Ningún layout raíz montó el motor',
     );
-    expect(element.querySelectorAll('[data-demo-bindings] tr').length).toBe(0);
+    expect(element.querySelectorAll('[data-demo-bindings] tbody tr').length).toBe(0);
   });
 });
 

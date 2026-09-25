@@ -479,73 +479,63 @@
     </div>
 
     <h3 class="text-h3">Los cinco tipos de columna</h3>
-    <div class="overflow-x-auto">
-      <table class="w-full border-collapse text-caption">
-        <caption class="mb-2 text-left text-secondary">
-          El
-          <code class="font-mono">type</code>
-          decide cuatro cosas a la vez
-        </caption>
-        <thead>
-          <tr>
-            <th scope="col" class="border-b border-default p-2 text-left text-secondary">type</th>
-            <th scope="col" class="border-b border-default p-2 text-left text-secondary">
-              Alineación
-            </th>
-            <th scope="col" class="border-b border-default p-2 text-left text-secondary">
-              Tipografía
-            </th>
-            <th scope="col" class="border-b border-default p-2 text-left text-secondary">Filtro</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <th scope="row" class="border-b border-default p-2 text-left font-mono text-primary">
-              text
-            </th>
-            <td class="border-b border-default p-2 text-primary">inicio</td>
-            <td class="border-b border-default p-2 text-primary">sans</td>
-            <td class="border-b border-default p-2 text-primary">una caja, «contiene»</td>
-          </tr>
-          <tr>
-            <th scope="row" class="border-b border-default p-2 text-left font-mono text-primary">
-              number
-            </th>
-            <td class="border-b border-default p-2 text-primary">final</td>
-            <td class="border-b border-default p-2 text-primary">mono</td>
-            <td class="border-b border-default p-2 text-primary">
-              <strong>dos cajas, mín y máx</strong>
-            </td>
-          </tr>
-          <tr>
-            <th scope="row" class="border-b border-default p-2 text-left font-mono text-primary">
-              date
-            </th>
-            <td class="border-b border-default p-2 text-primary">inicio</td>
-            <td class="border-b border-default p-2 text-primary">mono</td>
-            <td class="border-b border-default p-2 text-primary">
-              <strong>dos fechas, desde y hasta</strong>
-            </td>
-          </tr>
-          <tr>
-            <th scope="row" class="border-b border-default p-2 text-left font-mono text-primary">
-              badge
-            </th>
-            <td class="border-b border-default p-2 text-primary">inicio</td>
-            <td class="border-b border-default p-2 text-primary">—</td>
-            <td class="border-b border-default p-2 text-primary">una caja, «contiene»</td>
-          </tr>
-          <tr>
-            <th scope="row" class="border-b border-default p-2 text-left font-mono text-primary">
-              actions
-            </th>
-            <td class="border-b border-default p-2 text-primary">final</td>
-            <td class="border-b border-default p-2 text-primary">—</td>
-            <td class="border-b border-default p-2 text-primary">—</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+    <ewms-doc-table
+      caption="El type decide cuatro cosas a la vez"
+      [columns]="[
+        { id: 'type', label: 'type' },
+        { id: 'align', label: 'Alineación' },
+        { id: 'font', label: 'Tipografía' },
+        { id: 'filter', label: 'Filtro' },
+      ]"
+      [rows]="['text', 'number', 'date', 'badge', 'actions']"
+    >
+      <ng-template let-row let-column="column">
+        @switch (column.id) {
+          @case ('type') {
+            <span class="font-mono">{{ row }}</span>
+          }
+          @case ('align') {
+            @if (row === 'number' || row === 'actions') {
+              final
+            } @else {
+              inicio
+            }
+          }
+          @case ('font') {
+            @switch (row) {
+              @case ('text') {
+                sans
+              }
+              @case ('number') {
+                mono
+              }
+              @case ('date') {
+                mono
+              }
+              @default {
+                —
+              }
+            }
+          }
+          @default {
+            @switch (row) {
+              @case ('number') {
+                <strong>dos cajas, mín y máx</strong>
+              }
+              @case ('date') {
+                <strong>dos fechas, desde y hasta</strong>
+              }
+              @case ('actions') {
+                —
+              }
+              @default {
+                una caja, «contiene»
+              }
+            }
+          }
+        }
+      </ng-template>
+    </ewms-doc-table>
 
     <div class="flex flex-col gap-2 rounded-md border border-strong bg-secondary p-4">
       <h3 class="text-h4">El filtro lo decide el tipo, y el consumidor no configura nada</h3>
@@ -627,35 +617,44 @@
       tabindex="0"
     >
       <!-- Sobre superficie, como la tabla: sobre el lienzo, el hover no se distinguía del fondo. -->
-      <table class="w-full border-separate border-spacing-0 text-caption" data-row-matrix>
-        <caption class="sr-only">Fondo y marca de cada estado de fila</caption>
-        <thead>
-          <tr class="bg-secondary text-secondary">
-            <th scope="col" class="p-2 text-left">Estado</th>
-            <th scope="col" class="p-2 text-left">Fondo</th>
-            <th scope="col" class="p-2 text-left">Marca</th>
-            <th scope="col" class="p-2 text-left">Muestra</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (item of rowMatrix; track item.id) {
-            <tr [attr.data-row-state]="item.id">
-              <th scope="row" class="border-t border-default p-2 text-left text-primary">
-                {{ item.state }}
-              </th>
-              <td class="border-t border-default p-2 font-mono">{{ item.background }}</td>
-              <td class="border-t border-default p-2 font-mono">{{ item.mark }}</td>
-              <td class="border-t border-default p-2">
-                <span class="flex min-w-72 items-center gap-3 px-3 py-2" [class]="item.row + ' ' + item.cell">
+      <ewms-doc-table
+        caption="Fondo y marca de cada estado de fila"
+        [columns]="[
+          { id: 'state', label: 'Estado' },
+          { id: 'background', label: 'Fondo' },
+          { id: 'mark', label: 'Marca' },
+          { id: 'sample', label: 'Muestra' },
+        ]"
+        [rows]="rowMatrix"
+        data-row-matrix
+      >
+        <ng-template let-item let-column="column">
+          @switch (column.id) {
+            @case ('state') {
+              {{ item.state }}
+            }
+            @case ('background') {
+              <span class="font-mono">{{ item.background }}</span>
+            }
+            @case ('mark') {
+              <span class="font-mono">{{ item.mark }}</span>
+            }
+            @default {
+              <!-- La fila de muestra, con el fondo y la marca de su estado como los pinta la tabla. -->
+              <span class="block" [attr.data-row-state]="item.id">
+                <span
+                  class="flex min-w-72 items-center gap-3 px-3 py-2"
+                  [class]="item.row + ' ' + item.cell"
+                >
                   <span class="text-p whitespace-nowrap text-primary">EXP-2026-0400</span>
                   <span class="text-secondary">secundario</span>
                   <ewms-badge variant="danger" label="Con incidencia" />
                 </span>
-              </td>
-            </tr>
+              </span>
+            }
           }
-        </tbody>
-      </table>
+        </ng-template>
+      </ewms-doc-table>
     </div>
     <div class="flex flex-col gap-2 rounded-md border border-strong bg-secondary p-4">
       <h3 class="text-h4">El color nunca es la única señal (WCAG 1.4.1)</h3>
@@ -684,39 +683,26 @@
       Dos densidades. Se eligen en el panel «Vista» de la barra de la tabla; <code class="font-mono">density</code> es el
       valor con que arranca.
     </p>
-    <div class="overflow-x-auto">
-      <table class="w-full border-collapse text-caption">
-        <caption class="mb-2 text-left text-secondary">
-          El alto de fila, leído del token
-        </caption>
-        <thead>
-          <tr>
-            <th scope="col" class="border-b border-default p-2 text-left text-secondary">
-              Densidad
-            </th>
-            <th scope="col" class="border-b border-default p-2 text-left text-secondary">
-              Token y valor
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <th scope="row" class="border-b border-default p-2 text-left text-primary">
-              Media (default)
-            </th>
-            <td class="border-b border-default p-2">
-              <ewms-token-value token="--row-height-md" />
-            </td>
-          </tr>
-          <tr>
-            <th scope="row" class="border-b border-default p-2 text-left text-primary">Compacta</th>
-            <td class="border-b border-default p-2">
-              <ewms-token-value token="--row-height-sm" />
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+    <ewms-doc-table
+      caption="El alto de fila, leído del token"
+      [columns]="[
+        { id: 'density', label: 'Densidad' },
+        { id: 'token', label: 'Token y valor' },
+      ]"
+      [rows]="['md', 'sm']"
+    >
+      <ng-template let-row let-column="column">
+        @if (column.id === 'density') {
+          @if (row === 'md') {
+            Media (default)
+          } @else {
+            Compacta
+          }
+        } @else {
+          <ewms-token-value [token]="row === 'md' ? '--row-height-md' : '--row-height-sm'" />
+        }
+      </ng-template>
+    </ewms-doc-table>
     <div class="flex flex-col gap-2 rounded-md border border-strong bg-secondary p-4">
       <h3 class="text-h4">
         El alto de fila media <strong>es</strong> el alto del control
@@ -734,33 +720,15 @@
   <!-- ===================================================== 7. Anatomía y tokens -->
   <section class="flex flex-col gap-4" aria-labelledby="ta-anatomy" data-block="7-anatomia">
     <h2 id="ta-anatomy" class="text-h2">Anatomía y tokens</h2>
-    <div class="overflow-x-auto">
-      <table class="w-full border-collapse text-caption">
-        <caption class="mb-2 text-left text-secondary">
-          Tokens que consume &lt;ewms-table&gt;
-        </caption>
-        <thead>
-          <tr>
-            <th scope="col" class="border-b border-default p-2 text-left text-secondary">Parte</th>
-            <th scope="col" class="border-b border-default p-2 text-left text-secondary">
-              Token, cadena y valor
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (row of anatomy; track row.token) {
-            <tr>
-              <th scope="row" class="border-b border-default p-2 text-left text-primary">
-                {{ row.part }}
-              </th>
-              <td class="border-b border-default p-2">
-                <ewms-token-value [token]="row.token" [swatch]="true" />
-              </td>
-            </tr>
-          }
-        </tbody>
-      </table>
-    </div>
+    <ewms-doc-table caption="Tokens que consume &lt;ewms-table&gt;" [columns]="anatomyColumns" [rows]="anatomy">
+      <ng-template let-row let-column="column">
+        @if (column.id === 'part') {
+          {{ row.part }}
+        } @else {
+          <ewms-token-value [token]="row.token" [swatch]="true" />
+        }
+      </ng-template>
+    </ewms-doc-table>
 
     <h3 class="text-h3">El árbol se aplana, y por eso hay un solo bucle</h3>
     <ul class="flex flex-col gap-2">
@@ -793,66 +761,44 @@
     <h2 id="ta-contract" class="text-h2">Contrato para Angular</h2>
 
     <h3 class="text-h3">Teclado — el patrón treegrid, seguido y no reinventado</h3>
-    <div class="overflow-x-auto">
-      <table class="w-full border-collapse text-caption">
-        <caption class="mb-2 text-left text-secondary">
-          Una sola parada de
-          <kbd class="font-mono">Tab</kbd>
-          para toda la tabla
-        </caption>
-        <thead>
-          <tr>
-            <th scope="col" class="border-b border-default p-2 text-left text-secondary">Tecla</th>
-            <th scope="col" class="border-b border-default p-2 text-left text-secondary">
-              Qué hace
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <th scope="row" class="border-b border-default p-2 text-left text-primary">↑ / ↓</th>
-            <td class="border-b border-default p-2 text-primary">
+    <ewms-doc-table
+      caption="Una sola parada de Tab para toda la tabla"
+      [columns]="[
+        { id: 'key', label: 'Tecla' },
+        { id: 'does', label: 'Qué hace' },
+      ]"
+      [rows]="['↑ / ↓', '→', '←', 'Home / End', 'Enter', 'Space']"
+    >
+      <ng-template let-row let-column="column">
+        @if (column.id === 'key') {
+          {{ row }}
+        } @else {
+          @switch (row) {
+            @case ('↑ / ↓') {
               Fila anterior o siguiente, misma columna.
-            </td>
-          </tr>
-          <tr>
-            <th scope="row" class="border-b border-default p-2 text-left text-primary">→</th>
-            <td class="border-b border-default p-2 text-primary">
+            }
+            @case ('→') {
               En una fila padre contraída, <strong>expande</strong>. Si no, celda siguiente.
-            </td>
-          </tr>
-          <tr>
-            <th scope="row" class="border-b border-default p-2 text-left text-primary">←</th>
-            <td class="border-b border-default p-2 text-primary">
+            }
+            @case ('←') {
               En una fila padre expandida, <strong>contrae</strong>. Si no, celda anterior; en la
               primera celda de una hija, va a la fila padre.
-            </td>
-          </tr>
-          <tr>
-            <th scope="row" class="border-b border-default p-2 text-left text-primary">
-              Home / End
-            </th>
-            <td class="border-b border-default p-2 text-primary">
+            }
+            @case ('Home / End') {
               Primera o última celda de la fila. Con <kbd class="font-mono">Ctrl</kbd>, de la tabla.
-            </td>
-          </tr>
-          <tr>
-            <th scope="row" class="border-b border-default p-2 text-left text-primary">Enter</th>
-            <td class="border-b border-default p-2 text-primary">
+            }
+            @case ('Enter') {
               <code class="font-mono">(rowActivate)</code>. El doble clic hace lo mismo: dos
               caminos, una acción.
-            </td>
-          </tr>
-          <tr>
-            <th scope="row" class="border-b border-default p-2 text-left text-primary">Space</th>
-            <td class="border-b border-default p-2 text-primary">
+            }
+            @default {
               Alterna la selección de la fila. También frena el scroll, que es lo último que quiere
               quien está marcando filas.
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+            }
+          }
+        }
+      </ng-template>
+    </ewms-doc-table>
 
     <h3 class="text-h3">Salidas</h3>
     <p class="text-secondary">

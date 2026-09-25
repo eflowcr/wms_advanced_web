@@ -8,6 +8,7 @@ import {
 } from '@angular/core';
 import { DESIGN_SYSTEM_VERSION, Text, type TextVariant } from '@ewms/design-system';
 import { DemoFrame } from '../../ui/demo-frame';
+import { DocTable } from '../../ui/doc-table';
 import { PropTable, type PropRow } from '../../ui/prop-table';
 import { StateMatrix, type MatrixAxis } from '../../ui/state-matrix';
 import { TokenValue } from '../../ui/token-value';
@@ -158,7 +159,7 @@ interface RenderedElement {
  */
 @Component({
   selector: 'ewms-showroom-text',
-  imports: [Text, DemoFrame, PropTable, StateMatrix, TokenValue],
+  imports: [Text, DemoFrame, DocTable, PropTable, StateMatrix, TokenValue],
   templateUrl: './text.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

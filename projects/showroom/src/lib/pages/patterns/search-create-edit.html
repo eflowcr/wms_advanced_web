@@ -82,42 +82,31 @@
         </p>
       </div>
 
-      <div class="overflow-x-auto">
-        <table class="w-full border-collapse text-caption">
-          <caption class="mb-2 text-left text-secondary">
-            Presupuesto por flujo, y desde dónde se cuenta
-          </caption>
-          <thead>
-            <tr>
-              <th scope="col" class="border-b border-default p-2 text-left text-secondary">
-                Flujo
-              </th>
-              <th scope="col" class="border-b border-default p-2 text-left text-secondary">
-                Máximo
-              </th>
-              <th scope="col" class="border-b border-default p-2 text-left text-secondary">
-                Desde dónde
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (budget of budgets; track budget.id) {
-              <tr [attr.data-budget]="budget.id">
-                <th
-                  scope="row"
-                  class="border-b border-default p-2 text-left text-caption text-primary"
-                >
-                  {{ budget.name }}
-                </th>
-                <td class="border-b border-default p-2 font-mono text-primary" data-budget-max>
-                  {{ budget.max }}
-                </td>
-                <td class="border-b border-default p-2 text-secondary">{{ budget.from }}</td>
-              </tr>
+      <ewms-doc-table
+        caption="Presupuesto por flujo, y desde dónde se cuenta"
+        [columns]="[
+          { id: 'name', label: 'Flujo' },
+          { id: 'max', label: 'Máximo' },
+          { id: 'from', label: 'Desde dónde' },
+        ]"
+        [rows]="budgets"
+        [rowKey]="budgetId"
+        data-budgets
+      >
+        <ng-template let-budget let-column="column">
+          @switch (column.id) {
+            @case ('name') {
+              {{ budget.name }}
             }
-          </tbody>
-        </table>
-      </div>
+            @case ('max') {
+              <span class="font-mono" data-budget-max>{{ budget.max }}</span>
+            }
+            @default {
+              <span class="text-secondary">{{ budget.from }}</span>
+            }
+          }
+        </ng-template>
+      </ewms-doc-table>
 
       <div class="flex flex-wrap items-center gap-4">
         <p class="flex items-baseline gap-2">
@@ -256,81 +245,79 @@
       solo con el teclado. El segundo es el que el estándar premia, y el que el operario con guantes
       usa de verdad.
     </p>
-    <div class="overflow-x-auto">
-      <table class="w-full border-collapse text-caption">
-        <caption class="mb-2 text-left text-secondary">
-          El camino más corto de cada flujo, contado según §2.1
-        </caption>
-        <thead>
-          <tr>
-            <th scope="col" class="border-b border-default p-2 text-left text-secondary">Flujo</th>
-            <th scope="col" class="border-b border-default p-2 text-left text-secondary">
-              Con ratón
-            </th>
-            <th scope="col" class="border-b border-default p-2 text-left text-secondary">
-              Solo teclado
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <th scope="row" class="border-b border-default p-2 text-left text-caption text-primary">
-              Buscar
-            </th>
-            <td class="border-b border-default p-2">
-              Clic en el campo <strong>(1)</strong>, escribir, clic en el resultado
-              <strong>(2)</strong>. Máximo {{ budgetFor('search') }}.
-            </td>
-            <td class="border-b border-default p-2">
-              <kbd class="font-mono">/</kbd>, escribir, <kbd class="font-mono">↓</kbd>
-              <kbd class="font-mono">Enter</kbd>. <strong>Cero.</strong>
-            </td>
-          </tr>
-          <tr>
-            <th scope="row" class="border-b border-default p-2 text-left text-caption text-primary">
-              Crear
-            </th>
-            <td class="border-b border-default p-2">
-              Clic en «Nuevo» <strong>(1)</strong>, llenar, clic en «Guardar» <strong>(2)</strong>.
-              Máximo {{ budgetFor('create') }}.
-            </td>
-            <td class="border-b border-default p-2">
-              <kbd class="font-mono">Alt</kbd> + <kbd class="font-mono">N</kbd>,
-              <kbd class="font-mono">Tab</kbd> por los campos, <kbd class="font-mono">Ctrl</kbd> +
-              <kbd class="font-mono">S</kbd>.
-              <strong>Cero.</strong>
-            </td>
-          </tr>
-          <tr>
-            <th scope="row" class="border-b border-default p-2 text-left text-caption text-primary">
-              Editar
-            </th>
-            <td class="border-b border-default p-2">
-              Clic en el campo <strong>(1)</strong>, clic en el resultado <strong>(2)</strong>, clic
-              en «Editar la elegida» <strong>(3)</strong>. Máximo {{ budgetFor('edit') }}. Doble
-              clic sobre una fila de la tabla son <strong>2</strong>, y también entra.
-            </td>
-            <td class="border-b border-default p-2">
-              <kbd class="font-mono">/</kbd>, escribir, <kbd class="font-mono">Enter</kbd>,
-              <kbd class="font-mono">Tab</kbd>, <kbd class="font-mono">Enter</kbd>.
-              <strong>Cero.</strong>
-            </td>
-          </tr>
-          <tr>
-            <th scope="row" class="border-b border-default p-2 text-left text-caption text-primary">
-              Cancelar
-            </th>
-            <td class="border-b border-default p-2">
-              Clic en «Cancelar» <strong>(1)</strong>. Máximo {{ budgetFor('cancel') }}, y sin
-              preguntar si estás seguro.
-            </td>
-            <td class="border-b border-default p-2">
-              <kbd class="font-mono">Esc</kbd>. <strong>Cero</strong>, y el foco vuelve.
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+    <ewms-doc-table
+      caption="El camino más corto de cada flujo, contado según §2.1"
+      [columns]="[
+        { id: 'flow', label: 'Flujo' },
+        { id: 'mouse', label: 'Con ratón' },
+        { id: 'keyboard', label: 'Solo teclado' },
+      ]"
+      [rows]="['search', 'create', 'edit', 'cancel']"
+    >
+      <ng-template let-row let-column="column">
+        @switch (column.id) {
+          @case ('flow') {
+            @switch (row) {
+              @case ('search') {
+                Buscar
+              }
+              @case ('create') {
+                Crear
+              }
+              @case ('edit') {
+                Editar
+              }
+              @default {
+                Cancelar
+              }
+            }
+          }
+          @case ('mouse') {
+            @switch (row) {
+              @case ('search') {
+                Clic en el campo <strong>(1)</strong>, escribir, clic en el resultado
+                <strong>(2)</strong>. Máximo {{ budgetFor('search') }}.
+              }
+              @case ('create') {
+                Clic en «Nuevo» <strong>(1)</strong>, llenar, clic en «Guardar» <strong>(2)</strong>.
+                Máximo {{ budgetFor('create') }}.
+              }
+              @case ('edit') {
+                Clic en el campo <strong>(1)</strong>, clic en el resultado <strong>(2)</strong>, clic
+                en «Editar la elegida» <strong>(3)</strong>. Máximo {{ budgetFor('edit') }}. Doble
+                clic sobre una fila de la tabla son <strong>2</strong>, y también entra.
+              }
+              @default {
+                Clic en «Cancelar» <strong>(1)</strong>. Máximo {{ budgetFor('cancel') }}, y sin
+                preguntar si estás seguro.
+              }
+            }
+          }
+          @default {
+            @switch (row) {
+              @case ('search') {
+                <kbd class="font-mono">/</kbd>, escribir, <kbd class="font-mono">↓</kbd>
+                <kbd class="font-mono">Enter</kbd>. <strong>Cero.</strong>
+              }
+              @case ('create') {
+                <kbd class="font-mono">Alt</kbd> + <kbd class="font-mono">N</kbd>,
+                <kbd class="font-mono">Tab</kbd> por los campos, <kbd class="font-mono">Ctrl</kbd> +
+                <kbd class="font-mono">S</kbd>.
+                <strong>Cero.</strong>
+              }
+              @case ('edit') {
+                <kbd class="font-mono">/</kbd>, escribir, <kbd class="font-mono">Enter</kbd>,
+                <kbd class="font-mono">Tab</kbd>, <kbd class="font-mono">Enter</kbd>.
+                <strong>Cero.</strong>
+              }
+              @default {
+                <kbd class="font-mono">Esc</kbd>. <strong>Cero</strong>, y el foco vuelve.
+              }
+            }
+          }
+        }
+      </ng-template>
+    </ewms-doc-table>
   </section>
 
   <!-- ==================================================== 5. Matriz de estados -->
@@ -340,76 +327,80 @@
       Los estados de esta pantalla no son suyos: son los de los componentes que la forman. Lo que sí
       es suyo es <strong>qué hace con cada uno</strong>.
     </p>
-    <div class="overflow-x-auto">
-      <table class="w-full border-collapse text-caption">
-        <caption class="mb-2 text-left text-secondary">
-          Qué pasa, quién lo dice, y por qué con esa forma de mensaje
-        </caption>
-        <thead>
-          <tr>
-            <th scope="col" class="border-b border-default p-2 text-left text-secondary">
-              Situación
-            </th>
-            <th scope="col" class="border-b border-default p-2 text-left text-secondary">
-              Cómo se dice
-            </th>
-            <th scope="col" class="border-b border-default p-2 text-left text-secondary">
-              Por qué
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <th scope="row" class="border-b border-default p-2 text-left text-caption text-primary">
-              Se guardó
-            </th>
-            <td class="border-b border-default p-2">Toast success</td>
-            <td class="border-b border-default p-2">
-              Acaba de pasar y ya terminó. No hay nada que decidir ni nada que siga siendo cierto.
-            </td>
-          </tr>
-          <tr>
-            <th scope="row" class="border-b border-default p-2 text-left text-caption text-primary">
-              La fuente falla
-            </th>
-            <td class="border-b border-default p-2">Banner danger, en el flujo</td>
-            <td class="border-b border-default p-2">
-              Sigue siendo cierto hasta que alguien lo arregle. Un toast desaparecería y quien llegó
-              cuatro segundos tarde nunca se enteró.
-            </td>
-          </tr>
-          <tr>
-            <th scope="row" class="border-b border-default p-2 text-left text-caption text-primary">
-              Un código escaneado no existe
-            </th>
-            <td class="border-b border-default p-2">Toast warning</td>
-            <td class="border-b border-default p-2">
-              Es un evento puntual —ese disparo— y no una condición. El siguiente escaneo lo
-              reemplaza.
-            </td>
-          </tr>
-          <tr>
-            <th scope="row" class="border-b border-default p-2 text-left text-caption text-primary">
-              Se canceló
-            </th>
-            <td class="border-b border-default p-2">Nada</td>
-            <td class="border-b border-default p-2">
-              Un aviso de «cambiaste de opinión» es una notificación sobre la ausencia de un evento.
-            </td>
-          </tr>
-          <tr>
-            <th scope="row" class="border-b border-default p-2 text-left text-caption text-primary">
-              Nada elegido
-            </th>
-            <td class="border-b border-default p-2">«Editar la elegida» deshabilitado</td>
-            <td class="border-b border-default p-2">
-              Un botón que abre un formulario vacío cuando creías estar editando es peor que uno que
-              no se puede pulsar.
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+    <ewms-doc-table
+      caption="Qué pasa, quién lo dice, y por qué con esa forma de mensaje"
+      [columns]="[
+        { id: 'situation', label: 'Situación' },
+        { id: 'how', label: 'Cómo se dice' },
+        { id: 'why', label: 'Por qué' },
+      ]"
+      [rows]="['saved', 'failing', 'unknown', 'cancelled', 'none']"
+    >
+      <ng-template let-row let-column="column">
+        @switch (column.id) {
+          @case ('situation') {
+            @switch (row) {
+              @case ('saved') {
+                Se guardó
+              }
+              @case ('failing') {
+                La fuente falla
+              }
+              @case ('unknown') {
+                Un código escaneado no existe
+              }
+              @case ('cancelled') {
+                Se canceló
+              }
+              @default {
+                Nada elegido
+              }
+            }
+          }
+          @case ('how') {
+            @switch (row) {
+              @case ('saved') {
+                Toast success
+              }
+              @case ('failing') {
+                Banner danger, en el flujo
+              }
+              @case ('unknown') {
+                Toast warning
+              }
+              @case ('cancelled') {
+                Nada
+              }
+              @default {
+                «Editar la elegida» deshabilitado
+              }
+            }
+          }
+          @default {
+            @switch (row) {
+              @case ('saved') {
+                Acaba de pasar y ya terminó. No hay nada que decidir ni nada que siga siendo cierto.
+              }
+              @case ('failing') {
+                Sigue siendo cierto hasta que alguien lo arregle. Un toast desaparecería y quien llegó
+                cuatro segundos tarde nunca se enteró.
+              }
+              @case ('unknown') {
+                Es un evento puntual —ese disparo— y no una condición. El siguiente escaneo lo
+                reemplaza.
+              }
+              @case ('cancelled') {
+                Un aviso de «cambiaste de opinión» es una notificación sobre la ausencia de un evento.
+              }
+              @default {
+                Un botón que abre un formulario vacío cuando creías estar editando es peor que uno que
+                no se puede pulsar.
+              }
+            }
+          }
+        }
+      </ng-template>
+    </ewms-doc-table>
   </section>
 
   <!-- ============================================================= 6. Tamaños -->

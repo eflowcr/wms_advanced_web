@@ -2,10 +2,12 @@ import { NgTemplateOutlet } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   contentChild,
   input,
   TemplateRef,
 } from '@angular/core';
+import { DocTable, type DocColumn } from './doc-table';
 
 /** Etiqueta de un eje de la matriz; la plantilla de celda decide por `id`. */
 export interface MatrixAxis {
@@ -27,7 +29,7 @@ export interface MatrixCell {
 @Component({
   selector: 'ewms-state-matrix',
   templateUrl: './state-matrix.html',
-  imports: [NgTemplateOutlet],
+  imports: [DocTable, NgTemplateOutlet],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class StateMatrix {
@@ -43,4 +45,12 @@ export class StateMatrix {
   readonly rowHeader = input<string>('Variante');
 
   readonly cell = contentChild.required<TemplateRef<MatrixCell>>(TemplateRef);
+
+  /** La columna que nombra la fila; un id vacío no choca con el de ningún estado. */
+  protected readonly rowColumn = '';
+
+  protected readonly columns = computed<readonly DocColumn[]>(() => [
+    { id: this.rowColumn, label: this.rowHeader() },
+    ...this.states(),
+  ]);
 }

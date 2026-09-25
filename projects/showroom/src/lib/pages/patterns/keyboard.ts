@@ -12,6 +12,7 @@ import {
   type ShortcutOutcome,
 } from '@ewms/design-system';
 import { DemoFrame } from '../../ui/demo-frame';
+import { DocTable } from '../../ui/doc-table';
 import { PropTable, type PropRow } from '../../ui/prop-table';
 import { TokenValue } from '../../ui/token-value';
 
@@ -120,7 +121,7 @@ const LOG_LENGTH = 12;
 // `unregistered`, y Ctrl+S igual debe impedir que el navegador guarde la página.
 @Component({
   selector: 'ewms-showroom-keyboard',
-  imports: [Button, Input, DemoFrame, PropTable, TokenValue],
+  imports: [Button, Input, DemoFrame, DocTable, PropTable, TokenValue],
   templateUrl: './keyboard.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -179,6 +180,10 @@ export class ShowroomKeyboard {
 
   protected toneFor(outcome: ShortcutOutcome): string {
     return OUTCOME_TONE[outcome];
+  }
+
+  protected meaningOf(outcome: ShortcutOutcome): string {
+    return this.outcomes[outcome];
   }
 
   protected clear(): void {

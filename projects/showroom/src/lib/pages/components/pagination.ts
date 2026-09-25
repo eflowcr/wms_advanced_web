@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, signal } from '@angular/core';
 import { Button, DESIGN_SYSTEM_VERSION, Pagination } from '@ewms/design-system';
 import { DemoFrame } from '../../ui/demo-frame';
+import { DocTable } from '../../ui/doc-table';
 import { PropTable, type PropRow } from '../../ui/prop-table';
 import { TokenValue } from '../../ui/token-value';
 
@@ -58,7 +59,7 @@ const FILAS = 163;
 @Component({
   selector: 'ewms-showroom-pagination',
   templateUrl: './pagination.html',
-  imports: [Button, Pagination, DemoFrame, PropTable, TokenValue],
+  imports: [Button, Pagination, DemoFrame, DocTable, PropTable, TokenValue],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ShowroomPagination {

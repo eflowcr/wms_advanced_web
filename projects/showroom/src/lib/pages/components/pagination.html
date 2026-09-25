@@ -120,55 +120,63 @@
       Tres situaciones, y en las tres el estado llega por <strong>dos</strong> caminos: cómo se ve y
       qué dice el DOM.
     </p>
-    <div class="overflow-x-auto">
-      <table class="w-full border-collapse text-caption">
-        <caption class="mb-2 text-left text-secondary">
-          Dónde está la página y qué se puede pulsar
-        </caption>
-        <thead>
-          <tr>
-            <th scope="col" class="border-b border-default p-2 text-left text-secondary">
-              Situación
-            </th>
-            <th scope="col" class="border-b border-default p-2 text-left text-secondary">
-              Anterior
-            </th>
-            <th scope="col" class="border-b border-default p-2 text-left text-secondary">
-              Siguiente
-            </th>
-            <th scope="col" class="border-b border-default p-2 text-left text-secondary">
-              Lo que se anuncia
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <th scope="row" class="border-b border-default p-2 text-left text-primary">
-              Primera página
-            </th>
-            <td class="border-b border-default p-2 text-primary">deshabilitado</td>
-            <td class="border-b border-default p-2 text-primary">activo</td>
-            <td class="border-b border-default p-2 font-mono text-primary">Página 1 de 7</td>
-          </tr>
-          <tr>
-            <th scope="row" class="border-b border-default p-2 text-left text-primary">
-              Página intermedia
-            </th>
-            <td class="border-b border-default p-2 text-primary">activo</td>
-            <td class="border-b border-default p-2 text-primary">activo</td>
-            <td class="border-b border-default p-2 font-mono text-primary">Página N de 7</td>
-          </tr>
-          <tr>
-            <th scope="row" class="border-b border-default p-2 text-left text-primary">
-              Última página
-            </th>
-            <td class="border-b border-default p-2 text-primary">activo</td>
-            <td class="border-b border-default p-2 text-primary">deshabilitado</td>
-            <td class="border-b border-default p-2 font-mono text-primary">Página 7 de 7</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+    <ewms-doc-table
+      caption="Dónde está la página y qué se puede pulsar"
+      [columns]="[
+        { id: 'where', label: 'Situación' },
+        { id: 'previous', label: 'Anterior' },
+        { id: 'next', label: 'Siguiente' },
+        { id: 'announced', label: 'Lo que se anuncia' },
+      ]"
+      [rows]="['first', 'middle', 'last']"
+    >
+      <ng-template let-row let-column="column">
+        @switch (column.id) {
+          @case ('where') {
+            @switch (row) {
+              @case ('first') {
+                Primera página
+              }
+              @case ('middle') {
+                Página intermedia
+              }
+              @default {
+                Última página
+              }
+            }
+          }
+          @case ('previous') {
+            @if (row === 'first') {
+              deshabilitado
+            } @else {
+              activo
+            }
+          }
+          @case ('next') {
+            @if (row === 'last') {
+              deshabilitado
+            } @else {
+              activo
+            }
+          }
+          @default {
+            <span class="font-mono">
+              @switch (row) {
+                @case ('first') {
+                  Página 1 de 7
+                }
+                @case ('middle') {
+                  Página N de 7
+                }
+                @default {
+                  Página 7 de 7
+                }
+              }
+            </span>
+          }
+        }
+      </ng-template>
+    </ewms-doc-table>
     <div class="flex flex-col gap-2 rounded-md border border-strong bg-secondary p-4">
       <h3 class="text-h4">El color nunca es la única señal (WCAG 1.4.1)</h3>
       <p class="text-caption">

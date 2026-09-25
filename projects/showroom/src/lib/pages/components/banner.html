@@ -105,33 +105,33 @@
       </div>
     </ewms-demo-frame>
 
-    <div class="overflow-x-auto">
-      <table class="w-full border-collapse text-caption">
-        <caption class="mb-2 text-left text-secondary">
-          Variante, familia de color y role — las tres columnas que suelen confundirse
-        </caption>
-        <thead>
-          <tr>
-            <th scope="col" class="border-b border-default p-2 text-left text-secondary">Variante</th>
-            <th scope="col" class="border-b border-default p-2 text-left text-secondary">Familia</th>
-            <th scope="col" class="border-b border-default p-2 text-left text-secondary">role</th>
-            <th scope="col" class="border-b border-default p-2 text-left text-secondary">Icono</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (row of variants; track row.variant) {
-            <tr>
-              <th scope="row" class="border-b border-default p-2 text-left text-primary">
-                {{ row.name }}
-              </th>
-              <td class="border-b border-default p-2 font-mono text-primary">{{ row.family }}</td>
-              <td class="border-b border-default p-2 font-mono text-primary">{{ row.role }}</td>
-              <td class="border-b border-default p-2 text-primary">{{ row.severityLabel }}</td>
-            </tr>
+    <ewms-doc-table
+      caption="Variante, familia de color y role — las tres columnas que suelen confundirse"
+      [columns]="[
+        { id: 'name', label: 'Variante' },
+        { id: 'family', label: 'Familia' },
+        { id: 'role', label: 'role' },
+        { id: 'icon', label: 'Icono' },
+      ]"
+      [rows]="variants"
+    >
+      <ng-template let-row let-column="column">
+        @switch (column.id) {
+          @case ('name') {
+            {{ row.name }}
           }
-        </tbody>
-      </table>
-    </div>
+          @case ('family') {
+            <span class="font-mono">{{ row.family }}</span>
+          }
+          @case ('role') {
+            <span class="font-mono">{{ row.role }}</span>
+          }
+          @default {
+            {{ row.severityLabel }}
+          }
+        }
+      </ng-template>
+    </ewms-doc-table>
 
     <div class="flex flex-col gap-2 rounded-md border border-strong bg-secondary p-4">
       <h3 class="text-h4">Info se llama Info y se pinta neutral</h3>
@@ -239,33 +239,15 @@
       <code class="font-mono">-text</code>, <code class="font-mono">-solid</code>— así que la tabla
       muestra una y la regla vale para las cuatro.
     </p>
-    <div class="overflow-x-auto">
-      <table class="w-full border-collapse text-caption">
-        <caption class="mb-2 text-left text-secondary">
-          Tokens que consume &lt;ewms-banner&gt;
-        </caption>
-        <thead>
-          <tr>
-            <th scope="col" class="border-b border-default p-2 text-left text-secondary">Parte</th>
-            <th scope="col" class="border-b border-default p-2 text-left text-secondary">
-              Token, cadena y valor
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (row of anatomy; track row.token) {
-            <tr>
-              <th scope="row" class="border-b border-default p-2 text-left text-primary">
-                {{ row.part }}
-              </th>
-              <td class="border-b border-default p-2">
-                <ewms-token-value [token]="row.token" [swatch]="true" />
-              </td>
-            </tr>
-          }
-        </tbody>
-      </table>
-    </div>
+    <ewms-doc-table caption="Tokens que consume &lt;ewms-banner&gt;" [columns]="anatomyColumns" [rows]="anatomy">
+      <ng-template let-row let-column="column">
+        @if (column.id === 'part') {
+          {{ row.part }}
+        } @else {
+          <ewms-token-value [token]="row.token" [swatch]="true" />
+        }
+      </ng-template>
+    </ewms-doc-table>
 
     <div class="flex flex-col gap-2 rounded-md border border-strong bg-secondary p-4">
       <h3 class="text-h4">
@@ -277,42 +259,34 @@
         <code class="font-mono">-solid</code>, con el criterio de los 3:1 de WCAG 1.4.11 contra la
         <code class="font-mono">-surface</code> de la misma familia. Medido:
       </p>
-      <div class="overflow-x-auto">
-        <table class="w-full border-collapse text-caption">
-          <caption class="mb-2 text-left text-secondary">
-            Contraste contra la <code class="font-mono">-surface</code> de cada familia
-          </caption>
-          <thead>
-            <tr>
-              <th scope="col" class="border-b border-default p-2 text-left text-secondary">Familia</th>
-              <th scope="col" class="border-b border-default p-2 text-left text-secondary">-text</th>
-              <th scope="col" class="border-b border-default p-2 text-left text-secondary">-solid</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <th scope="row" class="border-b border-default p-2 text-left text-primary">danger</th>
-              <td class="border-b border-default p-2 font-mono text-success">5.58:1</td>
-              <td class="border-b border-default p-2 font-mono text-primary">4.28:1</td>
-            </tr>
-            <tr>
-              <th scope="row" class="border-b border-default p-2 text-left text-primary">warning</th>
-              <td class="border-b border-default p-2 font-mono text-success">5.34:1</td>
-              <td class="border-b border-default p-2 font-mono text-primary">4.13:1</td>
-            </tr>
-            <tr>
-              <th scope="row" class="border-b border-default p-2 text-left text-primary">success</th>
-              <td class="border-b border-default p-2 font-mono text-success">5.34:1</td>
-              <td class="border-b border-default p-2 font-mono text-primary">4.12:1</td>
-            </tr>
-            <tr>
-              <th scope="row" class="border-b border-default p-2 text-left text-primary">neutral</th>
-              <td class="border-b border-default p-2 font-mono text-success">9.04:1</td>
-              <td class="border-b border-default p-2 font-mono text-primary">3.71:1</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+      <ewms-doc-table
+        caption="Contraste contra la -surface de cada familia"
+        [columns]="[
+          { id: 'family', label: 'Familia' },
+          { id: 'text', label: '-text' },
+          { id: 'solid', label: '-solid' },
+        ]"
+        [rows]="[
+          { family: 'danger', text: '5.58:1', solid: '4.28:1' },
+          { family: 'warning', text: '5.34:1', solid: '4.13:1' },
+          { family: 'success', text: '5.34:1', solid: '4.12:1' },
+          { family: 'neutral', text: '9.04:1', solid: '3.71:1' },
+        ]"
+      >
+        <ng-template let-row let-column="column">
+          @switch (column.id) {
+            @case ('family') {
+              {{ row.family }}
+            }
+            @case ('text') {
+              <span class="font-mono text-success">{{ row.text }}</span>
+            }
+            @default {
+              <span class="font-mono">{{ row.solid }}</span>
+            }
+          }
+        </ng-template>
+      </ewms-doc-table>
       <p class="text-caption">
         Las dos pasan, y gana <code class="font-mono">-text</code> por dos razones: tiene más
         margen en las cuatro familias —<code class="font-mono">neutral</code> con

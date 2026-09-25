@@ -17,6 +17,7 @@ import {
   type InputType,
 } from '@ewms/design-system';
 import { DemoFrame } from '../../ui/demo-frame';
+import { ANATOMY_COLUMNS, DocTable } from '../../ui/doc-table';
 import { PropTable, type PropRow } from '../../ui/prop-table';
 import { StateMatrix, type MatrixAxis } from '../../ui/state-matrix';
 import { TokenValue } from '../../ui/token-value';
@@ -210,6 +211,7 @@ interface SizeSample {
     Button,
     Input,
     DemoFrame,
+    DocTable,
     PropTable,
     StateMatrix,
     TokenValue,
@@ -226,6 +228,7 @@ export class ShowroomInput {
   protected readonly types = TYPES;
   protected readonly props = PROPS;
   protected readonly anatomy = ANATOMY;
+  protected readonly anatomyColumns = ANATOMY_COLUMNS;
 
   /** Un form() real; el Input se enlaza solo por [formField]. */
   protected readonly model = signal({ sku: 'SKU-04871-B', clave: '', busqueda: '' });

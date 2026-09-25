@@ -18,6 +18,7 @@ import {
   type SelectOption,
 } from '@ewms/design-system';
 import { DemoFrame } from '../../ui/demo-frame';
+import { ANATOMY_COLUMNS, DocTable } from '../../ui/doc-table';
 import { PropTable, type PropRow } from '../../ui/prop-table';
 import { StateMatrix, type MatrixAxis } from '../../ui/state-matrix';
 import { TokenValue } from '../../ui/token-value';
@@ -216,7 +217,7 @@ interface ChevronSample {
  */
 @Component({
   selector: 'ewms-showroom-select',
-  imports: [Button, FormField, Select, DemoFrame, PropTable, StateMatrix, TokenValue],
+  imports: [Button, FormField, Select, DemoFrame, DocTable, PropTable, StateMatrix, TokenValue],
   templateUrl: './select.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -231,6 +232,7 @@ export class ShowroomSelect {
   protected readonly locations = LOCATIONS;
   protected readonly props = PROPS;
   protected readonly anatomy = ANATOMY;
+  protected readonly anatomyColumns = ANATOMY_COLUMNS;
   protected readonly searchVariants = SEARCH_VARIANTS;
   protected readonly searchColumns = SEARCH_COLUMNS;
   protected readonly pageSize = SEARCH_PAGE_SIZE;

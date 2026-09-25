@@ -182,38 +182,68 @@
   <section class="flex flex-col gap-4" aria-labelledby="fo-matrix" data-block="5-matriz">
     <h2 id="fo-matrix" class="text-h2">Matriz de estados</h2>
     <div class="overflow-x-auto rounded-md border border-default">
-      <table class="w-full border-collapse text-caption">
-        <caption class="sr-only">Qué se ve en cada momento</caption>
-        <thead>
-          <tr class="bg-secondary text-secondary">
-            <th scope="col" class="p-2 text-left">Momento</th>
-            <th scope="col" class="p-2 text-left">El campo</th>
-            <th scope="col" class="p-2 text-left">El formulario</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr class="border-t border-default">
-            <th scope="row" class="p-2 text-left text-primary">Mientras se escribe</th>
-            <td class="p-2">su hint, sin error</td>
-            <td class="p-2">Guardar habilitado</td>
-          </tr>
-          <tr class="border-t border-default">
-            <th scope="row" class="p-2 text-left text-primary">Al salir del campo</th>
-            <td class="p-2">el mensaje del validador que falló, en lugar del hint</td>
-            <td class="p-2">sin resumen todavía</td>
-          </tr>
-          <tr class="border-t border-default">
-            <th scope="row" class="p-2 text-left text-primary">Al enviar con errores</th>
-            <td class="p-2">todos los mensajes, aunque no se haya visitado el campo</td>
-            <td class="p-2">resumen arriba, enfocado, con un enlace por campo</td>
-          </tr>
-          <tr class="border-t border-default">
-            <th scope="row" class="p-2 text-left text-primary">Al enviar válido</th>
-            <td class="p-2">sin mensajes</td>
-            <td class="p-2">Guardar en carga mientras la acción del envío corre</td>
-          </tr>
-        </tbody>
-      </table>
+      <ewms-doc-table
+        caption="Qué se ve en cada momento"
+        [columns]="[
+          { id: 'moment', label: 'Momento' },
+          { id: 'field', label: 'El campo' },
+          { id: 'form', label: 'El formulario' },
+        ]"
+        [rows]="['typing', 'leaving', 'invalid', 'valid']"
+      >
+        <ng-template let-row let-column="column">
+          @switch (column.id) {
+            @case ('moment') {
+              @switch (row) {
+                @case ('typing') {
+                  Mientras se escribe
+                }
+                @case ('leaving') {
+                  Al salir del campo
+                }
+                @case ('invalid') {
+                  Al enviar con errores
+                }
+                @default {
+                  Al enviar válido
+                }
+              }
+            }
+            @case ('field') {
+              @switch (row) {
+                @case ('typing') {
+                  su hint, sin error
+                }
+                @case ('leaving') {
+                  el mensaje del validador que falló, en lugar del hint
+                }
+                @case ('invalid') {
+                  todos los mensajes, aunque no se haya visitado el campo
+                }
+                @default {
+                  sin mensajes
+                }
+              }
+            }
+            @default {
+              @switch (row) {
+                @case ('typing') {
+                  Guardar habilitado
+                }
+                @case ('leaving') {
+                  sin resumen todavía
+                }
+                @case ('invalid') {
+                  resumen arriba, enfocado, con un enlace por campo
+                }
+                @default {
+                  Guardar en carga mientras la acción del envío corre
+                }
+              }
+            }
+          }
+        </ng-template>
+      </ewms-doc-table>
     </div>
   </section>
 

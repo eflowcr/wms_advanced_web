@@ -11,6 +11,7 @@ import {
 import { form, FormField } from '@angular/forms/signals';
 import { DESIGN_SYSTEM_VERSION, Radio, RadioGroup } from '@ewms/design-system';
 import { DemoFrame } from '../../ui/demo-frame';
+import { ANATOMY_COLUMNS, DocTable } from '../../ui/doc-table';
 import { PropTable, type PropRow } from '../../ui/prop-table';
 import { StateMatrix, type MatrixAxis } from '../../ui/state-matrix';
 import { TokenValue } from '../../ui/token-value';
@@ -129,7 +130,7 @@ const GROUP_PROPS: readonly PropRow[] = [
  */
 @Component({
   selector: 'ewms-showroom-radio',
-  imports: [FormField, Radio, RadioGroup, DemoFrame, PropTable, StateMatrix, TokenValue],
+  imports: [FormField, Radio, RadioGroup, DemoFrame, DocTable, PropTable, StateMatrix, TokenValue],
   templateUrl: './radio.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -143,6 +144,7 @@ export class ShowroomRadio {
   protected readonly props = PROPS;
   protected readonly groupProps = GROUP_PROPS;
   protected readonly anatomy = SELECTION_ANATOMY;
+  protected readonly anatomyColumns = ANATOMY_COLUMNS;
 
   protected readonly box = signal<SelectionBox>(SELECTION_BOX);
 

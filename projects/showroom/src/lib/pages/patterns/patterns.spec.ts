@@ -460,7 +460,7 @@ describe('the DS-4 pattern pages, driven', () => {
 
     it('lists the map the engine is really dispatching from', async () => {
       await settle();
-      const actions = [...page.querySelectorAll('[data-demo-bindings] th')].map((cell) =>
+      const actions = [...page.querySelectorAll('[data-demo-bindings] tbody th')].map((cell) =>
         cell.textContent?.trim(),
       );
 
@@ -517,7 +517,7 @@ describe('the DS-4 pattern pages, driven', () => {
     it('clears everything it collected', async () => {
       scan('EXP-000123');
       await settle();
-      expect(page.querySelector('[data-demo-log] tr')).not.toBeNull();
+      expect(page.querySelector('[data-demo-log] tbody tr')).not.toBeNull();
 
       page.querySelector<HTMLButtonElement>('[data-demo-keyboard] button')!.click();
       await settle();

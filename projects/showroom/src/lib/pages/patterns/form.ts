@@ -28,6 +28,7 @@ import {
   type SelectOption,
 } from '@ewms/design-system';
 import { DemoFrame } from '../../ui/demo-frame';
+import { DocTable } from '../../ui/doc-table';
 import { PropTable, type PropRow } from '../../ui/prop-table';
 import { ESTADO_OPTIONS } from './expedicion-form';
 import { numberRange, shipmentCode } from './expedicion.rules';
@@ -107,6 +108,7 @@ interface AltaExpedicion {
     Checkbox,
     DatePicker,
     DemoFrame,
+    DocTable,
     EwmsInput,
     FormField,
     FormPattern,

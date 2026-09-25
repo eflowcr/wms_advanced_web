@@ -89,53 +89,54 @@
       <strong>Exento</strong> no es un «falla» más suave: un control deshabilitado está exento por
       norma, y un divisor decorativo no es un control.
     </p>
-    <div class="overflow-x-auto">
-      <table class="w-full border-collapse text-caption">
-        <caption class="mb-2 text-left text-secondary">
-          Pares verificados ({{ contrasts().length }})
-        </caption>
-        <thead>
-          <tr>
-            <th scope="col" class="border-b border-default p-2 text-left text-secondary">Muestra</th>
-            <th scope="col" class="border-b border-default p-2 text-left text-secondary">Primer plano</th>
-            <th scope="col" class="border-b border-default p-2 text-left text-secondary">Sobre</th>
-            <th scope="col" class="border-b border-default p-2 text-left text-secondary">Razón</th>
-            <th scope="col" class="border-b border-default p-2 text-left text-secondary">Mín.</th>
-            <th scope="col" class="border-b border-default p-2 text-left text-secondary">Veredicto</th>
-            <th scope="col" class="border-b border-default p-2 text-left text-secondary">Nota</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (row of contrasts(); track row.foreground + row.background) {
-            <tr [attr.data-contrast]="row.foreground + ' on ' + row.background">
-              <td class="border-b border-default p-2">
-                <span
-                  class="flex size-8 items-center justify-center rounded-sm border border-default"
-                  [style]="swatch(row.background)"
-                  aria-hidden="true"
-                >
-                  <span class="block size-4 rounded-full" [style]="swatch(row.foreground)"></span>
-                </span>
-              </td>
-              <th scope="row" class="border-b border-default p-2 text-left">
-                <code class="font-mono text-primary">{{ row.foreground }}</code>
-              </th>
-              <td class="border-b border-default p-2">
-                <code class="font-mono text-secondary">{{ row.background }}</code>
-              </td>
-              <td class="border-b border-default p-2 font-mono text-primary">{{ row.ratio }}</td>
-              <td class="border-b border-default p-2 font-mono text-secondary">{{ row.minimum }}:1</td>
-              <td class="border-b border-default p-2">
-                <span class="rounded-sm px-2 py-1" [class]="verdictClasses(row.verdict)">
-                  {{ verdictLabel(row.verdict) }}
-                </span>
-              </td>
-              <td class="border-b border-default p-2 text-secondary">{{ row.note }}</td>
-            </tr>
+    <ewms-doc-table
+      [caption]="'Pares verificados (' + contrasts().length + ')'"
+      [columns]="[
+        { id: 'sample', label: 'Muestra' },
+        { id: 'foreground', label: 'Primer plano' },
+        { id: 'background', label: 'Sobre' },
+        { id: 'ratio', label: 'Razón' },
+        { id: 'minimum', label: 'Mín.' },
+        { id: 'verdict', label: 'Veredicto' },
+        { id: 'note', label: 'Nota' },
+      ]"
+      [rows]="contrasts()"
+      rowHeader="foreground"
+    >
+      <ng-template let-row let-column="column">
+        @switch (column.id) {
+          @case ('sample') {
+            <span
+              class="flex size-8 items-center justify-center rounded-sm border border-default"
+              [style]="swatch(row.background)"
+              aria-hidden="true"
+            >
+              <span class="block size-4 rounded-full" [style]="swatch(row.foreground)"></span>
+            </span>
           }
-        </tbody>
-      </table>
-    </div>
+          @case ('foreground') {
+            <code class="font-mono">{{ row.foreground }}</code>
+          }
+          @case ('background') {
+            <code class="font-mono text-secondary">{{ row.background }}</code>
+          }
+          @case ('ratio') {
+            <span class="font-mono">{{ row.ratio }}</span>
+          }
+          @case ('minimum') {
+            <span class="font-mono text-secondary">{{ row.minimum }}:1</span>
+          }
+          @case ('verdict') {
+            <span class="rounded-sm px-2 py-1" [class]="verdictClasses(row.verdict)">
+              {{ verdictLabel(row.verdict) }}
+            </span>
+          }
+          @default {
+            <span class="text-secondary">{{ row.note }}</span>
+          }
+        }
+      </ng-template>
+    </ewms-doc-table>
   </section>
 
   <section class="flex flex-col gap-4" aria-labelledby="colors-rules">

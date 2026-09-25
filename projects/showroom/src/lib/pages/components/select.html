@@ -359,33 +359,15 @@
       Qué token controla cada parte, leído en vivo. Las alturas, el padding y la escala tipográfica
       son las del Input —importadas, no copiadas— y el Input las toma a su vez del Botón.
     </p>
-    <div class="overflow-x-auto">
-      <table class="w-full border-collapse text-caption">
-        <caption class="mb-2 text-left text-secondary">
-          Tokens que consume &lt;ewms-select&gt;
-        </caption>
-        <thead>
-          <tr>
-            <th scope="col" class="border-b border-default p-2 text-left text-secondary">Parte</th>
-            <th scope="col" class="border-b border-default p-2 text-left text-secondary">
-              Token, cadena y valor
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (row of anatomy; track row.token) {
-            <tr>
-              <th scope="row" class="border-b border-default p-2 text-left text-primary">
-                {{ row.part }}
-              </th>
-              <td class="border-b border-default p-2">
-                <ewms-token-value [token]="row.token" [swatch]="true" />
-              </td>
-            </tr>
-          }
-        </tbody>
-      </table>
-    </div>
+    <ewms-doc-table caption="Tokens que consume &lt;ewms-select&gt;" [columns]="anatomyColumns" [rows]="anatomy">
+      <ng-template let-row let-column="column">
+        @if (column.id === 'part') {
+          {{ row.part }}
+        } @else {
+          <ewms-token-value [token]="row.token" [swatch]="true" />
+        }
+      </ng-template>
+    </ewms-doc-table>
 
     <h3 class="text-h3">El panel: ancho y volteo</h3>
     <ul class="flex flex-col gap-2">
@@ -471,63 +453,64 @@
     ><code>{{ snippet }}</code></pre>
 
     <h3 class="text-h3">Accesibilidad: el teclado, y qué anuncia cada parte</h3>
-    <div class="overflow-x-auto">
-      <table class="w-full border-collapse text-caption">
-        <caption class="mb-2 text-left text-secondary">
-          El contrato de teclado: uno solo, sobre el campo
-        </caption>
-        <thead>
-          <tr>
-            <th scope="col" class="border-b border-default p-2 text-left text-secondary">Tecla</th>
-            <th scope="col" class="border-b border-default p-2 text-left text-secondary">Cerrado</th>
-            <th scope="col" class="border-b border-default p-2 text-left text-secondary">Abierto</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <th scope="row" class="border-b border-default p-2 text-left text-primary">↓ / ↑</th>
-            <td class="border-b border-default p-2 text-primary">
-              ↓ abre la lista entera (con <code class="font-mono">options</code>) o reabre los
-              resultados (con <code class="font-mono">source</code>).
-            </td>
-            <td class="border-b border-default p-2 text-primary">
-              Mueve la fila activa. <strong>No da la vuelta</strong> en los extremos: dar la vuelta
-              convierte «mantener la flecha» en un bucle sin señal de que la lista terminó.
-            </td>
-          </tr>
-          <tr>
-            <th scope="row" class="border-b border-default p-2 text-left text-primary">Enter</th>
-            <td class="border-b border-default p-2 text-primary">
-              Del formulario. Tras una ráfaga de escáner, busca sin esperar.
-            </td>
-            <td class="border-b border-default p-2 text-primary">
-              Elige la fila activa y cierra.
-            </td>
-          </tr>
-          <tr>
-            <th scope="row" class="border-b border-default p-2 text-left text-primary">Escape</th>
-            <td class="border-b border-default p-2 text-primary">—</td>
-            <td class="border-b border-default p-2 text-primary">
-              Cierra <strong>sin tocar el valor</strong>. Es descarte, y nada más.
-            </td>
-          </tr>
-          <tr>
-            <th scope="row" class="border-b border-default p-2 text-left text-primary">Letras</th>
-            <td class="border-b border-default p-2 text-primary" colspan="2">
-              Escriben en el campo y filtran: al instante en memoria, tras el retardo de entrada
-              contra la fuente. Vaciar la caja no borra el valor elegido.
-            </td>
-          </tr>
-          <tr>
-            <th scope="row" class="border-b border-default p-2 text-left text-primary">Tab</th>
-            <td class="border-b border-default p-2 text-primary">Sale del control.</td>
-            <td class="border-b border-default p-2 text-primary">
-              Cierra sin elegir: el foco va camino a otro lado.
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+    <ewms-doc-table
+      caption="El contrato de teclado: uno solo, sobre el campo"
+      [columns]="[
+        { id: 'key', label: 'Tecla' },
+        { id: 'closed', label: 'Cerrado' },
+        { id: 'open', label: 'Abierto' },
+      ]"
+      [rows]="['↓ / ↑', 'Enter', 'Escape', 'Letras', 'Tab']"
+    >
+      <ng-template let-row let-column="column">
+        @switch (column.id) {
+          @case ('key') {
+            {{ row }}
+          }
+          @case ('closed') {
+            @switch (row) {
+              @case ('↓ / ↑') {
+                ↓ abre la lista entera (con <code class="font-mono">options</code>) o reabre los
+                resultados (con <code class="font-mono">source</code>).
+              }
+              @case ('Enter') {
+                Del formulario. Tras una ráfaga de escáner, busca sin esperar.
+              }
+              @case ('Escape') {
+                —
+              }
+              @case ('Letras') {
+                Escriben en el campo y filtran: al instante en memoria, tras el retardo de entrada
+                contra la fuente. Vaciar la caja no borra el valor elegido.
+              }
+              @default {
+                Sale del control.
+              }
+            }
+          }
+          @default {
+            @switch (row) {
+              @case ('↓ / ↑') {
+                Mueve la fila activa. <strong>No da la vuelta</strong> en los extremos: dar la vuelta
+                convierte «mantener la flecha» en un bucle sin señal de que la lista terminó.
+              }
+              @case ('Enter') {
+                Elige la fila activa y cierra.
+              }
+              @case ('Escape') {
+                Cierra <strong>sin tocar el valor</strong>. Es descarte, y nada más.
+              }
+              @case ('Letras') {
+                Igual que cerrado.
+              }
+              @default {
+                Cierra sin elegir: el foco va camino a otro lado.
+              }
+            }
+          }
+        }
+      </ng-template>
+    </ewms-doc-table>
     <div class="flex flex-col gap-2 rounded-md border border-warning bg-warning-surface p-4">
       <h4 class="text-h4">Lo que NO hay</h4>
       <p class="text-caption">

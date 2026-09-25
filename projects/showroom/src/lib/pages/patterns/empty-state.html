@@ -83,27 +83,34 @@
       class="overflow-x-auto rounded-md border border-default outline-none focus-visible:shadow-(--focus-ring-shadow)"
       tabindex="0"
     >
-      <table class="w-full border-collapse text-caption" data-empty-cases>
-        <caption class="sr-only">Cuándo va cada caso</caption>
-        <thead>
-          <tr class="bg-secondary text-secondary">
-            <th scope="col" class="p-2 text-left">kind</th>
-            <th scope="col" class="p-2 text-left">Cuándo</th>
-            <th scope="col" class="p-2 text-left">Ícono</th>
-            <th scope="col" class="p-2 text-left">Acción</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (item of cases; track item.kind) {
-            <tr class="border-t border-default">
-              <th scope="row" class="p-2 text-left font-mono text-primary">{{ item.kind }}</th>
-              <td class="p-2">{{ item.when }}</td>
-              <td class="p-2 font-mono">{{ item.icon }}</td>
-              <td class="p-2">{{ item.action }}</td>
-            </tr>
+      <ewms-doc-table
+        caption="Cuándo va cada caso"
+        [columns]="[
+          { id: 'kind', label: 'kind' },
+          { id: 'when', label: 'Cuándo' },
+          { id: 'icon', label: 'Ícono' },
+          { id: 'action', label: 'Acción' },
+        ]"
+        [rows]="cases"
+        data-empty-cases
+      >
+        <ng-template let-item let-column="column">
+          @switch (column.id) {
+            @case ('kind') {
+              <span class="font-mono">{{ item.kind }}</span>
+            }
+            @case ('when') {
+              {{ item.when }}
+            }
+            @case ('icon') {
+              <span class="font-mono">{{ item.icon }}</span>
+            }
+            @default {
+              {{ item.action }}
+            }
           }
-        </tbody>
-      </table>
+        </ng-template>
+      </ewms-doc-table>
     </div>
   </section>
 

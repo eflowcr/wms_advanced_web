@@ -11,6 +11,7 @@ import {
   type Tab,
 } from '@ewms/design-system';
 import { DemoFrame } from '../../ui/demo-frame';
+import { DocTable } from '../../ui/doc-table';
 import { PropTable, type PropRow } from '../../ui/prop-table';
 import { TokenValue } from '../../ui/token-value';
 
@@ -200,7 +201,7 @@ const ANATOMY: readonly { readonly part: string; readonly token: string }[] = [
 @Component({
   selector: 'ewms-showroom-navigation',
   templateUrl: './navigation.html',
-  imports: [NavRail, NavBottom, Tabs, Breadcrumbs, DemoFrame, PropTable, TokenValue],
+  imports: [NavRail, NavBottom, Tabs, Breadcrumbs, DemoFrame, DocTable, PropTable, TokenValue],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ShowroomNavigation {

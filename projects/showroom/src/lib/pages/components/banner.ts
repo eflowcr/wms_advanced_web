@@ -8,6 +8,7 @@ import {
 } from '@angular/core';
 import { Banner, DESIGN_SYSTEM_VERSION, type FeedbackVariant } from '@ewms/design-system';
 import { DemoFrame } from '../../ui/demo-frame';
+import { ANATOMY_COLUMNS, DocTable } from '../../ui/doc-table';
 import { PropTable, type PropRow } from '../../ui/prop-table';
 import { StateMatrix, type MatrixAxis } from '../../ui/state-matrix';
 import { TokenValue } from '../../ui/token-value';
@@ -156,7 +157,7 @@ interface IconSample {
  */
 @Component({
   selector: 'ewms-showroom-banner',
-  imports: [Banner, DemoFrame, PropTable, StateMatrix, TokenValue],
+  imports: [Banner, DemoFrame, DocTable, PropTable, StateMatrix, TokenValue],
   templateUrl: './banner.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -169,6 +170,7 @@ export class ShowroomBanner {
   protected readonly matrixStates = MATRIX_STATES;
   protected readonly props = PROPS;
   protected readonly anatomy = ANATOMY;
+  protected readonly anatomyColumns = ANATOMY_COLUMNS;
 
   /** Lo cuenta la demo, para mostrar que «no se saca solo». */
   protected readonly dismissCount = signal(0);

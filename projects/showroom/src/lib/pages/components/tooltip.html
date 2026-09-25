@@ -197,61 +197,51 @@
     </div>
 
     <h3 class="text-h3">Las tres reglas de la WCAG 2.2 §1.4.13, y cómo probarlas acá</h3>
-    <div class="overflow-x-auto">
-      <table class="w-full border-collapse text-caption">
-        <caption class="mb-2 text-left text-secondary">
-          Contenido al apuntar o enfocar — requisito, no mejora
-        </caption>
-        <thead>
-          <tr>
-            <th scope="col" class="border-b border-default p-2 text-left text-secondary">Regla</th>
-            <th scope="col" class="border-b border-default p-2 text-left text-secondary">
-              Qué significa acá
-            </th>
-            <th scope="col" class="border-b border-default p-2 text-left text-secondary">
-              Cómo comprobarlo en esta página
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <th scope="row" class="border-b border-default p-2 text-left text-primary">
-              Descartable
-            </th>
-            <td class="border-b border-default p-2 text-primary">
-              <code class="font-mono">Escape</code> lo cierra sin mover el foco ni el puntero.
-            </td>
-            <td class="border-b border-default p-2 text-primary">
-              Abrí cualquiera de arriba y pulsá <code class="font-mono">Escape</code>: desaparece y
-              el foco se queda donde estaba.
-            </td>
-          </tr>
-          <tr>
-            <th scope="row" class="border-b border-default p-2 text-left text-primary">
-              Apuntable
-            </th>
-            <td class="border-b border-default p-2 text-primary">
-              El puntero puede entrar al panel sin que se cierre.
-            </td>
-            <td class="border-b border-default p-2 text-primary">
-              Apuntá un control, movete despacio hasta el panel y quedate ahí: no se va.
-            </td>
-          </tr>
-          <tr>
-            <th scope="row" class="border-b border-default p-2 text-left text-primary">
-              Persistente
-            </th>
-            <td class="border-b border-default p-2 text-primary">
-              Queda visible hasta que el puntero salga, el foco se vaya o se pulse
-              <code class="font-mono">Escape</code>. <strong>Nunca se cierra solo por tiempo.</strong>
-            </td>
-            <td class="border-b border-default p-2 text-primary">
-              Dejalo abierto y esperá. Sigue ahí.
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+    <ewms-doc-table
+      caption="Contenido al apuntar o enfocar — requisito, no mejora"
+      [columns]="[
+        { id: 'rule', label: 'Regla' },
+        { id: 'means', label: 'Qué significa acá' },
+        { id: 'check', label: 'Cómo comprobarlo en esta página' },
+      ]"
+      [rows]="['Descartable', 'Apuntable', 'Persistente']"
+    >
+      <ng-template let-row let-column="column">
+        @switch (column.id) {
+          @case ('rule') {
+            {{ row }}
+          }
+          @case ('means') {
+            @switch (row) {
+              @case ('Descartable') {
+                <code class="font-mono">Escape</code> lo cierra sin mover el foco ni el puntero.
+              }
+              @case ('Apuntable') {
+                El puntero puede entrar al panel sin que se cierre.
+              }
+              @default {
+                Queda visible hasta que el puntero salga, el foco se vaya o se pulse
+                <code class="font-mono">Escape</code>. <strong>Nunca se cierra solo por tiempo.</strong>
+              }
+            }
+          }
+          @default {
+            @switch (row) {
+              @case ('Descartable') {
+                Abrí cualquiera de arriba y pulsá <code class="font-mono">Escape</code>: desaparece y
+                el foco se queda donde estaba.
+              }
+              @case ('Apuntable') {
+                Apuntá un control, movete despacio hasta el panel y quedate ahí: no se va.
+              }
+              @default {
+                Dejalo abierto y esperá. Sigue ahí.
+              }
+            }
+          }
+        }
+      </ng-template>
+    </ewms-doc-table>
     <p class="text-caption text-secondary">
       Hay dos temporizadores y <strong>ninguno de los dos es un cierre automático</strong>. Uno es
       el retardo de aparición, que existe para que barrer el mouse por una toolbar no dispare cinco
@@ -288,33 +278,15 @@
       clases única: no tiene plantilla de Angular, así que todo lo que lo pinta está en esa cadena y
       sale de estos tokens.
     </p>
-    <div class="overflow-x-auto">
-      <table class="w-full border-collapse text-caption">
-        <caption class="mb-2 text-left text-secondary">
-          Tokens que consume [ewmsTooltip]
-        </caption>
-        <thead>
-          <tr>
-            <th scope="col" class="border-b border-default p-2 text-left text-secondary">Parte</th>
-            <th scope="col" class="border-b border-default p-2 text-left text-secondary">
-              Token, cadena y valor
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (row of anatomy; track row.token) {
-            <tr>
-              <th scope="row" class="border-b border-default p-2 text-left text-primary">
-                {{ row.part }}
-              </th>
-              <td class="border-b border-default p-2">
-                <ewms-token-value [token]="row.token" [swatch]="true" />
-              </td>
-            </tr>
-          }
-        </tbody>
-      </table>
-    </div>
+    <ewms-doc-table caption="Tokens que consume [ewmsTooltip]" [columns]="anatomyColumns" [rows]="anatomy">
+      <ng-template let-row let-column="column">
+        @if (column.id === 'part') {
+          {{ row.part }}
+        } @else {
+          <ewms-token-value [token]="row.token" [swatch]="true" />
+        }
+      </ng-template>
+    </ewms-doc-table>
     <p class="text-caption text-secondary">
       El texto se escribe con <code class="font-mono">textContent</code>, nunca
       <code class="font-mono">innerHTML</code>: un tooltip no puede llevar marcado, ni por descuido

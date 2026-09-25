@@ -21,6 +21,7 @@ import {
   type TableSource,
 } from '@ewms/design-system';
 import { DemoFrame } from '../../ui/demo-frame';
+import { ANATOMY_COLUMNS, DocTable } from '../../ui/doc-table';
 import { PropTable, type PropRow } from '../../ui/prop-table';
 import { StateMatrix, type MatrixAxis } from '../../ui/state-matrix';
 import { TokenValue } from '../../ui/token-value';
@@ -308,6 +309,7 @@ const ANATOMY = [
     Table,
     TableColumn,
     DemoFrame,
+    DocTable,
     PropTable,
     StateMatrix,
     TokenValue,
@@ -321,6 +323,7 @@ export class ShowroomTable {
   protected readonly version = DESIGN_SYSTEM_VERSION;
   protected readonly props = PROPS;
   protected readonly anatomy = ANATOMY;
+  protected readonly anatomyColumns = ANATOMY_COLUMNS;
   protected readonly matrixVariants = MATRIX_VARIANTS;
   protected readonly matrixStates = MATRIX_STATES;
   protected readonly rowMatrix = ROW_MATRIX;

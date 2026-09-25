@@ -6,6 +6,7 @@ import {
   type FeedbackVariant,
 } from '@ewms/design-system';
 import { DemoFrame } from '../../ui/demo-frame';
+import { ANATOMY_COLUMNS, DocTable } from '../../ui/doc-table';
 import { PropTable, type PropRow } from '../../ui/prop-table';
 import { StateMatrix, type MatrixAxis } from '../../ui/state-matrix';
 import { TokenValue } from '../../ui/token-value';
@@ -148,7 +149,7 @@ const ACCENT_SAMPLES: Readonly<Record<string, string>> = {
  */
 @Component({
   selector: 'ewms-showroom-toast',
-  imports: [Button, DemoFrame, PropTable, StateMatrix, TokenValue],
+  imports: [Button, DemoFrame, DocTable, PropTable, StateMatrix, TokenValue],
   templateUrl: './toast.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -161,6 +162,7 @@ export class ShowroomToast {
   protected readonly matrixStates = MATRIX_STATES;
   protected readonly props = PROPS;
   protected readonly anatomy = ANATOMY;
+  protected readonly anatomyColumns = ANATOMY_COLUMNS;
 
   /** Cuántos hay visibles, leído de la cola real. */
   protected readonly queued = this.toastService.toasts;

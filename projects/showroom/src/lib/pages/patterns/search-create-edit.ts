@@ -25,6 +25,7 @@ import {
   type SearchDisplay,
 } from '@ewms/design-system';
 import { DemoFrame } from '../../ui/demo-frame';
+import { DocTable } from '../../ui/doc-table';
 import { ESTADOS, EXPEDICIONES, type ExpedicionRow } from '../components/expediciones';
 import { FLOW_BUDGETS, type FlowId } from './click-budget';
 import { ExpedicionForm, type ExpedicionDraft } from './expedicion-form';
@@ -48,7 +49,7 @@ const FLOW_CONTROLS =
 // del CDK); la regla de oyente global único es del teclado, y ese sigue siendo del motor.
 @Component({
   selector: 'ewms-showroom-search-create-edit',
-  imports: [Banner, Button, DemoFrame, Select, Table, TableColumn],
+  imports: [Banner, Button, DemoFrame, DocTable, Select, Table, TableColumn],
   templateUrl: './search-create-edit.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -59,6 +60,7 @@ export class ShowroomSearchCreateEdit {
 
   protected readonly version = DESIGN_SYSTEM_VERSION;
   protected readonly budgets = FLOW_BUDGETS;
+  protected readonly budgetId = (budget: (typeof FLOW_BUDGETS)[number]): string => budget.id;
   protected readonly estados = ESTADOS;
 
   /** Las expediciones como estado: guardar una cambia la tabla y la búsqueda. */

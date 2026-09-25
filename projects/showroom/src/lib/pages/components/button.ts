@@ -9,6 +9,7 @@ import {
 } from '@angular/core';
 import { Button, DESIGN_SYSTEM_VERSION, type ButtonVariant } from '@ewms/design-system';
 import { DemoFrame } from '../../ui/demo-frame';
+import { ANATOMY_COLUMNS, DocTable } from '../../ui/doc-table';
 import { PropTable, type PropRow } from '../../ui/prop-table';
 import { StateMatrix, type MatrixAxis } from '../../ui/state-matrix';
 import { TokenValue } from '../../ui/token-value';
@@ -191,7 +192,7 @@ const SIZE_SAMPLES: readonly SizeSample[] = [
  */
 @Component({
   selector: 'ewms-showroom-button',
-  imports: [Button, DemoFrame, PropTable, StateMatrix, TokenValue],
+  imports: [Button, DemoFrame, DocTable, PropTable, StateMatrix, TokenValue],
   templateUrl: './button.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -203,6 +204,7 @@ export class ShowroomButton {
   protected readonly states = STATES;
   protected readonly props = PROPS;
   protected readonly anatomy = ANATOMY;
+  protected readonly anatomyColumns = ANATOMY_COLUMNS;
 
   protected readonly sizes = signal<readonly SizeSample[]>(SIZE_SAMPLES);
   protected readonly iconSizes = signal<readonly SizeSample[]>(SIZE_SAMPLES);

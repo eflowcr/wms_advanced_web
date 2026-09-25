@@ -223,33 +223,15 @@
       <code class="font-mono">&lt;input&gt;</code> no puede tener hijos y todo evento de puntero le
       pertenece al control de abajo.
     </p>
-    <div class="overflow-x-auto">
-      <table class="w-full border-collapse text-caption">
-        <caption class="mb-2 text-left text-secondary">
-          Tokens que consume &lt;ewms-toggle&gt;
-        </caption>
-        <thead>
-          <tr>
-            <th scope="col" class="border-b border-default p-2 text-left text-secondary">Parte</th>
-            <th scope="col" class="border-b border-default p-2 text-left text-secondary">
-              Token, cadena y valor
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (row of anatomy; track row.token) {
-            <tr>
-              <th scope="row" class="border-b border-default p-2 text-left text-primary">
-                {{ row.part }}
-              </th>
-              <td class="border-b border-default p-2">
-                <ewms-token-value [token]="row.token" [swatch]="true" />
-              </td>
-            </tr>
-          }
-        </tbody>
-      </table>
-    </div>
+    <ewms-doc-table caption="Tokens que consume &lt;ewms-toggle&gt;" [columns]="anatomyColumns" [rows]="anatomy">
+      <ng-template let-row let-column="column">
+        @if (column.id === 'part') {
+          {{ row.part }}
+        } @else {
+          <ewms-token-value [token]="row.token" [swatch]="true" />
+        }
+      </ng-template>
+    </ewms-doc-table>
     <div class="flex flex-col gap-2 rounded-md border border-warning bg-warning-surface p-4">
       <h3 class="text-h4">El pulgar no se desliza — cambia de lado de golpe</h3>
       <p class="text-caption">

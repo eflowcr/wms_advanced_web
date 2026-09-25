@@ -117,52 +117,40 @@
         </dl>
 
         <!-- Región viva: quien más necesita saber qué pasó con su tecla es quien no ve cambiar la tabla. -->
-        <div class="overflow-x-auto" role="status" aria-live="polite">
-          <table class="w-full border-collapse text-caption">
-            <caption class="mb-2 text-left text-secondary">
-              Las últimas pulsaciones, clasificadas por el motor
-            </caption>
-            <thead>
-              <tr>
-                <th scope="col" class="border-b border-default p-2 text-left text-secondary">
-                  Tecla
-                </th>
-                <th scope="col" class="border-b border-default p-2 text-left text-secondary">
-                  Acción
-                </th>
-                <th scope="col" class="border-b border-default p-2 text-left text-secondary">
-                  Qué pasó, y por qué
-                </th>
-              </tr>
-            </thead>
-            <tbody data-demo-log>
-              @for (line of log(); track line.id) {
-                <tr>
-                  <th
-                    scope="row"
-                    class="border-b border-default p-2 text-left font-mono text-caption text-primary"
-                  >
-                    {{ line.key }}
-                  </th>
-                  <td class="border-b border-default p-2 font-mono text-secondary">
-                    {{ line.action ?? '—' }}
-                  </td>
-                  <td class="border-b border-default p-2" [class]="toneFor(line.outcome)">
-                    <span class="font-mono">{{ line.outcome }}</span> — {{ outcomes[line.outcome] }}
-                  </td>
-                </tr>
-              } @empty {
-                <tr>
-                  <td colspan="3" class="p-2 text-secondary">
-                    Todavía no llegó ninguna tecla. Probá con
-                    <kbd class="font-mono">/</kbd>, <kbd class="font-mono">Alt</kbd> +
-                    <kbd class="font-mono">N</kbd>, <kbd class="font-mono">Ctrl</kbd> +
-                    <kbd class="font-mono">S</kbd> o <kbd class="font-mono">?</kbd>.
-                  </td>
-                </tr>
+        <div role="status" aria-live="polite" data-demo-log>
+          <ewms-doc-table
+            caption="Las últimas pulsaciones, clasificadas por el motor"
+            [columns]="[
+              { id: 'key', label: 'Tecla' },
+              { id: 'action', label: 'Acción' },
+              { id: 'outcome', label: 'Qué pasó, y por qué' },
+            ]"
+            [rows]="log()"
+          >
+            <ng-template let-line let-column="column">
+              @switch (column.id) {
+                @case ('key') {
+                  <span class="font-mono">{{ line.key }}</span>
+                }
+                @case ('action') {
+                  <span class="font-mono text-secondary">{{ line.action ?? '—' }}</span>
+                }
+                @default {
+                  <span [class]="toneFor(line.outcome)">
+                    <span class="font-mono">{{ line.outcome }}</span> — {{ meaningOf(line.outcome) }}
+                  </span>
+                }
               }
-            </tbody>
-          </table>
+            </ng-template>
+          </ewms-doc-table>
+          @if (log().length === 0) {
+            <p class="p-2 text-caption text-secondary">
+              Todavía no llegó ninguna tecla. Probá con
+              <kbd class="font-mono">/</kbd>, <kbd class="font-mono">Alt</kbd> +
+              <kbd class="font-mono">N</kbd>, <kbd class="font-mono">Ctrl</kbd> +
+              <kbd class="font-mono">S</kbd> o <kbd class="font-mono">?</kbd>.
+            </p>
+          }
         </div>
       </div>
     </ewms-demo-frame>
@@ -187,49 +175,38 @@
       No son variantes visuales: son las <strong>cinco acciones del mapa</strong>, con lo que cada
       binding declara sobre sí mismo. Leído del motor en vivo, no escrito acá.
     </p>
-    <div class="overflow-x-auto">
-      <table class="w-full border-collapse text-caption">
-        <caption class="mb-2 text-left text-secondary">
-          El mapa que el motor está despachando ahora mismo
-        </caption>
-        <thead>
-          <tr>
-            <th scope="col" class="border-b border-default p-2 text-left text-secondary">Acción</th>
-            <th scope="col" class="border-b border-default p-2 text-left text-secondary">Tecla</th>
-            <th scope="col" class="border-b border-default p-2 text-left text-secondary">
-              ¿Una sola tecla?
-            </th>
-            <th scope="col" class="border-b border-default p-2 text-left text-secondary">
-              ¿Dentro de un campo?
-            </th>
-            <th scope="col" class="border-b border-default p-2 text-left text-secondary">
-              ¿Registrada acá?
-            </th>
-          </tr>
-        </thead>
-        <tbody data-demo-bindings>
-          @for (binding of bindings(); track binding.action) {
-            <tr>
-              <th scope="row" class="border-b border-default p-2 text-left font-mono text-primary">
-                {{ binding.action }}
-              </th>
-              <td class="border-b border-default p-2 font-mono text-primary">
-                {{ binding.chord }}
-              </td>
-              <td class="border-b border-default p-2">
-                {{ binding.singleKey ? 'Sí — sujeta al conmutador de 2.1.4' : 'No' }}
-              </td>
-              <td class="border-b border-default p-2">
-                {{ binding.insideTextFields ? 'Sí' : 'No' }}
-              </td>
-              <td class="border-b border-default p-2">
-                {{ binding.registered ? 'Sí' : 'No — por eso «unregistered» se puede ver' }}
-              </td>
-            </tr>
+    <ewms-doc-table
+      caption="El mapa que el motor está despachando ahora mismo"
+      [columns]="[
+        { id: 'action', label: 'Acción' },
+        { id: 'chord', label: 'Tecla' },
+        { id: 'single', label: '¿Una sola tecla?' },
+        { id: 'inside', label: '¿Dentro de un campo?' },
+        { id: 'registered', label: '¿Registrada acá?' },
+      ]"
+      [rows]="bindings()"
+      data-demo-bindings
+    >
+      <ng-template let-binding let-column="column">
+        @switch (column.id) {
+          @case ('action') {
+            <span class="font-mono">{{ binding.action }}</span>
           }
-        </tbody>
-      </table>
-    </div>
+          @case ('chord') {
+            <span class="font-mono">{{ binding.chord }}</span>
+          }
+          @case ('single') {
+            {{ binding.singleKey ? 'Sí — sujeta al conmutador de 2.1.4' : 'No' }}
+          }
+          @case ('inside') {
+            {{ binding.insideTextFields ? 'Sí' : 'No' }}
+          }
+          @default {
+            {{ binding.registered ? 'Sí' : 'No — por eso «unregistered» se puede ver' }}
+          }
+        }
+      </ng-template>
+    </ewms-doc-table>
     <p class="text-caption text-secondary">
       <strong><code class="font-mono">save</code> se deja sin registrar a propósito.</strong>
       <code class="font-mono">Ctrl</code> + <code class="font-mono">S</code> sigue impidiendo que el
@@ -246,33 +223,22 @@
       El orden de las comprobaciones <strong>es</strong> el diseño: cada fila solo se puede mover
       aceptando un fallo que el requerimiento nombra.
     </p>
-    <div class="overflow-x-auto">
-      <table class="w-full border-collapse text-caption">
-        <caption class="mb-2 text-left text-secondary">
-          Los nueve desenlaces de una pulsación, en el orden en que se deciden
-        </caption>
-        <thead>
-          <tr>
-            <th scope="col" class="border-b border-default p-2 text-left text-secondary">
-              Desenlace
-            </th>
-            <th scope="col" class="border-b border-default p-2 text-left text-secondary">
-              Qué significa
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (row of outcomeRows; track row.outcome) {
-            <tr>
-              <th scope="row" class="border-b border-default p-2 text-left font-mono text-primary">
-                {{ row.outcome }}
-              </th>
-              <td class="border-b border-default p-2">{{ row.meaning }}</td>
-            </tr>
-          }
-        </tbody>
-      </table>
-    </div>
+    <ewms-doc-table
+      caption="Los nueve desenlaces de una pulsación, en el orden en que se deciden"
+      [columns]="[
+        { id: 'outcome', label: 'Desenlace' },
+        { id: 'meaning', label: 'Qué significa' },
+      ]"
+      [rows]="outcomeRows"
+    >
+      <ng-template let-row let-column="column">
+        @if (column.id === 'outcome') {
+          <span class="font-mono">{{ row.outcome }}</span>
+        } @else {
+          {{ row.meaning }}
+        }
+      </ng-template>
+    </ewms-doc-table>
   </section>
 
   <!-- ============================================================= 6. Tamaños -->

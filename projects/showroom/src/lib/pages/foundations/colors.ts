@@ -1,5 +1,6 @@
 import { afterNextRender, ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { DemoFrame } from '../../ui/demo-frame';
+import { DocTable } from '../../ui/doc-table';
 import { TokenReader } from '../../ui/token-reader';
 import { TokenValue } from '../../ui/token-value';
 import { AA_NON_TEXT, AA_TEXT, formatRatio, verdict, type ContrastVerdict } from '../../ui/tokens';
@@ -351,7 +352,7 @@ const PAIRS: readonly ContrastPair[] = [
  */
 @Component({
   selector: 'ewms-showroom-colors',
-  imports: [DemoFrame, TokenValue],
+  imports: [DemoFrame, DocTable, TokenValue],
   templateUrl: './colors.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

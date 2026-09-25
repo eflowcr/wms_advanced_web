@@ -192,51 +192,37 @@
       <code class="font-mono">as</code>, esta tabla sería lo primero en dejar de coincidir con la de
       arriba.
     </p>
-    <div class="overflow-x-auto">
-      <table class="w-full border-collapse text-caption">
-        <caption class="mb-2 text-left text-secondary">
-          Elemento renderizado y tamaño calculado, por variante
-        </caption>
-        <thead>
-          <tr>
-            <th scope="col" class="border-b border-default p-2 text-left text-secondary">
-              Variante
-            </th>
-            <th scope="col" class="border-b border-default p-2 text-left text-secondary">
-              Elemento renderizado
-            </th>
-            <th scope="col" class="border-b border-default p-2 text-left text-secondary">
-              Tamaño calculado
-            </th>
-            <th scope="col" class="border-b border-default p-2 text-left text-secondary">
-              ¿Entra al esquema?
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (row of rendered(); track row.variant) {
-            <tr>
-              <th scope="row" class="border-b border-default p-2 text-left">
-                <code class="font-mono text-primary">{{ row.variant }}</code>
-              </th>
-              <td class="border-b border-default p-2">
-                <code class="font-mono text-primary">{{ row.tag }}</code>
-              </td>
-              <td class="border-b border-default p-2">
-                <span class="font-mono text-primary">{{ row.fontSize }}</span>
-              </td>
-              <td class="border-b border-default p-2 text-primary">
-                @if (isHeading(row.variant)) {
-                  Sí, es un encabezado
-                } @else {
-                  No
-                }
-              </td>
-            </tr>
+    <ewms-doc-table
+      caption="Elemento renderizado y tamaño calculado, por variante"
+      [columns]="[
+        { id: 'variant', label: 'Variante' },
+        { id: 'tag', label: 'Elemento renderizado' },
+        { id: 'size', label: 'Tamaño calculado' },
+        { id: 'heading', label: '¿Entra al esquema?' },
+      ]"
+      [rows]="rendered()"
+    >
+      <ng-template let-row let-column="column">
+        @switch (column.id) {
+          @case ('variant') {
+            <code class="font-mono">{{ row.variant }}</code>
           }
-        </tbody>
-      </table>
-    </div>
+          @case ('tag') {
+            <code class="font-mono">{{ row.tag }}</code>
+          }
+          @case ('size') {
+            <span class="font-mono">{{ row.fontSize }}</span>
+          }
+          @default {
+            @if (isHeading(row.variant)) {
+              Sí, es un encabezado
+            } @else {
+              No
+            }
+          }
+        }
+      </ng-template>
+    </ewms-doc-table>
 
     <h3 class="text-h3">Los tokens de cada variante</h3>
     <p class="text-secondary">
@@ -244,46 +230,33 @@
       <strong>sin decidir</strong> en <code class="font-mono">tokens.css</code> y salen marcados como
       tales: un hueco visible es información, un número inventado no.
     </p>
-    <div class="overflow-x-auto">
-      <table class="w-full border-collapse text-caption">
-        <caption class="mb-2 text-left text-secondary">
-          Tokens que consume &lt;ewms-text&gt;
-        </caption>
-        <thead>
-          <tr>
-            <th scope="col" class="border-b border-default p-2 text-left text-secondary">
-              Variante
-            </th>
-            <th scope="col" class="border-b border-default p-2 text-left text-secondary">
-              Token, cadena y valor
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (row of tokens; track row.variant) {
-            <tr>
-              <th scope="row" class="border-b border-default p-2 text-left align-top">
-                <code class="font-mono text-primary">{{ row.variant }}</code>
-              </th>
-              <td class="border-b border-default p-2">
-                <ul class="flex flex-col gap-1">
-                  <li><ewms-token-value [token]="row.size" /></li>
-                  <li>
-                    <ewms-token-value [token]="row.weight" [pending]="isPending(row, row.weight)" />
-                  </li>
-                  <li>
-                    <ewms-token-value
-                      [token]="row.lineHeight"
-                      [pending]="isPending(row, row.lineHeight)"
-                    />
-                  </li>
-                </ul>
-              </td>
-            </tr>
-          }
-        </tbody>
-      </table>
-    </div>
+    <ewms-doc-table
+      caption="Tokens que consume &lt;ewms-text&gt;"
+      [columns]="[
+        { id: 'variant', label: 'Variante' },
+        { id: 'tokens', label: 'Token, cadena y valor' },
+      ]"
+      [rows]="tokens"
+    >
+      <ng-template let-row let-column="column">
+        @if (column.id === 'variant') {
+          <code class="font-mono">{{ row.variant }}</code>
+        } @else {
+          <ul class="flex flex-col gap-1">
+            <li><ewms-token-value [token]="row.size" /></li>
+            <li>
+              <ewms-token-value [token]="row.weight" [pending]="isPending(row, row.weight)" />
+            </li>
+            <li>
+              <ewms-token-value
+                [token]="row.lineHeight"
+                [pending]="isPending(row, row.lineHeight)"
+              />
+            </li>
+          </ul>
+        }
+      </ng-template>
+    </ewms-doc-table>
     <p class="text-caption text-secondary">
       La cara es <strong>Montserrat</strong> auto-hospedada, variable 100–900. No se carga de un CDN:
       la CSP sólo permite <code class="font-mono">font-src 'self'</code>, y además evita filtrar las

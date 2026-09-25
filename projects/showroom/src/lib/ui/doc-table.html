@@ -1,0 +1,45 @@
+<!--
+  Una región con scroll debe alcanzarse con teclado (WCAG 2.1.1, axe scrollable-region-focusable).
+  Chromium le da parada de Tab solo; se declara acá para que sea nuestra y lleve anillo de foco.
+-->
+<div class="overflow-x-auto outline-none focus-visible:shadow-(--focus-ring-shadow)" tabindex="0">
+  <table class="w-full border-collapse text-caption">
+    <caption class="mb-2 text-left text-secondary">{{ caption() }}</caption>
+    <thead>
+      <tr>
+        @for (column of columns(); track column.id) {
+          <th scope="col" class="border-b border-default p-2 text-left text-secondary">
+            {{ column.label }}
+          </th>
+        }
+      </tr>
+    </thead>
+    <tbody>
+      @for (row of rows(); track $index) {
+        <tr [attr.data-doc-row]="keyOf(row)">
+          @for (column of columns(); track column.id; let first = $first) {
+            @if (isRowHeader(column, first)) {
+              <th
+                scope="row"
+                class="border-b border-default p-2 text-left text-primary"
+                [class]="alignClass()"
+              >
+                <ng-container
+                  [ngTemplateOutlet]="cell()"
+                  [ngTemplateOutletContext]="{ $implicit: row, column }"
+                />
+              </th>
+            } @else {
+              <td class="border-b border-default p-2 text-primary" [class]="alignClass()">
+                <ng-container
+                  [ngTemplateOutlet]="cell()"
+                  [ngTemplateOutletContext]="{ $implicit: row, column }"
+                />
+              </td>
+            }
+          }
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>

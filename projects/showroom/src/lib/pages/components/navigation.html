@@ -196,59 +196,81 @@
   <!-- ====================================================== 5. Matriz de estados -->
   <section class="flex flex-col gap-4" aria-labelledby="nav-states" data-block="5-matriz">
     <h2 id="nav-states" class="text-h2">Matriz de estados</h2>
-    <table class="w-full border-collapse text-p">
-      <caption class="pb-2 text-left text-caption text-secondary">
-        Qué hace cada pieza en cada estado
-      </caption>
-      <thead>
-        <tr class="border-b border-strong text-left">
-          <th scope="col" class="py-2 pr-4">Estado</th>
-          <th scope="col" class="py-2 pr-4">Qué se ve</th>
-          <th scope="col" class="py-2">Por qué</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr class="border-b border-default">
-          <th scope="row" class="py-2 pr-4 text-left text-h4">Rail colapsado</th>
-          <td class="py-2 pr-4">Sólo iconos, cada uno con tooltip</td>
-          <td class="py-2">
-            Un rail de glifos sin nombre sólo lo usa quien ya conoce el producto
-          </td>
-        </tr>
-        <tr class="border-b border-default">
-          <th scope="row" class="py-2 pr-4 text-left text-h4">Ítem activo</th>
-          <td class="py-2 pr-4">Pastilla azul y <code class="font-mono">aria-current="page"</code></td>
-          <td class="py-2">El color solo no basta; el atributo lo dice sin verlo</td>
-        </tr>
-        <tr class="border-b border-default">
-          <th scope="row" class="py-2 pr-4 text-left text-h4">Grupo con la activa dentro</th>
-          <td class="py-2 pr-4">Se abre solo</td>
-          <td class="py-2">
-            Un rail que no contiene la pantalla en la que estás no es una navegación
-          </td>
-        </tr>
-        <tr class="border-b border-default">
-          <th scope="row" class="py-2 pr-4 text-left text-h4">Pestaña no cerrable</th>
-          <td class="py-2 pr-4">Sin «×» y sin <code class="font-mono">aria-keyshortcuts</code></td>
-          <td class="py-2">Un atajo anunciado que no hace nada es peor que ninguno</td>
-        </tr>
-        <tr class="border-b border-default">
-          <th scope="row" class="py-2 pr-4 text-left text-h4">Pestaña deshabilitada</th>
-          <td class="py-2 pr-4">Gris, y las flechas la saltan</td>
-          <td class="py-2">Las flechas no deben dejarte parado en algo inerte</td>
-        </tr>
-        <tr class="border-b border-default">
-          <th scope="row" class="py-2 pr-4 text-left text-h4">Migas de un nivel</th>
-          <td class="py-2 pr-4">Un solo texto, sin enlaces</td>
-          <td class="py-2">Un enlace a donde ya estás no lleva a ninguna parte</td>
-        </tr>
-        <tr>
-          <th scope="row" class="py-2 pr-4 text-left text-h4">Barra inferior sin sobrantes</th>
-          <td class="py-2 pr-4">No aparece «Más»</td>
-          <td class="py-2">Un control que abre una hoja vacía es un control que miente</td>
-        </tr>
-      </tbody>
-    </table>
+    <ewms-doc-table
+      caption="Qué hace cada pieza en cada estado"
+      [columns]="[
+        { id: 'state', label: 'Estado' },
+        { id: 'seen', label: 'Qué se ve' },
+        { id: 'why', label: 'Por qué' },
+      ]"
+      [rows]="[
+        'Rail colapsado',
+        'Ítem activo',
+        'Grupo con la activa dentro',
+        'Pestaña no cerrable',
+        'Pestaña deshabilitada',
+        'Migas de un nivel',
+        'Barra inferior sin sobrantes',
+      ]"
+    >
+      <ng-template let-row let-column="column">
+        @switch (column.id) {
+          @case ('state') {
+            {{ row }}
+          }
+          @case ('seen') {
+            @switch (row) {
+              @case ('Rail colapsado') {
+                Sólo iconos, cada uno con tooltip
+              }
+              @case ('Ítem activo') {
+                Pastilla azul y <code class="font-mono">aria-current="page"</code>
+              }
+              @case ('Grupo con la activa dentro') {
+                Se abre solo
+              }
+              @case ('Pestaña no cerrable') {
+                Sin «×» y sin <code class="font-mono">aria-keyshortcuts</code>
+              }
+              @case ('Pestaña deshabilitada') {
+                Gris, y las flechas la saltan
+              }
+              @case ('Migas de un nivel') {
+                Un solo texto, sin enlaces
+              }
+              @default {
+                No aparece «Más»
+              }
+            }
+          }
+          @default {
+            @switch (row) {
+              @case ('Rail colapsado') {
+                Un rail de glifos sin nombre sólo lo usa quien ya conoce el producto
+              }
+              @case ('Ítem activo') {
+                El color solo no basta; el atributo lo dice sin verlo
+              }
+              @case ('Grupo con la activa dentro') {
+                Un rail que no contiene la pantalla en la que estás no es una navegación
+              }
+              @case ('Pestaña no cerrable') {
+                Un atajo anunciado que no hace nada es peor que ninguno
+              }
+              @case ('Pestaña deshabilitada') {
+                Las flechas no deben dejarte parado en algo inerte
+              }
+              @case ('Migas de un nivel') {
+                Un enlace a donde ya estás no lleva a ninguna parte
+              }
+              @default {
+                Un control que abre una hoja vacía es un control que miente
+              }
+            }
+          }
+        }
+      </ng-template>
+    </ewms-doc-table>
   </section>
 
   <!-- =========================================================== 6. Tamaños -->

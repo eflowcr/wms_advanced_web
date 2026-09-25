@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import { DocTable, type DocColumn } from './doc-table';
 
 /** Fila de la tabla de propiedades. `default` es el literal tal como se tipearía, comillas incluidas. */
 export interface PropRow {
@@ -15,6 +16,7 @@ export interface PropRow {
 @Component({
   selector: 'ewms-prop-table',
   templateUrl: './prop-table.html',
+  imports: [DocTable],
   changeDetection: ChangeDetectionStrategy.OnPush,
   // Debajo de la demo y a ancho completo: al lado quedaba cortada (Select, Date picker). min-w-0:
   // sin él la tabla estira la columna de la grilla y se corta en vez de hacer scroll.
@@ -23,4 +25,11 @@ export interface PropRow {
 export class PropTable {
   readonly rows = input.required<readonly PropRow[]>();
   readonly caption = input.required<string>();
+
+  protected readonly columns: readonly DocColumn[] = [
+    { id: 'name', label: 'Propiedad' },
+    { id: 'type', label: 'Tipo' },
+    { id: 'default', label: 'Default' },
+    { id: 'description', label: 'Que hace' },
+  ];
 }

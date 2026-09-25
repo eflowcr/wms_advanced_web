@@ -6,6 +6,7 @@ import {
   type TooltipPosition,
 } from '@ewms/design-system';
 import { DemoFrame } from '../../ui/demo-frame';
+import { ANATOMY_COLUMNS, DocTable } from '../../ui/doc-table';
 import { PropTable, type PropRow } from '../../ui/prop-table';
 import { TokenValue } from '../../ui/token-value';
 
@@ -72,7 +73,7 @@ const ANATOMY = [
  */
 @Component({
   selector: 'ewms-showroom-tooltip',
-  imports: [Button, Tooltip, DemoFrame, PropTable, TokenValue],
+  imports: [Button, Tooltip, DemoFrame, DocTable, PropTable, TokenValue],
   templateUrl: './tooltip.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -81,6 +82,7 @@ export class ShowroomTooltip {
   protected readonly positions = POSITIONS;
   protected readonly props = PROPS;
   protected readonly anatomy = ANATOMY;
+  protected readonly anatomyColumns = ANATOMY_COLUMNS;
 
   /** Interruptor de la demo de tooltipDisabled. */
   protected readonly suppressed = signal(false);

@@ -9,6 +9,7 @@ import {
 } from '@angular/core';
 import { Checkbox, DESIGN_SYSTEM_VERSION } from '@ewms/design-system';
 import { DemoFrame } from '../../ui/demo-frame';
+import { ANATOMY_COLUMNS, DocTable } from '../../ui/doc-table';
 import { PropTable, type PropRow } from '../../ui/prop-table';
 import { StateMatrix, type MatrixAxis } from '../../ui/state-matrix';
 import { TokenValue } from '../../ui/token-value';
@@ -93,7 +94,7 @@ const PROPS: readonly PropRow[] = [
  */
 @Component({
   selector: 'ewms-showroom-checkbox',
-  imports: [Checkbox, DemoFrame, PropTable, StateMatrix, TokenValue],
+  imports: [Checkbox, DemoFrame, DocTable, PropTable, StateMatrix, TokenValue],
   templateUrl: './checkbox.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -105,6 +106,7 @@ export class ShowroomCheckbox {
   protected readonly states = STATES;
   protected readonly props = PROPS;
   protected readonly anatomy = SELECTION_ANATOMY;
+  protected readonly anatomyColumns = ANATOMY_COLUMNS;
 
   protected readonly box = signal<SelectionBox>(SELECTION_BOX);
 
