@@ -34,8 +34,9 @@ export const FORM = '/design-system/patterns/form';
 export const ROUTE_BUDGET_MS = 3_000;
 
 /**
- * Las rutas navegables del catálogo, patrones incluidos. Sumarla acá la somete a las cuatro
- * pruebas de showroom: título, sin desborde a 1440 y 1280, axe limpio y Tab una vez por control.
+ * Las rutas navegables del catálogo, patrones incluidos, con su título en los dos idiomas. Sumarla
+ * acá la somete a las pruebas de showroom: título, sin desborde a 1440 y 1280, axe limpio, Tab una
+ * vez por control, y la página entera en inglés.
  */
 /**
  * Los trece destinos del menú sin pantalla: van a «En construcción», nunca a un 404. El router
@@ -59,32 +60,38 @@ export const UNDER_CONSTRUCTION = [
 ] as const;
 
 export const PAGES = [
-  { url: '/design-system', heading: 'Showroom del sistema de diseño' },
-  { url: '/design-system/foundations/brand', heading: 'Marca' },
-  { url: '/design-system/foundations/colors', heading: 'Color' },
-  { url: '/design-system/foundations/typography', heading: 'Tipografía' },
-  { url: SPACING, heading: 'Espaciado, radios y elevación' },
-  { url: '/design-system/foundations/icons', heading: 'Iconografía' },
-  { url: BUTTON, heading: 'Botón' },
-  { url: TEXT, heading: 'Texto' },
-  { url: TOOLTIP, heading: 'Tooltip' },
-  { url: INPUT, heading: 'Input' },
-  { url: SELECT, heading: 'Select' },
-  { url: CHECKBOX, heading: 'Checkbox' },
-  { url: RADIO, heading: 'Radio' },
-  { url: TOGGLE, heading: 'Toggle' },
-  { url: BANNER, heading: 'Banner' },
-  { url: TOAST, heading: 'Toast' },
-  { url: CARD, heading: 'Card' },
-  { url: DIALOG, heading: 'Dialog' },
-  { url: TABLE, heading: 'Tabla de datos' },
-  { url: PAGINATION, heading: 'Paginación' },
-  { url: SPLIT_BUTTON, heading: 'Split button' },
-  { url: DATE_PICKER, heading: 'Date picker' },
-  { url: NAVIGATION, heading: 'Navegación' },
-  { url: KEYBOARD, heading: 'Atajos de teclado' },
-  { url: SEARCH_CREATE_EDIT, heading: 'Buscar, crear, editar' },
-  { url: EMPTY_STATE, heading: 'Estado vacío' },
-  { url: FILTERS, heading: 'Filtros' },
-  { url: FORM, heading: 'Formulario' },
+  {
+    url: '/design-system',
+    heading: { es: 'Showroom del sistema de diseño', en: 'Design system showroom' },
+  },
+  { url: '/design-system/foundations/brand', heading: { es: 'Marca', en: 'Brand' } },
+  { url: '/design-system/foundations/colors', heading: { es: 'Color', en: 'Colour' } },
+  { url: '/design-system/foundations/typography', heading: { es: 'Tipografía', en: 'Typography' } },
+  {
+    url: SPACING,
+    heading: { es: 'Espaciado, radios y elevación', en: 'Spacing, radii and elevation' },
+  },
+  { url: '/design-system/foundations/icons', heading: { es: 'Iconografía', en: 'Iconography' } },
+  { url: BUTTON, heading: { es: 'Botón', en: 'Button' } },
+  { url: TEXT, heading: { es: 'Texto', en: 'Text' } },
+  { url: TOOLTIP, heading: { es: 'Tooltip', en: 'Tooltip' } },
+  { url: INPUT, heading: { es: 'Input', en: 'Input' } },
+  { url: SELECT, heading: { es: 'Select', en: 'Select' } },
+  { url: CHECKBOX, heading: { es: 'Checkbox', en: 'Checkbox' } },
+  { url: RADIO, heading: { es: 'Radio', en: 'Radio' } },
+  { url: TOGGLE, heading: { es: 'Toggle', en: 'Toggle' } },
+  { url: BANNER, heading: { es: 'Banner', en: 'Banner' } },
+  { url: TOAST, heading: { es: 'Toast', en: 'Toast' } },
+  { url: CARD, heading: { es: 'Card', en: 'Card' } },
+  { url: DIALOG, heading: { es: 'Dialog', en: 'Dialog' } },
+  { url: TABLE, heading: { es: 'Tabla de datos', en: 'Data table' } },
+  { url: PAGINATION, heading: { es: 'Paginación', en: 'Pagination' } },
+  { url: SPLIT_BUTTON, heading: { es: 'Split button', en: 'Split button' } },
+  { url: DATE_PICKER, heading: { es: 'Date picker', en: 'Date picker' } },
+  { url: NAVIGATION, heading: { es: 'Navegación', en: 'Navigation' } },
+  { url: KEYBOARD, heading: { es: 'Atajos de teclado', en: 'Keyboard shortcuts' } },
+  { url: SEARCH_CREATE_EDIT, heading: { es: 'Buscar, crear, editar', en: 'Search, create, edit' } },
+  { url: EMPTY_STATE, heading: { es: 'Estado vacío', en: 'Empty state' } },
+  { url: FILTERS, heading: { es: 'Filtros', en: 'Filters' } },
+  { url: FORM, heading: { es: 'Formulario', en: 'Form' } },
 ] as const;

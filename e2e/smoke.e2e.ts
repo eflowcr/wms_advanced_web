@@ -39,7 +39,7 @@ test.describe('the application is alive', () => {
       const response = await page.goto(url);
       expect(response?.status(), `${url} no respondió`).toBeLessThan(400);
       await expect(
-        page.getByRole('heading', { level: 1, name: heading }),
+        page.getByRole('heading', { level: 1, name: heading.es }),
         `${url} no renderizó su h1`,
       ).toBeVisible();
       await watch.clean(url);
