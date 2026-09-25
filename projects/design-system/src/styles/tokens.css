@@ -78,11 +78,12 @@
   --size-40: 40px;
   --size-48: 48px;
   --size-56: 56px;
-  /* App Shell (DS-5): miden un marco, no un control. */
+  /* App Shell: miden un marco, no un control. */
   --size-64: 64px;
   --size-72: 72px;
-  --size-232: 232px;
+  --size-640: 640px;
   --size-768: 768px;
+  --size-1280: 1280px;
   /* Anchos de columna de la Tabla (DS-3 lote C). */
   --size-96: 96px;
   --size-160: 160px;
@@ -109,10 +110,20 @@
   --blur-8: 8px;
 
   --vh-70: 70vh;
+  --dvh-100: 100dvh;
   --ms-50: 50ms;
+  --ms-200: 200ms;
   --ms-300: 300ms;
   --ms-3000: 3000ms;
   --ms-5000: 5000ms;
+
+  /* Desaceleración: entra rápido y se asienta, sin rebote. */
+  --ease-out: cubic-bezier(0.2, 0, 0, 1);
+
+  /* Capas: un número sin unidad, como los pesos. El overlay del CDK vive en 1000. */
+  --z-20: 20;
+  --z-30: 30;
+  --z-40: 40;
 
   /* 'Montserrat' se auto-hospeda en projects/shell/public/fonts (@font-face en styles.css). */
   --typeface-montserrat: 'Montserrat', ui-sans-serif, system-ui, sans-serif;
@@ -179,6 +190,26 @@
   --color-neutral-border: var(--navy-81);
   --color-neutral-text: var(--navy-28);
 
+  /* Marco claro (decisión del usuario, 2026-09-25): el navy pasa al activo. Contrastes medidos
+   * en la ficha Navegacion. */
+  --color-nav-bg: var(--navy-100);
+  --color-nav-row-hover: var(--navy-95);
+  --color-nav-row-active: var(--navy-7);
+  --color-nav-row-active-hover: var(--navy-28);
+  --color-nav-row-active-text: var(--navy-100);
+  /* Chip en reposo: navy-91 y no bg-secondary, que contra el lienzo da 1.05:1 y no se ve. */
+  --color-chip-bg: var(--navy-91);
+  --color-chip-bg-hover: var(--navy-81);
+  --color-chip-text: var(--navy-7);
+  --color-chip-active: var(--navy-7);
+  --color-chip-active-text: var(--navy-100);
+  /* Círculo de la × al apuntarla: oscurece el chip que tenga debajo. */
+  --color-chip-close-hover: var(--navy-7-a10);
+  --color-chip-active-close-hover: var(--navy-28);
+  /* Las flechas de la tira se funden con el lienzo sobre los chips que pasan por debajo. */
+  --gradient-chip-fade-start: linear-gradient(to right, var(--navy-97) 60%, transparent);
+  --gradient-chip-fade-end: linear-gradient(to left, var(--navy-97) 60%, transparent);
+
   --color-focus-ring: var(--blue-48);
   /* Sobre el rail navy: 6.37:1 (el azul de marca da 3.76:1). */
   --color-focus-ring-on-dark: var(--blue-63);
@@ -213,17 +244,38 @@
     0 24px 48px var(--navy-7-a10), 0 8px 16px var(--navy-7-a08), 0 2px 4px var(--navy-7-a06);
   --backdrop-blur: var(--blur-8);
 
-  /* Marco (DS-5): tokens y no números sueltos, que la compuerta 10 rechaza. */
-  --shell-header-height: var(--size-64);
+  /* Marco: tokens y no números sueltos, que la compuerta 10 rechaza. Estructura de YouTube,
+   * pintura del sistema (decisión del usuario, 2026-09-25). Ver vault: App-Shell, Navegacion. */
+  --shell-header-height: var(--size-56);
   --nav-rail-width: var(--size-72);
-  --nav-panel-width: var(--size-232);
+  --nav-panel-width: var(--size-240);
+  /* Lo que queda debajo de la cabecera fija: el menú lateral mide esto y se desplaza solo. */
+  --shell-body-height: calc(var(--dvh-100) - var(--shell-header-height));
+  --nav-row-height: var(--size-40);
+  /* Plegado: ícono sobre la etiqueta. */
+  --nav-row-height-collapsed: var(--size-64);
+  --search-max-width: var(--size-640);
+  /* Pestaña de documento como chip. */
+  --chip-height: var(--size-32);
+  /* Subrayado de la pestaña de sección activa. */
+  --tab-indicator-width: var(--size-3);
+  --duration-nav: var(--ms-200);
+  --ease-nav: var(--ease-out);
+
+  /* Capas del marco: cabecera y tira fijas, cajón con su velo encima, y el salto al contenido
+   * por encima de todo porque aparece sobre la cabecera. */
+  --layer-shell: var(--z-20);
+  --layer-nav-drawer: var(--z-30);
+  --layer-skip-link: var(--z-40);
 
   /* Barra inferior: 64 deja un objetivo táctil holgado sobre el 24x24 de WCAG 2.5.8. */
   --nav-bottom-height: var(--size-64);
 
-  /* El único punto de corte: bajo 768 px el rail pasa a barra inferior (decisión del usuario,
-   * 2026-09-19). Es token porque el @theme borra los breakpoints por defecto (ADR 0009). */
+  /* Bajo 768 px el rail pasa a barra inferior (decisión del usuario, 2026-09-19). Es token porque
+   * el @theme borra los breakpoints por defecto (ADR 0009). */
   --breakpoint-nav-bottom: var(--size-768);
+  /* Entre los dos cortes el menú abierto es un cajón sobre el contenido; desde acá lo empuja. */
+  --breakpoint-nav-drawer: var(--size-1280);
 
   /* Igual a la altura de control `md`: pestaña y botón miden lo mismo en la barra. */
   --tab-height: var(--size-40);
