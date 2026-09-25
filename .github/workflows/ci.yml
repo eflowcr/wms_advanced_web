@@ -73,7 +73,8 @@ jobs:
       - name: Icons (generated table in sync, no loose <svg>)
         run: npm run lint:icons
 
-      # ADR 0008. El showroom está exento; la razón vive en el script.
+      # ADR 0008. Plantillas y literales de TypeScript; solo el soporte de pruebas y la marca
+      # quedan fuera, con la razón en el script. Los escapes por línea se listan en el log.
       - name: i18n (keys in sync, same keys per language, no hardcoded text)
         run: npm run lint:i18n
 
@@ -84,6 +85,11 @@ jobs:
       # REQ-FE-DS4-003 HG-02. Misma historia que el mapa de atajos.
       - name: Click budget (declared once, imported twice)
         run: npm run lint:click-budget
+
+      # Regla 15: fuera de la biblioteca no se escribe a mano un botón, un campo, un select ni
+      # una tabla; la pieza que falta se agrega al sistema.
+      - name: Design system only (no native controls outside the library)
+        run: npm run lint:ds
 
       - name: Vitest, coverage thresholds, axe-core
         run: npm test
