@@ -19,6 +19,7 @@ import {
   FavoriteToggle,
   FavoritesNav,
   Button,
+  Input,
   KeyboardShortcuts,
   NavBottom,
   NavRail,
@@ -50,6 +51,7 @@ import { MAX_OPEN_TABS, TabsService } from './tabs.service';
     FavoriteToggle,
     FavoritesNav,
     Button,
+    Input,
     LanguageSwitcher,
     NavBottom,
     NavRail,
@@ -82,7 +84,7 @@ export class MainLayout {
   protected readonly maxTabs = MAX_OPEN_TABS;
 
   private readonly main = viewChild<ElementRef<HTMLElement>>('main');
-  private readonly searchField = viewChild<ElementRef<HTMLInputElement>>('headerSearch');
+  private readonly searchField = viewChild<Input>('headerSearch');
 
   /** Rail colapsado o panel expandido; solo en memoria. */
   protected readonly railExpanded = signal(true);
@@ -295,8 +297,8 @@ export class MainLayout {
   protected readonly expandCrumbsLabel = (hidden: number): string =>
     this.transloco.translate('shell.breadcrumbs.expand', { hidden });
 
-  /** Destino del atajo `/`. */
+  /** Destino del atajo `/`: el campo real, no el host, que no es enfocable. */
   protected focusSearch(): void {
-    this.searchField()?.nativeElement.focus();
+    this.searchField()?.focus();
   }
 }

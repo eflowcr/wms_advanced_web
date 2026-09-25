@@ -1,10 +1,7 @@
-<label for="language-switcher">{{ 'shell.languageSwitcher.label' | transloco }}</label>
-<select #control id="language-switcher" (change)="select($event)">
-  @for (option of language.languages; track option) {
-    <option [value]="option" [attr.lang]="option">{{ labels[option] | transloco }}</option>
-  }
-</select>
-@if (language.unavailable()) {
-  <!-- Aviso provisional, como el conmutador: lo reemplaza Notificaciones (i18n.md). -->
-  <p role="alert">{{ 'shell.languageSwitcher.unavailable' | transloco }}</p>
-}
+<ewms-select
+  [label]="'shell.languageSwitcher.label' | transloco"
+  [hideLabel]="true"
+  [options]="options()"
+  [value]="language.active()"
+  (valueChange)="select($event)"
+/>

@@ -120,7 +120,7 @@ test.describe('the App Shell', () => {
     await page.keyboard.press('/');
 
     // La otra mitad de los «cinco Tab hasta el buscador» que reportó DS-2: con esto son cero.
-    await expect(page.locator('[data-shell-search]')).toBeFocused();
+    await expect(page.locator('[data-shell-search] input')).toBeFocused();
   });
 
   test('a route opens a tab, and Delete closes it onto its neighbour', async ({ page }) => {

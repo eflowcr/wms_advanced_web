@@ -10,6 +10,8 @@ import {
 export interface SelectOption {
   label: string;
   value: unknown;
+  /** Idioma de la etiqueta cuando no es el de la página: «English» en una interfaz en español. */
+  lang?: string;
 }
 
 /** RFE-03: `empty` y `error` no se mezclan, o una caída parece un depósito vacío. */

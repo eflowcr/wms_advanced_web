@@ -298,6 +298,39 @@ describe('Select, options in memory', () => {
     expect(listbox()?.getAttribute('aria-labelledby')).toBe(label.id);
     await expectNoAxeViolations(document.querySelector('.cdk-overlay-container')!);
   });
+
+  it('shows the value that comes back, even when it comes back before a render', async () => {
+    host.model.set({ bodega: 'BC' });
+    await settle();
+    await openPanel();
+
+    // Quien usa el valor lo rechaza en el mismo turno, como el conmutador de idioma tras un fallo.
+    const select = fixture.debugElement.query(By.directive(Select)).componentInstance as Select;
+    const reject = select.value.subscribe(() => select.value.set('BC'));
+    row(1).click();
+    reject.unsubscribe();
+    await settle();
+
+    expect(host.form.bodega().value()).toBe('BC');
+    expect(field().value).toBe('Bodega central');
+  });
+
+  it('writes the lang of each option on its row, and the chosen one on the closed field', async () => {
+    host.options.set([
+      { label: 'Español', value: 'es', lang: 'es' },
+      { label: 'English', value: 'en', lang: 'en' },
+      { label: 'Sin idioma', value: 'none' },
+    ]);
+    host.model.set({ bodega: 'en' });
+    await settle();
+    expect(field().getAttribute('lang')).toBe('en');
+
+    await openPanel();
+    expect(rows().map((option) => option.getAttribute('lang'))).toEqual(['es', 'en', null]);
+    row(2).click();
+    await settle();
+    expect(field().hasAttribute('lang')).toBe(false);
+  });
 });
 
 @Component({

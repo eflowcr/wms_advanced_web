@@ -1,6 +1,7 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
 import { watchConsole } from './console-watch';
+import { chooseLanguage } from './language';
 
 /**
  * El showroom y las medidas que necesitan navegador: jsdom no maqueta y toda caja le da cero.
@@ -166,7 +167,7 @@ test.describe('favourites: one list, and the route as the identity', () => {
     const inRail = page.locator('ewms-nav-rail [data-favorite="/catalogos/articulos"]');
     await expect(inRail).toHaveText('Artículos');
 
-    await page.locator('#language-switcher').selectOption('en');
+    await chooseLanguage(page, 'Idioma', 'en');
     await expect(inRail).toHaveText('Articles');
 
     // La barra del catálogo lee la misma lista y le pide el nombre a la app: sigue el idioma
@@ -175,7 +176,7 @@ test.describe('favourites: one list, and the route as the identity', () => {
     const inSidebar = page.locator('[data-sidebar] [data-favorite="/catalogos/articulos"]');
     await expect(inSidebar).toHaveText('Articles');
 
-    await page.locator('#language-switcher').selectOption('es');
+    await chooseLanguage(page, 'Language', 'es');
     await expect(inSidebar).toHaveText('Artículos');
     await expect(inRail).toHaveText('Artículos');
   });
@@ -893,7 +894,7 @@ test.describe('keyboard only', () => {
 
     await page.keyboard.press('/');
 
-    await expect(page.locator('[data-shell-search]')).toBeFocused();
+    await expect(page.locator('[data-shell-search] input')).toBeFocused();
   });
 
   // El buscador va encima de los enlaces del catálogo para que la barra lateral no sea un muro.
@@ -1077,9 +1078,11 @@ test.describe('DS-3 lote A: notificaciones y card', () => {
     await page.goto(TOAST);
     await ready(page);
 
-    const stack = page.locator('[role="status"][aria-live="polite"]');
-    // Una sola región viva en todo el documento, aun vacía.
+    // Una sola región de avisos en todo el documento, aun vacía. Se busca por su outlet: el idioma
+    // de la cabecera es un Select, que trae su propia región para anunciar la búsqueda.
+    const stack = page.locator('ewms-toast-outlet [role="status"][aria-live="polite"]');
     await expect(stack).toHaveCount(1);
+    await expect(page.locator('ewms-toast-outlet')).toHaveCount(1);
 
     await page.locator('[data-raise-sticky] button').click();
 
