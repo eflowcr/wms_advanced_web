@@ -11,6 +11,7 @@ import {
   FILTERS,
   FORM,
   PAGES,
+  ROUTE_BUDGET_MS,
   BANNER,
   BUTTON,
   CARD,
@@ -102,6 +103,7 @@ test.describe('the showroom renders and is reachable', () => {
 
   for (const width of [1440, 1280]) {
     test(`no page scrolls sideways at ${width}`, async ({ page }) => {
+      test.setTimeout(PAGES.length * ROUTE_BUDGET_MS);
       await page.setViewportSize({ width, height: 900 });
       for (const { url, heading } of PAGES) {
         await page.goto(url);
@@ -157,6 +159,8 @@ test.describe('favourites: one list, and the route as the identity', () => {
     await page.goto('/');
     await page.locator('[data-nav-item="catalogs"]').click();
     await page.locator('[data-nav-item="articles"]').click();
+    // La estrella marca la pantalla que se ve: sin esperar la navegación, marcaba el Dashboard.
+    await expect(page).toHaveURL(/\/catalogos\/articulos$/);
     await page.locator('[data-app-header] [data-favorite-toggle] button').click();
 
     const inRail = page.locator('ewms-nav-rail [data-favorite="/catalogos/articulos"]');

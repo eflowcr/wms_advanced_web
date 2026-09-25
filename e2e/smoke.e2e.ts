@@ -1,6 +1,12 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
-import { KEYBOARD, PAGES, SEARCH_CREATE_EDIT, UNDER_CONSTRUCTION } from './routes';
+import {
+  KEYBOARD,
+  PAGES,
+  ROUTE_BUDGET_MS,
+  SEARCH_CREATE_EDIT,
+  UNDER_CONSTRUCTION,
+} from './routes';
 import { watchConsole } from './console-watch';
 
 /**
@@ -27,6 +33,7 @@ test.describe('the application is alive', () => {
   // Una sola prueba para todas las rutas: veinticuatro pagarían un contexto de navegador cada una
   // para saber solo si la ruta responde. La lista se importa, así una ruta nueva entra sola.
   test('every route in the catalogue answers, with a clean console', async ({ page }) => {
+    test.setTimeout(PAGES.length * ROUTE_BUDGET_MS);
     const watch = await watchConsole(page);
     for (const { url, heading } of PAGES) {
       const response = await page.goto(url);
@@ -79,7 +86,8 @@ test.describe('the patterns still work, on the keyboard', () => {
     await page.goto(KEYBOARD);
     await page.getByRole('heading', { level: 1, name: 'Atajos de teclado' }).click();
 
-    await page.keyboard.type(`/${KNOWN_CODE}`, { delay: 5 });
+    // Sin demora, como una pistola: con 5 ms, en un runner cargado un hueco pasaba los 50 ms del umbral.
+    await page.keyboard.type(`/${KNOWN_CODE}`, { delay: 0 });
     await page.keyboard.press('Enter');
 
     await expect(page.getByRole('dialog')).toHaveCount(0);
@@ -140,6 +148,7 @@ test.describe('the App Shell', () => {
   test('a menu entry with no screen is a PAGE, never a 404, and says nothing to the console', async ({
     page,
   }) => {
+    test.setTimeout(UNDER_CONSTRUCTION.length * ROUTE_BUDGET_MS);
     const watch = await watchConsole(page);
     for (const { url, heading } of UNDER_CONSTRUCTION) {
       const response = await page.goto(url);
@@ -187,12 +196,15 @@ test.describe('the App Shell', () => {
     await page.goto('/');
     await page.locator('[data-nav-item="catalogs"]').click();
     await page.locator('[data-nav-item="articles"]').click();
+    // La estrella marca la pantalla que se ve: sin esperar la navegación, marcaba el Dashboard.
+    await expect(page).toHaveURL(/\/catalogos\/articulos$/);
 
     await page.locator('[data-app-header] [data-favorite-toggle] button').click();
     const entry = page.locator('ewms-nav-rail [data-favorite]');
     await expect(entry).toHaveCount(1);
 
     await page.locator('[data-nav-item="dashboard"]').click();
+    await expect(page).toHaveURL(/\/$/);
     await entry.click();
     await expect(page).toHaveURL(/\/catalogos\/articulos$/);
 

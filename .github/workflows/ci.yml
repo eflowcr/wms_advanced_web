@@ -92,6 +92,10 @@ jobs:
       - name: Production build and bundle budgets
         run: npm run build
 
+      # Cada biblioteca con ng-packagr, como se publica: el build de la app no las empaqueta.
+      - name: Library builds
+        run: npm run build:libs
+
       - name: npm audit
         run: npm run audit:ci
 
