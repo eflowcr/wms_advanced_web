@@ -10,6 +10,7 @@ import {
   EWMS_FAVORITES_STORE,
   EWMS_SELECT_MESSAGES,
   EWMS_SHORTCUT_HELP_MESSAGES,
+  EWMS_SEARCH_BOX_MESSAGES,
   EWMS_SPLIT_BUTTON_MESSAGES,
   EWMS_SHORTCUT_MAP,
   EWMS_TABLE_FORMATTERS,
@@ -25,6 +26,7 @@ import {
   type PaginationMessages,
   type SelectMessages,
   type ShortcutHelpMessages,
+  type SearchBoxMessages,
   type SplitButtonMessages,
   type TableFormatters,
   type TableMessages,
@@ -95,6 +97,10 @@ export function provideEwmsDesignSystem(): Provider[] {
     {
       provide: EWMS_SPLIT_BUTTON_MESSAGES,
       useFactory: splitButtonMessages,
+    },
+    {
+      provide: EWMS_SEARCH_BOX_MESSAGES,
+      useFactory: searchBoxMessages,
     },
     {
       provide: EWMS_DATE_PICKER_MESSAGES,
@@ -476,6 +482,18 @@ function shortcutHelpMessages(): ShortcutHelpMessages {
       get help() {
         return transloco.translate('shell.shortcuts.actions.help');
       },
+    },
+  };
+}
+
+function searchBoxMessages(): SearchBoxMessages {
+  const transloco = injectTranslator();
+  return {
+    get submit() {
+      return transloco.translate('ds.searchBox.submit');
+    },
+    get clear() {
+      return transloco.translate('ds.searchBox.clear');
     },
   };
 }

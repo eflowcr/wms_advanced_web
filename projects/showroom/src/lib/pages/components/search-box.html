@@ -1,0 +1,162 @@
+<article class="flex flex-col gap-10">
+  <!-- ============================================================ 1. Encabezado -->
+  <header class="flex flex-col gap-2" data-block="1-encabezado">
+    <div class="flex flex-wrap items-baseline gap-3">
+      <h1 class="text-h1">{{ 'showroom.catalog.searchBox.name' | transloco }}</h1>
+      <code class="font-mono text-primary">&lt;ewms-search-box&gt;</code>
+    </div>
+    <ul class="flex flex-wrap gap-2 text-caption">
+      <li
+        class="rounded-sm bg-secondary px-2 py-1 text-secondary"
+        [ewmsProse]="'showroom.common.header.version' | transloco: { version }"
+      ></li>
+      <li class="rounded-sm bg-success-surface px-2 py-1 text-success">
+        {{ 'showroom.common.header.built' | transloco }}
+      </li>
+      <li
+        class="rounded-sm bg-secondary px-2 py-1 text-secondary"
+        [ewmsProse]="
+          'showroom.common.header.sheet'
+            | transloco: { path: '08-Sistema-de-Diseno/Componentes/Buscador.md' }
+        "
+      ></li>
+    </ul>
+  </header>
+
+  <!-- ================================================ 2. Qué resuelve / cuándo no -->
+  <section class="flex flex-col gap-4" aria-labelledby="sx-purpose" data-block="2-proposito">
+    <h2 id="sx-purpose" class="text-h2">{{ 'showroom.common.sections.purpose' | transloco }}</h2>
+    <div class="grid grid-cols-[repeat(auto-fit,minmax(min(20rem,100%),1fr))] gap-4">
+      <div class="flex flex-col gap-2 rounded-md border border-default bg-surface p-4">
+        <h3 class="text-h3">{{ 'showroom.common.sections.solves' | transloco }}</h3>
+        <p [ewmsProse]="'showroom.searchBox.purpose.solves' | transloco"></p>
+        <p
+          class="text-caption text-secondary"
+          [ewmsProse]="'showroom.searchBox.purpose.notWired' | transloco"
+        ></p>
+      </div>
+      <div class="flex flex-col gap-2 rounded-md border border-danger bg-danger-surface p-4">
+        <h3 class="text-h3">{{ 'showroom.common.sections.avoid' | transloco }}</h3>
+        <ul class="flex flex-col gap-2">
+          <li [ewmsProse]="'showroom.searchBox.purpose.notAFilter' | transloco"></li>
+          <li [ewmsProse]="'showroom.searchBox.purpose.notAPicker' | transloco"></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================= 3. Demo principal -->
+  <section class="flex flex-col gap-4" aria-labelledby="sx-demo" data-block="3-demo">
+    <h2 id="sx-demo" class="text-h2">{{ 'showroom.common.sections.demo' | transloco }}</h2>
+    <div class="grid grid-cols-[repeat(auto-fit,minmax(min(24rem,100%),1fr))] gap-6">
+      <ewms-demo-frame ground="surface" [label]="'showroom.searchBox.demo.frame' | transloco">
+        <div class="flex flex-col gap-4" data-demo-search-box>
+          <ewms-search-box
+            [label]="'showroom.searchBox.demo.label' | transloco"
+            [placeholder]="'showroom.searchBox.demo.placeholder' | transloco"
+            shortcut="/"
+            (searchSubmit)="onSearch($event)"
+          />
+          <p class="text-caption text-secondary" role="status">
+            {{ 'showroom.searchBox.demo.last' | transloco }}
+            <span class="font-mono text-primary" data-demo-last>{{
+              last() ?? ('showroom.searchBox.demo.nothingYet' | transloco)
+            }}</span>
+          </p>
+        </div>
+      </ewms-demo-frame>
+      <ewms-prop-table [rows]="props" [caption]="'showroom.searchBox.props.caption' | transloco" />
+    </div>
+    <p
+      class="text-caption text-secondary"
+      [ewmsProse]="'showroom.searchBox.demo.keyboard' | transloco"
+    ></p>
+  </section>
+
+  <!-- =============================================================== 4. Variantes -->
+  <section class="flex flex-col gap-4" aria-labelledby="sx-variants" data-block="4-variantes">
+    <h2 id="sx-variants" class="text-h2">{{ 'showroom.common.sections.variants' | transloco }}</h2>
+    <div class="flex flex-col gap-2 rounded-md border border-strong bg-secondary p-4">
+      <h3 class="text-h4">{{ 'showroom.common.notApplicable' | transloco }}</h3>
+      <p [ewmsProse]="'showroom.searchBox.variants.one' | transloco"></p>
+    </div>
+  </section>
+
+  <!-- ========================================================= 5. Matriz de estados -->
+  <section class="flex flex-col gap-4" aria-labelledby="sx-matrix" data-block="5-matriz">
+    <h2 id="sx-matrix" class="text-h2">{{ 'showroom.common.sections.states' | transloco }}</h2>
+    <p class="text-secondary" [ewmsProse]="'showroom.searchBox.states.intro' | transloco"></p>
+    <ewms-demo-frame ground="surface">
+      <ewms-state-matrix
+        [variants]="states"
+        [states]="contents"
+        [rowHeader]="rowHeader"
+        [caption]="'showroom.searchBox.states.caption' | transloco"
+      >
+        <ng-template let-variant="variant" let-state="state">
+          <span
+            class="block"
+            [class]="forcedClasses(variant.id)"
+            [attr.data-search-state]="variant.id + '-' + state.id"
+          >
+            <ewms-search-box
+              [label]="(state.label | transloco) + ', ' + (variant.label | transloco)"
+              [placeholder]="'showroom.searchBox.demo.placeholder' | transloco"
+              shortcut="/"
+              [value]="
+                state.id === 'filled' ? ('showroom.searchBox.states.sample' | transloco) : ''
+              "
+              [disabled]="variant.id === 'disabled'"
+            />
+          </span>
+        </ng-template>
+      </ewms-state-matrix>
+    </ewms-demo-frame>
+  </section>
+
+  <!-- ================================================================ 6. Tamaños -->
+  <section class="flex flex-col gap-4" aria-labelledby="sx-sizes" data-block="6-tamanos">
+    <h2 id="sx-sizes" class="text-h2">{{ 'showroom.common.sections.sizes' | transloco }}</h2>
+    <div class="flex flex-col gap-2 rounded-md border border-strong bg-secondary p-4">
+      <h3 class="text-h4">{{ 'showroom.common.notApplicable' | transloco }}</h3>
+      <p [ewmsProse]="'showroom.searchBox.sizes.one' | transloco"></p>
+    </div>
+  </section>
+
+  <!-- ===================================================== 7. Anatomía y tokens -->
+  <section class="flex flex-col gap-4" aria-labelledby="sx-anatomy" data-block="7-anatomia">
+    <h2 id="sx-anatomy" class="text-h2">{{ 'showroom.common.sections.anatomy' | transloco }}</h2>
+    <ul class="flex flex-col gap-2">
+      @for (item of anatomy; track item.token) {
+        <li
+          class="flex flex-wrap items-center gap-3 rounded-md border border-default bg-surface p-3"
+        >
+          <span class="text-caption text-secondary">{{ item.part | transloco }}</span>
+          <ewms-token-value [token]="item.token" />
+        </li>
+      }
+    </ul>
+  </section>
+
+  <!-- ============================================== 8. Contrato para Angular -->
+  <section class="flex flex-col gap-4" aria-labelledby="sx-contract" data-block="8-contrato">
+    <h2 id="sx-contract" class="text-h2">{{ 'showroom.common.sections.contract' | transloco }}</h2>
+    <pre
+      class="overflow-x-auto rounded-md border border-default bg-secondary p-4 font-mono text-mono text-primary outline-none focus-visible:shadow-(--focus-ring-shadow)"
+      tabindex="0"
+    ><code>{{ snippet }}</code></pre>
+    <h3 class="text-h3">{{ 'showroom.common.sections.a11y' | transloco }}</h3>
+    <ul class="flex flex-col gap-2">
+      <li [ewmsProse]="'showroom.searchBox.a11y.label' | transloco"></li>
+      <li [ewmsProse]="'showroom.searchBox.a11y.shortcut' | transloco"></li>
+      <li [ewmsProse]="'showroom.searchBox.a11y.clear' | transloco"></li>
+    </ul>
+    <h3 class="text-h3">{{ 'showroom.common.sections.mistakes' | transloco }}</h3>
+    <ul class="flex flex-col gap-2">
+      <li [ewmsProse]="'showroom.searchBox.mistakes.native' | transloco"></li>
+      <li [ewmsProse]="'showroom.searchBox.mistakes.searching' | transloco"></li>
+    </ul>
+    <h3 class="text-h3">{{ 'showroom.common.sections.notApplicable' | transloco }}</h3>
+    <p class="text-secondary">{{ 'showroom.searchBox.notApplicable' | transloco }}</p>
+  </section>
+</article>

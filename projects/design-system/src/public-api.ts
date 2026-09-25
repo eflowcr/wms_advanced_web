@@ -81,6 +81,10 @@ export {
 } from './lib/split-button/split-button';
 export { EWMS_SPLIT_BUTTON_MESSAGES } from './lib/split-button/split-button.types';
 
+// Buscador en píldora (2026-09-25): el de la cabecera, estructura de YouTube con la pintura del sistema.
+export { SearchBox, type SearchBoxMessages } from './lib/search-box/search-box';
+export { EWMS_SEARCH_BOX_MESSAGES } from './lib/search-box/search-box.types';
+
 // Pagination (DS-3): aparte de la tabla, porque cards, logs y colas de picking también paginan.
 export {
   EWMS_PAGINATION_MESSAGES,

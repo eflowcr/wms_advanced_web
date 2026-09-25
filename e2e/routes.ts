@@ -8,6 +8,7 @@ export const SPACING = '/design-system/foundations/spacing';
 export const TEXT = '/design-system/components/text';
 export const TOOLTIP = '/design-system/components/tooltip';
 export const INPUT = '/design-system/components/input';
+export const SEARCH_BOX = '/design-system/components/search-box';
 export const SELECT = '/design-system/components/select';
 export const CHECKBOX = '/design-system/components/checkbox';
 export const RADIO = '/design-system/components/radio';
@@ -76,6 +77,7 @@ export const PAGES = [
   { url: TEXT, heading: { es: 'Texto', en: 'Text' } },
   { url: TOOLTIP, heading: { es: 'Tooltip', en: 'Tooltip' } },
   { url: INPUT, heading: { es: 'Input', en: 'Input' } },
+  { url: SEARCH_BOX, heading: { es: 'Buscador', en: 'Search box' } },
   { url: SELECT, heading: { es: 'Select', en: 'Select' } },
   { url: CHECKBOX, heading: { es: 'Checkbox', en: 'Checkbox' } },
   { url: RADIO, heading: { es: 'Radio', en: 'Radio' } },

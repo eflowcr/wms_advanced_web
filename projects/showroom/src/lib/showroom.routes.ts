@@ -83,6 +83,11 @@ export const showroomRoutes: Routes = withTitles([
         loadComponent: async () => (await import('./pages/components/input')).ShowroomInput,
       },
       {
+        path: 'components/search-box',
+        loadComponent: async () =>
+          (await import('./pages/components/search-box')).ShowroomSearchBox,
+      },
+      {
         path: 'components/select',
         loadComponent: async () => (await import('./pages/components/select')).ShowroomSelect,
       },

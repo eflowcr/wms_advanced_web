@@ -6,6 +6,7 @@ import {
   EWMS_FILTER_CHIPS_MESSAGES,
   EWMS_FORM_MESSAGES,
   EWMS_PAGINATION_MESSAGES,
+  EWMS_SEARCH_BOX_MESSAGES,
   EWMS_SELECT_MESSAGES,
   EWMS_SHORTCUT_HELP_MESSAGES,
   EWMS_SPLIT_BUTTON_MESSAGES,
@@ -235,6 +236,10 @@ export function provideDesignSystemTextsTesting(): Provider[] {
       },
     },
     { provide: EWMS_SPLIT_BUTTON_MESSAGES, useValue: { moreActions: 'Más opciones' } },
+    {
+      provide: EWMS_SEARCH_BOX_MESSAGES,
+      useValue: { submit: 'Buscar', clear: 'Limpiar la búsqueda' },
+    },
     {
       provide: EWMS_DATE_PICKER_MESSAGES,
       useValue: {

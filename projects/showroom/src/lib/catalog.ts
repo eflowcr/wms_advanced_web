@@ -43,7 +43,7 @@ export const SHOWROOM_SCOPE = 'showroom';
 
 /**
  * Claves literales; el marcador es lo que ve transloco-keys-manager.
- * t(showroom.catalog.sections.foundations, showroom.catalog.sections.components, showroom.catalog.sections.patterns, showroom.catalog.pending, showroom.catalog.brand.name, showroom.catalog.brand.note, showroom.catalog.colors.name, showroom.catalog.colors.note, showroom.catalog.typography.name, showroom.catalog.typography.note, showroom.catalog.spacing.name, showroom.catalog.spacing.note, showroom.catalog.icons.name, showroom.catalog.icons.note, showroom.catalog.button.name, showroom.catalog.button.note, showroom.catalog.text.name, showroom.catalog.text.note, showroom.catalog.tooltip.name, showroom.catalog.tooltip.note, showroom.catalog.input.name, showroom.catalog.input.note, showroom.catalog.checkbox.name, showroom.catalog.checkbox.note, showroom.catalog.radio.name, showroom.catalog.radio.note, showroom.catalog.toggle.name, showroom.catalog.toggle.note, showroom.catalog.select.name, showroom.catalog.select.note, showroom.catalog.table.name, showroom.catalog.table.note, showroom.catalog.pagination.name, showroom.catalog.pagination.note, showroom.catalog.badge.name, showroom.catalog.badge.note, showroom.catalog.modal.name, showroom.catalog.modal.note, showroom.catalog.cards.name, showroom.catalog.cards.note, showroom.catalog.banner.name, showroom.catalog.banner.note, showroom.catalog.toast.name, showroom.catalog.toast.note, showroom.catalog.navigation.name, showroom.catalog.navigation.note, showroom.catalog.favorites.name, showroom.catalog.favorites.note, showroom.catalog.splitButton.name, showroom.catalog.splitButton.note, showroom.catalog.datePicker.name, showroom.catalog.datePicker.note, showroom.catalog.patternKeyboard.name, showroom.catalog.patternKeyboard.note, showroom.catalog.patternSearchCreateEdit.name, showroom.catalog.patternSearchCreateEdit.note, showroom.catalog.patternForm.name, showroom.catalog.patternForm.note, showroom.catalog.patternFilters.name, showroom.catalog.patternFilters.note, showroom.catalog.patternEmpty.name, showroom.catalog.patternEmpty.note)
+ * t(showroom.catalog.sections.foundations, showroom.catalog.sections.components, showroom.catalog.sections.patterns, showroom.catalog.pending, showroom.catalog.brand.name, showroom.catalog.brand.note, showroom.catalog.colors.name, showroom.catalog.colors.note, showroom.catalog.typography.name, showroom.catalog.typography.note, showroom.catalog.spacing.name, showroom.catalog.spacing.note, showroom.catalog.icons.name, showroom.catalog.icons.note, showroom.catalog.button.name, showroom.catalog.button.note, showroom.catalog.text.name, showroom.catalog.text.note, showroom.catalog.tooltip.name, showroom.catalog.tooltip.note, showroom.catalog.input.name, showroom.catalog.input.note, showroom.catalog.searchBox.name, showroom.catalog.searchBox.note, showroom.catalog.checkbox.name, showroom.catalog.checkbox.note, showroom.catalog.radio.name, showroom.catalog.radio.note, showroom.catalog.toggle.name, showroom.catalog.toggle.note, showroom.catalog.select.name, showroom.catalog.select.note, showroom.catalog.table.name, showroom.catalog.table.note, showroom.catalog.pagination.name, showroom.catalog.pagination.note, showroom.catalog.badge.name, showroom.catalog.badge.note, showroom.catalog.modal.name, showroom.catalog.modal.note, showroom.catalog.cards.name, showroom.catalog.cards.note, showroom.catalog.banner.name, showroom.catalog.banner.note, showroom.catalog.toast.name, showroom.catalog.toast.note, showroom.catalog.navigation.name, showroom.catalog.navigation.note, showroom.catalog.favorites.name, showroom.catalog.favorites.note, showroom.catalog.splitButton.name, showroom.catalog.splitButton.note, showroom.catalog.datePicker.name, showroom.catalog.datePicker.note, showroom.catalog.patternKeyboard.name, showroom.catalog.patternKeyboard.note, showroom.catalog.patternSearchCreateEdit.name, showroom.catalog.patternSearchCreateEdit.note, showroom.catalog.patternForm.name, showroom.catalog.patternForm.note, showroom.catalog.patternFilters.name, showroom.catalog.patternFilters.note, showroom.catalog.patternEmpty.name, showroom.catalog.patternEmpty.note)
  */
 const FOUNDATIONS: readonly CatalogEntry[] = [
   {
@@ -120,6 +120,14 @@ const COMPONENTS: readonly CatalogEntry[] = [
     route: `${SHOWROOM_BASE}/components/input`,
     status: 'ready',
     note: 'showroom.catalog.input.note',
+  },
+  {
+    id: 'search-box',
+    name: 'showroom.catalog.searchBox.name',
+    selector: 'ewms-search-box',
+    route: `${SHOWROOM_BASE}/components/search-box`,
+    status: 'ready',
+    note: 'showroom.catalog.searchBox.note',
   },
   {
     id: 'checkbox',

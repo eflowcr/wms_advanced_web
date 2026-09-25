@@ -567,6 +567,10 @@
       "name": "Radio",
       "note": "The same box as the Checkbox, grouped by the native name and with no third state."
     },
+    "searchBox": {
+      "name": "Search box",
+      "note": "A pill with the button attached and the key hint: the header search."
+    },
     "sections": {
       "components": "Components",
       "foundations": "Foundations",
@@ -2216,6 +2220,73 @@
     "variants": {
       "none": "There is no <code>variant</code>, just like the Checkbox. And unlike the Checkbox, <b>there is no third value either</b>: a radio is either chosen or it is not.",
       "onlyDifference": "That absence is the only real difference in expression between the two selection controls, which otherwise share even the style file. The Checkbox has <code>indeterminate</code> because a checkbox can speak <i>about a set of other things</i>; a radio only speaks about itself."
+    }
+  },
+  "searchBox": {
+    "a11y": {
+      "clear": "The <b>×</b> appears only when there is text: on an empty field it would be a control that does nothing. After clearing, the focus goes back to the field.",
+      "label": "The label is not visible, but it is a real <code><label for></code>: the placeholder disappears while typing and many screen readers do not announce it. The field has <code>role=\"searchbox\"</code>.",
+      "shortcut": "The key is announced once, with <code>aria-keyshortcuts</code> on the field. The visible <code><kbd></code> is <code>aria-hidden</code>: otherwise it would be read twice."
+    },
+    "anatomy": {
+      "parts": {
+        "border": "Pill border",
+        "borderFocus": "Border with the focus inside",
+        "borderHover": "Border on hover",
+        "button": "Search button background",
+        "buttonHover": "Search button on hover",
+        "field": "Field background",
+        "focusRing": "Focus ring",
+        "hint": "Placeholder and key hint",
+        "maxWidth": "Maximum width",
+        "shape": "Pill shape"
+      }
+    },
+    "demo": {
+      "frame": "The header search, with the “/” hint",
+      "keyboard": "Type and press <kbd>Enter</kbd>, or the button. What comes out has no spaces at the ends and no repeated ones; an empty field, or one with only spaces, does not search.",
+      "label": "Search the application",
+      "last": "Last search:",
+      "nothingYet": "(nothing yet)",
+      "placeholder": "Search…"
+    },
+    "mistakes": {
+      "native": "<b>Expecting a <code>(search)</code>.</b> The output is called <code>(searchSubmit)</code>: <code>search</code> is a native event, and with that name the consumer would receive the browser’s <code>Event</code> instead of the text, as happened with <code>(change)</code> on the Checkbox.",
+      "searching": "<b>Believing it searches.</b> The component says <i>what</i> to search for; <i>where</i> and <i>how</i> belong to the domain that uses it."
+    },
+    "notApplicable": "Two: variants (there is a single shape) and sizes (a single height).",
+    "props": {
+      "caption": "Inputs and outputs of <ewms-search-box>",
+      "disabled": "Disables the field and the button, and offers nothing to clear.",
+      "focus": "Moves the focus to the field. It is what the header’s <kbd>/</kbd> shortcut calls.",
+      "label": "<b>Required.</b> The field’s accessible name, already translated. It is not visible: the pill has no room for a label.",
+      "messages": "Overrides, for this instance, the names of both buttons that arrive through <code>EWMS_SEARCH_BOX_MESSAGES</code>. Without either, it throws in development: a button with no name is not drawn.",
+      "placeholder": "Sample text inside the field, already translated. It does not replace the label.",
+      "searchSubmit": "The tidied text, on <kbd>Enter</kbd> or the button. Nothing comes out when it is empty.",
+      "shortcut": "The key that moves the focus to the field, drawn inside while it is empty and announced with <code>aria-keyshortcuts</code>.",
+      "value": "What has been typed, both ways."
+    },
+    "purpose": {
+      "notAFilter": "<b>It does not filter a table.</b> That is the Table’s quick filter, or a <code>search</code> Input in the filter bar: the pill with a button is the search for the whole application.",
+      "notAPicker": "<b>It does not pick a record.</b> To choose an item or a location from a list there is the Select, which searches as you type.",
+      "notWired": "It does not search anything yet: wiring it up belongs to the domains. The component hands over the text and nothing else.",
+      "solves": "The application search, in the header: a <b>pill</b> field with the search button <b>attached on the right</b>, the <kbd>/</kbd> key hint inside and a button to clear when there is text. The structure is YouTube’s; the paint is the system’s."
+    },
+    "sizes": {
+      "one": "A single height, that of the <code>md</code> control, the same as the header buttons. What changes is the width: it fills its place up to <code>--search-max-width</code>."
+    },
+    "states": {
+      "caption": "The search box empty and with text, in each state",
+      "intro": "Hover and focus are forced with the same token utility the component uses. With text, the <b>×</b> takes the place of the hint.",
+      "rowHeader": "State",
+      "rows": {
+        "empty": "Empty",
+        "filled": "With text"
+      },
+      "sample": "folding box"
+    },
+    "variants": {
+      "one": "A single shape: the pill with the attached button. One search per application does not call for variants."
     }
   },
   "select": {

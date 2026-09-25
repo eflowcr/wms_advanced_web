@@ -567,6 +567,10 @@
       "name": "Radio",
       "note": "La misma caja que el Checkbox, agrupada por name nativo y sin tercer estado."
     },
+    "searchBox": {
+      "name": "Buscador",
+      "note": "Píldora con el botón pegado y la pista de la tecla: el buscador de la cabecera."
+    },
     "sections": {
       "components": "Componentes",
       "foundations": "Fundamentos",
@@ -2216,6 +2220,73 @@
     "variants": {
       "none": "No hay <code>variant</code>, igual que el Checkbox. Y a diferencia del Checkbox, <b>tampoco hay un tercer valor</b>: un radio está elegido o no lo está.",
       "onlyDifference": "Esa ausencia es la única diferencia real de expresión entre los dos controles de selección, que por lo demás comparten hasta el archivo de estilos. El Checkbox tiene <code>indeterminate</code> porque una casilla puede hablar <i>de un conjunto de otras cosas</i>; un radio sólo habla de sí mismo."
+    }
+  },
+  "searchBox": {
+    "a11y": {
+      "clear": "La <b>×</b> aparece solo con texto: sobre un campo vacío sería un control que no hace nada. Al limpiar, el foco vuelve al campo.",
+      "label": "La etiqueta no se ve, pero es un <code><label for></code> de verdad: el placeholder desaparece al escribir y muchos lectores no lo anuncian. El campo tiene <code>role=\"searchbox\"</code>.",
+      "shortcut": "La tecla se anuncia una vez, con <code>aria-keyshortcuts</code> en el campo. El <code><kbd></code> que se ve va <code>aria-hidden</code>: si no, se leería dos veces."
+    },
+    "anatomy": {
+      "parts": {
+        "border": "Borde de la píldora",
+        "borderFocus": "Borde con el foco adentro",
+        "borderHover": "Borde en hover",
+        "button": "Fondo del botón buscar",
+        "buttonHover": "Botón buscar en hover",
+        "field": "Fondo del campo",
+        "focusRing": "Anillo de foco",
+        "hint": "Placeholder y pista de tecla",
+        "maxWidth": "Ancho máximo",
+        "shape": "Forma de píldora"
+      }
+    },
+    "demo": {
+      "frame": "El buscador de la cabecera, con la pista de «/»",
+      "keyboard": "Escriba y pulse <kbd>Enter</kbd>, o el botón. Lo que sale va sin espacios en los bordes ni repetidos; un campo vacío o con solo espacios no busca.",
+      "label": "Buscar en la aplicación",
+      "last": "Última búsqueda:",
+      "nothingYet": "(todavía nada)",
+      "placeholder": "Buscar…"
+    },
+    "mistakes": {
+      "native": "<b>Esperar un <code>(search)</code>.</b> La salida se llama <code>(searchSubmit)</code>: <code>search</code> es un evento nativo, y con ese nombre el consumidor recibiría el <code>Event</code> del navegador en vez del texto, como pasó con <code>(change)</code> en el Checkbox.",
+      "searching": "<b>Creer que busca.</b> El componente dice <i>qué</i> buscar; <i>dónde</i> y <i>cómo</i> es del dominio que lo usa."
+    },
+    "notApplicable": "Dos: variantes (hay una sola forma) y tamaños (una sola altura).",
+    "props": {
+      "caption": "Entradas y salidas de <ewms-search-box>",
+      "disabled": "Deshabilita el campo y el botón, y no ofrece limpiar.",
+      "focus": "Lleva el foco al campo. Es lo que llama el atajo <kbd>/</kbd> de la cabecera.",
+      "label": "<b>Obligatoria.</b> El nombre accesible del campo, ya traducido. No se ve: la píldora no tiene lugar para una etiqueta.",
+      "messages": "Pisa, en esta instancia, los nombres de los dos botones que llegan por <code>EWMS_SEARCH_BOX_MESSAGES</code>. Sin ninguno de los dos, en desarrollo lanza: un botón sin nombre no se dibuja.",
+      "placeholder": "Texto de ejemplo dentro del campo, ya traducido. No reemplaza a la etiqueta.",
+      "searchSubmit": "El texto normalizado, al pulsar <kbd>Enter</kbd> o el botón. Vacío no sale.",
+      "shortcut": "La tecla que lleva el foco al campo, dibujada adentro mientras está vacío y anunciada con <code>aria-keyshortcuts</code>.",
+      "value": "Lo escrito, en los dos sentidos."
+    },
+    "purpose": {
+      "notAFilter": "<b>No filtra una tabla.</b> Eso es el filtro rápido de la Tabla o un Input de tipo <code>search</code> en la barra de filtros: la píldora con botón es la búsqueda de toda la aplicación.",
+      "notAPicker": "<b>No elige un registro.</b> Para elegir un artículo o una ubicación de una lista está el Select, que busca mientras se escribe.",
+      "notWired": "Todavía no busca nada: conectarlo es de los dominios. El componente entrega el texto y nada más.",
+      "solves": "El buscador de la aplicación, en la cabecera: un campo en <b>píldora</b> con el botón de buscar <b>pegado a la derecha</b>, la pista de la tecla <kbd>/</kbd> adentro y un botón para limpiar cuando hay texto. La estructura es la de YouTube; la pintura, la del sistema."
+    },
+    "sizes": {
+      "one": "Una sola altura, la del control <code>md</code>, igual que los botones de la cabecera. Lo que cambia es el ancho: llena su lugar hasta <code>--search-max-width</code>."
+    },
+    "states": {
+      "caption": "El buscador vacío y con texto, en cada estado",
+      "intro": "Hover y foco se fuerzan con la misma utilidad del token que usa el componente. Con texto, la <b>×</b> ocupa el lugar de la pista.",
+      "rowHeader": "Estado",
+      "rows": {
+        "empty": "Vacío",
+        "filled": "Con texto"
+      },
+      "sample": "caja plegable"
+    },
+    "variants": {
+      "one": "Una sola forma: la píldora con el botón pegado. Un buscador por aplicación no pide variantes."
     }
   },
   "select": {

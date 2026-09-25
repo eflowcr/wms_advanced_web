@@ -36,6 +36,7 @@ import { ShowroomCard } from './components/card';
 import { ShowroomCheckbox } from './components/checkbox';
 import { ShowroomDialog } from './components/dialog';
 import { ShowroomInput } from './components/input';
+import { ShowroomSearchBox } from './components/search-box';
 import { ShowroomNavigation } from './components/navigation';
 import { ShowroomPagination } from './components/pagination';
 import { ShowroomRadio } from './components/radio';
@@ -618,6 +619,7 @@ const SHEETS: readonly { name: string; component: Type<unknown>; heading: string
   { name: 'ShowroomText', component: ShowroomText, heading: 'Texto' },
   { name: 'ShowroomTooltip', component: ShowroomTooltip, heading: 'Tooltip' },
   { name: 'ShowroomInput', component: ShowroomInput, heading: 'Input' },
+  { name: 'ShowroomSearchBox', component: ShowroomSearchBox, heading: 'Buscador' },
   { name: 'ShowroomSelect', component: ShowroomSelect, heading: 'Select' },
   { name: 'ShowroomCheckbox', component: ShowroomCheckbox, heading: 'Checkbox' },
   { name: 'ShowroomRadio', component: ShowroomRadio, heading: 'Radio' },

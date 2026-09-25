@@ -40,6 +40,10 @@
       "previousPage": "Página anterior",
       "rowsTotal": "{total, plural, =0 {Sin filas} one {# fila} other {# filas}}"
     },
+    "searchBox": {
+      "clear": "Limpiar la búsqueda",
+      "submit": "Buscar"
+    },
     "select": {
       "error": "No se pudo consultar el catálogo.",
       "more": "Ver más resultados",
