@@ -10,7 +10,8 @@ interface DragHost {
 }
 
 /** La línea de inserción: el color de acción, del lado donde cae la columna. */
-const LINE = 'before:absolute before:inset-y-0 before:z-4 before:w-0.5 before:bg-primary';
+const INSERT_LINE_CLASSES =
+  'before:absolute before:inset-y-0 before:z-4 before:w-0.5 before:bg-primary';
 
 /**
  * Reordenar columnas arrastrando la cabecera (arrastrar y soltar nativo). Solo dentro del
@@ -84,7 +85,7 @@ export class TableColumnDrag {
     if (target?.key !== column.key()) {
       return '';
     }
-    return `${LINE} ${target.side === 'before' ? 'before:start-0' : 'before:end-0'}`;
+    return `${INSERT_LINE_CLASSES} ${target.side === 'before' ? 'before:start-0' : 'before:end-0'}`;
   }
 
   private source(): TableColumn | undefined {

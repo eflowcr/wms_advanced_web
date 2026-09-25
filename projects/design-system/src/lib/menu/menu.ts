@@ -40,7 +40,7 @@ export const MENU_ITEM_CLASSES = 'flex w-full items-center gap-2 px-3 py-1.5 tex
 
 // Una sola utilidad de color por entrada: dos declaraciones de `color` en la misma capa las
 // decide el orden de la hoja generada, no el del atributo.
-const MENU_ITEM_TONES = {
+const MENU_ITEM_TONE_CLASSES = {
   normal: 'cursor-pointer text-primary',
   danger: 'cursor-pointer text-danger',
   /** Deshabilitada gana a peligro: una entrada roja que no se puede pulsar engaña. */
@@ -51,7 +51,7 @@ export const MENU_SEPARATOR_CLASSES = 'my-1 border-t border-default';
 
 export function menuItemClasses(item: MenuItem, active: boolean): string {
   const tone = item.disabled ? 'disabled' : item.tone === 'danger' ? 'danger' : 'normal';
-  const classes = [MENU_ITEM_CLASSES, MENU_ITEM_TONES[tone]];
+  const classes = [MENU_ITEM_CLASSES, MENU_ITEM_TONE_CLASSES[tone]];
   if (active && !item.disabled) {
     classes.push('bg-ghost-hover');
   }

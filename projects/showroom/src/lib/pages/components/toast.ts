@@ -152,14 +152,14 @@ const ANATOMY = [
  * Celdas escritas completas, no armadas con la familia: Tailwind escanea texto
  * crudo y no ve una clase interpolada. Como literales, la compuerta 10 las juzga.
  */
-const SURFACE_SAMPLES: Readonly<Record<string, string>> = {
+const SURFACE_SAMPLE_CLASSES: Readonly<Record<string, string>> = {
   success: 'h-6 w-16 rounded-sm border bg-success-surface border-success',
   warning: 'h-6 w-16 rounded-sm border bg-warning-surface border-warning',
   danger: 'h-6 w-16 rounded-sm border bg-danger-surface border-danger',
   info: 'h-6 w-16 rounded-sm border bg-neutral-surface border-neutral',
 };
 
-const ACCENT_SAMPLES: Readonly<Record<string, string>> = {
+const ACCENT_SAMPLE_CLASSES: Readonly<Record<string, string>> = {
   success: 'h-6 w-6 rounded-sm bg-success-solid',
   warning: 'h-6 w-6 rounded-sm bg-warning-solid',
   danger: 'h-6 w-6 rounded-sm bg-danger-solid',
@@ -263,7 +263,7 @@ export class ShowroomToast {
    * vive en una pila flotante y no se puede fijar dentro de una tabla.
    */
   protected cellClasses(stateId: string, variantId: string): string {
-    const sample = stateId === 'accent' ? ACCENT_SAMPLES : SURFACE_SAMPLES;
+    const sample = stateId === 'accent' ? ACCENT_SAMPLE_CLASSES : SURFACE_SAMPLE_CLASSES;
     return sample[variantId] ?? '';
   }
 }
