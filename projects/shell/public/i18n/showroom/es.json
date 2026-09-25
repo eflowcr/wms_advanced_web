@@ -1396,7 +1396,7 @@
       "tabs": {
         "activeId": "Cuál está seleccionada. El panel lo pone el consumidor.",
         "label": "<b>Obligatoria.</b> Nombre del tablist, ya traducido.",
-        "mode": "Subrayado para subsecciones; tarjeta cerrable para el MDI del App Shell.",
+        "mode": "Subrayado navy bajo la activa para subsecciones, como las pestañas de un canal de YouTube; chip en píldora con × para el MDI del App Shell, activo en navy.",
         "tabClose": "La pestaña que se pidió cerrar. Cerrarla es del consumidor.",
         "tabSelect": "La pestaña elegida. No cambia la selección por su cuenta.",
         "tabs": "<b>Obligatoria.</b> <code>'{ id, label, closable?, disabled? }'</code>. Cerrable salvo que diga lo contrario."
@@ -2233,8 +2233,6 @@
     "anatomy": {
       "parts": {
         "border": "Borde de la píldora",
-        "borderFocus": "Borde con el foco adentro",
-        "borderHover": "Borde en hover",
         "button": "Fondo del botón buscar",
         "buttonHover": "Botón buscar en hover",
         "field": "Fondo del campo",

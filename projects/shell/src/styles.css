@@ -89,7 +89,6 @@
   --search-max-width: var(--search-max-width);
   --chip-height: var(--chip-height);
   --nav-bottom-height: var(--nav-bottom-height);
-  --tab-height: var(--tab-height);
 
   --shadow-sm: var(--shadow-sm);
   --shadow-md: var(--shadow-md);
@@ -130,7 +129,6 @@
   --background-color-overlay: var(--color-overlay);
   --background-color-chip: var(--color-chip-bg);
   --background-color-chip-hover: var(--color-chip-bg-hover);
-  --background-color-chip-active: var(--color-chip-active);
   --background-color-chip-close-hover: var(--color-chip-close-hover);
   --background-color-chip-active-close-hover: var(--color-chip-active-close-hover);
 
@@ -139,8 +137,6 @@
   --text-color-disabled: var(--color-text-disabled);
   --text-color-on-dark: var(--color-text-on-dark);
   --text-color-on-primary: var(--color-text-on-primary);
-  --text-color-chip: var(--color-chip-text);
-  --text-color-chip-active: var(--color-chip-active-text);
   --text-color-danger: var(--color-danger-text);
   --text-color-warning: var(--color-warning-text);
   --text-color-success: var(--color-success-text);

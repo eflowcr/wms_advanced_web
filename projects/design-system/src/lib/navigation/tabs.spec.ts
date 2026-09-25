@@ -98,6 +98,25 @@ describe('Tabs', () => {
     expect(tab('pinned').getAttribute('aria-keyshortcuts')).toBeNull();
   });
 
+  it('a document tab is a pill chip: the selected one in navy, the rest in grey', () => {
+    // La barra de chips de YouTube con la pintura del sistema (decisión del usuario, 2026-09-25).
+    expect(tab('articles').className).toContain('rounded-full');
+    expect(tab('articles').className).toContain('bg-brand-navy');
+    expect(tab('clients').className).toContain('bg-chip');
+    expect(tab('clients').className).not.toContain('bg-brand-navy');
+  });
+
+  it('section mode underlines the selected tab, and only that one', async () => {
+    host.mode.set('section');
+    await settle();
+
+    const lines = [...fixture.nativeElement.querySelectorAll('[data-tab-indicator]')];
+    expect(lines).toHaveLength(1);
+    expect(tab('articles').contains(lines[0] as Node)).toBe(true);
+    // Una sección no es un chip.
+    expect(tab('articles').className).not.toContain('rounded-full');
+  });
+
   it('section mode closes nothing at all: a section is not a document', async () => {
     host.mode.set('section');
     await settle();
@@ -192,6 +211,105 @@ describe('Tabs', () => {
 
     expect(host.closed).toBe('articles');
     expect(host.chosen).toBeNull();
+  });
+
+  describe('when the strip overflows', () => {
+    // jsdom no mide: el desborde y el desplazamiento se fijan a mano, como en la Tabla.
+    let strip: HTMLElement;
+    const back = (): HTMLButtonElement | null =>
+      fixture.nativeElement.querySelector('[data-tabs-back] button');
+    const forward = (): HTMLButtonElement | null =>
+      fixture.nativeElement.querySelector('[data-tabs-forward] button');
+
+    async function lay(scrollLeft: number): Promise<void> {
+      Object.defineProperty(strip, 'scrollWidth', { configurable: true, value: 900 });
+      Object.defineProperty(strip, 'clientWidth', { configurable: true, value: 300 });
+      Object.defineProperty(strip, 'scrollLeft', { configurable: true, value: scrollLeft });
+      strip.dispatchEvent(new Event('scroll'));
+      await settle();
+    }
+
+    beforeEach(() => {
+      document.body.appendChild(fixture.nativeElement);
+      strip = fixture.nativeElement.querySelector('[role="tablist"]') as HTMLElement;
+    });
+
+    afterEach(() => {
+      fixture.nativeElement.remove();
+    });
+
+    it('shows the arrow of a side only while that side hides something', async () => {
+      await lay(0);
+      expect(back()).toBeNull();
+      expect(forward()).not.toBeNull();
+
+      await lay(300);
+      expect(back()).not.toBeNull();
+      expect(forward()).not.toBeNull();
+
+      await lay(600);
+      expect(back()).not.toBeNull();
+      expect(forward()).toBeNull();
+    });
+
+    it('an arrow moves the strip by most of its width', async () => {
+      await lay(0);
+      const scrollBy = vi.fn();
+      strip.scrollBy = scrollBy as unknown as typeof strip.scrollBy;
+
+      forward()!.click();
+
+      expect(scrollBy).toHaveBeenCalledWith({ left: 240, behavior: 'smooth' });
+    });
+
+    it('when the focused arrow goes away at the edge, the focus goes to the selected tab', async () => {
+      await lay(300);
+      back()!.focus();
+
+      await lay(0);
+
+      // No al body: habría que tabular la página entera para volver.
+      expect(back()).toBeNull();
+      expect(document.activeElement).toBe(tab('articles'));
+    });
+
+    it('section mode draws no arrows, overflow or not', async () => {
+      host.mode.set('section');
+      await settle();
+      strip = fixture.nativeElement.querySelector('[role="tablist"]') as HTMLElement;
+      await lay(300);
+
+      expect(back()).toBeNull();
+      expect(forward()).toBeNull();
+    });
+  });
+
+  describe('the selected tab stays in view', () => {
+    function place(left: number, right: number): ReturnType<typeof vi.fn> {
+      const strip = fixture.nativeElement.querySelector('[role="tablist"]') as HTMLElement;
+      strip.getBoundingClientRect = () => ({ left: 0, right: 300 }) as DOMRect;
+      const target = tab('clients');
+      target.getBoundingClientRect = () => ({ left, right }) as DOMRect;
+      const scrollIntoView = vi.fn();
+      target.scrollIntoView = scrollIntoView;
+      return scrollIntoView;
+    }
+
+    it('is brought into view when it is not whole', async () => {
+      const scrollIntoView = place(260, 380);
+      host.activeId.set('clients');
+      await settle();
+
+      expect(scrollIntoView).toHaveBeenCalledWith({ block: 'nearest', inline: 'center' });
+    });
+
+    it('and left alone when it already is: the strip does not jump on every click', async () => {
+      const scrollIntoView = place(100, 200);
+      host.activeId.set('clients');
+      await settle();
+
+      expect(scrollIntoView).not.toHaveBeenCalled();
+    });
   });
 
   it('has no axe violations in either mode', async () => {

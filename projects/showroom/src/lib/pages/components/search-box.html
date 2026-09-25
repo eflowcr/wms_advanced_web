@@ -96,7 +96,7 @@
         <ng-template let-variant="variant" let-state="state">
           <span
             class="block"
-            [class]="forcedClasses(variant.id)"
+            [class]="forcedClasses(variant.id, state.id)"
             [attr.data-search-state]="variant.id + '-' + state.id"
           >
             <ewms-search-box

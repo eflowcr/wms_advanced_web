@@ -19,9 +19,9 @@ export function normalizeQuery(text: string): string {
 }
 
 /**
- * Píldora partida: el `<input>` es la mitad izquierda y lleva borde, forma y anillo, como en Input
- * (el foco se ve en el elemento enfocado). El borde va por clase para que el catálogo pueda forzar
- * hover y foco con la misma utilidad. `pr-10` deja lugar a la pista o a la ×.
+ * Píldora partida: el `<input>` es la mitad izquierda y lleva borde, forma y anillo. Como en Input,
+ * el borde no cambia en hover ni en foco: el foco lo dice el anillo, en el elemento enfocado.
+ * `pr-10` deja lugar a la pista o a la ×.
  */
 export function searchFieldClasses(disabled: boolean): string {
   const base =
@@ -29,9 +29,7 @@ export function searchFieldClasses(disabled: boolean): string {
     'placeholder:text-secondary ';
   return disabled
     ? base + 'border-default bg-secondary text-disabled cursor-not-allowed'
-    : base +
-        'border-strong bg-surface text-primary hover:border-strong-hover ' +
-        'focus:border-(color:--color-focus-ring) focus-visible:shadow-(--focus-ring-shadow)';
+    : base + 'border-strong bg-surface text-primary focus-visible:shadow-(--focus-ring-shadow)';
 }
 
 /** Sin texto que buscar el botón está apagado, con el ícono en secundario: vacío no busca. */

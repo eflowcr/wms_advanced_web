@@ -114,9 +114,12 @@
       <!--
         Fijo bajo la cabecera y con su propio desplazamiento: la página corre y el menú no. Entre la
         barra inferior y 1280 px, abierto es un cajón sobre el contenido (--breakpoint-nav-drawer).
+        `z-10` con el cajón abierto: sticky crea su propio contexto de apilamiento, y sin capa el cajón
+        quedaba debajo de la tira de pestañas (z-5). Solo entonces: plegado no tapa nada de la página.
       -->
       <ewms-nav-rail
         class="sticky top-(--shell-header-height) h-(--shell-body-height) shrink-0"
+        [class.z-10]="drawerOpen() && !viewport.panelFits()"
         [items]="navItems()"
         [label]="'shell.nav.mainMenu' | transloco"
         [activeId]="activeId()"
@@ -161,13 +164,18 @@
       </ewms-nav-rail>
     }
 
-    <div class="flex min-w-0 flex-1 flex-col gap-3 p-4" [class.pb-20]="!viewport.isWide()">
+    <div class="flex min-w-0 flex-1 flex-col gap-3 px-4 pb-4" [class.pb-20]="!viewport.isWide()">
       <!--
         El `<nav>` con nombre lo pidió axe: la tira quedaba fuera de todo landmark y quien
         salta por landmarks se la saltaba. `<nav>` nombra la región; el `tablist`, el widget.
+        Fija bajo la cabecera con el fondo del contenido; debajo del velo del cajón, que la cubre
+        como al resto de la página, y encima de las cabeceras fijas de las tablas (z-3).
       -->
       @if (tabs().length > 0) {
-        <nav [attr.aria-label]="'shell.tabs.label' | transloco">
+        <nav
+          class="sticky top-(--shell-header-height) z-5 flex h-(--shell-tabs-height) items-center bg-canvas"
+          [attr.aria-label]="'shell.tabs.label' | transloco"
+        >
           <ewms-tabs
             [tabs]="tabs()"
             mode="document"

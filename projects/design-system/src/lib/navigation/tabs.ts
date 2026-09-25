@@ -3,14 +3,18 @@ import {
   Component,
   DestroyRef,
   ElementRef,
+  Injector,
   computed,
+  effect,
   inject,
   input,
   output,
   signal,
+  untracked,
   viewChild,
   afterNextRender,
 } from '@angular/core';
+import { DOCUMENT } from '@angular/common';
 import { Icon } from '../icon/icon';
 import { Button } from '../button/button';
 import type { Tab } from './navigation.types';
@@ -18,6 +22,19 @@ import type { Tab } from './navigation.types';
 export type TabsMode = 'section' | 'document';
 
 let nextTabsId = 0;
+
+/**
+ * Documento: chip en píldora como la barra de YouTube (decisión del usuario, 2026-09-25). Activo en
+ * navy con texto claro; el resto en gris y un tono más oscuro en hover.
+ */
+const CHIP_CLASSES = 'h-(--chip-height) rounded-full px-3';
+const CHIP_ACTIVE_CLASSES = 'bg-brand-navy text-h4 text-on-dark';
+const CHIP_REST_CLASSES = 'bg-chip text-p text-primary hover:bg-chip-hover';
+
+/** Sección: pestañas de un canal de YouTube, con el subrayado navy bajo la activa. */
+const SECTION_CLASSES = 'relative rounded-sm px-3 py-2';
+const SECTION_ACTIVE_CLASSES = 'text-h4 text-primary';
+const SECTION_REST_CLASSES = 'text-p text-secondary hover:text-primary';
 
 /**
  * Dos modos (`section`, `document` MDI), un componente: un solo teclado y contrato de foco.
@@ -47,13 +64,24 @@ export class Tabs {
   private readonly strip = viewChild<ElementRef<HTMLElement>>('strip');
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly injector = inject(Injector);
+  private readonly document = inject(DOCUMENT);
 
   protected readonly listId = `ewms-tabs-${++nextTabsId}`;
 
   private readonly overflowing = signal(false);
+  private readonly atStart = signal(true);
+  private readonly atEnd = signal(true);
 
   protected readonly isDocument = computed(() => this.mode() === 'document');
-  protected readonly showArrows = computed(() => this.isDocument() && this.overflowing());
+
+  /** Una flecha por lado, y solo si hay algo escondido de ese lado (como en YouTube). */
+  protected readonly showBack = computed(
+    () => this.isDocument() && this.overflowing() && !this.atStart(),
+  );
+  protected readonly showForward = computed(
+    () => this.isDocument() && this.overflowing() && !this.atEnd(),
+  );
 
   constructor() {
     // ResizeObserver: la tira se angosta al abrir el rail y ningún evento de ventana lo dice.
@@ -62,12 +90,53 @@ export class Tabs {
       if (element === undefined || typeof ResizeObserver === 'undefined') {
         return;
       }
-      const observer = new ResizeObserver(() => {
-        this.overflowing.set(element.scrollWidth > element.clientWidth + 1);
-      });
+      const observer = new ResizeObserver(() => this.measure());
       observer.observe(element);
       this.destroyRef.onDestroy(() => observer.disconnect());
     });
+
+    // La activa siempre a la vista: a 375 px la cuarta pestaña abierta quedaba fuera de la tira.
+    effect(() => {
+      const active = this.activeId();
+      this.tabs();
+      untracked(() => afterNextRender(() => this.reveal(active), { injector: this.injector }));
+    });
+  }
+
+  protected tabClasses(tab: Tab): string {
+    const active = this.activeId() === tab.id;
+    if (this.isDocument()) {
+      return `${CHIP_CLASSES} ${active ? CHIP_ACTIVE_CLASSES : CHIP_REST_CLASSES}`;
+    }
+    return `${SECTION_CLASSES} ${active ? SECTION_ACTIVE_CLASSES : SECTION_REST_CLASSES}`;
+  }
+
+  /** La × oscurece su círculo sobre el chip que tenga debajo. */
+  protected closeClasses(tab: Tab): string {
+    return this.activeId() === tab.id
+      ? 'hover:bg-chip-active-close-hover'
+      : 'hover:bg-chip-close-hover';
+  }
+
+  /** Desborde y bordes alcanzados; lo llaman el observador y el desplazamiento de la tira. */
+  protected measure(): void {
+    const element = this.strip()?.nativeElement;
+    if (element === undefined) {
+      return;
+    }
+    const arrow = this.document.activeElement?.closest('[data-tabs-back], [data-tabs-forward]');
+    this.overflowing.set(element.scrollWidth > element.clientWidth + 1);
+    this.atStart.set(element.scrollLeft <= 1);
+    this.atEnd.set(element.scrollLeft + element.clientWidth >= element.scrollWidth - 1);
+
+    // La flecha con el foco se va al llegar al borde: el foco pasa a la activa y no cae al body.
+    const gone = arrow?.hasAttribute('data-tabs-back') ? !this.showBack() : !this.showForward();
+    if (arrow !== null && arrow !== undefined && gone) {
+      const id = this.activeId();
+      if (id !== null) {
+        element.querySelector<HTMLElement>(`[data-tab="${CSS.escape(id)}"]`)?.focus();
+      }
+    }
   }
 
   protected isClosable(tab: Tab): boolean {
@@ -123,6 +192,23 @@ export class Tabs {
       return;
     }
     element.scrollBy({ left: direction * element.clientWidth * 0.8, behavior: 'smooth' });
+  }
+
+  /** Solo si no se ve entera: centrarla siempre movería la tira a cada clic. */
+  private reveal(id: string | null): void {
+    const strip = this.strip()?.nativeElement;
+    if (id === null || strip === undefined) {
+      return;
+    }
+    const tab = strip.querySelector<HTMLElement>(`[data-tab="${CSS.escape(id)}"]`);
+    if (tab === null || typeof tab.scrollIntoView !== 'function') {
+      return;
+    }
+    const box = tab.getBoundingClientRect();
+    const view = strip.getBoundingClientRect();
+    if (box.left < view.left || box.right > view.right) {
+      tab.scrollIntoView({ block: 'nearest', inline: 'center' });
+    }
   }
 
   private focusAndSelect(tab: Tab | undefined): void {

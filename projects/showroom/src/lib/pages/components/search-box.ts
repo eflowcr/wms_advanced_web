@@ -85,13 +85,12 @@ const ROW_HEADER = 'showroom.searchBox.states.rowHeader';
  * `[data-search-field]`: el anillo ya lo fuerzan otras páginas con esa clase y no suma CSS.
  */
 const FORCED_STATE_CLASSES: Readonly<Record<string, string>> = {
-  hover: '[&_input]:border-strong-hover [&_[data-search-submit]:enabled]:bg-secondary-hover',
-  focus: '[&_input]:border-(color:--color-focus-ring) [&_input]:shadow-(--focus-ring-shadow)',
+  hover: '[&_[data-search-submit]]:bg-secondary-hover',
+  focus: '[&_input]:shadow-(--focus-ring-shadow)',
 };
 
 /**
  * t(showroom.searchBox.anatomy.parts.shape, showroom.searchBox.anatomy.parts.border,
- *   showroom.searchBox.anatomy.parts.borderHover, showroom.searchBox.anatomy.parts.borderFocus,
  *   showroom.searchBox.anatomy.parts.focusRing, showroom.searchBox.anatomy.parts.field,
  *   showroom.searchBox.anatomy.parts.button, showroom.searchBox.anatomy.parts.buttonHover,
  *   showroom.searchBox.anatomy.parts.hint, showroom.searchBox.anatomy.parts.maxWidth)
@@ -99,8 +98,6 @@ const FORCED_STATE_CLASSES: Readonly<Record<string, string>> = {
 const ANATOMY: readonly { readonly part: string; readonly token: string }[] = [
   { part: 'showroom.searchBox.anatomy.parts.shape', token: '--radius-full' },
   { part: 'showroom.searchBox.anatomy.parts.border', token: '--color-border-strong' },
-  { part: 'showroom.searchBox.anatomy.parts.borderHover', token: '--color-border-strong-hover' },
-  { part: 'showroom.searchBox.anatomy.parts.borderFocus', token: '--color-focus-ring' },
   { part: 'showroom.searchBox.anatomy.parts.focusRing', token: '--focus-ring-shadow' },
   { part: 'showroom.searchBox.anatomy.parts.field', token: '--color-surface' },
   { part: 'showroom.searchBox.anatomy.parts.button', token: '--color-bg-secondary' },
@@ -139,7 +136,11 @@ export class ShowroomSearchBox {
     '/>',
   ].join('\n');
 
-  protected forcedClasses(state: string): string {
+  /** Vacío, el hover no cambia nada: el campo no tiene hover y el botón está apagado. */
+  protected forcedClasses(state: string, content: string): string {
+    if (state === 'hover' && content === 'empty') {
+      return '';
+    }
     return FORCED_STATE_CLASSES[state] ?? '';
   }
 

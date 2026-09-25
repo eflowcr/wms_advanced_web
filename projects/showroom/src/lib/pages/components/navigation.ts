@@ -183,7 +183,7 @@ const ANATOMY: readonly { readonly part: string; readonly token: string }[] = [
   { part: 'showroom.navigation.anatomy.parts.activeText', token: '--color-text-on-primary' },
   { part: 'showroom.navigation.anatomy.parts.railWidth', token: '--nav-rail-width' },
   { part: 'showroom.navigation.anatomy.parts.panelWidth', token: '--nav-panel-width' },
-  { part: 'showroom.navigation.anatomy.parts.tabHeight', token: '--tab-height' },
+  { part: 'showroom.navigation.anatomy.parts.tabHeight', token: '--chip-height' },
   { part: 'showroom.navigation.anatomy.parts.bottomHeight', token: '--nav-bottom-height' },
   { part: 'showroom.navigation.anatomy.parts.bottomBreakpoint', token: '--breakpoint-nav-bottom' },
   {

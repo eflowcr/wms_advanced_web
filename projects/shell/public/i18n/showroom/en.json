@@ -1396,7 +1396,7 @@
       "tabs": {
         "activeId": "Which one is selected. The consumer supplies the panel.",
         "label": "<b>Required.</b> Name of the tablist, already translated.",
-        "mode": "Underline for subsections; closable card for the App Shell's MDI.",
+        "mode": "A navy underline under the active one for subsections, like a YouTube channel's tabs; a pill chip with × for the App Shell MDI, the active one in navy.",
         "tabClose": "The tab that was asked to close. Closing it is the consumer's job.",
         "tabSelect": "The chosen tab. It does not change the selection on its own.",
         "tabs": "<b>Required.</b> <code>'{ id, label, closable?, disabled? }'</code>. Closable unless it says otherwise."
@@ -2233,8 +2233,6 @@
     "anatomy": {
       "parts": {
         "border": "Pill border",
-        "borderFocus": "Border with the focus inside",
-        "borderHover": "Border on hover",
         "button": "Search button background",
         "buttonHover": "Search button on hover",
         "field": "Field background",

@@ -190,13 +190,11 @@
   --color-neutral-text: var(--navy-28);
 
   /* Marco claro (decisión del usuario, 2026-09-25): el menú usa surface, ghost-hover y el
-   * brand-navy con on-dark para el activo, que ya existían. Contrastes en la ficha Navegacion.
+   * brand-navy con on-dark para el activo, que ya existían; el chip activo y el texto de los
+   * chips, también. Contrastes en la ficha Navegacion.
    * Chip en reposo: navy-91 y no bg-secondary, que contra el lienzo da 1.05:1 y no se ve. */
   --color-chip-bg: var(--navy-91);
   --color-chip-bg-hover: var(--navy-81);
-  --color-chip-text: var(--navy-7);
-  --color-chip-active: var(--navy-7);
-  --color-chip-active-text: var(--navy-100);
   /* Círculo de la × al apuntarla: oscurece el chip que tenga debajo. */
   --color-chip-close-hover: var(--navy-7-a10);
   --color-chip-active-close-hover: var(--navy-28);
@@ -251,13 +249,17 @@
   --search-max-width: var(--size-640);
   /* Pestaña de documento como chip. */
   --chip-height: var(--size-32);
+  /* La tira de chips, fija bajo la cabecera: el chip y su aire. Lo fijo arriba suma las dos, y el
+   * catálogo pega su barra lateral debajo, con el alto que queda. */
+  --shell-tabs-height: var(--size-48);
+  --shell-chrome-height: calc(var(--shell-header-height) + var(--shell-tabs-height));
+  --shell-content-height: calc(var(--dvh-100) - var(--shell-chrome-height));
   /* Subrayado de la pestaña de sección activa. */
   --tab-indicator-width: var(--size-3);
-  --duration-nav: var(--ms-200);
-  --ease-nav: var(--ease-out);
-  /* La única animación del marco: el cajón entra deslizándose. Una propiedad y no tres utilidades:
-   * duración y curva por clase registraban @property y sumaban ~450 B a la hoja inicial. */
-  --transition-nav-drawer: translate var(--duration-nav) var(--ease-nav);
+  /* La única animación del marco: el cajón entra deslizándose en 200 ms, desacelerando. Una
+   * propiedad y no tres utilidades: duración y curva por clase registraban @property y sumaban
+   * ~450 B a la hoja inicial. */
+  --transition-nav-drawer: translate var(--ms-200) var(--ease-out);
 
   /* Capas del marco: cabecera y tira fijas, y el salto al contenido por encima porque aparece
    * sobre la cabecera. El cajón y su velo van debajo de la cabecera, como la hoja inferior. */
@@ -272,9 +274,6 @@
   --breakpoint-nav-bottom: var(--size-768);
   /* Entre los dos cortes el menú abierto es un cajón sobre el contenido; desde acá lo empuja. */
   --breakpoint-nav-drawer: var(--size-1280);
-
-  /* Igual a la altura de control `md`: pestaña y botón miden lo mismo en la barra. */
-  --tab-height: var(--size-40);
 
   /* `--row-height-md` es la altura de control `md`: una celda contiene un `ewms-input` sin
    * crecer (el E2E lo mide). */
