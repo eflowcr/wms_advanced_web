@@ -16,6 +16,12 @@ import {
 import { Icon } from '../icon/icon';
 import { isGroup, type NavItem } from './navigation.types';
 
+/**
+ * El activo en navy con texto claro, como en el menú lateral (decisión del usuario, 2026-09-25). Por
+ * estado y no con variantes `aria-*`: utilidades que la hoja ya tenía.
+ */
+const ACTIVE_CLASSES = 'bg-brand-navy text-on-dark';
+
 /** Cuatro destinos entran al ancho más angosto; el quinto lugar es «Más». */
 export const BOTTOM_NAV_SLOTS = 4;
 
@@ -70,6 +76,16 @@ export class NavBottom {
   protected readonly hasMore = computed(
     () => this.barItems().length < this.items().length || this.items().some(isGroup),
   );
+
+  protected barClasses(item: NavItem): string {
+    return this.activeId() === item.id ? ACTIVE_CLASSES : 'hover:bg-ghost-hover';
+  }
+
+  protected sheetClasses(item: NavItem): string {
+    return this.activeId() === item.id
+      ? `${ACTIVE_CLASSES} text-h4`
+      : 'text-p hover:bg-ghost-hover';
+  }
 
   protected isGroup(item: NavItem): boolean {
     return isGroup(item);

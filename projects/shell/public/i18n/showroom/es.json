@@ -156,7 +156,7 @@
       "white": {
         "alt": "Logo de ePRAC en blanco",
         "name": "Blanco",
-        "use": "Sobre el rail navy y sobre cualquier superficie oscura."
+        "use": "Sobre cualquier superficie oscura."
       }
     },
     "grounds": {
@@ -738,8 +738,7 @@
         "familyText": "Texto de la familia sobre su propia superficie.",
         "focusRing": "El anillo contrasta contra la superficie, no contra el control: por eso lleva separación.",
         "focusRingOnCanvas": "El anillo sobre el canvas.",
-        "focusRingOnDark": "Existe porque el azul de marca sobre navy queda sin aire.",
-        "navyBars": "Barra superior y rail navy.",
+        "navyBars": "La fila activa del menú, el chip activo y el activo de la barra inferior.",
         "neutralBadge": "Badge neutral: surface + text, nunca solid + blanco.",
         "onDangerSolid": "Blanco sobre la severidad danger.",
         "onSuccessSolid": "Blanco sobre la severidad success.",
@@ -1322,7 +1321,6 @@
         "activeText": "Texto del ítem activo",
         "bottomBreakpoint": "Punto de corte de la barra inferior",
         "bottomHeight": "Alto de la barra inferior",
-        "focusRingOnNavy": "Anillo de foco sobre navy",
         "panelWidth": "Ancho del panel expandido",
         "railBackground": "Fondo del rail y de la barra inferior",
         "railWidth": "Ancho del rail colapsado",

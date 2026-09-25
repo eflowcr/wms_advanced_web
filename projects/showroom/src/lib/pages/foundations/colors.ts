@@ -138,12 +138,7 @@ const ROLES: readonly RoleGroup[] = [
     id: 'states',
     title: 'showroom.colors.semantic.roles.states.title',
     note: 'showroom.colors.semantic.roles.states.note',
-    tokens: [
-      '--color-focus-ring',
-      '--color-focus-ring-on-dark',
-      '--color-row-selected',
-      '--color-overlay',
-    ],
+    tokens: ['--color-focus-ring', '--color-row-selected', '--color-overlay'],
   },
 ];
 
@@ -163,7 +158,7 @@ const ROLES: readonly RoleGroup[] = [
  *   showroom.colors.contrast.notes.controlBorderHover,
  *   showroom.colors.contrast.notes.controlBorderHoverWorst,
  *   showroom.colors.contrast.notes.focusRing, showroom.colors.contrast.notes.focusRingOnCanvas,
- *   showroom.colors.contrast.notes.focusRingOnDark, showroom.colors.contrast.notes.divider,
+ *   showroom.colors.contrast.notes.divider,
  *   showroom.colors.contrast.notes.disabledPrimary, showroom.colors.contrast.notes.disabledDanger,
  *   showroom.colors.contrast.notes.disabledOnSecondary, showroom.colors.contrast.notes.toggleThumb)
  */
@@ -335,13 +330,6 @@ const PAIRS: readonly ContrastPair[] = [
     minimum: AA_NON_TEXT,
     exempt: false,
     note: 'showroom.colors.contrast.notes.focusRingOnCanvas',
-  },
-  {
-    foreground: '--color-focus-ring-on-dark',
-    background: '--color-brand-navy',
-    minimum: AA_NON_TEXT,
-    exempt: false,
-    note: 'showroom.colors.contrast.notes.focusRingOnDark',
   },
   {
     foreground: '--color-border',

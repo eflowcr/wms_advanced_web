@@ -156,7 +156,7 @@
       "white": {
         "alt": "ePRAC logo in white",
         "name": "White",
-        "use": "On the navy rail and on any dark surface."
+        "use": "On any dark surface."
       }
     },
     "grounds": {
@@ -738,8 +738,7 @@
         "familyText": "The family's text on its own surface.",
         "focusRing": "The ring contrasts with the surface, not with the control: that is why it has a gap.",
         "focusRingOnCanvas": "The ring on the canvas.",
-        "focusRingOnDark": "It exists because the brand blue on navy has no room to breathe.",
-        "navyBars": "Top bar and navy rail.",
+        "navyBars": "The active menu row, the active chip and the active item of the bottom bar.",
         "neutralBadge": "Neutral badge: surface + text, never solid + white.",
         "onDangerSolid": "White on the danger severity.",
         "onSuccessSolid": "White on the success severity.",
@@ -1322,7 +1321,6 @@
         "activeText": "Active item text",
         "bottomBreakpoint": "Bottom bar breakpoint",
         "bottomHeight": "Bottom bar height",
-        "focusRingOnNavy": "Focus ring on navy",
         "panelWidth": "Expanded panel width",
         "railBackground": "Rail and bottom bar background",
         "railWidth": "Collapsed rail width",

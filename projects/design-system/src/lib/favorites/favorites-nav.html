@@ -1,7 +1,9 @@
-<!-- `<nav>` propio: landmark «Favoritos» aparte, y las flechas del árbol no visitan filas ajenas. -->
+<!--
+  `<nav>` propio: landmark «Favoritos» aparte, y las flechas del árbol no visitan filas ajenas. Solo
+  sobre claro desde el 2026-09-25: el menú, la hoja inferior y el catálogo lo son.
+-->
 <nav
-  class="border-b px-2 py-3"
-  [class]="tone().text + ' ' + tone().border"
+  class="border-b border-default px-2 py-3 text-primary"
   data-favorites-nav
   [attr.aria-label]="label()"
 >
@@ -26,7 +28,7 @@
         <li>
           <button
             type="button"
-            class="flex w-full items-center gap-4 rounded-lg py-2 text-left text-p outline-none focus-visible:shadow-(--focus-ring-shadow) aria-[current=page]:text-h4"
+            class="flex w-full items-center gap-4 rounded-lg py-2 text-left outline-none focus-visible:shadow-(--focus-ring-shadow)"
             [class]="rowClasses(row.favorite.route)"
             [attr.data-favorite]="row.favorite.route"
             [attr.aria-label]="expanded() ? null : row.label"

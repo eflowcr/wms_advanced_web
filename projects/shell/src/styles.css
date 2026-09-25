@@ -152,9 +152,7 @@
   --border-color-neutral: var(--color-neutral-border);
 
   --outline-color-focus: var(--color-focus-ring);
-  --outline-color-focus-on-dark: var(--color-focus-ring-on-dark);
   --ring-color-focus: var(--color-focus-ring);
-  --ring-color-focus-on-dark: var(--color-focus-ring-on-dark);
 }
 
 /*

@@ -203,8 +203,6 @@
   --gradient-chip-fade-end: linear-gradient(to left, var(--navy-97) 60%, transparent);
 
   --color-focus-ring: var(--blue-48);
-  /* Sobre el rail navy: 6.37:1 (el azul de marca da 3.76:1). */
-  --color-focus-ring-on-dark: var(--blue-63);
   /* Anillo de 3px separado 2px del control. */
   --focus-ring-shadow: 0 0 0 2px var(--color-surface), 0 0 0 5px var(--color-focus-ring);
   /* Siempre con barra de acento. blue-96 desde DS-4 (blue-93 dejaba el secundario en 4.35:1).

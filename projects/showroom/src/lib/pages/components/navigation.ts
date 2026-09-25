@@ -173,8 +173,7 @@ const CRUMB_PROPS: readonly PropRow[] = [
  *   showroom.navigation.anatomy.parts.activePill, showroom.navigation.anatomy.parts.activeText,
  *   showroom.navigation.anatomy.parts.railWidth, showroom.navigation.anatomy.parts.panelWidth,
  *   showroom.navigation.anatomy.parts.tabHeight, showroom.navigation.anatomy.parts.bottomHeight,
- *   showroom.navigation.anatomy.parts.bottomBreakpoint,
- *   showroom.navigation.anatomy.parts.focusRingOnNavy)
+ *   showroom.navigation.anatomy.parts.bottomBreakpoint)
  */
 const ANATOMY: readonly { readonly part: string; readonly token: string }[] = [
   { part: 'showroom.navigation.anatomy.parts.railBackground', token: '--color-brand-navy' },
@@ -186,10 +185,6 @@ const ANATOMY: readonly { readonly part: string; readonly token: string }[] = [
   { part: 'showroom.navigation.anatomy.parts.tabHeight', token: '--chip-height' },
   { part: 'showroom.navigation.anatomy.parts.bottomHeight', token: '--nav-bottom-height' },
   { part: 'showroom.navigation.anatomy.parts.bottomBreakpoint', token: '--breakpoint-nav-bottom' },
-  {
-    part: 'showroom.navigation.anatomy.parts.focusRingOnNavy',
-    token: '--color-focus-ring-on-dark',
-  },
 ];
 
 /**
