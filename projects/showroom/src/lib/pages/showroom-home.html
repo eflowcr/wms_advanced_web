@@ -1,37 +1,23 @@
-<!-- Showroom solo en español, exento de i18n (compuerta 12): se declara para que el lector de pantalla no lo lea en inglés. -->
-<article class="flex flex-col gap-10" lang="es">
+<article class="flex flex-col gap-10">
   <header class="flex flex-col gap-2">
-    <h1 class="text-h1">Showroom del sistema de diseño</h1>
-    <p class="text-secondary">
-      El catálogo interno que se abre <em>antes</em> de escribir un componente nuevo, para descubrir
-      que ya existe. Es también el primer consumidor real de
-      <code class="font-mono">&#64;ewms/design-system</code>: si algo es incómodo de usar, se siente
-      acá antes que en producción.
-    </p>
+    <h1 class="text-h1">{{ 'showroom.home.title' | transloco }}</h1>
+    <p class="text-secondary" [ewmsProse]="'showroom.home.intro' | transloco"></p>
   </header>
 
   <section class="grid grid-cols-[repeat(auto-fit,minmax(min(20rem,100%),1fr))] gap-4">
     <div class="flex flex-col gap-2 rounded-md border border-default bg-surface p-4">
-      <h2 class="text-h3">Cómo se usa</h2>
-      <p>
-        Cada página tiene URL propia y estable: se puede pegar
-        <code class="font-mono">/design-system/components/button</code> en un chat y abre ahí. La
-        búsqueda del panel izquierdo filtra por nombre y por selector.
-      </p>
+      <h2 class="text-h3">{{ 'showroom.home.howTo.title' | transloco }}</h2>
+      <p [ewmsProse]="'showroom.home.howTo.text' | transloco"></p>
     </div>
     <div class="flex flex-col gap-2 rounded-md border border-default bg-surface p-4">
-      <h2 class="text-h3">Qué no es</h2>
-      <p>
-        No es una galería de marketing ni el lugar donde se decide cómo se ve algo. Lo que se ve acá
-        sale de los componentes reales compilados: si el showroom y la ficha del vault no coinciden,
-        <strong>gana el código</strong> y la ficha se corrige.
-      </p>
+      <h2 class="text-h3">{{ 'showroom.home.notThis.title' | transloco }}</h2>
+      <p [ewmsProse]="'showroom.home.notThis.text' | transloco"></p>
     </div>
   </section>
 
   @for (section of catalog; track section.id) {
     <section class="flex flex-col gap-4" [attr.aria-labelledby]="'index-' + section.id">
-      <h2 [id]="'index-' + section.id" class="text-h2">{{ section.title }}</h2>
+      <h2 [id]="'index-' + section.id" class="text-h2">{{ section.title | transloco }}</h2>
       <ul class="grid grid-cols-[repeat(auto-fill,minmax(min(18rem,100%),1fr))] gap-3">
         @for (entry of section.entries; track entry.id) {
           <li
@@ -44,19 +30,19 @@
                 <a
                   class="rounded-sm text-primary outline-none focus-visible:shadow-(--focus-ring-shadow)"
                   [routerLink]="entry.route"
-                  >{{ entry.name }}</a
+                  >{{ entry.name | transloco }}</a
                 >
               } @else {
                 <span class="text-secondary">
-                  {{ entry.name }}
-                  <span class="text-caption">{{ statusLabels[entry.status] }}</span>
+                  {{ entry.name | transloco }}
+                  <span class="text-caption">{{ statusLabels[entry.status] | transloco }}</span>
                 </span>
               }
             </p>
             @if (entry.selector) {
               <p class="font-mono text-caption text-secondary">{{ entry.selector }}</p>
             }
-            <p class="text-caption text-secondary">{{ entry.note }}</p>
+            <p class="text-caption text-secondary">{{ entry.note | transloco }}</p>
           </li>
         }
       </ul>
@@ -64,11 +50,7 @@
   }
 
   <aside class="flex flex-col gap-2 rounded-md border border-strong bg-secondary p-4">
-    <h2 class="text-h4">El App Shell no se exhibe</h2>
-    <p>
-      Tiene ficha en el vault y está en <code class="font-mono">status: listo</code>, pero no es un
-      componente del sistema de diseño: es el layout del <code class="font-mono">shell</code>, armado
-      con las piezas de Navegación. Lo que se exhibe acá son esas piezas.
-    </p>
+    <h2 class="text-h4">{{ 'showroom.home.appShell.title' | transloco }}</h2>
+    <p [ewmsProse]="'showroom.home.appShell.text' | transloco"></p>
   </aside>
 </article>

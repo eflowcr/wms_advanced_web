@@ -13,12 +13,14 @@ import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { filter, map, startWith } from 'rxjs';
 import { SessionContext } from '@ewms/core';
+import { catalogKeyFor } from '@ewms/showroom';
 import {
   Breadcrumbs,
   Favorites,
   FavoriteToggle,
   FavoritesNav,
   Button,
+  Input,
   KeyboardShortcuts,
   NavBottom,
   NavRail,
@@ -36,7 +38,7 @@ import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { BRAND_NAME } from '../brand';
 import { provideEwmsDesignSystem } from '../design-system.providers';
 import { LanguageSwitcher } from './language-switcher';
-import { MENU, MENU_DESTINATIONS, menuEntryFor, routeMatches, type MenuEntry } from './menu';
+import { MENU, MENU_DESTINATIONS, menuEntryFor, type MenuEntry } from './menu';
 import { MAX_OPEN_TABS, TabsService } from './tabs.service';
 
 /**
@@ -50,6 +52,7 @@ import { MAX_OPEN_TABS, TabsService } from './tabs.service';
     FavoriteToggle,
     FavoritesNav,
     Button,
+    Input,
     LanguageSwitcher,
     NavBottom,
     NavRail,
@@ -82,7 +85,7 @@ export class MainLayout {
   protected readonly maxTabs = MAX_OPEN_TABS;
 
   private readonly main = viewChild<ElementRef<HTMLElement>>('main');
-  private readonly searchField = viewChild<ElementRef<HTMLInputElement>>('headerSearch');
+  private readonly searchField = viewChild<Input>('headerSearch');
 
   /** Rail colapsado o panel expandido; solo en memoria. */
   protected readonly railExpanded = signal(true);
@@ -147,9 +150,8 @@ export class MainLayout {
   /** Nombre de la página, para su pestaña y para el anuncio. */
   private readonly pageTitle = computed(() => {
     this.activeLang();
-    const active = this.activeId();
-    const item = MENU_DESTINATIONS.find((entry) => entry.id === active);
-    return item === undefined ? this.brandName : this.transloco.translate(item.labelKey);
+    const key = this.titleKeyFor(this.url());
+    return key === null ? this.brandName : this.transloco.translate(key);
   });
 
   constructor() {
@@ -191,9 +193,9 @@ export class MainLayout {
       this.activeLang();
       untracked(() => {
         for (const tab of this.tabsService.tabs()) {
-          const item = MENU_DESTINATIONS.find((entry) => routeMatches(tab.route, entry.route));
-          if (item !== undefined) {
-            this.tabsService.relabel(tab.route, this.transloco.translate(item.labelKey));
+          const key = this.titleKeyFor(tab.route);
+          if (key !== null) {
+            this.tabsService.relabel(tab.route, this.transloco.translate(key));
           }
         }
       });
@@ -295,8 +297,16 @@ export class MainLayout {
   protected readonly expandCrumbsLabel = (hidden: number): string =>
     this.transloco.translate('shell.breadcrumbs.expand', { hidden });
 
-  /** Destino del atajo `/`. */
+  /**
+   * La clave del nombre de una ruta: la página del catálogo por su nombre (el menú solo diría
+   * «Sistema de diseño» para todas), o su destino del menú.
+   */
+  private titleKeyFor(route: string): string | null {
+    return catalogKeyFor(route) ?? menuEntryFor(route)?.labelKey ?? null;
+  }
+
+  /** Destino del atajo `/`: el campo real, no el host, que no es enfocable. */
   protected focusSearch(): void {
-    this.searchField()?.nativeElement.focus();
+    this.searchField()?.focus();
   }
 }

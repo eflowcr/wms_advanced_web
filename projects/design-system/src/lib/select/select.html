@@ -1,5 +1,9 @@
-<!-- RFE-01: un `<input>` que se tipea ya; es etiquetable, así que for/id. -->
-<label [id]="labelId" [attr.for]="fieldId" class="block text-caption text-secondary mb-1">
+<!-- RFE-01: un `<input>` que se tipea ya; es etiquetable, así que for/id. Oculta, sigue nombrando. -->
+<label
+  [id]="labelId"
+  [attr.for]="fieldId"
+  [class]="hideLabel() ? 'sr-only' : 'block text-caption text-secondary mb-1'"
+>
   {{ label() }}
   @if (required()) {
     <span aria-hidden="true">*</span>
@@ -17,6 +21,7 @@
     [disabled]="disabled()"
     [placeholder]="placeholder()"
     [value]="text()"
+    [attr.lang]="selectedLang()"
     [attr.aria-expanded]="isOpen()"
     aria-haspopup="listbox"
     aria-autocomplete="list"
@@ -61,13 +66,9 @@
   >
     <ewms-icon name="circle-x" size="sm" />
     <span class="flex-1">{{ words().error }}</span>
-    <button
-      type="button"
-      class="rounded-sm px-2 py-1 cursor-pointer outline-none focus-visible:shadow-(--focus-ring-shadow) text-(color:--color-bg-primary) hover:text-(color:--color-bg-primary-hover)"
-      (click)="search.retry()"
-    >
+    <ewms-button variant="link" size="sm" (click)="search.retry()">
       {{ words().retry }}
-    </button>
+    </ewms-button>
   </div>
 }
 
@@ -86,6 +87,7 @@
         [style.fontSize]="fontSize()"
         [style.fontWeight]="$index === selectedIndex() ? selectedWeight : null"
         [attr.aria-selected]="$index === selectedIndex()"
+        [attr.lang]="langOf(row)"
         (mousedown)="onOptionMousedown($event)"
         (click)="choose(row)"
         (mouseenter)="activeIndex.set($index)"

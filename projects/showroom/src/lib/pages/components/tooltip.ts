@@ -5,8 +5,11 @@ import {
   Tooltip,
   type TooltipPosition,
 } from '@ewms/design-system';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { DemoFrame } from '../../ui/demo-frame';
+import { ANATOMY_COLUMNS, DocTable, type DocColumn } from '../../ui/doc-table';
 import { PropTable, type PropRow } from '../../ui/prop-table';
+import { Prose } from '../../ui/prose';
 import { TokenValue } from '../../ui/token-value';
 
 interface PositionSample {
@@ -15,56 +18,101 @@ interface PositionSample {
   readonly hint: string;
 }
 
+/**
+ * t(showroom.tooltip.variants.top.label, showroom.tooltip.variants.top.hint,
+ *   showroom.tooltip.variants.bottom.label, showroom.tooltip.variants.bottom.hint,
+ *   showroom.tooltip.variants.left.label, showroom.tooltip.variants.left.hint,
+ *   showroom.tooltip.variants.right.label, showroom.tooltip.variants.right.hint)
+ */
 const POSITIONS: readonly PositionSample[] = [
-  { position: 'top', label: 'top (default)', hint: 'Arriba; cae abajo si no entra.' },
-  { position: 'bottom', label: 'bottom', hint: 'Abajo; sube si no entra.' },
-  { position: 'left', label: 'left', hint: 'A la izquierda; pasa a la derecha si no entra.' },
-  { position: 'right', label: 'right', hint: 'A la derecha; pasa a la izquierda si no entra.' },
+  {
+    position: 'top',
+    label: 'showroom.tooltip.variants.top.label',
+    hint: 'showroom.tooltip.variants.top.hint',
+  },
+  {
+    position: 'bottom',
+    label: 'showroom.tooltip.variants.bottom.label',
+    hint: 'showroom.tooltip.variants.bottom.hint',
+  },
+  {
+    position: 'left',
+    label: 'showroom.tooltip.variants.left.label',
+    hint: 'showroom.tooltip.variants.left.hint',
+  },
+  {
+    position: 'right',
+    label: 'showroom.tooltip.variants.right.label',
+    hint: 'showroom.tooltip.variants.right.hint',
+  },
 ];
 
 /**
  * Verificada contra tooltip.ts. La primera fila es el selector que escribe el consumidor
  * (ewmsTooltip, alias de text), no el nombre del campo.
+ * t(showroom.tooltip.props.text, showroom.tooltip.props.position, showroom.tooltip.props.describes,
+ *   showroom.tooltip.props.tooltipDisabled)
  */
 const PROPS: readonly PropRow[] = [
   {
     name: '[ewmsTooltip]',
     type: 'string',
-    default: '— (requerido)',
-    description:
-      'El texto, ya traducido por el consumidor. Es el selector Y la entrada: aplicar la directiva y darle su texto son el mismo atributo. Dentro de un componente del DS se expone como tooltip, a secas.',
+    default: '—',
+    description: 'showroom.tooltip.props.text',
   },
   {
     name: 'position',
     type: "'top' | 'bottom' | 'left' | 'right'",
     default: "'top'",
-    description:
-      'Colocación preferida. Se voltea sola a la opuesta cuando no entra: la lista que recorre el CDK tiene dos entradas, la pedida y su contraria.',
+    description: 'showroom.tooltip.props.position',
   },
   {
     name: 'describes',
     type: 'boolean',
     default: 'false',
-    description:
-      'Si el texto AGREGA información al nombre accesible. false conecta nada y pone el panel aria-hidden; true lo conecta con aria-describedby y role="tooltip". La directiva no adivina: lo declara quien la usa.',
+    description: 'showroom.tooltip.props.describes',
   },
   {
     name: 'tooltipDisabled',
     type: 'boolean',
     default: 'false',
-    description:
-      'Suprime el tooltip en un contexto puntual sin quitar la directiva. NO se llama disabled, y el prefijo es estructural: ver Errores comunes.',
+    description: 'showroom.tooltip.props.tooltipDisabled',
   },
 ];
 
+/**
+ * t(showroom.tooltip.anatomy.parts.background, showroom.tooltip.anatomy.parts.text,
+ *   showroom.tooltip.anatomy.parts.radius, showroom.tooltip.anatomy.parts.elevation,
+ *   showroom.tooltip.anatomy.parts.fontSize, showroom.tooltip.anatomy.parts.fontWeight)
+ */
 const ANATOMY = [
-  { part: 'Fondo del panel', token: '--color-neutral-solid' },
-  { part: 'Texto del panel', token: '--color-text-on-primary' },
-  { part: 'Radio de esquina', token: '--radius-sm' },
-  { part: 'Elevación', token: '--shadow-md' },
-  { part: 'Tamaño de letra', token: '--text-caption-size' },
-  { part: 'Peso de letra', token: '--text-caption-weight' },
+  { part: 'showroom.tooltip.anatomy.parts.background', token: '--color-neutral-solid' },
+  { part: 'showroom.tooltip.anatomy.parts.text', token: '--color-text-on-primary' },
+  { part: 'showroom.tooltip.anatomy.parts.radius', token: '--radius-sm' },
+  { part: 'showroom.tooltip.anatomy.parts.elevation', token: '--shadow-md' },
+  { part: 'showroom.tooltip.anatomy.parts.fontSize', token: '--text-caption-size' },
+  { part: 'showroom.tooltip.anatomy.parts.fontWeight', token: '--text-caption-weight' },
 ] as const;
+
+/**
+ * t(showroom.tooltip.rules.columns.rule, showroom.tooltip.rules.columns.means,
+ *   showroom.tooltip.rules.columns.check)
+ */
+const RULE_COLUMNS: readonly DocColumn[] = [
+  { id: 'rule', label: 'showroom.tooltip.rules.columns.rule' },
+  { id: 'means', label: 'showroom.tooltip.rules.columns.means' },
+  { id: 'check', label: 'showroom.tooltip.rules.columns.check' },
+];
+
+/**
+ * Las tres de la WCAG 1.4.13; la plantilla arma la clave con el id.
+ * t(showroom.tooltip.rules.dismissible.name, showroom.tooltip.rules.dismissible.means,
+ *   showroom.tooltip.rules.dismissible.check, showroom.tooltip.rules.hoverable.name,
+ *   showroom.tooltip.rules.hoverable.means, showroom.tooltip.rules.hoverable.check,
+ *   showroom.tooltip.rules.persistent.name, showroom.tooltip.rules.persistent.means,
+ *   showroom.tooltip.rules.persistent.check)
+ */
+const RULES = ['dismissible', 'hoverable', 'persistent'] as const;
 
 /**
  * /design-system/components/tooltip: ficha de ewmsTooltip. Es una directiva, no un
@@ -72,7 +120,7 @@ const ANATOMY = [
  */
 @Component({
   selector: 'ewms-showroom-tooltip',
-  imports: [Button, Tooltip, DemoFrame, PropTable, TokenValue],
+  imports: [Button, Tooltip, DemoFrame, DocTable, PropTable, Prose, TokenValue, TranslocoPipe],
   templateUrl: './tooltip.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -81,6 +129,9 @@ export class ShowroomTooltip {
   protected readonly positions = POSITIONS;
   protected readonly props = PROPS;
   protected readonly anatomy = ANATOMY;
+  protected readonly anatomyColumns = ANATOMY_COLUMNS;
+  protected readonly ruleColumns = RULE_COLUMNS;
+  protected readonly rules = RULES;
 
   /** Interruptor de la demo de tooltipDisabled. */
   protected readonly suppressed = signal(false);

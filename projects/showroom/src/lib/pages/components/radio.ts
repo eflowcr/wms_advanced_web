@@ -10,10 +10,14 @@ import {
 } from '@angular/core';
 import { form, FormField } from '@angular/forms/signals';
 import { DESIGN_SYSTEM_VERSION, Radio, RadioGroup } from '@ewms/design-system';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { DemoFrame } from '../../ui/demo-frame';
+import { ANATOMY_COLUMNS, DocTable } from '../../ui/doc-table';
 import { PropTable, type PropRow } from '../../ui/prop-table';
+import { Prose } from '../../ui/prose';
 import { StateMatrix, type MatrixAxis } from '../../ui/state-matrix';
 import { TokenValue } from '../../ui/token-value';
+import { translated } from '../../ui/translated';
 import {
   readSelectionBox,
   SELECTION_ANATOMY,
@@ -24,21 +28,32 @@ import {
 /**
  * Dos filas, no tres: un radio no tiene indeterminado. Es la única diferencia real
  * de expresión con el Checkbox, con el que comparte todo lo demás.
+ * t(showroom.radio.states.values.off, showroom.radio.states.values.on)
  */
 const VALUES: readonly MatrixAxis[] = [
-  { id: 'off', label: 'Sin elegir' },
-  { id: 'on', label: 'Elegido' },
+  { id: 'off', label: 'showroom.radio.states.values.off' },
+  { id: 'on', label: 'showroom.radio.states.values.on' },
 ];
 
+/**
+ * t(showroom.common.states.default, showroom.common.states.hover, showroom.common.states.focus,
+ *   showroom.common.states.disabled)
+ */
 const STATES: readonly MatrixAxis[] = [
-  { id: 'default', label: 'Default' },
-  { id: 'hover', label: 'Hover' },
-  { id: 'focus', label: 'Focus' },
-  { id: 'disabled', label: 'Disabled' },
+  { id: 'default', label: 'showroom.common.states.default' },
+  { id: 'hover', label: 'showroom.common.states.hover' },
+  { id: 'focus', label: 'showroom.common.states.focus' },
+  { id: 'disabled', label: 'showroom.common.states.disabled' },
 ];
+
+/**
+ * Encabezado de la columna de filas: el eje son valores, no variantes. La matriz lo traduce.
+ * t(showroom.radio.states.rowHeader)
+ */
+const ROW_HEADER = 'showroom.radio.states.rowHeader';
 
 /** Valor que ofrece cada celda; «elegido» es que su control lo tenga. */
-const CELL_VALUE = 'la-elegida';
+const CELL_VALUE = 'elegida';
 
 /** Mismos estados forzados y tokens que el Checkbox: comparten código. */
 const FORCED: Readonly<Record<string, string>> = {
@@ -51,75 +66,88 @@ interface Option {
   readonly label: string;
 }
 
+/**
+ * El código es dato; el nombre que la interfaz le da es clave.
+ * t(showroom.radio.demo.types.supplier, showroom.radio.demo.types.customerReturn,
+ *   showroom.radio.demo.types.transfer)
+ */
 const RECEPTION_TYPES: readonly Option[] = [
-  { value: 'proveedor', label: 'De proveedor' },
-  { value: 'devolucion', label: 'Devolución de cliente' },
-  { value: 'traslado', label: 'Traslado entre almacenes' },
+  { value: 'proveedor', label: 'showroom.radio.demo.types.supplier' },
+  { value: 'devolucion', label: 'showroom.radio.demo.types.customerReturn' },
+  { value: 'traslado', label: 'showroom.radio.demo.types.transfer' },
 ];
 
-/** Verificada contra radio.ts. */
+/** t(showroom.radio.demo.noneChosen) */
+const NONE_CHOSEN = 'showroom.radio.demo.noneChosen';
+
+/**
+ * Verificada contra radio.ts.
+ * t(showroom.radio.props.value, showroom.radio.props.disabled, showroom.radio.props.label,
+ *   showroom.radio.props.ariaLabel)
+ */
 const PROPS: readonly PropRow[] = [
   {
     name: 'value',
     type: 'unknown',
-    default: '— (requerido)',
-    description:
-      'Lo que el valor del GRUPO pasa a ser cuando se elige esta opción. No es el valor del grupo: es lo que esta opción aporta al ser la elegida.',
+    default: '—',
+    description: 'showroom.radio.props.value',
   },
   {
     name: 'disabled',
     type: 'boolean',
     default: 'false',
-    description:
-      'Se suma con OR al del grupo, nunca se resta: el grupo deshabilitado apaga a todas sus opciones.',
+    description: 'showroom.radio.props.disabled',
   },
   {
     name: 'label',
     type: 'string',
     default: "''",
-    description: 'Texto visible al lado del punto, ya traducido.',
+    description: 'showroom.radio.props.label',
   },
   {
     name: 'ariaLabel',
     type: 'string',
     default: "''",
-    description: 'El nombre accesible cuando no hay texto visible.',
+    description: 'showroom.radio.props.ariaLabel',
   },
 ];
 
-/** Verificada contra radio-group.ts. */
+/**
+ * Verificada contra radio-group.ts.
+ * t(showroom.radio.groupProps.value, showroom.radio.groupProps.label,
+ *   showroom.radio.groupProps.hideLabelHint, showroom.radio.groupProps.name,
+ *   showroom.radio.groupProps.formState)
+ */
 const GROUP_PROPS: readonly PropRow[] = [
   {
     name: 'value',
     type: 'model<unknown>',
     default: 'null',
-    description:
-      'El valor del campo: el value de la opción elegida. Con [formField] lo llena el formulario; fuera de uno, [(value)].',
+    description: 'showroom.radio.groupProps.value',
   },
   {
     name: 'label',
     type: 'string',
-    default: '— (requerido)',
-    description: 'El legend del fieldset. El grupo es lo que tiene nombre, no cada opción.',
+    default: '—',
+    description: 'showroom.radio.groupProps.label',
   },
   {
     name: 'hideLabel · hint',
     type: 'boolean · string',
     default: "false · ''",
-    description: 'Como en el Input. El mensaje del validador reemplaza al hint.',
+    description: 'showroom.radio.groupProps.hideLabelHint',
   },
   {
     name: 'name',
     type: 'string',
-    default: "'' (uno propio)",
-    description:
-      'El name que comparten los radios nativos, que ES la agrupación. Sin él, uno por instancia: nunca quedan dos grupos mezclados.',
+    default: "''",
+    description: 'showroom.radio.groupProps.name',
   },
   {
     name: 'disabled · required · invalid · touched · errors',
-    type: 'Del contrato FormValueControl',
+    type: 'FormValueControl',
     default: '—',
-    description: 'Las llena el [formField]. Ninguna que el componente no lea.',
+    description: 'showroom.radio.groupProps.formState',
   },
 ];
 
@@ -129,7 +157,18 @@ const GROUP_PROPS: readonly PropRow[] = [
  */
 @Component({
   selector: 'ewms-showroom-radio',
-  imports: [FormField, Radio, RadioGroup, DemoFrame, PropTable, StateMatrix, TokenValue],
+  imports: [
+    FormField,
+    Radio,
+    RadioGroup,
+    DemoFrame,
+    DocTable,
+    PropTable,
+    Prose,
+    StateMatrix,
+    TokenValue,
+    TranslocoPipe,
+  ],
   templateUrl: './radio.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -139,10 +178,17 @@ export class ShowroomRadio {
   protected readonly version = DESIGN_SYSTEM_VERSION;
   protected readonly values = VALUES;
   protected readonly states = STATES;
-  protected readonly options = RECEPTION_TYPES;
+  protected readonly rowHeader = ROW_HEADER;
   protected readonly props = PROPS;
   protected readonly groupProps = GROUP_PROPS;
   protected readonly anatomy = SELECTION_ANATOMY;
+  protected readonly anatomyColumns = ANATOMY_COLUMNS;
+
+  /** Las opciones con su texto ya traducido: ewms-radio recibe la etiqueta escrita. */
+  protected readonly options = translated((t) =>
+    RECEPTION_TYPES.map((option) => ({ value: option.value, label: t(option.label) })),
+  );
+  private readonly noneChosen = translated((t) => t(NONE_CHOSEN));
 
   protected readonly box = signal<SelectionBox>(SELECTION_BOX);
 
@@ -195,6 +241,8 @@ export class ShowroomRadio {
   protected readonly cellValue = CELL_VALUE;
 
   protected chosenLabel(): string {
-    return RECEPTION_TYPES.find((option) => option.value === this.chosen())?.label ?? '(ninguno)';
+    return (
+      this.options().find((option) => option.value === this.chosen())?.label ?? this.noneChosen()
+    );
   }
 }

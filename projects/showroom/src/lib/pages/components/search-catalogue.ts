@@ -1,6 +1,7 @@
 import { SEARCH_PAGE_SIZE, type SearchPage, type SearchSource } from '@ewms/design-system';
 import { Observable, throwError, timer } from 'rxjs';
 import { map, switchMap } from 'rxjs/operators';
+import { ARTICLE_FAMILIES as FAMILIES, ARTICLE_SHAPES as SHAPES } from './select.fixtures';
 
 /** Una página de artículos, con nombre para que la prueba diga qué espera. */
 export type SearchPageOfArticle = SearchPage<Article>;
@@ -11,28 +12,6 @@ export interface Article {
   readonly name: string;
   readonly family: string;
 }
-
-const FAMILIES = [
-  'Embalaje',
-  'Film y flejes',
-  'Etiquetas',
-  'Repuestos',
-  'Consumibles',
-  'Higiene',
-] as const;
-
-const SHAPES = [
-  'Caja plegable',
-  'Caja americana',
-  'Film estirable',
-  'Fleje de poliéster',
-  'Etiqueta térmica',
-  'Separador de cartón',
-  'Esquinero',
-  'Bolsa de burbuja',
-  'Cinta de embalar',
-  'Palet de plástico',
-] as const;
 
 /**
  * Generador con semilla (xorshift32): el catálogo sale igual en cada carga para
@@ -99,7 +78,7 @@ export class CatalogueSource implements SearchSource<Article> {
     return timer(wait).pipe(
       switchMap(() =>
         behaviour === 'failing'
-          ? throwError(() => new Error('demo: the source refused'))
+          ? throwError(() => new Error('demo: source refused'))
           : new Observable<SearchPage<Article>>((subscriber) => {
               subscriber.next(this.page(query, page));
               subscriber.complete();

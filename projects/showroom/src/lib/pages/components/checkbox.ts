@@ -8,8 +8,11 @@ import {
   signal,
 } from '@angular/core';
 import { Checkbox, DESIGN_SYSTEM_VERSION } from '@ewms/design-system';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { DemoFrame } from '../../ui/demo-frame';
+import { ANATOMY_COLUMNS, DocTable } from '../../ui/doc-table';
 import { PropTable, type PropRow } from '../../ui/prop-table';
+import { Prose } from '../../ui/prose';
 import { StateMatrix, type MatrixAxis } from '../../ui/state-matrix';
 import { TokenValue } from '../../ui/token-value';
 import {
@@ -19,19 +22,33 @@ import {
   type SelectionBox,
 } from './selection-shared';
 
-/** Filas: lo que contiene la casilla. Tres, y la tercera es la que importa. */
+/**
+ * Filas: lo que contiene la casilla. Tres, y la tercera es la que importa.
+ * t(showroom.checkbox.states.values.off, showroom.checkbox.states.values.on,
+ *   showroom.checkbox.states.values.mixed)
+ */
 const VALUES: readonly MatrixAxis[] = [
-  { id: 'off', label: 'Sin marcar' },
-  { id: 'on', label: 'Marcado' },
-  { id: 'mixed', label: 'Indeterminado' },
+  { id: 'off', label: 'showroom.checkbox.states.values.off' },
+  { id: 'on', label: 'showroom.checkbox.states.values.on' },
+  { id: 'mixed', label: 'showroom.checkbox.states.values.mixed' },
 ];
 
+/**
+ * t(showroom.common.states.default, showroom.common.states.hover, showroom.common.states.focus,
+ *   showroom.common.states.disabled)
+ */
 const STATES: readonly MatrixAxis[] = [
-  { id: 'default', label: 'Default' },
-  { id: 'hover', label: 'Hover' },
-  { id: 'focus', label: 'Focus' },
-  { id: 'disabled', label: 'Disabled' },
+  { id: 'default', label: 'showroom.common.states.default' },
+  { id: 'hover', label: 'showroom.common.states.hover' },
+  { id: 'focus', label: 'showroom.common.states.focus' },
+  { id: 'disabled', label: 'showroom.common.states.disabled' },
 ];
+
+/**
+ * Encabezado de la columna de filas: el eje son valores, no variantes. La matriz lo traduce.
+ * t(showroom.checkbox.states.rowHeader)
+ */
+const ROW_HEADER = 'showroom.checkbox.states.rowHeader';
 
 /**
  * Solo Hover y Focus se fuerzan, con los mismos tokens del control. Disabled va como
@@ -42,48 +59,48 @@ const FORCED: Readonly<Record<string, string>> = {
   focus: '[&_input]:shadow-(--focus-ring-shadow)',
 };
 
-/** Verificada contra checkbox.ts. */
+/**
+ * Verificada contra checkbox.ts.
+ * t(showroom.checkbox.props.checked, showroom.checkbox.props.indeterminate,
+ *   showroom.checkbox.props.label, showroom.checkbox.props.ariaLabel,
+ *   showroom.checkbox.props.disabled, showroom.checkbox.props.checkedChange)
+ */
 const PROPS: readonly PropRow[] = [
   {
     name: 'checked',
     type: 'boolean',
     default: 'false',
-    description:
-      'Siembra el estado. Después manda el formulario: la clase base lo toma como semilla de un linkedSignal, y writeValue lo pisa.',
+    description: 'showroom.checkbox.props.checked',
   },
   {
     name: 'indeterminate',
     type: 'boolean',
     default: 'false',
-    description:
-      'Ni marcado ni sin marcar: la casilla de «seleccionar todo» cuando algunas filas están elegidas. Gana sobre checked, visualmente y en lo que se anuncia.',
+    description: 'showroom.checkbox.props.indeterminate',
   },
   {
     name: 'label',
     type: 'string',
     default: "''",
-    description:
-      'Texto visible al lado de la caja, ya traducido. Opcional porque no siempre se etiqueta en el lugar — el encabezado de una tabla seleccionable es el caso.',
+    description: 'showroom.checkbox.props.label',
   },
   {
     name: 'ariaLabel',
     type: 'string',
     default: "''",
-    description:
-      'El nombre accesible cuando no hay texto visible: una columna de casillas por fila, donde el nombre tiene que decir CUÁL fila.',
+    description: 'showroom.checkbox.props.ariaLabel',
   },
   {
     name: 'disabled',
     type: 'boolean',
     default: 'false',
-    description: 'Fuera de un formulario. Dentro de uno lo pone la regla disabled() del esquema — ver el bloque 8.',
+    description: 'showroom.checkbox.props.disabled',
   },
   {
     name: '(checkedChange)',
     type: 'output<boolean>',
     default: '—',
-    description:
-      'NO se llama (change): ese nombre es nativo y burbujea. Ver el bloque 8. Además es el nombre que el Toggle ya tenía, así que los dos controles de selección se leen igual.',
+    description: 'showroom.checkbox.props.checkedChange',
   },
 ];
 
@@ -93,7 +110,16 @@ const PROPS: readonly PropRow[] = [
  */
 @Component({
   selector: 'ewms-showroom-checkbox',
-  imports: [Checkbox, DemoFrame, PropTable, StateMatrix, TokenValue],
+  imports: [
+    Checkbox,
+    DemoFrame,
+    DocTable,
+    PropTable,
+    Prose,
+    StateMatrix,
+    TokenValue,
+    TranslocoPipe,
+  ],
   templateUrl: './checkbox.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -103,16 +129,21 @@ export class ShowroomCheckbox {
   protected readonly version = DESIGN_SYSTEM_VERSION;
   protected readonly values = VALUES;
   protected readonly states = STATES;
+  protected readonly rowHeader = ROW_HEADER;
   protected readonly props = PROPS;
   protected readonly anatomy = SELECTION_ANATOMY;
+  protected readonly anatomyColumns = ANATOMY_COLUMNS;
 
   protected readonly box = signal<SelectionBox>(SELECTION_BOX);
 
-  /** Demo de «seleccionar todo»: tres filas y la casilla de cabecera. */
-  protected readonly rows = signal<readonly { id: string; label: string; on: boolean }[]>([
-    { id: 'a', label: 'Reetiquetar SKU-04871-B', on: false },
-    { id: 'b', label: 'Reetiquetar SKU-04872-C', on: true },
-    { id: 'c', label: 'Reetiquetar SKU-04873-D', on: false },
+  /**
+   * Demo de «seleccionar todo»: tres filas y la casilla de cabecera. El SKU es dato; el
+   * texto de la fila lo arma la plantilla.
+   */
+  protected readonly rows = signal<readonly { id: string; sku: string; on: boolean }[]>([
+    { id: 'a', sku: 'SKU-04871-B', on: false },
+    { id: 'b', sku: 'SKU-04872-C', on: true },
+    { id: 'c', sku: 'SKU-04873-D', on: false },
   ]);
 
   protected readonly allOn = computed(() => this.rows().every((row) => row.on));
@@ -123,7 +154,7 @@ export class ShowroomCheckbox {
   protected readonly snippet = [
     '<ewms-checkbox',
     '  [formField]="alta.reetiquetar"',
-    "  [label]=\"'articulos.reetiquetar' | transloco\"",
+    '  [label]="\'articulos.reetiquetar\' | transloco"',
     '  (checkedChange)="onToggle($event)"',
     '/>',
     '',
@@ -131,7 +162,7 @@ export class ShowroomCheckbox {
     '<ewms-checkbox',
     '  [indeterminate]="algunas() && !todas()"',
     '  [checked]="todas()"',
-    "  [ariaLabel]=\"'tabla.seleccionarTodo' | transloco\"",
+    '  [ariaLabel]="\'tabla.seleccionarTodo\' | transloco"',
     '  (checkedChange)="marcarTodo($event)"',
     '/>',
   ].join('\n');

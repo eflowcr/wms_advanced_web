@@ -1,4 +1,10 @@
-import { provideZonelessChangeDetection, signal, type Type } from '@angular/core';
+import {
+  provideZonelessChangeDetection,
+  signal,
+  type EnvironmentProviders,
+  type Provider,
+  type Type,
+} from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { provideRouter, Router } from '@angular/router';
@@ -13,9 +19,17 @@ import {
   type FavoriteLabelResolver,
   type FilterValues,
 } from '@ewms/design-system';
-import { expectNoAxeViolations } from '@ewms/testing';
+import { expectNoAxeViolations, provideI18nTesting } from '@ewms/testing';
+import { TranslocoService } from '@jsverse/transloco';
+import { firstValueFrom } from 'rxjs';
 import { ShowroomLayout } from '../layout/showroom-layout';
 import { provideShowroomDesignSystem } from '../showroom.providers';
+import {
+  loadShowroomScope,
+  provideDesignSystemTextsTesting,
+  SHOWROOM_DICTIONARIES,
+  useSpanishBrowser,
+} from '../showroom.testing';
 import { ShowroomBanner } from './components/banner';
 import { ShowroomButton } from './components/button';
 import { ShowroomCard } from './components/card';
@@ -57,13 +71,26 @@ function provideApplicationFavorites() {
   return [{ provide: EWMS_FAVORITES_STORE, useClass: InMemoryFavoritesStore }, Favorites];
 }
 
+/**
+ * Lo que en la aplicación ponen el shell y la ruta: i18n con los diccionarios reales, los textos
+ * del design system (sin ellos la prueba falla al inyectar, no en una aserción) y el catálogo.
+ */
+function provideCatalogue(): (Provider | EnvironmentProviders)[] {
+  return [
+    provideI18nTesting(SHOWROOM_DICTIONARIES),
+    provideDesignSystemTextsTesting(),
+    provideShowroomDesignSystem(),
+    provideApplicationFavorites(),
+  ];
+}
+
 async function render<T>(component: Type<T>) {
+  useSpanishBrowser();
   await TestBed.configureTestingModule({
     imports: [component],
-    // Los mismos proveedores que instala la ruta. Los textos del DS se proveen por
-    // inyección: sin ellos la prueba falla al inyectar, no en una aserción.
-    providers: [provideRouter([]), provideShowroomDesignSystem(), provideApplicationFavorites()],
+    providers: [provideRouter([]), provideCatalogue()],
   }).compileComponents();
+  await loadShowroomScope();
   const fixture = TestBed.createComponent(component);
   await fixture.whenStable();
   return { fixture, element: fixture.nativeElement as HTMLElement };
@@ -109,7 +136,7 @@ describe('ShowroomLayout', () => {
 
   it('filters the catalogue as you type, by name and by selector', async () => {
     const { fixture, element } = await render(ShowroomLayout);
-    const search = element.querySelector<HTMLInputElement>('#showroom-search');
+    const search = element.querySelector<HTMLInputElement>('[data-showroom-search] input');
     const count = () => element.querySelectorAll('[data-sidebar] nav li').length;
 
     // Dos desde DS-5: «Toggle» por nombre y «Favoritos» por su selector
@@ -132,16 +159,51 @@ describe('ShowroomLayout', () => {
 
   it('says so when nothing matches, instead of showing an empty panel', async () => {
     const { fixture, element } = await render(ShowroomLayout);
-    const search = element.querySelector<HTMLInputElement>('#showroom-search');
+    const search = element.querySelector<HTMLInputElement>('[data-showroom-search] input');
     search!.value = 'zzzz-no-existe';
     search!.dispatchEvent(new Event('input'));
     await fixture.whenStable();
     expect(element.textContent).toContain('Nada coincide con la búsqueda');
   });
 
-  it('declares Spanish, so a screen reader does not read it with English phonetics', async () => {
+  it('pins no language of its own: the frame speaks the one the application has on', async () => {
     const { element } = await render(ShowroomLayout);
-    expect(element.querySelector('[lang="es"]')).not.toBeNull();
+    expect(element.firstElementChild?.hasAttribute('lang')).toBe(false);
+    expect(element.querySelector('[data-sidebar] a')?.textContent?.trim()).toBe(
+      'Sistema de diseño',
+    );
+  });
+
+  it('finds a page by its name in the active language, and by its selector in any', async () => {
+    const { fixture, element } = await render(ShowroomLayout);
+    const search = element.querySelector<HTMLInputElement>('[data-showroom-search] input')!;
+    const names = () =>
+      [...element.querySelectorAll('[data-sidebar] nav li a')].map((link) =>
+        link.textContent?.trim(),
+      );
+    const transloco = TestBed.inject(TranslocoService);
+    await firstValueFrom(transloco.load('en'));
+    await firstValueFrom(transloco.load('showroom/en'));
+    transloco.setActiveLang('en');
+    await fixture.whenStable();
+
+    search.value = 'button';
+    search.dispatchEvent(new Event('input'));
+    await fixture.whenStable();
+    expect(names()).toContain('Button');
+
+    search.value = 'botón';
+    search.dispatchEvent(new Event('input'));
+    await fixture.whenStable();
+    expect(names()).toEqual([]);
+
+    search.value = 'ewms-select';
+    search.dispatchEvent(new Event('input'));
+    await fixture.whenStable();
+    expect(names()).toEqual(['Select']);
+    expect(element.querySelector('[data-sidebar] [role="status"]')?.textContent?.trim()).toBe(
+      '1 result',
+    );
   });
 
   /** Marca una ruta en la lista de la aplicación, como lo hace la estrella del encabezado. */
@@ -173,14 +235,18 @@ describe('ShowroomLayout', () => {
       labelFor: (route) => signal(route === '/catalogos/articulos' ? 'Artículos' : '').asReadonly(),
       iconFor: () => 'package',
     };
+    useSpanishBrowser();
     await TestBed.configureTestingModule({
       imports: [ShowroomLayout],
       providers: [
         provideRouter([]),
+        provideI18nTesting(SHOWROOM_DICTIONARIES),
+        provideDesignSystemTextsTesting(),
         provideApplicationFavorites(),
         { provide: EWMS_FAVORITE_LABELS, useValue: application },
       ],
     }).compileComponents();
+    await loadShowroomScope();
     const fixture = TestBed.createComponent(ShowroomLayout);
     await fixture.whenStable();
     const element = fixture.nativeElement as HTMLElement;
@@ -232,6 +298,7 @@ describe('ShowroomLayout', () => {
 
   it('the block marks the page you are on, and follows you when you move', async () => {
     // `aria-current` sale de la URL que el layout lee del router; la estrella ya no está acá.
+    useSpanishBrowser();
     await TestBed.configureTestingModule({
       imports: [ShowroomLayout],
       providers: [
@@ -240,10 +307,10 @@ describe('ShowroomLayout', () => {
           { path: 'design-system/components/button', children: [] },
           { path: 'design-system/components/card', children: [] },
         ]),
-        provideShowroomDesignSystem(),
-        provideApplicationFavorites(),
+        provideCatalogue(),
       ],
     }).compileComponents();
+    await loadShowroomScope();
     const router = TestBed.inject(Router);
     await router.navigateByUrl('/design-system/components/button');
 
@@ -428,18 +495,18 @@ describe('ShowroomButton', () => {
     }
   });
 
-  it('renders the four variants with their canonical names', async () => {
+  it('renders the five variants with their canonical names', async () => {
     const { element } = await render(ShowroomButton);
     const variants = [...element.querySelectorAll('[data-variant]')].map((el) =>
       el.getAttribute('data-variant'),
     );
-    expect(variants).toEqual(['primary', 'secondary', 'danger', 'ghost']);
+    expect(variants).toEqual(['primary', 'secondary', 'danger', 'ghost', 'link']);
   });
 
   it('renders the matrix with the real component in every cell', async () => {
     const { element } = await render(ShowroomButton);
     const matrix = element.querySelector('ewms-state-matrix');
-    expect(matrix?.querySelectorAll('tbody ewms-button')).toHaveLength(20);
+    expect(matrix?.querySelectorAll('tbody ewms-button')).toHaveLength(25);
   });
 
   it('forces hover and focus with the token the component itself would use', async () => {
@@ -451,6 +518,7 @@ describe('ShowroomButton', () => {
     expect(page.forced('ghost', 'hover')).toBe(
       '[&_button]:bg-ghost-hover [&_button]:text-(color:--color-bg-primary-hover)',
     );
+    expect(page.forced('link', 'hover')).toBe('[&_button]:underline');
     expect(page.forced('danger', 'focus')).toContain('focus-ring-shadow');
     // Disabled y Loading son entradas reales: no se fuerza nada.
     expect(page.forced('primary', 'disabled')).toBe('');
@@ -507,7 +575,9 @@ describe('ShowroomButton', () => {
   });
 });
 
-describe('the pages declare Spanish', () => {
+// Desde el 2026-09-25 el catálogo se traduce (Showroom - Especificacion §8): ninguna página declara
+// un idioma propio, habla el de la aplicación, que pone <html lang>.
+describe('the pages speak the language of the application', () => {
   const pages: Type<unknown>[] = [
     ShowroomHome,
     ShowroomBrand,
@@ -516,12 +586,12 @@ describe('the pages declare Spanish', () => {
     ShowroomSpacing,
   ];
 
-  it('marks every page root as Spanish (the showroom is exempt from i18n)', async () => {
+  it('declares no language on any page root', async () => {
     for (const page of pages) {
       TestBed.resetTestingModule();
       TestBed.configureTestingModule({ providers: [provideZonelessChangeDetection()] });
       const { element } = await render(page);
-      expect(element.querySelector('[lang="es"]'), page.name).not.toBeNull();
+      expect(element.querySelector('article')?.hasAttribute('lang'), page.name).toBe(false);
     }
   });
 });
@@ -596,9 +666,11 @@ describe.each([...SHEETS, ...PATTERNS])('$name', ({ component, heading }) => {
     );
   });
 
-  it('declares Spanish, so a screen reader does not read it with English phonetics', async () => {
+  // Desde el 2026-09-25 el catálogo se traduce: la página habla el idioma de la aplicación, que
+  // declara <html lang>. Un lang="es" propio haría leer el inglés con fonética española.
+  it('declares no language of its own: it speaks the one of the application', async () => {
     const { element } = await render(component);
-    expect(element.querySelector('[lang="es"]')).not.toBeNull();
+    expect(element.querySelector('article')?.hasAttribute('lang')).toBe(false);
   });
 
   // 20 s y no 5: se prueba si axe encuentra violaciones, no cuánto tarda. La página de Tabla
@@ -762,6 +834,14 @@ describe('ShowroomSelect', () => {
     expect(matrix?.querySelectorAll('tbody ewms-select')).toHaveLength(12);
   });
 
+  it('shows the hidden label with the real component: out of sight, still naming the field', async () => {
+    const { element } = await render(ShowroomSelect);
+    const field = element.querySelector<HTMLInputElement>('[data-demo-hidden-label] input')!;
+    const label = element.querySelector(`[data-demo-hidden-label] label[for="${field.id}"]`);
+    expect(label?.textContent?.trim()).toBe('Almacén');
+    expect(label?.classList.contains('sr-only')).toBe(true);
+  });
+
   it('keeps the panel out of the page until it is opened', async () => {
     const { element } = await render(ShowroomSelect);
     // El panel es un overlay del CDK: nada en el DOM propio del componente.
@@ -791,16 +871,20 @@ describe('ShowroomSelect', () => {
   });
 
   it('says so when the form holds a value no option carries', async () => {
-    const { fixture } = await render(ShowroomSelect);
+    const { fixture, element } = await render(ShowroomSelect);
     const page = fixture.componentInstance as unknown as {
       model: {
         set(value: { estado: string | null; rack: null; articulo: null }): void;
       };
-      chosenLabel(): string;
+      chosenLabel(): string | null;
     };
     page.model.set({ estado: 'una-que-no-existe', rack: null, articulo: null });
     await fixture.whenStable();
-    expect(page.chosenLabel()).toBe('(sin elegir)');
+    // Ninguna opción la nombra; la plantilla escribe «sin elegir» en el idioma en pantalla.
+    expect(page.chosenLabel()).toBeNull();
+    expect(element.querySelector('[data-demo-value]')?.parentElement?.textContent).toContain(
+      '(sin elegir)',
+    );
   });
 });
 
@@ -887,6 +971,22 @@ describe('ShowroomRadio', () => {
     ].map((radio) => radio.name);
     expect(names.length).toBeGreaterThan(1);
     expect(new Set(names).size).toBe(names.length);
+  });
+
+  it('keeps every matrix cell live: choosing an empty one marks it, and only it', async () => {
+    const { fixture, element } = await render(ShowroomRadio);
+    const radios = () => [
+      ...element.querySelectorAll<HTMLInputElement>('[data-block="5-matriz"] input[type="radio"]'),
+    ];
+    const empty = radios().find((radio) => !radio.checked && !radio.disabled)!;
+    const before = radios().filter((radio) => radio.checked).length;
+
+    empty.checked = true;
+    empty.dispatchEvent(new Event('change'));
+    await fixture.whenStable();
+
+    expect(empty.checked).toBe(true);
+    expect(radios().filter((radio) => radio.checked).length).toBe(before + 1);
   });
 
   it('caches one value signal per cell, and forces only hover and focus', async () => {
@@ -1177,9 +1277,11 @@ describe('ShowroomDialog', () => {
       isGlyph(stateId: string): boolean;
       glyphFor(tone: string): unknown;
     };
-    expect(page.rowFor('no-such-tone').name).toBe('Info');
-    expect(page.fact('danger', 'confirm')).toBe('Danger');
-    expect(page.fact('danger', 'backdrop')).toBe('No cierra');
+    // Las filas guardan claves; lo que se ve es su texto.
+    const text = (key: string) => TestBed.inject(TranslocoService).translate(key);
+    expect(text(page.rowFor('no-such-tone').name)).toBe('Info');
+    expect(text(page.fact('danger', 'confirm'))).toBe('Danger');
+    expect(text(page.fact('danger', 'backdrop'))).toBe('No cierra');
     expect(page.fact('danger', 'glyph')).toBe('');
     expect(page.isGlyph('glyph')).toBe(true);
     expect(page.isGlyph('confirm')).toBe(false);
@@ -1288,8 +1390,10 @@ describe('ShowroomSelect, the three forms', () => {
     const page = fixture.componentInstance as unknown as {
       fact(variantId: string, columnId: string): string;
     };
-    expect(page.fact('error', 'where')).toContain('bajo el campo');
-    expect(page.fact('empty', 'value')).toContain('Intacto');
+    // La tabla de hechos guarda claves; lo que se ve es su texto.
+    const text = (key: string) => TestBed.inject(TranslocoService).translate(key);
+    expect(text(page.fact('error', 'where'))).toContain('bajo el campo');
+    expect(text(page.fact('empty', 'value'))).toContain('Intacto');
     expect(page.fact('no-such-state', 'where')).toBe('');
   });
 });
@@ -1318,9 +1422,10 @@ describe('ShowroomTable', () => {
     expect(snippet.trimEnd().split('\n').length).toBe(lines);
   });
 
-  it('shows the whole component behind it, and it is four lines: source, row id, bulk actions and their handler', async () => {
+  // Cinco desde el 2026-09-25: el diccionario de estados es una línea porque sigue al idioma.
+  it('shows the whole component behind it, and it is five lines: source, row id, states, bulk actions and their handler', async () => {
     const { element } = await render(ShowroomTable);
-    expect(element.querySelector('[data-component-lines]')?.textContent).toBe('4');
+    expect(element.querySelector('[data-component-lines]')?.textContent).toBe('5');
   });
 
   it('the snippet is what the page actually renders', async () => {
@@ -1415,8 +1520,9 @@ describe('ShowroomTable', () => {
     // La barra de la tabla ofrece las acciones masivas de la demo, y la demo anota la elegida.
     element.querySelector<HTMLButtonElement>('[data-bulk-action="imprimir"] button')!.click();
     await fixture.whenStable();
+    // Plural ICU: una expedición, en singular.
     expect(element.querySelector('[data-bulk-choice]')?.textContent).toBe(
-      'Imprimir etiquetas · 1 expediciones',
+      'Imprimir etiquetas · 1 expedición',
     );
 
     element.querySelector<HTMLButtonElement>('[data-demo-table] [data-sort="bultos"]')!.click();
@@ -1525,7 +1631,7 @@ describe('ShowroomTable — composición avanzada', () => {
     // prueba en e2e: acá no hay hoja de estilos, ni altura de fila, ni ventana, y 5000 filas
     // en jsdom son 5000 filas.
     expect(element.querySelector('[data-loaded-count]')?.textContent).toContain('60');
-    expect(element.querySelector<HTMLButtonElement>('[data-load-all]')?.disabled).toBe(false);
+    expect(element.querySelector<HTMLButtonElement>('[data-load-all] button')?.disabled).toBe(false);
     expect(element.querySelector('[data-load-all]')?.textContent).toContain('5000');
   });
 });
@@ -1714,8 +1820,8 @@ describe('ShowroomPagination', () => {
 describe('ShowroomSearchCreateEdit', () => {
   it('shows the four budgets, and shows the numbers the constants hold', async () => {
     const { element } = await render(ShowroomSearchCreateEdit);
-    const shown = [...element.querySelectorAll('[data-budget]')].map((row) => ({
-      id: row.getAttribute('data-budget'),
+    const shown = [...element.querySelectorAll('[data-budgets] tbody tr')].map((row) => ({
+      id: row.getAttribute('data-doc-row'),
       max: Number(row.querySelector('[data-budget-max]')?.textContent?.trim()),
     }));
 
@@ -1773,7 +1879,7 @@ describe('ShowroomKeyboard', () => {
     expect(element.querySelector('[data-demo-keyboard]')?.textContent).toContain(
       'Ningún layout raíz montó el motor',
     );
-    expect(element.querySelectorAll('[data-demo-bindings] tr').length).toBe(0);
+    expect(element.querySelectorAll('[data-demo-bindings] tbody tr').length).toBe(0);
   });
 });
 

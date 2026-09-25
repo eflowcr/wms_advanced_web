@@ -1,5 +1,6 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
+import { chooseLanguage } from './language';
 
 /**
  * ADR 0008 en un navegador real: el cambio no recarga, html lang lo sigue, la elección sobrevive
@@ -7,7 +8,7 @@ import { expect, test, type Page } from '@playwright/test';
  */
 
 async function switchTo(page: Page, from: string, value: 'es' | 'en'): Promise<void> {
-  await page.getByLabel(from, { exact: true }).selectOption(value);
+  await chooseLanguage(page, from, value);
 }
 
 test.describe('i18n with a Spanish browser', () => {
@@ -76,7 +77,7 @@ test.describe('i18n with a Spanish browser', () => {
 
     await expect(page.getByRole('navigation', { name: 'Main menu' })).toBeVisible();
     await expect(page.locator('html')).toHaveAttribute('lang', 'en');
-    await expect(page.getByLabel('Language', { exact: true })).toHaveValue('en');
+    await expect(page.getByLabel('Language', { exact: true })).toHaveValue('English');
   });
 
   test('formats numbers, dates and plurals with the locale of each language', async ({ page }) => {

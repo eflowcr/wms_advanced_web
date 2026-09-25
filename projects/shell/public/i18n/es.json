@@ -20,9 +20,9 @@
       "removeFilter": "Quitar el filtro {{ column }}"
     },
     "form": {
-      "custom": "Revisá este campo",
-      "email": "Escribí un correo válido",
-      "errorSummary": "{count, plural, =1 {Revisá 1 campo} other {Revisá # campos}}",
+      "custom": "Revise este campo",
+      "email": "Escriba un correo válido",
+      "errorSummary": "{count, plural, =1 {Revise 1 campo} other {Revise # campos}}",
       "errorSummaryLabel": "Error",
       "max": "El máximo es {{ max }}",
       "maxDate": "La fecha máxima es {{ date }}",
@@ -97,7 +97,7 @@
       "moveLater": "Bajar {{ column }}",
       "noData": "Todavía no hay filas.",
       "noResults": "Ninguna fila coincide.",
-      "noResultsHint": "Probá con otra búsqueda o limpiá los filtros.",
+      "noResultsHint": "Pruebe con otra búsqueda o limpie los filtros.",
       "resetView": "Restablecer vista",
       "resizeColumn": "Ancho de la columna {{ column }}",
       "retry": "Reintentar",
@@ -128,7 +128,7 @@
     "favorites": {
       "add": "Agregar a favoritos",
       "added": "Agregado a favoritos",
-      "empty": "Marcá una pantalla con ★",
+      "empty": "Marque una pantalla con ★",
       "remove": "Quitar de favoritos",
       "removed": "Quitado de favoritos",
       "title": "Favoritos"
@@ -203,7 +203,7 @@
     "skipToContent": "Saltar al contenido",
     "tabs": {
       "label": "Documentos abiertos",
-      "limit": "No se pueden abrir más de {{ max }} pestañas a la vez. Cerrá alguna para abrir otra.",
+      "limit": "No se pueden abrir más de {{ max }} pestañas a la vez. Cierre alguna para abrir otra.",
       "scrollBack": "Ver las pestañas anteriores",
       "scrollForward": "Ver las pestañas siguientes"
     },

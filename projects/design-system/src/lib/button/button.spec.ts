@@ -308,6 +308,77 @@ describe('Button', () => {
     });
   });
 
+  describe('Link variant', () => {
+    const classes = (): string[] => [...button().classList];
+
+    beforeEach(async () => {
+      host.variant.set('link');
+      await settle();
+    });
+
+    it('is text on no background or border, one tone deeper on hover, with an underline', () => {
+      expect(classes()).toContain('text-(color:--color-bg-primary-hover)');
+      expect(classes()).toContain('hover:underline');
+      expect(classes()).toContain('bg-transparent');
+      expect(classes().some((name) => name.startsWith('border'))).toBe(false);
+      expect(classes().some((name) => name.startsWith('hover:bg-'))).toBe(false);
+      expect(classes()).toContain('focus-visible:shadow-(--focus-ring-shadow)');
+    });
+
+    const heights: readonly (readonly [ButtonSize, string])[] = [
+      ['sm', 'h-8'],
+      ['md', 'h-10'],
+    ];
+
+    it.each(heights)(
+      'keeps the control height at size "%s", with a short padding',
+      async (size, height) => {
+        host.size.set(size);
+        await settle();
+
+        expect(classes()).toContain(height);
+        expect(classes().filter((name) => name.startsWith('px-'))).toEqual(['px-2']);
+      },
+    );
+
+    it('follows the same disabled contract: native attribute, no hover, no click', async () => {
+      host.disabled.set(true);
+      await settle();
+
+      expect(button().disabled).toBe(true);
+      expect(classes()).toContain('text-disabled');
+      expect(classes()).not.toContain('hover:underline');
+      button().click();
+      expect(host.buttonClicked).toBe(false);
+    });
+
+    it('follows the same loading contract, with the spinner in its own tone', async () => {
+      host.loading.set(true);
+      await settle();
+
+      expect(button().getAttribute('aria-busy')).toBe('true');
+      expect(button().getAttribute('aria-disabled')).toBe('true');
+      expect(accessibleName()).toBe('Save Changes');
+      const spinner = button().querySelector<HTMLElement>('span[aria-hidden="true"]');
+      expect(spinner?.style.color).toBe('var(--color-bg-primary-hover)');
+      button().click();
+      expect(host.buttonClicked).toBe(false);
+    });
+
+    it('fails in dev mode as icon only or at size lg, which a link does not come in', () => {
+      const iconOnly = TestBed.createComponent(TestHost);
+      iconOnly.componentInstance.variant.set('link');
+      iconOnly.componentInstance.iconOnly.set(true);
+      iconOnly.componentInstance.label.set('Reintentar');
+      expect(() => iconOnly.detectChanges()).toThrow(/variant="link"/);
+
+      const large = TestBed.createComponent(TestHost);
+      large.componentInstance.variant.set('link');
+      large.componentInstance.size.set('lg');
+      expect(() => large.detectChanges()).toThrow(/variant="link"/);
+    });
+  });
+
   it('exposes pressed, expanded and controls only when they are set', async () => {
     expect(button().hasAttribute('aria-pressed')).toBe(false);
     expect(button().hasAttribute('aria-expanded')).toBe(false);
@@ -333,6 +404,22 @@ describe('Button', () => {
 
       await asIconOnly();
       host.variant.set(variant);
+      await settle();
+      await expectNoAxeViolations(fixture.nativeElement);
+    });
+
+    it('passes axe as a link, resting, loading and disabled', async () => {
+      host.variant.set('link');
+      host.size.set('sm');
+      await settle();
+      await expectNoAxeViolations(fixture.nativeElement);
+
+      host.loading.set(true);
+      await settle();
+      await expectNoAxeViolations(fixture.nativeElement);
+
+      host.loading.set(false);
+      host.disabled.set(true);
       await settle();
       await expectNoAxeViolations(fixture.nativeElement);
     });

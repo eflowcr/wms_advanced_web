@@ -20,5 +20,5 @@ export default projectRunner(
     functions: 98,
     lines: 98,
   },
-  ['**/design-system/**'],
+  ['**/design-system/**', '**/core/**'],
 );

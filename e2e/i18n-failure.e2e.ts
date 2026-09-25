@@ -1,5 +1,6 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
+import { chooseLanguage } from './language';
 
 /**
  * Qué ve el usuario si un diccionario no carga (i18n.md, «Cuando el diccionario no carga»): siempre
@@ -9,6 +10,9 @@ import { expect, test, type Page } from '@playwright/test';
 
 const ES_DICTIONARY = '**/i18n/es.json';
 const EN_DICTIONARY = '**/i18n/en.json';
+
+/** El aviso del caso A es un Toast, en la única región de notificaciones del shell. */
+const notice = (page: Page) => page.getByRole('status', { name: 'Notificaciones' }).locator('p');
 
 /** Violaciones de CSP: todo lo inline en la página anfitriona se descartaría sin aviso. */
 function collectCspViolations(page: Page): string[] {
@@ -84,15 +88,15 @@ test.describe('case A: a dictionary other than the default does not load', () =>
     await page.route(EN_DICTIONARY, (route) => route.abort());
     await page.goto('/');
     await expect(page.getByRole('navigation', { name: 'Menú principal' })).toBeVisible();
-    await page.getByLabel('Idioma', { exact: true }).selectOption('en');
+    await chooseLanguage(page, 'Idioma', 'en');
   });
 
   test('stays in Spanish and working, tells the user, and saves nothing', async ({ page }) => {
-    await expect(page.getByRole('alert')).toHaveText(
+    await expect(notice(page)).toHaveText(
       'No se pudo cargar el idioma elegido. La interfaz sigue en español; vuelva a intentarlo más tarde.',
     );
     await expect(page.locator('html')).toHaveAttribute('lang', 'es');
-    await expect(page.getByLabel('Idioma', { exact: true })).toHaveValue('es');
+    await expect(page.getByLabel('Idioma', { exact: true })).toHaveValue('Español');
     await expect(page.locator('[data-sample="plural"]').first()).toHaveText('Sin bultos');
 
     // Sigue funcionando: la navegación y el render en español continúan.
@@ -108,19 +112,19 @@ test.describe('case A: a dictionary other than the default does not load', () =>
   test('once the dictionary is back, the switch works and the notice goes away', async ({
     page,
   }) => {
-    await expect(page.getByRole('alert')).toBeVisible();
+    await expect(notice(page)).toBeVisible();
 
     await page.unroute(EN_DICTIONARY);
-    await page.getByLabel('Idioma', { exact: true }).selectOption('en');
+    await chooseLanguage(page, 'Idioma', 'en');
 
     await expect(page.getByRole('navigation', { name: 'Main menu' })).toBeVisible();
-    await expect(page.getByRole('alert')).toHaveCount(0);
+    await expect(notice(page)).toHaveCount(0);
     await expect(page.locator('html')).toHaveAttribute('lang', 'en');
     expect(JSON.stringify(await page.context().storageState())).toContain('"ewms.lang"');
   });
 
   test('has no accessibility violations with the notice on screen', async ({ page }) => {
-    await expect(page.getByRole('alert')).toBeVisible();
+    await expect(notice(page)).toBeVisible();
 
     const results = await new AxeBuilder({ page }).analyze();
     expect(results.violations).toEqual([]);

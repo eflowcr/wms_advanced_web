@@ -1,57 +1,52 @@
-<!-- Showroom solo en español, exento de i18n (compuerta 12): se declara para que el lector de pantalla no lo lea en inglés. -->
-<article class="flex flex-col gap-10" lang="es">
+<article class="flex flex-col gap-10">
   <!-- ============================================================ 1. Encabezado -->
   <header class="flex flex-col gap-2" data-block="1-encabezado">
     <div class="flex flex-wrap items-baseline gap-3">
-      <h1 class="text-h1">Formulario</h1>
+      <h1 class="text-h1">{{ 'showroom.catalog.patternForm.name' | transloco }}</h1>
       <code class="font-mono text-primary">[ewmsForm]</code>
     </div>
     <ul class="flex flex-wrap gap-2 text-caption">
-      <li class="rounded-sm bg-secondary px-2 py-1 text-secondary">
-        Versión <span class="font-mono">{{ version }}</span>
+      <li
+        class="rounded-sm bg-secondary px-2 py-1 text-secondary"
+        [ewmsProse]="'showroom.common.header.version' | transloco: { version }"
+      ></li>
+      <li class="rounded-sm bg-success-surface px-2 py-1 text-success">
+        {{ 'showroom.common.header.built' | transloco }}
       </li>
-      <li class="rounded-sm bg-success-surface px-2 py-1 text-success">Construido y en verde</li>
-      <li class="rounded-sm bg-secondary px-2 py-1 text-secondary">
-        Ficha: <span class="font-mono">08-Sistema-de-Diseno/Componentes/Patron-Formulario.md</span>
-      </li>
+      <li
+        class="rounded-sm bg-secondary px-2 py-1 text-secondary"
+        [ewmsProse]="
+          'showroom.common.header.sheet'
+            | transloco: { path: '08-Sistema-de-Diseno/Componentes/Patron-Formulario.md' }
+        "
+      ></li>
     </ul>
   </header>
 
   <!-- ================================================ 2. Qué resuelve / cuándo no -->
   <section class="flex flex-col gap-4" aria-labelledby="fo-purpose" data-block="2-proposito">
-    <h2 id="fo-purpose" class="text-h2">Qué resuelve, y cuándo NO usarlo</h2>
+    <h2 id="fo-purpose" class="text-h2">{{ 'showroom.common.sections.purpose' | transloco }}</h2>
     <div class="grid grid-cols-[repeat(auto-fit,minmax(min(20rem,100%),1fr))] gap-4">
       <div class="flex flex-col gap-2 rounded-md border border-default bg-surface p-4">
-        <h3 class="text-h3">Qué resuelve</h3>
-        <p>
-          <strong>Las reglas en un solo lugar</strong>, sobre
-          <code class="font-mono">Signal Forms</code>: se valida
-          <strong>al salir del campo y al enviar</strong>, nunca mientras se escribe; al enviar con
-          errores aparece el resumen y se enfoca; <kbd class="font-mono">Ctrl</kbd>+<kbd
-            class="font-mono"
-            >S</kbd
-          >
-          envía desde cualquier campo.
-        </p>
-        <p class="text-caption text-secondary">
-          <strong>Guardar nunca se deshabilita</strong>: un botón apagado no dice qué falta.
-        </p>
+        <h3 class="text-h3">{{ 'showroom.common.sections.solves' | transloco }}</h3>
+        <p [ewmsProse]="'showroom.patternForm.purpose.solves' | transloco"></p>
+        <p
+          class="text-caption text-secondary"
+          [ewmsProse]="'showroom.patternForm.purpose.neverDisabled' | transloco"
+        ></p>
       </div>
       <div class="flex flex-col gap-2 rounded-md border border-danger bg-danger-surface p-4">
-        <h3 class="text-h3">Cuándo NO usarlo</h3>
+        <h3 class="text-h3">{{ 'showroom.common.sections.avoid' | transloco }}</h3>
         <ul class="flex flex-col gap-2">
+          <li [ewmsProse]="'showroom.patternForm.purpose.singleField' | transloco"></li>
+          <!-- El enlace lleva clases: parte el ítem en tres, y su texto es el nombre del patrón. -->
           <li>
-            <strong>Si es un solo campo que aplica al tocarlo</strong> (un toggle de preferencia),
-            no hay formulario: no hay nada que enviar.
-          </li>
-          <li>
-            <strong>Si el formulario es una búsqueda</strong>, va el patrón
+            <span [ewmsProse]="'showroom.patternForm.purpose.search.before' | transloco"></span>
             <a
               class="rounded-sm underline outline-none focus-visible:shadow-(--focus-ring-shadow)"
               href="/design-system/patterns/filters"
-              >Filtros</a
-            >: aplica al
-            cambiar y no se envía.
+              >{{ 'showroom.catalog.patternFilters.name' | transloco }}</a
+            >{{ 'showroom.patternForm.purpose.search.after' | transloco }}
           </li>
         </ul>
       </div>
@@ -60,14 +55,13 @@
 
   <!-- ========================================================= 3. Demo principal -->
   <section class="flex flex-col gap-4" aria-labelledby="fo-demo" data-block="3-demo">
-    <h2 id="fo-demo" class="text-h2">Demo principal — alta de una expedición</h2>
-    <p class="text-secondary">
-      <strong>Pulsá «Guardar» sin llenar nada:</strong> aparece el resumen, cada campo dice qué le
-      falta y el foco cae en el resumen. Con todo bien, «Guardar» queda en carga hasta que el
-      acción del envío termina.
-    </p>
+    <h2 id="fo-demo" class="text-h2">
+      {{ 'showroom.common.sections.demo' | transloco }} —
+      {{ 'showroom.patternForm.demo.subject' | transloco }}
+    </h2>
+    <p class="text-secondary" [ewmsProse]="'showroom.patternForm.demo.intro' | transloco"></p>
 
-    <ewms-demo-frame ground="surface" label="Un formulario con secciones, validación y envío">
+    <ewms-demo-frame ground="surface" [label]="'showroom.patternForm.demo.frame' | transloco">
       <form
         [ewmsForm]="alta"
         [ewmsFormAction]="guardar"
@@ -75,42 +69,54 @@
         class="flex max-w-160 flex-col gap-4"
         data-demo-form
       >
-        <p class="text-caption text-secondary" data-required-legend>* obligatorio</p>
+        <p class="text-caption text-secondary" data-required-legend>
+          {{ 'showroom.patternForm.demo.requiredLegend' | transloco }}
+        </p>
 
         <fieldset class="flex flex-col gap-4 rounded-md border border-default p-4">
-          <legend class="px-1 text-caption text-secondary">Datos de la expedición</legend>
+          <legend class="px-1 text-caption text-secondary">
+            {{ 'showroom.patternForm.demo.shipment.legend' | transloco }}
+          </legend>
           <ewms-input
-            label="Código"
-            placeholder="EXP-2026-0000"
-            hint="El código que llevará la etiqueta."
+            [label]="'showroom.patternForm.demo.shipment.code' | transloco"
+            [placeholder]="'showroom.patternForm.demo.shipment.codePlaceholder' | transloco"
+            [hint]="'showroom.patternForm.demo.shipment.codeHint' | transloco"
             [formField]="alta.codigo"
             data-form-codigo
           />
-          <ewms-input label="Cliente" [formField]="alta.cliente" data-form-cliente />
+          <ewms-input
+            [label]="'showroom.patternForm.demo.shipment.customer' | transloco"
+            [formField]="alta.cliente"
+            data-form-cliente
+          />
           <!-- `type="text"`: la caja del sistema no tiene tipo email; el validador sí. -->
           <ewms-input
-            label="Correo de aviso"
-            hint="Opcional; si se escribe, tiene que ser un correo."
+            [label]="'showroom.patternForm.demo.shipment.email' | transloco"
+            [hint]="'showroom.patternForm.demo.shipment.emailHint' | transloco"
             [formField]="alta.correo"
             data-form-correo
           />
           <!-- Dos columnas solo para campos cortos emparentados, y solo en pantalla ancha. -->
           <div class="grid grid-cols-[repeat(auto-fit,minmax(min(14rem,100%),1fr))] gap-4">
             <ewms-select
-              label="Almacén"
+              [label]="'showroom.patternForm.demo.shipment.warehouse' | transloco"
               [options]="almacenes"
               [formField]="alta.almacen"
               data-form-almacen
             />
-            <ewms-date-picker label="Fecha comprometida" [formField]="alta.fecha" data-form-fecha />
+            <ewms-date-picker
+              [label]="'showroom.patternForm.demo.shipment.date' | transloco"
+              [formField]="alta.fecha"
+              data-form-fecha
+            />
             <ewms-select
-              label="Estado"
-              [options]="estados"
+              [label]="'showroom.patternForm.demo.shipment.status' | transloco"
+              [options]="estados()"
               [formField]="alta.estado"
               data-form-estado
             />
             <ewms-input
-              label="Bultos"
+              [label]="'showroom.patternForm.demo.shipment.packages' | transloco"
               type="number"
               [formField]="alta.bultos"
               data-form-bultos
@@ -119,10 +125,16 @@
         </fieldset>
 
         <fieldset class="flex flex-col gap-3 rounded-md border border-default p-4">
-          <legend class="px-1 text-caption text-secondary">Preparación</legend>
-          <ewms-toggle label="Urgente" [formField]="alta.urgente" data-form-urgente />
+          <legend class="px-1 text-caption text-secondary">
+            {{ 'showroom.patternForm.demo.preparation.legend' | transloco }}
+          </legend>
+          <ewms-toggle
+            [label]="'showroom.patternForm.demo.preparation.urgent' | transloco"
+            [formField]="alta.urgente"
+            data-form-urgente
+          />
           <ewms-checkbox
-            label="Confirmo que las etiquetas están impresas"
+            [label]="'showroom.patternForm.demo.preparation.labels' | transloco"
             [formField]="alta.etiquetas"
             data-form-etiquetas
           />
@@ -131,10 +143,10 @@
         <!-- Pie: Cancelar y la acción primaria a la derecha. -->
         <div class="flex flex-wrap items-center justify-end gap-2">
           <ewms-button variant="secondary" data-form-leave (click)="salir()">
-            Salir de la pantalla
+            {{ 'showroom.patternForm.demo.leave' | transloco }}
           </ewms-button>
           <ewms-button variant="primary" type="submit" [loading]="pattern.busy()" data-form-save>
-            Guardar
+            {{ 'showroom.patternForm.demo.save' | transloco }}
           </ewms-button>
         </div>
       </form>
@@ -142,133 +154,80 @@
 
     <dl class="flex flex-col gap-1 rounded-md border border-default bg-surface p-3 text-caption">
       <div class="flex flex-wrap gap-2">
-        <dt class="text-secondary">Último guardado:</dt>
-        <dd class="font-mono text-primary" data-form-saved>{{ saved() }}</dd>
+        <dt class="text-secondary">{{ 'showroom.patternForm.demo.lastSaved' | transloco }}</dt>
+        <dd class="font-mono text-primary" data-form-saved>{{ savedText() }}</dd>
       </div>
       <div class="flex flex-wrap gap-2">
-        <dt class="text-secondary">Al salir con cambios:</dt>
-        <dd class="text-primary" data-form-left>{{ left() }}</dd>
+        <dt class="text-secondary">{{ 'showroom.patternForm.demo.onLeaving' | transloco }}</dt>
+        <dd class="text-primary" data-form-left>{{ left() | transloco }}</dd>
       </div>
     </dl>
-    <ewms-prop-table [rows]="props" caption="El patrón Formulario" />
+    <ewms-prop-table [rows]="props" [caption]="'showroom.patternForm.props.caption' | transloco" />
   </section>
 
   <!-- =============================================================== 4. Variantes -->
   <section class="flex flex-col gap-4" aria-labelledby="fo-variants" data-block="4-variantes">
-    <h2 id="fo-variants" class="text-h2">Variantes — cómo se compone</h2>
+    <h2 id="fo-variants" class="text-h2">
+      {{ 'showroom.common.sections.variants' | transloco }} —
+      {{ 'showroom.patternForm.variants.subject' | transloco }}
+    </h2>
     <ul class="flex flex-col gap-2">
-      <li>
-        <strong>Una columna.</strong> Dos columnas solo para campos cortos emparentados (almacén,
-        fecha, estado, bultos), y solo cuando la pantalla es ancha.
-      </li>
-      <li>
-        <strong>Secciones con <code class="font-mono">fieldset</code> y
-        <code class="font-mono">legend</code></strong>: un lector de pantalla anuncia en qué grupo
-        está cada campo.
-      </li>
-      <li>
-        <strong>Pie con Cancelar y la primaria a la derecha.</strong> Si el formulario es más alto
-        que la ventana, el pie se fija abajo (<code class="font-mono">sticky</code>), para no
-        buscar «Guardar» con la rueda.
-      </li>
-      <li>
-        <strong>Asterisco en la etiqueta</strong> de cada obligatorio —lo pone el campo leyendo el
-        validador, no se escribe a mano— y la leyenda «* obligatorio» una vez por formulario.
-      </li>
+      <li [ewmsProse]="'showroom.patternForm.variants.oneColumn' | transloco"></li>
+      <li [ewmsProse]="'showroom.patternForm.variants.sections' | transloco"></li>
+      <li [ewmsProse]="'showroom.patternForm.variants.footer' | transloco"></li>
+      <li [ewmsProse]="'showroom.patternForm.variants.asterisk' | transloco"></li>
     </ul>
   </section>
 
   <!-- ========================================================= 5. Matriz de estados -->
   <section class="flex flex-col gap-4" aria-labelledby="fo-matrix" data-block="5-matriz">
-    <h2 id="fo-matrix" class="text-h2">Matriz de estados</h2>
+    <h2 id="fo-matrix" class="text-h2">{{ 'showroom.common.sections.states' | transloco }}</h2>
     <div class="overflow-x-auto rounded-md border border-default">
-      <table class="w-full border-collapse text-caption">
-        <caption class="sr-only">Qué se ve en cada momento</caption>
-        <thead>
-          <tr class="bg-secondary text-secondary">
-            <th scope="col" class="p-2 text-left">Momento</th>
-            <th scope="col" class="p-2 text-left">El campo</th>
-            <th scope="col" class="p-2 text-left">El formulario</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr class="border-t border-default">
-            <th scope="row" class="p-2 text-left text-primary">Mientras se escribe</th>
-            <td class="p-2">su hint, sin error</td>
-            <td class="p-2">Guardar habilitado</td>
-          </tr>
-          <tr class="border-t border-default">
-            <th scope="row" class="p-2 text-left text-primary">Al salir del campo</th>
-            <td class="p-2">el mensaje del validador que falló, en lugar del hint</td>
-            <td class="p-2">sin resumen todavía</td>
-          </tr>
-          <tr class="border-t border-default">
-            <th scope="row" class="p-2 text-left text-primary">Al enviar con errores</th>
-            <td class="p-2">todos los mensajes, aunque no se haya visitado el campo</td>
-            <td class="p-2">resumen arriba, enfocado, con un enlace por campo</td>
-          </tr>
-          <tr class="border-t border-default">
-            <th scope="row" class="p-2 text-left text-primary">Al enviar válido</th>
-            <td class="p-2">sin mensajes</td>
-            <td class="p-2">Guardar en carga mientras la acción del envío corre</td>
-          </tr>
-        </tbody>
-      </table>
+      <ewms-doc-table
+        [caption]="'showroom.patternForm.states.caption' | transloco"
+        [columns]="stateColumns"
+        [rows]="stateRows"
+      >
+        <ng-template let-row let-column="column">
+          {{ 'showroom.patternForm.states.' + row + '.' + column.id | transloco }}
+        </ng-template>
+      </ewms-doc-table>
     </div>
   </section>
 
   <!-- ================================================================ 6. Tamaños -->
   <section class="flex flex-col gap-4" aria-labelledby="fo-sizes" data-block="6-tamanos">
-    <h2 id="fo-sizes" class="text-h2">Tamaños</h2>
+    <h2 id="fo-sizes" class="text-h2">{{ 'showroom.common.sections.sizes' | transloco }}</h2>
     <div class="flex flex-col gap-2 rounded-md border border-strong bg-secondary p-4">
-      <h3 class="text-h4">No aplica — Medium</h3>
-      <p>
-        Los campos van en su tamaño por defecto: un formulario es la tarea de la pantalla, no un
-        control de una barra.
-      </p>
+      <h3 class="text-h4">
+        {{ 'showroom.common.notApplicable' | transloco }} —
+        {{ 'showroom.common.sizes.md' | transloco }}
+      </h3>
+      <p>{{ 'showroom.patternForm.sizes.default' | transloco }}</p>
     </div>
   </section>
 
   <!-- ===================================================== 7. Anatomía y tokens -->
   <section class="flex flex-col gap-4" aria-labelledby="fo-anatomy" data-block="7-anatomia">
-    <h2 id="fo-anatomy" class="text-h2">Anatomía y tokens</h2>
+    <h2 id="fo-anatomy" class="text-h2">{{ 'showroom.common.sections.anatomy' | transloco }}</h2>
     <ul class="flex flex-col gap-2">
-      <li>
-        <strong>Sin token propio.</strong> El resumen es un
-        <code class="font-mono">&lt;ewms-banner&gt;</code> de peligro, y los mensajes usan
-        <code class="font-mono">--color-danger-text</code> por la clase del campo.
-      </li>
-      <li>
-        <strong>Dónde vive:</strong> <code class="font-mono">lib/forms/</code> — la directiva, el
-        token de mensajes, <code class="font-mono">confirmDiscard</code> y
-        <code class="font-mono">field-note.ts</code>, que es de donde cada campo saca el texto del
-        validador que falló.
-      </li>
+      <li [ewmsProse]="'showroom.patternForm.anatomy.noToken' | transloco"></li>
+      <li [ewmsProse]="'showroom.patternForm.anatomy.where' | transloco"></li>
     </ul>
   </section>
 
   <!-- ============================================== 8. Contrato para Angular -->
   <section class="flex flex-col gap-4" aria-labelledby="fo-contract" data-block="8-contrato">
-    <h2 id="fo-contract" class="text-h2">Contrato para Angular</h2>
+    <h2 id="fo-contract" class="text-h2">{{ 'showroom.common.sections.contract' | transloco }}</h2>
     <pre
       class="overflow-x-auto rounded-md border border-default bg-secondary p-4 font-mono text-mono text-primary outline-none focus-visible:shadow-(--focus-ring-shadow)"
       tabindex="0"
     ><code>{{ snippet }}</code></pre>
-    <h3 class="text-h3">Accesibilidad</h3>
+    <h3 class="text-h3">{{ 'showroom.common.sections.a11y' | transloco }}</h3>
     <ul class="flex flex-col gap-2">
-      <li>
-        Cada mensaje se une a su campo por <code class="font-mono">aria-describedby</code>, y el
-        campo queda <code class="font-mono">aria-invalid</code>.
-      </li>
-      <li>
-        El resumen es un <code class="font-mono">role="alert"</code> (Banner de peligro) y recibe el
-        foco: quien usa lector de pantalla se entera sin buscar.
-      </li>
-      <li>
-        Cada enlace del resumen lleva al campo y lo enfoca; el asterisco es
-        <code class="font-mono">aria-hidden</code> porque <code class="font-mono">required</code> ya
-        lo anuncia.
-      </li>
+      <li [ewmsProse]="'showroom.patternForm.a11y.describedBy' | transloco"></li>
+      <li [ewmsProse]="'showroom.patternForm.a11y.alert' | transloco"></li>
+      <li [ewmsProse]="'showroom.patternForm.a11y.links' | transloco"></li>
     </ul>
   </section>
 </article>

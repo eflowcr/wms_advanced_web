@@ -20,6 +20,7 @@ import {
   buttonVariantClasses,
   ICON_ONLY_BOX_CLASSES,
   isInteractionBlocked,
+  LINK_PADDING_CLASS,
   suppressEvent,
   type ButtonIconPosition,
   type ButtonSize,
@@ -66,11 +67,14 @@ export class Button implements OnInit {
   protected readonly iconSize = computed(() => BUTTON_ICON_SIZES[this.size()]);
   protected readonly fontSize = computed(() => BUTTON_FONT_SIZES[this.size()]);
 
-  protected readonly boxClass = computed(() =>
-    this.iconOnly()
-      ? ICON_ONLY_BOX_CLASSES[this.size()]
-      : `${BUTTON_HEIGHT_CLASSES[this.size()]} ${BUTTON_PADDING_CLASSES[this.size()]}`,
-  );
+  protected readonly boxClass = computed(() => {
+    if (this.iconOnly()) {
+      return ICON_ONLY_BOX_CLASSES[this.size()];
+    }
+    const padding =
+      this.variant() === 'link' ? LINK_PADDING_CLASS : BUTTON_PADDING_CLASSES[this.size()];
+    return `${BUTTON_HEIGHT_CLASSES[this.size()]} ${padding}`;
+  });
 
   protected readonly hasLeftIcon = computed(
     () => Boolean(this.icon()) && (this.iconOnly() || this.iconPosition() === 'left'),
@@ -91,8 +95,14 @@ export class Button implements OnInit {
   );
 
   ngOnInit(): void {
-    if (isDevMode() && this.iconOnly() && !this.label()) {
+    if (!isDevMode()) {
+      return;
+    }
+    if (this.iconOnly() && !this.label()) {
       throw new Error('ewms-button: iconOnly requires a label (accessible name and tooltip).');
+    }
+    if (this.variant() === 'link' && (this.iconOnly() || this.size() === 'lg')) {
+      throw new Error('ewms-button: variant="link" has text and comes in sm or md only.');
     }
   }
 

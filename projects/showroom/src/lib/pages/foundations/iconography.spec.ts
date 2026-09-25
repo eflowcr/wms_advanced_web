@@ -1,15 +1,28 @@
 import { TestBed } from '@angular/core/testing';
 import { ICON_CATEGORIES } from '@ewms/design-system';
-import { expectNoAxeViolations } from '@ewms/testing';
+import { expectNoAxeViolations, provideI18nTesting } from '@ewms/testing';
+import {
+  loadShowroomScope,
+  SHOWROOM_DICTIONARIES,
+  useSpanishBrowser,
+} from '../../showroom.testing';
 import { COPIED_FEEDBACK_MS, ShowroomIconography } from './iconography';
 
 describe('ShowroomIconography', () => {
+  // La página traduce con el pipe: se monta con los diccionarios reales, en español.
   async function render() {
-    await TestBed.configureTestingModule({ imports: [ShowroomIconography] }).compileComponents();
+    useSpanishBrowser();
+    await TestBed.configureTestingModule({
+      imports: [ShowroomIconography],
+      providers: [provideI18nTesting(SHOWROOM_DICTIONARIES)],
+    }).compileComponents();
+    await loadShowroomScope();
     const fixture = TestBed.createComponent(ShowroomIconography);
     await fixture.whenStable();
     return { fixture, element: fixture.nativeElement as HTMLElement };
   }
+
+  afterEach(() => vi.restoreAllMocks());
 
   it('lists every icon once, grouped by domain and interface', async () => {
     const { element } = await render();

@@ -7,10 +7,12 @@ import {
   FormPattern,
   Select,
   Toggle,
-  type SelectOption,
 } from '@ewms/design-system';
-import type { EstadoExpedicion } from '../components/expediciones';
-import { shipmentCode } from './expedicion.rules';
+import { TranslocoPipe } from '@jsverse/transloco';
+import { Prose } from '../../ui/prose';
+import { injectEstadoOptions, type EstadoExpedicion } from '../components/expediciones';
+import { CLIENTE_EJEMPLO, CODIGO_EJEMPLO } from './expedicion-form.fixtures';
+import { provideShipmentCodeMessage, shipmentCode } from './expedicion.rules';
 
 /** Lo que edita el formulario; un registro nuevo llega con los campos en blanco. */
 export interface ExpedicionDraft {
@@ -21,13 +23,6 @@ export interface ExpedicionDraft {
   urgente: boolean;
 }
 
-export const ESTADO_OPTIONS: readonly SelectOption[] = [
-  { value: 'pendiente', label: 'Pendiente' },
-  { value: 'en-proceso', label: 'En proceso' },
-  { value: 'completada', label: 'Completada' },
-  { value: 'con-incidencia', label: 'Con incidencia' },
-];
-
 /**
  * Formulario de crear y editar: uno solo para ambos flujos, porque el presupuesto lo garantiza
  * el patrón (REQ-FE-DS4-003 RFE-05) y dos formularios terminan con clics distintos. Desde el
@@ -36,16 +31,19 @@ export const ESTADO_OPTIONS: readonly SelectOption[] = [
  */
 @Component({
   selector: 'ewms-expedicion-form',
-  imports: [Button, EwmsInput, FormField, FormPattern, Select, Toggle],
+  imports: [Button, EwmsInput, FormField, FormPattern, Prose, Select, Toggle, TranslocoPipe],
   templateUrl: './expedicion-form.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { class: 'contents' },
+  providers: [provideShipmentCodeMessage()],
 })
 export class ExpedicionForm {
   private readonly dialogRef = inject<DialogRef<ExpedicionDraft | undefined>>(DialogRef);
 
   protected readonly titleId = 'ewms-expedicion-form-title';
-  protected readonly estados = ESTADO_OPTIONS;
+  protected readonly estados = injectEstadoOptions();
+  protected readonly codePlaceholder = CODIGO_EJEMPLO;
+  protected readonly customerPlaceholder = CLIENTE_EJEMPLO;
 
   private readonly initial = inject<ExpedicionDraft>(DIALOG_DATA);
 

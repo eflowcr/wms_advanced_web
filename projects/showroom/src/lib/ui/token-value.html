@@ -13,9 +13,11 @@
   @if (chain(); as resolved) {
     @if (resolved.status === 'missing') {
       @if (pending()) {
-        <span class="text-secondary">(pendiente) sin declarar en tokens.css</span>
+        <span class="text-secondary">{{ 'showroom.common.tokens.pending' | transloco }}</span>
       } @else {
-        <span class="rounded-sm bg-danger-surface px-1 text-danger">falta en tokens.css</span>
+        <span class="rounded-sm bg-danger-surface px-1 text-danger">{{
+          'showroom.common.tokens.missing' | transloco
+        }}</span>
       }
     } @else {
       @for (parent of parents(); track parent.name) {

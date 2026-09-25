@@ -6,5 +6,5 @@ export { showroomRoutes } from './lib/showroom.routes';
 
 export { provideShowroomDesignSystem } from './lib/showroom.providers';
 
-/** Para que el shell nombre un favorito del showroom con el nombre del catálogo. */
-export { catalogNameFor } from './lib/catalog';
+/** Para que el shell nombre una página del catálogo (favorito, pestaña) con su nombre traducido. */
+export { catalogKeyFor } from './lib/catalog';

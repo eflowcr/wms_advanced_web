@@ -39,7 +39,7 @@ test.describe('the application is alive', () => {
       const response = await page.goto(url);
       expect(response?.status(), `${url} no respondió`).toBeLessThan(400);
       await expect(
-        page.getByRole('heading', { level: 1, name: heading }),
+        page.getByRole('heading', { level: 1, name: heading.es }),
         `${url} no renderizó su h1`,
       ).toBeVisible();
       await watch.clean(url);
@@ -120,7 +120,7 @@ test.describe('the App Shell', () => {
     await page.keyboard.press('/');
 
     // La otra mitad de los «cinco Tab hasta el buscador» que reportó DS-2: con esto son cero.
-    await expect(page.locator('[data-shell-search]')).toBeFocused();
+    await expect(page.locator('[data-shell-search] input')).toBeFocused();
   });
 
   test('a route opens a tab, and Delete closes it onto its neighbour', async ({ page }) => {

@@ -1,4 +1,17 @@
-import { CATALOG, countEntries, filterCatalog, SHOWROOM_BASE, STATUS_LABELS } from './catalog';
+import {
+  CATALOG,
+  catalogKeyFor,
+  countEntries,
+  filterCatalog,
+  SHOWROOM_BASE,
+  STATUS_LABELS,
+  type CatalogEntry,
+} from './catalog';
+import { showroomText } from './showroom.testing';
+
+/** El nombre en español, como lo traduce el layout con el idioma activo. */
+const spanish = (entry: CatalogEntry): string => showroomText(entry.name);
+const english = (entry: CatalogEntry): string => showroomText(entry.name, 'en');
 
 describe('the catalogue', () => {
   it('is one list with three sections', () => {
@@ -33,25 +46,46 @@ describe('the catalogue', () => {
   });
 
   it('labels everything that is not ready as pending, and nothing else', () => {
-    expect(STATUS_LABELS.ready).toBe('');
-    expect(STATUS_LABELS.built).toBe('(pendiente)');
-    expect(STATUS_LABELS.documented).toBe('(pendiente)');
-    expect(STATUS_LABELS.gap).toBe('(pendiente)');
+    expect(STATUS_LABELS.ready).toBeNull();
+    for (const status of ['built', 'documented', 'gap'] as const) {
+      expect(showroomText(STATUS_LABELS[status] ?? '')).toBe('(pendiente)');
+    }
+  });
+
+  it('names every entry, note and section in both dictionaries', () => {
+    const keys = CATALOG.flatMap((section) => [
+      section.title,
+      ...section.entries.flatMap((entry) => [entry.name, entry.note]),
+    ]);
+    for (const key of keys) {
+      expect(showroomText(key), key).not.toBe('');
+      expect(showroomText(key, 'en'), key).not.toBe('');
+    }
   });
 
   it('does not list the App Shell: it is the shell layout, not a design-system component', () => {
-    const names = CATALOG.flatMap((section) => section.entries.map((entry) => entry.name));
+    const names = CATALOG.flatMap((section) => section.entries.map(spanish));
     expect(names.some((name) => /app shell/i.test(name))).toBe(false);
+  });
+
+  it('names a page by its route for whoever names it from outside, and nothing else', () => {
+    expect(catalogKeyFor(`${SHOWROOM_BASE}/components/button?tab=1`)).toBe(
+      'showroom.catalog.button.name',
+    );
+    // Badge comparte la ruta de la Tabla: manda la primera entrada.
+    expect(catalogKeyFor(`${SHOWROOM_BASE}/components/table`)).toBe('showroom.catalog.table.name');
+    expect(catalogKeyFor(SHOWROOM_BASE)).toBeNull();
+    expect(catalogKeyFor('/catalogos/articulos')).toBeNull();
   });
 
   describe('filterCatalog', () => {
     it('returns everything for an empty or blank query', () => {
-      expect(filterCatalog('')).toBe(CATALOG);
-      expect(filterCatalog('   ')).toBe(CATALOG);
+      expect(filterCatalog('', spanish)).toBe(CATALOG);
+      expect(filterCatalog('   ', spanish)).toBe(CATALOG);
     });
 
     it('matches by name, ignoring case', () => {
-      const sections = filterCatalog('TOGGLE');
+      const sections = filterCatalog('TOGGLE', spanish);
 
       // Dos desde DS-5, y es la búsqueda funcionando: «Toggle» por nombre y «Favoritos» por
       // selector (`ewms-favorite-toggle`). Achicar la consulta probaría una coincidencia.
@@ -61,20 +95,26 @@ describe('the catalogue', () => {
       ]);
     });
 
+    it('matches by the name in the active language, not in another', () => {
+      expect(countEntries(filterCatalog('botón', spanish))).toBe(1);
+      expect(countEntries(filterCatalog('botón', english))).toBe(0);
+      expect(filterCatalog('data table', english)[0]?.entries[0]?.id).toBe('table');
+    });
+
     it('matches by selector, which is what you type in a template', () => {
-      const sections = filterCatalog('ewms-select');
+      const sections = filterCatalog('ewms-select', spanish);
       expect(countEntries(sections)).toBe(1);
       expect(sections[0]?.entries[0]?.id).toBe('select');
     });
 
     it('drops a section that ends up empty rather than leaving a bare heading', () => {
-      const sections = filterCatalog('marca');
+      const sections = filterCatalog('marca', spanish);
       expect(sections).toHaveLength(1);
       expect(sections[0]?.id).toBe('foundations');
     });
 
     it('returns nothing for a query that matches nothing', () => {
-      expect(countEntries(filterCatalog('no-existe-este-componente'))).toBe(0);
+      expect(countEntries(filterCatalog('no-existe-este-componente', spanish))).toBe(0);
     });
   });
 

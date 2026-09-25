@@ -1,4 +1,4 @@
-import { computed, inject, type Provider } from '@angular/core';
+import { computed, inject, type Provider, type Signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import {
   EWMS_DATE_PICKER_MESSAGES,
@@ -29,7 +29,7 @@ import {
   type TableFormatters,
   type TableMessages,
 } from '@ewms/design-system';
-import { catalogNameFor } from '@ewms/showroom';
+import { catalogKeyFor } from '@ewms/showroom';
 import { TranslocoService } from '@jsverse/transloco';
 import { TranslocoLocaleService } from '@jsverse/transloco-locale';
 import { menuEntryFor } from './layout/menu';
@@ -104,22 +104,45 @@ export function provideEwmsDesignSystem(): Provider[] {
 }
 
 /**
+ * El idioma activo como signal. Quien lo lee al escribir un texto hace que el componente OnPush
+ * que lo muestra, o el `computed` que copia el objeto de mensajes, siga un cambio de idioma: sin
+ * esto la barra de la tabla quedaba en el idioma anterior hasta el próximo clic.
+ */
+function activeLanguage(): Signal<string> {
+  const transloco = inject(TranslocoService);
+  return toSignal(transloco.langChanges$, { initialValue: transloco.getActiveLang() });
+}
+
+/** `translate` que registra el idioma como dependencia de quien lo llama (ver arriba). */
+function injectTranslator(): {
+  translate: (key: string, params?: Record<string, unknown>) => string;
+} {
+  const transloco = inject(TranslocoService);
+  const lang = activeLanguage();
+  return {
+    translate: (key, params) => {
+      lang();
+      return transloco.translate(key, params);
+    },
+  };
+}
+
+/**
  * Nombre del favorito al dibujarlo, por el mismo `menuEntryFor` de pestañas y migas
  * (REQ-FE-DS4-002 v1.3). Signals y no getters: el bloque es OnPush y solo `lang()`
  * lo repinta. Ruta desconocida: cadena vacía, y el bloque muestra la ruta.
  */
 function favoriteLabels(): FavoriteLabelResolver {
   const transloco = inject(TranslocoService);
-  const lang = toSignal(transloco.langChanges$, { initialValue: transloco.getActiveLang() });
+  const lang = activeLanguage();
   return {
     labelFor: (route) =>
       computed(() => {
         lang();
         // Una página del showroom se llama como en su catálogo: el menú solo sabe decir
         // «Sistema de diseño», y trece favoritos con el mismo nombre no son favoritos.
-        const page = catalogNameFor(route);
-        const entry = menuEntryFor(route);
-        return page ?? (entry === undefined ? '' : transloco.translate(entry.labelKey));
+        const key = catalogKeyFor(route) ?? menuEntryFor(route)?.labelKey;
+        return key === undefined ? '' : transloco.translate(key);
       }),
     iconFor: (route) => menuEntryFor(route)?.icon ?? null,
   };
@@ -131,7 +154,7 @@ function favoriteLabels(): FavoriteLabelResolver {
  * en un comentario la hace reportar como clave faltante.
  */
 function tableMessages(): TableMessages {
-  const transloco = inject(TranslocoService);
+  const transloco = injectTranslator();
   return {
     get search() {
       return transloco.translate('ds.table.search');
@@ -305,7 +328,7 @@ function tableMessages(): TableMessages {
  * fuente). Un validador del proyecto trae su texto en el `message` del error, que gana sobre esto.
  */
 function formMessages(): FormMessages {
-  const transloco = inject(TranslocoService);
+  const transloco = injectTranslator();
   const locale = inject(TranslocoLocaleService);
   const day = (limit: unknown): string =>
     limit instanceof Date ? locale.localizeDate(limit, undefined, DATE_LIMIT_FORMAT) : '';
@@ -333,7 +356,7 @@ function formMessages(): FormMessages {
 }
 
 function filterBarMessages(): FilterBarMessages {
-  const transloco = inject(TranslocoService);
+  const transloco = injectTranslator();
   return {
     moreFilters: (active) => transloco.translate('ds.filterBar.moreFilters', { active }),
     get fewerFilters() {
@@ -344,7 +367,7 @@ function filterBarMessages(): FilterBarMessages {
 
 /** Los mismos chips en la barra de la tabla y en la de pantalla: un solo diccionario. */
 function filterChipsMessages(): FilterChipsMessages {
-  const transloco = inject(TranslocoService);
+  const transloco = injectTranslator();
   return {
     removeFilter: (column) => transloco.translate('ds.filterChips.removeFilter', { column }),
     get clearFilters() {
@@ -355,7 +378,7 @@ function filterChipsMessages(): FilterChipsMessages {
 
 /** El paginador es suyo, no de la tabla: cards, logs y colas de picking también paginan. */
 function paginationMessages(): PaginationMessages {
-  const transloco = inject(TranslocoService);
+  const transloco = injectTranslator();
   return {
     get previousPage() {
       return transloco.translate('ds.pagination.previousPage');
@@ -374,7 +397,7 @@ function paginationMessages(): PaginationMessages {
  * interfaz quedaría en el idioma del arranque.
  */
 function selectMessages(): SelectMessages {
-  const transloco = inject(TranslocoService);
+  const transloco = injectTranslator();
   return {
     get searching() {
       return transloco.translate('ds.select.searching');
@@ -401,7 +424,7 @@ function selectMessages(): SelectMessages {
  * Un atajo nuevo suma una línea al mapa y una etiqueta acá. Getters, como arriba.
  */
 function shortcutHelpMessages(): ShortcutHelpMessages {
-  const transloco = inject(TranslocoService);
+  const transloco = injectTranslator();
   return {
     get title() {
       return transloco.translate('shell.shortcuts.title');
@@ -458,7 +481,7 @@ function shortcutHelpMessages(): ShortcutHelpMessages {
 }
 
 function splitButtonMessages(): SplitButtonMessages {
-  const transloco = inject(TranslocoService);
+  const transloco = injectTranslator();
   return {
     get moreActions() {
       return transloco.translate('ds.splitButton.moreActions');
@@ -468,8 +491,9 @@ function splitButtonMessages(): SplitButtonMessages {
 
 /** `locale` también es getter: el calendario sigue al idioma activo sin recargar. */
 function datePickerMessages(): DatePickerMessages {
-  const transloco = inject(TranslocoService);
+  const transloco = injectTranslator();
   const locale = inject(TranslocoLocaleService);
+  const lang = activeLanguage();
   return {
     get chooseDate() {
       return transloco.translate('ds.datePicker.chooseDate');
@@ -481,6 +505,7 @@ function datePickerMessages(): DatePickerMessages {
       return transloco.translate('ds.datePicker.nextMonth');
     },
     get locale() {
+      lang();
       return locale.getLocale();
     },
   };
@@ -491,12 +516,14 @@ const DATE_LIMIT_FORMAT = { day: '2-digit', month: '2-digit', year: 'numeric' } 
 
 function tableFormatters(): TableFormatters {
   const locale = inject(TranslocoLocaleService);
+  const lang = activeLanguage();
   return {
     /**
      * Lo que no parsea vuelve tal cual, nunca «Invalid Date». `parseTableDate` y no
      * `new Date('2026-03-15')`, que es medianoche UTC e imprimía el 14 al oeste de UTC.
      */
     date: (value) => {
+      lang();
       if (value === null || value === undefined || value === '') {
         return '';
       }
@@ -511,6 +538,7 @@ function tableFormatters(): TableFormatters {
           });
     },
     number: (value) => {
+      lang();
       if (value === null || value === undefined || value === '') {
         return '';
       }

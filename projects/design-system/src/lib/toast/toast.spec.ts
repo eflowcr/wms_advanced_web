@@ -127,7 +127,7 @@ describe('Toast', () => {
 
     it('a duration on the call overrides the token', async () => {
       document.documentElement.style.setProperty(TOAST_DURATION_TOKEN, '3000ms');
-      toasts.show('warning', 'Revisá la ubicación', 500);
+      toasts.show('warning', 'Revise la ubicación', 500);
       await settle();
       vi.advanceTimersByTime(500);
       await settle();

@@ -1,9 +1,10 @@
 /**
- * Regla 12: i18n (ADR 0008). Cuatro controles, todos bloqueantes.
+ * Regla 12: i18n (ADR 0008). Cinco controles, todos bloqueantes.
  *
  *   1. Claves usadas contra definidas (`transloco-keys-manager find`), en los dos
  *      sentidos. Una clave armada por concatenación aparece como sobrante.
- *   2. Todo diccionario tiene exactamente las claves del diccionario por defecto.
+ *   2. Todo diccionario tiene exactamente las claves del diccionario por defecto de su grupo:
+ *      el raíz y cada scope (`<scope>/<lang>.json`) se comparan por separado.
  *   3. Formato canónico como un lockfile (claves ordenadas, 2 espacios, LF, salto final;
  *      lo arregla `npm run i18n:format`), segmentos en camelCase, hojas no vacías e ICU
  *      válido según el intérprete de @ewms/core, que se importa para no discrepar.
@@ -11,6 +12,10 @@
  *      fuera de una interpolación y literales de atributos que se leen o se oyen. Se
  *      saltean <code>, <pre>, atributos técnicos y texto sin letras. La lista EXEMPT no
  *      crece para callar ruido: el ruido se reporta.
+ *   5. Sin texto humano quemado en literales de TypeScript, leídos con la API de TypeScript.
+ *      No cuentan specs, soporte de pruebas, `*.fixtures.ts`, imports, metadatos de componente,
+ *      claves, cadenas de clases, selectores, lo que se lanza o va a la consola, ni código.
+ *      Una línea se escapa a sabiendas con `// i18n-exempt: <razón>`; el reporte las lista.
  *
  * `npm run lint:i18n`.
  */
@@ -19,6 +24,7 @@ import { cp, mkdtemp, readdir, readFile, rm, stat, writeFile } from 'node:fs/pro
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import ts from 'typescript';
 import {
   LiteralPrimitive,
   parseTemplate,
@@ -33,19 +39,20 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '.
 const SCAN_DIR = 'projects';
 export const TRANSLATIONS_DIR = 'projects/shell/public/i18n';
 
-/** Rutas que la regla 12 no mira. Cada entrada lleva su razón escrita al lado. */
+/**
+ * Rutas que la regla 12 no mira, y en qué control: `keys` (claves usadas contra definidas) o
+ * `templates` (texto quemado). Cada entrada lleva su razón escrita al lado.
+ */
 const EXEMPT = [
   {
-    prefix: 'projects/showroom/',
-    reason:
-      'The showroom is an internal development tool, not product UI: translating it is cost ' +
-      'with no reader (decided 2026-09-15, Showroom - Especificacion.md §8). The exemption ' +
-      'covers only the text of the catalogue pages themselves; text a component shows to ' +
-      'an end user still arrives translated from its consumer.',
+    prefix: 'projects/testing/',
+    controls: ['keys', 'templates', 'literals'],
+    reason: 'Dev-only test support. Never rendered to a user and never shipped.',
   },
   {
-    prefix: 'projects/testing/',
-    reason: 'Dev-only test support. Never rendered to a user and never shipped.',
+    prefix: 'projects/shell/src/app/brand.ts',
+    controls: ['literals'],
+    reason: 'The brand name is not translated (i18n.md, «Nombres de marca»).',
   },
 ];
 
@@ -68,10 +75,26 @@ const CODE_ELEMENTS = new Set(['code', 'pre']);
 const LETTER = /\p{L}/u;
 const KEY_SEGMENT = /^[a-z][a-zA-Z0-9]*$/;
 
+/**
+ * Texto de persona: dos palabras separadas por espacio (con «a», «y», «o» en medio), o una letra
+ * que solo usa el español.
+ */
+const HUMAN_LITERAL = /\p{L}{2,}(?:[ \t]+\p{L})*[ \t]+\p{L}{2,}|[áéíóúüñÁÉÍÓÚÜÑ¿¡]/u;
+/** Sintaxis de código (marcado, llaves, corchetes, asignación, tubería, punto y coma): no es prosa. */
+const CODE_LITERAL = /[<>{}[\]=|;]/;
+/** Una clave de diccionario: segmentos separados por punto. */
+const KEY_LITERAL = /^[a-z][a-zA-Z0-9]*(\.[a-zA-Z0-9]+)+\.?$/;
+/** Declaraciones que guardan una cadena de clases CSS. */
+const CLASS_NAME = /(^|_)CLASS(ES)?$|^classe?s?$|Class(es)?$/;
+const SELECTOR_CALLS = new Set(['querySelector', 'querySelectorAll', 'closest', 'matches']);
+const ESCAPE = /\/\/\s*i18n-exempt:\s*(\S.*)$/;
+
 // ------------------------------------------------------------------ utilidades
 
-function isExempt(file) {
-  return EXEMPT.some(({ prefix }) => file.startsWith(prefix));
+function isExempt(file, control) {
+  return EXEMPT.some(
+    ({ prefix, controls }) => controls.includes(control) && file.startsWith(prefix),
+  );
 }
 
 async function listFiles(dir, extensions) {
@@ -92,6 +115,16 @@ async function listFiles(dir, extensions) {
 
 function isTestFile(file) {
   return file.endsWith('.spec.ts') || file.endsWith('.testing.ts');
+}
+
+/** Si el control 5 mira este archivo: TypeScript de producción, sin registros de ejemplo. */
+export function scansLiterals(file) {
+  return (
+    file.endsWith('.ts') &&
+    !isTestFile(file) &&
+    !file.endsWith('.fixtures.ts') &&
+    !isExempt(file, 'literals')
+  );
 }
 
 function report(problems, file, line, message) {
@@ -139,6 +172,37 @@ export function compareKeySets(reference, other) {
     missing: [...referenceKeys].filter((key) => !otherKeys.has(key)).sort(),
     extra: [...otherKeys].filter((key) => !referenceKeys.has(key)).sort(),
   };
+}
+
+/**
+ * Agrupa los diccionarios por scope: `es.json` es del raíz (scope null), `showroom/es.json` del
+ * scope `showroom`. Cada grupo necesita un archivo por idioma de LANGUAGES, y nada más.
+ */
+export function dictionaryGroups(paths, languages = LANGUAGES) {
+  const groups = new Map([[null, new Map()]]);
+  const problems = [];
+  for (const relative of paths) {
+    const parts = relative.split('/');
+    const lang = parts.pop().replace(/\.json$/, '');
+    const scope = parts.length ? parts.join('/') : null;
+    if (!languages.includes(lang)) {
+      problems.push(`${relative}: '${lang}' is not a language in LANGUAGES.`);
+      continue;
+    }
+    if (!groups.has(scope)) {
+      groups.set(scope, new Map());
+    }
+    groups.get(scope).set(lang, relative);
+  }
+  for (const [scope, files] of groups) {
+    for (const lang of languages.filter((candidate) => !files.has(candidate))) {
+      problems.push(
+        `${scope === null ? '' : `${scope}/`}${lang}.json is missing. Every language in LANGUAGES ` +
+          'needs its dictionary, in the root and in every scope.',
+      );
+    }
+  }
+  return { groups, problems };
 }
 
 // -------------------------------------------- control 3: formato y estructura
@@ -249,6 +313,97 @@ export function inlineTemplates(source) {
   return found;
 }
 
+function declaredName(node) {
+  const named =
+    ts.isVariableDeclaration(node) ||
+    ts.isPropertyDeclaration(node) ||
+    ts.isPropertyAssignment(node) ||
+    ts.isMethodDeclaration(node) ||
+    ts.isGetAccessorDeclaration(node) ||
+    ts.isFunctionDeclaration(node);
+  return named && node.name && !ts.isComputedPropertyName(node.name) ? node.name.getText() : null;
+}
+
+/** Si el literal está en un lugar que no es texto para una persona. */
+function isOutOfScope(node) {
+  for (let parent = node.parent; parent; parent = parent.parent) {
+    if (
+      ts.isImportDeclaration(parent) ||
+      ts.isExportDeclaration(parent) ||
+      ts.isDecorator(parent)
+    ) {
+      return true;
+    }
+    if (ts.isThrowStatement(parent)) {
+      return true;
+    }
+    if (ts.isNewExpression(parent) && /Error$/.test(parent.expression.getText())) {
+      return true;
+    }
+    if (ts.isCallExpression(parent)) {
+      const callee = parent.expression;
+      if (callee.kind === ts.SyntaxKind.ImportKeyword) {
+        return true;
+      }
+      if (ts.isPropertyAccessExpression(callee)) {
+        if (callee.expression.getText() === 'console') {
+          return true;
+        }
+        if (SELECTOR_CALLS.has(callee.name.getText())) {
+          return true;
+        }
+      }
+    }
+    const name = declaredName(parent);
+    if (name !== null && CLASS_NAME.test(name)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * Control 5 sobre un archivo TypeScript: los literales con texto de persona, y los que se
+ * escaparon con `// i18n-exempt: <razón>` en su línea o, sola, en la anterior.
+ */
+export function findHardcodedLiterals(source, file = 'file.ts') {
+  const sourceFile = ts.createSourceFile(file, source, ts.ScriptTarget.Latest, true);
+  const lines = source.split('\n');
+  const escapeFor = (line) => {
+    const same = ESCAPE.exec(lines[line] ?? '');
+    if (same) {
+      return same[1].trim();
+    }
+    const previous = lines[line - 1] ?? '';
+    const alone = /^\s*\/\/\s*i18n-exempt:/.test(previous) ? ESCAPE.exec(previous) : null;
+    return alone ? alone[1].trim() : null;
+  };
+  const found = [];
+  const escaped = [];
+  const visit = (node) => {
+    let text = null;
+    if (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) {
+      text = node.text;
+    } else if (ts.isTemplateExpression(node)) {
+      text = [node.head.text, ...node.templateSpans.map((span) => span.literal.text)].join(' ');
+    }
+    if (text !== null) {
+      const human =
+        HUMAN_LITERAL.test(text) && !CODE_LITERAL.test(text) && !KEY_LITERAL.test(text.trim());
+      if (human && !isOutOfScope(node)) {
+        const line = sourceFile.getLineAndCharacterOfPosition(node.getStart()).line;
+        const reason = escapeFor(line);
+        const entry = { line: line + 1, text: text.trim().replace(/\s+/g, ' ').slice(0, 70) };
+        (reason ? escaped : found).push(reason ? { ...entry, reason } : entry);
+      }
+      return;
+    }
+    ts.forEachChild(node, visit);
+  };
+  visit(sourceFile);
+  return { found, escaped };
+}
+
 /** La página host de cada aplicación (index.html) es un documento, no una plantilla. */
 async function hostPages() {
   const workspace = JSON.parse(
@@ -259,31 +414,38 @@ async function hostPages() {
     .map((project) => {
       const index = project.architect?.build?.options?.index;
       const file = typeof index === 'string' ? index : (index?.input ?? 'index.html');
-      return path.posix.join(project.sourceRoot ?? `${project.root}/src`, path.posix.basename(file));
+      return path.posix.join(
+        project.sourceRoot ?? `${project.root}/src`,
+        path.posix.basename(file),
+      );
     });
 }
 
 // ------------------------------------------------------------------ compuerta
 
+/** Los diccionarios leídos, por grupo: `[{ scope, dictionaries: Map<lang, { file, raw, data }> }]`. */
 async function readDictionaries() {
   const problems = [];
-  const dictionaries = new Map();
-  for (const lang of LANGUAGES) {
-    const file = `${TRANSLATIONS_DIR}/${lang}.json`;
-    let raw;
-    try {
-      raw = await readFile(path.join(ROOT, file), 'utf8');
-    } catch {
-      report(problems, file, 0, `is missing. Every language in LANGUAGES needs its dictionary.`);
-      continue;
+  const paths = (await listFiles(TRANSLATIONS_DIR, new Set(['.json']))).map((file) =>
+    file.slice(TRANSLATIONS_DIR.length + 1),
+  );
+  const { groups, problems: layout } = dictionaryGroups(paths);
+  layout.forEach((message) => report(problems, TRANSLATIONS_DIR, 0, message));
+  const result = [];
+  for (const [scope, files] of groups) {
+    const dictionaries = new Map();
+    for (const [lang, relative] of files) {
+      const file = `${TRANSLATIONS_DIR}/${relative}`;
+      const raw = await readFile(path.join(ROOT, file), 'utf8');
+      try {
+        dictionaries.set(lang, { file, raw, data: JSON.parse(raw.replace(/^\uFEFF/, '')) });
+      } catch (error) {
+        report(problems, file, 0, `is not valid JSON: ${error.message}`);
+      }
     }
-    try {
-      dictionaries.set(lang, { file, raw, data: JSON.parse(raw.replace(/^\uFEFF/, '')) });
-    } catch (error) {
-      report(problems, file, 0, `is not valid JSON: ${error.message}`);
-    }
+    result.push({ scope, dictionaries });
   }
-  return { dictionaries, problems };
+  return { groups: result, problems };
 }
 
 /**
@@ -294,7 +456,7 @@ async function readDictionaries() {
 async function checkUsedKeys() {
   const problems = [];
   const sources = (await listFiles(SCAN_DIR, new Set(['.ts', '.html']))).filter(
-    (file) => !isTestFile(file) && !isExempt(file),
+    (file) => !isTestFile(file) && !isExempt(file, 'keys'),
   );
   const mirror = await mkdtemp(path.join(tmpdir(), 'ewms-i18n-'));
   try {
@@ -342,7 +504,12 @@ async function checkUsedKeys() {
   return problems;
 }
 
-function checkSameKeys(dictionaries) {
+/** Control 2 sobre todos los grupos: cada uno contra el diccionario por defecto de su grupo. */
+export function checkSameKeys(groups) {
+  return groups.flatMap(({ scope, dictionaries }) => checkGroupKeys(scope, dictionaries));
+}
+
+function checkGroupKeys(scope, dictionaries) {
   const problems = [];
   const reference = dictionaries.get(DEFAULT_LANGUAGE);
   if (!reference) {
@@ -372,14 +539,18 @@ function checkSameKeys(dictionaries) {
   }
   if (!problems.length) {
     const count = flattenKeys(reference.data).length;
-    console.log(`i18n: ${[...dictionaries.keys()].join(', ')} share the same ${count} keys.`);
+    const where = scope === null ? 'root' : `scope ${scope}`;
+    console.log(
+      `i18n: ${where}: ${[...dictionaries.keys()].join(', ')} share the same ${count} keys.`,
+    );
   }
   return problems;
 }
 
-async function checkFormat(dictionaries, write) {
+async function checkFormat(groups, write) {
   const problems = [];
-  for (const { file, raw, data } of dictionaries.values()) {
+  const all = groups.flatMap(({ dictionaries }) => [...dictionaries.values()]);
+  for (const { file, raw, data } of all) {
     for (const problem of checkStructure(data)) {
       report(problems, file, 0, problem);
     }
@@ -389,7 +560,9 @@ async function checkFormat(dictionaries, write) {
         await writeFile(path.join(ROOT, file), canonical, 'utf8');
         console.log(`i18n: formatted ${file}.`);
       } else {
-        const hint = raw.includes('\r\n') ? ' It has CRLF line endings; .gitattributes pins LF.' : '';
+        const hint = raw.includes('\r\n')
+          ? ' It has CRLF line endings; .gitattributes pins LF.'
+          : '';
         report(
           problems,
           file,
@@ -410,7 +583,7 @@ async function checkTemplates() {
   const problems = [];
   const hosts = new Set(await hostPages());
   const files = (await listFiles(SCAN_DIR, new Set(['.html', '.ts']))).filter(
-    (file) => !isExempt(file) && !isTestFile(file) && !hosts.has(file),
+    (file) => !isExempt(file, 'templates') && !isTestFile(file) && !hosts.has(file),
   );
   let templates = 0;
   for (const file of files) {
@@ -433,23 +606,58 @@ async function checkTemplates() {
   if (!problems.length) {
     console.log(
       `i18n: no hardcoded text in ${templates} template(s) ` +
-        `(exempt: ${EXEMPT.map(({ prefix }) => prefix).join(', ')}; host pages: ${[...hosts].join(', ')}).`,
+        `(exempt: ${EXEMPT.filter(({ controls }) => controls.includes('templates'))
+          .map(({ prefix }) => prefix)
+          .join(', ')}; host pages: ${[...hosts].join(', ')}).`,
     );
+  }
+  return problems;
+}
+
+/** Control 5: cada literal de TypeScript con texto de persona es un problema; los escapes se listan. */
+async function checkLiterals() {
+  const problems = [];
+  const files = (await listFiles(SCAN_DIR, new Set(['.ts']))).filter(scansLiterals);
+  const escapes = [];
+  for (const file of files) {
+    const { found, escaped } = findHardcodedLiterals(
+      await readFile(path.join(ROOT, file), 'utf8'),
+      file,
+    );
+    for (const { line, text } of found) {
+      report(
+        problems,
+        file,
+        line,
+        `hardcoded text in a TypeScript literal: "${text}". Move it to the dictionaries (a key ` +
+          'constant with its marker comment), a fixture if it is a sample record, or escape the ' +
+          'line with // i18n-exempt: <reason>.',
+      );
+    }
+    escapes.push(...escaped.map((entry) => ({ file, ...entry })));
+  }
+  if (!problems.length) {
+    console.log(`i18n: no hardcoded text in TypeScript literals (${files.length} file(s)).`);
+  }
+  console.log(`i18n: ${escapes.length} escaped literal(s)${escapes.length ? ':' : '.'}`);
+  for (const { file, line, reason } of escapes) {
+    console.log(`  ${file}:${line} — ${reason}`);
   }
   return problems;
 }
 
 async function main() {
   const write = process.argv.includes('--write');
-  const { dictionaries, problems } = await readDictionaries();
+  const { groups, problems } = await readDictionaries();
   if (write) {
-    problems.push(...(await checkFormat(dictionaries, true)));
+    problems.push(...(await checkFormat(groups, true)));
   } else {
     problems.push(
       ...(await checkUsedKeys()),
-      ...checkSameKeys(dictionaries),
-      ...(await checkFormat(dictionaries, false)),
+      ...checkSameKeys(groups),
+      ...(await checkFormat(groups, false)),
       ...(await checkTemplates()),
+      ...(await checkLiterals()),
     );
   }
   if (problems.length) {

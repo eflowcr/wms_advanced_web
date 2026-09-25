@@ -15,7 +15,7 @@ const SIZES: readonly FieldSize[] = ['sm', 'md', 'lg'];
 const MESSAGES: FormMessages = {
   ...NO_FORM_MESSAGES,
   errors: { ...NO_FORM_MESSAGES.errors, minLength: (limit) => `Mínimo ${limit} caracteres` },
-  customError: () => 'Revisá este campo',
+  customError: () => 'Revise este campo',
 };
 
 @Component({
@@ -521,7 +521,7 @@ describe('Input inside a signal form', () => {
     host.own.set('withoutMessage');
     await settle();
     // Un `kind` que la tabla no nombra y sin `message`: queda el texto de `customError`.
-    expect(note()).toBe('Revisá este campo');
+    expect(note()).toBe('Revise este campo');
   });
 
   it('takes the asterisk and the native required from the schema', () => {

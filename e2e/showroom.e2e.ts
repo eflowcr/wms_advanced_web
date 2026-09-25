@@ -1,6 +1,7 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
 import { watchConsole } from './console-watch';
+import { chooseLanguage } from './language';
 
 /**
  * El showroom y las medidas que necesitan navegador: jsdom no maqueta y toda caja le da cero.
@@ -107,7 +108,7 @@ test.describe('the showroom renders and is reachable', () => {
       await page.setViewportSize({ width, height: 900 });
       for (const { url, heading } of PAGES) {
         await page.goto(url);
-        await expect(page.getByRole('heading', { level: 1, name: heading })).toBeVisible();
+        await expect(page.getByRole('heading', { level: 1, name: heading.es })).toBeVisible();
         await ready(page);
         const overflow = await page.evaluate(() => ({
           scroll: document.documentElement.scrollWidth,
@@ -166,7 +167,7 @@ test.describe('favourites: one list, and the route as the identity', () => {
     const inRail = page.locator('ewms-nav-rail [data-favorite="/catalogos/articulos"]');
     await expect(inRail).toHaveText('Artículos');
 
-    await page.locator('#language-switcher').selectOption('en');
+    await chooseLanguage(page, 'Idioma', 'en');
     await expect(inRail).toHaveText('Articles');
 
     // La barra del catálogo lee la misma lista y le pide el nombre a la app: sigue el idioma
@@ -175,7 +176,7 @@ test.describe('favourites: one list, and the route as the identity', () => {
     const inSidebar = page.locator('[data-sidebar] [data-favorite="/catalogos/articulos"]');
     await expect(inSidebar).toHaveText('Articles');
 
-    await page.locator('#language-switcher').selectOption('es');
+    await chooseLanguage(page, 'Language', 'es');
     await expect(inSidebar).toHaveText('Artículos');
     await expect(inRail).toHaveText('Artículos');
   });
@@ -423,9 +424,7 @@ test.describe('the component sheets measure what they claim', () => {
     await ready(page);
 
     for (const size of ['sm', 'md', 'lg'] as const) {
-      const chevron = await page
-        .locator(`[data-chevron-sample="${size}"] svg`)
-        .boundingBox();
+      const chevron = await page.locator(`[data-chevron-sample="${size}"] svg`).boundingBox();
       expect(round(chevron?.width), `chevron ${size}`).toBe(16);
     }
     await expect(page.getByText('no son 16')).toHaveCount(0);
@@ -516,13 +515,61 @@ test.describe('accessibility', () => {
       await page.goto(url);
       // Esperar la página y no solo las fuentes: la ruta es perezosa y axe sobre un documento sin
       // renderizar reporta unas sesenta violaciones que van y vienen con la carga de la máquina.
-      await expect(page.getByRole('heading', { level: 1, name: heading })).toBeVisible();
+      await expect(page.getByRole('heading', { level: 1, name: heading.es })).toBeVisible();
       await ready(page);
       const results = await new AxeBuilder({ page }).analyze();
       expect(results.violations).toEqual([]);
       await watch.clean(url);
     });
   }
+});
+
+// El catálogo se traduce (2026-09-25): con el navegador en inglés cada página arranca en inglés.
+// Una clave que falta lanza en desarrollo, así que la consola limpia dice que no falta ninguna.
+test.describe('the catalogue in English', () => {
+  test.use({ locale: 'en-GB' });
+
+  // De a siete páginas por prueba: cuatro contextos de navegador en paralelo y no veintiocho, que
+  // sumaban más del 10 % al tiempo de la suite. Cada afirmación nombra su ruta.
+  const GROUP = 7;
+  for (let first = 0; first < PAGES.length; first += GROUP) {
+    const group = PAGES.slice(first, first + GROUP);
+    test(`${group[0]!.url} … ${group.at(-1)!.url} speak English, with a clean console`, async ({
+      page,
+    }) => {
+      test.setTimeout(group.length * ROUTE_BUDGET_MS);
+      const watch = await watchConsole(page);
+      for (const { url, heading } of group) {
+        await page.goto(url);
+        await expect(
+          page.getByRole('heading', { level: 1, name: heading.en, exact: true }),
+          `${url} has no English h1`,
+        ).toBeVisible();
+        await expect(page.locator('html'), `${url} is not lang="en"`).toHaveAttribute('lang', 'en');
+        await watch.clean(url);
+      }
+    });
+  }
+
+  test('<html lang> follows the language switch, and the page with it', async ({ page }) => {
+    const watch = await watchConsole(page);
+    const html = page.locator('html');
+    await page.goto(BUTTON);
+    await expect(
+      page.getByRole('heading', { level: 1, name: 'Button', exact: true }),
+    ).toBeVisible();
+
+    await chooseLanguage(page, 'Language', 'es');
+    await expect(html).toHaveAttribute('lang', 'es');
+    await expect(page.getByRole('heading', { level: 1, name: 'Botón', exact: true })).toBeVisible();
+
+    await chooseLanguage(page, 'Idioma', 'en');
+    await expect(html).toHaveAttribute('lang', 'en');
+    await expect(
+      page.getByRole('heading', { level: 1, name: 'Button', exact: true }),
+    ).toBeVisible();
+    await watch.clean(BUTTON);
+  });
 });
 
 /*
@@ -764,7 +811,7 @@ test.describe('keyboard only', () => {
   for (const { url, heading } of PAGES) {
     test(`${url}: the tab order reaches every control, once`, async ({ page }) => {
       await page.goto(url);
-      await expect(page.getByRole('heading', { level: 1, name: heading })).toBeVisible();
+      await expect(page.getByRole('heading', { level: 1, name: heading.es })).toBeVisible();
       await ready(page);
 
       const { expected, labels, disabled, roving } = await stampFocusable(page);
@@ -815,8 +862,8 @@ test.describe('keyboard only', () => {
         `${url}: a composite widget is not exactly one tab stop`,
       ).toEqual([]);
 
-      // WCAG 2.4.7: box-shadow (--focus-ring-shadow) o contorno. La grilla de /foundations/icons usa
-      // contorno de token en sus setenta celdas para no invadir la vecina como una sombra de 3px.
+      // WCAG 2.4.7: box-shadow (--focus-ring-shadow) o contorno. Las celdas de la Tabla usan
+      // contorno de token para no invadir la vecina como una sombra de 3px.
       // Atrapó un span enfocable sin estilo de foco en la página del tooltip.
       expect(
         stops
@@ -870,13 +917,15 @@ test.describe('keyboard only', () => {
     for (let i = 0; i < 6; i += 1) {
       await page.keyboard.press('Tab');
       presses += 1;
-      const isSearch = await page.evaluate(() => document.activeElement?.id === 'showroom-search');
+      const isSearch = await page.evaluate(
+        () => document.activeElement?.closest('[data-showroom-search]') != null,
+      );
       if (isSearch) {
         break;
       }
     }
 
-    await expect(page.locator('#showroom-search')).toBeFocused();
+    await expect(page.locator('[data-showroom-search] input')).toBeFocused();
     expect(
       presses,
       'Tab presses from the top of the document via the skip link',
@@ -893,7 +942,7 @@ test.describe('keyboard only', () => {
 
     await page.keyboard.press('/');
 
-    await expect(page.locator('[data-shell-search]')).toBeFocused();
+    await expect(page.locator('[data-shell-search] input')).toBeFocused();
   });
 
   // El buscador va encima de los enlaces del catálogo para que la barra lateral no sea un muro.
@@ -903,9 +952,10 @@ test.describe('keyboard only', () => {
     await ready(page);
 
     await stampFocusable(page);
+    const search = await page.locator('[data-showroom-search] input').getAttribute('data-kbd');
     const stops = await walkTabCycle(page);
     const chain = stops.map((stop) => stop.label).join(' -> ');
-    const index = stops.findIndex((stop) => stop.label.includes('#showroom-search'));
+    const index = stops.findIndex((stop) => stop.kbd === search);
 
     expect(index, `the search was never reached by Tab. Order: ${chain}`).toBeGreaterThanOrEqual(0);
 
@@ -1077,9 +1127,11 @@ test.describe('DS-3 lote A: notificaciones y card', () => {
     await page.goto(TOAST);
     await ready(page);
 
-    const stack = page.locator('[role="status"][aria-live="polite"]');
-    // Una sola región viva en todo el documento, aun vacía.
+    // Una sola región de avisos en todo el documento, aun vacía. Se busca por su outlet: el idioma
+    // de la cabecera es un Select, que trae su propia región para anunciar la búsqueda.
+    const stack = page.locator('ewms-toast-outlet [role="status"][aria-live="polite"]');
     await expect(stack).toHaveCount(1);
+    await expect(page.locator('ewms-toast-outlet')).toHaveCount(1);
 
     await page.locator('[data-raise-sticky] button').click();
 
@@ -1436,10 +1488,12 @@ test.describe('el patrón Formulario', () => {
 
     await page.locator(`${DEMO} [data-form-save] button`).click();
     const summary = page.locator('[data-form-errors]');
-    await expect(summary).toContainText('Revisá 4 campos');
+    await expect(summary).toContainText('Revise 4 campos');
     await expect(page.locator('ewms-form-errors')).toBeFocused();
     // Cada campo dice qué le falta, en lugar de su hint.
-    await expect(page.locator(`${DEMO} [data-form-codigo] p`)).toHaveText('Este campo es obligatorio');
+    await expect(page.locator(`${DEMO} [data-form-codigo] p`)).toHaveText(
+      'Este campo es obligatorio',
+    );
 
     await summary.getByRole('button', { name: 'Cliente' }).click();
     await expect(page.locator(`${DEMO} [data-form-cliente] input`)).toBeFocused();
@@ -1451,7 +1505,10 @@ test.describe('el patrón Formulario', () => {
     await page.getByRole('option', { name: 'Central' }).click();
     await page.locator(`${DEMO} [data-form-etiquetas] input`).check();
     await page.locator(`${DEMO} [data-form-codigo] input`).press('Control+s');
-    await expect(page.locator(`${DEMO} [data-form-save] button`)).toHaveAttribute('aria-busy', 'true');
+    await expect(page.locator(`${DEMO} [data-form-save] button`)).toHaveAttribute(
+      'aria-busy',
+      'true',
+    );
     await expect(page.locator('[data-form-saved]')).toContainText('EXP-2026-0001');
   });
 });
@@ -1502,7 +1559,7 @@ test.describe('DS-3 lote C: la tabla', () => {
     expect(printed).toBe(snippet.trimEnd().split('\n').length);
     // El techo de la comanda para la demo de expediciones: si falla, se corrige la API, no la página.
     expect(printed).toBeLessThanOrEqual(40);
-    await expect(page.locator('[data-component-lines]')).toHaveText('4');
+    await expect(page.locator('[data-component-lines]')).toHaveText('5');
   });
 
   test('a row is exactly as tall as an input of the same size', async ({ page }) => {
@@ -1671,7 +1728,10 @@ test.describe('DS-3 lote C: la tabla', () => {
     // Todas marcadas al abrir: se desmarca lo que sobra, con teclado incluido.
     await panel.getByRole('checkbox', { name: 'Pendiente' }).uncheck();
     await panel.getByRole('checkbox', { name: 'Completada' }).press('Space');
-    await expect(panel.getByRole('checkbox', { name: 'Todos' })).toHaveAttribute('aria-checked', 'mixed');
+    await expect(panel.getByRole('checkbox', { name: 'Todos' })).toHaveAttribute(
+      'aria-checked',
+      'mixed',
+    );
     await expect(trigger).toHaveText(/Estado: 2 de 4/);
 
     const badges = page.locator(`${ROWS} ewms-badge`);
@@ -1707,13 +1767,17 @@ test.describe('DS-3 lote C: la tabla', () => {
     expect(Math.round((await codigo.boundingBox())!.x)).toBe(
       Math.round(selectBox.x + selectBox.width),
     );
-    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
+      true,
+    );
 
     // El separador es una parada de teclado y anuncia su ancho.
     const handle = page.locator(`${DEMO} [data-resize="cliente"]`);
     await handle.focus();
     // Sin getAttribute (no reintenta): el ancho de partida es el de la cabecera medida.
-    const before = Math.round((await page.locator(`${DEMO} th[data-col="cliente"]`).boundingBox())!.width);
+    const before = Math.round(
+      (await page.locator(`${DEMO} th[data-col="cliente"]`).boundingBox())!.width,
+    );
     await expect(handle).toHaveAttribute('aria-valuenow', String(before));
     await page.keyboard.press('ArrowRight');
     await expect(handle).toHaveAttribute('aria-valuenow', String(before + 16));
@@ -1732,7 +1796,9 @@ test.describe('DS-3 lote C: la tabla', () => {
     await expect(reset).toBeDisabled();
   });
 
-  test('THE TOOLBAR IS FOUR CONTROLS, and at 390 px it takes two rows at most', async ({ page }) => {
+  test('THE TOOLBAR IS FOUR CONTROLS, and at 390 px it takes two rows at most', async ({
+    page,
+  }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto(TABLE);
     await ready(page);
@@ -1742,7 +1808,8 @@ test.describe('DS-3 lote C: la tabla', () => {
     );
     await expect(controls).toHaveCount(4);
     const rows = await controls.evaluateAll(
-      (elements) => new Set(elements.map((element) => Math.round(element.getBoundingClientRect().top))).size,
+      (elements) =>
+        new Set(elements.map((element) => Math.round(element.getBoundingClientRect().top))).size,
     );
     expect(rows).toBeLessThanOrEqual(2);
   });
@@ -1762,7 +1829,9 @@ test.describe('DS-3 lote C: la tabla', () => {
     await expect(page.locator(`${DEMO} [data-table-announce]`)).toHaveText('4 seleccionadas');
 
     await page.locator(`${DEMO} [data-bulk-action="imprimir"] button`).click();
-    await expect(page.locator('[data-bulk-choice]')).toHaveText('Imprimir etiquetas · 4 expediciones');
+    await expect(page.locator('[data-bulk-choice]')).toHaveText(
+      'Imprimir etiquetas · 4 expediciones',
+    );
 
     await page.locator(`${DEMO} [data-cell="0-1"]`).focus();
     await page.keyboard.press('Control+c');
@@ -1790,8 +1859,9 @@ test.describe('DS-3 lote C: la tabla', () => {
     const bultos = page.locator(`${ROWS} td:nth-child(5)`);
     const numbers = (await bultos.allTextContents()).map((text) => Number(text.replace(/\D/g, '')));
     const onScreen = numbers.reduce((total, value) => total + value, 0);
+    // es-CR, el locale de la app en español (LANGUAGE_LOCALES): agrupa también los de cuatro cifras.
     await expect(status.locator('[data-aggregate="bultos"]')).toHaveText(
-      `Bultos en pantalla: ${new Intl.NumberFormat('es').format(onScreen)}`,
+      `Bultos en pantalla: ${new Intl.NumberFormat('es-CR').format(onScreen)}`,
     );
 
     const boxes = page.locator(`${ROWS} input[type="checkbox"]`);
@@ -1799,7 +1869,7 @@ test.describe('DS-3 lote C: la tabla', () => {
     await boxes.nth(1).click();
     await expect(status.locator('[data-status-selected]')).toHaveText('2 seleccionadas');
     await expect(status.locator('[data-aggregate="bultos"]')).toHaveText(
-      `Bultos seleccionados: ${new Intl.NumberFormat('es').format(numbers[0]! + numbers[1]!)}`,
+      `Bultos seleccionados: ${new Intl.NumberFormat('es-CR').format(numbers[0]! + numbers[1]!)}`,
     );
   });
 
@@ -1922,7 +1992,9 @@ test.describe('DS-3 lote C: la tabla', () => {
     const exception = page.locator(`${ROWS}[data-row="${index}"]`);
     await exception.locator('input[type="checkbox"]').check();
     await expect(exception).toHaveClass(/bg-row-selected/);
-    expect(await exception.evaluate((row) => getComputedStyle(row).backgroundColor)).not.toBe(hover);
+    expect(await exception.evaluate((row) => getComputedStyle(row).backgroundColor)).not.toBe(
+      hover,
+    );
     // La barra lateral sigue en la primera celda: la excepción no se pierde al seleccionar.
     await expect(exception.locator('td').first()).toHaveCSS('box-shadow', /inset/);
 
@@ -2001,7 +2073,11 @@ test.describe('DS-3 lote D: detalle, menú, ventana y paginador', () => {
     await expect(active).toContainText('Duplicar');
     await expect
       .poll(() =>
-        menu.evaluate((list) => list.getAttribute('aria-activedescendant') === list.querySelector('.bg-ghost-hover')?.id),
+        menu.evaluate(
+          (list) =>
+            list.getAttribute('aria-activedescendant') ===
+            list.querySelector('.bg-ghost-hover')?.id,
+        ),
       )
       .toBe(true);
 
@@ -2055,7 +2131,9 @@ test.describe('DS-3 lote D: detalle, menú, ventana y paginador', () => {
     await expect(first).not.toHaveAttribute('data-row', '0');
     await expect
       .poll(() =>
-        first.evaluate((row) => Number(row.getAttribute('aria-rowindex')) - Number(row.getAttribute('data-row'))),
+        first.evaluate(
+          (row) => Number(row.getAttribute('aria-rowindex')) - Number(row.getAttribute('data-row')),
+        ),
       )
       .toBe(1);
   });
@@ -2128,7 +2206,9 @@ test.describe('DS-3 lote D: detalle, menú, ventana y paginador', () => {
           input.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
         // Con flechitas Chrome les reserva ancho aunque no se vean: la cuenta de arriba daba
         // «cabe» y en pantalla se leía «Desd» (2026-09-22). Sin ellas, la cuenta es la verdad.
-        return style.appearance === 'textfield' && context.measureText(input.placeholder).width <= room;
+        return (
+          style.appearance === 'textfield' && context.measureText(input.placeholder).width <= room
+        );
       });
       expect(fits, `box ${index} fits its placeholder`).toBe(true);
     }
@@ -2156,15 +2236,19 @@ test.describe('DS-3 lote D: detalle, menú, ventana y paginador', () => {
     // una lectura del DOM que reintenta, nunca un getAttribute suelto.
     await expect
       .poll(() =>
-        page.locator(`${demo} tbody tr[data-row]`).evaluateAll((rows) =>
-          rows
-            .filter(
-              (row) =>
-                /bg-row-(danger|warning)/.test(row.className) !==
-                /Con incidencia|En proceso/.test(row.querySelector('ewms-badge')?.textContent ?? ''),
-            )
-            .map((row) => row.textContent?.trim()),
-        ),
+        page
+          .locator(`${demo} tbody tr[data-row]`)
+          .evaluateAll((rows) =>
+            rows
+              .filter(
+                (row) =>
+                  /bg-row-(danger|warning)/.test(row.className) !==
+                  /Con incidencia|En proceso/.test(
+                    row.querySelector('ewms-badge')?.textContent ?? '',
+                  ),
+              )
+              .map((row) => row.textContent?.trim()),
+          ),
       )
       .toEqual([]);
 

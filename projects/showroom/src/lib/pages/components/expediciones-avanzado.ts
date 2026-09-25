@@ -1,8 +1,17 @@
+import type { Signal } from '@angular/core';
 import { delay, Observable, of, timer } from 'rxjs';
 import { map } from 'rxjs/operators';
 import type { MenuItem, TablePage, TableQuery, TableSource } from '@ewms/design-system';
 import { ArrayTableSource } from '@ewms/design-system';
-import { EXPEDICIONES, type ExpedicionRow } from './expediciones';
+import { translated } from '../../ui/translated';
+import type { ExpedicionRow } from './expediciones';
+import { EXPEDICIONES } from './expediciones.fixtures';
+import {
+  ESTADO_QUE_FALLA,
+  generarUbicaciones,
+  SIN_RESPUESTA,
+  type UbicacionRow,
+} from './table.fixtures';
 
 /**
  * Fuentes del lote D, sintéticas y en memoria, sin HTTP: imitan el tiempo de una
@@ -20,19 +29,50 @@ export const CABECERAS: readonly ExpedicionRow[] = EXPEDICIONES.map(
 /**
  * Anular, la destructiva, va última y separada: pegada a Duplicar se anula queriendo
  * copiar. Imprimir está deshabilitada para mostrar que queda visible y fuera de las flechas.
+ * `label` es la clave de su texto.
+ * t(showroom.table.actions.view, showroom.table.actions.printDeliveryNote,
+ *   showroom.table.actions.duplicate, showroom.table.actions.cancel)
  */
-export const ACCIONES_FILA: readonly MenuItem[] = [
-  { id: 'ver', label: 'Ver detalle', icon: 'eye' },
-  { id: 'imprimir', label: 'Imprimir albarán', icon: 'label-print', disabled: true },
-  { id: 'duplicar', label: 'Duplicar', icon: 'copy' },
-  { id: 'anular', label: 'Anular', icon: 'trash', tone: 'danger', separatorBefore: true },
+const ACCIONES_FILA: readonly MenuItem[] = [
+  { id: 'ver', label: 'showroom.table.actions.view', icon: 'eye' },
+  {
+    id: 'imprimir',
+    label: 'showroom.table.actions.printDeliveryNote',
+    icon: 'label-print',
+    disabled: true,
+  },
+  { id: 'duplicar', label: 'showroom.table.actions.duplicate', icon: 'copy' },
+  {
+    id: 'anular',
+    label: 'showroom.table.actions.cancel',
+    icon: 'trash',
+    tone: 'danger',
+    separatorBefore: true,
+  },
 ];
 
-/** Lo que se hace con varias a la vez: la barra de la tabla las muestra con la selección. */
-export const ACCIONES_MASIVAS: readonly MenuItem[] = [
-  { id: 'imprimir', label: 'Imprimir etiquetas', icon: 'label-print' },
-  { id: 'anular', label: 'Anular', icon: 'trash', tone: 'danger' },
+/**
+ * Lo que se hace con varias a la vez: la barra de la tabla las muestra con la selección.
+ * t(showroom.table.actions.printLabels, showroom.table.actions.cancel)
+ */
+const ACCIONES_MASIVAS: readonly MenuItem[] = [
+  { id: 'imprimir', label: 'showroom.table.actions.printLabels', icon: 'label-print' },
+  { id: 'anular', label: 'showroom.table.actions.cancel', icon: 'trash', tone: 'danger' },
 ];
+
+/** El menú de fila, con sus textos en el idioma activo: el menú no habla ninguno. */
+export function injectAccionesFila(): Signal<readonly MenuItem[]> {
+  return translated((translate) =>
+    ACCIONES_FILA.map((item) => ({ ...item, label: translate(item.label) })),
+  );
+}
+
+/** Las acciones masivas, igual. */
+export function injectAccionesMasivas(): Signal<readonly MenuItem[]> {
+  return translated((translate) =>
+    ACCIONES_MASIVAS.map((item) => ({ ...item, label: translate(item.label) })),
+  );
+}
 
 /**
  * Hijos con retraso; los de una cabecera con incidencia fallan siempre. La tabla
@@ -42,35 +82,15 @@ export function hijosPerezosos(row: ExpedicionRow): Observable<readonly Expedici
   const original = EXPEDICIONES.find((expedicion) => expedicion.id === row.id);
   const hijos = original?.hijos ?? [];
 
-  if (row.estado === 'con-incidencia') {
+  if (row.estado === ESTADO_QUE_FALLA) {
     return timer(RETRASO_HIJOS).pipe(
       map(() => {
-        throw new Error('sin respuesta');
+        throw new Error(SIN_RESPUESTA);
       }),
     );
   }
 
   return of(hijos).pipe(delay(RETRASO_HIJOS));
-}
-
-/** Una fila de la tabla grande. Dos columnas: lo justo para que se note la altura. */
-export interface UbicacionRow {
-  readonly id: number;
-  readonly codigo: string;
-  readonly pasillo: string;
-  readonly ocupacion: number;
-}
-
-const PASILLOS = ['A', 'B', 'C', 'D', 'E', 'F'];
-
-/** Ubicaciones generadas, no traídas. */
-export function generarUbicaciones(cuantas: number): readonly UbicacionRow[] {
-  return Array.from({ length: cuantas }, (_sinUsar, indice) => ({
-    id: indice,
-    codigo: `UB-${String(indice + 1).padStart(5, '0')}`,
-    pasillo: `Pasillo ${PASILLOS[indice % PASILLOS.length] ?? 'A'}`,
-    ocupacion: (indice * 7) % 101,
-  }));
 }
 
 /**

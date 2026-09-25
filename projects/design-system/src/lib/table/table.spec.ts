@@ -118,7 +118,7 @@ const MESSAGES: TableMessages = {
   loadFailed: 'No se pudo cargar la tabla.',
   noData: 'Todavía no hay filas.',
   noResults: 'Ninguna fila coincide.',
-  noResultsHint: 'Probá con otra búsqueda.',
+  noResultsHint: 'Pruebe con otra búsqueda.',
   export: 'Exportar',
   exportSelected: 'CSV de lo seleccionado',
   copyAll: 'Copiar al portapapeles',

@@ -1,46 +1,45 @@
-<!-- Showroom solo en español, exento de i18n (compuerta 12): se declara para que el lector de pantalla no lo lea en inglés. -->
-<article class="flex flex-col gap-10" lang="es">
+<article class="flex flex-col gap-10">
   <!-- ============================================================ 1. Encabezado -->
   <header class="flex flex-col gap-2" data-block="1-encabezado">
     <div class="flex flex-wrap items-baseline gap-3">
-      <h1 class="text-h1">Date picker</h1>
+      <h1 class="text-h1">{{ 'showroom.catalog.datePicker.name' | transloco }}</h1>
       <code class="font-mono text-primary">&lt;ewms-date-picker&gt;</code>
     </div>
     <ul class="flex flex-wrap gap-2 text-caption">
-      <li class="rounded-sm bg-secondary px-2 py-1 text-secondary">
-        Versión <span class="font-mono">{{ version }}</span>
+      <li
+        class="rounded-sm bg-secondary px-2 py-1 text-secondary"
+        [ewmsProse]="'showroom.common.header.version' | transloco: { version }"
+      ></li>
+      <li class="rounded-sm bg-success-surface px-2 py-1 text-success">
+        {{ 'showroom.common.header.built' | transloco }}
       </li>
-      <li class="rounded-sm bg-success-surface px-2 py-1 text-success">Construido y en verde</li>
-      <li class="rounded-sm bg-secondary px-2 py-1 text-secondary">
-        Ficha: <span class="font-mono">08-Sistema-de-Diseno/Componentes/Date-Picker.md</span>
-      </li>
+      <li
+        class="rounded-sm bg-secondary px-2 py-1 text-secondary"
+        [ewmsProse]="
+          'showroom.common.header.sheet'
+            | transloco: { path: '08-Sistema-de-Diseno/Componentes/Date-Picker.md' }
+        "
+      ></li>
     </ul>
   </header>
 
   <!-- ================================================ 2. Qué resuelve / cuándo no -->
   <section class="flex flex-col gap-4" aria-labelledby="dp-purpose" data-block="2-proposito">
-    <h2 id="dp-purpose" class="text-h2">Qué resuelve, y cuándo NO usarlo</h2>
+    <h2 id="dp-purpose" class="text-h2">{{ 'showroom.common.sections.purpose' | transloco }}</h2>
     <div class="grid grid-cols-[repeat(auto-fit,minmax(min(20rem,100%),1fr))] gap-4">
       <div class="flex flex-col gap-2 rounded-md border border-default bg-surface p-4">
-        <h3 class="text-h3">Qué resuelve</h3>
-        <p>
-          Una fecha, o un período, <strong>en el idioma de la app</strong>: se escribe como se lee
-          acá (16/3/2026) o se elige en un calendario que se recorre entero con teclado. El valor es
-          <code class="font-mono">'YYYY-MM-DD'</code>, sin zona horaria.
-        </p>
-        <p class="text-caption text-secondary">
-          Propio y no <code class="font-mono">&lt;input type="date"&gt;</code>: el nativo muestra el
-          formato del sistema operativo aunque la app esté en otro idioma, y no toma tokens.
-        </p>
+        <h3 class="text-h3">{{ 'showroom.common.sections.solves' | transloco }}</h3>
+        <p [ewmsProse]="'showroom.datePicker.purpose.solves' | transloco"></p>
+        <p
+          class="text-caption text-secondary"
+          [ewmsProse]="'showroom.datePicker.purpose.native' | transloco"
+        ></p>
       </div>
       <div class="flex flex-col gap-2 rounded-md border border-danger bg-danger-surface p-4">
-        <h3 class="text-h3">Cuándo NO usarlo</h3>
+        <h3 class="text-h3">{{ 'showroom.common.sections.avoid' | transloco }}</h3>
         <ul class="flex flex-col gap-2">
-          <li><strong>Para una hora</strong>: no la tiene.</li>
-          <li>
-            <strong>Para una fecha que se conoce de memoria</strong> (nacimiento, vencimiento de un
-            lote impreso): escribirla es más rápido que recorrer años; el campo lo acepta igual.
-          </li>
+          <li [ewmsProse]="'showroom.datePicker.purpose.noTime' | transloco"></li>
+          <li [ewmsProse]="'showroom.datePicker.purpose.knownDate' | transloco"></li>
         </ul>
       </div>
     </div>
@@ -48,39 +47,41 @@
 
   <!-- ========================================================= 3. Demo principal -->
   <section class="flex flex-col gap-4" aria-labelledby="dp-demo" data-block="3-demo">
-    <h2 id="dp-demo" class="text-h2">Demo principal</h2>
+    <h2 id="dp-demo" class="text-h2">{{ 'showroom.common.sections.demo' | transloco }}</h2>
     <div class="grid grid-cols-[repeat(auto-fit,minmax(min(24rem,100%),1fr))] gap-6">
-      <ewms-demo-frame ground="canvas" label="Una fecha, desde hoy">
+      <ewms-demo-frame ground="canvas" [label]="'showroom.datePicker.demo.frame' | transloco">
         <div class="flex max-w-80 flex-col gap-3" data-demo-date>
           <ewms-date-picker
-            label="Fecha de entrega"
+            [label]="'showroom.datePicker.demo.delivery.label' | transloco"
             [formField]="form.entrega"
-            placeholder="dd/mm/aaaa"
-            hint="Escribila, o abrí el calendario con el botón."
+            [placeholder]="'showroom.datePicker.demo.delivery.placeholder' | transloco"
+            [hint]="'showroom.datePicker.demo.delivery.hint' | transloco"
             [minDate]="today"
           />
           <p class="text-caption text-secondary">
-            Valor: <span class="font-mono text-primary" data-demo-date-value>{{ show(delivery()) }}</span>
+            {{ 'showroom.datePicker.demo.value' | transloco }}
+            <span class="font-mono text-primary" data-demo-date-value>{{ show(delivery()) }}</span>
           </p>
         </div>
       </ewms-demo-frame>
-      <ewms-prop-table [rows]="props" caption="Propiedades de <ewms-date-picker>" />
+      <ewms-prop-table [rows]="props" [caption]="'showroom.datePicker.props.caption' | transloco" />
     </div>
   </section>
 
   <!-- =============================================================== 4. Variantes -->
   <section class="flex flex-col gap-4" aria-labelledby="dp-variants" data-block="4-variantes">
-    <h2 id="dp-variants" class="text-h2">Variantes</h2>
-    <p class="text-secondary">
-      <code class="font-mono">mode="range"</code>: dos elecciones en el calendario, en cualquier
-      orden, arman el <code class="font-mono">DateRange</code> que ya usa el filtro de la Tabla.
-      Escrito, va con una raya entre las dos fechas.
-    </p>
-    <ewms-demo-frame ground="canvas" label="Un período">
+    <h2 id="dp-variants" class="text-h2">{{ 'showroom.common.sections.variants' | transloco }}</h2>
+    <p class="text-secondary" [ewmsProse]="'showroom.datePicker.variants.intro' | transloco"></p>
+    <ewms-demo-frame ground="canvas" [label]="'showroom.datePicker.variants.frame' | transloco">
       <div class="flex max-w-80 flex-col gap-3" data-demo-range>
-        <ewms-date-picker label="Período" mode="range" [formField]="form.periodo" />
+        <ewms-date-picker
+          [label]="'showroom.datePicker.variants.period' | transloco"
+          mode="range"
+          [formField]="form.periodo"
+        />
         <p class="text-caption text-secondary">
-          Valor: <span class="font-mono text-primary" data-demo-range-value>{{ show(period()) }}</span>
+          {{ 'showroom.datePicker.demo.value' | transloco }}
+          <span class="font-mono text-primary" data-demo-range-value>{{ show(period()) }}</span>
         </p>
       </div>
     </ewms-demo-frame>
@@ -88,73 +89,58 @@
 
   <!-- ========================================================= 5. Matriz de estados -->
   <section class="flex flex-col gap-4" aria-labelledby="dp-matrix" data-block="5-matriz">
-    <h2 id="dp-matrix" class="text-h2">Matriz de estados</h2>
+    <h2 id="dp-matrix" class="text-h2">{{ 'showroom.common.sections.states' | transloco }}</h2>
     <div class="flex flex-col gap-2 rounded-md border border-strong bg-secondary p-4">
-      <h3 class="text-h4">Los del Input, y cuatro de día</h3>
-      <p>
-        El campo es la caja del Input: default, foco, error y deshabilitado son los de su matriz.
-        En el calendario, un día puede ser <strong>hoy</strong> (aro), <strong>elegido</strong>
-        (fondo de acción), <strong>fuera de rango</strong> (gris, se recorre y no se elige) y
-        <strong>activo</strong> (anillo de foco). Se ven de verdad abriendo la demo.
-      </p>
+      <h3 class="text-h4">{{ 'showroom.datePicker.states.title' | transloco }}</h3>
+      <p [ewmsProse]="'showroom.datePicker.states.days' | transloco"></p>
     </div>
   </section>
 
   <!-- ================================================================ 6. Tamaños -->
   <section class="flex flex-col gap-4" aria-labelledby="dp-sizes" data-block="6-tamanos">
-    <h2 id="dp-sizes" class="text-h2">Tamaños</h2>
-    <p class="text-secondary">
-      Los tres del Input (32 / 40 / 48) para el campo. El calendario tiene uno solo: días de 32 px,
-      por encima del mínimo de 24 de WCAG 2.5.8.
-    </p>
+    <h2 id="dp-sizes" class="text-h2">{{ 'showroom.common.sections.sizes' | transloco }}</h2>
+    <p class="text-secondary" [ewmsProse]="'showroom.datePicker.sizes.intro' | transloco"></p>
   </section>
 
   <!-- ===================================================== 7. Anatomía y tokens -->
   <section class="flex flex-col gap-4" aria-labelledby="dp-anatomy" data-block="7-anatomia">
-    <h2 id="dp-anatomy" class="text-h2">Anatomía y tokens</h2>
+    <h2 id="dp-anatomy" class="text-h2">{{ 'showroom.common.sections.anatomy' | transloco }}</h2>
     <ul class="flex flex-col gap-2">
       @for (item of anatomy; track item.part) {
-        <li class="flex flex-wrap items-center gap-3 rounded-md border border-default bg-surface p-3">
-          <span class="text-caption text-secondary">{{ item.part }}</span>
+        <li
+          class="flex flex-wrap items-center gap-3 rounded-md border border-default bg-surface p-3"
+        >
+          <span class="text-caption text-secondary">{{ item.part | transloco }}</span>
           <ewms-token-value [token]="item.token" />
         </li>
       }
     </ul>
-    <p class="text-caption text-secondary">
-      Nombres de mes y de día, orden de día/mes/año y primer día de la semana salen de
-      <code class="font-mono">Intl</code> con el locale activo: nada está escrito a mano. Si el
-      navegador no sabe el primer día de la semana, es el lunes.
-    </p>
+    <p
+      class="text-caption text-secondary"
+      [ewmsProse]="'showroom.datePicker.anatomy.intl' | transloco"
+    ></p>
   </section>
 
   <!-- ============================================== 8. Contrato para Angular -->
   <section class="flex flex-col gap-4" aria-labelledby="dp-contract" data-block="8-contrato">
-    <h2 id="dp-contract" class="text-h2">Contrato para Angular</h2>
+    <h2 id="dp-contract" class="text-h2">{{ 'showroom.common.sections.contract' | transloco }}</h2>
     <pre
       class="overflow-x-auto rounded-md border border-default bg-secondary p-4 font-mono text-mono text-primary outline-none focus-visible:shadow-(--focus-ring-shadow)"
       tabindex="0"
     ><code>{{ snippet }}</code></pre>
-    <p class="text-caption text-secondary">
-      Los textos (elegir fecha, mes anterior, mes siguiente) y el locale se proveen una vez con
-      <code class="font-mono">EWMS_DATE_PICKER_MESSAGES</code>. El locale es un getter en el shell
-      porque la app cambia de idioma sin recargar; sin él se usa
-      <code class="font-mono">LOCALE_ID</code>.
-    </p>
-    <h3 class="text-h3">Teclado (APG <em>date picker dialog</em>)</h3>
+    <p
+      class="text-caption text-secondary"
+      [ewmsProse]="'showroom.datePicker.contract.messages' | transloco"
+    ></p>
+    <!-- La prosa va en un span: un encabezado vacío en la plantilla rompe elements-content. -->
+    <h3 class="text-h3">
+      <span [ewmsProse]="'showroom.datePicker.contract.keyboardTitle' | transloco"></span>
+    </h3>
     <ul class="flex flex-col gap-2">
-      <li>
-        En el calendario: <kbd class="font-mono">← →</kbd> un día, <kbd class="font-mono">↑ ↓</kbd>
-        una semana, <kbd class="font-mono">RePág</kbd> / <kbd class="font-mono">AvPág</kbd> un mes
-        (con <kbd class="font-mono">Mayús</kbd>, un año), <kbd class="font-mono">Inicio</kbd> /
-        <kbd class="font-mono">Fin</kbd> la semana, <kbd class="font-mono">Enter</kbd> elige.
-      </li>
-      <li>
-        <kbd class="font-mono">Esc</kbd> cierra sin elegir y devuelve el foco al botón;
-        <kbd class="font-mono">Tab</kbd> no sale del diálogo. En el campo,
-        <kbd class="font-mono">Alt</kbd>+<kbd class="font-mono">↓</kbd> lo abre.
-      </li>
+      <li [ewmsProse]="'showroom.datePicker.contract.keysCalendar' | transloco"></li>
+      <li [ewmsProse]="'showroom.datePicker.contract.keysDialog' | transloco"></li>
     </ul>
-    <h3 class="text-h3">Bloques que no aplican</h3>
-    <p class="text-secondary">Matriz y tamaños remiten al Input: escritos arriba en vez de borrados.</p>
+    <h3 class="text-h3">{{ 'showroom.common.sections.notApplicable' | transloco }}</h3>
+    <p class="text-secondary" [ewmsProse]="'showroom.datePicker.notApplicable' | transloco"></p>
   </section>
 </article>

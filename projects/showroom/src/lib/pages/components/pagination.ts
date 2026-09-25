@@ -1,48 +1,59 @@
 import { ChangeDetectionStrategy, Component, computed, signal } from '@angular/core';
-import { DESIGN_SYSTEM_VERSION, Pagination } from '@ewms/design-system';
+import { Button, DESIGN_SYSTEM_VERSION, Pagination } from '@ewms/design-system';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { DemoFrame } from '../../ui/demo-frame';
+import { DocTable, type DocColumn } from '../../ui/doc-table';
 import { PropTable, type PropRow } from '../../ui/prop-table';
+import { Prose } from '../../ui/prose';
 import { TokenValue } from '../../ui/token-value';
 
+/**
+ * t(showroom.pagination.props.page, showroom.pagination.props.pageCount,
+ *   showroom.pagination.props.total, showroom.pagination.props.messages,
+ *   showroom.pagination.props.pageChange)
+ */
 const PROPS: readonly PropRow[] = [
   {
     name: 'page',
     type: 'number',
-    default: '— (obligatorio)',
-    description: 'La página actual, contada desde cero, como en TableQuery.',
+    default: '—',
+    description: 'showroom.pagination.props.page',
   },
   {
     name: 'pageCount',
     type: 'number',
-    default: '— (obligatorio)',
-    description: 'Cuántas páginas hay. Sin ella el control no se monta.',
+    default: '—',
+    description: 'showroom.pagination.props.pageCount',
   },
   {
     name: 'total',
     type: 'number | null',
     default: 'null',
-    description: 'Cuántas filas coincidieron. Con null no se dice nada del total.',
+    description: 'showroom.pagination.props.total',
   },
   {
     name: 'messages',
     type: 'Partial<PaginationMessages> | null',
     default: 'null',
-    description:
-      'Sobrescribe, en esta instancia, los textos de EWMS_PAGINATION_MESSAGES (ADR 0008).',
+    description: 'showroom.pagination.props.messages',
   },
   {
     name: 'pageChange',
     type: 'output<number>',
     default: '—',
-    description: 'La página pedida, contada desde cero. No cambia nada por su cuenta.',
+    description: 'showroom.pagination.props.pageChange',
   },
 ];
 
+/**
+ * t(showroom.pagination.anatomy.parts.totalText, showroom.pagination.anatomy.parts.pageText,
+ *   showroom.pagination.anatomy.parts.chevron, showroom.pagination.anatomy.parts.focusRing)
+ */
 const ANATOMY: readonly { readonly part: string; readonly token: string }[] = [
-  { part: 'Texto del total', token: '--color-text-secondary' },
-  { part: 'Texto «Página N de M»', token: '--color-text-primary' },
-  { part: 'Glifo de los chevrones', token: '--size-icon-sm' },
-  { part: 'Anillo de foco', token: '--focus-ring-shadow' },
+  { part: 'showroom.pagination.anatomy.parts.totalText', token: '--color-text-secondary' },
+  { part: 'showroom.pagination.anatomy.parts.pageText', token: '--color-text-primary' },
+  { part: 'showroom.pagination.anatomy.parts.chevron', token: '--size-icon-sm' },
+  { part: 'showroom.pagination.anatomy.parts.focusRing', token: '--focus-ring-shadow' },
 ];
 
 /** Cuántas páginas tiene la demo. Un número redondo y visiblemente finito. */
@@ -55,14 +66,28 @@ const FILAS = 163;
  * /design-system/components/pagination: ficha de ewms-pagination. Es un componente propio,
  * no parte de la tabla: tarjetas, eventos o colas de picking también paginan.
  */
+/**
+ * t(showroom.pagination.states.columns.where,
+ *   showroom.pagination.states.columns.previous,
+ *   showroom.pagination.states.columns.next,
+ *   showroom.pagination.states.columns.announced)
+ */
+const STATE_COLUMNS: readonly DocColumn[] = [
+  { id: 'where', label: 'showroom.pagination.states.columns.where' },
+  { id: 'previous', label: 'showroom.pagination.states.columns.previous' },
+  { id: 'next', label: 'showroom.pagination.states.columns.next' },
+  { id: 'announced', label: 'showroom.pagination.states.columns.announced' },
+];
+
 @Component({
   selector: 'ewms-showroom-pagination',
   templateUrl: './pagination.html',
-  imports: [Pagination, DemoFrame, PropTable, TokenValue],
+  imports: [Button, Pagination, DemoFrame, DocTable, PropTable, Prose, TokenValue, TranslocoPipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ShowroomPagination {
   protected readonly version = DESIGN_SYSTEM_VERSION;
+  protected readonly stateColumns = STATE_COLUMNS;
   protected readonly props = PROPS;
   protected readonly anatomy = ANATOMY;
   protected readonly paginas = PAGINAS;

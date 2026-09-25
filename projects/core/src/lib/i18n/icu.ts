@@ -53,7 +53,7 @@ class Parser {
   parse(): readonly IcuPart[] {
     const parts = this.parseMessage(0, false);
     if (this.pos < this.message.length) {
-      this.fail(`unmatched '}'`);
+      throw this.error(`unmatched '}'`);
     }
     return parts;
   }
@@ -77,7 +77,7 @@ class Parser {
       } else if (char === '{' && next === '{') {
         const end = this.message.indexOf('}}', this.pos + 2);
         if (end === -1) {
-          this.fail(`'{{' without its closing '}}'`);
+          throw this.error(`'{{' without its closing '}}'`);
         }
         text += this.message.slice(this.pos, end + 2);
         this.pos = end + 2;
@@ -86,7 +86,7 @@ class Parser {
         parts.push(this.parseChoice(inPlural));
       } else if (char === '}') {
         if (depth === 0) {
-          this.fail(`unmatched '}'`);
+          throw this.error(`unmatched '}'`);
         }
         break;
       } else if (char === '#' && inPlural) {
@@ -129,7 +129,7 @@ class Parser {
       quoted += char;
       this.pos += 1;
     }
-    return this.fail('quoted text without its closing apostrophe');
+    throw this.error('quoted text without its closing apostrophe');
   }
 
   private parseChoice(inPlural: boolean): IcuChoice {
@@ -141,14 +141,15 @@ class Parser {
 
     if (this.message.charAt(this.pos) === '}') {
       this.pos = start;
-      this.fail(`bare argument '{${arg}}'. Parameters are written {{ ${arg} }}`);
+      throw this.error(`bare argument '{${arg}}'. Parameters are written {{ ${arg} }}`);
     }
     this.expect(',');
     this.skipSpace();
+    // i18n-exempt: lo esperado, parte del mensaje de error para quien escribe el diccionario
     const kind = this.read(IDENTIFIER, 'plural, selectordinal or select');
     if (kind !== 'plural' && kind !== 'selectordinal' && kind !== 'select') {
       this.pos = start;
-      this.fail(
+      throw this.error(
         `unsupported argument type '${kind}'. Only plural, selectordinal and select are ` +
           'interpreted; format numbers and dates with the transloco-locale pipes',
       );
@@ -172,7 +173,7 @@ class Parser {
     for (;;) {
       this.skipSpace();
       if (this.pos >= this.message.length) {
-        this.fail(`'{${arg}, ${kind}' without its closing '}'`);
+        throw this.error(`'{${arg}, ${kind}' without its closing '}'`);
       }
       if (this.message.charAt(this.pos) === '}') {
         this.pos += 1;
@@ -180,7 +181,7 @@ class Parser {
       }
       const key = this.readSelector(numeric);
       if (options.has(key)) {
-        this.fail(`duplicate selector '${key}' in '${arg}'`);
+        throw this.error(`duplicate selector '${key}' in '${arg}'`);
       }
       this.skipSpace();
       this.expect('{');
@@ -191,7 +192,7 @@ class Parser {
 
     if (!options.has('other')) {
       this.pos = start;
-      this.fail(`'{${arg}, ${kind}}' has no 'other' branch`);
+      throw this.error(`'{${arg}, ${kind}}' has no 'other' branch`);
     }
     return { kind, arg, offset, options };
   }
@@ -207,7 +208,9 @@ class Parser {
     }
     const key = this.read(SELECT_KEY, 'a selector');
     if (numeric && !PLURAL_CATEGORIES.has(key)) {
-      this.fail(`'${key}' is not a plural category (zero, one, two, few, many, other) nor =N`);
+      throw this.error(
+        `'${key}' is not a plural category (zero, one, two, few, many, other) nor =N`,
+      );
     }
     return key;
   }
@@ -216,7 +219,7 @@ class Parser {
     pattern.lastIndex = this.pos;
     const match = pattern.exec(this.message);
     if (!match) {
-      this.fail(`expected ${what}`);
+      throw this.error(`expected ${what}`);
     }
     this.pos = pattern.lastIndex;
     return match[0];
@@ -224,7 +227,7 @@ class Parser {
 
   private expect(char: string): void {
     if (this.message.charAt(this.pos) !== char) {
-      this.fail(`expected '${char}'`);
+      throw this.error(`expected '${char}'`);
     }
     this.pos += 1;
   }
@@ -235,8 +238,8 @@ class Parser {
     }
   }
 
-  private fail(reason: string): never {
-    throw new IcuError(`${reason} (at ${this.pos} in "${this.message}")`);
+  private error(reason: string): IcuError {
+    return new IcuError(`${reason} (at ${this.pos} in "${this.message}")`);
   }
 }
 

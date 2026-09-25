@@ -35,6 +35,9 @@ export default defineConfig({
   use: {
     baseURL: BASE_URL,
     trace: 'on-first-retry',
+    // La app sigue al idioma del navegador y las aserciones están en español. Una prueba en
+    // inglés lo pide con `test.use({ locale })`.
+    locale: 'es-CR',
   },
 
   projects: [

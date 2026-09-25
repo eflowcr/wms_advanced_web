@@ -17,19 +17,20 @@ export type CatalogStatus =
 
 export interface CatalogEntry {
   readonly id: string;
-  /** Se muestra en la barra lateral y el índice, en español. */
+  /** Clave del nombre que se muestra en la barra lateral, el índice y la pestaña. */
   readonly name: string;
   /** Selector de Angular, para que la búsqueda encuentre lo que se escribe en una plantilla. */
   readonly selector: string | null;
   /** Ruta absoluta, o null si todavía no hay página. */
   readonly route: string | null;
   readonly status: CatalogStatus;
-  /** Una línea sobre qué es, o por qué todavía no está. */
+  /** Clave de una línea sobre qué es, o por qué todavía no está. */
   readonly note: string;
 }
 
 export interface CatalogSection {
   readonly id: string;
+  /** Clave del encabezado de la sección. */
   readonly title: string;
   readonly entries: readonly CatalogEntry[];
 }
@@ -37,266 +38,277 @@ export interface CatalogSection {
 /** Dónde monta el shell el showroom (app.routes.ts). */
 export const SHOWROOM_BASE = '/design-system';
 
+/** El scope de Transloco del catálogo: `public/i18n/showroom/<lang>.json`, perezoso. */
+export const SHOWROOM_SCOPE = 'showroom';
+
+/**
+ * Claves literales; el marcador es lo que ve transloco-keys-manager.
+ * t(showroom.catalog.sections.foundations, showroom.catalog.sections.components, showroom.catalog.sections.patterns, showroom.catalog.pending, showroom.catalog.brand.name, showroom.catalog.brand.note, showroom.catalog.colors.name, showroom.catalog.colors.note, showroom.catalog.typography.name, showroom.catalog.typography.note, showroom.catalog.spacing.name, showroom.catalog.spacing.note, showroom.catalog.icons.name, showroom.catalog.icons.note, showroom.catalog.button.name, showroom.catalog.button.note, showroom.catalog.text.name, showroom.catalog.text.note, showroom.catalog.tooltip.name, showroom.catalog.tooltip.note, showroom.catalog.input.name, showroom.catalog.input.note, showroom.catalog.checkbox.name, showroom.catalog.checkbox.note, showroom.catalog.radio.name, showroom.catalog.radio.note, showroom.catalog.toggle.name, showroom.catalog.toggle.note, showroom.catalog.select.name, showroom.catalog.select.note, showroom.catalog.table.name, showroom.catalog.table.note, showroom.catalog.pagination.name, showroom.catalog.pagination.note, showroom.catalog.badge.name, showroom.catalog.badge.note, showroom.catalog.modal.name, showroom.catalog.modal.note, showroom.catalog.cards.name, showroom.catalog.cards.note, showroom.catalog.banner.name, showroom.catalog.banner.note, showroom.catalog.toast.name, showroom.catalog.toast.note, showroom.catalog.navigation.name, showroom.catalog.navigation.note, showroom.catalog.favorites.name, showroom.catalog.favorites.note, showroom.catalog.splitButton.name, showroom.catalog.splitButton.note, showroom.catalog.datePicker.name, showroom.catalog.datePicker.note, showroom.catalog.patternKeyboard.name, showroom.catalog.patternKeyboard.note, showroom.catalog.patternSearchCreateEdit.name, showroom.catalog.patternSearchCreateEdit.note, showroom.catalog.patternForm.name, showroom.catalog.patternForm.note, showroom.catalog.patternFilters.name, showroom.catalog.patternFilters.note, showroom.catalog.patternEmpty.name, showroom.catalog.patternEmpty.note)
+ */
 const FOUNDATIONS: readonly CatalogEntry[] = [
   {
     id: 'brand',
-    name: 'Marca',
+    name: 'showroom.catalog.brand.name',
     selector: null,
     route: `${SHOWROOM_BASE}/foundations/brand`,
     status: 'ready',
-    note: 'Logo, variantes, fondos, tamaño mínimo, área de resguardo y usos incorrectos.',
+    note: 'showroom.catalog.brand.note',
   },
   {
     id: 'colors',
-    name: 'Color',
+    name: 'showroom.catalog.colors.name',
     selector: null,
     route: `${SHOWROOM_BASE}/foundations/colors`,
     status: 'ready',
-    note: 'Primitivos y semánticos, con el contraste calculado en vivo.',
+    note: 'showroom.catalog.colors.note',
   },
   {
     id: 'typography',
-    name: 'Tipografía',
+    name: 'showroom.catalog.typography.name',
     selector: null,
     route: `${SHOWROOM_BASE}/foundations/typography`,
     status: 'ready',
-    note: 'Montserrat y la escala H1-H4 / P / Caption / Mono, al tamaño real.',
+    note: 'showroom.catalog.typography.note',
   },
   {
     id: 'spacing',
-    name: 'Espaciado, radios y elevación',
+    name: 'showroom.catalog.spacing.name',
     selector: null,
     route: `${SHOWROOM_BASE}/foundations/spacing`,
     status: 'ready',
-    note: 'Base 4, los cinco radios, las tres alturas de control y las tres sombras.',
+    note: 'showroom.catalog.spacing.note',
   },
   {
     id: 'icons',
-    name: 'Iconografía',
+    name: 'showroom.catalog.icons.name',
     selector: 'ewms-icon',
     route: `${SHOWROOM_BASE}/foundations/icons`,
     status: 'ready',
-    note: 'Catálogo cerrado de 71 iconos Tabler, con el trazo compensado por tamaño.',
+    note: 'showroom.catalog.icons.note',
   },
 ];
 
 const COMPONENTS: readonly CatalogEntry[] = [
   {
     id: 'button',
-    name: 'Botón',
+    name: 'showroom.catalog.button.name',
     selector: 'ewms-button',
     route: `${SHOWROOM_BASE}/components/button`,
     status: 'ready',
-    note: 'Cuatro variantes, tres tamaños, solo ícono cuadrado y el patrón anti-doble-envío.',
+    note: 'showroom.catalog.button.note',
   },
   {
     id: 'text',
-    name: 'Texto',
+    name: 'showroom.catalog.text.name',
     selector: 'ewms-text',
     route: `${SHOWROOM_BASE}/components/text`,
     status: 'ready',
-    note: 'Las siete variantes semánticas, y por qué el nivel visual no se separa del nivel del documento.',
+    note: 'showroom.catalog.text.note',
   },
   {
     id: 'tooltip',
-    name: 'Tooltip',
+    name: 'showroom.catalog.tooltip.name',
     selector: 'ewmsTooltip',
     route: `${SHOWROOM_BASE}/components/tooltip`,
     status: 'ready',
-    note: 'Directiva, no componente. Las tres reglas de la 1.4.13 y la trampa del nombre disabled.',
+    note: 'showroom.catalog.tooltip.note',
   },
   {
     id: 'input',
-    name: 'Input',
+    name: 'showroom.catalog.input.name',
     selector: 'ewms-input',
     route: `${SHOWROOM_BASE}/components/input`,
     status: 'ready',
-    note: 'Cinco tipos, FormValueControl<string>, y la altura compartida con el Botón del mismo tamaño.',
+    note: 'showroom.catalog.input.note',
   },
   {
     id: 'checkbox',
-    name: 'Checkbox',
+    name: 'showroom.catalog.checkbox.name',
     selector: 'ewms-checkbox',
     route: `${SHOWROOM_BASE}/components/checkbox`,
     status: 'ready',
-    note: 'Caja de 18×18 con tercer estado indeterminado, para el «seleccionar todos».',
+    note: 'showroom.catalog.checkbox.note',
   },
   {
     id: 'radio',
-    name: 'Radio',
+    name: 'showroom.catalog.radio.name',
     selector: 'ewms-radio',
     route: `${SHOWROOM_BASE}/components/radio`,
     status: 'ready',
-    note: 'La misma caja que el Checkbox, agrupada por name nativo y sin tercer estado.',
+    note: 'showroom.catalog.radio.note',
   },
   {
     id: 'toggle',
-    name: 'Toggle',
+    name: 'showroom.catalog.toggle.name',
     selector: 'ewms-toggle',
     route: `${SHOWROOM_BASE}/components/toggle`,
     status: 'ready',
-    note: 'Pista de 44×24 con pulgar de 20. Aplica al tocar: si hay un Guardar al lado, va Checkbox.',
+    note: 'showroom.catalog.toggle.note',
   },
   {
     id: 'select',
-    name: 'Select',
+    name: 'showroom.catalog.select.name',
     selector: 'ewms-select',
     route: `${SHOWROOM_BASE}/components/select`,
     status: 'ready',
-    note: 'El único selector, y siempre busca: en memoria filtra al escribir; con fuente pagina y resuelve un escaneo.',
+    note: 'showroom.catalog.select.note',
   },
   {
     id: 'table',
-    name: 'Tabla de datos',
+    name: 'showroom.catalog.table.name',
     selector: 'ewms-table',
     route: `${SHOWROOM_BASE}/components/table`,
     status: 'ready',
-    note: 'Columnas declaradas, árbol aplanado, filtros por tipo y el teclado de un treegrid.',
+    note: 'showroom.catalog.table.note',
   },
   {
     id: 'pagination',
-    name: 'Paginación',
+    name: 'showroom.catalog.pagination.name',
     selector: 'ewms-pagination',
     route: `${SHOWROOM_BASE}/components/pagination`,
     status: 'ready',
-    note: 'Anterior, siguiente y dónde estás. Componente propio: la tabla es sólo su primer consumidor.',
+    note: 'showroom.catalog.pagination.note',
   },
   {
     id: 'badge',
-    name: 'Badge',
+    name: 'showroom.catalog.badge.name',
     selector: 'ewms-badge',
     route: `${SHOWROOM_BASE}/components/table`,
     status: 'ready',
-    note: 'Icono y texto, siempre los dos. Nació en la Tabla y se usa fuera de ella.',
+    note: 'showroom.catalog.badge.note',
   },
   {
     id: 'modal',
-    name: 'Modal / Dialog',
+    name: 'showroom.catalog.modal.name',
     selector: 'DialogService',
     route: `${SHOWROOM_BASE}/components/dialog`,
     status: 'ready',
-    note: 'Confirmación como promesa y formulario como componente, sobre el dialog del CDK.',
+    note: 'showroom.catalog.modal.note',
   },
   {
     id: 'cards',
-    name: 'Card',
+    name: 'showroom.catalog.cards.name',
     selector: 'ewms-card',
     route: `${SHOWROOM_BASE}/components/card`,
     status: 'ready',
-    note: 'Dos usos bajo un nombre: opción dentro de un grupo, contenedor fuera de él. Lo decide el inyector.',
+    note: 'showroom.catalog.cards.note',
   },
   {
     id: 'banner',
-    name: 'Banner',
+    name: 'showroom.catalog.banner.name',
     selector: 'ewms-banner',
     route: `${SHOWROOM_BASE}/components/banner`,
     status: 'ready',
-    note: 'Mensaje en el flujo, cuatro severidades. Info se llama Info y se pinta neutral.',
+    note: 'showroom.catalog.banner.note',
   },
   {
     id: 'toast',
-    name: 'Toast',
+    name: 'showroom.catalog.toast.name',
     selector: 'ewms-toast-outlet',
     route: `${SHOWROOM_BASE}/components/toast`,
     status: 'ready',
-    note: 'Cola compartida con una sola región viva. Es un servicio, no una etiqueta.',
+    note: 'showroom.catalog.toast.note',
   },
   {
     id: 'navigation',
-    name: 'Navegación',
+    name: 'showroom.catalog.navigation.name',
     selector: 'ewms-nav-rail',
     route: `${SHOWROOM_BASE}/components/navigation`,
     status: 'ready',
-    note: 'Rail, pestañas y migas, sincronizadas y sin router. La barra inferior, con su costo escrito.',
+    note: 'showroom.catalog.navigation.note',
   },
   {
     id: 'favorites',
-    name: 'Favoritos',
+    name: 'showroom.catalog.favorites.name',
     selector: 'ewms-favorite-toggle',
     route: `${SHOWROOM_BASE}/components/navigation`,
     status: 'ready',
-    note: 'La estrella y el bloque fijo del sidebar. En memoria hasta que exista el Security Core.',
+    note: 'showroom.catalog.favorites.note',
   },
   {
     id: 'split-button',
-    name: 'Split button',
+    name: 'showroom.catalog.splitButton.name',
     selector: 'ewms-split-button',
     route: `${SHOWROOM_BASE}/components/split-button`,
     status: 'ready',
-    note: 'Acción principal y alternativas a un clic: «Descargar / PDF / Excel / CSV». El menú es el de la Tabla.',
+    note: 'showroom.catalog.splitButton.note',
   },
   {
     id: 'date-picker',
-    name: 'Date picker',
+    name: 'showroom.catalog.datePicker.name',
     selector: 'ewms-date-picker',
     route: `${SHOWROOM_BASE}/components/date-picker`,
     status: 'ready',
-    note: 'Fecha o período en el idioma de la app, escrita o elegida con el teclado. Valor ISO.',
+    note: 'showroom.catalog.datePicker.note',
   },
 ];
 
 const PATTERNS: readonly CatalogEntry[] = [
   {
     id: 'pattern-keyboard',
-    name: 'Atajos de teclado',
+    name: 'showroom.catalog.patternKeyboard.name',
     selector: 'KeyboardShortcuts',
     route: `${SHOWROOM_BASE}/patterns/keyboard`,
     status: 'ready',
-    note: 'Registro por acción, un solo listener, y la ráfaga de escáner que no dispara nada.',
+    note: 'showroom.catalog.patternKeyboard.note',
   },
   {
     id: 'pattern-search-create-edit',
-    name: 'Buscar, crear, editar',
+    name: 'showroom.catalog.patternSearchCreateEdit.name',
     selector: null,
     route: `${SHOWROOM_BASE}/patterns/search-create-edit`,
     status: 'ready',
-    note: 'La pantalla de ejemplo: el presupuesto de clics, medido en vivo sobre componentes que ya existían.',
+    note: 'showroom.catalog.patternSearchCreateEdit.note',
   },
   {
     id: 'pattern-form',
-    name: 'Formulario',
+    name: 'showroom.catalog.patternForm.name',
     selector: 'ewmsForm',
     route: `${SHOWROOM_BASE}/patterns/form`,
     status: 'ready',
-    note: 'Validar al salir y al enviar, resumen de errores, Ctrl+S y cambios sin guardar. Guardar nunca se deshabilita.',
+    note: 'showroom.catalog.patternForm.note',
   },
   {
     id: 'pattern-filters',
-    name: 'Filtros',
+    name: 'showroom.catalog.patternFilters.name',
     selector: 'ewms-filter-bar',
     route: `${SHOWROOM_BASE}/patterns/filters`,
     status: 'ready',
-    note: 'Filtros de pantalla que van a la fuente y viven en la URL; los chips son los de la tabla.',
+    note: 'showroom.catalog.patternFilters.note',
   },
   {
     id: 'pattern-empty',
-    name: 'Estado vacío',
+    name: 'showroom.catalog.patternEmpty.name',
     selector: 'ewms-empty-state',
     route: `${SHOWROOM_BASE}/patterns/empty-state`,
     status: 'ready',
-    note: 'Un componente, cuatro casos: no hay, no coincide, falló, sin permiso. La tabla y el select lo eligen solos.',
+    note: 'showroom.catalog.patternEmpty.note',
   },
 ];
 
 export const CATALOG: readonly CatalogSection[] = [
-  { id: 'foundations', title: 'Fundamentos', entries: FOUNDATIONS },
-  { id: 'components', title: 'Componentes', entries: COMPONENTS },
-  { id: 'patterns', title: 'Patrones', entries: PATTERNS },
+  { id: 'foundations', title: 'showroom.catalog.sections.foundations', entries: FOUNDATIONS },
+  { id: 'components', title: 'showroom.catalog.sections.components', entries: COMPONENTS },
+  { id: 'patterns', title: 'showroom.catalog.sections.patterns', entries: PATTERNS },
 ];
 
-/** Etiqueta visible para una entrada sin página. */
-export const STATUS_LABELS: Readonly<Record<CatalogStatus, string>> = {
-  ready: '',
-  built: '(pendiente)',
-  documented: '(pendiente)',
-  gap: '(pendiente)',
+/** Clave de la etiqueta de una entrada sin página; una lista no lleva etiqueta. */
+export const STATUS_LABELS: Readonly<Record<CatalogStatus, string | null>> = {
+  ready: null,
+  built: 'showroom.catalog.pending',
+  documented: 'showroom.catalog.pending',
+  gap: 'showroom.catalog.pending',
 };
 
 /**
- * Filtra por nombre y selector conservando las secciones, para que la barra no se reordene
- * al escribir. Las secciones vacías se quitan: un encabezado vacío parece una página rota.
+ * Filtra por el nombre en el idioma activo (`nameOf` traduce la clave) y por el selector,
+ * conservando las secciones para que la barra no se reordene al escribir. Las secciones vacías se
+ * quitan: un encabezado vacío parece una página rota.
  */
-export function filterCatalog(query: string): readonly CatalogSection[] {
+export function filterCatalog(
+  query: string,
+  nameOf: (entry: CatalogEntry) => string,
+): readonly CatalogSection[] {
   const needle = query.trim().toLowerCase();
   if (!needle) {
     return CATALOG;
@@ -305,7 +317,7 @@ export function filterCatalog(query: string): readonly CatalogSection[] {
     ...section,
     entries: section.entries.filter(
       (entry) =>
-        entry.name.toLowerCase().includes(needle) ||
+        nameOf(entry).toLowerCase().includes(needle) ||
         (entry.selector?.toLowerCase().includes(needle) ?? false),
     ),
   })).filter((section) => section.entries.length > 0);
@@ -316,14 +328,17 @@ export function countEntries(sections: readonly CatalogSection[]): number {
   return sections.reduce((total, section) => total + section.entries.length, 0);
 }
 
+/** La primera entrada con esa ruta: Badge y Favoritos comparten la de Tabla y Navegación. */
+export function catalogEntryFor(route: string): CatalogEntry | null {
+  const path = route.split(/[?#]/)[0];
+  return CATALOG.flatMap((section) => section.entries).find((entry) => entry.route === path) ?? null;
+}
+
 /**
- * El nombre de una página por su ruta, para quien la nombra desde afuera (el favorito del riel).
- * Fuera del catálogo devuelve null, y la portada del showroom también: esa la nombra el menú.
+ * La clave del nombre de una página por su ruta, para quien la nombra desde afuera (el favorito
+ * del riel, la pestaña). Fuera del catálogo devuelve null, y la portada del showroom también: esa
+ * la nombra el menú.
  */
-export function catalogNameFor(route: string): string | null {
-  const path = route.split('?')[0];
-  return (
-    CATALOG.flatMap((section) => section.entries).find((entry) => entry.route === path)?.name ??
-    null
-  );
+export function catalogKeyFor(route: string): string | null {
+  return catalogEntryFor(route)?.name ?? null;
 }

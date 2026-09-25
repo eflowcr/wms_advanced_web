@@ -1,43 +1,66 @@
 import { ChangeDetectionStrategy, Component, computed, signal } from '@angular/core';
 import { form as signalForm, FormField } from '@angular/forms/signals';
 import { DatePicker, DESIGN_SYSTEM_VERSION, type DatePickerValue } from '@ewms/design-system';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { DemoFrame } from '../../ui/demo-frame';
 import { PropTable, type PropRow } from '../../ui/prop-table';
+import { Prose } from '../../ui/prose';
 import { TokenValue } from '../../ui/token-value';
 
-/** Verificada contra date-picker.ts. */
+/**
+ * Verificada contra date-picker.ts.
+ * t(showroom.datePicker.props.label, showroom.datePicker.props.mode,
+ *   showroom.datePicker.props.limits, showroom.datePicker.props.size,
+ *   showroom.datePicker.props.texts)
+ */
 const PROPS: readonly PropRow[] = [
-  { name: 'label', type: 'string', default: '— (requerido)', description: 'Visible, unido por for/id.' },
+  {
+    name: 'label',
+    type: 'string',
+    default: '—',
+    description: 'showroom.datePicker.props.label',
+  },
   {
     name: 'mode',
     type: "'single' | 'range'",
     default: "'single'",
-    description: "Una fecha 'YYYY-MM-DD', o el DateRange { from, to } de la tabla.",
+    description: 'showroom.datePicker.props.mode',
   },
   {
     name: 'minDate · maxDate',
     type: 'string | null',
     default: 'null',
-    description: "'YYYY-MM-DD'. Los días fuera se ven, se recorren y no se eligen.",
+    description: 'showroom.datePicker.props.limits',
   },
-  { name: 'size', type: "'sm' | 'md' | 'lg'", default: "'md'", description: 'La caja del Input.' },
+  {
+    name: 'size',
+    type: "'sm' | 'md' | 'lg'",
+    default: "'md'",
+    description: 'showroom.datePicker.props.size',
+  },
   {
     name: 'placeholder · hint · error',
     type: 'string · boolean',
     default: "'' · false",
-    description: 'Como en el Input. El hint va por aria-describedby.',
+    description: 'showroom.datePicker.props.texts',
   },
 ];
 
+/**
+ * t(showroom.datePicker.anatomy.parts.field, showroom.datePicker.anatomy.parts.background,
+ *   showroom.datePicker.anatomy.parts.elevation, showroom.datePicker.anatomy.parts.selected,
+ *   showroom.datePicker.anatomy.parts.today, showroom.datePicker.anatomy.parts.outOfRange,
+ *   showroom.datePicker.anatomy.parts.hover, showroom.datePicker.anatomy.parts.focusRing)
+ */
 const ANATOMY: readonly { readonly part: string; readonly token: string }[] = [
-  { part: 'Caja del campo', token: '--color-border-strong' },
-  { part: 'Fondo del calendario', token: '--color-surface' },
-  { part: 'Elevación del calendario', token: '--shadow-md' },
-  { part: 'Día elegido', token: '--color-bg-primary' },
-  { part: 'Hoy (aro)', token: '--color-border-strong' },
-  { part: 'Día fuera del rango', token: '--color-text-disabled' },
-  { part: 'Hover de un día', token: '--color-ghost-hover' },
-  { part: 'Anillo de foco del día', token: '--focus-ring-shadow' },
+  { part: 'showroom.datePicker.anatomy.parts.field', token: '--color-border-strong' },
+  { part: 'showroom.datePicker.anatomy.parts.background', token: '--color-surface' },
+  { part: 'showroom.datePicker.anatomy.parts.elevation', token: '--shadow-md' },
+  { part: 'showroom.datePicker.anatomy.parts.selected', token: '--color-bg-primary' },
+  { part: 'showroom.datePicker.anatomy.parts.today', token: '--color-border-strong' },
+  { part: 'showroom.datePicker.anatomy.parts.outOfRange', token: '--color-text-disabled' },
+  { part: 'showroom.datePicker.anatomy.parts.hover', token: '--color-ghost-hover' },
+  { part: 'showroom.datePicker.anatomy.parts.focusRing', token: '--focus-ring-shadow' },
 ];
 
 /** Hoy en la hora local, como lo calcula el componente. */
@@ -55,7 +78,7 @@ function today(): string {
 @Component({
   selector: 'ewms-showroom-date-picker',
   templateUrl: './date-picker.html',
-  imports: [DatePicker, FormField, DemoFrame, PropTable, TokenValue],
+  imports: [DatePicker, FormField, DemoFrame, PropTable, Prose, TokenValue, TranslocoPipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ShowroomDatePicker {

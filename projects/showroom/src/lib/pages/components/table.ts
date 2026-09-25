@@ -15,34 +15,39 @@ import {
   Table,
   TableColumn,
   type BulkActionEvent,
+  type MenuItem,
   type RowActivateEvent,
   type RowMenuEvent,
   type TableQuery,
   type TableSource,
 } from '@ewms/design-system';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { DemoFrame } from '../../ui/demo-frame';
+import { ANATOMY_COLUMNS, DocTable, type DocColumn } from '../../ui/doc-table';
 import { PropTable, type PropRow } from '../../ui/prop-table';
+import { Prose } from '../../ui/prose';
 import { StateMatrix, type MatrixAxis } from '../../ui/state-matrix';
 import { TokenValue } from '../../ui/token-value';
-import { ESTADOS, EXPEDICIONES, type ExpedicionRow } from './expediciones';
+import { translated } from '../../ui/translated';
+import { injectEstados, type ExpedicionRow } from './expediciones';
+import { EXPEDICIONES } from './expediciones.fixtures';
 import {
-  ACCIONES_FILA,
-  ACCIONES_MASIVAS,
   CABECERAS,
   FuentePaginada,
   hijosPerezosos,
-  generarUbicaciones,
+  injectAccionesFila,
+  injectAccionesMasivas,
   UBICACIONES_MUESTRA,
   UBICACIONES_TOTAL,
-  type UbicacionRow,
 } from './expediciones-avanzado';
 import { NOT_MEASURED } from './measure';
+import { CODIGO_MUESTRA, generarUbicaciones, type UbicacionRow } from './table.fixtures';
 
 /**
- * Plantilla del consumidor, literal: es lo que table.html renderiza debajo. La página
- * cuenta sus líneas en el DOM; el techo es cuarenta, y si lo pasa se arregla la API.
+ * Plantilla del consumidor: es lo que table.html renderiza debajo, textos traducidos incluidos.
+ * La página cuenta sus líneas en el DOM; el techo es cuarenta, y si lo pasa se arregla la API.
  */
-const CONSUMER_TEMPLATE = [
+const TEMPLATE_SNIPPET = [
   '<ewms-table',
   '  [source]="expediciones"',
   '  children="hijos"',
@@ -52,39 +57,46 @@ const CONSUMER_TEMPLATE = [
   '  [quickFilter]="true"',
   '  [columnChooser]="true"',
   '  [exportable]="true"',
-  '  [bulkActions]="masivas"',
-  '  ariaLabel="Expediciones"',
+  '  [bulkActions]="masivas()"',
+  "  [ariaLabel]=\"'showroom.table.demo.ariaLabel' | transloco\"",
   '  (rowActivate)="abrir($event)"',
   '  (selectionChange)="seleccion.set($event)"',
   '  (bulkAction)="masiva($event)"',
   '  (queryChange)="consulta.set($event)"',
   '>',
-  '  <ewms-column key="codigo" header="Código" width="md" pinned="start" [sortable]="true" [filterable]="true" />',
-  '  <ewms-column key="cliente" header="Cliente / artículo" width="fill" [filterable]="true" />',
-  '  <ewms-column key="fecha" header="Fecha" type="date" width="md" [sortable]="true" [filterable]="true" />',
-  '  <ewms-column key="bultos" header="Bultos" type="number" width="sm" aggregate="sum" [sortable]="true" [filterable]="true" />',
-  '  <ewms-column key="estado" header="Estado" type="badge" width="md" [badges]="ESTADOS" [filterable]="true" />',
+  "  <ewms-column key=\"codigo\" [header]=\"'showroom.table.columns.code' | transloco\" width=\"md\" pinned=\"start\" [sortable]=\"true\" [filterable]=\"true\" />",
+  "  <ewms-column key=\"cliente\" [header]=\"'showroom.table.columns.customerItem' | transloco\" width=\"fill\" [filterable]=\"true\" />",
+  "  <ewms-column key=\"fecha\" [header]=\"'showroom.table.columns.date' | transloco\" type=\"date\" width=\"md\" [sortable]=\"true\" [filterable]=\"true\" />",
+  "  <ewms-column key=\"bultos\" [header]=\"'showroom.table.columns.packages' | transloco\" type=\"number\" width=\"sm\" aggregate=\"sum\" [sortable]=\"true\" [filterable]=\"true\" />",
+  "  <ewms-column key=\"estado\" [header]=\"'showroom.table.columns.status' | transloco\" type=\"badge\" width=\"md\" [badges]=\"estados()\" [filterable]=\"true\" />",
   '</ewms-table>',
 ].join('\n');
 
-/** Y el componente entero que hay detrás. */
-const CONSUMER_COMPONENT = [
+/** Y el componente entero que hay detrás. Estados y acciones siguen al idioma: son señales. */
+const COMPONENT_SNIPPET = [
   'protected readonly expediciones = new ArrayTableSource(EXPEDICIONES);',
   'protected readonly porId = (row: ExpedicionRow) => row.id;',
-  'protected readonly masivas = ACCIONES_MASIVAS;',
+  'protected readonly estados = injectEstados();',
+  'protected readonly masivas = injectAccionesMasivas();',
   'protected masiva(event: BulkActionEvent<ExpedicionRow>) { /* imprimir, anular… */ }',
 ].join('\n');
 
+/**
+ * Las filas de la matriz: los cuatro estados, con el nombre del diccionario de estados.
+ * t(showroom.common.shipments.states.pending, showroom.common.shipments.states.inProgress,
+ *   showroom.common.shipments.states.completed, showroom.common.shipments.states.withIssue)
+ */
 const MATRIX_VARIANTS: readonly MatrixAxis[] = [
-  { id: 'neutral', label: 'Pendiente' },
-  { id: 'warning', label: 'En proceso' },
-  { id: 'success', label: 'Completada' },
-  { id: 'danger', label: 'Con incidencia' },
+  { id: 'neutral', label: 'showroom.common.shipments.states.pending' },
+  { id: 'warning', label: 'showroom.common.shipments.states.inProgress' },
+  { id: 'success', label: 'showroom.common.shipments.states.completed' },
+  { id: 'danger', label: 'showroom.common.shipments.states.withIssue' },
 ];
 
+/** t(showroom.table.states.axes.badge, showroom.table.states.axes.tint) */
 const MATRIX_STATES: readonly MatrixAxis[] = [
-  { id: 'badge', label: 'Badge de la columna Estado' },
-  { id: 'tint', label: 'Tinte de la fila' },
+  { id: 'badge', label: 'showroom.table.states.axes.badge' },
+  { id: 'tint', label: 'showroom.table.states.axes.tint' },
 ];
 
 /** Tintes de fila escritos completos para que Tailwind vea cada clase. Solo las excepciones tiñen. */
@@ -95,32 +107,61 @@ const TINTS: Readonly<Record<string, string>> = {
   danger: 'bg-row-danger',
 };
 
+interface RowMatrixEntry {
+  readonly id: string;
+  /** Clave del nombre del estado. */
+  readonly state: string;
+  readonly background: string;
+  /** La marca: un token, «—» si no lleva, o `{ label }` con la clave de su descripción. */
+  readonly mark: string | { readonly label: string };
+  readonly row: string;
+  readonly cell: string;
+}
+
 /**
  * La matriz de fila (Tabla §23), con las clases que usa la tabla escritas enteras. El foco
  * se muestra con su anillo interior aplicado a mano: `:focus-visible` no se fuerza.
+ * t(showroom.table.rowMatrix.states.normal, showroom.common.states.hover,
+ *   showroom.table.rowMatrix.states.focus, showroom.table.rowMatrix.innerRing,
+ *   showroom.table.rowMatrix.states.selected, showroom.table.rowMatrix.states.danger,
+ *   showroom.table.rowMatrix.states.warning, showroom.table.rowMatrix.states.selectedDanger)
  */
-const ROW_MATRIX: readonly {
-  readonly id: string;
-  readonly state: string;
-  readonly background: string;
-  readonly mark: string;
-  readonly row: string;
-  readonly cell: string;
-}[] = [
-  { id: 'normal', state: 'Normal', background: '--color-surface', mark: '—', row: 'bg-surface', cell: '' },
-  { id: 'hover', state: 'Hover', background: '--color-row-hover', mark: '—', row: 'bg-row-hover', cell: '' },
+const ROW_MATRIX: readonly RowMatrixEntry[] = [
+  {
+    id: 'normal',
+    state: 'showroom.table.rowMatrix.states.normal',
+    background: '--color-surface',
+    mark: '—',
+    row: 'bg-surface',
+    cell: '',
+  },
+  {
+    id: 'hover',
+    state: 'showroom.common.states.hover',
+    background: '--color-row-hover',
+    mark: '—',
+    row: 'bg-row-hover',
+    cell: '',
+  },
   {
     id: 'focus',
-    state: 'Enfocada (teclado)',
+    state: 'showroom.table.rowMatrix.states.focus',
     background: '--color-row-hover',
-    mark: 'anillo interior',
+    mark: { label: 'showroom.table.rowMatrix.innerRing' },
     row: 'bg-row-hover',
     cell: 'outline-2 -outline-offset-2 outline-focus',
   },
-  { id: 'selected', state: 'Seleccionada', background: '--color-row-selected', mark: '—', row: 'bg-row-selected', cell: '' },
+  {
+    id: 'selected',
+    state: 'showroom.table.rowMatrix.states.selected',
+    background: '--color-row-selected',
+    mark: '—',
+    row: 'bg-row-selected',
+    cell: '',
+  },
   {
     id: 'danger',
-    state: 'Excepción danger',
+    state: 'showroom.table.rowMatrix.states.danger',
     background: '--color-row-danger',
     mark: '--shadow-row-mark-danger',
     row: 'bg-row-danger',
@@ -128,7 +169,7 @@ const ROW_MATRIX: readonly {
   },
   {
     id: 'warning',
-    state: 'Excepción warning',
+    state: 'showroom.table.rowMatrix.states.warning',
     background: '--color-row-warning',
     mark: '--shadow-row-mark-warning',
     row: 'bg-row-warning',
@@ -136,7 +177,7 @@ const ROW_MATRIX: readonly {
   },
   {
     id: 'selected-danger',
-    state: 'Seleccionada + excepción',
+    state: 'showroom.table.rowMatrix.states.selectedDanger',
     background: '--color-row-selected',
     mark: '--shadow-row-mark-danger',
     row: 'bg-row-selected',
@@ -146,154 +187,226 @@ const ROW_MATRIX: readonly {
 
 const TINTED: ReadonlySet<string> = new Set(['warning', 'danger']);
 
-const LABELS: Readonly<Record<string, string>> = {
-  neutral: 'Pendiente',
-  warning: 'En proceso',
-  success: 'Completada',
-  danger: 'Con incidencia',
-};
-
-/** Verificada contra table.ts. */
+/**
+ * Verificada contra table.ts. `description` es la clave de su texto.
+ * t(showroom.table.props.source, showroom.table.props.ariaLabel, showroom.table.props.children,
+ *   showroom.table.props.rowState, showroom.table.props.selectable,
+ *   showroom.table.props.quickFilter, showroom.table.props.density,
+ *   showroom.table.props.columnChooser, showroom.table.props.exportable,
+ *   showroom.table.props.bulkActions, showroom.table.props.columnExtras,
+ *   showroom.table.props.trackBy, showroom.table.props.pageSize, showroom.table.props.rowActivate,
+ *   showroom.table.props.selectionChange, showroom.table.props.viewChange,
+ *   showroom.table.props.bulkAction, showroom.table.props.exportRequest,
+ *   showroom.table.props.queryChange)
+ */
 const PROPS: readonly PropRow[] = [
   {
     name: 'source',
     type: 'TableSource<T>',
-    default: '— (requerido)',
-    description: 'De dónde salen las filas. Una interfaz: la tabla no conoce HTTP.',
+    default: '—',
+    description: 'showroom.table.props.source',
   },
   {
     name: 'ariaLabel',
     type: 'string',
-    default: '— (requerido)',
-    description: 'Nombra la grilla. Una tabla sin nombre es una tabla que nadie puede pedir.',
+    default: '—',
+    description: 'showroom.table.props.ariaLabel',
   },
   {
     name: 'children',
     type: 'fn | keyof T | null',
     default: 'null',
-    description:
-      'Una función, o el nombre de una propiedad. Con esto hay árbol y el rol es treegrid; sin esto, grid.',
+    description: 'showroom.table.props.children',
   },
   {
     name: 'rowState',
     type: 'fn | keyof T | null',
     default: 'null',
-    description:
-      'Una función, o el nombre de una columna badge: entonces un diccionario alimenta el tinte y el badge.',
+    description: 'showroom.table.props.rowState',
   },
   {
     name: 'selectable',
     type: 'boolean',
     default: 'false',
-    description: 'Columna de checkbox, con el indeterminado en la cabecera.',
+    description: 'showroom.table.props.selectable',
   },
   {
     name: 'quickFilter',
     type: 'boolean',
     default: 'false',
-    description: 'El campo de búsqueda global sobre la tabla.',
+    description: 'showroom.table.props.quickFilter',
   },
   {
     name: 'density',
     type: "'md' | 'sm'",
     default: "'md'",
-    description: 'Con qué densidad arranca; después se elige en la barra. Alto de fila por token.',
+    description: 'showroom.table.props.density',
   },
   {
     name: 'columnChooser',
     type: 'boolean',
     default: 'false',
-    description: 'Selector de columnas en la barra. La última visible no se oculta.',
+    description: 'showroom.table.props.columnChooser',
   },
   {
     name: 'exportable',
     type: 'boolean',
     default: 'false',
-    description: 'Exportar: CSV en el cliente con ArrayTableSource; con fuente remota, (exportRequest).',
+    description: 'showroom.table.props.exportable',
   },
   {
     name: 'bulkActions',
     type: 'readonly MenuItem[]',
     default: '[]',
-    description: 'Acciones sobre lo seleccionado; la barra las muestra con «3 seleccionadas».',
+    description: 'showroom.table.props.bulkActions',
   },
   {
     name: 'ewms-column: pinned · hideable · aggregate',
     type: "'start' | 'end' · boolean · 'sum' | 'avg' | 'count'",
     default: 'null · true · null',
-    description:
-      'Fijado inicial (el usuario lo cambia en el menú ⋮), sin casilla en Vista, o la suma al pie.',
+    description: 'showroom.table.props.columnExtras',
   },
   {
     name: 'trackBy',
     type: '(row: T) => unknown',
-    default: 'identidad',
-    description:
-      'Identifica la fila, y TAMBIÉN la selección: por eso la selección sobrevive al cambio de página.',
+    default: '(row) => row',
+    description: 'showroom.table.props.trackBy',
   },
   {
     name: 'pageSize',
     type: 'number',
     default: '50',
-    description: 'Cuántas filas raíz pide cada consulta.',
+    description: 'showroom.table.props.pageSize',
   },
   {
     name: '(rowActivate)',
     type: '{ row: T }',
     default: '—',
-    description: 'Doble clic y Enter. Dos caminos, una acción. No se llama (dblclick).',
+    description: 'showroom.table.props.rowActivate',
   },
   {
     name: '(selectionChange)',
     type: 'readonly T[]',
     default: '—',
-    description: 'La selección. Una salida, no un valor de formulario: la tabla no es un CVA.',
+    description: 'showroom.table.props.selectionChange',
   },
   {
     name: '(viewChange)',
     type: 'TableView',
     default: '—',
-    description:
-      'Orden, columnas ocultas, anchos, fijadas y densidad: en memoria, para quien quiera guardarlas.',
+    description: 'showroom.table.props.viewChange',
   },
   {
     name: '(bulkAction)',
     type: '{ item, rows }',
     default: '—',
-    description: 'La acción masiva elegida, con las filas seleccionadas de cualquier página.',
+    description: 'showroom.table.props.bulkAction',
   },
   {
     name: '(exportRequest)',
     type: '{ query, columns, selectedOnly }',
     default: '—',
-    description: 'Solo con fuente remota: la tabla no descarga, dice qué pidió el usuario.',
+    description: 'showroom.table.props.exportRequest',
   },
   {
     name: '(queryChange)',
     type: 'TableQuery',
     default: '—',
-    description:
-      'La consulta entera en cada cambio (el orden es una lista): lo que una vista guardada persistirá.',
+    description: 'showroom.table.props.queryChange',
   },
 ];
 
+/**
+ * t(showroom.table.anatomy.parts.rowHeightMd, showroom.table.anatomy.parts.rowHeightSm,
+ *   showroom.table.anatomy.parts.columnWidth, showroom.table.anatomy.parts.headerBackground,
+ *   showroom.table.anatomy.parts.headerBorder, showroom.table.anatomy.parts.rowBorder,
+ *   showroom.table.anatomy.parts.selectedRow, showroom.table.anatomy.parts.hoverRow,
+ *   showroom.table.anatomy.parts.dangerTint, showroom.table.anatomy.parts.warningTint,
+ *   showroom.table.anatomy.parts.exceptionMark, showroom.table.anatomy.parts.pinShadow,
+ *   showroom.table.anatomy.parts.focusRing, showroom.table.anatomy.parts.maxHeight,
+ *   showroom.table.anatomy.parts.resizeStep)
+ */
 const ANATOMY = [
-  { part: 'Alto de fila, densidad md', token: '--row-height-md' },
-  { part: 'Alto de fila, densidad sm', token: '--row-height-sm' },
-  { part: 'Ancho de columna sm / md / lg', token: '--col-width-md' },
-  { part: 'Fondo de la cabecera', token: '--color-bg-secondary' },
-  { part: 'Borde bajo la cabecera', token: '--color-border-strong' },
-  { part: 'Borde entre filas', token: '--color-border' },
-  { part: 'Fila seleccionada', token: '--color-row-selected' },
-  { part: 'Fila en hover y enfocada', token: '--color-row-hover' },
-  { part: 'Tinte de fila «Con incidencia»', token: '--color-row-danger' },
-  { part: 'Tinte de fila «En proceso»', token: '--color-row-warning' },
-  { part: 'Marca lateral de una excepción', token: '--row-mark-width' },
-  { part: 'Sombra de una fijada con contenido debajo', token: '--shadow-pin-start' },
-  { part: 'Anillo de foco de la celda', token: '--focus-ring-shadow' },
-  { part: 'Alto máximo: la cabecera queda fija', token: '--table-max-height' },
-  { part: 'Paso de las flechas al redimensionar', token: '--col-resize-step' },
+  { part: 'showroom.table.anatomy.parts.rowHeightMd', token: '--row-height-md' },
+  { part: 'showroom.table.anatomy.parts.rowHeightSm', token: '--row-height-sm' },
+  { part: 'showroom.table.anatomy.parts.columnWidth', token: '--col-width-md' },
+  { part: 'showroom.table.anatomy.parts.headerBackground', token: '--color-bg-secondary' },
+  { part: 'showroom.table.anatomy.parts.headerBorder', token: '--color-border-strong' },
+  { part: 'showroom.table.anatomy.parts.rowBorder', token: '--color-border' },
+  { part: 'showroom.table.anatomy.parts.selectedRow', token: '--color-row-selected' },
+  { part: 'showroom.table.anatomy.parts.hoverRow', token: '--color-row-hover' },
+  { part: 'showroom.table.anatomy.parts.dangerTint', token: '--color-row-danger' },
+  { part: 'showroom.table.anatomy.parts.warningTint', token: '--color-row-warning' },
+  { part: 'showroom.table.anatomy.parts.exceptionMark', token: '--row-mark-width' },
+  { part: 'showroom.table.anatomy.parts.pinShadow', token: '--shadow-pin-start' },
+  { part: 'showroom.table.anatomy.parts.focusRing', token: '--focus-ring-shadow' },
+  { part: 'showroom.table.anatomy.parts.maxHeight', token: '--table-max-height' },
+  { part: 'showroom.table.anatomy.parts.resizeStep', token: '--col-resize-step' },
 ] as const;
+
+/**
+ * Los cinco tipos de columna: el primer encabezado es el nombre de la entrada, y va igual en
+ * todos los idiomas.
+ * t(showroom.table.columnTypes.columns.type, showroom.table.columnTypes.columns.align,
+ *   showroom.table.columnTypes.columns.font, showroom.table.columnTypes.columns.filter)
+ */
+const COLUMN_TYPE_COLUMNS: readonly DocColumn[] = [
+  { id: 'type', label: 'showroom.table.columnTypes.columns.type' },
+  { id: 'align', label: 'showroom.table.columnTypes.columns.align' },
+  { id: 'font', label: 'showroom.table.columnTypes.columns.font' },
+  { id: 'filter', label: 'showroom.table.columnTypes.columns.filter' },
+];
+
+/**
+ * t(showroom.table.rowMatrix.columns.state, showroom.table.rowMatrix.columns.background,
+ *   showroom.table.rowMatrix.columns.mark, showroom.table.rowMatrix.columns.sample)
+ */
+const ROW_MATRIX_COLUMNS: readonly DocColumn[] = [
+  { id: 'state', label: 'showroom.table.rowMatrix.columns.state' },
+  { id: 'background', label: 'showroom.table.rowMatrix.columns.background' },
+  { id: 'mark', label: 'showroom.table.rowMatrix.columns.mark' },
+  { id: 'sample', label: 'showroom.table.rowMatrix.columns.sample' },
+];
+
+/** t(showroom.table.sizes.columns.density, showroom.table.sizes.columns.token) */
+const DENSITY_COLUMNS: readonly DocColumn[] = [
+  { id: 'density', label: 'showroom.table.sizes.columns.density' },
+  { id: 'token', label: 'showroom.table.sizes.columns.token' },
+];
+
+/** t(showroom.table.contract.keyboard.columns.key, showroom.table.contract.keyboard.columns.does) */
+const KEYBOARD_COLUMNS: readonly DocColumn[] = [
+  { id: 'key', label: 'showroom.table.contract.keyboard.columns.key' },
+  { id: 'does', label: 'showroom.table.contract.keyboard.columns.does' },
+];
+
+/**
+ * El nombre que la interfaz da a cada nivel de fila.
+ * t(showroom.table.levels.header, showroom.table.levels.line, showroom.table.levels.serial)
+ */
+const LEVELS: Readonly<Record<ExpedicionRow['nivel'], string>> = {
+  cabecera: 'showroom.table.levels.header',
+  linea: 'showroom.table.levels.line',
+  serie: 'showroom.table.levels.serial',
+};
+
+/**
+ * Lo que las demos anotan al vuelo: no hacen nada, dicen qué pasó.
+ * t(showroom.table.log.none, showroom.table.log.bulkChoice, showroom.table.query.none,
+ *   showroom.table.query.search, showroom.table.query.noSearch, showroom.table.query.filters,
+ *   showroom.table.query.noFilters, showroom.table.query.noSort, showroom.table.query.page)
+ */
+const LOG = {
+  none: 'showroom.table.log.none',
+  bulkChoice: 'showroom.table.log.bulkChoice',
+  queryNone: 'showroom.table.query.none',
+  search: 'showroom.table.query.search',
+  noSearch: 'showroom.table.query.noSearch',
+  filters: 'showroom.table.query.filters',
+  noFilters: 'showroom.table.query.noFilters',
+  noSort: 'showroom.table.query.noSort',
+  page: 'showroom.table.query.page',
+} as const;
 
 /**
  * /design-system/components/table: ficha de ewms-table. Primero la demo y después
@@ -308,9 +421,12 @@ const ANATOMY = [
     Table,
     TableColumn,
     DemoFrame,
+    DocTable,
     PropTable,
+    Prose,
     StateMatrix,
     TokenValue,
+    TranslocoPipe,
   ],
   templateUrl: './table.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -321,12 +437,26 @@ export class ShowroomTable {
   protected readonly version = DESIGN_SYSTEM_VERSION;
   protected readonly props = PROPS;
   protected readonly anatomy = ANATOMY;
+  protected readonly anatomyColumns = ANATOMY_COLUMNS;
+  protected readonly columnTypeColumns = COLUMN_TYPE_COLUMNS;
+  protected readonly rowMatrixColumns = ROW_MATRIX_COLUMNS;
+  protected readonly densityColumns = DENSITY_COLUMNS;
+  protected readonly keyboardColumns = KEYBOARD_COLUMNS;
   protected readonly matrixVariants = MATRIX_VARIANTS;
   protected readonly matrixStates = MATRIX_STATES;
-  protected readonly rowMatrix = ROW_MATRIX;
-  protected readonly estados = ESTADOS;
-  protected readonly consumerTemplate = CONSUMER_TEMPLATE;
-  protected readonly consumerComponent = CONSUMER_COMPONENT;
+  protected readonly estados = injectEstados();
+  protected readonly consumerTemplate = TEMPLATE_SNIPPET;
+  protected readonly consumerComponent = COMPONENT_SNIPPET;
+  protected readonly sampleCode = CODIGO_MUESTRA;
+
+  /** La matriz de fila, con los nombres en el idioma activo. */
+  protected readonly rowMatrix = translated((translate) =>
+    ROW_MATRIX.map((entry) => ({
+      ...entry,
+      state: translate(entry.state),
+      mark: typeof entry.mark === 'string' ? entry.mark : translate(entry.mark.label),
+    })),
+  );
 
   /** Una línea: ArrayTableSource ya filtra, ordena y pagina, por eso vive en la librería. */
   protected readonly expediciones = new ArrayTableSource<ExpedicionRow>(EXPEDICIONES, [
@@ -338,9 +468,8 @@ export class ShowroomTable {
 
   // --------------------------------------------------------------- lote D
 
-  protected readonly accionesFila = ACCIONES_FILA;
-  protected readonly masivas = ACCIONES_MASIVAS;
-  protected readonly ultimaMasiva = signal('(ninguna)');
+  protected readonly accionesFila = injectAccionesFila();
+  protected readonly masivas = injectAccionesMasivas();
   protected readonly hijosPerezosos = hijosPerezosos;
 
   /** Las cabeceras solas, para la demo de detalle y menú. */
@@ -376,12 +505,67 @@ export class ShowroomTable {
   /** Toda expedición tiene algo que enseñar; una línea suelta no. */
   protected readonly esMaestra = (row: ExpedicionRow): boolean => row.nivel === 'cabecera';
 
-  protected readonly ultimaAccion = signal('(ninguna)');
-  protected readonly ultimaDescarga = signal('(ninguna)');
+  /** Lo último que eligió o pidió cada demo, null mientras no haya nada: el texto sale abajo. */
+  private readonly masivaElegida = signal<{ readonly id: string; readonly count: number } | null>(
+    null,
+  );
+  private readonly accionElegida = signal<{ readonly id: string; readonly codigo: string } | null>(
+    null,
+  );
+  private readonly descargaPedida = signal<string | null>(null);
+  private readonly filaActivada = signal<ExpedicionRow | null>(null);
 
   protected readonly seleccion = signal<readonly ExpedicionRow[]>([]);
   protected readonly consulta = signal<TableQuery | null>(null);
-  protected readonly ultimaActivada = signal('(ninguna)');
+
+  /** Lo mismo, escrito para quien mira y en el idioma activo: si cambia, se vuelve a escribir. */
+  protected readonly ultimaMasiva = translated((translate) => {
+    const choice = this.masivaElegida();
+    return choice
+      ? translate(LOG.bulkChoice, {
+          action: labelOf(this.masivas(), choice.id),
+          count: choice.count,
+        })
+      : translate(LOG.none);
+  });
+
+  protected readonly ultimaAccion = translated((translate) => {
+    const choice = this.accionElegida();
+    return choice
+      ? `${labelOf(this.accionesFila(), choice.id)} · ${choice.codigo}`
+      : translate(LOG.none);
+  });
+
+  protected readonly ultimaDescarga = translated(
+    (translate) => this.descargaPedida() ?? translate(LOG.none),
+  );
+
+  protected readonly ultimaActivada = translated((translate) => {
+    const row = this.filaActivada();
+    return row ? `${row.codigo} (${translate(LEVELS[row.nivel])})` : translate(LOG.none);
+  });
+
+  /** La última consulta, en una línea legible. */
+  protected readonly consultaResumen = translated((translate) => {
+    const query = this.consulta();
+    if (!query) {
+      return translate(LOG.queryNone);
+    }
+    const filters = Object.keys(query.filters);
+    const sort =
+      query.sort.length === 0
+        ? translate(LOG.noSort)
+        : query.sort.map((entry) => `${entry.key} ${entry.direction}`).join(', ');
+    const search =
+      query.search === ''
+        ? translate(LOG.noSearch)
+        : translate(LOG.search, { search: query.search });
+    const byColumn =
+      filters.length === 0
+        ? translate(LOG.noFilters)
+        : translate(LOG.filters, { keys: filters.join(', ') });
+    return `${search} · ${byColumn} · ${sort} · ${translate(LOG.page, { page: query.page })}`;
+  });
 
   /** Líneas del fragmento, leídas del DOM. */
   protected readonly templateLines = signal(NOT_MEASURED);
@@ -401,7 +585,7 @@ export class ShowroomTable {
   }
 
   protected abrir(event: RowActivateEvent<ExpedicionRow>): void {
-    this.ultimaActivada.set(`${event.row.codigo} (${event.row.nivel})`);
+    this.filaActivada.set(event.row);
   }
 
   protected cargarTodas(): void {
@@ -416,16 +600,16 @@ export class ShowroomTable {
 
   /** No hace nada: lo anota, como el resto de las demos. */
   protected masiva(event: BulkActionEvent<ExpedicionRow>): void {
-    this.ultimaMasiva.set(`${event.item.label} · ${event.rows.length} expediciones`);
+    this.masivaElegida.set({ id: event.item.id, count: event.rows.length });
   }
 
   protected elegir(event: RowMenuEvent<ExpedicionRow>): void {
-    this.ultimaAccion.set(`${event.item.label} · ${event.row.codigo}`);
+    this.accionElegida.set({ id: event.item.id, codigo: event.row.codigo });
   }
 
   /** No descarga nada, solo lo anota: ninguna demo tiene datos reales ni red. */
   protected descargar(row: ExpedicionRow): void {
-    this.ultimaDescarga.set(row.codigo);
+    this.descargaPedida.set(row.codigo);
   }
 
   /** Cuántas líneas cuelgan de una cabecera, según la lista completa. */
@@ -441,28 +625,13 @@ export class ShowroomTable {
     return TINTED.has(variant);
   }
 
+  /** El nombre del estado que pinta esa variante, del mismo diccionario que el badge de la tabla. */
   protected labelFor(variant: string): string {
-    return LABELS[variant] ?? '';
+    return Object.values(this.estados()).find((badge) => badge.variant === variant)?.label ?? '';
   }
 
   protected isBadge(stateId: string): boolean {
     return stateId === 'badge';
-  }
-
-  /** La última consulta, en una línea legible. */
-  protected consultaResumen(): string {
-    const query = this.consulta();
-    if (!query) {
-      return '(todavía ninguna)';
-    }
-    const filters = Object.keys(query.filters);
-    const sort =
-      query.sort.length === 0
-        ? 'sin orden'
-        : query.sort.map((entry) => `${entry.key} ${entry.direction}`).join(', ');
-    const search = query.search === '' ? 'sin búsqueda' : `«${query.search}»`;
-    const byColumn = filters.length === 0 ? 'sin filtros' : `filtros: ${filters.join(', ')}`;
-    return `${search} · ${byColumn} · ${sort} · página ${query.page}`;
   }
 }
 
@@ -470,4 +639,9 @@ export class ShowroomTable {
 function countLines(element: Element | null): number | null {
   const text = element?.textContent;
   return text ? text.trimEnd().split('\n').length : null;
+}
+
+/** El texto de una acción por su id, del menú ya traducido; el id si ya no está. */
+function labelOf(items: readonly MenuItem[], id: string): string {
+  return items.find((item) => item.id === id)?.label ?? id;
 }

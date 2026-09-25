@@ -1,11 +1,14 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { Text, type TextVariant } from '@ewms/design-system';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { DemoFrame } from '../../ui/demo-frame';
+import { Prose } from '../../ui/prose';
 import { TokenValue } from '../../ui/token-value';
 
 /**
  * Un paso de la escala. `lineHeight` y `weight` pueden nombrar un token inexistente: tokens.css
  * deja sin decidir tres interlineados y el peso mono, y la fila muestra el hueco sin adivinar.
+ * `sample` y `use` son claves del diccionario; `label` es el nombre de la variante, sin traducir.
  */
 interface ScaleStep {
   readonly variant: TextVariant;
@@ -19,12 +22,21 @@ interface ScaleStep {
   readonly pending: readonly string[];
 }
 
+/**
+ * t(showroom.typography.scale.h1.sample, showroom.typography.scale.h1.use,
+ *   showroom.typography.scale.h2.sample, showroom.typography.scale.h2.use,
+ *   showroom.typography.scale.h3.sample, showroom.typography.scale.h3.use,
+ *   showroom.typography.scale.h4.sample, showroom.typography.scale.h4.use,
+ *   showroom.typography.scale.p.sample, showroom.typography.scale.p.use,
+ *   showroom.typography.scale.caption.sample, showroom.typography.scale.caption.use,
+ *   showroom.typography.scale.mono.sample, showroom.typography.scale.mono.use)
+ */
 const SCALE: readonly ScaleStep[] = [
   {
     variant: 'h1',
     label: 'H1',
-    sample: 'Recepción de mercancía',
-    use: 'Título de página. Uno por pantalla.',
+    sample: 'showroom.typography.scale.h1.sample',
+    use: 'showroom.typography.scale.h1.use',
     size: '--text-h1-size',
     weight: '--text-h1-weight',
     lineHeight: '--text-h1-line-height',
@@ -33,8 +45,8 @@ const SCALE: readonly ScaleStep[] = [
   {
     variant: 'h2',
     label: 'H2',
-    sample: 'Órdenes pendientes',
-    use: 'Título de sección.',
+    sample: 'showroom.typography.scale.h2.sample',
+    use: 'showroom.typography.scale.h2.use',
     size: '--text-h2-size',
     weight: '--text-h2-weight',
     lineHeight: '--text-h2-line-height',
@@ -43,8 +55,8 @@ const SCALE: readonly ScaleStep[] = [
   {
     variant: 'h3',
     label: 'H3',
-    sample: 'Detalle del bulto',
-    use: 'Subsección, o encabezado de una card.',
+    sample: 'showroom.typography.scale.h3.sample',
+    use: 'showroom.typography.scale.h3.use',
     size: '--text-h3-size',
     weight: '--text-h3-weight',
     lineHeight: '--text-h3-line-height',
@@ -53,8 +65,8 @@ const SCALE: readonly ScaleStep[] = [
   {
     variant: 'h4',
     label: 'H4',
-    sample: 'Ubicación',
-    use: 'Etiqueta destacada. La mayúscula la aplica el componente, no el texto.',
+    sample: 'showroom.typography.scale.h4.sample',
+    use: 'showroom.typography.scale.h4.use',
     size: '--text-h4-size',
     weight: '--text-h4-weight',
     lineHeight: '--text-h4-line-height',
@@ -63,8 +75,8 @@ const SCALE: readonly ScaleStep[] = [
   {
     variant: 'p',
     label: 'P',
-    sample: 'El operario confirma la cantidad recibida antes de cerrar la recepción.',
-    use: 'Cuerpo de texto.',
+    sample: 'showroom.typography.scale.p.sample',
+    use: 'showroom.typography.scale.p.use',
     size: '--text-p-size',
     weight: '--text-p-weight',
     lineHeight: '--text-p-line-height',
@@ -73,8 +85,8 @@ const SCALE: readonly ScaleStep[] = [
   {
     variant: 'caption',
     label: 'Caption',
-    sample: 'Actualizado hace 3 minutos',
-    use: 'Metadatos y timestamps. Lleva color secundario.',
+    sample: 'showroom.typography.scale.caption.sample',
+    use: 'showroom.typography.scale.caption.use',
     size: '--text-caption-size',
     weight: '--text-caption-weight',
     lineHeight: '--text-caption-line-height',
@@ -83,8 +95,8 @@ const SCALE: readonly ScaleStep[] = [
   {
     variant: 'mono',
     label: 'Mono',
-    sample: 'SKU-48812-A / LOTE 2026-09',
-    use: 'Códigos, SKU, lotes, IDs.',
+    sample: 'showroom.typography.scale.mono.sample',
+    use: 'showroom.typography.scale.mono.use',
     size: '--text-mono-size',
     weight: '--text-mono-weight',
     lineHeight: '--text-mono-line-height',
@@ -98,7 +110,7 @@ const SCALE: readonly ScaleStep[] = [
  */
 @Component({
   selector: 'ewms-showroom-typography',
-  imports: [Text, DemoFrame, TokenValue],
+  imports: [Text, DemoFrame, Prose, TokenValue, TranslocoPipe],
   templateUrl: './typography.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

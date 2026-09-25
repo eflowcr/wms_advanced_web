@@ -41,22 +41,18 @@
     }
 
     <!--
-      Destino de `/`. Un `<input>` y no `ewms-select`: todavía no hay nada que
-      buscar, y un buscador que parece real sin estar conectado es peor.
-    -->
-    <!--
-      Solo en pantalla ancha: a 375 px el campo desbordaba el header. Cuando haya qué
-      buscar, la vista angosta abre una búsqueda sobre la página. Ver vault: App-Shell.
+      Destino de `/`, y todavía no busca nada: conectarlo es de los dominios. Solo en pantalla
+      ancha: a 375 px desbordaba el header. Ver vault: App-Shell.
     -->
     @if (viewport.isWide()) {
       <div class="min-w-0 flex-1">
-        <label class="sr-only" for="shell-search">{{ 'shell.search.label' | transloco }}</label>
-        <input
+        <ewms-input
           #headerSearch
-          id="shell-search"
+          class="max-w-96"
           type="search"
-          class="h-10 w-full max-w-96 rounded-control border border-strong bg-surface px-3 text-p text-primary outline-none focus-visible:shadow-(--focus-ring-shadow)"
           data-shell-search
+          [label]="'shell.search.label' | transloco"
+          [hideLabel]="true"
           [placeholder]="'shell.search.placeholder' | transloco"
         />
       </div>

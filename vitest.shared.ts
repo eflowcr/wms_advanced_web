@@ -44,6 +44,9 @@ export function projectRunner(thresholds: CoverageThresholds, alsoExclude: strin
         exclude: [
           ...alsoExclude,
           '**/*.spec.ts',
+          // Soporte de pruebas, como los specs: ayudantes y datos del TestBed, no código probado.
+          '**/*.testing.ts',
+          '**/projects/testing/**',
           '**/public-api.ts',
           '**/*.config.ts',
           '**/*.routes.ts',

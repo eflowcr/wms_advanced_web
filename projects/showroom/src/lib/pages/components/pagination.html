@@ -1,55 +1,46 @@
-<!-- Showroom solo en español, exento de i18n (compuerta 12): se declara para que el lector de pantalla no lo lea en inglés. -->
-<article class="flex flex-col gap-10" lang="es">
+<article class="flex flex-col gap-10">
   <!-- ============================================================ 1. Encabezado -->
   <header class="flex flex-col gap-2" data-block="1-encabezado">
     <div class="flex flex-wrap items-baseline gap-3">
-      <h1 class="text-h1">Paginación</h1>
+      <h1 class="text-h1">{{ 'showroom.catalog.pagination.name' | transloco }}</h1>
       <code class="font-mono text-primary">&lt;ewms-pagination&gt;</code>
     </div>
     <ul class="flex flex-wrap gap-2 text-caption">
-      <li class="rounded-sm bg-secondary px-2 py-1 text-secondary">
-        Versión <span class="font-mono">{{ version }}</span>
+      <li
+        class="rounded-sm bg-secondary px-2 py-1 text-secondary"
+        [ewmsProse]="'showroom.common.header.version' | transloco: { version }"
+      ></li>
+      <li class="rounded-sm bg-success-surface px-2 py-1 text-success">
+        {{ 'showroom.common.header.built' | transloco }}
       </li>
-      <li class="rounded-sm bg-success-surface px-2 py-1 text-success">Construido y en verde</li>
-      <li class="rounded-sm bg-secondary px-2 py-1 text-secondary">
-        Ficha: <span class="font-mono">08-Sistema-de-Diseno/Componentes/Tabla.md</span>
-      </li>
+      <li
+        class="rounded-sm bg-secondary px-2 py-1 text-secondary"
+        [ewmsProse]="
+          'showroom.common.header.sheet'
+            | transloco: { path: '08-Sistema-de-Diseno/Componentes/Tabla.md' }
+        "
+      ></li>
     </ul>
   </header>
 
   <!-- ================================================ 2. Qué resuelve / cuándo no -->
   <section class="flex flex-col gap-4" aria-labelledby="pg-purpose" data-block="2-proposito">
-    <h2 id="pg-purpose" class="text-h2">Qué resuelve, y cuándo NO usarlo</h2>
+    <h2 id="pg-purpose" class="text-h2">{{ 'showroom.common.sections.purpose' | transloco }}</h2>
     <div class="grid grid-cols-[repeat(auto-fit,minmax(min(20rem,100%),1fr))] gap-4">
       <div class="flex flex-col gap-2 rounded-md border border-default bg-surface p-4">
-        <h3 class="text-h3">Qué resuelve</h3>
-        <p>
-          <strong>Moverse por un conjunto de resultados que no cabe de una vez.</strong> Anterior,
-          siguiente, y dónde estás. La tabla lo monta sola cuando la fuente devuelve un
-          <code class="font-mono">total</code>, pero el componente es independiente: una lista de
-          tarjetas, un registro de eventos o una cola de picking paginan igual y no son tablas.
-        </p>
-        <p class="text-caption text-secondary">
-          Por eso vive fuera de <code class="font-mono">table/</code>: cerrar el hueco que el
-          catálogo tenía reservado desde DS-2 y que la tabla sólo es el primero en usar.
-        </p>
+        <h3 class="text-h3">{{ 'showroom.common.sections.solves' | transloco }}</h3>
+        <p [ewmsProse]="'showroom.pagination.purpose.solves' | transloco"></p>
+        <p
+          class="text-caption text-secondary"
+          [ewmsProse]="'showroom.pagination.purpose.scope' | transloco"
+        ></p>
       </div>
       <div class="flex flex-col gap-2 rounded-md border border-danger bg-danger-surface p-4">
-        <h3 class="text-h3">Cuándo NO usarlo</h3>
+        <h3 class="text-h3">{{ 'showroom.common.sections.avoid' | transloco }}</h3>
         <ul class="flex flex-col gap-2">
-          <li>
-            <strong>Si la lista se recorre entera, va la ventana.</strong> Cinco mil ubicaciones se
-            miran desplazándose, no pasando doscientas páginas.
-          </li>
-          <li>
-            <strong>Si la fuente no cuenta, no hay paginador.</strong> Con
-            <code class="font-mono">total: null</code> no existe una última página, y un control que
-            insinúa un final que no conoce miente.
-          </li>
-          <li>
-            <strong>Si hace falta saltar a una página concreta, todavía no existe.</strong> Está
-            declarado como hueco: la lista de números se reporta, no se construye.
-          </li>
+          <li [ewmsProse]="'showroom.pagination.purpose.window' | transloco"></li>
+          <li [ewmsProse]="'showroom.pagination.purpose.noCount' | transloco"></li>
+          <li [ewmsProse]="'showroom.pagination.purpose.jump' | transloco"></li>
         </ul>
       </div>
     </div>
@@ -57,13 +48,10 @@
 
   <!-- ========================================================= 3. Demo principal -->
   <section class="flex flex-col gap-4" aria-labelledby="pg-demo" data-block="3-demo">
-    <h2 id="pg-demo" class="text-h2">Demo</h2>
-    <p class="text-secondary">
-      Siete páginas y un total sintético. Los extremos se
-      <strong>deshabilitan</strong> en lugar de no hacer nada al pulsarlos.
-    </p>
+    <h2 id="pg-demo" class="text-h2">{{ 'showroom.common.sections.demo' | transloco }}</h2>
+    <p class="text-secondary" [ewmsProse]="'showroom.pagination.demo.intro' | transloco"></p>
 
-    <ewms-demo-frame ground="surface" label="El componente real">
+    <ewms-demo-frame ground="surface" [label]="'showroom.pagination.demo.frame' | transloco">
       <div class="flex flex-col gap-4" data-demo-pagination>
         <ewms-pagination
           [page]="pagina()"
@@ -73,207 +61,185 @@
         />
 
         <div class="flex flex-wrap items-center gap-3">
-          <button
-            type="button"
-            class="cursor-pointer rounded-sm border border-strong bg-surface px-2 py-1 text-caption text-primary outline-none focus-visible:shadow-(--focus-ring-shadow)"
-            data-toggle-total
-            (click)="alternarTotal()"
-          >
-            {{ conTotal() ? 'Quitar el total' : 'Devolver el total' }}
-          </button>
+          <ewms-button variant="secondary" size="sm" data-toggle-total (click)="alternarTotal()">
+            @if (conTotal()) {
+              {{ 'showroom.pagination.demo.dropTotal' | transloco }}
+            } @else {
+              {{ 'showroom.pagination.demo.restoreTotal' | transloco }}
+            }
+          </ewms-button>
           <span class="font-mono text-caption text-primary" data-page-value>
-            page = {{ pagina() }}
+            {{ 'showroom.pagination.demo.pageValue' | transloco: { page: pagina() } }}
           </span>
         </div>
       </div>
     </ewms-demo-frame>
 
     <div class="flex flex-col gap-2 rounded-md border border-strong bg-secondary p-4">
-      <h3 class="text-h4">Desde cero por dentro, desde uno en pantalla</h3>
-      <p class="text-caption">
-        <code class="font-mono">page</code> y <code class="font-mono">pageChange</code> cuentan
-        desde cero, igual que <code class="font-mono">TableQuery</code>: así el valor que sale del
-        control es el que entra en la consulta, sin sumar ni restar por el camino. La traducción a
-        «Página 1 de 7» ocurre una sola vez, dentro del componente.
-      </p>
-      <p class="text-caption">
-        <strong>No hay lista de números de página.</strong> Numerar exige saber cuántas páginas hay
-        —y a una fuente se le permite no contar— y además exige una regla para elidir el centro, que
-        es una decisión que nadie ha pedido. Anterior y siguiente funcionan sepa lo que sepa la
-        fuente, y «Página 3 de 17» dice el resto.
-      </p>
+      <h3 class="text-h4">{{ 'showroom.pagination.demo.zeroBased.title' | transloco }}</h3>
+      <p
+        class="text-caption"
+        [ewmsProse]="'showroom.pagination.demo.zeroBased.body' | transloco"
+      ></p>
+      <p class="text-caption" [ewmsProse]="'showroom.pagination.demo.noNumbers' | transloco"></p>
     </div>
   </section>
 
   <!-- =============================================================== 4. Variantes -->
   <section class="flex flex-col gap-4" aria-labelledby="pg-variants" data-block="4-variantes">
-    <h2 id="pg-variants" class="text-h2">Variantes</h2>
+    <h2 id="pg-variants" class="text-h2">
+      {{ 'showroom.common.sections.variants' | transloco }}
+    </h2>
     <div class="flex flex-col gap-2 rounded-md border border-strong bg-secondary p-4">
-      <h3 class="text-h4">No aplica — el paginador no tiene variantes visuales</h3>
-      <p>
-        No sigue el patrón <code class="font-mono">Componente/Variante/Tamaño/Estado</code>: hay una
-        sola forma. Lo único que cambia es <strong>si dice el total o no</strong>, y eso no es una
-        variante sino lo que la fuente sabe.
-      </p>
+      <h3 class="text-h4">{{ 'showroom.pagination.variants.title' | transloco }}</h3>
+      <p [ewmsProse]="'showroom.pagination.variants.body' | transloco"></p>
     </div>
   </section>
 
   <!-- ========================================================= 5. Matriz de estados -->
   <section class="flex flex-col gap-4" aria-labelledby="pg-matrix" data-block="5-matriz">
-    <h2 id="pg-matrix" class="text-h2">Matriz de estados</h2>
-    <p class="text-secondary">
-      Tres situaciones, y en las tres el estado llega por <strong>dos</strong> caminos: cómo se ve y
-      qué dice el DOM.
-    </p>
-    <div class="overflow-x-auto">
-      <table class="w-full border-collapse text-caption">
-        <caption class="mb-2 text-left text-secondary">
-          Dónde está la página y qué se puede pulsar
-        </caption>
-        <thead>
-          <tr>
-            <th scope="col" class="border-b border-default p-2 text-left text-secondary">
-              Situación
-            </th>
-            <th scope="col" class="border-b border-default p-2 text-left text-secondary">
-              Anterior
-            </th>
-            <th scope="col" class="border-b border-default p-2 text-left text-secondary">
-              Siguiente
-            </th>
-            <th scope="col" class="border-b border-default p-2 text-left text-secondary">
-              Lo que se anuncia
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <th scope="row" class="border-b border-default p-2 text-left text-primary">
-              Primera página
-            </th>
-            <td class="border-b border-default p-2 text-primary">deshabilitado</td>
-            <td class="border-b border-default p-2 text-primary">activo</td>
-            <td class="border-b border-default p-2 font-mono text-primary">Página 1 de 7</td>
-          </tr>
-          <tr>
-            <th scope="row" class="border-b border-default p-2 text-left text-primary">
-              Página intermedia
-            </th>
-            <td class="border-b border-default p-2 text-primary">activo</td>
-            <td class="border-b border-default p-2 text-primary">activo</td>
-            <td class="border-b border-default p-2 font-mono text-primary">Página N de 7</td>
-          </tr>
-          <tr>
-            <th scope="row" class="border-b border-default p-2 text-left text-primary">
-              Última página
-            </th>
-            <td class="border-b border-default p-2 text-primary">activo</td>
-            <td class="border-b border-default p-2 text-primary">deshabilitado</td>
-            <td class="border-b border-default p-2 font-mono text-primary">Página 7 de 7</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+    <h2 id="pg-matrix" class="text-h2">{{ 'showroom.common.sections.states' | transloco }}</h2>
+    <p class="text-secondary" [ewmsProse]="'showroom.pagination.states.intro' | transloco"></p>
+    <ewms-doc-table
+      [caption]="'showroom.pagination.states.caption' | transloco"
+      [columns]="stateColumns"
+      [rows]="['first', 'middle', 'last']"
+    >
+      <ng-template let-row let-column="column">
+        @switch (column.id) {
+          @case ('where') {
+            @switch (row) {
+              @case ('first') {
+                {{ 'showroom.pagination.states.first' | transloco }}
+              }
+              @case ('middle') {
+                {{ 'showroom.pagination.states.middle' | transloco }}
+              }
+              @default {
+                {{ 'showroom.pagination.states.last' | transloco }}
+              }
+            }
+          }
+          @case ('previous') {
+            @if (row === 'first') {
+              {{ 'showroom.pagination.states.disabled' | transloco }}
+            } @else {
+              {{ 'showroom.pagination.states.enabled' | transloco }}
+            }
+          }
+          @case ('next') {
+            @if (row === 'last') {
+              {{ 'showroom.pagination.states.disabled' | transloco }}
+            } @else {
+              {{ 'showroom.pagination.states.enabled' | transloco }}
+            }
+          }
+          @default {
+            <span class="font-mono">
+              @switch (row) {
+                @case ('first') {
+                  {{
+                    'showroom.pagination.states.announced' | transloco: { page: 1, pages: paginas }
+                  }}
+                }
+                @case ('middle') {
+                  {{
+                    'showroom.pagination.states.announced'
+                      | transloco: { page: 'N', pages: paginas }
+                  }}
+                }
+                @default {
+                  {{
+                    'showroom.pagination.states.announced'
+                      | transloco: { page: paginas, pages: paginas }
+                  }}
+                }
+              }
+            </span>
+          }
+        }
+      </ng-template>
+    </ewms-doc-table>
     <div class="flex flex-col gap-2 rounded-md border border-strong bg-secondary p-4">
-      <h3 class="text-h4">El color nunca es la única señal (WCAG 1.4.1)</h3>
-      <p class="text-caption">
-        Un extremo no se ve sólo por estar más apagado: lleva el atributo
-        <code class="font-mono">disabled</code> nativo, así que un lector de pantalla lo dice y el
-        teclado lo salta. Quien no distinga el gris del azul se entera igual.
-      </p>
+      <h3 class="text-h4">{{ 'showroom.pagination.states.colour.title' | transloco }}</h3>
+      <p
+        class="text-caption"
+        [ewmsProse]="'showroom.pagination.states.colour.body' | transloco"
+      ></p>
     </div>
   </section>
 
   <!-- ================================================================= 6. Tamaños -->
   <section class="flex flex-col gap-4" aria-labelledby="pg-sizes" data-block="6-tamanos">
-    <h2 id="pg-sizes" class="text-h2">Tamaños</h2>
+    <h2 id="pg-sizes" class="text-h2">{{ 'showroom.common.sections.sizes' | transloco }}</h2>
     <div class="flex flex-col gap-2 rounded-md border border-strong bg-secondary p-4">
-      <h3 class="text-h4">No aplica — un solo tamaño, y es el pequeño</h3>
-      <p>
-        Los dos botones son <code class="font-mono">ewms-button iconOnly</code> en
-        <code class="font-mono">sm</code>. Un paginador es un control secundario: va debajo del
-        contenido, se usa poco y no debe competir con lo que se está mirando. Un tamaño configurable
-        sería una invitación a ponerlo más grande que la tabla.
-      </p>
+      <h3 class="text-h4">{{ 'showroom.pagination.sizes.title' | transloco }}</h3>
+      <p [ewmsProse]="'showroom.pagination.sizes.body' | transloco"></p>
     </div>
   </section>
 
   <!-- ===================================================== 7. Anatomía y tokens -->
   <section class="flex flex-col gap-4" aria-labelledby="pg-anatomy" data-block="7-anatomia">
-    <h2 id="pg-anatomy" class="text-h2">Anatomía y tokens</h2>
+    <h2 id="pg-anatomy" class="text-h2">{{ 'showroom.common.sections.anatomy' | transloco }}</h2>
     <ul class="flex flex-col gap-2">
       @for (item of anatomy; track item.token) {
         <li
           class="flex flex-wrap items-center gap-3 rounded-md border border-default bg-surface p-3"
         >
-          <span class="text-caption text-secondary">{{ item.part }}</span>
+          <span class="text-caption text-secondary">{{ item.part | transloco }}</span>
           <ewms-token-value [token]="item.token" />
         </li>
       }
     </ul>
-    <p class="text-caption text-secondary">
-      No trae ningún token propio: los dos botones son
-      <code class="font-mono">ewms-button iconOnly</code> en tamaño <code class="font-mono">sm</code>,
-      con su caja, su anillo de foco y su comportamiento deshabilitado ya decididos. Una segunda
-      copia de esos botones aquí se habría separado de los demás en la primera revisión.
-    </p>
+    <p
+      class="text-caption text-secondary"
+      [ewmsProse]="'showroom.pagination.anatomy.noTokens' | transloco"
+    ></p>
   </section>
 
   <!-- ============================================== 8. Contrato para Angular -->
   <section class="flex flex-col gap-4" aria-labelledby="pg-contract" data-block="8-contrato">
-    <h2 id="pg-contract" class="text-h2">Contrato para Angular</h2>
+    <h2 id="pg-contract" class="text-h2">
+      {{ 'showroom.common.sections.contract' | transloco }}
+    </h2>
 
-    <ewms-prop-table [rows]="props" caption="Propiedades de <ewms-pagination>" />
+    <ewms-prop-table [rows]="props" [caption]="'showroom.pagination.props.caption' | transloco" />
 
-    <h3 class="text-h3">Teclado y anuncio</h3>
+    <h3 class="text-h3">{{ 'showroom.pagination.keyboard.title' | transloco }}</h3>
     <ul class="flex flex-col gap-2">
-      <li class="rounded-md border border-default bg-surface p-3">
-        <strong>Dos paradas de tabulador, ni una más.</strong> Son dos botones, y no hay estado
-        oculto entre ellos.
-      </li>
-      <li class="rounded-md border border-default bg-surface p-3">
-        <strong>Es una región de navegación con nombre.</strong> Un
-        <code class="font-mono">&lt;nav&gt;</code> con <code class="font-mono">aria-label</code>,
-        porque eso es lo que es: una manera de ir a otro sitio dentro de un conjunto de resultados.
-      </li>
-      <li class="rounded-md border border-default bg-surface p-3">
-        <strong>El cambio de página se anuncia.</strong> «Página N de M» es
-        <code class="font-mono">role="status"</code> con
-        <code class="font-mono">aria-live="polite"</code>: el foco se queda en el botón pulsado —que
-        es lo correcto, porque la siguiente pulsación suele ser la misma— y sin la región viva nada
-        diría que el contenido de debajo ha cambiado.
-      </li>
+      <li
+        class="rounded-md border border-default bg-surface p-3"
+        [ewmsProse]="'showroom.pagination.keyboard.twoStops' | transloco"
+      ></li>
+      <li
+        class="rounded-md border border-default bg-surface p-3"
+        [ewmsProse]="'showroom.pagination.keyboard.landmark' | transloco"
+      ></li>
+      <li
+        class="rounded-md border border-default bg-surface p-3"
+        [ewmsProse]="'showroom.pagination.keyboard.announced' | transloco"
+      ></li>
     </ul>
 
-    <h3 class="text-h3">Los textos se proveen una vez</h3>
+    <h3 class="text-h3">{{ 'showroom.pagination.messages.title' | transloco }}</h3>
     <div class="flex flex-col gap-2 rounded-md border border-strong bg-secondary p-4">
-      <p class="text-caption">
-        <code class="font-mono">EWMS_PAGINATION_MESSAGES</code> se provee una sola vez por
-        aplicación, como el de la tabla o el del select: una pantalla con tres paginadores no
-        escribe el mismo diccionario tres veces. La entrada
-        <code class="font-mono">[messages]</code> es opcional y parcial, y solo sobrescribe lo que
-        una instancia necesite decir distinto. Sin proveedor el control funciona igual y queda
-        mudo. Dentro de una tabla no hay nada que pasar: el paginador pide los suyos.
-      </p>
+      <p class="text-caption" [ewmsProse]="'showroom.pagination.messages.body' | transloco"></p>
     </div>
 
-    <h3 class="text-h3">Errores comunes</h3>
+    <h3 class="text-h3">{{ 'showroom.common.sections.mistakes' | transloco }}</h3>
     <ul class="flex flex-col gap-2">
-      <li class="rounded-md border border-danger bg-danger-surface p-3">
-        <strong>Sumar uno antes de pasarlo.</strong>
-        <code class="font-mono">page</code> es el mismo número que viaja en
-        <code class="font-mono">TableQuery</code>. Si hay que sumar en el consumidor, alguien va a
-        olvidarse de restar.
-      </li>
-      <li class="rounded-md border border-danger bg-danger-surface p-3">
-        <strong>Cambiar la página dentro del propio componente.</strong> No cambia nada por su
-        cuenta: emite lo que se le ha pedido y espera a que la fuente conteste. Un paginador que se
-        adelanta enseña una página que todavía no ha llegado.
-      </li>
-      <li class="rounded-md border border-danger bg-danger-surface p-3">
-        <strong>Montarlo sin saber cuántas páginas hay.</strong> Sin
-        <code class="font-mono">pageCount</code> no hay último extremo que deshabilitar.
-      </li>
+      <li
+        class="rounded-md border border-danger bg-danger-surface p-3"
+        [ewmsProse]="'showroom.pagination.mistakes.addOne' | transloco"
+      ></li>
+      <li
+        class="rounded-md border border-danger bg-danger-surface p-3"
+        [ewmsProse]="'showroom.pagination.mistakes.selfChange' | transloco"
+      ></li>
+      <li
+        class="rounded-md border border-danger bg-danger-surface p-3"
+        [ewmsProse]="'showroom.pagination.mistakes.noCount' | transloco"
+      ></li>
     </ul>
   </section>
 </article>

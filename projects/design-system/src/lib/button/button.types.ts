@@ -1,6 +1,6 @@
 import type { IconSize } from '../icon/icon';
 
-export type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'ghost';
+export type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'ghost' | 'link';
 export type ButtonSize = 'sm' | 'md' | 'lg';
 export type ButtonIconPosition = 'left' | 'right';
 
@@ -29,6 +29,9 @@ export const BUTTON_PADDING_CLASSES: Readonly<Record<ButtonSize, string>> = {
   lg: 'px-5',
 };
 
+/** Link, en `sm` y `md`: sin fondo, el relleno solo separa el anillo de foco del texto. */
+export const LINK_PADDING_CLASS = 'px-2';
+
 /** Solo ícono: cuadrado, mismo paso de escala en los dos ejes. */
 export const ICON_ONLY_BOX_CLASSES: Readonly<Record<ButtonSize, string>> = {
   sm: 'h-8 w-8',
@@ -46,7 +49,8 @@ export const BUTTON_BASE_CLASSES =
 
 /**
  * Deshabilitado gana: sin hover ni activo. Ghost lleva su frente como clase, porque en hover
- * oscurece el texto (4.38:1 no pasa, 5.65:1 sí) y en línea no hay hover. Ver vault: Boton.
+ * oscurece el texto (4.38:1 no pasa, 5.65:1 sí) y en línea no hay hover. Link descansa en el tono
+ * de hover: el de marca mide 4.31:1 sobre la superficie de peligro. Ver vault: Boton.
  */
 export function buttonVariantClasses(variant: ButtonVariant, disabled: boolean): string {
   if (disabled) {
@@ -58,6 +62,7 @@ export function buttonVariantClasses(variant: ButtonVariant, disabled: boolean):
       case 'danger':
         return 'bg-danger-disabled text-disabled cursor-not-allowed';
       case 'ghost':
+      case 'link':
         return 'bg-transparent text-disabled cursor-not-allowed';
     }
   }
@@ -74,6 +79,8 @@ export function buttonVariantClasses(variant: ButtonVariant, disabled: boolean):
         'bg-transparent hover:bg-ghost-hover cursor-pointer ' +
         'text-(color:--color-bg-primary) hover:text-(color:--color-bg-primary-hover)'
       );
+    case 'link':
+      return 'bg-transparent cursor-pointer text-(color:--color-bg-primary-hover) hover:underline';
   }
 }
 
@@ -84,6 +91,8 @@ export function buttonSpinnerColor(variant: ButtonVariant): string {
       return 'var(--color-text-secondary)';
     case 'ghost':
       return 'var(--color-bg-primary)';
+    case 'link':
+      return 'var(--color-bg-primary-hover)';
     default:
       return 'inherit';
   }

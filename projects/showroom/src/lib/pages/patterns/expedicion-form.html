@@ -11,44 +11,58 @@
   data-expedicion-form
 >
   <h2 [id]="titleId" class="text-h3 text-primary">
-    {{ isNew ? 'Nueva expedición' : 'Editar la expedición' }}
+    @if (isNew) {
+      {{ 'showroom.common.shipmentForm.title.new' | transloco }}
+    } @else {
+      {{ 'showroom.common.shipmentForm.title.edit' | transloco }}
+    }
   </h2>
 
   <ewms-input
-    label="Código"
-    placeholder="EXP-2026-0000"
-    hint="El código que llevará la etiqueta."
+    [label]="'showroom.common.shipmentForm.code' | transloco"
+    [placeholder]="codePlaceholder"
+    [hint]="'showroom.common.shipmentForm.codeHint' | transloco"
     [formField]="alta.codigo"
     data-form-codigo
   />
 
   <ewms-input
-    label="Cliente"
-    placeholder="Distribuidora Andes"
+    [label]="'showroom.common.shipmentForm.customer' | transloco"
+    [placeholder]="customerPlaceholder"
     [formField]="alta.cliente"
     data-form-cliente
   />
 
-  <ewms-select label="Estado" [options]="estados" [formField]="alta.estado" data-form-estado />
+  <ewms-select
+    [label]="'showroom.common.shipmentForm.state' | transloco"
+    [options]="estados()"
+    [formField]="alta.estado"
+    data-form-estado
+  />
 
   <!--
     Toggle y no Checkbox aunque haya Guardar: «urgente» no cambia nada hasta guardar igual,
     y el interruptor se lee como propiedad de la expedición, no como orden al formulario.
   -->
-  <ewms-toggle label="Urgente" [formField]="alta.urgente" data-form-urgente />
+  <ewms-toggle
+    [label]="'showroom.common.shipmentForm.urgent' | transloco"
+    [formField]="alta.urgente"
+    data-form-urgente
+  />
 
-  <p class="text-caption text-secondary">
-    <kbd class="font-mono">Ctrl</kbd> + <kbd class="font-mono">S</kbd> guarda sin soltar el teclado
-    —desde cualquier campo, que es justo donde está el foco cuando se quiere guardar—.
-    <kbd class="font-mono">Esc</kbd> cancela, en un solo gesto y sin preguntar.
-  </p>
+  <p
+    class="text-caption text-secondary"
+    [ewmsProse]="'showroom.common.shipmentForm.keyboard' | transloco"
+  ></p>
 
   <!-- Cancelar primero en el DOM: el CDK enfoca el primer tabulable y debe ser la respuesta segura. -->
   <div class="flex w-full justify-end gap-2">
-    <ewms-button variant="secondary" data-form-cancel (click)="cancel()"> Cancelar </ewms-button>
+    <ewms-button variant="secondary" data-form-cancel (click)="cancel()">
+      {{ 'showroom.common.shipmentForm.cancel' | transloco }}
+    </ewms-button>
     <!-- Guardar nunca se deshabilita: al enviar con errores se muestra el resumen y se enfoca. -->
     <ewms-button variant="primary" type="submit" [loading]="pattern.busy()" data-form-save>
-      Guardar
+      {{ 'showroom.common.shipmentForm.save' | transloco }}
     </ewms-button>
   </div>
 </form>

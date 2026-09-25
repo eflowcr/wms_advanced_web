@@ -1,13 +1,52 @@
+import { inject, type Provider } from '@angular/core';
 import { maxError, minError, validate, type SchemaPath } from '@angular/forms/signals';
+import { EWMS_FORM_MESSAGES, type FormMessages } from '@ewms/design-system';
+import { TranslocoService } from '@jsverse/transloco';
 
 /** EXP-AAAA-NNNN: el código que lleva la etiqueta. */
 const CODIGO = /^EXP-\d{4}-\d{4}$/;
 
 /**
- * El `kind` del proyecto para el formato del código. Su texto no vive acá: sale de
- * `EWMS_FORM_MESSAGES` por `kind`, como los nueve de Angular (ADR 0013).
+ * El `kind` del proyecto para el formato del código. Su texto sale de `EWMS_FORM_MESSAGES` por
+ * `kind`, como los nueve de Angular (ADR 0013): lo suma `provideShipmentCodeMessage()`.
  */
 export const SHIPMENT_CODE = 'shipmentCode';
+
+/**
+ * Clave del scope del catálogo. Constante y marcador, no el literal en translate(): el extractor lo
+ * daría por clave del diccionario raíz.
+ * t(showroom.form.errors.shipmentCode)
+ */
+const SHIPMENT_CODE_MESSAGE = 'showroom.form.errors.shipmentCode';
+
+/**
+ * Los mensajes de arriba (los del shell, traducidos) más el del `kind` propio, en el componente que
+ * usa `shipmentCode()`. Delega con getters: copiar el objeto congelaría el idioma del momento. En un
+ * diálogo, «arriba» existe solo si se abre con el `injector` de la pantalla.
+ */
+export function provideShipmentCodeMessage(): Provider {
+  return {
+    provide: EWMS_FORM_MESSAGES,
+    useFactory: (): FormMessages => {
+      const parent = inject(EWMS_FORM_MESSAGES, { skipSelf: true });
+      const transloco = inject(TranslocoService);
+      const shipmentCode = () => transloco.translate(SHIPMENT_CODE_MESSAGE);
+      return {
+        get errors() {
+          return { ...parent.errors, [SHIPMENT_CODE]: shipmentCode };
+        },
+        customError: (limit) => parent.customError(limit),
+        errorSummary: (count) => parent.errorSummary(count),
+        get errorSummaryLabel() {
+          return parent.errorSummaryLabel;
+        },
+        get requiredLegend() {
+          return parent.requiredLegend;
+        },
+      };
+    },
+  };
+}
 
 /**
  * Función de esquema reutilizable: la usan el formulario del catálogo y el de
