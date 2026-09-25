@@ -44,19 +44,21 @@
   </div>
 
   <!-- El ancho es estado del rail: `expanded` entra, el cambio sale. -->
-  <div class="flex shrink-0 p-2" [class.justify-center]="!expanded()">
-    <button
-      type="button"
-      class="flex items-center justify-center rounded-sm p-2 outline-none hover:bg-primary-hover focus-visible:shadow-(--focus-ring-shadow)"
-      data-nav-rail-toggle
-      [attr.aria-label]="toggleLabel()"
-      [attr.aria-expanded]="expanded()"
-      [attr.aria-controls]="treeId"
-      (click)="onToggleWidth()"
-    >
-      <ewms-icon [name]="expanded() ? 'sidebar-collapse' : 'sidebar-expand'" size="lg" />
-    </button>
-  </div>
+  @if (toggleLabel()) {
+    <div class="flex shrink-0 p-2" [class.justify-center]="!expanded()">
+      <button
+        type="button"
+        class="flex items-center justify-center rounded-sm p-2 outline-none hover:bg-primary-hover focus-visible:shadow-(--focus-ring-shadow)"
+        data-nav-rail-toggle
+        [attr.aria-label]="toggleLabel()"
+        [attr.aria-expanded]="expanded()"
+        [attr.aria-controls]="treeId"
+        (click)="onToggleWidth()"
+      >
+        <ewms-icon [name]="expanded() ? 'sidebar-collapse' : 'sidebar-expand'" size="lg" />
+      </button>
+    </div>
+  }
 </nav>
 
 <!-- `aria-label` solo plegada: el tooltip no es nombre accesible (WCAG 4.1.2). Ver vault: Navegacion. -->

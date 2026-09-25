@@ -36,7 +36,7 @@ export class NavRail {
   /** Null mientras nada coincide. */
   readonly activeId = input<string | null>(null);
 
-  /** Rail plegado (72) o panel abierto (232). */
+  /** Rail plegado (72) o panel abierto (240). */
   readonly expanded = input<boolean>(true);
 
   /** Un grupo nunca emite: se abre. */
@@ -44,7 +44,11 @@ export class NavRail {
 
   readonly expandedChange = output<boolean>();
 
-  readonly toggleLabel = input.required<string>();
+  /**
+   * Con nombre, el rail dibuja al pie su botón de ancho (el catálogo, sin cabecera). Vacía no hay
+   * botón: en la app el único conmutador es la hamburguesa de la cabecera.
+   */
+  readonly toggleLabel = input<string>('');
 
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
 

@@ -23,7 +23,7 @@ const TREE: readonly NavItem[] = [
     <ewms-nav-rail
       [items]="items()"
       label="Menú principal"
-      toggleLabel="Contraer el menú"
+      [toggleLabel]="toggleLabel()"
       [activeId]="activeId()"
       [expanded]="expanded()"
       (itemSelect)="chosen = $event.id"
@@ -39,6 +39,7 @@ class TestHost {
   readonly items = signal(TREE);
   readonly activeId = signal<string | null>(null);
   readonly expanded = signal(true);
+  readonly toggleLabel = signal('Contraer el menú');
 
   chosen: string | null = null;
   askedWidth: boolean | null = null;
@@ -228,6 +229,15 @@ describe('NavRail', () => {
     expect(host.askedWidth).toBe(false);
     // El ancho es del consumidor.
     expect(host.expanded()).toBe(true);
+  });
+
+  it('draws no width button without a name: the app toggles from the header', async () => {
+    host.toggleLabel.set('');
+    await settle();
+
+    expect(fixture.nativeElement.querySelector('[data-nav-rail-toggle]')).toBeNull();
+    // El árbol sigue entero: solo se va el botón.
+    expect(rows()).toHaveLength(3);
   });
 
   it('has no axe violations, open group and all', async () => {

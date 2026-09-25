@@ -93,6 +93,18 @@ describe('SearchBox', () => {
     expect(fixture.componentInstance.searched).toEqual(['caja plegable', 'caja plegable']);
   });
 
+  it('keeps the button off, and out of the Tab order, until there is something to search', async () => {
+    expect(submitButton().disabled).toBe(true);
+    expect(submitButton().className).toContain('text-secondary');
+
+    await type('   ');
+    expect(submitButton().disabled).toBe(true);
+
+    await type('caja');
+    expect(submitButton().disabled).toBe(false);
+    expect(submitButton().className).toContain('text-primary');
+  });
+
   it('does not search for nothing', async () => {
     await type('   ');
     field().dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));

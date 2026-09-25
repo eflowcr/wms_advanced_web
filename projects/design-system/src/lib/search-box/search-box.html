@@ -36,7 +36,7 @@
     } @else if (shortcut() && !hasText() && !disabled()) {
       <!-- Decorativa: la tecla ya la dice `aria-keyshortcuts`. -->
       <kbd
-        class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 rounded-sm border border-default px-1.5 font-mono text-caption text-secondary"
+        class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 rounded-sm border border-default px-1 font-mono text-caption text-secondary"
         aria-hidden="true"
         data-search-shortcut
         >{{ shortcut() }}</kbd
@@ -49,7 +49,7 @@
     [class]="buttonClasses()"
     data-search-submit
     [attr.aria-label]="words().submit"
-    [disabled]="disabled()"
+    [disabled]="!canSubmit()"
     (click)="submit()"
   >
     <ewms-icon name="search" size="lg" />

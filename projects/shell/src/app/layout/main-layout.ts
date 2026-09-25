@@ -10,7 +10,7 @@ import {
   viewChild,
 } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
-import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
+import { NavigationEnd, Router, RouterLink, RouterOutlet } from '@angular/router';
 import { filter, map, startWith } from 'rxjs';
 import { SessionContext } from '@ewms/core';
 import { catalogKeyFor } from '@ewms/showroom';
@@ -20,15 +20,16 @@ import {
   FavoriteToggle,
   FavoritesNav,
   Button,
-  Input,
   KeyboardShortcuts,
   NavBottom,
   NavRail,
+  SearchBox,
   ShortcutsHost,
   Tabs,
   ToastOutlet,
   ToastService,
   Viewport,
+  isSingleCharacter,
   type Crumb,
   type Favorite,
   type NavItem,
@@ -52,11 +53,12 @@ import { MAX_OPEN_TABS, TabsService } from './tabs.service';
     FavoriteToggle,
     FavoritesNav,
     Button,
-    Input,
     LanguageSwitcher,
     NavBottom,
     NavRail,
+    RouterLink,
     RouterOutlet,
+    SearchBox,
     ShortcutsHost,
     Tabs,
     ToastOutlet,
@@ -85,7 +87,17 @@ export class MainLayout {
   protected readonly maxTabs = MAX_OPEN_TABS;
 
   private readonly main = viewChild<ElementRef<HTMLElement>>('main');
-  private readonly searchField = viewChild<Input>('headerSearch');
+  private readonly searchField = viewChild<SearchBox>('headerSearch');
+
+  /** La pista sale del mapa y se apaga con los atajos de un carácter (WCAG 2.2 2.1.4). */
+  protected readonly searchShortcut = computed(() => {
+    const binding = this.shortcuts.bindings()?.search;
+    if (binding === undefined) {
+      return '';
+    }
+    const off = isSingleCharacter(binding) && !this.shortcuts.singleKeyShortcuts();
+    return off ? '' : binding.chord.join('+');
+  });
 
   /** Rail colapsado o panel expandido; solo en memoria. */
   protected readonly railExpanded = signal(true);

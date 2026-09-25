@@ -5,7 +5,7 @@
 <div class="flex min-h-screen flex-col bg-canvas" ewmsShortcutsHost>
   <!-- Primero en el DOM (WCAG 2.4.1): con dieciséis destinos, sin él se paga el menú entero. -->
   <a
-    class="sr-only rounded-sm bg-primary px-4 py-2 text-p text-on-primary focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-10"
+    class="sr-only rounded-sm bg-primary px-4 py-2 text-p text-on-primary focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-(--layer-skip-link)"
     href="#main"
     data-skip-link
     (click)="onSkip($event)"
@@ -13,80 +13,100 @@
     {{ 'shell.skipToContent' | transloco }}
   </a>
 
+  <!--
+    Tres zonas (estructura de YouTube, decisión del usuario 2026-09-25). Los lados en `1fr` iguales
+    centran el buscador aunque midan distinto; el centro llega hasta su token. Ver vault: App-Shell.
+  -->
   <header
-    class="flex h-(--shell-header-height) shrink-0 items-center gap-2 border-b border-default bg-surface px-3"
+    class="sticky top-0 z-(--layer-shell) grid h-(--shell-header-height) shrink-0 grid-cols-[1fr_minmax(0,var(--search-max-width))_1fr] items-center gap-4 bg-surface px-4"
     data-app-header
   >
-    <!-- La hamburguesa solo existe donde hay rail: debajo del corte manda la barra inferior. -->
-    @if (viewport.isWide()) {
-      <ewms-button
-        [iconOnly]="true"
-        icon="menu"
-        variant="ghost"
-        data-rail-toggle
-        [label]="'shell.nav.toggleMenu' | transloco"
-        [expanded]="railExpanded()"
-        (click)="onRailExpandedChange(!railExpanded())"
-      />
-    }
+    <div class="flex items-center gap-2">
+      <!-- La hamburguesa solo existe donde hay rail: debajo del corte manda la barra inferior. -->
+      @if (viewport.isWide()) {
+        <ewms-button
+          [iconOnly]="true"
+          icon="menu"
+          variant="ghost"
+          data-rail-toggle
+          [label]="'shell.nav.toggleMenu' | transloco"
+          [expanded]="railExpanded()"
+          (click)="onRailExpandedChange(!railExpanded())"
+        />
+      }
 
-    <!--
-      A 375 px el logotipo ocupa 145 px y el header se desbordaba de costado; se usa el
-      isotipo en vez de truncar la marca. `[alt]` enlazado: la marca no es clave (brand.ts).
-    -->
-    @if (viewport.isWide()) {
-      <span class="shrink-0 text-h3 text-primary">{{ brandName }}</span>
-    } @else {
-      <img class="h-8 w-auto shrink-0" src="/brand/ewms-isotipo.svg" [alt]="brandName" />
-    }
+      <!--
+        A 375 px el logotipo desbordaba la cabecera: va el isotipo. `max-w-none`: con el `max-width: 100%`
+        de la base, la rejilla medía el logo en cero y el buscador lo tapaba a 1024 px. `width`/`height`
+        (proporción del viewBox): sin ellos el enlace mide cero hasta que carga el SVG.
+      -->
+      <a
+        class="flex shrink-0 items-center rounded-sm outline-none focus-visible:shadow-(--focus-ring-shadow)"
+        routerLink="/"
+        data-shell-home
+      >
+        @if (viewport.isWide()) {
+          <img
+            class="h-8 w-auto max-w-none"
+            src="/brand/ewms-lockup.svg"
+            width="1050"
+            height="327"
+            [alt]="brandName"
+          />
+        } @else {
+          <img
+            class="h-8 w-auto max-w-none"
+            src="/brand/ewms-isotipo.svg"
+            width="173"
+            height="175"
+            [alt]="brandName"
+          />
+        }
+      </a>
+    </div>
 
-    <!--
-      Destino de `/`, y todavía no busca nada: conectarlo es de los dominios. Solo en pantalla
-      ancha: a 375 px desbordaba el header. Ver vault: App-Shell.
-    -->
-    @if (viewport.isWide()) {
-      <div class="min-w-0 flex-1">
-        <ewms-input
+    <!-- Destino de `/`, y todavía no busca: conectarlo es de los dominios. A 375 px no se dibuja. -->
+    <div class="flex min-w-0 justify-center">
+      @if (viewport.isWide()) {
+        <ewms-search-box
           #headerSearch
-          class="max-w-96"
-          type="search"
           data-shell-search
           [label]="'shell.search.label' | transloco"
-          [hideLabel]="true"
           [placeholder]="'shell.search.placeholder' | transloco"
+          [shortcut]="searchShortcut()"
         />
-      </div>
-    } @else {
-      <span class="flex-1"></span>
-    }
+      }
+    </div>
 
-    <ewms-favorite-toggle
-      [route]="pageRoute()"
-      [addLabel]="'shell.favorites.add' | transloco"
-      [removeLabel]="'shell.favorites.remove' | transloco"
-      [addedMessage]="'shell.favorites.added' | transloco"
-      [removedMessage]="'shell.favorites.removed' | transloco"
-    />
+    <div class="flex items-center justify-end gap-1">
+      <ewms-favorite-toggle
+        [route]="pageRoute()"
+        [addLabel]="'shell.favorites.add' | transloco"
+        [removeLabel]="'shell.favorites.remove' | transloco"
+        [addedMessage]="'shell.favorites.added' | transloco"
+        [removedMessage]="'shell.favorites.removed' | transloco"
+      />
 
-    <app-language-switcher />
+      <app-language-switcher />
 
-    <ewms-button
-      [iconOnly]="true"
-      icon="logout"
-      variant="ghost"
-      data-shell-logout
-      [label]="'shell.session.signOut' | transloco"
-    />
+      <ewms-button
+        [iconOnly]="true"
+        icon="logout"
+        variant="ghost"
+        data-shell-logout
+        [label]="'shell.session.signOut' | transloco"
+      />
 
-    <!-- Decorativo: el usuario ya está escrito al pie del rail; anunciarlo dos veces es ruido. -->
-    <span
-      class="flex size-10 shrink-0 items-center justify-center rounded-full bg-secondary text-h4 text-primary"
-      data-shell-avatar
-      [attr.title]="session.user().name"
-      aria-hidden="true"
-    >
-      {{ session.user().initials }}
-    </span>
+      <!-- Decorativo: el usuario ya está escrito al pie del rail; anunciarlo dos veces es ruido. -->
+      <span
+        class="ml-2 flex size-8 shrink-0 items-center justify-center rounded-full bg-secondary text-caption text-primary"
+        data-shell-avatar
+        [attr.title]="session.user().name"
+        aria-hidden="true"
+      >
+        {{ session.user().initials }}
+      </span>
+    </div>
   </header>
 
   <div class="flex min-h-0 flex-1">
@@ -95,7 +115,6 @@
         class="shrink-0"
         [items]="navItems()"
         [label]="'shell.nav.mainMenu' | transloco"
-        [toggleLabel]="'shell.nav.toggleMenu' | transloco"
         [activeId]="activeId()"
         [expanded]="railExpanded()"
         (itemSelect)="onNavItemSelect($event)"

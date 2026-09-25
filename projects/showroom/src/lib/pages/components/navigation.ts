@@ -57,7 +57,7 @@ const RAIL_PROPS: readonly PropRow[] = [
   {
     name: 'toggleLabel',
     type: 'string',
-    default: '—',
+    default: "''",
     description: 'showroom.navigation.props.rail.toggleLabel',
   },
   {

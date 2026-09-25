@@ -279,7 +279,8 @@ test.describe('a panel that does not fit flips instead of falling off', () => {
         (el, position) => {
           const style = (el as HTMLElement).style;
           style.position = 'fixed';
-          style.zIndex = '1';
+          // Sobre la cabecera fija: en las esquinas de arriba la tapaba y el puntero no llegaba.
+          style.zIndex = 'calc(var(--layer-shell) + 1)';
           style.top = position.top;
           style.left = position.left;
         },

@@ -1388,7 +1388,7 @@
         "itemSelect": "A chosen destination. A group never emits: it opens.",
         "items": "<b>Required.</b> The tree. An item with <code>children</code> is a group: it opens, it does not navigate.",
         "label": "<b>Required.</b> The name of the landmark, already translated. A page has more than one nav.",
-        "toggleLabel": "<b>Required.</b> Name of the control that changes the width, already translated.",
+        "toggleLabel": "Name of the width button at the foot of the rail, already translated. Empty, the button is not drawn: in the app the only toggle is the header hamburger.",
         "top": "Projected slot, above the tree. The favourites block goes there; the rail does not know what it is."
       },
       "railCaption": "Properties of <ewms-nav-rail>",
@@ -2226,7 +2226,8 @@
     "a11y": {
       "clear": "The <b>×</b> appears only when there is text: on an empty field it would be a control that does nothing. After clearing, the focus goes back to the field.",
       "label": "The label is not visible, but it is a real <code><label for></code>: the placeholder disappears while typing and many screen readers do not announce it. The field has <code>role=\"searchbox\"</code>.",
-      "shortcut": "The key is announced once, with <code>aria-keyshortcuts</code> on the field. The visible <code><kbd></code> is <code>aria-hidden</code>: otherwise it would be read twice."
+      "shortcut": "The key is announced once, with <code>aria-keyshortcuts</code> on the field. The visible <code><kbd></code> is <code>aria-hidden</code>: otherwise it would be read twice.",
+      "submit": "The search button is off while there is nothing to search (empty or only spaces), with its icon in grey. Off is not a <kbd>Tab</kbd> stop, and <kbd>Enter</kbd> already searches from the field; with text it turns on and joins the <kbd>Tab</kbd> order."
     },
     "anatomy": {
       "parts": {
@@ -2237,7 +2238,7 @@
         "buttonHover": "Search button on hover",
         "field": "Field background",
         "focusRing": "Focus ring",
-        "hint": "Placeholder and key hint",
+        "hint": "Placeholder, key hint and the icon of the idle button",
         "maxWidth": "Maximum width",
         "shape": "Pill shape"
       }

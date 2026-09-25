@@ -74,7 +74,17 @@ export class SearchBox implements OnInit {
   }));
 
   protected readonly fieldClasses = computed(() => searchFieldClasses(this.disabled()));
-  protected readonly buttonClasses = computed(() => searchButtonClasses(this.disabled()));
+  /**
+   * Vacío no busca: el botón espera texto, y apagado no es parada de Tab. Enter ya busca desde el
+   * campo, y así la cabecera no suma una parada al techo del marco. Ver vault: Componentes/Buscador.
+   */
+  protected readonly canSubmit = computed(
+    () => !this.disabled() && normalizeQuery(this.value()) !== '',
+  );
+
+  protected readonly buttonClasses = computed(() =>
+    searchButtonClasses(this.disabled(), this.canSubmit()),
+  );
 
   /** Con texto, la × ocupa el lugar de la pista: las dos juntas se leían como un campo roto. */
   protected readonly hasText = computed(() => this.value().length > 0);

@@ -80,12 +80,13 @@ const STATES: readonly MatrixAxis[] = [
 /** Estados en filas y contenido en columnas: dos píldoras anchas por fila. t(showroom.searchBox.states.rowHeader) */
 const ROW_HEADER = 'showroom.searchBox.states.rowHeader';
 
-/** Hover y foco forzados con la misma utilidad del token que usa el componente. */
+/**
+ * Hover y foco forzados con la misma utilidad del token que usa el componente. `[&_input]` y no
+ * `[data-search-field]`: el anillo ya lo fuerzan otras páginas con esa clase y no suma CSS.
+ */
 const FORCED_STATE_CLASSES: Readonly<Record<string, string>> = {
-  hover: '[&_[data-search-field]]:border-strong-hover [&_[data-search-submit]]:bg-secondary-hover',
-  focus:
-    '[&_[data-search-field]]:border-(color:--color-focus-ring) ' +
-    '[&_[data-search-field]]:shadow-(--focus-ring-shadow)',
+  hover: '[&_input]:border-strong-hover [&_[data-search-submit]:enabled]:bg-secondary-hover',
+  focus: '[&_input]:border-(color:--color-focus-ring) [&_input]:shadow-(--focus-ring-shadow)',
 };
 
 /**

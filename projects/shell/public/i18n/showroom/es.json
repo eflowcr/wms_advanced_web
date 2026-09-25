@@ -1388,7 +1388,7 @@
         "itemSelect": "Un destino elegido. Un grupo nunca emite: abre.",
         "items": "<b>Obligatoria.</b> El árbol. Un ítem con <code>children</code> es un grupo: abre, no navega.",
         "label": "<b>Obligatoria.</b> El nombre del landmark, ya traducido. Una página tiene más de un nav.",
-        "toggleLabel": "<b>Obligatoria.</b> Nombre del control que cambia el ancho, ya traducido.",
+        "toggleLabel": "Nombre del botón de ancho al pie del rail, ya traducido. Vacía, el botón no se dibuja: en la app el único conmutador es la hamburguesa de la cabecera.",
         "top": "Ranura proyectada, encima del árbol. Ahí va el bloque de favoritos; el rail no sabe qué es."
       },
       "railCaption": "Propiedades de <ewms-nav-rail>",
@@ -2226,7 +2226,8 @@
     "a11y": {
       "clear": "La <b>×</b> aparece solo con texto: sobre un campo vacío sería un control que no hace nada. Al limpiar, el foco vuelve al campo.",
       "label": "La etiqueta no se ve, pero es un <code><label for></code> de verdad: el placeholder desaparece al escribir y muchos lectores no lo anuncian. El campo tiene <code>role=\"searchbox\"</code>.",
-      "shortcut": "La tecla se anuncia una vez, con <code>aria-keyshortcuts</code> en el campo. El <code><kbd></code> que se ve va <code>aria-hidden</code>: si no, se leería dos veces."
+      "shortcut": "La tecla se anuncia una vez, con <code>aria-keyshortcuts</code> en el campo. El <code><kbd></code> que se ve va <code>aria-hidden</code>: si no, se leería dos veces.",
+      "submit": "El botón buscar está apagado mientras no hay nada que buscar (vacío o solo espacios), con el ícono en gris. Apagado no es parada de <kbd>Tab</kbd>, y <kbd>Enter</kbd> ya busca desde el campo; con texto se enciende y entra al orden de <kbd>Tab</kbd>."
     },
     "anatomy": {
       "parts": {
@@ -2237,7 +2238,7 @@
         "buttonHover": "Botón buscar en hover",
         "field": "Fondo del campo",
         "focusRing": "Anillo de foco",
-        "hint": "Placeholder y pista de tecla",
+        "hint": "Placeholder, pista de tecla e ícono del botón apagado",
         "maxWidth": "Ancho máximo",
         "shape": "Forma de píldora"
       }
