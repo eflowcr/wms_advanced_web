@@ -445,14 +445,14 @@
                 <span class="flex items-center gap-2 text-caption text-danger">
                   <ewms-icon name="circle-x" size="sm" />
                   {{ text().childrenFailed }}
-                  <button
-                    type="button"
-                    class="cursor-pointer rounded-sm px-2 py-1 outline-none focus-visible:shadow-(--focus-ring-shadow) text-(color:--color-bg-primary) hover:text-(color:--color-bg-primary-hover)"
+                  <ewms-button
+                    variant="link"
+                    size="sm"
                     [attr.data-retry]="rowIndex"
                     (click)="retryChildren(flat)"
                   >
                     {{ text().retry }}
-                  </button>
+                  </ewms-button>
                 </span>
               </td>
             </tr>

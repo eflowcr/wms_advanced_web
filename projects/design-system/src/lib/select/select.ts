@@ -35,6 +35,7 @@ import {
   type FieldState,
 } from '../field/field.types';
 import { fieldErrorText } from '../forms/field-note';
+import { Button } from '../button/button';
 import { EmptyState } from '../empty-state/empty-state';
 import { Icon } from '../icon/icon';
 import { ScanDetector } from '../keyboard/scan-detector';
@@ -71,7 +72,7 @@ let nextSelectId = 0;
 @Component({
   selector: 'ewms-select',
   templateUrl: './select.html',
-  imports: [EmptyState, Icon],
+  imports: [Button, EmptyState, Icon],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { class: 'block' },
 })

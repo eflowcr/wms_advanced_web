@@ -15,6 +15,7 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { submit, type FieldTree } from '@angular/forms/signals';
 import { Banner } from '../banner/banner';
+import { Button } from '../button/button';
 import { KeyboardShortcuts } from '../keyboard/keyboard-shortcuts';
 import { EWMS_FORM_MESSAGES, NO_FORM_MESSAGES } from './form.types';
 
@@ -33,7 +34,7 @@ interface InvalidField {
  */
 @Component({
   selector: 'ewms-form-errors',
-  imports: [Banner],
+  imports: [Banner, Button],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { class: 'block', tabindex: '-1' },
   template: `
@@ -46,14 +47,14 @@ interface InvalidField {
       <ul class="flex flex-col gap-1">
         @for (field of fields(); track field.label; let index = $index) {
           <li>
-            <button
-              type="button"
-              class="cursor-pointer rounded-sm underline outline-none focus-visible:shadow-(--focus-ring-shadow)"
+            <ewms-button
+              variant="link"
+              size="sm"
               [attr.data-form-error]="index"
               (click)="choose.emit(field)"
             >
               {{ field.label }}
-            </button>
+            </ewms-button>
           </li>
         }
       </ul>

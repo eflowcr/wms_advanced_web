@@ -61,13 +61,9 @@
   >
     <ewms-icon name="circle-x" size="sm" />
     <span class="flex-1">{{ words().error }}</span>
-    <button
-      type="button"
-      class="rounded-sm px-2 py-1 cursor-pointer outline-none focus-visible:shadow-(--focus-ring-shadow) text-(color:--color-bg-primary) hover:text-(color:--color-bg-primary-hover)"
-      (click)="search.retry()"
-    >
+    <ewms-button variant="link" size="sm" (click)="search.retry()">
       {{ words().retry }}
-    </button>
+    </ewms-button>
   </div>
 }
 

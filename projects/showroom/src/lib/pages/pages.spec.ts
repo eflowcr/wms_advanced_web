@@ -428,18 +428,18 @@ describe('ShowroomButton', () => {
     }
   });
 
-  it('renders the four variants with their canonical names', async () => {
+  it('renders the five variants with their canonical names', async () => {
     const { element } = await render(ShowroomButton);
     const variants = [...element.querySelectorAll('[data-variant]')].map((el) =>
       el.getAttribute('data-variant'),
     );
-    expect(variants).toEqual(['primary', 'secondary', 'danger', 'ghost']);
+    expect(variants).toEqual(['primary', 'secondary', 'danger', 'ghost', 'link']);
   });
 
   it('renders the matrix with the real component in every cell', async () => {
     const { element } = await render(ShowroomButton);
     const matrix = element.querySelector('ewms-state-matrix');
-    expect(matrix?.querySelectorAll('tbody ewms-button')).toHaveLength(20);
+    expect(matrix?.querySelectorAll('tbody ewms-button')).toHaveLength(25);
   });
 
   it('forces hover and focus with the token the component itself would use', async () => {
@@ -451,6 +451,7 @@ describe('ShowroomButton', () => {
     expect(page.forced('ghost', 'hover')).toBe(
       '[&_button]:bg-ghost-hover [&_button]:text-(color:--color-bg-primary-hover)',
     );
+    expect(page.forced('link', 'hover')).toBe('[&_button]:underline');
     expect(page.forced('danger', 'focus')).toContain('focus-ring-shadow');
     // Disabled y Loading son entradas reales: no se fuerza nada.
     expect(page.forced('primary', 'disabled')).toBe('');

@@ -7,6 +7,7 @@ import {
   input,
   output,
 } from '@angular/core';
+import { Button } from '../button/button';
 import { Icon } from '../icon/icon';
 
 /** Un filtro activo, para su chip: columna o campo, y el valor ya legible. */
@@ -39,7 +40,7 @@ export const NO_FILTER_CHIPS_MESSAGES: FilterChipsMessages = {
  */
 @Component({
   selector: 'ewms-filter-chips',
-  imports: [Icon],
+  imports: [Button, Icon],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { class: 'block' },
   template: `
@@ -65,14 +66,9 @@ export const NO_FILTER_CHIPS_MESSAGES: FilterChipsMessages = {
           </li>
         }
         <li>
-          <button
-            type="button"
-            class="cursor-pointer rounded-sm px-2 py-1 text-caption outline-none focus-visible:shadow-(--focus-ring-shadow) text-(color:--color-bg-primary) hover:text-(color:--color-bg-primary-hover)"
-            data-clear-filters
-            (click)="clearAll.emit()"
-          >
+          <ewms-button variant="link" size="sm" data-clear-filters (click)="clearAll.emit()">
             {{ text().clearFilters }}
-          </button>
+          </ewms-button>
         </li>
       </ul>
     }

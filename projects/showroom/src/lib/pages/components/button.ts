@@ -21,6 +21,7 @@ const VARIANTS: readonly MatrixAxis[] = [
   { id: 'secondary', label: 'Secondary' },
   { id: 'danger', label: 'Danger' },
   { id: 'ghost', label: 'Ghost' },
+  { id: 'link', label: 'Link' },
 ];
 
 const STATES: readonly MatrixAxis[] = [
@@ -37,6 +38,7 @@ const VARIANT_BY_ID: Readonly<Record<string, ButtonVariant>> = {
   secondary: 'secondary',
   danger: 'danger',
   ghost: 'ghost',
+  link: 'link',
 };
 
 /**
@@ -54,12 +56,14 @@ const FORCED: Readonly<Record<string, Readonly<Record<string, string>>>> = {
     // Ghost cambia fondo y texto en hover. Forzar solo el fondo mostró el par
     // 4.38:1 que axe detectó en el PR 3: un estado que el componente ya no tiene.
     ghost: '[&_button]:bg-ghost-hover [&_button]:text-(color:--color-bg-primary-hover)',
+    link: '[&_button]:underline',
   },
   focus: {
     primary: FOCUS_RING,
     secondary: FOCUS_RING,
     danger: FOCUS_RING,
     ghost: FOCUS_RING,
+    link: FOCUS_RING,
   },
 };
 
@@ -70,9 +74,10 @@ const FORCED: Readonly<Record<string, Readonly<Record<string, string>>>> = {
 const PROPS: readonly PropRow[] = [
   {
     name: 'variant',
-    type: "'primary' | 'secondary' | 'danger' | 'ghost'",
+    type: "'primary' | 'secondary' | 'danger' | 'ghost' | 'link'",
     default: "'primary'",
-    description: 'El énfasis. Una sola Primary por vista o formulario.',
+    description:
+      'El énfasis. Una sola Primary por vista o formulario. Link es texto sin caja, en sm y md, para acciones dentro de un aviso o una línea.',
   },
   {
     name: 'size',
@@ -154,6 +159,7 @@ const ANATOMY = [
   { part: 'Fondo, variante Secondary', token: '--color-bg-secondary' },
   { part: 'Borde, variante Secondary', token: '--color-border-strong' },
   { part: 'Fondo de Ghost en hover', token: '--color-ghost-hover' },
+  { part: 'Texto de Link, en reposo y en hover', token: '--color-bg-primary-hover' },
   { part: 'Fondo, variante Danger', token: '--color-bg-danger' },
   { part: 'Fondo deshabilitado (Primary)', token: '--color-bg-primary-disabled' },
   { part: 'Texto deshabilitado', token: '--color-text-disabled' },

@@ -138,6 +138,15 @@
       <code class="font-mono">--color-ghost-hover</code> mide 4.38:1 y la 1.4.3 pide 4.5:1; el tono
       de hover mide 5.65:1.
     </p>
+    <p class="text-caption text-secondary" data-link-note>
+      <strong>Link</strong> es un botón con cara de texto: sin fondo ni borde, en Small y Medium,
+      para una acción dentro de un aviso o de una línea —reintentar, limpiar los filtros, ir al
+      campo con error—. Hace algo; si llevara a otra dirección, sería un
+      <code class="font-mono">&lt;a&gt;</code>. Descansa en
+      <code class="font-mono">--color-bg-primary-hover</code> y en hover se subraya: el azul de
+      marca mide 4.31:1 sobre <code class="font-mono">--color-danger-surface</code>, donde vive el
+      reintento del Select, y el tono de hover, 5.54:1.
+    </p>
   </section>
 
   <!-- ============================================================ 4b. Solo ícono -->
@@ -201,7 +210,7 @@
       <ewms-state-matrix
         [variants]="variants"
         [states]="states"
-        caption="Cuatro variantes por cinco estados"
+        caption="Cinco variantes por cinco estados"
       >
         <ng-template let-variant="variant" let-state="state">
           <span [class]="forced(variant.id, state.id)">
