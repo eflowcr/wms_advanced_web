@@ -1,17 +1,7 @@
 /**
- * Regla 10: tokens de diseño (ADR 0005, ADR 0009). Falla si algo bajo projects/ se sale
- * del sistema. Tres controles:
- *
- *   1. Valores crudos en .css/.html/.ts: hex, funciones de color y px.
- *   2. Utilidades por defecto de Tailwind: no llevan hex y saltean el sistema igual, y
- *      Tailwind descarta en silencio la clase desconocida. Sin lista a mano: cada token
- *      con forma de clase se compila contra Tailwind de fábrica y contra nuestro
- *      styles.css; si genera CSS en el primero y no en el nuestro, es una por defecto.
- *   3. Primitivos fuera de tokens.css (ADR 0007): primitivo es un token sin var().
- *
- * Excepciones por ruta exacta: tokens.css, y startup-failure.css, que se pinta cuando la
- * app no arrancó y no puede leer tokens.css; ahí solo pasan valores que tokens.css define
- * como primitivo (i18n.md, «Cuando el diccionario no carga»). `npm run lint:tokens`.
+ * Regla 10 (ADR 0005, ADR 0009): bajo projects/ no hay hex, color, px, utilidad de fábrica de
+ * Tailwind, primitivo fuera de tokens.css ni capa con número; startup-failure.css solo usa valores
+ * de tokens.css. Ver vault: 02-Arquitectura/Integracion Continua.md §4, regla 10.
  */
 import { readdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
@@ -46,6 +36,10 @@ const RAW_VALUES = [
     comparable: true,
   },
 ];
+
+// Una capa con número, negativa o arbitraria compila con cualquier tema, también con el nuestro:
+// sale de un token --layer-*. Tailwind escanea este archivo: acá no se escribe una clase entera.
+const RAW_LAYER = /^(?:\S*:)?!?-?z-(?:\d+|\[[^\]]*\])!?$/;
 
 // ----------------------------------------------------------------- archivos
 
@@ -212,6 +206,12 @@ function tokens(text) {
   return found;
 }
 
+export function rawLayerMatches(content, extension) {
+  return candidates(content, extension)
+    .filter(({ token }) => RAW_LAYER.test(token))
+    .map(({ token }) => token);
+}
+
 export function rawValueMatches(content) {
   return RAW_VALUES.flatMap(({ pattern, label }) =>
     [...content.matchAll(pattern)].map((match) => ({ value: match[0], label, index: match.index })),
@@ -289,7 +289,14 @@ async function main() {
     }
 
     for (const { token, index } of candidates(content, path.extname(file))) {
-      if (isStock(token) && !isOurs(token)) {
+      if (RAW_LAYER.test(token)) {
+        report(
+          file,
+          content,
+          index,
+          `raw layer \`${token}\`. Use a --layer-* token from tokens.css as the z-index value.`,
+        );
+      } else if (isStock(token) && !isOurs(token)) {
         report(
           file,
           content,

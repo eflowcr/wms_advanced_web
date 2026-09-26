@@ -133,14 +133,12 @@
   <div class="flex min-h-0 flex-1">
     @if (viewport.isWide()) {
       <!--
-        Fijo bajo la cabecera y con su propio desplazamiento: la página corre y el menú no. Entre la
-        barra inferior y 1280 px, abierto es un cajón sobre el contenido (--breakpoint-nav-drawer).
-        `z-10` con el cajón abierto: sticky crea su propio contexto de apilamiento, y sin capa el cajón
-        quedaba debajo de la tira de pestañas (z-5). Solo entonces: plegado no tapa nada de la página.
+        Fijo bajo la cabecera y con su desplazamiento. Sticky arma su propio apilamiento: con el cajón
+        abierto sube a --layer-overlay, o la tira lo tapa; solo entonces. Ver vault: App-Shell.
       -->
       <ewms-nav-rail
         class="sticky top-(--shell-header-height) h-(--shell-body-height) shrink-0"
-        [class.z-10]="drawerOpen() && !viewport.panelFits()"
+        [class.z-(--layer-overlay)]="drawerOpen() && !viewport.panelFits()"
         [items]="navItems()"
         [label]="'shell.nav.mainMenu' | transloco"
         [activeId]="activeId()"
@@ -192,14 +190,12 @@
     <!-- El pie deja aire para la marca de agua, y bajo 768 px para la barra inferior: nada queda debajo. -->
     <div class="flex min-w-0 flex-1 flex-col gap-3 px-4 pb-20">
       <!--
-        El `<nav>` con nombre lo pidió axe: la tira quedaba fuera de todo landmark y quien
-        salta por landmarks se la saltaba. `<nav>` nombra la región; el `tablist`, el widget.
-        Fija bajo la cabecera con el fondo del contenido; debajo del velo del cajón, que la cubre
-        como al resto de la página, y encima de las cabeceras fijas de las tablas (z-3).
+        `<nav>` con nombre (lo pidió axe: sin landmark se la saltaba). Fija bajo la cabecera en
+        --layer-shell-strip: debajo del velo del cajón y sobre toda la página, que `<main>` aísla.
       -->
       @if (tabs().length > 0) {
         <nav
-          class="sticky top-(--shell-header-height) z-5 flex h-(--shell-tabs-height) items-center bg-canvas"
+          class="sticky top-(--shell-header-height) z-(--layer-shell-strip) flex h-(--shell-tabs-height) items-center bg-canvas"
           [attr.aria-label]="'shell.tabs.label' | transloco"
         >
           <ewms-tabs
@@ -229,10 +225,11 @@
         en cada navegación; el anillo, solo con `:focus-visible` (llegando por teclado): con
         `:focus` se pintaba en cada clic (2026-09-21). Ver vault: App-Shell.
       -->
+      <!-- `isolate`: la página es su propio apilamiento y ninguna capa de adentro tapa el marco. -->
       <main
         #main
         id="main"
-        class="min-w-0 flex-1 [&_h1:focus]:outline-none [&_h1:focus-visible]:rounded-sm [&_h1:focus-visible]:shadow-(--focus-ring-shadow)"
+        class="isolate min-w-0 flex-1 [&_h1:focus]:outline-none [&_h1:focus-visible]:rounded-sm [&_h1:focus-visible]:shadow-(--focus-ring-shadow)"
         tabindex="-1"
       >
         <router-outlet />
@@ -258,7 +255,7 @@
 
   @if (viewport.isWide()) {
     <footer
-      class="pointer-events-none fixed bottom-0 right-0 z-5 flex items-center gap-2 rounded-tl-lg bg-surface px-3 py-1 text-caption text-secondary shadow-sm"
+      class="pointer-events-none fixed bottom-0 right-0 z-(--layer-shell-strip) flex items-center gap-2 rounded-tl-lg bg-surface px-3 py-1 text-caption text-secondary shadow-sm"
       data-shell-stamp
       [attr.aria-label]="'shell.session.stamp' | transloco"
     >

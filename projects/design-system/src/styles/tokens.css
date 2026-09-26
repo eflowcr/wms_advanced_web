@@ -126,6 +126,12 @@
   --ease-out: cubic-bezier(0.2, 0, 0, 1);
 
   /* Capas: un número sin unidad, como los pesos. El overlay del CDK vive en 1000. */
+  --z-1: 1;
+  --z-2: 2;
+  --z-3: 3;
+  --z-4: 4;
+  --z-5: 5;
+  --z-10: 10;
   --z-20: 20;
   --z-40: 40;
 
@@ -283,10 +289,20 @@
    * ~450 B a la hoja inicial. */
   --transition-nav-drawer: translate var(--ms-200) var(--ease-out);
 
-  /* Capas del marco: cabecera y tira fijas, y el salto al contenido por encima porque aparece
-   * sobre la cabecera. El cajón y su velo van debajo de la cabecera, como la hoja inferior. */
+  /* Capas del marco. `<main>` aísla la página: lo de adentro nunca se pinta sobre el marco, tenga la
+   * capa que tenga. Tira y marca de agua; lo que flota (cajón, barra inferior, hoja, toasts) y su
+   * velo; cabecera; y el salto al contenido, que aparece sobre ella. Ver vault: App-Shell. */
+  --layer-shell-strip: var(--z-5);
+  --layer-overlay: var(--z-10);
   --layer-shell: var(--z-20);
   --layer-skip-link: var(--z-40);
+  /* Capas de la Tabla, dentro de su ventana: celda fija, separador de ancho, cabecera de la celda
+   * fija, línea de inserción al arrastrar y la cabecera. Ver vault: Tabla. */
+  --layer-table-pin: var(--z-1);
+  --layer-table-resize: var(--z-2);
+  --layer-table-pin-head: var(--z-3);
+  --layer-table-drop: var(--z-4);
+  --layer-table-head: var(--z-10);
 
   /* Barra inferior: 64 deja un objetivo táctil holgado sobre el 24x24 de WCAG 2.5.8. */
   --nav-bottom-height: var(--size-64);

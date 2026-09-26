@@ -48,7 +48,7 @@ const ACTIVE_ROW_CLASSES = 'bg-surface text-primary';
  * movimiento con `prefers-reduced-motion`).
  */
 const DRAWER_CLASSES =
-  'fixed bottom-0 left-0 top-(--shell-header-height) z-10 w-(--nav-panel-width) rounded-tr-nav shadow-lg ' +
+  'fixed bottom-0 left-0 top-(--shell-header-height) z-(--layer-overlay) w-(--nav-panel-width) rounded-tr-nav shadow-lg ' +
   '[transition:var(--transition-nav-drawer)] motion-safe:starting:[translate:-100%]';
 
 /**

@@ -11,7 +11,7 @@ interface DragHost {
 
 /** La línea de inserción: el color de acción, del lado donde cae la columna. */
 const INSERT_LINE_CLASSES =
-  'before:absolute before:inset-y-0 before:z-4 before:w-0.5 before:bg-primary';
+  'before:absolute before:inset-y-0 before:z-(--layer-table-drop) before:w-0.5 before:bg-primary';
 
 /**
  * Reordenar columnas arrastrando la cabecera (arrastrar y soltar nativo). Solo dentro del

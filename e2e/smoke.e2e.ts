@@ -162,6 +162,47 @@ test.describe('the App Shell', () => {
     }
   });
 
+  test('the page never paints over the chrome: a sticky table header stays under the tabs and the stamp', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto('/design-system/components/table');
+    await expect(page.locator('ewms-table thead').first()).toBeVisible();
+
+    // Lo que se pinta encima lo dice el hit testing. La marca de agua no toma el puntero: se le
+    // devuelve solo para medirla.
+    const covered = await page.evaluate(async () => {
+      const settle = (): Promise<unknown> =>
+        new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)));
+      const head = document.querySelector('ewms-table thead') as HTMLElement;
+      const strip = document.querySelector('ewms-tabs')?.closest('nav') as HTMLElement;
+      const stamp = document.querySelector('footer[data-shell-stamp]') as HTMLElement;
+      const misses: string[] = [];
+
+      window.scrollBy(0, head.getBoundingClientRect().top - strip.getBoundingClientRect().top - 8);
+      await settle();
+      const tabs = strip.getBoundingClientRect();
+      for (const x of [tabs.left + 8, tabs.left + tabs.width / 2, tabs.right - 8]) {
+        const hit = document.elementFromPoint(x, tabs.top + tabs.height / 2);
+        if (!strip.contains(hit)) misses.push(`tira, x=${Math.round(x)}: ${hit?.tagName}`);
+      }
+
+      const mark = stamp.getBoundingClientRect();
+      const box = head.getBoundingClientRect();
+      window.scrollBy(0, box.top + box.height / 2 - (mark.top + mark.height / 2));
+      await settle();
+      const cell = head.getBoundingClientRect();
+      const x = (Math.max(mark.left, cell.left) + Math.min(mark.right, cell.right)) / 2;
+      stamp.style.pointerEvents = 'auto';
+      const hit = document.elementFromPoint(x, mark.top + mark.height / 2);
+      stamp.style.pointerEvents = '';
+      if (!stamp.contains(hit)) misses.push(`marca de agua, x=${Math.round(x)}: ${hit?.tagName}`);
+      return misses;
+    });
+
+    expect(covered, 'la página se pintó sobre el marco').toEqual([]);
+  });
+
   test('at 375 px the rail becomes the bottom bar, and the header does not scroll', async ({
     page,
   }) => {
