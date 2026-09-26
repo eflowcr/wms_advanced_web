@@ -346,3 +346,34 @@ describe('NavRail', () => {
     await expectNoAxeViolations(fixture.nativeElement);
   });
 });
+
+@Component({
+  template: `
+    <ewms-nav-rail [items]="items" label="Menú principal">
+      <span navRailBackdrop data-backdrop></span>
+      <p navRailTop>arriba</p>
+    </ewms-nav-rail>
+  `,
+  imports: [NavRail],
+})
+class WithBackdrop {
+  readonly items = TREE;
+}
+
+describe('NavRail backdrop', () => {
+  // El shell pone ahí las rutas animadas del menú (decisión del usuario, 2026-09-25, opción A).
+  it('puts what the consumer projects first in the panel, and everything else paints over it', async () => {
+    await TestBed.configureTestingModule({ imports: [WithBackdrop] }).compileComponents();
+    const fixture = TestBed.createComponent(WithBackdrop);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const element = fixture.nativeElement as HTMLElement;
+
+    expect(element.querySelector('nav')?.firstElementChild?.hasAttribute('data-backdrop')).toBe(
+      true,
+    );
+    // Posicionado, lo que viene después en el DOM se pinta encima del fondo.
+    expect(element.querySelector('[role="tree"]')?.className).toContain('relative');
+    expect(element.querySelector('nav')?.className).toContain('relative');
+  });
+});

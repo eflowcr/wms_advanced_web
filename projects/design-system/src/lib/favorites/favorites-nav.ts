@@ -15,10 +15,13 @@ interface FavoriteRow {
 const NEUTRAL_ICON: IconName = 'star';
 
 /**
- * El activo es el del menú: navy con texto claro y semibold (decisión del usuario, 2026-09-25). Por
- * estado y no con variantes `aria-*`, como en el rail: utilidades que la hoja ya tenía.
+ * El activo de cada fondo, en semibold, como en el menú: sobre el navy una píldora surface, sobre
+ * claro una fila navy (decisión del usuario, 2026-09-25). Por estado y no con variantes `aria-*`.
  */
-const ACTIVE_CLASSES = 'bg-brand-navy text-h4 text-on-dark';
+const NAVY_ACTIVE_CLASSES = 'bg-surface text-h4 text-primary';
+const SURFACE_ACTIVE_CLASSES = 'bg-brand-navy text-h4 text-on-dark';
+const NAVY_BLOCK_CLASSES = 'border-strong text-on-dark';
+const SURFACE_BLOCK_CLASSES = 'border-default text-primary';
 
 /** Límite de pantalla, no de datos: más de ocho deja de ser atajo. Ver vault: REQ-FE-DS4-002. */
 export const FAVORITES_SHOWN = 8;
@@ -44,6 +47,13 @@ export class FavoritesNav {
 
   readonly activeRoute = input<string | null>(null);
 
+  /** El menú lateral y la hoja inferior son navy; el catálogo, claro. */
+  readonly ground = input<'navy' | 'surface'>('surface');
+
+  protected readonly blockClasses = computed(() =>
+    this.ground() === 'navy' ? NAVY_BLOCK_CLASSES : SURFACE_BLOCK_CLASSES,
+  );
+
   readonly favoriteSelect = output<Favorite>();
 
   private readonly favorites = inject(Favorites);
@@ -64,7 +74,11 @@ export class FavoritesNav {
 
   protected rowClasses(route: string): string {
     const shape = this.expanded() ? 'px-4' : 'justify-center px-1';
-    return `${shape} ${this.activeRoute() === route ? ACTIVE_CLASSES : 'text-p hover:bg-ghost-hover'}`;
+    const navy = this.ground() === 'navy';
+    if (this.activeRoute() === route) {
+      return `${shape} ${navy ? NAVY_ACTIVE_CLASSES : SURFACE_ACTIVE_CLASSES}`;
+    }
+    return `${shape} text-p ${navy ? 'hover:bg-primary-hover' : 'hover:bg-ghost-hover'}`;
   }
 
   protected onSelect(favorite: Favorite): void {

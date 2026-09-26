@@ -69,7 +69,13 @@
           (itemSelect)="onItemSelect($event)"
           (expandedChange)="onExpandedChange($event)"
         >
-          <p navRailTop class="border-b border-default px-4 py-3 text-caption uppercase">
+          <img
+            navRailBackdrop
+            class="pointer-events-none absolute inset-x-0 bottom-0 h-1/2 w-full object-cover"
+            src="/brand/nav-routes.svg"
+            alt=""
+          />
+          <p navRailTop class="border-b border-strong px-4 py-3 text-caption uppercase">
             {{ 'showroom.navigation.demo.favourites' | transloco }}
           </p>
           <p navRailFooter class="px-4 py-3 text-caption">{{ session }}</p>

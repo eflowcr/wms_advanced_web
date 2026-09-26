@@ -156,7 +156,7 @@
       "white": {
         "alt": "ePRAC logo in white",
         "name": "White",
-        "use": "On any dark surface."
+        "use": "On the navy menu and on any dark surface."
       }
     },
     "grounds": {
@@ -738,7 +738,7 @@
         "familyText": "The family's text on its own surface.",
         "focusRing": "The ring contrasts with the surface, not with the control: that is why it has a gap.",
         "focusRingOnCanvas": "The ring on the canvas.",
-        "navyBars": "The active menu row, the active chip and the active item of the bottom bar.",
+        "navyBars": "The side menu and the bottom bar, on their navy gradient, and the active chip.",
         "neutralBadge": "Neutral badge: surface + text, never solid + white.",
         "onDangerSolid": "White on the danger severity.",
         "onSuccessSolid": "White on the success severity.",
@@ -1315,10 +1315,10 @@
   },
   "navigation": {
     "anatomy": {
-      "contrast": "<b>The contrasts of the light frame are measured in the browser</b>, on the painted pieces and with hover: text on the menu and the header, the active row and chip (<code>--color-text-on-dark</code> on <code>--color-brand-navy</code>), the chip at rest and hovered, and the hovered ×. All pass AA; the full table, with the numbers, is in the Navigation sheet.",
+      "contrast": "<b>The contrasts of the frame are measured in the browser</b>, on the painted pieces and with hover: light text across the whole navy gradient of the menu, the hovered row, the active pill, the active chip (<code>--color-text-on-dark</code> on <code>--color-brand-navy</code>) and the chips at rest. All pass AA; the full table, with the numbers, is in the Navigation sheet. The background routes are decoration: they sit behind the text and outside the accessibility tree.",
       "parts": {
-        "activeRow": "Active row, chip and destination",
-        "activeText": "Text and icons on what is active",
+        "activeRow": "Active row and destination: light pill",
+        "activeText": "Text and icons of what is active",
         "bottomBreakpoint": "Bottom bar breakpoint",
         "bottomHeight": "Bottom bar height",
         "chip": "Chip at rest",
@@ -1328,7 +1328,7 @@
         "drawerBreakpoint": "Drawer breakpoint: below it, the open menu lies over the page",
         "drawerTransition": "Drawer entrance (the only animation in the frame)",
         "panelWidth": "Expanded panel width",
-        "railBackground": "Background of the menu, the header and the bottom bar",
+        "railBackground": "Background of the menu and the bottom bar: navy gradient",
         "railWidth": "Collapsed rail width",
         "rowHeight": "Row height, open",
         "rowHeightCollapsed": "Row height, folded (icon over label)",
@@ -1426,7 +1426,7 @@
     "states": {
       "activeItem": {
         "name": "Active item",
-        "seen": "Navy row with light text and <code>aria-current=\"page\"</code>",
+        "seen": "Light pill with navy text and <code>aria-current=\"page\"</code>",
         "why": "Colour alone is not enough; the attribute says it without being seen"
       },
       "bottomNoOverflow": {

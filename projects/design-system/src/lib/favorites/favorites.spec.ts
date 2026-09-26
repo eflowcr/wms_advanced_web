@@ -200,6 +200,7 @@ describe('Favorites', () => {
       emptyLabel="Marque una pantalla con la estrella"
       [expanded]="expanded()"
       [activeRoute]="activeRoute()"
+      [ground]="ground()"
       (favoriteSelect)="chosen = $event.route"
     />
   `,
@@ -214,6 +215,7 @@ class TestHost {
   readonly route = '/articulos';
   readonly expanded = signal(true);
   readonly activeRoute = signal<string | null>(null);
+  readonly ground = signal<'navy' | 'surface'>('surface');
   chosen: string | null = null;
 }
 
@@ -314,6 +316,25 @@ describe('the star and the block, together', () => {
         fixture.nativeElement.querySelector('[data-favorite="/articulos"]') as HTMLElement
       ).getAttribute('aria-current'),
     ).toBe('page');
+  });
+
+  it('on the navy menu the active favourite is a light pill, and on light it is navy', async () => {
+    star().click();
+    host.activeRoute.set('/articulos');
+    await settle();
+    const row = (): HTMLElement =>
+      fixture.nativeElement.querySelector('[data-favorite="/articulos"]') as HTMLElement;
+    const block = (): HTMLElement =>
+      fixture.nativeElement.querySelector('[data-favorites-nav]') as HTMLElement;
+
+    expect(row().className).toContain('bg-brand-navy');
+    expect(block().className).toContain('text-primary');
+
+    // El menú lateral y la hoja inferior son navy (decisión del usuario, 2026-09-25).
+    host.ground.set('navy');
+    await settle();
+    expect(row().className).toContain('bg-surface');
+    expect(block().className).toContain('text-on-dark');
   });
 
   it('collapsed, the block drops the labels and keeps the destinations', async () => {

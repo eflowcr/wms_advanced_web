@@ -17,10 +17,10 @@ import { Icon } from '../icon/icon';
 import { isGroup, type NavItem } from './navigation.types';
 
 /**
- * El activo en navy con texto claro, como en el menú lateral (decisión del usuario, 2026-09-25). Por
- * estado y no con variantes `aria-*`: utilidades que la hoja ya tenía.
+ * Sobre el degradado navy, el activo es una baldosa surface con texto primario, como en el menú
+ * lateral (decisión del usuario, 2026-09-25). Por estado y no con variantes `aria-*`.
  */
-const ACTIVE_CLASSES = 'bg-brand-navy text-on-dark';
+const ACTIVE_CLASSES = 'bg-surface text-primary';
 
 /** Cuatro destinos entran al ancho más angosto; el quinto lugar es «Más». */
 export const BOTTOM_NAV_SLOTS = 4;
@@ -78,13 +78,13 @@ export class NavBottom {
   );
 
   protected barClasses(item: NavItem): string {
-    return this.activeId() === item.id ? ACTIVE_CLASSES : 'hover:bg-ghost-hover';
+    return this.activeId() === item.id ? ACTIVE_CLASSES : 'hover:bg-primary-hover';
   }
 
   protected sheetClasses(item: NavItem): string {
     return this.activeId() === item.id
       ? `${ACTIVE_CLASSES} text-h4`
-      : 'text-p hover:bg-ghost-hover';
+      : 'text-p hover:bg-primary-hover';
   }
 
   protected isGroup(item: NavItem): boolean {

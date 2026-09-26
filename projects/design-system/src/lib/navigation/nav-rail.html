@@ -13,18 +13,24 @@
 <!-- Rail y panel son el mismo árbol a dos anchos (token). `ul`/`li` reales con roles de árbol: acá andan las flechas. -->
 <nav
   #panel
-  class="flex flex-col bg-surface text-primary"
+  class="flex flex-col bg-(image:--gradient-nav) text-on-dark"
   [class]="panelClasses()"
   [attr.aria-label]="label()"
   [attr.data-nav-drawer]="drawerOpen() ? '' : null"
 >
+  <!--
+    Fondo decorativo del consumidor, detrás de todo: el shell pone ahí las rutas animadas (decisión
+    del usuario, 2026-09-25). Lo que sigue lleva `relative` para pintarse encima.
+  -->
+  <ng-content select="[navRailBackdrop]" />
+
   <!-- Favoritos (REQ-FE-DS4-002 RFE-04): el rail solo ofrece el hueco. -->
-  <div class="shrink-0">
+  <div class="relative shrink-0">
     <ng-content select="[navRailTop]" />
   </div>
 
   <ul
-    class="min-h-0 flex-1 list-none overflow-y-auto overflow-x-hidden py-2"
+    class="relative min-h-0 flex-1 list-none overflow-y-auto overflow-x-hidden py-2"
     [class]="expanded() ? 'px-2' : 'p-0.5'"
     role="tree"
     [id]="treeId"
@@ -54,16 +60,16 @@
   </ul>
 
   <!-- Credenciales y logo del cliente. -->
-  <div class="shrink-0 border-t border-default">
+  <div class="relative shrink-0 border-t border-strong">
     <ng-content select="[navRailFooter]" />
   </div>
 
   <!-- El ancho es estado del rail: `expanded` entra, el cambio sale. -->
   @if (toggleLabel()) {
-    <div class="flex shrink-0 p-2" [class.justify-center]="!expanded()">
+    <div class="relative flex shrink-0 p-2" [class.justify-center]="!expanded()">
       <button
         type="button"
-        class="flex items-center justify-center rounded-sm p-2 outline-none hover:bg-ghost-hover focus-visible:shadow-(--focus-ring-shadow)"
+        class="flex items-center justify-center rounded-sm p-2 outline-none hover:bg-primary-hover focus-visible:shadow-(--focus-ring-shadow)"
         data-nav-rail-toggle
         [attr.aria-label]="toggleLabel()"
         [attr.aria-expanded]="expanded()"

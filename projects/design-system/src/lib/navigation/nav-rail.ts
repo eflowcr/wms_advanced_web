@@ -33,14 +33,15 @@ const FOLDED_ROW_CLASSES =
   'h-(--nav-row-height-collapsed) flex-col items-center justify-center gap-1 text-caption';
 
 /**
- * Activo en navy con texto claro (decisión del usuario, 2026-09-25). Por estado y no con variantes
- * `aria-*`: son utilidades que la hoja ya tenía, y cada variante nueva suma a la hoja inicial.
+ * Sobre el degradado navy, el activo es una píldora surface con texto primario (decisión del
+ * usuario, 2026-09-25, opción A). Por estado y no con variantes `aria-*`: utilidades que la hoja ya
+ * tenía, y cada variante nueva suma a la hoja inicial.
  */
-const ACTIVE_ROW_CLASSES = 'bg-brand-navy text-on-dark';
+const ACTIVE_ROW_CLASSES = 'bg-surface text-primary';
 
 /**
  * El cajón: fijo bajo la cabecera, encima del contenido y de su velo, y entra deslizándose (sin
- * movimiento con `prefers-reduced-motion`). La única animación del marco.
+ * movimiento con `prefers-reduced-motion`).
  */
 const DRAWER_CLASSES =
   'fixed bottom-0 left-0 top-(--shell-header-height) z-10 w-(--nav-panel-width) shadow-lg ' +
@@ -90,6 +91,7 @@ export class NavRail {
 
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly document = inject(DOCUMENT);
+
   private readonly focusTraps = inject(FocusTrapFactory);
   private readonly injector = inject(Injector);
   private readonly panel = viewChild.required<ElementRef<HTMLElement>>('panel');
@@ -107,7 +109,10 @@ export class NavRail {
     if (this.drawerOpen()) {
       return DRAWER_CLASSES;
     }
-    return this.expanded() ? 'h-full w-(--nav-panel-width)' : 'h-full w-(--nav-rail-width)';
+    // `relative`: el bloque que contiene el fondo decorativo.
+    return this.expanded()
+      ? 'relative h-full w-(--nav-panel-width)'
+      : 'relative h-full w-(--nav-rail-width)';
   });
 
   protected readonly treeId = `ewms-nav-rail-${++nextRailId}`;
@@ -169,7 +174,7 @@ export class NavRail {
 
   protected rowClasses(item: NavItem, child: boolean): string {
     const current = this.isCurrent(item);
-    const tone = current ? ACTIVE_ROW_CLASSES : 'hover:bg-ghost-hover';
+    const tone = current ? ACTIVE_ROW_CLASSES : 'hover:bg-primary-hover';
     if (!this.expanded()) {
       return `${FOLDED_ROW_CLASSES} ${tone}`;
     }

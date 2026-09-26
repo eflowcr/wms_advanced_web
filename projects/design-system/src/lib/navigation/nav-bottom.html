@@ -12,7 +12,7 @@
 
   <div
     #sheet
-    class="fixed inset-x-0 bottom-(--nav-bottom-height) z-10 max-h-[70vh] overflow-y-auto border-t border-default bg-surface text-primary shadow-lg"
+    class="fixed inset-x-0 bottom-(--nav-bottom-height) z-10 max-h-[70vh] overflow-y-auto border-t border-strong bg-(image:--gradient-nav) text-on-dark shadow-lg"
     data-nav-bottom-sheet
   >
     <!-- Favoritos: primero en la hoja, el lugar fijo a este ancho. -->
@@ -23,7 +23,7 @@
         @for (item of items(); track item.id) {
           <li>
             @if (isGroup(item)) {
-              <p class="px-4 pb-1 pt-3 text-caption uppercase text-secondary">{{ item.label }}</p>
+              <p class="px-4 pb-1 pt-3 text-caption uppercase text-on-dark">{{ item.label }}</p>
               <ul class="list-none">
                 @for (child of item.children; track child.id) {
                   <li>
@@ -60,7 +60,7 @@
 
       <button
         type="button"
-        class="mt-2 flex w-full items-center justify-center gap-2 rounded-lg px-4 py-3 text-p outline-none hover:bg-ghost-hover focus-visible:shadow-(--focus-ring-shadow)"
+        class="mt-2 flex w-full items-center justify-center gap-2 rounded-lg px-4 py-3 text-p outline-none hover:bg-primary-hover focus-visible:shadow-(--focus-ring-shadow)"
         data-nav-bottom-close
         (click)="close()"
       >
@@ -71,9 +71,9 @@
   </div>
 }
 
-<!-- Clara como el menú lateral, con borde arriba; el activo en navy (decisión del usuario, 2026-09-25). -->
+<!-- Navy como el menú lateral, con el activo en una baldosa surface (decisión del usuario, 2026-09-25). -->
 <nav
-  class="fixed inset-x-0 bottom-0 z-10 flex h-(--nav-bottom-height) items-stretch border-t border-default bg-surface p-0.5 text-primary"
+  class="fixed inset-x-0 bottom-0 z-10 flex h-(--nav-bottom-height) items-stretch border-t border-strong bg-(image:--gradient-nav) p-0.5 text-on-dark"
   data-nav-bottom
   [attr.aria-label]="label()"
 >
@@ -94,7 +94,7 @@
   @if (hasMore()) {
     <button
       type="button"
-      class="flex flex-1 flex-col items-center justify-center gap-1 rounded-lg outline-none hover:bg-ghost-hover focus-visible:shadow-(--focus-ring-shadow)"
+      class="flex flex-1 flex-col items-center justify-center gap-1 rounded-lg outline-none hover:bg-primary-hover focus-visible:shadow-(--focus-ring-shadow)"
       data-nav-bottom-more
       [attr.aria-expanded]="open()"
       (click)="onOpen($event)"

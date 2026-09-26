@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 250" aria-hidden="true">
+  <!--
+    Fondo del menú lateral (decisión del usuario, 2026-09-25, opción A): rutas punteadas que fluyen
+    despacio y nodos que respiran. Recurso de marca, como los logos: el color es blue-63 de
+    tokens.css y va escrito porque una imagen no lee las variables de la página. El trazo se repite
+    cada 11 unidades y corre 55 por ciclo. Quieto con prefers-reduced-motion.
+  -->
+  <style>
+    path { fill: none; stroke: #7c93f2; stroke-width: 1.2; stroke-dasharray: 4 7; stroke-opacity: 0.35; animation: flow 5s linear infinite; }
+    circle { fill: #7c93f2; opacity: 0.8; animation: pulse 5s ease-in-out infinite; }
+    circle:nth-of-type(2) { animation-delay: -1.67s; }
+    circle:nth-of-type(3) { animation-delay: -3.33s; }
+    @keyframes flow { to { stroke-dashoffset: -55; } }
+    @keyframes pulse { 50% { opacity: 0.25; } }
+    @media (prefers-reduced-motion: reduce) { path, circle { animation: none; } }
+  </style>
+  <path d="M-10 220 C 40 170, 60 130, 110 110 S 170 50, 210 30" />
+  <path d="M-10 150 C 50 140, 90 180, 140 160 S 190 110, 210 100" />
+  <path d="M20 260 C 60 220, 120 220, 150 180 S 180 150, 210 170" />
+  <circle cx="110" cy="110" r="3" />
+  <circle cx="140" cy="160" r="2.5" />
+  <circle cx="150" cy="180" r="2" />
+</svg>

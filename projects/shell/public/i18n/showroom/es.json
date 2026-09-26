@@ -156,7 +156,7 @@
       "white": {
         "alt": "Logo de ePRAC en blanco",
         "name": "Blanco",
-        "use": "Sobre cualquier superficie oscura."
+        "use": "Sobre el menú navy y sobre cualquier superficie oscura."
       }
     },
     "grounds": {
@@ -738,7 +738,7 @@
         "familyText": "Texto de la familia sobre su propia superficie.",
         "focusRing": "El anillo contrasta contra la superficie, no contra el control: por eso lleva separación.",
         "focusRingOnCanvas": "El anillo sobre el canvas.",
-        "navyBars": "La fila activa del menú, el chip activo y el activo de la barra inferior.",
+        "navyBars": "El menú lateral y la barra inferior, sobre su degradado navy, y el chip activo.",
         "neutralBadge": "Badge neutral: surface + text, nunca solid + blanco.",
         "onDangerSolid": "Blanco sobre la severidad danger.",
         "onSuccessSolid": "Blanco sobre la severidad success.",
@@ -1315,10 +1315,10 @@
   },
   "navigation": {
     "anatomy": {
-      "contrast": "<b>Los contrastes del marco claro están medidos en el navegador</b>, sobre las piezas pintadas y con hover: el texto sobre el menú y la cabecera, la fila y el chip activos (<code>--color-text-on-dark</code> sobre <code>--color-brand-navy</code>), el chip en reposo y apuntado, y la × apuntada. Todos pasan AA; la tabla completa, con los números, está en la ficha de Navegación.",
+      "contrast": "<b>Los contrastes del marco están medidos en el navegador</b>, sobre las piezas pintadas y con hover: el texto claro sobre todo el degradado navy del menú, la fila apuntada, la píldora activa, el chip activo (<code>--color-text-on-dark</code> sobre <code>--color-brand-navy</code>) y los chips en reposo. Todos pasan AA; la tabla completa, con los números, está en la ficha de Navegación. Las rutas del fondo son decoración: quedan detrás del texto y fuera del árbol de accesibilidad.",
       "parts": {
-        "activeRow": "Fila, chip y destino activos",
-        "activeText": "Texto e íconos sobre lo activo",
+        "activeRow": "Fila y destino activos: píldora clara",
+        "activeText": "Texto e íconos de lo activo",
         "bottomBreakpoint": "Punto de corte de la barra inferior",
         "bottomHeight": "Alto de la barra inferior",
         "chip": "Chip en reposo",
@@ -1328,7 +1328,7 @@
         "drawerBreakpoint": "Corte del cajón: debajo, el menú abierto se superpone",
         "drawerTransition": "Entrada del cajón (la única animación del marco)",
         "panelWidth": "Ancho del panel expandido",
-        "railBackground": "Fondo del menú, de la cabecera y de la barra inferior",
+        "railBackground": "Fondo del menú y de la barra inferior: degradado navy",
         "railWidth": "Ancho del rail colapsado",
         "rowHeight": "Alto de una fila, abierto",
         "rowHeightCollapsed": "Alto de una fila, plegado (ícono sobre etiqueta)",
@@ -1426,7 +1426,7 @@
     "states": {
       "activeItem": {
         "name": "Ítem activo",
-        "seen": "Fila navy con texto claro y <code>aria-current=\"page\"</code>",
+        "seen": "Píldora clara con texto navy y <code>aria-current=\"page\"</code>",
         "why": "El color solo no basta; el atributo lo dice sin verlo"
       },
       "bottomNoOverflow": {

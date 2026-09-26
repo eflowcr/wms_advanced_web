@@ -169,7 +169,7 @@ const CRUMB_PROPS: readonly PropRow[] = [
 ];
 
 /**
- * El marco claro (decisión del usuario, 2026-09-25): menú, chips, subrayado y cajón.
+ * El marco (decisiones del usuario, 2026-09-25): menú navy con rutas, chips, subrayado y cajón.
  * t(showroom.navigation.anatomy.parts.railBackground, showroom.navigation.anatomy.parts.rowHover,
  *   showroom.navigation.anatomy.parts.activeRow, showroom.navigation.anatomy.parts.activeText,
  *   showroom.navigation.anatomy.parts.railWidth, showroom.navigation.anatomy.parts.panelWidth,
@@ -182,10 +182,10 @@ const CRUMB_PROPS: readonly PropRow[] = [
  *   showroom.navigation.anatomy.parts.drawerBreakpoint)
  */
 const ANATOMY: readonly { readonly part: string; readonly token: string }[] = [
-  { part: 'showroom.navigation.anatomy.parts.railBackground', token: '--color-surface' },
-  { part: 'showroom.navigation.anatomy.parts.rowHover', token: '--color-ghost-hover' },
-  { part: 'showroom.navigation.anatomy.parts.activeRow', token: '--color-brand-navy' },
-  { part: 'showroom.navigation.anatomy.parts.activeText', token: '--color-text-on-dark' },
+  { part: 'showroom.navigation.anatomy.parts.railBackground', token: '--gradient-nav' },
+  { part: 'showroom.navigation.anatomy.parts.rowHover', token: '--color-bg-primary-hover' },
+  { part: 'showroom.navigation.anatomy.parts.activeRow', token: '--color-surface' },
+  { part: 'showroom.navigation.anatomy.parts.activeText', token: '--color-text-primary' },
   { part: 'showroom.navigation.anatomy.parts.railWidth', token: '--nav-rail-width' },
   { part: 'showroom.navigation.anatomy.parts.panelWidth', token: '--nav-panel-width' },
   { part: 'showroom.navigation.anatomy.parts.rowHeight', token: '--nav-row-height' },

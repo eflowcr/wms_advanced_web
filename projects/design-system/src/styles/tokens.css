@@ -15,6 +15,9 @@
   /* Color <familia>-<tono>: el tono es la luminosidad CIE L* redondeada (0 negro, 100 blanco). */
 
   --navy-7: #010f42;
+  /* El degradado del menú lateral: del navy de marca hacia un azul profundo. */
+  --navy-13: #0a1b57;
+  --navy-23: #17307f;
   --navy-28: #343f68;
   --navy-46: #646b87;
   --navy-49: #6d7388;
@@ -189,10 +192,12 @@
   --color-neutral-border: var(--navy-81);
   --color-neutral-text: var(--navy-28);
 
-  /* Marco claro (decisión del usuario, 2026-09-25): el menú usa surface, ghost-hover y el
-   * brand-navy con on-dark para el activo, que ya existían; el chip activo y el texto de los
-   * chips, también. Contrastes en la ficha Navegacion.
-   * Chip en reposo: navy-91 y no bg-secondary, que contra el lienzo da 1.05:1 y no se ve. */
+  /* Menú lateral con vida (decisión del usuario, 2026-09-25, opción A): degradado navy, con las
+   * rutas animadas del shell al pie; la fila activa, una píldora surface con texto primario.
+   * Contrastes en la ficha Navegacion. El chip activo es brand-navy con on-dark.
+   */
+  --gradient-nav: linear-gradient(180deg, var(--navy-7), var(--navy-13) 55%, var(--navy-23));
+  /* Chip en reposo: navy-91 y no bg-secondary, que contra el lienzo da 1.05:1 y no se ve. */
   --color-chip-bg: var(--navy-91);
   --color-chip-bg-hover: var(--navy-81);
   /* Círculo de la × al apuntarla: oscurece el chip que tenga debajo. */

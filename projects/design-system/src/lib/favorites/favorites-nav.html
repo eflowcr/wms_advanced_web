@@ -1,9 +1,7 @@
-<!--
-  `<nav>` propio: landmark «Favoritos» aparte, y las flechas del árbol no visitan filas ajenas. Solo
-  sobre claro desde el 2026-09-25: el menú, la hoja inferior y el catálogo lo son.
--->
+<!-- `<nav>` propio: landmark «Favoritos» aparte, y las flechas del árbol no visitan filas ajenas. -->
 <nav
-  class="border-b border-default px-2 py-3 text-primary"
+  class="border-b px-2 py-3"
+  [class]="blockClasses()"
   data-favorites-nav
   [attr.aria-label]="label()"
 >

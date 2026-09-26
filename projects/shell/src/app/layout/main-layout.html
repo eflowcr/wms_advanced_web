@@ -36,31 +36,25 @@
       }
 
       <!--
-        A 375 px el logotipo desbordaba la cabecera: va el isotipo. `max-w-none`: con el `max-width: 100%`
-        de la base, la rejilla medía el logo en cero y el buscador lo tapaba a 1024 px. `width`/`height`
-        (proporción del viewBox): sin ellos el enlace mide cero hasta que carga el SVG.
+        El isotipo y el nombre del producto (decisión del usuario, 2026-09-25); a 375 px solo el isotipo,
+        que el nombre desbordaba la cabecera. Con el nombre escrito, el isotipo va con `alt` vacío: si no,
+        el enlace se llamaría dos veces «eWMS Advance». `max-w-none` y `width`/`height`: sin ellos la
+        rejilla medía el logo en cero y el enlace medía cero hasta que cargaba el SVG.
       -->
       <a
-        class="flex shrink-0 items-center rounded-sm outline-none focus-visible:shadow-(--focus-ring-shadow)"
+        class="flex shrink-0 items-center gap-2 rounded-sm outline-none focus-visible:shadow-(--focus-ring-shadow)"
         routerLink="/"
         data-shell-home
       >
+        <img
+          class="h-8 w-auto max-w-none"
+          src="/brand/ewms-isotipo.svg"
+          width="173"
+          height="175"
+          [alt]="viewport.isWide() ? '' : brandName"
+        />
         @if (viewport.isWide()) {
-          <img
-            class="h-8 w-auto max-w-none"
-            src="/brand/ewms-lockup.svg"
-            width="1050"
-            height="327"
-            [alt]="brandName"
-          />
-        } @else {
-          <img
-            class="h-8 w-auto max-w-none"
-            src="/brand/ewms-isotipo.svg"
-            width="173"
-            height="175"
-            [alt]="brandName"
-          />
+          <span class="whitespace-nowrap text-h3 text-primary">{{ brandName }}</span>
         }
       </a>
     </div>
@@ -128,9 +122,21 @@
         (itemSelect)="onNavItemSelect($event)"
         (expandedChange)="onMenuOpenChange($event)"
       >
+        <!--
+          Rutas que fluyen despacio al pie del menú (decisión del usuario, 2026-09-25, opción A): un
+          recurso de marca con su animación adentro, quieta con prefers-reduced-motion. Decoración.
+        -->
+        <img
+          navRailBackdrop
+          class="pointer-events-none absolute inset-x-0 bottom-0 h-1/2 w-full object-cover"
+          src="/brand/nav-routes.svg"
+          alt=""
+        />
+
         <!-- Lugar fijo de favoritos en la navegación (REQ-FE-DS4-002 RFE-04). -->
         <ewms-favorites-nav
           navRailTop
+          ground="navy"
           [label]="'shell.favorites.title' | transloco"
           [emptyLabel]="'shell.favorites.empty' | transloco"
           [expanded]="menuOpen()"
@@ -146,12 +152,12 @@
               {{ session.warehouse().name }}
             </p>
             <!--
-              El navy y no el de color: su trazo más claro da 17.01:1 sobre surface; la «e» azul del
-              de color, 4.65:1. El PNG trae mucho margen: `object-cover` recorta al trazo.
+              Sobre el menú navy, el logo blanco (el de color pierde la «e» azul contra el navy). El
+              PNG trae mucho margen: `object-cover` recorta al trazo.
             -->
             <img
               class="h-6 w-24 self-start object-cover"
-              src="/brand/eprac/eprac-navy.png"
+              src="/brand/eprac/eprac-blanco.png"
               [alt]="session.company().name"
             />
           } @else {
@@ -228,6 +234,7 @@
     >
       <ewms-favorites-nav
         navBottomTop
+        ground="navy"
         [label]="'shell.favorites.title' | transloco"
         [emptyLabel]="'shell.favorites.empty' | transloco"
         [activeRoute]="pageRoute()"
