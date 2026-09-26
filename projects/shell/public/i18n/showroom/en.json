@@ -1327,7 +1327,7 @@
         "chipFade": "Gradient behind the strip arrows",
         "chipHover": "Hovered chip",
         "drawerBreakpoint": "Drawer breakpoint: below it, the open menu lies over the page",
-        "drawerTransition": "Drawer entrance (the only animation in the frame)",
+        "drawerTransition": "Drawer entrance (slides in from the edge)",
         "panelWidth": "Expanded panel width",
         "railBackground": "Background of the menu and the bottom bar: navy gradient",
         "railCorner": "Edge of the menu facing the content, rounded top and bottom",

@@ -1327,7 +1327,7 @@
         "chipFade": "Degradado de las flechas de la tira",
         "chipHover": "Chip apuntado",
         "drawerBreakpoint": "Corte del cajón: debajo, el menú abierto se superpone",
-        "drawerTransition": "Entrada del cajón (la única animación del marco)",
+        "drawerTransition": "Entrada del cajón (se desliza desde el borde)",
         "panelWidth": "Ancho del panel expandido",
         "railBackground": "Fondo del menú y de la barra inferior: degradado navy",
         "railCorner": "Borde del menú hacia el contenido, redondeado arriba y abajo",

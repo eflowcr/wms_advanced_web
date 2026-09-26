@@ -92,6 +92,9 @@
   --chip-height: var(--chip-height);
   --nav-bottom-height: var(--nav-bottom-height);
 
+  /* Animaciones: el token en tokens.css y los @keyframes más abajo; siempre con `motion-safe:`. */
+  --animate-nav-drawer: var(--animate-nav-drawer);
+
   --shadow-sm: var(--shadow-sm);
   --shadow-md: var(--shadow-md);
   --shadow-lg: var(--shadow-lg);
@@ -207,6 +210,13 @@
     U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329,
     U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F,
     U+A720-A7FF;
+}
+
+/* El cajón entra desde el borde; es el mismo `<nav>` que cambia de clases, no uno nuevo. */
+@keyframes nav-drawer-in {
+  from {
+    translate: -100%;
+  }
 }
 
 /* Peso explícito para no depender de `normal` contra una fuente variable. */

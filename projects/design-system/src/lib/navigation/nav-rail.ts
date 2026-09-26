@@ -49,7 +49,7 @@ const ACTIVE_ROW_CLASSES = 'bg-surface text-primary';
  */
 const DRAWER_CLASSES =
   'fixed bottom-0 left-0 top-(--shell-header-height) z-(--layer-overlay) w-(--nav-panel-width) rounded-tr-nav shadow-lg ' +
-  '[transition:var(--transition-nav-drawer)] motion-safe:starting:[translate:-100%]';
+  'motion-safe:animate-nav-drawer';
 
 /**
  * Árbol de navegación: no conoce router, menú real ni permisos. Rail o panel por token; plegado,

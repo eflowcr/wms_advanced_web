@@ -201,7 +201,7 @@ const ANATOMY: readonly { readonly part: string; readonly token: string }[] = [
   },
   {
     part: 'showroom.navigation.anatomy.parts.drawerTransition',
-    token: '--transition-nav-drawer',
+    token: '--animate-nav-drawer',
   },
   { part: 'showroom.navigation.anatomy.parts.chip', token: '--color-chip-bg' },
   { part: 'showroom.navigation.anatomy.parts.chipHover', token: '--color-chip-bg-hover' },

@@ -245,6 +245,8 @@ test.describe('the App Shell', () => {
     await hamburger.click();
     await expect(drawer).toBeVisible();
     await expect(hamburger).toHaveAttribute('aria-expanded', 'true');
+    // Entra con una animación de verdad: `@starting-style` no se veía, el `<nav>` no es nuevo.
+    await expect(drawer).toHaveCSS('animation-name', 'nav-drawer-in');
 
     // Atrapado: ni Tab ni Shift+Tab lo sacan del cajón.
     const inside = (): Promise<boolean> =>
@@ -265,6 +267,12 @@ test.describe('the App Shell', () => {
     await page.locator('[data-nav-drawer-veil]').click({ position: { x: 700, y: 400 } });
     await expect(drawer).toHaveCount(0);
     await expect(hamburger).toBeFocused();
+
+    // Con movimiento reducido aparece quieto.
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await hamburger.click();
+    await expect(drawer).toBeVisible();
+    await expect(drawer).toHaveCSS('animation-name', 'none');
   });
 
   test('any navigation closes the drawer: the logo, going back, and a wider window leave none open', async ({

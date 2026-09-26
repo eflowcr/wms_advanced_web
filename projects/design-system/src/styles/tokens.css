@@ -284,10 +284,9 @@
   --shell-content-height: calc(var(--dvh-100) - var(--shell-chrome-height));
   /* Subrayado de la pestaña de sección activa. */
   --tab-indicator-width: var(--size-3);
-  /* La única animación del marco: el cajón entra deslizándose en 200 ms, desacelerando. Una
-   * propiedad y no tres utilidades: duración y curva por clase registraban @property y sumaban
-   * ~450 B a la hoja inicial. */
-  --transition-nav-drawer: translate var(--ms-200) var(--ease-out);
+  /* Entrada del cajón: se desliza en 200 ms, desacelerando (@keyframes en styles.css). Una propiedad
+   * y no tres utilidades: duración y curva por clase registraban @property en la hoja inicial. */
+  --animate-nav-drawer: nav-drawer-in var(--ms-200) var(--ease-out);
 
   /* Capas del marco. `<main>` aísla la página: lo de adentro nunca se pinta sobre el marco, tenga la
    * capa que tenga. Tira y marca de agua; lo que flota (cajón, barra inferior, hoja, toasts) y su
