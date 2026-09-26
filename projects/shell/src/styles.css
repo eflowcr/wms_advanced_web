@@ -2,7 +2,7 @@
  * tokens.css va acá, junto al import de Tailwind: v4 solo convierte un `@theme` en utilidades
  * si lo resuelve en la hoja que procesa. Sin valores crudos: la compuerta 10 la escanea.
  */
-@import 'tailwindcss';
+@import 'tailwindcss' source(none);
 @import '../../design-system/src/styles/tokens.css';
 
 /*
@@ -14,8 +14,14 @@
 /* La trampa de foco y el anuncio del CDK esconden nodos con `.cdk-visually-hidden`. */
 @import '@angular/cdk/a11y-prebuilt.css';
 
-/* Los íconos son geometría y nombres, no clases: escaneados, sus nombres emitían utilidades. */
-@source not '../../design-system/src/icons';
+/*
+ * Tailwind lee solo el código de UI, sin specs (decisión del usuario, 2026-09-26): las palabras de
+ * pruebas, diccionarios, tools y docs emitían CSS muerto. Los íconos (src/icons) quedan afuera.
+ */
+@source '../../design-system/src/lib';
+@source '../../showroom/src';
+@source '../../shell/src';
+@source not '../../**/*.spec.ts';
 
 /*
  * Tailwind como motor, no como design system (ADR 0009). `--*: initial` borra su tema: solo
