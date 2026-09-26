@@ -4,36 +4,33 @@ const tseslint = require('typescript-eslint');
 const angular = require('angular-eslint');
 
 /**
- * Reglas de dependencia entre bibliotecas: espejo de la regla del backend. Ningún
- * módulo entra en las entrañas de otro; todo cruce pasa por el alias `@ewms/*`, que
- * resuelve al `public-api.ts` de la biblioteca (tsconfig.json). Son errores que bloquean CI.
- *
- *   biblioteca     puede importar                 nunca importa
- *   -------------  -----------------------------  -------------------------
- *   shell          todo                           -
- *   showroom       design-system, shared          core, api-client, domains
- *   design-system  shared                         core, api-client, domains, @jsverse/*
- *   core           shared, api-client             design-system, domains
- *   shared         nada del proyecto              todo
- *   api-client     nada del proyecto              todo
- *   testing        todo (solo dev)                -
+ * Fronteras en lista blanca: cada biblioteca declara qué `@ewms/*` puede importar y lo demás es
+ * error; una spec suma `@ewms/testing`. Las prueba tools/ci/boundaries.test.mjs, una sonda por
+ * frontera. Ver vault: 02-Arquitectura/Anatomia del Workspace.md.
  */
 
-const DOMAINS = ['@ewms/domains-*', '@ewms/domains/**'];
-
-/**
- * Todas las bibliotecas del workspace. Producción usa el glob `@ewms/*`, que cerca una
- * biblioteca nueva al nacer; las specs necesitan restar `@ewms/testing` y el glob se
- * expande contra esta lista. Una biblioteca nueva va acá también, o las specs la importan.
- */
-const LIBS = [
-  '@ewms/design-system',
-  '@ewms/showroom',
-  '@ewms/core',
-  '@ewms/shared',
-  '@ewms/api-client',
-  '@ewms/testing',
+/** Los alias de dominio de Estructura §2, en una sola lista; cada uno en projects/domains/<nombre>. */
+const DOMAINS = [
+  '@ewms/inventory',
+  '@ewms/security',
+  '@ewms/kardex',
+  '@ewms/decisions',
+  '@ewms/audit',
+  '@ewms/outbox',
+  '@ewms/extensibility',
+  '@ewms/tasks',
 ];
+
+/** Lo que un dominio puede importar del workspace; nunca otro dominio (Estructura §3). */
+const DOMAIN_ALLOWED = ['@ewms/design-system', '@ewms/core', '@ewms/shared', '@ewms/api-client'];
+
+/** El sistema de diseño no conoce el router: es presentación (ADR 0014). */
+const NO_ROUTER = {
+  group: ['@angular/router', '@angular/router/*'],
+  message:
+    '@ewms/design-system does not know the router (ADR 0014): receive the route as an input ' +
+    'and let the consumer navigate.',
+};
 
 /**
  * Las hojas de componente se inyectan como <style> inline y la CSP estricta las bloquea
@@ -76,13 +73,15 @@ const NO_LEGACY_FORMS = [
   },
 ];
 
-function restrict(project, forbidden, allowedText, extraPatterns) {
+// `@ewms/*` menos lo permitido: una biblioteca nueva queda prohibida hasta que alguien la declare.
+function restrict(project, allowed, extraPatterns) {
+  const allowedText = allowed.length ? allowed.join(', ') : 'nothing from this workspace';
   return [
     'error',
     {
       patterns: [
         {
-          group: forbidden,
+          group: ['@ewms/*', ...allowed.map((alias) => `!${alias}`)],
           message:
             `Boundary violation: @ewms/${project} may only import ${allowedText}. ` +
             'If this dependency is genuinely needed, the architecture changes first, not this import.',
@@ -93,40 +92,15 @@ function restrict(project, forbidden, allowedText, extraPatterns) {
   ];
 }
 
-/**
- * Arma los overrides de `no-restricted-imports` de una biblioteca: dos configs, primero
- * producción con todo lo prohibido y después *.spec.ts con lo mismo menos @ewms/testing.
- * Una spec no es la puerta trasera de la arquitectura: importa lo que el código probado.
- */
-function boundary(project, forbidden, allowed, extraPatterns = []) {
-  const allowedText = allowed.length ? allowed.join(', ') : 'nothing from this workspace';
-  const inSpecs = forbidden
-    .flatMap((pattern) => (pattern === '@ewms/*' ? LIBS : [pattern]))
-    .filter((pattern) => pattern !== '@ewms/testing');
-
+// Producción y después sus specs, que suman @ewms/testing y nada más: una spec no es la puerta
+// trasera de la arquitectura, importa lo que el código probado.
+function boundary(project, folder, allowed, extraPatterns = []) {
+  const rule = (list) => ({
+    '@typescript-eslint/no-restricted-imports': restrict(project, list, extraPatterns),
+  });
   return [
-    {
-      files: [`projects/${project}/**/*.ts`],
-      rules: {
-        '@typescript-eslint/no-restricted-imports': restrict(
-          project,
-          forbidden,
-          allowedText,
-          extraPatterns,
-        ),
-      },
-    },
-    {
-      files: [`projects/${project}/**/*.spec.ts`],
-      rules: {
-        '@typescript-eslint/no-restricted-imports': restrict(
-          project,
-          inSpecs,
-          `${allowedText}, plus @ewms/testing in specs`,
-          extraPatterns,
-        ),
-      },
-    },
+    { files: [`${folder}/**/*.ts`], rules: rule(allowed) },
+    { files: [`${folder}/**/*.spec.ts`], rules: rule([...allowed, '@ewms/testing']) },
   ];
 }
 
@@ -272,33 +246,43 @@ module.exports = tseslint.config(
   },
 
   // ------------------------------------------------------------ las fronteras
-  // Cada llamada emite la regla de producción y después la de specs, así el override
-  // de specs siempre queda detrás de la config que acota.
-  ...boundary('shared', ['@ewms/*', ...DOMAINS], [], [...NO_LEGACY_FORMS]),
-  ...boundary('api-client', ['@ewms/*', ...DOMAINS], [], [...NO_LEGACY_FORMS]),
+  ...boundary('shared', 'projects/shared', [], NO_LEGACY_FORMS),
+  ...boundary('api-client', 'projects/api-client', [], NO_LEGACY_FORMS),
   ...boundary(
     'design-system',
-    ['@ewms/core', '@ewms/api-client', '@ewms/showroom', '@ewms/testing', ...DOMAINS],
+    'projects/design-system',
     ['@ewms/shared'],
-    [NO_TRANSLATION_LIBRARY, ...NO_LEGACY_FORMS],
+    [NO_TRANSLATION_LIBRARY, NO_ROUTER, ...NO_LEGACY_FORMS],
   ),
   ...boundary(
     'showroom',
-    ['@ewms/core', '@ewms/api-client', '@ewms/testing', ...DOMAINS],
+    'projects/showroom',
     ['@ewms/design-system', '@ewms/shared'],
-    [...NO_LEGACY_FORMS],
+    NO_LEGACY_FORMS,
   ),
+  ...boundary('core', 'projects/core', ['@ewms/shared', '@ewms/api-client'], NO_LEGACY_FORMS),
+  // El shell arma la app con todo; @ewms/testing, solo en sus specs.
   ...boundary(
-    'core',
-    ['@ewms/design-system', '@ewms/showroom', '@ewms/testing', ...DOMAINS],
-    ['@ewms/shared', '@ewms/api-client'],
-    [...NO_LEGACY_FORMS],
+    'shell',
+    'projects/shell',
+    [
+      '@ewms/design-system',
+      '@ewms/showroom',
+      '@ewms/core',
+      '@ewms/shared',
+      '@ewms/api-client',
+      ...DOMAINS,
+    ],
+    NO_LEGACY_FORMS,
   ),
+  ...DOMAINS.flatMap((alias) => {
+    const name = alias.replace('@ewms/', '');
+    return boundary(name, `projects/domains/${name}`, DOMAIN_ALLOWED, NO_LEGACY_FORMS);
+  }),
 
-  // `shell` y `testing` no pasan por `boundary` (no tienen frontera de @ewms/*), pero la
-  // API vieja de formularios tampoco entra por ahí.
+  // `testing` es solo de desarrollo y usa todo; la API vieja de formularios tampoco entra por ahí.
   {
-    files: ['projects/shell/**/*.ts', 'projects/testing/**/*.ts'],
+    files: ['projects/testing/**/*.ts'],
     rules: {
       '@typescript-eslint/no-restricted-imports': ['error', { patterns: [...NO_LEGACY_FORMS] }],
     },
@@ -318,3 +302,6 @@ module.exports = tseslint.config(
     rules: {},
   },
 );
+
+// Para las sondas de tools/ci/boundaries.test.mjs: la misma lista, no una copia.
+module.exports.DOMAINS = DOMAINS;

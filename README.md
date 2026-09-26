@@ -78,8 +78,8 @@ supersedes ADR 0004 and its Figma → Style Dictionary pipeline).
 
       security, inventory, kardex, decisions, audit, outbox, extensibility, tasks
 
-  Each gets its own @ewms/domains-<name> alias and its own row in the dependency
-  table below. Domains are never importable by design-system, showroom or core.
+  Each gets its own @ewms/<name> alias (@ewms/inventory, @ewms/kardex, ...) and
+  falls under the domain row of the dependency table below.
 -->
 
 ## Dependency rules
@@ -91,10 +91,11 @@ that interface is the `@ewms/*` alias, which resolves to the library's
 
 | Library | May import | Never imports |
 | --- | --- | --- |
-| `shell` | everything | — |
-| `showroom` | design-system, shared | core, api-client, domains |
-| `design-system` | shared | core, api-client, domains |
-| `core` | shared, api-client | design-system, domains |
+| `shell` | everything (`@ewms/testing` only in specs) | — |
+| `showroom` | design-system, shared | core, api-client, testing, domains |
+| `design-system` | shared | core, api-client, showroom, domains, `@angular/router`, `@jsverse/*` |
+| `core` | shared, api-client | design-system, showroom, domains |
+| `domains/X` | design-system, core, shared, api-client | showroom, **another domain** |
 | `shared` | nothing from the project | everything |
 | `api-client` | nothing from the project | everything |
 | `testing` | everything (dev only) | — |
@@ -108,10 +109,12 @@ the architecture — what a spec may import is what the code under test will end
 up being written against. `@ewms/testing` itself remains forbidden in production
 code, specs only.
 
-These rules are **ESLint errors that fail CI**, not a good-faith agreement. See
-[`eslint.config.js`](./eslint.config.js). To see them bite, add
-`import '@ewms/core';` to a file under `projects/design-system/` and run
-`npm run lint`.
+These rules are **ESLint errors that fail CI**, not a good-faith agreement, and
+they are an **allowlist**: each library declares the `@ewms/*` it may import and
+everything else fails, so a new library is off-limits until someone declares it.
+See [`eslint.config.js`](./eslint.config.js).
+[`tools/ci/boundaries.test.mjs`](./tools/ci/boundaries.test.mjs) probes every
+boundary with one allowed and one forbidden import, and runs in `npm test`.
 
 ## Conventions
 
