@@ -37,6 +37,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+        with:
+          # La compuerta de comentarios compara contra el ancestro común con la base.
+          fetch-depth: 0
 
       - name: Set up Node
         uses: actions/setup-node@v5
@@ -90,6 +93,12 @@ jobs:
       # una tabla; la pieza que falta se agrega al sistema.
       - name: Design system only (no native controls outside the library)
         run: npm run lint:ds
+
+      # Regla 16: un bloque de comentario tiene tres líneas como máximo, en lo que la rama crea o toca.
+      - name: Comments (three lines per block)
+        env:
+          BASE_REF: ${{ github.base_ref || 'development' }}
+        run: npm run lint:comments -- --base "origin/$BASE_REF"
 
       - name: Vitest, coverage thresholds, axe-core
         run: npm test
