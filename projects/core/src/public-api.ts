@@ -5,6 +5,31 @@ export { provideEwmsI18n } from './lib/i18n/transloco.providers';
 export { DictionaryUnavailableError, LanguageService } from './lib/i18n/language.service';
 export { LANGUAGES, type Language } from './lib/i18n/language.types';
 
+// Asientos de plataforma sin proveedor (ADR 0017): errores y telemetría, traza, recarga, configuración.
+export {
+  errorReport,
+  EwmsErrorHandler,
+  provideEwmsErrorHandling,
+  TELEMETRY,
+  type ErrorReport,
+  type Telemetry,
+} from './lib/errors/telemetry';
+export {
+  CHUNK_RELOAD_PARAM,
+  ChunkReload,
+  isChunkLoadError,
+  provideChunkReload,
+  withChunkReload,
+} from './lib/errors/chunk-reload';
+export { TRACEPARENT, traceparentInterceptor } from './lib/http/traceparent.interceptor';
+export {
+  provideRuntimeConfig,
+  RUNTIME_CONFIG_FIELDS,
+  RuntimeConfigInvalidError,
+  RuntimeConfigStore,
+  type RuntimeConfig,
+} from './lib/config/runtime-config';
+
 // Sesión y almacén activo (DS-5): asiento del Security Core (SEC-MUL-002), no el Security Core.
 export {
   SessionContext,

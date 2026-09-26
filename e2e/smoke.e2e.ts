@@ -13,9 +13,12 @@ const KNOWN_CODE = 'EXP-2026-0403';
 
 test.describe('the application is alive', () => {
   test('the shell boots and renders the home page', async ({ page }) => {
+    const dictionary = page.waitForRequest((request) => /\/i18n\/es\.json(\?|$)/.test(request.url()));
     await page.goto('/');
 
     await expect(page.getByRole('heading', { name: 'eWMS Advance' })).toBeVisible();
+    // Cada petición sale con su traza W3C (AUD-003/004); la del diccionario sirve de muestra.
+    expect((await dictionary).headers()['traceparent']).toMatch(/^00-[0-9a-f]{32}-[0-9a-f]{16}-00$/);
     // Es el artefacto de producción: las utilidades `ng` de depuración solo existen en desarrollo.
     expect(await page.evaluate(() => 'ng' in window)).toBe(false);
 

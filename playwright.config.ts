@@ -63,6 +63,7 @@ export default defineConfig({
         'iconography.e2e.ts',
         'i18n.e2e.ts',
         'i18n-failure.e2e.ts',
+        'config-failure.e2e.ts',
         'click-budget.e2e.ts',
       ],
       use: { ...devices['Desktop Chrome'] },
