@@ -1,7 +1,8 @@
 import { Component, signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { expectNoAxeViolations } from '@ewms/testing';
-import { EWMS_PAGINATION_MESSAGES, Pagination, type PaginationMessages } from './pagination';
+import { Pagination } from './pagination';
+import { EWMS_PAGINATION_MESSAGES, type PaginationMessages } from './pagination.types';
 
 const MESSAGES: PaginationMessages = {
   previousPage: 'Página anterior',

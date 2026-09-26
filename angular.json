@@ -36,8 +36,8 @@
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "400kB",
-                  "maximumError": "600kB"
+                  "maximumWarning": "372kB",
+                  "maximumError": "372kB"
                 },
                 {
                   "type": "anyComponentStyle",
@@ -59,7 +59,9 @@
                 },
                 "fonts": true
               },
-              "outputHashing": "all"
+              "outputHashing": "all",
+              // La compuerta de ruta crítica lee este stats.json (fuera de browser/: no se sirve).
+              "statsJson": true
             },
             "development": {
               "optimization": false,

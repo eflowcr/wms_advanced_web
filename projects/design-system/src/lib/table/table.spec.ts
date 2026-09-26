@@ -5,8 +5,8 @@ import { expectNoAxeViolations, pixels } from '@ewms/testing';
 import { By } from '@angular/platform-browser';
 import { defer, Observable, of, Subject, throwError } from 'rxjs';
 import { EWMS_DATE_PICKER_MESSAGES } from '../date-picker/date-picker.types';
-import { EWMS_FILTER_CHIPS_MESSAGES, type FilterChipsMessages } from '../filters/filter-chips';
-import { EWMS_PAGINATION_MESSAGES, type PaginationMessages } from '../pagination/pagination';
+import { EWMS_FILTER_CHIPS_MESSAGES, type FilterChipsMessages } from '../filters/filter-chips.types';
+import { EWMS_PAGINATION_MESSAGES, type PaginationMessages } from '../pagination/pagination.types';
 import { EWMS_SPLIT_BUTTON_MESSAGES } from '../split-button/split-button.types';
 import { ShortcutsHost } from '../keyboard/shortcuts-host';
 import {

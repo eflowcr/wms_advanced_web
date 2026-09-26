@@ -17,6 +17,7 @@
     "lint:ds": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON tools/ci/check-design-system-only.mjs",
     "lint:i18n": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON tools/ci/check-i18n.mjs",
     "lint:comments": "node tools/ci/check-comments.mjs",
+    "lint:critical-path": "node tools/ci/check-critical-path.mjs",
     "i18n:format": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON tools/ci/check-i18n.mjs --write",
     "icons:build": "node tools/icons/build-icons.mjs",
     "vault:check-tokens": "node tools/vault/check-token-names.mjs",

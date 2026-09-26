@@ -61,7 +61,7 @@ interface InvalidField {
     </ewms-banner>
   `,
 })
-export class FormErrors {
+class FormErrors {
   // Con valor por defecto y no `required`: lo crea la directiva, y una entrada obligatoria sin
   // valor al crearlo lanza antes de que nadie pueda llenarla.
   readonly fields = input<readonly InvalidField[]>([]);
