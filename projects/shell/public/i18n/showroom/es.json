@@ -1315,17 +1315,26 @@
   },
   "navigation": {
     "anatomy": {
-      "contrast": "<b>Los contrastes sobre navy están medidos</b>, no supuestos: <code>--color-text-on-dark</code> sobre <code>--color-brand-navy</code>, el icono, y la pastilla activa. Los números y el método están en el reporte de DS-5 y en <mono>Fundamentos de Marca</mono>.",
+      "contrast": "<b>Los contrastes del marco claro están medidos en el navegador</b>, sobre las piezas pintadas y con hover: el texto sobre el menú y la cabecera, la fila y el chip activos (<code>--color-text-on-dark</code> sobre <code>--color-brand-navy</code>), el chip en reposo y apuntado, y la × apuntada. Todos pasan AA; la tabla completa, con los números, está en la ficha de Navegación.",
       "parts": {
-        "activePill": "Pastilla del ítem activo",
-        "activeText": "Texto del ítem activo",
+        "activeRow": "Fila, chip y destino activos",
+        "activeText": "Texto e íconos sobre lo activo",
         "bottomBreakpoint": "Punto de corte de la barra inferior",
         "bottomHeight": "Alto de la barra inferior",
+        "chip": "Chip en reposo",
+        "chipClose": "Círculo de la × apuntada",
+        "chipFade": "Degradado de las flechas de la tira",
+        "chipHover": "Chip apuntado",
+        "drawerBreakpoint": "Corte del cajón: debajo, el menú abierto se superpone",
+        "drawerTransition": "Entrada del cajón (la única animación del marco)",
         "panelWidth": "Ancho del panel expandido",
-        "railBackground": "Fondo del rail y de la barra inferior",
+        "railBackground": "Fondo del menú, de la cabecera y de la barra inferior",
         "railWidth": "Ancho del rail colapsado",
+        "rowHeight": "Alto de una fila, abierto",
+        "rowHeightCollapsed": "Alto de una fila, plegado (ícono sobre etiqueta)",
+        "rowHover": "Fila apuntada",
         "tabHeight": "Alto de una pestaña",
-        "textOnNavy": "Texto e iconos sobre navy"
+        "tabIndicator": "Subrayado de la sección activa"
       }
     },
     "demo": {
@@ -1353,6 +1362,7 @@
         "lots": "Lotes",
         "params": "Parámetros",
         "settings": "Configuración",
+        "settingsShort": "Config",
         "users": "Usuarios"
       }
     },
@@ -1411,12 +1421,12 @@
     },
     "sizes": {
       "breakpoint": "<b>El punto de corte es un token y se lee desde TypeScript</b>, no como un <code>md:</code> de Tailwind. Mapearlo al <code>@theme</code> emite <code>@media (width >= var(--breakpoint-nav-bottom))</code>, y una propiedad personalizada no se sustituye dentro de una media query: compila, no falla nada, y el diseño no cambia nunca. Lo lee <code>Viewport</code> con <code>readPixels</code>, igual que el Toast lee su duración.",
-      "intro": "Los tres números de la hoja de Figma del App Shell, y ninguno escrito en una plantilla: el header mide <code>--shell-header-height</code>, el rail <code>--nav-rail-width</code> y el panel <code>--nav-panel-width</code>."
+      "intro": "Todas las medidas del marco son tokens y ninguna está escrita en una plantilla: la cabecera, el menú plegado y abierto, sus filas, la tira de chips, la barra inferior y los dos cortes."
     },
     "states": {
       "activeItem": {
         "name": "Ítem activo",
-        "seen": "Pastilla azul y <code>aria-current=\"page\"</code>",
+        "seen": "Fila navy con texto claro y <code>aria-current=\"page\"</code>",
         "why": "El color solo no basta; el atributo lo dice sin verlo"
       },
       "bottomNoOverflow": {
@@ -1430,6 +1440,11 @@
         "state": "Estado",
         "why": "Por qué"
       },
+      "drawerOpen": {
+        "name": "Menú abierto en pantalla media",
+        "seen": "Cajón sobre la página, con velo; el foco queda adentro y <kbd>Escape</kbd> lo cierra",
+        "why": "Entre la barra inferior y 1280 px el panel no cabe al lado del contenido: empujarlo dejaría la pantalla en una columna angosta"
+      },
       "groupWithActive": {
         "name": "Grupo con la activa dentro",
         "seen": "Se abre solo",
@@ -1437,13 +1452,18 @@
       },
       "railCollapsed": {
         "name": "Rail colapsado",
-        "seen": "Sólo iconos, cada uno con tooltip",
+        "seen": "Ícono sobre la etiqueta corta, y el nombre entero en el tooltip y en <code>aria-label</code>",
         "why": "Un rail de glifos sin nombre sólo lo usa quien ya conoce el producto"
       },
       "singleCrumb": {
         "name": "Migas de un nivel",
         "seen": "Un solo texto, sin enlaces",
         "why": "Un enlace a donde ya está no lleva a ninguna parte"
+      },
+      "stripOverflow": {
+        "name": "Tira de pestañas desbordada",
+        "seen": "Una flecha por lado con algo escondido, y la activa a la vista",
+        "why": "Una flecha que no mueve nada es un control que miente, y una pestaña activa fuera de vista no dice dónde está"
       },
       "tabDisabled": {
         "name": "Pestaña deshabilitada",
@@ -1473,6 +1493,12 @@
         "note": "El <b>«…» es un botón</b> y dice cuántos niveles esconde. Tres puntos que no se pueden pulsar avisan de que el camino se acortó y no dan forma de recuperarlo. El primero y el último nunca se pliegan: uno es la salida y el otro es dónde está.",
         "title": "Migas: el pliegue, a partir de cinco niveles",
         "warehouses": "Almacenes"
+      },
+      "drawer": {
+        "frame": "El rail con drawer, plegado en el flujo",
+        "label": "Menú de ejemplo en cajón",
+        "note": "Pulse el botón del pie: el cajón se abre <b>sobre esta página</b>, bajo la cabecera, como en la aplicación entre 768 y 1280 px. El foco queda adentro; <kbd>Escape</kbd>, el velo o el mismo botón lo cierran y el foco vuelve a quien lo abrió. En la app el conmutador es la hamburguesa.",
+        "title": "Pantalla media: el cajón"
       },
       "tabs": {
         "audit": "Auditoría",

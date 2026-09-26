@@ -159,12 +159,41 @@
       [ewmsProse]="'showroom.navigation.variants.crumbs.note' | transloco"
     ></p>
 
+    <!-- El cajón de verdad: abierto se superpone a esta página, bajo la cabecera, como en la app. -->
+    <h3 class="text-h3">{{ 'showroom.navigation.variants.drawer.title' | transloco }}</h3>
+    <ewms-demo-frame
+      ground="surface"
+      [label]="'showroom.navigation.variants.drawer.frame' | transloco"
+    >
+      <div class="flex min-h-96 overflow-hidden rounded-md border border-default" data-demo-drawer>
+        <ewms-nav-rail
+          [items]="tree()"
+          [label]="'showroom.navigation.variants.drawer.label' | transloco"
+          [toggleLabel]="'showroom.navigation.demo.toggleLabel' | transloco"
+          [activeId]="activeId()"
+          [expanded]="drawerOpen()"
+          [drawer]="true"
+          (itemSelect)="onDrawerSelect($event)"
+          (expandedChange)="drawerOpen.set($event)"
+        />
+        <div class="flex-1 bg-canvas"></div>
+      </div>
+    </ewms-demo-frame>
+    <p
+      class="text-caption text-secondary"
+      [ewmsProse]="'showroom.navigation.variants.drawer.note' | transloco"
+    ></p>
+
     <h3 class="text-h3">{{ 'showroom.navigation.variants.bottom.title' | transloco }}</h3>
     <ewms-demo-frame
       ground="surface"
       [label]="'showroom.navigation.variants.bottom.frame' | transloco"
     >
-      <div class="relative h-96 overflow-hidden rounded-md border border-default">
+      <!--
+        `translate-x-0`: una transformación hace del marco el bloque contenedor de lo fijo. Sin ella
+        la barra y su hoja salían del marco y quedaban pegadas al pie de toda la página.
+      -->
+      <div class="relative h-96 translate-x-0 overflow-hidden rounded-md border border-default">
         <ewms-nav-bottom
           [items]="tree()"
           [label]="'showroom.navigation.variants.bottom.label' | transloco"
@@ -219,10 +248,14 @@
     <ul class="flex flex-col gap-2">
       <li><ewms-token-value token="--nav-rail-width" /></li>
       <li><ewms-token-value token="--nav-panel-width" /></li>
+      <li><ewms-token-value token="--nav-row-height" /></li>
+      <li><ewms-token-value token="--nav-row-height-collapsed" /></li>
       <li><ewms-token-value token="--shell-header-height" /></li>
-      <li><ewms-token-value token="--nav-bottom-height" /></li>
+      <li><ewms-token-value token="--shell-tabs-height" /></li>
       <li><ewms-token-value token="--chip-height" /></li>
+      <li><ewms-token-value token="--nav-bottom-height" /></li>
       <li><ewms-token-value token="--breakpoint-nav-bottom" /></li>
+      <li><ewms-token-value token="--breakpoint-nav-drawer" /></li>
     </ul>
     <div class="rounded-md border border-strong bg-secondary p-4">
       <p class="text-caption" [ewmsProse]="'showroom.navigation.sizes.breakpoint' | transloco"></p>

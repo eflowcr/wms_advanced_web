@@ -1315,17 +1315,26 @@
   },
   "navigation": {
     "anatomy": {
-      "contrast": "<b>The contrasts on navy are measured</b>, not assumed: <code>--color-text-on-dark</code> on <code>--color-brand-navy</code>, the icon, and the active pill. The figures and the method are in the DS-5 report and in <mono>Fundamentos de Marca</mono>.",
+      "contrast": "<b>The contrasts of the light frame are measured in the browser</b>, on the painted pieces and with hover: text on the menu and the header, the active row and chip (<code>--color-text-on-dark</code> on <code>--color-brand-navy</code>), the chip at rest and hovered, and the hovered ×. All pass AA; the full table, with the numbers, is in the Navigation sheet.",
       "parts": {
-        "activePill": "Active item pill",
-        "activeText": "Active item text",
+        "activeRow": "Active row, chip and destination",
+        "activeText": "Text and icons on what is active",
         "bottomBreakpoint": "Bottom bar breakpoint",
         "bottomHeight": "Bottom bar height",
+        "chip": "Chip at rest",
+        "chipClose": "Circle of the hovered ×",
+        "chipFade": "Gradient behind the strip arrows",
+        "chipHover": "Hovered chip",
+        "drawerBreakpoint": "Drawer breakpoint: below it, the open menu lies over the page",
+        "drawerTransition": "Drawer entrance (the only animation in the frame)",
         "panelWidth": "Expanded panel width",
-        "railBackground": "Rail and bottom bar background",
+        "railBackground": "Background of the menu, the header and the bottom bar",
         "railWidth": "Collapsed rail width",
+        "rowHeight": "Row height, open",
+        "rowHeightCollapsed": "Row height, folded (icon over label)",
+        "rowHover": "Hovered row",
         "tabHeight": "Tab height",
-        "textOnNavy": "Text and icons on navy"
+        "tabIndicator": "Underline of the active section"
       }
     },
     "demo": {
@@ -1353,6 +1362,7 @@
         "lots": "Lots",
         "params": "Parameters",
         "settings": "Settings",
+        "settingsShort": "Settings",
         "users": "Users"
       }
     },
@@ -1411,12 +1421,12 @@
     },
     "sizes": {
       "breakpoint": "<b>The breakpoint is a token and is read from TypeScript</b>, not as a Tailwind <code>md:</code>. Mapping it into <code>@theme</code> emits <code>@media (width >= var(--breakpoint-nav-bottom))</code>, and a custom property is not substituted inside a media query: it compiles, nothing fails, and the layout never changes. <code>Viewport</code> reads it with <code>readPixels</code>, just as the Toast reads its duration.",
-      "intro": "The three numbers from the App Shell Figma sheet, and none of them written into a template: the header measures <code>--shell-header-height</code>, the rail <code>--nav-rail-width</code> and the panel <code>--nav-panel-width</code>."
+      "intro": "Every measure of the frame is a token and none is written in a template: the header, the folded and open menu, its rows, the chip strip, the bottom bar and the two breakpoints."
     },
     "states": {
       "activeItem": {
         "name": "Active item",
-        "seen": "Blue pill and <code>aria-current=\"page\"</code>",
+        "seen": "Navy row with light text and <code>aria-current=\"page\"</code>",
         "why": "Colour alone is not enough; the attribute says it without being seen"
       },
       "bottomNoOverflow": {
@@ -1430,6 +1440,11 @@
         "state": "State",
         "why": "Why"
       },
+      "drawerOpen": {
+        "name": "Menu open on a medium screen",
+        "seen": "Drawer over the page, with a veil; the focus stays inside and <kbd>Escape</kbd> closes it",
+        "why": "Between the bottom bar and 1280 px the panel does not fit beside the content: pushing it would leave the screen as a narrow column"
+      },
       "groupWithActive": {
         "name": "Group with the active item inside",
         "seen": "Opens by itself",
@@ -1437,13 +1452,18 @@
       },
       "railCollapsed": {
         "name": "Collapsed rail",
-        "seen": "Icons only, each with a tooltip",
+        "seen": "Icon over the short label, and the full name in the tooltip and in <code>aria-label</code>",
         "why": "A rail of unnamed glyphs is only usable by someone who already knows the product"
       },
       "singleCrumb": {
         "name": "Single-level breadcrumbs",
         "seen": "A single text, no links",
         "why": "A link to where you already are leads nowhere"
+      },
+      "stripOverflow": {
+        "name": "Overflowing tab strip",
+        "seen": "One arrow per side that hides something, and the active tab in view",
+        "why": "An arrow that moves nothing is a control that lies, and an active tab out of view does not say where you are"
       },
       "tabDisabled": {
         "name": "Disabled tab",
@@ -1473,6 +1493,12 @@
         "note": "The <b>“…” is a button</b> and says how many levels it hides. Three dots that cannot be pressed warn that the path was shortened and give no way of getting it back. The first and the last never fold: one is the way out and the other is where you are.",
         "title": "Breadcrumbs: the fold, from five levels up",
         "warehouses": "Warehouses"
+      },
+      "drawer": {
+        "frame": "The rail with drawer, folded in the flow",
+        "label": "Example menu as a drawer",
+        "note": "Press the button at its foot: the drawer opens <b>over this page</b>, under the header, as in the application between 768 and 1280 px. The focus stays inside; <kbd>Escape</kbd>, the veil or the same button close it, and the focus goes back to whoever opened it. In the app the toggle is the hamburger.",
+        "title": "Medium screens: the drawer"
       },
       "tabs": {
         "audit": "Audit",
