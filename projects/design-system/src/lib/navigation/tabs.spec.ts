@@ -273,6 +273,17 @@ describe('Tabs', () => {
       expect(document.activeElement).toBe(tab('articles'));
     });
 
+    it('and moving the focus there does not scroll the strip back to it', async () => {
+      await lay(300);
+      forward()!.focus();
+      const focus = vi.spyOn(tab('articles'), 'focus');
+
+      await lay(600);
+
+      expect(forward()).toBeNull();
+      expect(focus).toHaveBeenCalledWith({ preventScroll: true });
+    });
+
     it('section mode draws no arrows, overflow or not', async () => {
       host.mode.set('section');
       await settle();

@@ -130,11 +130,14 @@ export class Tabs {
     this.atEnd.set(element.scrollLeft + element.clientWidth >= element.scrollWidth - 1);
 
     // La flecha con el foco se va al llegar al borde: el foco pasa a la activa y no cae al body.
+    // Sin desplazar: la tira quedaba donde el usuario la llevó y el foco la hacía volver.
     const gone = arrow?.hasAttribute('data-tabs-back') ? !this.showBack() : !this.showForward();
     if (arrow !== null && arrow !== undefined && gone) {
       const id = this.activeId();
       if (id !== null) {
-        element.querySelector<HTMLElement>(`[data-tab="${CSS.escape(id)}"]`)?.focus();
+        element
+          .querySelector<HTMLElement>(`[data-tab="${CSS.escape(id)}"]`)
+          ?.focus({ preventScroll: true });
       }
     }
   }
