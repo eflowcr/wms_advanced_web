@@ -305,6 +305,8 @@
 
   /* Barra inferior: 64 deja un objetivo táctil holgado sobre el 24x24 de WCAG 2.5.8. */
   --nav-bottom-height: var(--size-64);
+  /* Alto máximo de la hoja «Más»: lo que no entra desplaza adentro. */
+  --nav-sheet-max-height: var(--vh-70);
 
   /* Bajo 768 px el rail pasa a barra inferior (decisión del usuario, 2026-09-19). Es token porque
    * el @theme borra los breakpoints por defecto (ADR 0009). */
