@@ -9,6 +9,7 @@ import {
   untracked,
   viewChild,
 } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink, RouterOutlet } from '@angular/router';
 import { filter, map, startWith } from 'rxjs';
@@ -36,8 +37,9 @@ import {
   type Tab,
 } from '@ewms/design-system';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
-import { BRAND_NAME } from '../brand';
+import { BRAND_EDITION, BRAND_NAME } from '../brand';
 import { provideEwmsDesignSystem } from '../design-system.providers';
+import { APP_VERSION } from '../version';
 import { LanguageSwitcher } from './language-switcher';
 import { MENU, MENU_DESTINATIONS, menuEntryFor, type MenuEntry } from './menu';
 import { MAX_OPEN_TABS, TabsService } from './tabs.service';
@@ -56,6 +58,7 @@ import { MAX_OPEN_TABS, TabsService } from './tabs.service';
     LanguageSwitcher,
     NavBottom,
     NavRail,
+    NgTemplateOutlet,
     RouterLink,
     RouterOutlet,
     SearchBox,
@@ -84,6 +87,8 @@ export class MainLayout {
   protected readonly viewport = inject(Viewport);
 
   protected readonly brandName = BRAND_NAME;
+  protected readonly brandEdition = BRAND_EDITION;
+  protected readonly appVersion = APP_VERSION;
   protected readonly maxTabs = MAX_OPEN_TABS;
 
   private readonly main = viewChild<ElementRef<HTMLElement>>('main');

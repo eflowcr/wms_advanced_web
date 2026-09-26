@@ -10,10 +10,14 @@
   ></button>
 }
 
-<!-- Rail y panel son el mismo árbol a dos anchos (token). `ul`/`li` reales con roles de árbol: acá andan las flechas. -->
+<!--
+  Rail y panel son el mismo árbol a dos anchos (token). `ul`/`li` reales con roles de árbol: acá andan
+  las flechas. El lado del contenido va redondeado abajo siempre y arriba solo abierto: plegado, la
+  columna sigue hacia la celda de la hamburguesa. `overflow-hidden` recorta el fondo a la curva.
+-->
 <nav
   #panel
-  class="flex flex-col bg-(image:--gradient-nav) text-on-dark"
+  class="flex flex-col overflow-hidden rounded-br-nav bg-(image:--gradient-nav) text-on-dark"
   [class]="panelClasses()"
   [attr.aria-label]="label()"
   [attr.data-nav-drawer]="drawerOpen() ? '' : null"
@@ -31,7 +35,7 @@
 
   <ul
     class="relative min-h-0 flex-1 list-none overflow-y-auto overflow-x-hidden py-2"
-    [class]="expanded() ? 'px-2' : 'p-0.5'"
+    [class]="expanded() ? 'px-2.5' : 'p-0.5'"
     role="tree"
     [id]="treeId"
     [attr.aria-label]="label()"
@@ -59,8 +63,8 @@
     }
   </ul>
 
-  <!-- Credenciales y logo del cliente. -->
-  <div class="relative shrink-0 border-t border-strong">
+  <!-- Logo del cliente. Sin nada proyectado no queda una línea suelta: `empty:hidden`. -->
+  <div class="relative shrink-0 border-t border-strong empty:hidden" data-nav-rail-footer>
     <ng-content select="[navRailFooter]" />
   </div>
 
@@ -105,9 +109,8 @@
     (click)="onActivate(item)"
     (keydown)="onKeydown($event, item)"
   >
-    <ewms-icon [name]="item.icon" size="lg" />
-
     @if (expanded()) {
+      <ewms-icon [name]="item.icon" size="lg" />
       <span class="min-w-0 flex-1 truncate">{{ item.label }}</span>
 
       @if (item.badge !== undefined) {
@@ -121,6 +124,10 @@
         <ewms-icon [name]="isOpen(item) ? 'chevron-up' : 'chevron-down'" size="sm" />
       }
     } @else {
+      <!-- Plegado, lo activo es un indicador alrededor del ícono: la etiqueta no queda apretada. -->
+      <span class="flex rounded-full px-4 py-1" [class]="indicatorClasses(item)" data-nav-indicator>
+        <ewms-icon [name]="item.icon" size="lg" />
+      </span>
       <span class="max-w-full truncate" data-nav-short-label>{{
         item.shortLabel ?? item.label
       }}</span>

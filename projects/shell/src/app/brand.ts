@@ -3,3 +3,6 @@
  * index.html la repite en <title> y en el aviso de arranque, que se pintan antes de Angular.
  */
 export const BRAND_NAME = 'eWMS Advance';
+
+/** La edición, escrita junto al wordmark eWMS en la cabecera. */
+export const BRAND_EDITION = 'Advance';

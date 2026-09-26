@@ -17,7 +17,11 @@ import { PropTable, type PropRow } from '../../ui/prop-table';
 import { Prose } from '../../ui/prose';
 import { TokenValue } from '../../ui/token-value';
 import { translated } from '../../ui/translated';
-import { DEEP_TRAIL_RECORDS, RAIL_FOOTER_SESSION } from './navigation.fixtures';
+import {
+  DEEP_TRAIL_RECORDS,
+  RAIL_FOOTER_CUSTOMER,
+  SHEET_FOOTER_STAMP,
+} from './navigation.fixtures';
 
 /** Una pestaña abierta sin su etiqueta: la etiqueta sale del árbol traducido. */
 type OpenTab = Omit<Tab, 'label'>;
@@ -173,6 +177,7 @@ const CRUMB_PROPS: readonly PropRow[] = [
  * t(showroom.navigation.anatomy.parts.railBackground, showroom.navigation.anatomy.parts.rowHover,
  *   showroom.navigation.anatomy.parts.activeRow, showroom.navigation.anatomy.parts.activeText,
  *   showroom.navigation.anatomy.parts.railWidth, showroom.navigation.anatomy.parts.panelWidth,
+ *   showroom.navigation.anatomy.parts.railCorner,
  *   showroom.navigation.anatomy.parts.rowHeight, showroom.navigation.anatomy.parts.rowHeightCollapsed,
  *   showroom.navigation.anatomy.parts.drawerTransition, showroom.navigation.anatomy.parts.chip,
  *   showroom.navigation.anatomy.parts.chipHover, showroom.navigation.anatomy.parts.chipClose,
@@ -188,6 +193,7 @@ const ANATOMY: readonly { readonly part: string; readonly token: string }[] = [
   { part: 'showroom.navigation.anatomy.parts.activeText', token: '--color-text-primary' },
   { part: 'showroom.navigation.anatomy.parts.railWidth', token: '--nav-rail-width' },
   { part: 'showroom.navigation.anatomy.parts.panelWidth', token: '--nav-panel-width' },
+  { part: 'showroom.navigation.anatomy.parts.railCorner', token: '--radius-nav' },
   { part: 'showroom.navigation.anatomy.parts.rowHeight', token: '--nav-row-height' },
   {
     part: 'showroom.navigation.anatomy.parts.rowHeightCollapsed',
@@ -293,7 +299,8 @@ export class ShowroomNavigation {
   protected readonly anatomy = ANATOMY;
   protected readonly stateColumns = STATE_COLUMNS;
   protected readonly states = STATES;
-  protected readonly session = RAIL_FOOTER_SESSION;
+  protected readonly customer = RAIL_FOOTER_CUSTOMER;
+  protected readonly stamp = SHEET_FOOTER_STAMP;
 
   /**
    * Árbol real del App Shell, recortado: un grupo con muchos hijos y otro con pocos

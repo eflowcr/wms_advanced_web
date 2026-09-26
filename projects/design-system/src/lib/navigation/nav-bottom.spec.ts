@@ -36,6 +36,7 @@ const TREE: readonly NavItem[] = [
       (itemSelect)="chosen = $event.id"
     >
       <p navBottomTop data-top>favoritos</p>
+      <p navBottomFooter data-foot>v0.0.0 · Operador</p>
     </ewms-nav-bottom>
   `,
   imports: [NavBottom],
@@ -141,6 +142,12 @@ describe('NavBottom', () => {
 
     it('projects the favourites block: the fixed place survives the narrow layout', () => {
       expect(fixture.nativeElement.querySelector('[data-top]')).not.toBeNull();
+    });
+
+    it('projects the consumer footer LAST, below the close control', () => {
+      const foot = fixture.nativeElement.querySelector('[data-foot]') as HTMLElement;
+      expect(foot.parentElement).toBe(sheet());
+      expect(sheet()?.lastElementChild).toBe(foot);
     });
 
     it('closes behind you when you choose something', async () => {

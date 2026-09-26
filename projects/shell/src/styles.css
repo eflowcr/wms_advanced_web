@@ -60,6 +60,8 @@
   --radius-full: var(--radius-full);
   /* El Modal está un nivel más allá de la escala de radios: no es `lg` con otro nombre. */
   --radius-dialog: var(--radius-dialog);
+  /* El borde del menú lateral hacia el contenido. */
+  --radius-nav: var(--radius-nav);
 
   /* Un solo desenfoque, el del fondo del Modal. */
   --blur-dialog: var(--backdrop-blur);
@@ -100,6 +102,7 @@
   --shadow-pin-end: var(--shadow-pin-end);
 
   --background-color-canvas: var(--color-canvas);
+  --background-color-shell-header: var(--color-shell-header-bg);
   --background-color-surface: var(--color-surface);
   --background-color-brand-navy: var(--color-brand-navy);
   --background-color-secondary: var(--color-bg-secondary);

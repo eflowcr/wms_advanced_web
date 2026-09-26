@@ -186,7 +186,9 @@
       "placeholder": "Buscar…"
     },
     "session": {
-      "signOut": "Salir"
+      "signOut": "Salir",
+      "stamp": "Versión y sesión, para soporte",
+      "version": "v{{ version }}"
     },
     "shortcuts": {
       "actionColumn": "Acción",

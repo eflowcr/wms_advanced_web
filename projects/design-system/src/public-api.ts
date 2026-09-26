@@ -17,6 +17,7 @@ export { ICON_CATEGORIES, type IconCategory, type IconName } from './icons/icons
 export { Text, type TextVariant } from './lib/text/text';
 export {
   Button,
+  type ButtonGround,
   type ButtonIconPosition,
   type ButtonSize,
   type ButtonVariant,

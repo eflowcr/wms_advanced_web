@@ -1,18 +1,18 @@
 <!-- `<nav>` propio: landmark «Favoritos» aparte, y las flechas del árbol no visitan filas ajenas. -->
 <nav
-  class="border-b px-2 py-3"
+  class="border-b py-3"
   [class]="blockClasses()"
   data-favorites-nav
   [attr.aria-label]="label()"
 >
   @if (expanded()) {
-    <h2 class="px-4 pb-2 text-caption uppercase">{{ label() }}</h2>
+    <h2 class="pb-2 text-caption uppercase" [class]="textInset()">{{ label() }}</h2>
   }
 
   @if (shown().length === 0) {
     <!-- Vacío explica cómo llenarlo; plegado, una estrella lleva esas palabras como nombre. -->
     @if (expanded()) {
-      <p class="px-4 text-caption" data-favorites-empty>{{ emptyLabel() }}</p>
+      <p class="text-caption" [class]="textInset()" data-favorites-empty>{{ emptyLabel() }}</p>
     } @else {
       <!-- Sin foco ni tooltip: `role="img"` con nombre; un `tabindex="0"` sería una parada vacía. -->
       <div class="flex justify-center py-2" data-favorites-empty>
@@ -36,9 +36,18 @@
             position="right"
             (click)="onSelect(row.favorite)"
           >
-            <ewms-icon [name]="row.icon" size="lg" />
             @if (expanded()) {
+              <ewms-icon [name]="row.icon" size="lg" />
               <span class="min-w-0 flex-1 truncate">{{ row.label }}</span>
+            } @else {
+              <!-- Plegado, lo activo rodea solo el ícono, como en el árbol del rail. -->
+              <span
+                class="flex rounded-full px-4 py-1"
+                [class]="indicatorClasses(row.favorite.route)"
+                data-favorite-indicator
+              >
+                <ewms-icon [name]="row.icon" size="lg" />
+              </span>
             }
           </button>
         </li>

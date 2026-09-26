@@ -200,10 +200,41 @@ describe('NavRail', () => {
     });
   });
 
+  it('rounds the bottom corner always and the top only while open: folded, the column goes on up', async () => {
+    // Plegado, el rail sigue hacia la celda navy de la hamburguesa (decisión del usuario, 2026-09-25).
+    const panel = (): HTMLElement => fixture.nativeElement.querySelector('nav') as HTMLElement;
+    expect(panel().className).toContain('rounded-br-nav');
+    expect(panel().className).toContain('rounded-tr-nav');
+    expect(panel().className).toContain('overflow-hidden');
+
+    host.expanded.set(false);
+    await settle();
+    expect(panel().className).toContain('rounded-br-nav');
+    expect(panel().className).not.toContain('rounded-tr-nav');
+
+    // El cajón también es un panel abierto.
+    host.drawer.set(true);
+    host.expanded.set(true);
+    await settle();
+    expect(panel().className).toContain('rounded-tr-nav');
+  });
+
   describe('collapsed', () => {
     beforeEach(async () => {
       host.expanded.set(false);
       await settle();
+    });
+
+    it('marks where you are with an indicator around the ICON, and leaves the label free', async () => {
+      host.activeId.set('dashboard');
+      await settle();
+      const indicator = row('dashboard').querySelector('[data-nav-indicator]') as HTMLElement;
+
+      expect(indicator.className).toContain('bg-surface');
+      expect(row('dashboard').className).not.toContain('bg-surface');
+      expect(row('design').querySelector('[data-nav-indicator]')?.className).not.toContain(
+        'bg-surface',
+      );
     });
 
     it('shows the short label under the icon, or the label itself when there is none', () => {
@@ -376,4 +407,19 @@ describe('NavRail backdrop', () => {
     expect(element.querySelector('[role="tree"]')?.className).toContain('relative');
     expect(element.querySelector('nav')?.className).toContain('relative');
   });
+
+  it('without a footer there is no loose line: the empty footer box hides itself', async () => {
+    await TestBed.configureTestingModule({ imports: [WithBackdrop] }).compileComponents();
+    const fixture = TestBed.createComponent(WithBackdrop);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const footer = (fixture.nativeElement as HTMLElement).querySelector(
+      '[data-nav-rail-footer]',
+    ) as HTMLElement;
+
+    // `empty:hidden` actúa con `:empty`, que admite comentarios: el ancla de un `@if` apagado cuenta.
+    expect(footer.matches(':empty')).toBe(true);
+    expect(footer.className).toContain('empty:hidden');
+  });
+
 });

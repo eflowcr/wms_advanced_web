@@ -78,7 +78,13 @@
           <p navRailTop class="border-b border-strong px-4 py-3 text-caption uppercase">
             {{ 'showroom.navigation.demo.favourites' | transloco }}
           </p>
-          <p navRailFooter class="px-4 py-3 text-caption">{{ session }}</p>
+          <div navRailFooter class="px-4 py-3">
+            <img
+              class="block h-6 w-24 object-cover"
+              src="/brand/eprac/eprac-blanco.png"
+              [alt]="customer"
+            />
+          </div>
         </ewms-nav-rail>
 
         <div class="flex min-w-0 flex-1 flex-col gap-4 bg-canvas p-4">
@@ -211,6 +217,7 @@
           <p navBottomTop class="px-4 py-3 text-caption uppercase">
             {{ 'showroom.navigation.demo.favourites' | transloco }}
           </p>
+          <p navBottomFooter class="px-4 pb-4 text-center text-caption">{{ stamp }}</p>
         </ewms-nav-bottom>
       </div>
     </ewms-demo-frame>

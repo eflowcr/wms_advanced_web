@@ -15,46 +15,59 @@
 
   <!--
     Tres zonas (estructura de YouTube, decisión del usuario 2026-09-25). Los lados en `1fr` iguales
-    centran el buscador aunque midan distinto; el centro llega hasta su token. Ver vault: App-Shell.
+    centran el buscador aunque midan distinto; el centro llega hasta su token. Fondo con un tinte azul
+    mínimo, translúcido y desenfocado (decisión del usuario, 2026-09-25). Ver vault: App-Shell.
   -->
   <header
-    class="sticky top-0 z-(--layer-shell) grid h-(--shell-header-height) shrink-0 grid-cols-[1fr_minmax(0,var(--search-max-width))_1fr] items-center gap-4 bg-surface px-4"
+    class="sticky top-0 z-(--layer-shell) grid h-(--shell-header-height) shrink-0 grid-cols-[1fr_minmax(0,var(--search-max-width))_1fr] items-center gap-4 bg-shell-header pr-4 [backdrop-filter:var(--backdrop-shell-header)]"
+    [class.pl-4]="!viewport.isWide()"
     data-app-header
   >
-    <div class="flex items-center gap-2">
-      <!-- La hamburguesa solo existe donde hay rail: debajo del corte manda la barra inferior. -->
+    <div class="flex h-full items-center gap-4">
+      <!--
+        La hamburguesa solo existe donde hay rail: debajo del corte manda la barra inferior. Va sobre el
+        navy del menú, en una celda de su ancho y pegada al borde: queda centrada sobre sus íconos.
+      -->
       @if (viewport.isWide()) {
-        <ewms-button
-          [iconOnly]="true"
-          icon="menu"
-          variant="ghost"
-          data-rail-toggle
-          [label]="'shell.nav.toggleMenu' | transloco"
-          [expanded]="menuOpen()"
-          (click)="onMenuOpenChange(!menuOpen())"
-        />
+        <div
+          class="flex h-full w-(--nav-rail-width) shrink-0 items-center justify-center bg-brand-navy"
+          data-shell-menu-cell
+        >
+          <ewms-button
+            [iconOnly]="true"
+            icon="menu"
+            variant="ghost"
+            ground="navy"
+            data-rail-toggle
+            [label]="'shell.nav.toggleMenu' | transloco"
+            [expanded]="menuOpen()"
+            (click)="onMenuOpenChange(!menuOpen())"
+          />
+        </div>
       }
 
       <!--
-        El isotipo y el nombre del producto (decisión del usuario, 2026-09-25); a 375 px solo el isotipo,
-        que el nombre desbordaba la cabecera. Con el nombre escrito, el isotipo va con `alt` vacío: si no,
-        el enlace se llamaría dos veces «eWMS Advance». `max-w-none` y `width`/`height`: sin ellos la
-        rejilla medía el logo en cero y el enlace medía cero hasta que cargaba el SVG.
+        El wordmark eWMS y «Advance» en texto (decisión del usuario, 2026-09-25), con la misma altura de
+        mayúscula (--brand-wordmark-height) y alineados por la línea base; a 375 px solo el wordmark.
+        El nombre va en `aria-label`: el de contenido pegaría «eWMS» y «Advance» según el navegador.
+        `max-w-none` y `width`/`height`: sin ellos la rejilla medía el logo en cero y el enlace medía
+        cero hasta que cargaba el SVG.
       -->
       <a
-        class="flex shrink-0 items-center gap-2 rounded-sm outline-none focus-visible:shadow-(--focus-ring-shadow)"
+        class="flex shrink-0 items-baseline gap-2 rounded-sm outline-none focus-visible:shadow-(--focus-ring-shadow)"
         routerLink="/"
         data-shell-home
+        [attr.aria-label]="brandName"
       >
         <img
-          class="h-8 w-auto max-w-none"
-          src="/brand/ewms-isotipo.svg"
-          width="173"
-          height="175"
-          [alt]="viewport.isWide() ? '' : brandName"
+          class="h-(--brand-wordmark-height) w-auto max-w-none"
+          src="/brand/ewms-wordmark.svg"
+          width="1048"
+          height="232"
+          alt=""
         />
         @if (viewport.isWide()) {
-          <span class="whitespace-nowrap text-h3 text-primary">{{ brandName }}</span>
+          <span class="whitespace-nowrap text-h2 text-primary">{{ brandEdition }}</span>
         }
       </a>
     </div>
@@ -91,16 +104,30 @@
         [label]="'shell.session.signOut' | transloco"
       />
 
-      <!-- Decorativo: el usuario ya está escrito al pie del rail; anunciarlo dos veces es ruido. -->
-      <span
-        class="ml-2 flex size-8 shrink-0 items-center justify-center rounded-full bg-secondary text-caption text-primary"
-        data-shell-avatar
-        [attr.title]="session.user().name"
-        aria-hidden="true"
-      >
-        {{ session.user().initials }}
-      </span>
+      <!--
+        Decorativo: el usuario ya está escrito en la marca de agua; anunciarlo dos veces es ruido. A 375 px
+        no se dibuja: con el wordmark eWMS la cabecera no entraba, y en táctil su `title` no se ve.
+      -->
+      @if (viewport.isWide()) {
+        <span
+          class="ml-2 flex size-8 shrink-0 items-center justify-center rounded-full bg-secondary text-caption text-primary"
+          data-shell-avatar
+          [attr.title]="session.user().name"
+          aria-hidden="true"
+        >
+          {{ session.user().initials }}
+        </span>
+      }
     </div>
+
+    <!-- Con el menú abierto, la curva cóncava que une la celda de la hamburguesa con el panel. -->
+    @if (viewport.isWide() && menuOpen()) {
+      <span
+        class="pointer-events-none absolute bottom-0 left-(--nav-rail-width) size-(--radius-nav) bg-(image:--gradient-nav-fillet)"
+        data-shell-menu-fillet
+        aria-hidden="true"
+      ></span>
+    }
   </header>
 
   <div class="flex min-h-0 flex-1">
@@ -144,32 +171,25 @@
           (favoriteSelect)="onFavoriteSelect($event)"
         />
 
-        <!-- Credenciales como dato de `SessionContext`, asiento del Security Core. -->
-        <div navRailFooter class="flex flex-col gap-2 px-4 py-3">
-          @if (menuOpen()) {
-            <p class="text-caption" data-shell-credentials>
-              {{ session.company().code }} / {{ session.warehouse().code }} -
-              {{ session.warehouse().name }}
-            </p>
-            <!--
-              Sobre el menú navy, el logo blanco (el de color pierde la «e» azul contra el navy). El
-              PNG trae mucho margen: `object-cover` recorta al trazo.
-            -->
+        <!--
+          El logo del cliente, solo abierto: plegado no entra, y el pie vacío se oculta. Las credenciales
+          pasaron a la marca de agua. Sobre navy, el logo blanco (el de color pierde la «e» azul); el
+          PNG trae mucho margen y `object-cover` recorta al trazo.
+        -->
+        @if (menuOpen()) {
+          <div navRailFooter class="px-4 py-3">
             <img
-              class="h-6 w-24 self-start object-cover"
+              class="block h-6 w-24 object-cover"
               src="/brand/eprac/eprac-blanco.png"
               [alt]="session.company().name"
             />
-          } @else {
-            <p class="text-center text-caption" data-shell-credentials>
-              {{ session.warehouse().code }}
-            </p>
-          }
-        </div>
+          </div>
+        }
       </ewms-nav-rail>
     }
 
-    <div class="flex min-w-0 flex-1 flex-col gap-3 px-4 pb-4" [class.pb-20]="!viewport.isWide()">
+    <!-- El pie deja aire para la marca de agua, y bajo 768 px para la barra inferior: nada queda debajo. -->
+    <div class="flex min-w-0 flex-1 flex-col gap-3 px-4 pb-20">
       <!--
         El `<nav>` con nombre lo pidió axe: la tira quedaba fuera de todo landmark y quien
         salta por landmarks se la saltaba. `<nav>` nombra la región; el `tablist`, el widget.
@@ -219,6 +239,32 @@
     </div>
   </div>
 
+  <!--
+    Marca de agua (decisión del usuario, 2026-09-25): versión, usuario y almacén, para que soporte sepa
+    qué tiene cada quien. Pegada a la esquina de abajo a la derecha y sin tragarse clics; los toasts
+    pasan por encima.
+    Bajo la barra inferior no flota, que taparía contenido: va al pie de la hoja «Más».
+  -->
+  <ng-template #stamp>
+    <span>{{ 'shell.session.version' | transloco: { version: appVersion } }}</span>
+    <span aria-hidden="true">·</span>
+    <span>{{ session.user().name }}</span>
+    <span aria-hidden="true">·</span>
+    <span>
+      {{ session.company().code }} / {{ session.warehouse().code }} - {{ session.warehouse().name }}
+    </span>
+  </ng-template>
+
+  @if (viewport.isWide()) {
+    <footer
+      class="pointer-events-none fixed bottom-0 right-0 z-5 flex items-center gap-2 rounded-tl-lg bg-surface px-3 py-1 text-caption text-secondary shadow-sm"
+      data-shell-stamp
+      [attr.aria-label]="'shell.session.stamp' | transloco"
+    >
+      <ng-container [ngTemplateOutlet]="stamp" />
+    </footer>
+  }
+
   @if (!viewport.isWide()) {
     <!--
       Barra inferior (decisión del usuario, 2026-09-19): los doce destinos de segundo
@@ -240,6 +286,15 @@
         [activeRoute]="pageRoute()"
         (favoriteSelect)="onFavoriteSelect($event)"
       />
+
+      <footer
+        navBottomFooter
+        class="flex flex-wrap justify-center gap-2 px-4 pb-4 text-caption"
+        data-shell-stamp
+        [attr.aria-label]="'shell.session.stamp' | transloco"
+      >
+        <ng-container [ngTemplateOutlet]="stamp" />
+      </footer>
     </ewms-nav-bottom>
   }
 

@@ -38,6 +38,8 @@
   --navy-7-a08: rgb(1 15 66 / 0.08);
   --navy-7-a10: rgb(1 15 66 / 0.1);
   --navy-7-a50: rgb(1 15 66 / 0.5);
+  /* Matiz azul translúcido para la cabecera (decisión del usuario, 2026-09-25). */
+  --blue-96-a90: rgb(240 243 253 / 0.9);
 
   --blue-35: #3149aa;
   --blue-41: #3a56c9;
@@ -74,6 +76,7 @@
   --size-14: 14px;
   --size-15: 15px;
   --size-16: 16px;
+  --size-17: 17px;
   --size-18: 18px;
   --size-20: 20px;
   --size-24: 24px;
@@ -152,6 +155,10 @@
   --color-border-strong-hover: var(--navy-49);
 
   --color-canvas: var(--navy-97);
+  /* Cabecera: blanco con un tinte azul mínimo, translúcido y desenfocado; lo que corre debajo se
+   * adivina sin leerse (decisión del usuario, 2026-09-25). */
+  --color-shell-header-bg: var(--blue-96-a90);
+  --backdrop-shell-header: blur(var(--blur-8));
   /* Campo, panel, Card, Modal: 1.07:1 contra el canvas, separan borde y sombra. */
   --color-surface: var(--navy-100);
   --color-bg-secondary: var(--navy-95);
@@ -197,6 +204,13 @@
    * Contrastes en la ficha Navegacion. El chip activo es brand-navy con on-dark.
    */
   --gradient-nav: linear-gradient(180deg, var(--navy-7), var(--navy-13) 55%, var(--navy-23));
+  /* La hamburguesa va en una celda navy del ancho del rail; con el menú abierto, esta curva cóncava
+   * une la celda con el panel (decisión del usuario, 2026-09-25). Navy-7: el tope del degradado. */
+  --gradient-nav-fillet: radial-gradient(
+    circle at 100% 0,
+    transparent var(--radius-nav),
+    var(--navy-7) calc(var(--radius-nav) + 0.5px)
+  );
   /* Chip en reposo: navy-91 y no bg-secondary, que contra el lienzo da 1.05:1 y no se ve. */
   --color-chip-bg: var(--navy-91);
   --color-chip-bg-hover: var(--navy-81);
@@ -244,6 +258,12 @@
   --shell-header-height: var(--size-56);
   --nav-rail-width: var(--size-72);
   --nav-panel-width: var(--size-240);
+  /* El borde del menú hacia el contenido, redondeado arriba y abajo: sin corte en seco contra la
+   * cabecera ni el lienzo (decisión del usuario, 2026-09-25). */
+  --radius-nav: var(--size-24);
+  /* El wordmark eWMS junto a «Advance» en text-h2: a 17 px su mayúscula mide lo que la de
+   * Montserrat a 24 (0,98 del alto contra 0,70 del cuerpo), y las dos se leen como un nombre. */
+  --brand-wordmark-height: var(--size-17);
   /* Lo que queda debajo de la cabecera fija: el menú lateral mide esto y se desplaza solo. */
   --shell-body-height: calc(var(--dvh-100) - var(--shell-header-height));
   --nav-row-height: var(--size-40);

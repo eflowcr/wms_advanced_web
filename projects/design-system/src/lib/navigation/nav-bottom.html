@@ -68,6 +68,9 @@
         <span>{{ closeLabel() }}</span>
       </button>
     </nav>
+
+    <!-- Pie del consumidor: el shell pone ahí la versión y la sesión, que a este ancho no flotan. -->
+    <ng-content select="[navBottomFooter]" />
   </div>
 }
 

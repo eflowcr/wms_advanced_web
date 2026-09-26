@@ -22,12 +22,16 @@ import { isGroup, parentOf, visibleItems, type NavItem } from './navigation.type
 
 let nextRailId = 0;
 
-/** Abierta: fila de 40 con ícono y texto; el ícono queda donde estaba plegado. */
+/**
+ * Abierta: fila de 40 con ícono y texto. Con los 10 px del árbol el ícono cae en 36, el centro del
+ * rail plegado y de la hamburguesa de la cabecera: no salta al abrir.
+ */
 const OPEN_ROW_CLASSES = 'h-(--nav-row-height) items-center gap-4 pr-2';
 
 /**
  * Plegada: fila de 64 de alto con el ícono sobre la etiqueta corta, la mini guía de YouTube. Sin
- * relleno lateral: a 12 px «Dashboard» mide 67 y «Catalogues» 68; con 2 px de margen entran.
+ * relleno lateral: a 12 px «Dashboard» mide 67 y «Catalogues» 68. Van sueltas sobre el navy, bajo el
+ * indicador del ícono: dentro de la píldora quedaban pegadas a sus bordes (2026-09-25).
  */
 const FOLDED_ROW_CLASSES =
   'h-(--nav-row-height-collapsed) flex-col items-center justify-center gap-1 text-caption';
@@ -44,7 +48,7 @@ const ACTIVE_ROW_CLASSES = 'bg-surface text-primary';
  * movimiento con `prefers-reduced-motion`).
  */
 const DRAWER_CLASSES =
-  'fixed bottom-0 left-0 top-(--shell-header-height) z-10 w-(--nav-panel-width) shadow-lg ' +
+  'fixed bottom-0 left-0 top-(--shell-header-height) z-10 w-(--nav-panel-width) rounded-tr-nav shadow-lg ' +
   '[transition:var(--transition-nav-drawer)] motion-safe:starting:[translate:-100%]';
 
 /**
@@ -111,7 +115,7 @@ export class NavRail {
     }
     // `relative`: el bloque que contiene el fondo decorativo.
     return this.expanded()
-      ? 'relative h-full w-(--nav-panel-width)'
+      ? 'relative h-full w-(--nav-panel-width) rounded-tr-nav'
       : 'relative h-full w-(--nav-rail-width)';
   });
 
@@ -176,10 +180,16 @@ export class NavRail {
     const current = this.isCurrent(item);
     const tone = current ? ACTIVE_ROW_CLASSES : 'hover:bg-primary-hover';
     if (!this.expanded()) {
-      return `${FOLDED_ROW_CLASSES} ${tone}`;
+      // Plegado, lo activo va en el indicador del ícono; la fila solo lleva el hover.
+      return current ? FOLDED_ROW_CLASSES : `${FOLDED_ROW_CLASSES} ${tone}`;
     }
     // Abierta, el activo va en semibold.
     return `${OPEN_ROW_CLASSES} ${child ? 'pl-10' : 'pl-4'} ${current ? 'text-h4' : 'text-p'} ${tone}`;
+  }
+
+  /** Plegado: la píldora activa rodea solo el ícono, como el indicador de un navigation rail. */
+  protected indicatorClasses(item: NavItem): string {
+    return this.isCurrent(item) ? ACTIVE_ROW_CLASSES : '';
   }
 
   /** La página donde estás; un grupo nunca lo es. */

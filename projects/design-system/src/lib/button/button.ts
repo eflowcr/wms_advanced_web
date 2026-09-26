@@ -22,12 +22,13 @@ import {
   isInteractionBlocked,
   LINK_PADDING_CLASS,
   suppressEvent,
+  type ButtonGround,
   type ButtonIconPosition,
   type ButtonSize,
   type ButtonVariant,
 } from './button.types';
 
-export type { ButtonIconPosition, ButtonSize, ButtonVariant } from './button.types';
+export type { ButtonGround, ButtonIconPosition, ButtonSize, ButtonVariant } from './button.types';
 
 let nextButtonId = 0;
 
@@ -46,6 +47,9 @@ export class Button implements OnInit {
   readonly iconPosition = input<ButtonIconPosition>('left');
   readonly disabled = input<boolean>(false);
   readonly loading = input<boolean>(false);
+
+  /** Sobre navy, `ghost` se pinta en claro. Ver vault: Boton. */
+  readonly ground = input<ButtonGround>('surface');
 
   /** Sin texto visible: `label` pasa a ser el nombre accesible y el tooltip. */
   readonly iconOnly = input<boolean>(false);
@@ -84,10 +88,12 @@ export class Button implements OnInit {
   );
 
   protected readonly variantClasses = computed(() =>
-    buttonVariantClasses(this.variant(), this.disabled()),
+    buttonVariantClasses(this.variant(), this.disabled(), this.ground()),
   );
 
-  protected readonly spinnerColor = computed(() => buttonSpinnerColor(this.variant()));
+  protected readonly spinnerColor = computed(() =>
+    buttonSpinnerColor(this.variant(), this.ground()),
+  );
 
   /** Solo mientras falta el atributo nativo, para no anunciar el estado dos veces. */
   protected readonly ariaDisabled = computed(() =>
