@@ -28,21 +28,25 @@ concurrency:
 
 env:
   GITLEAKS_VERSION: '8.30.1'
+  # La del archivo oficial de sumas de esa versión; el paso de instalación verifica las dos.
+  GITLEAKS_SHA256: '551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb'
 
+# Cada `timeout-minutes`: el doble de la mayor duración medida (2026-09-25), al minuto de arriba.
 jobs:
   # ---------------------------------------------------------------------- verify
   verify:
     # Nombre exigido por el ruleset, letra por letra. Ver la cabecera.
     name: Types, lint, tests, budgets
     runs-on: ubuntu-latest
+    timeout-minutes: 7
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
         with:
           # La compuerta de comentarios compara contra el ancestro común con la base.
           fetch-depth: 0
 
       - name: Set up Node
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
         with:
           # Única fuente de verdad, la misma que lee fnm en local; `engines` +
           # engine-strict en .npmrc hacen fallar un desajuste.
@@ -127,11 +131,12 @@ jobs:
     # Nombre exigido por el ruleset, letra por letra. Ver la cabecera.
     name: Playwright smoke
     runs-on: ubuntu-latest
+    timeout-minutes: 3
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
 
       - name: Set up Node
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
         with:
           node-version-file: .node-version
           cache: npm
@@ -142,12 +147,13 @@ jobs:
       - name: Install Playwright browser
         run: npx playwright install chromium --with-deps
 
-      - name: Playwright smoke suite
-        run: npm run e2e:smoke
+      # El nivel de dominio corre acá, con un solo build: vacío hoy, no una compuerta muda.
+      - name: Playwright smoke and domain suites
+        run: npm run e2e:smoke -- --project=domain --pass-with-no-tests
 
       - name: Upload Playwright report
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: playwright-report-smoke
           path: playwright-report/
@@ -158,8 +164,9 @@ jobs:
     # el día que el ruleset lo exija. El filtro es un paso, no un job.
     name: Playwright showroom
     runs-on: ubuntu-latest
+    timeout-minutes: 7
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
         with:
           # Hace falta la base del PR en la historia para el diff.
           fetch-depth: 0
@@ -180,9 +187,9 @@ jobs:
           CHANGED=$(git diff --name-only "$BASE_SHA" HEAD)
           echo "Changed files:"
           echo "$CHANGED"
-          # Lo que defiende la suite: biblioteca, catálogo, layout del shell, las
-          # specs y la config de Playwright. La prueba e2e-levels lee esta expresión.
-          if printf '%s\n' "$CHANGED" | grep -Eq '^(projects/design-system/|projects/showroom/|projects/shell/src/app/layout/|e2e/|playwright[^/]*\.ts$)'; then
+          # Lo que la suite defiende y lo que usa: bibliotecas, shell, specs, su servidor y
+          # las dependencias. La prueba e2e-levels lee esta expresión.
+          if printf '%s\n' "$CHANGED" | grep -Eq '^(projects/(design-system|showroom|shell|core|shared)/|e2e/|tools/e2e/|playwright[^/]*\.ts$|package(-lock)?\.json$)'; then
             echo "showroom=true" >> "$GITHUB_OUTPUT"
           else
             echo "Nothing the showroom documents changed: the suite does not run."
@@ -193,7 +200,7 @@ jobs:
       # `if:` en el job nunca garantiza.
       - name: Set up Node
         if: steps.filter.outputs.showroom == 'true'
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
         with:
           node-version-file: .node-version
           cache: npm
@@ -214,7 +221,7 @@ jobs:
 
       - name: Upload Playwright report
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: playwright-report-showroom
           path: playwright-report/
@@ -224,19 +231,26 @@ jobs:
     # Nombre exigido por el ruleset, letra por letra. Ver la cabecera.
     name: Gitleaks
     runs-on: ubuntu-latest
+    timeout-minutes: 1
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
         with:
           # Historia completa: el escaneo cubre cada commit de la rama.
           fetch-depth: 0
 
       # El binario directo: gitleaks-action pide licencia en repos de organización.
+      # Nada se abre sin verificar: la suma fijada arriba y la del archivo oficial de la versión.
       - name: Install gitleaks
         run: |
-          curl -sSL -o /tmp/gitleaks.tar.gz \
-            "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
-          tar -xzf /tmp/gitleaks.tar.gz -C /tmp gitleaks
-          sudo mv /tmp/gitleaks /usr/local/bin/gitleaks
+          base="https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}"
+          tarball="gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          cd /tmp
+          curl -sSLf -o "$tarball" "$base/$tarball"
+          curl -sSLf -o checksums.txt "$base/gitleaks_${GITLEAKS_VERSION}_checksums.txt"
+          echo "${GITLEAKS_SHA256}  $tarball" | sha256sum --check --strict
+          grep " $tarball\$" checksums.txt | sha256sum --check --strict
+          tar -xzf "$tarball" gitleaks
+          sudo mv gitleaks /usr/local/bin/gitleaks
           gitleaks version
 
       - name: Scan git history for secrets

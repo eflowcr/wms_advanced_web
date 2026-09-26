@@ -11,11 +11,12 @@ Design decisions, component specs and the working log live in the team vault
 
 ## Runtime
 
-Node is pinned to **24 LTS** in four places that must agree:
-`.node-version` (read by fnm), `engines.node` in `package.json`,
-`engine-strict=true` in `.npmrc`, and `node-version-file` in `ci.yml`.
-A mismatched Node fails `npm install` immediately instead of failing strangely
-several commands later.
+Node **24 LTS**, in four places that must agree: `.node-version` holds the
+exact version CI runs (read by fnm and by `node-version-file` in `ci.yml`),
+`engines.node` in `package.json` the range the toolchain accepts, and
+`engine-strict=true` in `.npmrc` makes a Node outside that range fail
+`npm install` immediately instead of failing strangely several commands later.
+`tools/ci/workflow-hardening.test.mjs` keeps them in step.
 
 ```
 fnm use          # picks up .node-version

@@ -25,7 +25,8 @@ export default defineConfig({
   testMatch: '**/*.e2e.ts',
   fullyParallel: true,
   forbidOnly: CI,
-  retries: CI ? 2 : 0,
+  // Sin reintentos, también en CI: una prueba inestable se arregla, no se repite hasta que pase.
+  retries: 0,
 
   // Cuatro workers en CI, no uno. Si una prueba deja de pasar en paralelo, el defecto es
   // esa prueba (estado compartido, puerto fijo): serializar esconde el acoplamiento. Cuatro
@@ -35,7 +36,10 @@ export default defineConfig({
   reporter: CI ? [['list'], ['html', { open: 'never' }]] : [['list']],
   use: {
     baseURL: BASE_URL,
-    trace: 'on-first-retry',
+    // Sin reintentos no hay «primer reintento». Grabar la traza de todas duplicó el catálogo
+    // (138 → 280 s, 2026-09-26): al fallar quedan la captura y el error-context.
+    trace: 'off',
+    screenshot: 'only-on-failure',
     // La app sigue al idioma del navegador y las aserciones están en español. Una prueba en
     // inglés lo pide con `test.use({ locale })`.
     locale: 'es-CR',
