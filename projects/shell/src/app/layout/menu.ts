@@ -10,6 +10,8 @@ export interface MenuEntry {
   /** Ausente en un grupo. */
   readonly route?: string;
   readonly children?: readonly MenuEntry[];
+  /** El destino principal del rail: centrado y aparte (decisión del usuario, 2026-09-25). */
+  readonly main?: true;
 }
 
 /**
@@ -22,7 +24,7 @@ export interface MenuEntry {
 // también registra claves. Si una clave falta de un lado, la compuerta 12 falla.
 /** t(shell.menu.dashboard, shell.menu.catalogs, shell.menu.articles, shell.menu.clients, shell.menu.suppliers, shell.menu.locations, shell.menu.warehouses, shell.menu.units, shell.menu.lots, shell.menu.serials, shell.menu.carriers, shell.menu.rates, shell.menu.settings, shell.menu.users, shell.menu.profiles, shell.menu.params, shell.menu.designSystem, shell.menu.short.settings, shell.menu.short.designSystem) */
 export const MENU: readonly MenuEntry[] = [
-  { id: 'dashboard', labelKey: 'shell.menu.dashboard', icon: 'dashboard', route: '/' },
+  { id: 'dashboard', labelKey: 'shell.menu.dashboard', icon: 'dashboard', route: '/', main: true },
   {
     id: 'catalogs',
     labelKey: 'shell.menu.catalogs',

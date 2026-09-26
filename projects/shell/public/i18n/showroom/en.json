@@ -1397,7 +1397,7 @@
         "expandedChange": "The requested width. The rail does not change it by itself.",
         "footer": "Projected slot, at the foot. The customer's logo in the App Shell; left empty, it draws no line.",
         "itemSelect": "A chosen destination. A group never emits: it opens.",
-        "items": "<b>Required.</b> The tree. An item with <code>children</code> is a group: it opens, it does not navigate. With <code>shortLabel</code>, the folded rail shows that label under the icon; it must be inside <code>label</code>, which stays the name (WCAG 2.5.3).",
+        "items": "<b>Required.</b> The tree. An item with <code>children</code> is a group: it opens, it does not navigate. With <code>shortLabel</code>, the folded rail shows that label under the icon; it must be inside <code>label</code>, which stays the name (WCAG 2.5.3). With <code>main</code>, that destination goes centred and set apart, like a button (the App Shell Dashboard).",
         "label": "<b>Required.</b> The name of the landmark, already translated. A page has more than one nav.",
         "toggleLabel": "Name of the width button at the foot of the rail, already translated. Empty, the button is not drawn: in the app the only toggle is the header hamburger.",
         "top": "Projected slot, above the tree. The favourites block goes there; the rail does not know what it is."

@@ -1397,7 +1397,7 @@
         "expandedChange": "El ancho pedido. El rail no se lo cambia solo.",
         "footer": "Ranura proyectada, al pie. En el App Shell, el logo del cliente; vacía, no deja línea.",
         "itemSelect": "Un destino elegido. Un grupo nunca emite: abre.",
-        "items": "<b>Obligatoria.</b> El árbol. Un ítem con <code>children</code> es un grupo: abre, no navega. Con <code>shortLabel</code>, plegado se ve esa etiqueta bajo el ícono; tiene que estar dentro de <code>label</code>, que sigue siendo el nombre (WCAG 2.5.3).",
+        "items": "<b>Obligatoria.</b> El árbol. Un ítem con <code>children</code> es un grupo: abre, no navega. Con <code>shortLabel</code>, plegado se ve esa etiqueta bajo el ícono; tiene que estar dentro de <code>label</code>, que sigue siendo el nombre (WCAG 2.5.3). Con <code>main</code>, ese destino va centrado y aparte, como un botón (el Dashboard del App Shell).",
         "label": "<b>Obligatoria.</b> El nombre del landmark, ya traducido. Una página tiene más de un nav.",
         "toggleLabel": "Nombre del botón de ancho al pie del rail, ya traducido. Vacía, el botón no se dibuja: en la app el único conmutador es la hamburguesa de la cabecera.",
         "top": "Ranura proyectada, encima del árbol. Ahí va el bloque de favoritos; el rail no sabe qué es."

@@ -312,6 +312,7 @@ export class MainLayout {
       ...(entry.shortLabelKey === undefined
         ? {}
         : { shortLabel: this.transloco.translate(entry.shortLabelKey) }),
+      ...(entry.main ? { main: true } : {}),
     };
     // Spread y no `route: undefined`: con `exactOptionalPropertyTypes` no son el
     // mismo tipo, y esa diferencia sostiene que un grupo no tiene ruta.

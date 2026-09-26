@@ -317,6 +317,8 @@ export class ShowroomNavigation {
       label: t('showroom.navigation.demo.tree.dashboard'),
       icon: 'dashboard',
       route: '/dashboard',
+      // El destino principal: centrado y aparte en el rail abierto.
+      main: true,
     },
     {
       id: 'catalogs',
