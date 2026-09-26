@@ -63,8 +63,8 @@
     }
   </ul>
 
-  <!-- Logo del cliente. Sin nada proyectado no queda una línea suelta: `empty:hidden`. -->
-  <div class="relative shrink-0 border-t border-strong empty:hidden" data-nav-rail-footer>
+  <!-- Logo del cliente, sin línea encima (decisión del usuario, 2026-09-25). -->
+  <div class="relative shrink-0">
     <ng-content select="[navRailFooter]" />
   </div>
 
@@ -111,8 +111,7 @@
   >
     @if (expanded()) {
       <ewms-icon [name]="item.icon" size="lg" />
-      <!-- Sin `flex-1` en el destino principal: el ícono y la etiqueta quedan centrados. -->
-      <span class="min-w-0 truncate" [class.flex-1]="!item.main">{{ item.label }}</span>
+      <span class="min-w-0 flex-1 truncate">{{ item.label }}</span>
 
       @if (item.badge !== undefined) {
         <!-- El número; la palabra la pone el consumidor en `label` (ADR 0008). -->

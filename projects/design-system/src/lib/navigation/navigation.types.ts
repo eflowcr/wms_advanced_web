@@ -20,12 +20,6 @@ export interface NavItem {
   readonly children?: readonly NavItem[];
   /** Cuenta chica junto a la etiqueta: pendientes, alertas. */
   readonly badge?: number;
-  /**
-   * El destino principal: en el rail abierto va centrado, con borde en reposo y aparte del resto,
-   * como un botón. Uno solo, arriba y sin hijos (el Dashboard del App Shell). La barra inferior lo
-   * ignora.
-   */
-  readonly main?: boolean;
 }
 
 export interface Tab {

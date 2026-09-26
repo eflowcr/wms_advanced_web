@@ -44,14 +44,6 @@ const FOLDED_ROW_CLASSES =
 const ACTIVE_ROW_CLASSES = 'bg-surface text-primary';
 
 /**
- * El destino principal, abierto (decisión del usuario, 2026-09-25): centrado y aparte del árbol; en
- * reposo con borde, para leerse como botón y no como una fila más. Sigue siendo un `treeitem`.
- */
-const MAIN_ROW_CLASSES = 'mb-2 h-(--nav-row-height) items-center justify-center gap-4 px-4';
-const MAIN_ACTIVE_CLASSES = 'bg-surface text-h4 text-primary';
-const MAIN_REST_CLASSES = 'border border-strong text-p hover:bg-primary-hover';
-
-/**
  * El cajón: fijo bajo la cabecera, encima del contenido y de su velo, y entra deslizándose (sin
  * movimiento con `prefers-reduced-motion`).
  */
@@ -189,11 +181,7 @@ export class NavRail {
     const tone = current ? ACTIVE_ROW_CLASSES : 'hover:bg-primary-hover';
     if (!this.expanded()) {
       // Plegado, lo activo va en el indicador del ícono; la fila solo lleva el hover.
-      const folded = item.main ? `${FOLDED_ROW_CLASSES} mb-2` : FOLDED_ROW_CLASSES;
-      return current ? folded : `${folded} ${tone}`;
-    }
-    if (item.main) {
-      return `${MAIN_ROW_CLASSES} ${current ? MAIN_ACTIVE_CLASSES : MAIN_REST_CLASSES}`;
+      return current ? FOLDED_ROW_CLASSES : `${FOLDED_ROW_CLASSES} ${tone}`;
     }
     // Abierta, el activo va en semibold.
     return `${OPEN_ROW_CLASSES} ${child ? 'pl-10' : 'pl-4'} ${current ? 'text-h4' : 'text-p'} ${tone}`;

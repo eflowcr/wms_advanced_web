@@ -174,11 +174,11 @@
         <!--
           El logo del cliente, solo abierto: plegado no entra, y el pie vacío se oculta. Las credenciales
           pasaron a la marca de agua. Sobre navy, el logo blanco (el de color pierde la «e» azul); el
-          PNG trae mucho margen y `object-cover` recorta al trazo. Centrado y con 100 px de trazo
-          (decisión del usuario, 2026-09-25).
+          PNG trae mucho margen y `object-cover` recorta al trazo. Centrado, con 100 px de trazo y
+          separado del borde de abajo (decisión del usuario, 2026-09-25).
         -->
         @if (menuOpen()) {
-          <div navRailFooter class="flex justify-center px-4 py-3">
+          <div navRailFooter class="flex justify-center px-4 py-6">
             <img
               class="block h-8 w-32 object-cover"
               src="/brand/eprac/eprac-blanco.png"

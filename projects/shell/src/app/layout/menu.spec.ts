@@ -9,19 +9,6 @@ function text(dictionary: unknown, key: string): string {
   return String(value);
 }
 
-describe('the main destination', () => {
-  it('is ONE, the Dashboard: first, with a route and without children', () => {
-    // El rail lo dibuja centrado y aparte, como un botón (decisión del usuario, 2026-09-25).
-    const main = MENU.flatMap((entry) => [entry, ...(entry.children ?? [])]).filter(
-      (entry) => entry.main,
-    );
-    expect(main.map((entry) => entry.id)).toEqual(['dashboard']);
-    expect(MENU[0]?.main).toBe(true);
-    expect(MENU[0]?.route).toBe('/');
-    expect(MENU[0]?.children).toBeUndefined();
-  });
-});
-
 describe('the menu as the name of a route', () => {
   it('matches a route, its children and its query string, and nothing that only shares a prefix', () => {
     expect(routeMatches('/catalogos/articulos', '/catalogos/articulos')).toBe(true);

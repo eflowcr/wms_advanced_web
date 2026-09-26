@@ -200,21 +200,6 @@ describe('NavRail', () => {
     });
   });
 
-  it('draws the MAIN destination centred and apart, bordered at rest, and keeps it in the tree', async () => {
-    // El Dashboard del App Shell (decisión del usuario, 2026-09-25): un botón, no una fila más.
-    host.items.set(TREE.map((item) => (item.id === 'dashboard' ? { ...item, main: true } : item)));
-    await settle();
-    expect(row('dashboard').className).toContain('justify-center');
-    expect(row('dashboard').className).toContain('border-strong');
-    expect(row('dashboard').getAttribute('role')).toBe('treeitem');
-    expect(row('catalogs').className).not.toContain('justify-center');
-
-    host.activeId.set('dashboard');
-    await settle();
-    expect(row('dashboard').className).toContain('bg-surface');
-    expect(row('dashboard').className).not.toContain('border-strong');
-  });
-
   it('rounds the bottom corner always and the top only while open: folded, the column goes on up', async () => {
     // Plegado, el rail sigue hacia la celda navy de la hamburguesa (decisión del usuario, 2026-09-25).
     const panel = (): HTMLElement => fixture.nativeElement.querySelector('nav') as HTMLElement;
@@ -423,18 +408,5 @@ describe('NavRail backdrop', () => {
     expect(element.querySelector('nav')?.className).toContain('relative');
   });
 
-  it('without a footer there is no loose line: the empty footer box hides itself', async () => {
-    await TestBed.configureTestingModule({ imports: [WithBackdrop] }).compileComponents();
-    const fixture = TestBed.createComponent(WithBackdrop);
-    fixture.detectChanges();
-    await fixture.whenStable();
-    const footer = (fixture.nativeElement as HTMLElement).querySelector(
-      '[data-nav-rail-footer]',
-    ) as HTMLElement;
-
-    // `empty:hidden` actúa con `:empty`, que admite comentarios: el ancla de un `@if` apagado cuenta.
-    expect(footer.matches(':empty')).toBe(true);
-    expect(footer.className).toContain('empty:hidden');
-  });
 
 });
