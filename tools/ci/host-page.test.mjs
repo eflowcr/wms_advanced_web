@@ -7,6 +7,7 @@
  * estilos inline (les agrega un source map). Ver vault: i18n.md. `npm run test:tools`.
  */
 import assert from 'node:assert/strict';
+import { existsSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { test } from 'node:test';
@@ -57,4 +58,16 @@ test('every stylesheet the host page links exists in public/', async () => {
       `${href} is linked from ${HOST_PAGE} but missing from projects/shell/public`,
     );
   }
+});
+
+// El artefacto, no el fuente: la CSP que se despliega es la del build. ci.yml construye antes de
+// esta prueba; sin dist/ falla pidiendo el build, nunca se salta.
+const BUILT_PAGE = path.join(ROOT, 'dist/shell/browser/index.html');
+
+test('the production build keeps the CSP word for word', async () => {
+  assert.ok(existsSync(BUILT_PAGE), `${BUILT_PAGE} is missing: run npm run build first`);
+  const deployed = stripHtmlComments(await readFile(BUILT_PAGE, 'utf8'));
+  const deployedCsp =
+    /<meta\s+http-equiv="Content-Security-Policy"\s+content="([^"]*)"/i.exec(deployed)?.[1];
+  assert.equal(deployedCsp, csp, 'the build changed or dropped the CSP of the host page');
 });

@@ -1,6 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
 
-const PORT = 4200;
+// No 4200: el servidor de desarrollo que alguien tenga abierto nunca se confunde con el artefacto.
+const PORT = 4400;
 const BASE_URL = `http://localhost:${PORT}`;
 const CI = Boolean(process.env['CI']);
 
@@ -71,8 +72,10 @@ export default defineConfig({
     },
   ],
 
+  // El artefacto que se despliega: build de producción servido estático, así la vigilancia de
+  // consola y CSP mira lo mismo que un usuario. Ver vault: Integracion Continua §4.1.
   webServer: {
-    command: `npm run start -- --port ${PORT}`,
+    command: `npm run build && node tools/e2e/serve.mjs --port ${PORT}`,
     url: BASE_URL,
     reuseExistingServer: !CI,
     timeout: 180_000,

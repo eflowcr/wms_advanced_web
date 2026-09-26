@@ -16,6 +16,8 @@ test.describe('the application is alive', () => {
     await page.goto('/');
 
     await expect(page.getByRole('heading', { name: 'eWMS Advance' })).toBeVisible();
+    // Es el artefacto de producción: las utilidades `ng` de depuración solo existen en desarrollo.
+    expect(await page.evaluate(() => 'ng' in window)).toBe(false);
   });
 
   test('the showroom route responds at /design-system', async ({ page }) => {

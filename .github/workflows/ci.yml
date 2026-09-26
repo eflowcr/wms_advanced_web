@@ -100,16 +100,16 @@ jobs:
           BASE_REF: ${{ github.base_ref || 'development' }}
         run: npm run lint:comments -- --base "origin/$BASE_REF"
 
-      - name: Vitest, coverage thresholds, axe-core
-        run: npm test
-
-      # Los presupuestos viven en angular.json; pasar maximumError rompe acá.
+      # Antes que las pruebas: host-page.test.mjs lee la CSP del artefacto. Los presupuestos, en angular.json.
       - name: Production build and bundle budgets
         run: npm run build
 
       # Regla 17: lo que `/` carga antes de pintar, contra su techo; lee el stats.json del build.
       - name: Critical path of / (static closure against its ceiling)
         run: npm run lint:critical-path
+
+      - name: Vitest, coverage thresholds, axe-core
+        run: npm test
 
       # Cada biblioteca con ng-packagr, como se publica: el build de la app no las empaqueta.
       - name: Library builds

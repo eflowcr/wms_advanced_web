@@ -528,7 +528,7 @@ test.describe('accessibility', () => {
 });
 
 // El catálogo se traduce (2026-09-25): con el navegador en inglés cada página arranca en inglés.
-// Una clave que falta lanza en desarrollo, así que la consola limpia dice que no falta ninguna.
+// Una clave que falta se ve como su ruta y la vigilancia la busca: limpia, no falta ninguna.
 test.describe('the catalogue in English', () => {
   test.use({ locale: 'en-GB' });
 
