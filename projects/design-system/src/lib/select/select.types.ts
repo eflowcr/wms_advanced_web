@@ -1,6 +1,5 @@
 import { InjectionToken } from '@angular/core';
 import {
-  LISTBOX_OPTION_BASE_CLASSES,
   LISTBOX_PANEL_CLASSES,
   LISTBOX_SELECTED_WEIGHT,
   listboxOptionClasses,
@@ -22,11 +21,10 @@ export const DELAY_SEARCH_INPUT_TOKEN = '--delay-search-input';
 export const TIMEOUT_SEARCH_TOKEN = '--timeout-search';
 
 // El umbral de escaneo vive en scan-detector (una copia aparte deriva); se reexporta.
-export { SCAN_MIN_KEYSTROKES, SCAN_THRESHOLD_TOKEN } from '../keyboard/scan-detector';
+export { SCAN_THRESHOLD_TOKEN } from '../keyboard/scan-detector';
 
 /** Sin scroll virtual a propósito: una lista de cientos va con `source`, que pagina. */
 export const SELECT_PANEL_CLASSES = LISTBOX_PANEL_CLASSES;
-export const SELECT_OPTION_BASE_CLASSES = LISTBOX_OPTION_BASE_CLASSES;
 export const SELECT_SELECTED_WEIGHT = LISTBOX_SELECTED_WEIGHT;
 export const selectOptionClasses = listboxOptionClasses;
 

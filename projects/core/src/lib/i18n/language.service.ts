@@ -10,7 +10,7 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TranslocoService } from '@jsverse/transloco';
 import { filter, firstValueFrom, forkJoin } from 'rxjs';
-import { DEFAULT_LANGUAGE, isLanguage, LANGUAGES, type Language } from './language.types';
+import { DEFAULT_LANGUAGE, isLanguage, type Language } from './language.types';
 
 /** Clave de localStorage de la preferencia. */
 export const LANGUAGE_STORAGE_KEY = 'ewms.lang';
@@ -62,8 +62,6 @@ export class LanguageService {
         }
       });
   }
-
-  readonly languages: readonly Language[] = LANGUAGES;
 
   readonly active: Signal<Language> = computed(() => {
     const lang = this.transloco.activeLang();

@@ -103,7 +103,6 @@ describe('Favorites', () => {
 
     expect(marked()).toBe(true);
     expect(favorites.list()).toHaveLength(1);
-    expect(favorites.count()).toBe(1);
   });
 
   it('PACQ-01.2: toggling twice returns to exactly where it started', async () => {

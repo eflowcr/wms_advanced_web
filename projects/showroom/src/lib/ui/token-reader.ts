@@ -56,11 +56,6 @@ export class TokenReader {
     return resolveChain(name, this.allDeclarations(), this.value(name));
   }
 
-  /** Varios a la vez, en el orden pedido. */
-  chains(names: readonly string[]): readonly TokenChain[] {
-    return names.map((name) => this.chain(name));
-  }
-
   /** Canales de cualquier color que acepte el parser CSS, token o literal. */
   colour(value: string): Rgb | null {
     const view = this.document.defaultView;

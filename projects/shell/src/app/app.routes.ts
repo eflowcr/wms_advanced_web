@@ -1,5 +1,5 @@
 import type { Route, Routes } from '@angular/router';
-import { MENU, MENU_DESTINATIONS, BUILT_ROUTES } from './layout/menu';
+import { MENU_DESTINATIONS, BUILT_ROUTES } from './layout/menu';
 
 /**
  * Cada destino sin pantalla, como ruta «En construcción». Derivadas del menú y no escritas a
@@ -54,6 +54,3 @@ export const routes: Routes = [
     ],
   },
 ];
-
-/** Reexportado para que quien lea las rutas vea de dónde sale el árbol. */
-export { MENU };

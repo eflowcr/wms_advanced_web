@@ -1,4 +1,4 @@
-import { computed, DestroyRef, inject, Injectable, signal } from '@angular/core';
+import { DestroyRef, inject, Injectable, signal, type Signal } from '@angular/core';
 import type { FeedbackVariant } from '../feedback/feedback.types';
 import { readMilliseconds } from '../tokens/read-token';
 import { TOAST_DURATION_TOKEN, type Toast } from './toast.types';
@@ -12,7 +12,7 @@ export class ToastService {
   private readonly queue = signal<readonly Toast[]>([]);
 
   /** Del más viejo al más nuevo. */
-  readonly toasts = computed<readonly Toast[]>(() => this.queue());
+  readonly toasts: Signal<readonly Toast[]> = this.queue.asReadonly();
 
   private readonly timers = new Map<number, ReturnType<typeof setTimeout>>();
 

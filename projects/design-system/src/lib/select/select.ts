@@ -60,7 +60,7 @@ import {
 } from './select.types';
 
 export type { SearchDisplay, SearchPage, SearchSource } from './search-source';
-export type { SearchStatus, SelectMessages, SelectOption } from './select.types';
+export type { SelectMessages, SelectOption } from './select.types';
 
 let nextSelectId = 0;
 

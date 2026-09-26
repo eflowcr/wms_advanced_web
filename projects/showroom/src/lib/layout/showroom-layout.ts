@@ -12,7 +12,7 @@ import {
 import { DOCUMENT } from '@angular/common';
 import { NavigationEnd, Router, RouterLink, RouterOutlet } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { filter, map, startWith } from 'rxjs';
+import { filter, map } from 'rxjs';
 import { DESIGN_SYSTEM_VERSION, FavoritesNav, Input, Select, Viewport } from '@ewms/design-system';
 import type { Favorite, SelectOption } from '@ewms/design-system';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
@@ -109,13 +109,12 @@ export class ShowroomLayout {
   protected readonly matches = computed(() => countEntries(this.sections()));
   protected readonly filtering = computed(() => this.query().trim().length > 0);
 
-  // `startWith` porque la navegación que creó este layout ya terminó y no emite: sin él,
+  // `initialValue` porque la navegación que creó este layout ya terminó y no emite: sin él,
   // la primera página no tendría ruta y el bloque no marcaría nada como actual.
   private readonly url = toSignal(
     this.router.events.pipe(
       filter((event): event is NavigationEnd => event instanceof NavigationEnd),
       map((event) => event.urlAfterRedirects),
-      startWith(this.router.url),
     ),
     { initialValue: this.router.url },
   );

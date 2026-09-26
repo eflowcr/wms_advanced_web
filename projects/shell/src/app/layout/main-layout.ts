@@ -12,12 +12,11 @@ import {
 import { NgTemplateOutlet } from '@angular/common';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink, RouterOutlet } from '@angular/router';
-import { filter, map, startWith } from 'rxjs';
+import { filter, map } from 'rxjs';
 import { SessionContext } from '@ewms/core';
 import { catalogKeyFor } from '@ewms/showroom';
 import {
   Breadcrumbs,
-  Favorites,
   FavoriteToggle,
   FavoritesNav,
   Button,
@@ -41,7 +40,7 @@ import { BRAND_EDITION, BRAND_NAME } from '../brand';
 import { provideEwmsDesignSystem } from '../design-system.providers';
 import { APP_VERSION } from '../version';
 import { LanguageSwitcher } from './language-switcher';
-import { MENU, MENU_DESTINATIONS, menuEntryFor, type MenuEntry } from './menu';
+import { MENU, menuEntryFor, type MenuEntry } from './menu';
 import { MAX_OPEN_TABS, TabsService } from './tabs.service';
 
 /**
@@ -80,7 +79,6 @@ export class MainLayout {
   private readonly transloco = inject(TranslocoService);
   private readonly toasts = inject(ToastService);
   private readonly tabsService = inject(TabsService);
-  private readonly favorites = inject(Favorites);
   private readonly shortcuts = inject(KeyboardShortcuts);
 
   protected readonly session = inject(SessionContext);
@@ -89,7 +87,6 @@ export class MainLayout {
   protected readonly brandName = BRAND_NAME;
   protected readonly brandEdition = BRAND_EDITION;
   protected readonly appVersion = APP_VERSION;
-  protected readonly maxTabs = MAX_OPEN_TABS;
 
   private readonly main = viewChild<ElementRef<HTMLElement>>('main');
   private readonly searchField = viewChild<SearchBox>('headerSearch');
@@ -126,12 +123,11 @@ export class MainLayout {
     initialValue: this.transloco.getActiveLang(),
   });
 
-  /** `startWith` porque la primera navegación ya terminó al construirse. */
+  /** `initialValue` porque la primera navegación ya terminó al construirse. */
   private readonly url = toSignal(
     this.router.events.pipe(
       filter((event): event is NavigationEnd => event instanceof NavigationEnd),
       map((event) => event.urlAfterRedirects),
-      startWith(this.router.url),
     ),
     { initialValue: this.router.url },
   );
@@ -142,10 +138,12 @@ export class MainLayout {
     return MENU.map((entry) => this.toNavItem(entry));
   });
 
-  protected readonly activeId = computed(() => menuEntryFor(this.url())?.id ?? null);
+  /** El destino del menú de la ruta actual: marca el menú y cierra la miga. */
+  private readonly activeEntry = computed(() => menuEntryFor(this.url()));
+  protected readonly activeId = computed(() => this.activeEntry()?.id ?? null);
 
-  protected readonly tabs = computed<readonly Tab[]>(() => this.tabsService.tabs());
-  protected readonly activeTabId = computed(() => this.tabsService.activeRoute());
+  protected readonly tabs = this.tabsService.tabs;
+  protected readonly activeTabId = this.tabsService.activeRoute;
 
   /**
    * Inicio › grupo › pantalla. Se arma acá porque la miga es un hecho del menú;
@@ -153,19 +151,16 @@ export class MainLayout {
    */
   protected readonly crumbs = computed<readonly Crumb[]>(() => {
     this.activeLang();
-    const active = this.activeId();
-    if (active === null) {
+    const item = this.activeEntry();
+    if (item === undefined) {
       return [];
     }
-    const group = MENU.find((entry) => entry.children?.some((child) => child.id === active));
-    const item = MENU_DESTINATIONS.find((entry) => entry.id === active);
+    const group = MENU.find((entry) => entry.children?.some((child) => child.id === item.id));
     const trail: Crumb[] = [{ label: this.transloco.translate('shell.menu.home'), route: '/' }];
     if (group !== undefined) {
       trail.push({ label: this.transloco.translate(group.labelKey) });
     }
-    if (item !== undefined) {
-      trail.push({ label: this.transloco.translate(item.labelKey) });
-    }
+    trail.push({ label: this.transloco.translate(item.labelKey) });
     return trail;
   });
 
@@ -190,23 +185,24 @@ export class MainLayout {
       // él el efecto se relanza a sí mismo en un bucle síncrono que cuelga la
       // pestaña antes del primer pintado. Las pruebas unitarias no lo ven.
       untracked(() => {
-        const opened = this.tabsService.activate(url, title, url !== '/');
-        if (!opened) {
-          this.toasts.show(
-            'warning',
-            this.transloco.translate('shell.tabs.limit', { max: MAX_OPEN_TABS }),
-          );
-        } else {
-          // Una pestaña ya abierta sigue al idioma actual.
-          this.tabsService.relabel(url, title);
+        // Solo al navegar. Un cambio de idioma también relanza este efecto (lee el título):
+        // reabría la pestaña y, con la tira llena, repetía el aviso. Las etiquetas de las
+        // pestañas abiertas las cambia el efecto de abajo.
+        if (url !== this.previousUrl) {
+          const opened = this.tabsService.activate(url, title, url !== '/');
+          if (!opened) {
+            this.toasts.show(
+              'warning',
+              this.transloco.translate('shell.tabs.limit', { max: MAX_OPEN_TABS }),
+            );
+          }
+          // No en la primera carga: Chrome pinta el `h1` como `:focus-visible` porque aún
+          // no hubo puntero.
+          if (this.previousUrl !== null) {
+            this.focusPage();
+          }
+          this.previousUrl = url;
         }
-
-        // Solo al navegar: en la primera carga Chrome pinta el `h1` como `:focus-visible`
-        // porque aún no hubo puntero, y un cambio de idioma no es una navegación.
-        if (this.previousUrl !== null && this.previousUrl !== url) {
-          this.focusPage();
-        }
-        this.previousUrl = url;
         this.routeAnnouncement.set(title);
       });
     });
@@ -277,10 +273,6 @@ export class MainLayout {
 
   protected onMenuOpenChange(open: boolean): void {
     (this.viewport.panelFits() ? this.railExpanded : this.drawerOpen).set(open);
-  }
-
-  protected favoritesCount(): number {
-    return this.favorites.count();
   }
 
   /**

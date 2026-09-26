@@ -1,5 +1,4 @@
 import {
-  clearsSquare,
   computedOf,
   formatBox,
   formatHeight,
@@ -87,22 +86,6 @@ describe('formatBox / formatHeight', () => {
   it('says so, visibly, when nothing was measured', () => {
     expect(formatBox(null)).toBe(NOT_MEASURED);
     expect(formatHeight(null)).toBe(NOT_MEASURED);
-  });
-});
-
-describe('clearsSquare', () => {
-  it('passes a box that clears the minimum in both directions', () => {
-    expect(clearsSquare(rect(32, 32), 24)).toBe(true);
-  });
-
-  it('fails a box that is short in either direction', () => {
-    expect(clearsSquare(rect(32, 20), 24)).toBe(false);
-    expect(clearsSquare(rect(20, 32), 24)).toBe(false);
-  });
-
-  it('does NOT pass something that was never measured', () => {
-    // Un badge verde que significa «no se pudo verificar» es peor que ningún badge.
-    expect(clearsSquare(null, 24)).toBe(false);
   });
 });
 

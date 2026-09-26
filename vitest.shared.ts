@@ -33,7 +33,6 @@ export interface CoverageThresholds {
 export function projectRunner(thresholds: CoverageThresholds, alsoExclude: string[] = []) {
   return defineConfig({
     test: {
-      setupFiles: ['./vitest-setup.ts'],
       // Zona horaria fija y al oeste de UTC: `new Date('2026-03-15')` es medianoche UTC y
       // en hora local cae un día antes; en UTC ese error no se ve (así se escapó uno en la
       // tabla). Variable de entorno y no setup: Node cachea la zona al arrancar (Node 24).

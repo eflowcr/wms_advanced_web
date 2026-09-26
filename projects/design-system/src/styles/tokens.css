@@ -46,7 +46,6 @@
   --blue-48: #4465ec;
   --blue-63: #7c93f2;
   --blue-90: #dde3fc;
-  --blue-93: #e5e9fc;
   --blue-96: #f0f3fd;
 
   --red-34: #9c2017;
@@ -224,7 +223,7 @@
   --color-focus-ring: var(--blue-48);
   /* Anillo de 3px separado 2px del control. */
   --focus-ring-shadow: 0 0 0 2px var(--color-surface), 0 0 0 5px var(--color-focus-ring);
-  /* Siempre con barra de acento. blue-96 desde DS-4 (blue-93 dejaba el secundario en 4.35:1).
+  /* Siempre con barra de acento. blue-96 desde DS-4 (el azul 93 dejaba el secundario en 4.35:1).
    * Texto azul sobre la fila nunca llega a 4.5:1. Ver vault: Fundamentos de Marca. */
   --color-row-selected: var(--blue-96);
   /* Matriz de fila de la Tabla (AA medido en Tabla §23). Hover y foco: un paso sobre la

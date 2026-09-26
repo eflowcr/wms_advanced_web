@@ -19,12 +19,11 @@ import { DatePicker, type DatePickerValue } from '../date-picker/date-picker';
 import { EWMS_DATE_PICKER_MESSAGES } from '../date-picker/date-picker.types';
 import { Input as TextInput } from '../input/input';
 import { Select, type SelectOption } from '../select/select';
+import { DELAY_SEARCH_INPUT_TOKEN } from '../select/select.types';
 import { parseTableDate } from '../table/table.tokens';
 import type { DateRange } from '../table/table-source';
 import { readMilliseconds } from '../tokens/read-token';
 import { FilterChips, type FilterChip } from './filter-chips';
-
-const DELAY_SEARCH_INPUT_TOKEN = '--delay-search-input';
 
 /** Lo que vale un filtro de pantalla: un valor elegido, un texto o un período. */
 export type FilterFieldValue = string | DateRange;
