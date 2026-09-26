@@ -267,6 +267,44 @@ test.describe('the App Shell', () => {
     await expect(hamburger).toBeFocused();
   });
 
+  test('any navigation closes the drawer: the logo, going back, and a wider window leave none open', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1024, height: 768 });
+    await page.goto('/catalogos/articulos');
+    await expect(page.locator('[data-page-heading]')).toBeVisible();
+    const drawer = page.locator('[data-nav-drawer]');
+    const hamburger = page.locator('[data-rail-toggle] button');
+
+    // Elegir la pantalla que ya está abierta no navega, y el cajón se cierra igual.
+    await hamburger.click();
+    await drawer.locator('[data-nav-item="articles"]').click();
+    await expect(drawer).toHaveCount(0);
+
+    // El logo está en la cabecera, encima del velo: navega sin pasar por el menú.
+    await hamburger.click();
+    await expect(drawer).toBeVisible();
+    await page.locator('[data-shell-home]').click();
+    await expect(page).toHaveURL(/\/$/);
+    await expect(drawer).toHaveCount(0);
+    await expect(page.locator('[data-page-heading]')).toBeFocused();
+
+    await hamburger.click();
+    await expect(drawer).toBeVisible();
+    await page.goBack();
+    await expect(page).toHaveURL(/\/catalogos\/articulos$/);
+    await expect(drawer).toHaveCount(0);
+
+    // Desde 1280 el menú es panel; al volver a 1024 no reaparece un cajón que quedó abierto.
+    await hamburger.click();
+    await expect(drawer).toBeVisible();
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await expect(drawer).toHaveCount(0);
+    await page.setViewportSize({ width: 1024, height: 768 });
+    await expect(page.locator('ewms-nav-rail')).toBeVisible();
+    await expect(drawer).toHaveCount(0);
+  });
+
   test('a favourite is ONE click from anywhere, and is lost on reload', async ({ page }) => {
     await page.goto('/');
     await page.locator('[data-nav-item="catalogs"]').click();

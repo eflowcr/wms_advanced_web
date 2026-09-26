@@ -345,6 +345,19 @@ describe('NavRail', () => {
       expect(document.activeElement).toBe(opener);
     });
 
+    // La trampa se arma en el mismo tick que la pide: abrir, cerrar y abrir deja una, nunca dos.
+    it('opened, closed and opened again leaves ONE trap, not two', async () => {
+      opener.focus();
+      host.expanded.set(true);
+      fixture.detectChanges();
+      host.expanded.set(false);
+      fixture.detectChanges();
+      host.expanded.set(true);
+      await settle();
+
+      expect(document.querySelectorAll('.cdk-focus-trap-anchor').length).toBe(2);
+    });
+
     it('the veil asks to close it too', async () => {
       await open();
       veil()?.click();

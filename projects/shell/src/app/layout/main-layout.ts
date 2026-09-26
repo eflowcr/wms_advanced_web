@@ -11,7 +11,13 @@ import {
 } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
-import { NavigationEnd, Router, RouterLink, RouterOutlet } from '@angular/router';
+import {
+  NavigationEnd,
+  NavigationSkipped,
+  Router,
+  RouterLink,
+  RouterOutlet,
+} from '@angular/router';
 import { filter, map } from 'rxjs';
 import { SessionContext } from '@ewms/core';
 import { catalogKeyFor } from '@ewms/showroom';
@@ -207,6 +213,21 @@ export class MainLayout {
       });
     });
 
+    // Toda navegación cierra el cajón: menú, favorito, logo, pestaña, miga o atrás, y también la que
+    // vuelve a la pantalla abierta (NavigationSkipped). Un solo lugar. Ver vault: App-Shell.
+    this.router.events
+      .pipe(
+        filter((event) => event instanceof NavigationEnd || event instanceof NavigationSkipped),
+        takeUntilDestroyed(),
+      )
+      .subscribe(() => this.drawerOpen.set(false));
+
+    // Al cruzar el corte del cajón se olvida: agrandar la ventana y volver no reabre uno escondido.
+    effect(() => {
+      this.viewport.panelFits();
+      untracked(() => this.drawerOpen.set(false));
+    });
+
     // Un cambio de idioma reetiqueta todas las pestañas abiertas, no solo la activa:
     // una tira en dos idiomas es la pantalla a medio traducir que evita el ADR 0008.
     // Solo el shell puede: es dueño del menú, que sabe cómo se llama cada ruta.
@@ -244,14 +265,11 @@ export class MainLayout {
 
   protected onNavItemSelect(item: NavItem): void {
     if (item.route !== undefined) {
-      // El cajón se cierra al elegir, como en YouTube; el foco lo lleva la navegación al `h1`.
-      this.drawerOpen.set(false);
       void this.router.navigateByUrl(item.route);
     }
   }
 
   protected onFavoriteSelect(favorite: Favorite): void {
-    this.drawerOpen.set(false);
     void this.router.navigateByUrl(favorite.route);
   }
 
