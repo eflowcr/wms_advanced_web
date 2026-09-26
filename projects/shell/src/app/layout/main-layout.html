@@ -47,11 +47,9 @@
       }
 
       <!--
-        El wordmark eWMS y «Advance» en texto (decisión del usuario, 2026-09-25), con la misma altura de
-        mayúscula (--brand-wordmark-height) y alineados por la línea base; a 375 px solo el wordmark.
-        El nombre va en `aria-label`: el de contenido pegaría «eWMS» y «Advance» según el navegador.
-        `max-w-none` y `width`/`height`: sin ellos la rejilla medía el logo en cero y el enlace medía
-        cero hasta que cargaba el SVG.
+        Wordmark eWMS y «Advance» con la misma mayúscula (--brand-wordmark-height); a 375 px, solo el
+        wordmark. Nombre en `aria-label`: el de contenido pegaría las dos palabras. `max-w-none` y
+        `width`/`height`: sin ellos el logo medía cero hasta cargar. Ver vault: App-Shell.
       -->
       <a
         class="flex shrink-0 items-baseline gap-2 rounded-sm outline-none focus-visible:shadow-(--focus-ring-shadow)"
@@ -170,10 +168,8 @@
         />
 
         <!--
-          El logo del cliente, solo abierto: plegado no entra, y el pie vacío se oculta. Las credenciales
-          pasaron a la marca de agua. Sobre navy, el logo blanco (el de color pierde la «e» azul); el
-          PNG trae mucho margen y `object-cover` recorta al trazo. Centrado, con 100 px de trazo y
-          separado del borde de abajo (decisión del usuario, 2026-09-25).
+          Logo del cliente, solo abierto (plegado no entra). Blanco sobre navy: el de color pierde la
+          «e» azul; el PNG trae margen y `object-cover` recorta al trazo. Ver vault: App-Shell.
         -->
         @if (menuOpen()) {
           <div navRailFooter class="flex justify-center px-4 py-6">
@@ -238,10 +234,8 @@
   </div>
 
   <!--
-    Marca de agua (decisión del usuario, 2026-09-25): versión, usuario y almacén, para que soporte sepa
-    qué tiene cada quien. Pegada a la esquina de abajo a la derecha y sin tragarse clics; los toasts
-    pasan por encima.
-    Bajo la barra inferior no flota, que taparía contenido: va al pie de la hoja «Más».
+    Marca de agua (decisión del usuario, 2026-09-25): versión, usuario y almacén para soporte, en la
+    esquina y sin tomar clics; los toasts pasan encima. Bajo 768 px va al pie de la hoja «Más».
   -->
   <ng-template #stamp>
     <span>{{ 'shell.session.version' | transloco: { version: appVersion } }}</span>

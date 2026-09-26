@@ -30,12 +30,9 @@
           },
           "configurations": {
             "production": {
-              // TODO: acordar con el CTO. Valores de arranque medidos con la app
-              // casi vacia (~210 kB crudos al arrancar; ~372 kB con el marco del
-              // 2026-09-25). Dejan margen para crecer sin volverse un techo que nunca
-              // se toca; revisar cuando entren los dominios en projects/domains/.
-              // Rompen el build, no avisan: ver el paso «Production build and bundle
-              // budgets» de ci.yml.
+              // Pendientes de acordar con el CTO; se revisan cuando entren los dominios. Rompen el
+              // build, no avisan (paso «Production build and bundle budgets» de ci.yml).
+              // Medidas e historia: vault, 02-Arquitectura/Integracion Continua.md §4.
               "budgets": [
                 {
                   "type": "initial",
