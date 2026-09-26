@@ -18,6 +18,26 @@ test.describe('the application is alive', () => {
     await expect(page.getByRole('heading', { name: 'eWMS Advance' })).toBeVisible();
     // Es el artefacto de producción: las utilidades `ng` de depuración solo existen en desarrollo.
     expect(await page.evaluate(() => 'ng' in window)).toBe(false);
+
+    // Trusted Types en vigor: HTML desde una cadena lanza y no se puede crear ninguna política.
+    // DOMParser es la sonda porque ESLint ya prohíbe escribir innerHTML, también en una prueba.
+    const trustedTypes = await page.evaluate(() => {
+      const outcome = (act: () => unknown) => {
+        try {
+          act();
+          return 'allowed';
+        } catch (error) {
+          return (error as Error).name;
+        }
+      };
+      const factory = (window as { trustedTypes?: { createPolicy(name: string, rules: object): unknown } })
+        .trustedTypes;
+      return {
+        html: outcome(() => new DOMParser().parseFromString('<b>x</b>', 'text/html')),
+        policy: outcome(() => factory?.createPolicy('probe', {})),
+      };
+    });
+    expect(trustedTypes).toEqual({ html: 'TypeError', policy: 'TypeError' });
   });
 
   test('the showroom route responds at /design-system', async ({ page }) => {

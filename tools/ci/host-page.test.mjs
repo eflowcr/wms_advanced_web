@@ -40,6 +40,13 @@ test('the CSP stays strict: no unsafe-inline, no unsafe-eval, no hash, no nonce'
   assert.doesNotMatch(csp, /'unsafe-inline'|'unsafe-eval'|'unsafe-hashes'|'sha(256|384|512)-|'nonce-/);
 });
 
+test('the CSP turns Trusted Types on and allows no policy', () => {
+  const directives = csp.split(';').map((directive) => directive.trim());
+  assert.ok(directives.includes("require-trusted-types-for 'script'"), 'Trusted Types is off');
+  // Ninguna política: la única que trae Angular es la de bypassSecurityTrust*, prohibido.
+  assert.ok(directives.includes("trusted-types 'none'"), 'the CSP allows Trusted Types policies');
+});
+
 test('the host page has nothing inline that the CSP would drop', () => {
   assert.doesNotMatch(html, /<style[\s>]/i, 'inline <style> is blocked: use a stylesheet in public/');
   assert.doesNotMatch(html, /<script(?![^>]*\bsrc=)[^>]*>/i, 'inline <script> is blocked');

@@ -41,6 +41,16 @@ const COMPONENT_STYLES_MESSAGE =
   "Estila con utilidades de Tailwind, y el host con `host: { class: '...' }`. " +
   'Si falta una utilidad, agregá el token — no abras una hoja de estilos.';
 
+/** Regla 9: nada de la sesión vive en el navegador; la única excepción escrita es el idioma (ADR 0008). */
+const STORAGE_MESSAGE =
+  'El almacenamiento del navegador está prohibido (PLN-WMS-003 §4): nada de la sesión vive en el ' +
+  'navegador. La única excepción escrita es el idioma de la interfaz (ADR 0008); otra pide su ADR.';
+
+/** Con Trusted Types en la CSP, un sumidero con una cadena lanza en ejecución: acá falla antes. */
+const CODE_SINK_MESSAGE =
+  'Escribir HTML o código desde una cadena está prohibido (XSS; Trusted Types en la CSP): ' +
+  'arme el DOM con una plantilla o con createElement.';
+
 /**
  * El sistema de diseño no habla ningún idioma (ADR 0008): el texto llega ya traducido como
  * input. Importar la biblioteca de traducción obligaría a cargar el diccionario antes de
@@ -127,21 +137,27 @@ module.exports = tseslint.config(
       ...angular.configs.tsRecommended,
     ],
     processor: angular.processInlineTemplates,
+    // no-implied-eval solo mira globales declarados: sin esto, `setTimeout('…')` pasaba.
+    languageOptions: {
+      globals: {
+        setTimeout: 'readonly',
+        setInterval: 'readonly',
+        window: 'readonly',
+        globalThis: 'readonly',
+        self: 'readonly',
+      },
+    },
     rules: {
       // ------------------------------------------------ compuertas de seguridad
       // Regla 9. Cada una es error, nunca warning.
+      'no-eval': 'error',
+      'no-new-func': 'error',
+      'no-implied-eval': 'error',
       'no-restricted-globals': [
         'error',
-        {
-          name: 'localStorage',
-          message:
-            'localStorage must never hold auth tokens. Use the token store from @ewms/core. For a non-sensitive UI preference, disable this rule on the line with a written justification.',
-        },
-        {
-          name: 'sessionStorage',
-          message:
-            'sessionStorage must never hold auth tokens. Use the token store from @ewms/core. For a non-sensitive UI preference, disable this rule on the line with a written justification.',
-        },
+        { name: 'localStorage', message: STORAGE_MESSAGE },
+        { name: 'sessionStorage', message: STORAGE_MESSAGE },
+        { name: 'indexedDB', message: STORAGE_MESSAGE },
       ],
       'no-restricted-syntax': [
         'error',
@@ -156,15 +172,38 @@ module.exports = tseslint.config(
             'Raw innerHTML is forbidden (XSS). Render through a template, or sanitise via DomSanitizer.sanitize().',
         },
         {
-          // Atrapa `localStorage.setItem(...)`.
-          selector: 'MemberExpression[object.name=/^(localStorage|sessionStorage)$/]',
-          message: 'Web storage must never hold auth tokens. Use the token store from @ewms/core.',
+          // Leer outerHTML no ejecuta nada; asignarlo sí.
+          selector: "AssignmentExpression > MemberExpression.left[property.name='outerHTML']",
+          message: CODE_SINK_MESSAGE,
         },
         {
-          // Atrapa `window.localStorage...` y `globalThis.sessionStorage...`, que
-          // no-restricted-globals no ve porque son accesos a propiedad.
-          selector: 'MemberExpression[property.name=/^(localStorage|sessionStorage)$/]',
-          message: 'Web storage must never hold auth tokens. Use the token store from @ewms/core.',
+          selector: "MemberExpression[property.name='insertAdjacentHTML']",
+          message: CODE_SINK_MESSAGE,
+        },
+        {
+          selector: "MemberExpression[object.name='document'][property.name=/^(write|writeln)$/]",
+          message: CODE_SINK_MESSAGE,
+        },
+        {
+          // Atrapa `localStorage.setItem(...)`.
+          selector: 'MemberExpression[object.name=/^(localStorage|sessionStorage|indexedDB)$/]',
+          message: STORAGE_MESSAGE,
+        },
+        {
+          // `window.localStorage` y `globalThis.indexedDB`: no-restricted-globals no ve propiedades.
+          selector: 'MemberExpression[property.name=/^(localStorage|sessionStorage|indexedDB)$/]',
+          message: STORAGE_MESSAGE,
+        },
+        {
+          // `window['localStorage']`: el nombre llega como cadena, no como identificador.
+          selector:
+            'MemberExpression[computed=true][property.value=/^(localStorage|sessionStorage|indexedDB)$/]',
+          message: STORAGE_MESSAGE,
+        },
+        {
+          selector:
+            "MemberExpression[property.name='cookie']:matches([object.name='document'], [object.property.name='document'])",
+          message: STORAGE_MESSAGE,
         },
         {
           // `styles: [...]` o `styles: '...'`, solo como clave directa de los
