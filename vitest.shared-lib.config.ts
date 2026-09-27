@@ -2,7 +2,7 @@ import { projectRunner } from './vitest.shared';
 
 /**
  * shared. El nombre lleva `-lib` porque `vitest.shared.ts` ya es la base que comparten todos.
- * Medido 2026-09-22, con `filtersInUrl` como primer contenido de la biblioteca.
+ * Piso = medido y truncado (2026-09-27, B15: 100 en las cuatro). Solo sube.
  */
 export default projectRunner({
   statements: 100,

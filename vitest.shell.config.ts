@@ -1,8 +1,8 @@
 import { projectRunner } from './vitest.shared';
 
 /**
- * shell. Medido 2026-09-25: 99.33 / 97.36 / 98.73 / 99.61, truncado; sin core, design-system ni
- * showroom, que la corrida cubría de paso y se miden en la suya. Ver vault: Integracion Continua.md §8.
+ * shell. Piso = medido y truncado (2026-09-27, B15: 99.41 / 97.70 / 98.83 / 99.66). Solo sube.
+ * Sin core, design-system ni showroom: cada uno se mide en su corrida. Ver vault: IC §8.
  */
 export default projectRunner(
   {

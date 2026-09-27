@@ -1,7 +1,8 @@
 import { ApplicationInitStatus } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideI18nTesting } from '@ewms/testing';
-import { TranslocoService } from '@jsverse/transloco';
+import { TRANSLOCO_TRANSPILER, TranslocoService } from '@jsverse/transloco';
+import { IcuTranspiler } from './icu.transpiler';
 
 describe('IcuTranspiler', () => {
   let transloco: TranslocoService;
@@ -38,6 +39,31 @@ describe('IcuTranspiler', () => {
     expect(transloco.translate('plain', { location: '{x, select, other {boom}}' })).toBe(
       'Ubicación {x, select, other {boom}}',
     );
+  });
+
+  it('formats # in the locale of the language that loaded, also through a scope', () => {
+    const transpiler = TestBed.inject(TRANSLOCO_TRANSPILER) as IcuTranspiler;
+    const units = '{count, plural, one {# bulto} other {# bultos}}';
+    const format = (): unknown =>
+      transpiler.transpile({
+        value: units,
+        params: { count: 1234 },
+        translation: {},
+        key: 'units',
+      });
+
+    // Las cargas con scope llegan como 'scope/idioma': el locale sigue al idioma.
+    transpiler.onLangChanged('showroom/en');
+    expect(format()).toBe(`${new Intl.NumberFormat('en-US').format(1234)} bultos`);
+
+    // Un idioma que no es de la aplicación cae al de por defecto, nunca al del sistema.
+    transpiler.onLangChanged('fr');
+    expect(format()).toBe(`${new Intl.NumberFormat('es-CR').format(1234)} bultos`);
+  });
+
+  it('formats a message it already parsed with the parameters of each call', () => {
+    expect(transloco.translate('located', { count: 1, location: 'A-01' })).toBe('1 bulto en A-01');
+    expect(transloco.translate('located', { count: 3, location: 'B-02' })).toBe('3 bultos en B-02');
   });
 
   it('throws on a malformed message in development, naming the key', () => {

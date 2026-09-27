@@ -1,12 +1,9 @@
 import { projectRunner } from './vitest.shared';
 
-/**
- * design-system. Medido 2026-09-18 (DS-2): 95.94 / 91.62 / 94.84 / 96.86, truncado; la
- * corrida que cerró las cuatro primitivas de formulario, 247 pruebas.
- */
+/** design-system. Piso = medido y truncado (2026-09-27: 96.90 / 91.39 / 94.86 / 97.43). */
 export default projectRunner({
-  statements: 95,
+  statements: 96,
   branches: 91,
   functions: 94,
-  lines: 96,
+  lines: 97,
 });
