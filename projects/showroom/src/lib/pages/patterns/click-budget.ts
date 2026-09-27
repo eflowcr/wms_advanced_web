@@ -1,29 +1,14 @@
-/*
- * Presupuesto de clics: única copia de las cifras de REQ-FE-DS4-003 §2.2 (HG-02), que importan
- * la pantalla de patrón y e2e/click-budget.e2e.ts. Se cambian primero en el vault, luego acá.
- * Cómo se cuenta un clic (§2.1; con teclado, cero): ver vault: REQ-FE-DS4-003 - Minimo de clics.
- */
+import {
+  CANCEL_MAX_CLICKS,
+  CREATE_MAX_CLICKS,
+  EDIT_MAX_CLICKS,
+  OPEN_FAVORITE_MAX_CLICKS,
+  SEARCH_MAX_CLICKS,
+  type FlowId,
+} from '@ewms/shared';
 
-/** Encontrar un registro, desde cualquier pantalla. */
-export const SEARCH_MAX_CLICKS = 2;
-
-/** Crear un registro, desde la pantalla de su módulo. */
-export const CREATE_MAX_CLICKS = 2;
-
-/** Editar un registro, encontrarlo incluido: la búsqueda está contenida y el tercer clic abre la edición. */
-export const EDIT_MAX_CLICKS = 3;
-
-/** Cancelar lo que sea; con Escape, cero. Pedir confirmar la cancelación de algo no guardado gasta el presupuesto. */
-export const CANCEL_MAX_CLICKS = 1;
-
-/**
- * Abrir un favorito desde cualquier pantalla (DS-5): el bloque está fijo en la navegación
- * (REQ-FE-DS4-002 RFE-04), así que pulsar la entrada ya es navegar.
- */
-export const OPEN_FAVORITE_MAX_CLICKS = 1;
-
-/** Flujos que cubre el estándar, para que los recorran la página y la prueba. */
-export type FlowId = 'search' | 'create' | 'edit' | 'cancel' | 'favorite';
+/** Las cifras son de `@ewms/shared` (REQ-FE-DS4-003 RFE-05): acá solo se nombran en pantalla. */
+export type { FlowId };
 
 export interface FlowBudget {
   readonly id: FlowId;

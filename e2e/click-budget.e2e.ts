@@ -11,7 +11,7 @@ import {
   EDIT_MAX_CLICKS,
   OPEN_FAVORITE_MAX_CLICKS,
   SEARCH_MAX_CLICKS,
-} from '../projects/showroom/src/lib/pages/patterns/click-budget';
+} from '../projects/shared/src/lib/click-budget';
 
 /*
  * Cuenta clics (REQ-FE-DS4-003 RFE-03) y prueba reglas de teclado (REQ-FE-DS4-001). Los clics los cuenta

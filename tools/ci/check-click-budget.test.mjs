@@ -58,7 +58,7 @@ describe('importsBudgets', () => {
 
   it('accepts a test that pulls the names in from somewhere else', () => {
     const source = [
-      "import { SEARCH_MAX_CLICKS, CREATE_MAX_CLICKS, EDIT_MAX_CLICKS } from '@ewms/showroom';",
+      "import { SEARCH_MAX_CLICKS, CREATE_MAX_CLICKS, EDIT_MAX_CLICKS } from '@ewms/shared';",
       "test.describe('x', () => {});",
     ].join('\n');
     assert.equal(importsBudgets(source, NAMES), true);
@@ -100,6 +100,18 @@ describe('the repository itself', () => {
       'OPEN_FAVORITE_MAX_CLICKS',
       'SEARCH_MAX_CLICKS',
     ]);
+  });
+
+  // G7: «se hereda» exige que un dominio pueda importarlo, y un dominio no importa el showroom.
+  it('lives in a library a domain may import, so a screen inherits it', async () => {
+    const config = await readFile(path.join(ROOT, 'eslint.config.js'), 'utf8');
+    const list = /const DOMAIN_ALLOWED = \[([^\]]*)\]/.exec(config)?.[1] ?? '';
+    const folders = [...list.matchAll(/'@ewms\/([\w-]+)'/g)].map(([, name]) => `projects/${name}/`);
+    assert.ok(folders.length > 0, 'DOMAIN_ALLOWED not found in eslint.config.js');
+    assert.ok(
+      folders.some((folder) => BUDGET_FILE.startsWith(folder)),
+      `${BUDGET_FILE} is not in ${folders.join(', ')}`,
+    );
   });
 
   it('the end-to-end test imports them rather than typing them in', async () => {
