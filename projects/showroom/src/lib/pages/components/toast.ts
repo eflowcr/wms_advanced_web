@@ -81,8 +81,9 @@ const ACCENT_WIDTH = 4;
  * con el prefijo de la clase la columna desbordaba, la tabla se volvía región con
  * scroll y axe la marcaba sin acceso por teclado. La clase va en el título.
  * t(showroom.toast.props.show, showroom.toast.props.dismiss, showroom.toast.props.dismissLatest,
- *   showroom.toast.props.clear, showroom.toast.props.toasts, showroom.toast.props.severityLabels,
- *   showroom.toast.props.regionLabel)
+ *   showroom.toast.props.pause, showroom.toast.props.resume, showroom.toast.props.clear,
+ *   showroom.toast.props.toasts, showroom.toast.props.severityLabels,
+ *   showroom.toast.props.regionLabel, showroom.toast.props.dismissLabel)
  */
 const PROPS: readonly PropRow[] = [
   {
@@ -102,6 +103,18 @@ const PROPS: readonly PropRow[] = [
     type: '=> void',
     default: '—',
     description: 'showroom.toast.props.dismissLatest',
+  },
+  {
+    name: 'pause()',
+    type: '=> void',
+    default: '—',
+    description: 'showroom.toast.props.pause',
+  },
+  {
+    name: 'resume()',
+    type: '=> void',
+    default: '—',
+    description: 'showroom.toast.props.resume',
   },
   {
     name: 'clear()',
@@ -127,6 +140,12 @@ const PROPS: readonly PropRow[] = [
     default: '—',
     description: 'showroom.toast.props.regionLabel',
   },
+  {
+    name: '[dismissLabel]',
+    type: 'string',
+    default: '—',
+    description: 'showroom.toast.props.dismissLabel',
+  },
 ];
 
 /**
@@ -134,7 +153,7 @@ const PROPS: readonly PropRow[] = [
  *   showroom.toast.anatomy.parts.text, showroom.toast.anatomy.parts.accent,
  *   showroom.toast.anatomy.parts.accentInfo, showroom.toast.anatomy.parts.elevation,
  *   showroom.toast.anatomy.parts.radius, showroom.toast.anatomy.parts.iconSize,
- *   showroom.toast.anatomy.parts.duration)
+ *   showroom.toast.anatomy.parts.duration, showroom.toast.anatomy.parts.compactBottom)
  */
 const ANATOMY = [
   { part: 'showroom.toast.anatomy.parts.surface', token: '--color-success-surface' },
@@ -146,6 +165,7 @@ const ANATOMY = [
   { part: 'showroom.toast.anatomy.parts.radius', token: '--radius-md' },
   { part: 'showroom.toast.anatomy.parts.iconSize', token: '--size-icon-md' },
   { part: 'showroom.toast.anatomy.parts.duration', token: '--duration-toast' },
+  { part: 'showroom.toast.anatomy.parts.compactBottom', token: '--toast-bottom-compact' },
 ] as const;
 
 /**

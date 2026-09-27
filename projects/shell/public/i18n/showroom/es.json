@@ -3087,8 +3087,9 @@
   },
   "toast": {
     "a11y": {
-      "escape": "<b>Escape escucha en el documento</b>, porque un toast nunca tiene el foco: no es una parada de tabulación y no debe robarle el foco a lo que el operario está haciendo. Un <code>Escape</code> que otro ya manejó —el de un diálogo, el del Select— se deja pasar.",
+      "escape": "<b>Escape escucha en el documento</b>: cierra el más reciente esté donde esté el foco. Un toast nunca toma el foco solo, para no robárselo a lo que el operario está haciendo. Un <code>Escape</code> que otro ya manejó —el de un diálogo, el del Select— se deja pasar.",
       "oneRegion": "<b>Una sola región viva, siempre en el documento</b>, esté vacía o no. Una región que aparece junto con su primer mensaje se anuncia de forma inconsistente —varios lectores de pantalla se pierden el contenido que llega en el mismo cuadro que la región—, así que la región espera y lo único que cambia es su contenido.",
+      "pause": "<b>WCAG 2.2.1:</b> con el puntero o el foco en la pila, ningún mensaje se va; al salir, cada uno sigue con lo que le quedaba. El botón de cerrar se alcanza con <code>Tab</code>, y hay tres a la vez como máximo: el cuarto saca al más viejo.",
       "polite": "<code>polite</code> y nunca <code>assertive</code>: un toast cuenta algo que ya pasó. Lo que de verdad no puede esperar es un Banner con <code>role=\"alert\"</code>, que es el otro componente.",
       "severity": "Cada icono lleva la severidad como nombre accesible, por las mismas palabras que el consumidor tradujo al montar la salida. El color no es la única señal."
     },
@@ -3098,6 +3099,7 @@
         "accent": "Acento de 4 px (Success)",
         "accentInfo": "Acento de 4 px (Info — neutral)",
         "border": "Borde del toast, por familia (Success)",
+        "compactBottom": "Distancia al borde inferior con barra inferior (debajo del corte)",
         "duration": "Cuánto vive un mensaje",
         "elevation": "Elevación de la pila",
         "iconSize": "Tamaño del icono (md)",
@@ -3134,11 +3136,14 @@
     },
     "notApplicable": "Uno: <b>tamaños</b>, porque el toast tiene uno solo. Está escrito arriba en lugar de borrado.",
     "props": {
-      "caption": "Métodos de ToastService, y las dos entradas de <ewms-toast-outlet>",
+      "caption": "Métodos de ToastService, y las tres entradas de <ewms-toast-outlet>",
       "clear": "Vacía la cola, timers incluidos. Se llama sola al destruirse el inyector.",
       "dismiss": "Saca uno. Un id que ya no está no es un error.",
+      "dismissLabel": "<b>Obligatoria.</b> Entrada de la salida. Nombre del botón de cerrar de cada mensaje, como el <code>dismissLabel</code> del Banner.",
       "dismissLatest": "Saca el más reciente. Es lo que hace Escape.",
+      "pause": "Detiene la vida de todos los mensajes y guarda lo que le quedaba a cada uno. La salida lo llama con el puntero o el foco en la pila.",
       "regionLabel": "<b>Obligatoria.</b> Entrada de la salida. Nombra la región viva, para que el lector de pantalla diga de dónde viene el mensaje.",
+      "resume": "Cada mensaje sigue con el tiempo que le quedaba, no con uno nuevo.",
       "severityLabels": "<b>Obligatoria.</b> Entrada de la salida. Las cuatro severidades en palabras, para el nombre accesible de cada icono. Se traducen una vez, donde se monta.",
       "show": "Encola un mensaje y devuelve su id. <code>duration</code> en milisegundos pisa el token para esa llamada; <code>0</code> significa «no expira».",
       "toasts": "Lo que la salida renderiza, del más viejo al más nuevo."

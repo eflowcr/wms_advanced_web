@@ -3087,8 +3087,9 @@
   },
   "toast": {
     "a11y": {
-      "escape": "<b>Escape is listened for on the document</b>, because a toast never has the focus: it is not a tab stop and must not steal the focus from what the operator is doing. An <code>Escape</code> that something else has already handled —a dialog's, the Select's— is let through.",
+      "escape": "<b>Escape listens on the document</b>: it closes the most recent one wherever the focus is. A toast never takes the focus by itself, so as not to steal it from what the operator is doing. An <code>Escape</code> that something else already handled —a dialog's, the Select's— is let through.",
       "oneRegion": "<b>A single live region, always in the document</b>, whether it is empty or not. A region that appears together with its first message is announced inconsistently —several screen readers miss content that arrives in the same frame as the region—, so the region waits and the only thing that changes is its content.",
+      "pause": "<b>WCAG 2.2.1:</b> with the pointer or the focus on the stack, no message leaves; once they move away, each one carries on with what it had left. The close button is reachable with <code>Tab</code>, and there are three at most at a time: the fourth pushes the oldest out.",
       "polite": "<code>polite</code> and never <code>assertive</code>: a toast reports something that has already happened. What truly cannot wait is a Banner with <code>role=\"alert\"</code>, which is the other component.",
       "severity": "Each icon carries the severity as its accessible name, in the same words the consumer translated when mounting the outlet. Colour is not the only cue."
     },
@@ -3098,6 +3099,7 @@
         "accent": "4 px accent (Success)",
         "accentInfo": "4 px accent (Info — neutral)",
         "border": "Toast border, by family (Success)",
+        "compactBottom": "Distance to the bottom edge with the bottom bar (below the breakpoint)",
         "duration": "How long a message lives",
         "elevation": "Stack elevation",
         "iconSize": "Icon size (md)",
@@ -3134,11 +3136,14 @@
     },
     "notApplicable": "One: <b>sizes</b>, because the toast has only one. It is written above rather than deleted.",
     "props": {
-      "caption": "ToastService methods, and the two inputs of <ewms-toast-outlet>",
+      "caption": "ToastService methods, and the three inputs of <ewms-toast-outlet>",
       "clear": "Empties the queue, timers included. It is called automatically when the injector is destroyed.",
       "dismiss": "Removes one. An id that is no longer there is not an error.",
+      "dismissLabel": "<b>Required.</b> Outlet input. The name of the close button on every message, like the Banner's <code>dismissLabel</code>.",
       "dismissLatest": "Removes the most recent one. It is what Escape does.",
+      "pause": "Stops the lifetime of every message and keeps what each one had left. The outlet calls it with the pointer or the focus on the stack.",
       "regionLabel": "<b>Required.</b> An outlet input. It names the live region, so that the screen reader says where the message comes from.",
+      "resume": "Each message carries on with the time it had left, not with a new one.",
       "severityLabels": "<b>Required.</b> An outlet input. The four severities in words, for the accessible name of each icon. They are translated once, where the outlet is mounted.",
       "show": "Queues a message and returns its id. <code>duration</code> in milliseconds overrides the token for that call; <code>0</code> means “never expires”.",
       "toasts": "What the outlet renders, from oldest to newest."

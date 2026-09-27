@@ -218,6 +218,7 @@
       "scrollForward": "Ver las pestañas siguientes"
     },
     "toast": {
+      "dismiss": "Cerrar notificación",
       "region": "Notificaciones",
       "severity": {
         "danger": "Error",

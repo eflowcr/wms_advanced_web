@@ -14,7 +14,11 @@ const LABELS: Readonly<Record<FeedbackVariant, string>> = {
 };
 
 @Component({
-  template: `<ewms-toast-outlet [severityLabels]="labels" regionLabel="Notificaciones" />`,
+  template: `<ewms-toast-outlet
+    [severityLabels]="labels"
+    regionLabel="Notificaciones"
+    dismissLabel="Cerrar notificación"
+  />`,
   imports: [ToastOutlet],
 })
 class TestHost {
@@ -96,6 +100,150 @@ describe('Toast', () => {
       toasts.show('info', 'Uno');
       toasts.show('info', 'Dos');
       toasts.clear();
+      await settle();
+      expect(rows().length).toBe(0);
+    });
+
+    it('shows three at most: a fourth pushes the oldest out', async () => {
+      document.documentElement.style.setProperty(TOAST_DURATION_TOKEN, '3000ms');
+      for (const message of ['Uno', 'Dos', 'Tres', 'Cuatro']) {
+        toasts.show('info', message);
+      }
+      await settle();
+
+      const text = rows().map((row) => row.textContent ?? '');
+      expect(text.length).toBe(3);
+      expect(text[0]).toContain('Dos');
+      expect(text[2]).toContain('Cuatro');
+
+      // El que salió se lleva su timer: los tres que quedan viven su tiempo entero.
+      vi.advanceTimersByTime(2999);
+      await settle();
+      expect(rows().length).toBe(3);
+    });
+  });
+
+  describe('the close button', () => {
+    function closeButton(row: Element | undefined): HTMLButtonElement {
+      const button = row?.querySelector('button');
+      if (!button) {
+        throw new Error('the toast rendered no close button');
+      }
+      return button;
+    }
+
+    it('is named in the words the consumer passed', async () => {
+      toasts.show('success', 'Guardado');
+      await settle();
+      expect(closeButton(rows()[0]).getAttribute('aria-label')).toBe('Cerrar notificación');
+    });
+
+    it('closes that toast and no other', async () => {
+      toasts.show('info', 'Vieja');
+      toasts.show('info', 'Nueva');
+      await settle();
+
+      closeButton(rows()[0]).click();
+      await settle();
+
+      expect(rows().length).toBe(1);
+      expect(rows()[0]?.textContent).toContain('Nueva');
+    });
+  });
+
+  // WCAG 2.2.1: quien está leyendo o por cerrar un mensaje no lo pierde a mitad de camino.
+  describe('the clock stops while someone is on the stack', () => {
+    beforeEach(() => {
+      document.documentElement.style.setProperty(TOAST_DURATION_TOKEN, '3000ms');
+    });
+
+    // Entrar y salir de la pila, como el navegador: jsdom no deriva estos de un mouseover.
+    function pointer(type: 'mouseenter' | 'mouseleave'): void {
+      region().dispatchEvent(new MouseEvent(type));
+    }
+
+    it('pauses under the pointer and resumes with the time that was left', async () => {
+      toasts.show('success', 'Guardado');
+      await settle();
+      vi.advanceTimersByTime(1000);
+
+      pointer('mouseenter');
+      vi.advanceTimersByTime(60_000);
+      await settle();
+      expect(rows().length).toBe(1);
+
+      pointer('mouseleave');
+      vi.advanceTimersByTime(1999);
+      await settle();
+      expect(rows().length).toBe(1);
+
+      vi.advanceTimersByTime(1);
+      await settle();
+      expect(rows().length).toBe(0);
+    });
+
+    it('pauses while the focus is inside, and resumes when it leaves', async () => {
+      toasts.show('success', 'Guardado');
+      await settle();
+      const button = rows()[0]?.querySelector('button');
+
+      button?.focus();
+      vi.advanceTimersByTime(60_000);
+      await settle();
+      expect(rows().length).toBe(1);
+
+      button?.blur();
+      vi.advanceTimersByTime(3000);
+      await settle();
+      expect(rows().length).toBe(0);
+    });
+
+    it('holds a message that arrives while paused, for its whole lifetime', async () => {
+      toasts.show('info', 'Primero');
+      await settle();
+      pointer('mouseenter');
+
+      toasts.show('info', 'Segundo');
+      vi.advanceTimersByTime(60_000);
+      await settle();
+      expect(rows().length).toBe(2);
+
+      pointer('mouseleave');
+      vi.advanceTimersByTime(3000);
+      await settle();
+      expect(rows().length).toBe(0);
+    });
+
+    // El botón se va con su mensaje: la pila no puede quedar detenida para siempre.
+    it('runs again after a close by the button', async () => {
+      toasts.show('info', 'Uno');
+      toasts.show('info', 'Dos');
+      await settle();
+
+      pointer('mouseenter');
+      rows()[0]?.querySelector('button')?.click();
+      await settle();
+      expect(rows().length).toBe(1);
+
+      vi.advanceTimersByTime(3000);
+      await settle();
+      expect(rows().length).toBe(0);
+    });
+
+    it('runs again when Escape closes the toast that had the focus', async () => {
+      toasts.show('info', 'Uno');
+      toasts.show('info', 'Dos');
+      await settle();
+
+      const button = rows()[1]?.querySelector('button');
+      button?.focus();
+      button?.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }),
+      );
+      await settle();
+      expect(rows().length).toBe(1);
+
+      vi.advanceTimersByTime(3000);
       await settle();
       expect(rows().length).toBe(0);
     });
@@ -215,12 +363,15 @@ describe('Toast', () => {
     });
   });
 
-  it('has no axe violations with the four up at once', async () => {
+  it('has no axe violations with the four variants, three up at a time', async () => {
     // axe necesita el reloj real; el resto del archivo maneja los timers a mano.
     vi.useRealTimers();
     toasts.show('success', 'Guardado');
     toasts.show('warning', 'Stock bajo');
     toasts.show('danger', 'Sin conexión');
+    await settle();
+    await expectNoAxeViolations(fixture.nativeElement);
+
     toasts.show('info', 'Sincronizando');
     await settle();
     await expectNoAxeViolations(fixture.nativeElement);

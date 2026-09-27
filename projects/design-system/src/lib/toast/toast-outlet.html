@@ -2,9 +2,18 @@
   Una región viva, siempre presente aunque vacía: una que aparece con su primer mensaje se anuncia mal.
   `polite`: lo urgente es un Banner con role="alert". Ver vault: Notificaciones.
 -->
-<div [class]="outletClasses" role="status" aria-live="polite" [attr.aria-label]="regionLabel()">
+<div
+  [class]="outletClasses()"
+  role="status"
+  aria-live="polite"
+  [attr.aria-label]="regionLabel()"
+  (mouseenter)="onPointerEnter()"
+  (mouseleave)="onPointerLeave()"
+  (focusin)="onFocusIn()"
+  (focusout)="onFocusOut($event)"
+>
   @for (toast of toasts(); track toast.id) {
-    <div [class]="toastClasses + ' ' + surfaceClasses(toast)">
+    <div [class]="toastClasses + ' ' + surfaceClasses(toast)" [attr.data-toast]="toast.id">
       <!-- Acento en el solid de la familia, no en el borde (ver feedback.types.ts). -->
       <span class="w-1 shrink-0" [class]="accentClasses(toast)" aria-hidden="true"></span>
 
@@ -12,6 +21,18 @@
         <!-- Informativo, como en el banner: la severidad no se lee solo del color. -->
         <ewms-icon [name]="iconName(toast)" [size]="iconSize" [label]="severityLabel(toast)" />
         <p class="min-w-0 text-p">{{ toast.message }}</p>
+      </div>
+
+      <!-- El mismo cierre que el Banner: ghost, solo ícono, con nombre. -->
+      <div class="flex items-center pe-2">
+        <ewms-button
+          [iconOnly]="true"
+          variant="ghost"
+          icon="x"
+          size="sm"
+          [label]="dismissLabel()"
+          (click)="close(toast)"
+        />
       </div>
     </div>
   }

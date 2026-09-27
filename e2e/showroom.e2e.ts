@@ -1,5 +1,5 @@
 import { axe } from './axe';
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Locator, type Page } from '@playwright/test';
 import { watchConsole } from './console-watch';
 import { chooseLanguage } from './language';
 
@@ -2401,5 +2401,117 @@ test.describe('DS-3 lote D: detalle, menú, ventana y paginador', () => {
     await expect(page.locator(`${demo} tbody tr[data-row] td:nth-child(4)`).first()).toHaveText(
       /^\s*\d{2}\/\d{2}\/2026\s*$/,
     );
+  });
+});
+
+// B11 (decisión del usuario, 2026-09-26). El reloj de la página se detiene: una máquina lenta no
+// vence un toast antes de tiempo; cada `runFor` corto deja correr la detección de cambios.
+test.describe('the toast on a phone (375 px)', () => {
+  test.use({ viewport: { width: 375, height: 812 } });
+
+  async function tick(page: Page, ms = 100): Promise<void> {
+    await page.clock.runFor(ms);
+  }
+
+  // Con el reloj detenido no hay cuadros, y `click()`/`hover()` esperan uno: ratón en el centro.
+  async function pointAt(target: Locator): Promise<{ x: number; y: number }> {
+    const box = await target.boundingBox();
+    if (box === null) {
+      throw new Error('the target has no box');
+    }
+    return { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+  }
+
+  async function press(page: Page, target: Locator): Promise<void> {
+    const { x, y } = await pointAt(target);
+    await page.mouse.click(x, y);
+    await tick(page);
+  }
+
+  test('shows three at most, above the bottom bar and inside the screen', async ({ page }) => {
+    await page.clock.install();
+    await page.goto(TOAST);
+    await ready(page);
+    // El reloj se detiene con la demo pintada y a la vista: sin cuadros, nada se pinta ni desplaza.
+    await page.locator('[data-demo-toast]').scrollIntoViewIfNeeded();
+    await page.clock.pauseAt(Date.now() + 1_000);
+
+    const toasts = page.locator('ewms-toast-outlet [role="status"] > div');
+    for (const variant of ['success', 'warning', 'danger', 'info']) {
+      await press(page, page.locator(`[data-raise="${variant}"] button`));
+    }
+    await expect(toasts).toHaveCount(3);
+    // Sale el más viejo (success): el primero que queda es el segundo que se levantó.
+    await expect(toasts.locator('> span.bg-success-solid')).toHaveCount(0);
+    await expect(toasts.first().locator('> span')).toHaveClass(/bg-warning-solid/);
+
+    const bar = await page.locator('[data-nav-bottom]').boundingBox();
+    for (const box of await Promise.all((await toasts.all()).map((toast) => toast.boundingBox()))) {
+      expect(
+        round((box?.y ?? 0) + (box?.height ?? 0)),
+        'toast over the bottom bar',
+      ).toBeLessThanOrEqual(round(bar?.y));
+      expect(box?.x ?? -1, 'toast off the left edge').toBeGreaterThanOrEqual(0);
+      expect((box?.x ?? 0) + (box?.width ?? 0), 'toast off the right edge').toBeLessThanOrEqual(
+        375,
+      );
+    }
+  });
+
+  test('pauses under the pointer and the focus, and resumes where it was', async ({ page }) => {
+    await page.clock.install();
+    await page.goto(TOAST);
+    await ready(page);
+    // El reloj se detiene con la demo pintada y a la vista: sin cuadros, nada se pinta ni desplaza.
+    await page.locator('[data-demo-toast]').scrollIntoViewIfNeeded();
+    await page.clock.pauseAt(Date.now() + 1_000);
+
+    const toasts = page.locator('ewms-toast-outlet [role="status"] > div');
+    await press(page, page.locator('[data-raise="success"] button'));
+    await expect(toasts).toHaveCount(1);
+
+    const over = await pointAt(toasts.first());
+    await page.mouse.move(over.x, over.y);
+    await tick(page, 10_000);
+    await expect(toasts, 'paused under the pointer').toHaveCount(1);
+
+    await page.mouse.move(10, 10);
+    await tick(page, 3_000);
+    await expect(toasts, 'resumed when the pointer left').toHaveCount(0);
+
+    await press(page, page.locator('[data-raise="success"] button'));
+    await page.mouse.move(10, 10);
+    await toasts.first().getByRole('button').focus();
+    await tick(page, 10_000);
+    await expect(toasts, 'paused while focused').toHaveCount(1);
+
+    await page.locator('[data-raise="success"] button').focus();
+    await tick(page, 3_000);
+    await expect(toasts, 'resumed when the focus left').toHaveCount(0);
+  });
+
+  test('closes by its button, named in the page language', async ({ page }) => {
+    await page.goto(TOAST);
+    await ready(page);
+
+    const toasts = page.locator('ewms-toast-outlet [role="status"] > div');
+    await page.locator('[data-raise-sticky] button').click();
+    await page.locator('[data-raise-sticky] button').click();
+    await expect(toasts).toHaveCount(2);
+
+    await toasts.first().getByRole('button', { name: 'Cerrar notificación' }).click();
+    await expect(toasts).toHaveCount(1);
+  });
+
+  test('has no axe violations with toasts up', async ({ page }) => {
+    await page.goto(TOAST);
+    await ready(page);
+
+    const toasts = page.locator('ewms-toast-outlet [role="status"] > div');
+    await page.locator('[data-raise-sticky] button').click();
+    await page.locator('[data-raise-sticky] button').click();
+    await expect(toasts).toHaveCount(2);
+
+    expect((await axe(page).analyze()).violations).toEqual([]);
   });
 });

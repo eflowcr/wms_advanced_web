@@ -308,6 +308,8 @@
 
   /* Barra inferior: 64 deja un objetivo táctil holgado sobre el 24x24 de WCAG 2.5.8. */
   --nav-bottom-height: var(--size-64);
+  /* La pila de toasts cuando hay barra inferior: encima de ella, con el aire que tiene sin barra. */
+  --toast-bottom-compact: calc(var(--nav-bottom-height) + var(--size-16));
   /* Alto máximo de la hoja «Más»: lo que no entra desplaza adentro. */
   --nav-sheet-max-height: var(--vh-70);
 
