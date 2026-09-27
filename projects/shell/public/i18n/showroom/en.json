@@ -3440,12 +3440,12 @@
   },
   "typography": {
     "families": {
-      "mono": "The mono family is still the system stack: JetBrains Mono comes in with its first real consumer, the Table. Until then the token exists and points to the stack, which is the honest thing to do — you do not declare a face that is not being served.",
+      "mono": "The mono family is <b>JetBrains Mono</b>, self-hosted like Montserrat: Regular and Bold, only the Latin subset in woff2 and no preload, so only a page that shows code downloads it. The system stack stays behind it, in case the file does not arrive.",
       "title": "The two families"
     },
     "gaps": {
-      "body": "Four values are still undecided in <code>tokens.css</code>: the line height of H4, that of Caption, and the weight and line height of Mono. Above, they are marked <b>(pending)</b> instead of being filled in with an invented number or having their row deleted. In the meantime the browser applies its normal value, which is exactly what you are seeing.",
-      "title": "The gaps are information, not neglect"
+      "body": "Until 2026-09-27 four values were missing from <code>tokens.css</code>: the line height of H4, that of Caption, and the weight and line height of Mono. They were marked as pending instead of being given an invented number. They were declared with what the browser was already applying —a line height of 1.5 and weight 400—, so nothing moved on screen: the token says it now.",
+      "title": "The scale is closed"
     },
     "header": {
       "intro": "A single interface family: <b>Montserrat</b>, variable 100–900, self-hosted. It is not loaded from a CDN — the CSP only allows <code>font-src 'self'</code>. The mono family plays a supporting role, for codes and SKUs."

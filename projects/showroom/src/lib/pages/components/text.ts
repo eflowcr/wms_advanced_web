@@ -100,16 +100,12 @@ const TOKEN_COLUMNS: readonly DocColumn[] = [
   { id: 'tokens', label: 'showroom.common.anatomy.token' },
 ];
 
-/**
- * Tokens por variante. Cuatro no están declarados en tokens.css y se marcan
- * como pendientes en vez de inventarles valor, igual que en Fundamentos.
- */
+/** Tokens por variante: las siete declaran tamaño, peso e interlineado (desde B12). */
 interface VariantTokens {
   readonly variant: string;
   readonly size: string;
   readonly weight: string;
   readonly lineHeight: string;
-  readonly pending: readonly string[];
 }
 
 const TOKENS: readonly VariantTokens[] = [
@@ -118,49 +114,42 @@ const TOKENS: readonly VariantTokens[] = [
     size: '--text-h1-size',
     weight: '--text-h1-weight',
     lineHeight: '--text-h1-line-height',
-    pending: [],
   },
   {
     variant: 'h2',
     size: '--text-h2-size',
     weight: '--text-h2-weight',
     lineHeight: '--text-h2-line-height',
-    pending: [],
   },
   {
     variant: 'h3',
     size: '--text-h3-size',
     weight: '--text-h3-weight',
     lineHeight: '--text-h3-line-height',
-    pending: [],
   },
   {
     variant: 'h4',
     size: '--text-h4-size',
     weight: '--text-h4-weight',
     lineHeight: '--text-h4-line-height',
-    pending: ['--text-h4-line-height'],
   },
   {
     variant: 'p',
     size: '--text-p-size',
     weight: '--text-p-weight',
     lineHeight: '--text-p-line-height',
-    pending: [],
   },
   {
     variant: 'caption',
     size: '--text-caption-size',
     weight: '--text-caption-weight',
     lineHeight: '--text-caption-line-height',
-    pending: ['--text-caption-line-height'],
   },
   {
     variant: 'mono',
     size: '--text-mono-size',
     weight: '--text-mono-weight',
     lineHeight: '--text-mono-line-height',
-    pending: ['--text-mono-weight', '--text-mono-line-height'],
   },
 ];
 
@@ -258,9 +247,5 @@ export class ShowroomText {
   /** Solo en los encabezados el acople tiene consecuencias. */
   protected isHeading(id: string): boolean {
     return id.startsWith('h');
-  }
-
-  protected isPending(row: VariantTokens, token: string): boolean {
-    return row.pending.includes(token);
   }
 }

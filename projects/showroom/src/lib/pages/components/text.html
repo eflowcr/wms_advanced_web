@@ -184,13 +184,10 @@
           <ul class="flex flex-col gap-1">
             <li><ewms-token-value [token]="row.size" /></li>
             <li>
-              <ewms-token-value [token]="row.weight" [pending]="isPending(row, row.weight)" />
+              <ewms-token-value [token]="row.weight" />
             </li>
             <li>
-              <ewms-token-value
-                [token]="row.lineHeight"
-                [pending]="isPending(row, row.lineHeight)"
-              />
+              <ewms-token-value [token]="row.lineHeight" />
             </li>
           </ul>
         }

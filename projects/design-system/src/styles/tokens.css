@@ -138,7 +138,7 @@
 
   /* 'Montserrat' se auto-hospeda en projects/shell/public/fonts (@font-face en styles.css). */
   --typeface-montserrat: 'Montserrat', ui-sans-serif, system-ui, sans-serif;
-  --typeface-system-mono: ui-monospace, SFMono-Regular, monospace;
+  --typeface-jetbrains-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
 
   /* ===== Capa 2 — semánticos ===== */
 
@@ -369,7 +369,7 @@
   --border-width-selection: var(--size-1-5);
 
   --font-family-sans: var(--typeface-montserrat);
-  --font-family-mono: var(--typeface-system-mono);
+  --font-family-mono: var(--typeface-jetbrains-mono);
 
   --text-h1-size: var(--size-32);
   --text-h1-weight: var(--weight-bold);
@@ -383,20 +383,24 @@
   --text-h3-weight: var(--weight-semibold);
   --text-h3-line-height: var(--ratio-1-3);
 
-  /* H4: mayúsculas las aplica el componente. Interlineado: el del cuerpo. */
+  /* H4: mayúsculas las aplica el componente. */
   --text-h4-size: var(--size-14);
   --text-h4-weight: var(--weight-semibold);
+  --text-h4-line-height: var(--ratio-1-5);
 
   --text-p-size: var(--size-14);
   --text-p-weight: var(--weight-regular);
   --text-p-line-height: var(--ratio-1-5);
 
-  /* Caption: color text-secondary. Interlineado: el del cuerpo. */
+  /* Caption: color text-secondary. */
   --text-caption-size: var(--size-12);
   --text-caption-weight: var(--weight-medium);
+  --text-caption-line-height: var(--ratio-1-5);
 
-  /* Mono: códigos, SKUs, lotes. Peso e interlineado: los del cuerpo. */
+  /* Mono: códigos, SKUs, lotes; en JetBrains Mono. */
   --text-mono-size: var(--size-13);
+  --text-mono-weight: var(--weight-regular);
+  --text-mono-line-height: var(--ratio-1-5);
 
   /* Tamaños de la ficha del Botón (13 / 14 / 15). */
   --text-control-sm-size: var(--size-13);

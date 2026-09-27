@@ -962,7 +962,9 @@ test.describe('keyboard only', () => {
           ...chrome.map((element) => element?.getBoundingClientRect().bottom ?? 0),
         );
         const box = focused.getBoundingClientRect();
-        return box.top + box.height / 2 < bottom
+        // Lo que cabe bajo el marco, por su centro; lo más alto, solo si queda entero debajo (2.4.11).
+        const tall = box.height > window.innerHeight - bottom;
+        return (tall ? box.bottom <= bottom : box.top + box.height / 2 < bottom)
           ? (focused.getAttribute('aria-label') ??
               focused.textContent?.trim().slice(0, 40) ??
               focused.tagName)
@@ -1015,7 +1017,8 @@ test.describe('keyboard only', () => {
         window.scrollBy(0, box.top + box.height / 2 - (bottom - 8));
         control.focus();
         const after = control.getBoundingClientRect();
-        if (after.top + after.height / 2 < bottom) {
+        const tall = after.height > window.innerHeight - bottom;
+        if (tall ? after.bottom <= bottom : after.top + after.height / 2 < bottom) {
           under.push(
             control.getAttribute('aria-label') ?? control.textContent?.trim().slice(0, 40) ?? '',
           );

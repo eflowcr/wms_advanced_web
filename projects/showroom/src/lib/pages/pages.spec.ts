@@ -426,10 +426,11 @@ describe('ShowroomTypography', () => {
     expect(element.querySelector('[data-scale-step="p"] p')).not.toBeNull();
   });
 
-  it('shows the four undecided values as pending instead of inventing them', async () => {
+  // B12 cerró los cuatro «(pendiente)» con lo que ya se veía: la escala entera sale de tokens.
+  it('declares every value of the scale, and says the gaps were closed', async () => {
     const { element } = await render(ShowroomTypography);
-    expect(element.textContent).toContain('(pendiente)');
-    expect(element.textContent).toContain('Los huecos son información, no descuido');
+    expect(element.textContent).not.toContain('(pendiente)');
+    expect(element.textContent).toContain('La escala está cerrada');
   });
 });
 
@@ -714,7 +715,6 @@ describe('ShowroomText', () => {
       sampleFor(id: string): string;
       tagFor(id: string): string;
       isHeading(id: string): boolean;
-      isPending(row: { pending: readonly string[] }, token: string): boolean;
     };
 
     expect(page.variantFor('caption')).toBe('caption');
@@ -725,9 +725,6 @@ describe('ShowroomText', () => {
 
     expect(page.isHeading('h4')).toBe(true);
     expect(page.isHeading('caption')).toBe(false);
-
-    expect(page.isPending({ pending: ['--text-mono-weight'] }, '--text-mono-weight')).toBe(true);
-    expect(page.isPending({ pending: [] }, '--text-mono-weight')).toBe(false);
   });
 });
 
