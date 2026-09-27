@@ -19,8 +19,8 @@ export const CARD_SELECTABLE_CLASSES =
   'w-full text-left select-none outline-none focus-visible:shadow-(--focus-ring-shadow)';
 
 /**
- * Elegida = borde azul de acción + relleno: el contorno hace de barra de acento y el tilde
- * es la tercera pista. Deshabilitada va primero y sin hover. Ver vault: Cards.
+ * Elegida = borde azul de acción + relleno, y el tilde es la tercera pista. Sin elegir, el borde
+ * de los controles (3,56:1, WCAG 1.4.11). Deshabilitada va primero y sin hover. Ver vault: Cards.
  */
 export function cardSelectableClasses(selected: boolean, disabled: boolean): string {
   if (disabled) {
@@ -29,5 +29,5 @@ export function cardSelectableClasses(selected: boolean, disabled: boolean): str
   if (selected) {
     return 'bg-row-selected border-(--color-bg-primary) text-primary cursor-pointer';
   }
-  return 'bg-surface border-default text-primary cursor-pointer hover:border-strong';
+  return 'bg-surface border-strong text-primary cursor-pointer hover:border-strong-hover';
 }

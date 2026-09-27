@@ -9,6 +9,12 @@
  * Ver vault: Fundamentos de Marca, Escalas.
  */
 
+/*
+ * Excepción escrita (B14): un semántico compuesto —sombra, anillo de foco, degradado— lleva en px
+ * o % la geometría de su efecto (desplazamiento, desenfoque, parada); su color sale de un primitivo.
+ * Ver vault: Nomenclatura de Componentes y Tokens (tokens compuestos).
+ */
+
 :root {
   /* ===== Capa 1 — primitivos ===== */
 

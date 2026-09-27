@@ -134,6 +134,15 @@ describe('Card', () => {
       expect(chosen.querySelector('svg')).not.toBeNull();
     });
 
+    // WCAG 1.4.11 (D12): el borde de `border-default` medía 1,23:1 contra el surface; el de los
+    // controles (border-strong) mide 3,56:1. jsdom no calcula el color: se afirma la clase.
+    it('draws the edge of a card not chosen with the control border, 3:1', () => {
+      const idle = radios()[0] as HTMLElement;
+      expect(idle.getAttribute('aria-checked')).toBe('false');
+      expect(idle.className).toContain('border-strong');
+      expect(idle.className).not.toContain('border-default');
+    });
+
     it('chooses on click', async () => {
       radios()[1]?.click();
       await settle();

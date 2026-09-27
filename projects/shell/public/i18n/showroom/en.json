@@ -382,7 +382,8 @@
         "hoverBorder": "Hover border (selectable)",
         "radius": "Box radius",
         "restBackground": "Resting background",
-        "restBorder": "Resting border"
+        "restBorder": "Resting border (container)",
+        "restBorderSelectable": "Resting border (selectable): the controls' one, 3.56:1"
       }
     },
     "contract": {
@@ -463,7 +464,7 @@
       "caption": "The card's two uses by its four states",
       "content": "Content (standalone)",
       "contentSame": "<b>The content card is the same in all four columns, and that is the information.</b> It has no hover, no selection and cannot be disabled: it is layout. The row above is the one that changes.",
-      "forced": "<b>Hover is the only forced cell</b>, with the same token the component's rule uses (<code>--color-border-strong</code>): nobody can hold the pointer still over a grid. <b>Focus is missing</b>, for the same reason as in the Input and the Select: the ring is a <code>:focus-visible</code> <code>box-shadow</code>, and a wrapping class cannot produce it without lying about when it appears. Walk through it with Tab in the demo above, which is where it truly shows.",
+      "forced": "<b>Hover is the only forced cell</b>, with the same token the component's rule uses (<code>--color-border-strong-hover</code>): nobody can hold the pointer still over a grid. <b>Focus is missing</b>, for the same reason as in the Input and the Select: the ring is a <code>:focus-visible</code> <code>box-shadow</code>, and a wrapping class cannot produce it without lying about when it appears. Walk through it with Tab in the demo above, which is where it truly shows.",
       "intro": "The two uses against the four states in the sheet. Every cell but one is a real input.",
       "option": "Selectable (in a group)",
       "rowHeader": "Use",

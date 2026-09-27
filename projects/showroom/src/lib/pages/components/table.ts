@@ -32,10 +32,10 @@ import { translated } from '../../ui/translated';
 import { injectEstados, type ExpedicionRow } from './expediciones';
 import { EXPEDICIONES } from './expediciones.fixtures';
 import {
-  CABECERAS,
-  FuentePaginada,
-  hijosPerezosos,
-  injectAccionesFila,
+  HEADER_ROWS,
+  PagedSource,
+  lazyChildren,
+  injectRowActions,
   injectAccionesMasivas,
   UBICACIONES_MUESTRA,
   UBICACIONES_TOTAL,
@@ -468,18 +468,18 @@ export class ShowroomTable {
 
   // --------------------------------------------------------------- lote D
 
-  protected readonly accionesFila = injectAccionesFila();
+  protected readonly accionesFila = injectRowActions();
   protected readonly masivas = injectAccionesMasivas();
-  protected readonly hijosPerezosos = hijosPerezosos;
+  protected readonly lazyChildren = lazyChildren;
 
   /** Las cabeceras solas, para la demo de detalle y menú. */
-  protected readonly cabeceras = new ArrayTableSource<ExpedicionRow>(CABECERAS, [
+  protected readonly cabeceras = new ArrayTableSource<ExpedicionRow>(HEADER_ROWS, [
     'codigo',
     'cliente',
   ]);
 
   /** La misma lista, con los hijos detrás de un Observable que tarda. */
-  protected readonly perezosa = new ArrayTableSource<ExpedicionRow>(CABECERAS, [
+  protected readonly perezosa = new ArrayTableSource<ExpedicionRow>(HEADER_ROWS, [
     'codigo',
     'cliente',
   ]);
@@ -498,7 +498,7 @@ export class ShowroomTable {
   protected readonly ubicacionesCargadas = signal(UBICACIONES_MUESTRA);
   protected readonly ubicacionesTotal = UBICACIONES_TOTAL;
 
-  protected readonly paginada = new FuentePaginada();
+  protected readonly paginada = new PagedSource();
 
   protected readonly porUbicacion = (row: UbicacionRow): unknown => row.id;
 

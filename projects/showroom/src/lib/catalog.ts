@@ -19,8 +19,11 @@ export interface CatalogEntry {
   readonly id: string;
   /** Clave del nombre que se muestra en la barra lateral, el índice y la pestaña. */
   readonly name: string;
-  /** Selector de Angular, para que la búsqueda encuentre lo que se escribe en una plantilla. */
-  readonly selector: string | null;
+  /**
+   * Lo que se escribe en una plantilla o se inyecta, uno por nombre público de la página: la búsqueda
+   * encuentra la página por cualquiera (tools/ci/catalog.test.mjs cruza public-api.ts).
+   */
+  readonly selectors: readonly string[];
   /** Ruta absoluta, o null si todavía no hay página. */
   readonly route: string | null;
   readonly status: CatalogStatus;
@@ -49,7 +52,7 @@ const FOUNDATIONS: readonly CatalogEntry[] = [
   {
     id: 'brand',
     name: 'showroom.catalog.brand.name',
-    selector: null,
+    selectors: [],
     route: `${SHOWROOM_BASE}/foundations/brand`,
     status: 'ready',
     note: 'showroom.catalog.brand.note',
@@ -57,7 +60,7 @@ const FOUNDATIONS: readonly CatalogEntry[] = [
   {
     id: 'colors',
     name: 'showroom.catalog.colors.name',
-    selector: null,
+    selectors: [],
     route: `${SHOWROOM_BASE}/foundations/colors`,
     status: 'ready',
     note: 'showroom.catalog.colors.note',
@@ -65,7 +68,7 @@ const FOUNDATIONS: readonly CatalogEntry[] = [
   {
     id: 'typography',
     name: 'showroom.catalog.typography.name',
-    selector: null,
+    selectors: [],
     route: `${SHOWROOM_BASE}/foundations/typography`,
     status: 'ready',
     note: 'showroom.catalog.typography.note',
@@ -73,7 +76,7 @@ const FOUNDATIONS: readonly CatalogEntry[] = [
   {
     id: 'spacing',
     name: 'showroom.catalog.spacing.name',
-    selector: null,
+    selectors: [],
     route: `${SHOWROOM_BASE}/foundations/spacing`,
     status: 'ready',
     note: 'showroom.catalog.spacing.note',
@@ -81,7 +84,7 @@ const FOUNDATIONS: readonly CatalogEntry[] = [
   {
     id: 'icons',
     name: 'showroom.catalog.icons.name',
-    selector: 'ewms-icon',
+    selectors: ['ewms-icon'],
     route: `${SHOWROOM_BASE}/foundations/icons`,
     status: 'ready',
     note: 'showroom.catalog.icons.note',
@@ -92,7 +95,7 @@ const COMPONENTS: readonly CatalogEntry[] = [
   {
     id: 'button',
     name: 'showroom.catalog.button.name',
-    selector: 'ewms-button',
+    selectors: ['ewms-button'],
     route: `${SHOWROOM_BASE}/components/button`,
     status: 'ready',
     note: 'showroom.catalog.button.note',
@@ -100,7 +103,7 @@ const COMPONENTS: readonly CatalogEntry[] = [
   {
     id: 'text',
     name: 'showroom.catalog.text.name',
-    selector: 'ewms-text',
+    selectors: ['ewms-text'],
     route: `${SHOWROOM_BASE}/components/text`,
     status: 'ready',
     note: 'showroom.catalog.text.note',
@@ -108,7 +111,7 @@ const COMPONENTS: readonly CatalogEntry[] = [
   {
     id: 'tooltip',
     name: 'showroom.catalog.tooltip.name',
-    selector: 'ewmsTooltip',
+    selectors: ['ewmsTooltip'],
     route: `${SHOWROOM_BASE}/components/tooltip`,
     status: 'ready',
     note: 'showroom.catalog.tooltip.note',
@@ -116,7 +119,7 @@ const COMPONENTS: readonly CatalogEntry[] = [
   {
     id: 'input',
     name: 'showroom.catalog.input.name',
-    selector: 'ewms-input',
+    selectors: ['ewms-input'],
     route: `${SHOWROOM_BASE}/components/input`,
     status: 'ready',
     note: 'showroom.catalog.input.note',
@@ -124,7 +127,7 @@ const COMPONENTS: readonly CatalogEntry[] = [
   {
     id: 'search-box',
     name: 'showroom.catalog.searchBox.name',
-    selector: 'ewms-search-box',
+    selectors: ['ewms-search-box'],
     route: `${SHOWROOM_BASE}/components/search-box`,
     status: 'ready',
     note: 'showroom.catalog.searchBox.note',
@@ -132,7 +135,7 @@ const COMPONENTS: readonly CatalogEntry[] = [
   {
     id: 'checkbox',
     name: 'showroom.catalog.checkbox.name',
-    selector: 'ewms-checkbox',
+    selectors: ['ewms-checkbox'],
     route: `${SHOWROOM_BASE}/components/checkbox`,
     status: 'ready',
     note: 'showroom.catalog.checkbox.note',
@@ -140,7 +143,7 @@ const COMPONENTS: readonly CatalogEntry[] = [
   {
     id: 'radio',
     name: 'showroom.catalog.radio.name',
-    selector: 'ewms-radio',
+    selectors: ['ewms-radio', 'ewms-radio-group'],
     route: `${SHOWROOM_BASE}/components/radio`,
     status: 'ready',
     note: 'showroom.catalog.radio.note',
@@ -148,7 +151,7 @@ const COMPONENTS: readonly CatalogEntry[] = [
   {
     id: 'toggle',
     name: 'showroom.catalog.toggle.name',
-    selector: 'ewms-toggle',
+    selectors: ['ewms-toggle'],
     route: `${SHOWROOM_BASE}/components/toggle`,
     status: 'ready',
     note: 'showroom.catalog.toggle.note',
@@ -156,7 +159,7 @@ const COMPONENTS: readonly CatalogEntry[] = [
   {
     id: 'select',
     name: 'showroom.catalog.select.name',
-    selector: 'ewms-select',
+    selectors: ['ewms-select'],
     route: `${SHOWROOM_BASE}/components/select`,
     status: 'ready',
     note: 'showroom.catalog.select.note',
@@ -164,7 +167,7 @@ const COMPONENTS: readonly CatalogEntry[] = [
   {
     id: 'table',
     name: 'showroom.catalog.table.name',
-    selector: 'ewms-table',
+    selectors: ['ewms-table', 'ewms-column', 'ewmsCell', 'ewmsDetail', 'ewmsEmpty'],
     route: `${SHOWROOM_BASE}/components/table`,
     status: 'ready',
     note: 'showroom.catalog.table.note',
@@ -172,7 +175,7 @@ const COMPONENTS: readonly CatalogEntry[] = [
   {
     id: 'pagination',
     name: 'showroom.catalog.pagination.name',
-    selector: 'ewms-pagination',
+    selectors: ['ewms-pagination'],
     route: `${SHOWROOM_BASE}/components/pagination`,
     status: 'ready',
     note: 'showroom.catalog.pagination.note',
@@ -180,7 +183,7 @@ const COMPONENTS: readonly CatalogEntry[] = [
   {
     id: 'badge',
     name: 'showroom.catalog.badge.name',
-    selector: 'ewms-badge',
+    selectors: ['ewms-badge'],
     route: `${SHOWROOM_BASE}/components/table`,
     status: 'ready',
     note: 'showroom.catalog.badge.note',
@@ -188,7 +191,7 @@ const COMPONENTS: readonly CatalogEntry[] = [
   {
     id: 'modal',
     name: 'showroom.catalog.modal.name',
-    selector: 'DialogService',
+    selectors: ['DialogService'],
     route: `${SHOWROOM_BASE}/components/dialog`,
     status: 'ready',
     note: 'showroom.catalog.modal.note',
@@ -196,7 +199,7 @@ const COMPONENTS: readonly CatalogEntry[] = [
   {
     id: 'cards',
     name: 'showroom.catalog.cards.name',
-    selector: 'ewms-card',
+    selectors: ['ewms-card', 'ewms-card-group'],
     route: `${SHOWROOM_BASE}/components/card`,
     status: 'ready',
     note: 'showroom.catalog.cards.note',
@@ -204,7 +207,7 @@ const COMPONENTS: readonly CatalogEntry[] = [
   {
     id: 'banner',
     name: 'showroom.catalog.banner.name',
-    selector: 'ewms-banner',
+    selectors: ['ewms-banner'],
     route: `${SHOWROOM_BASE}/components/banner`,
     status: 'ready',
     note: 'showroom.catalog.banner.note',
@@ -212,7 +215,7 @@ const COMPONENTS: readonly CatalogEntry[] = [
   {
     id: 'toast',
     name: 'showroom.catalog.toast.name',
-    selector: 'ewms-toast-outlet',
+    selectors: ['ewms-toast-outlet', 'ToastService'],
     route: `${SHOWROOM_BASE}/components/toast`,
     status: 'ready',
     note: 'showroom.catalog.toast.note',
@@ -220,7 +223,7 @@ const COMPONENTS: readonly CatalogEntry[] = [
   {
     id: 'navigation',
     name: 'showroom.catalog.navigation.name',
-    selector: 'ewms-nav-rail',
+    selectors: ['ewms-nav-rail', 'ewms-nav-bottom', 'ewms-tabs', 'ewms-breadcrumbs'],
     route: `${SHOWROOM_BASE}/components/navigation`,
     status: 'ready',
     note: 'showroom.catalog.navigation.note',
@@ -228,7 +231,7 @@ const COMPONENTS: readonly CatalogEntry[] = [
   {
     id: 'favorites',
     name: 'showroom.catalog.favorites.name',
-    selector: 'ewms-favorite-toggle',
+    selectors: ['ewms-favorite-toggle', 'ewms-favorites-nav'],
     route: `${SHOWROOM_BASE}/components/navigation`,
     status: 'ready',
     note: 'showroom.catalog.favorites.note',
@@ -236,7 +239,7 @@ const COMPONENTS: readonly CatalogEntry[] = [
   {
     id: 'split-button',
     name: 'showroom.catalog.splitButton.name',
-    selector: 'ewms-split-button',
+    selectors: ['ewms-split-button'],
     route: `${SHOWROOM_BASE}/components/split-button`,
     status: 'ready',
     note: 'showroom.catalog.splitButton.note',
@@ -244,7 +247,7 @@ const COMPONENTS: readonly CatalogEntry[] = [
   {
     id: 'date-picker',
     name: 'showroom.catalog.datePicker.name',
-    selector: 'ewms-date-picker',
+    selectors: ['ewms-date-picker'],
     route: `${SHOWROOM_BASE}/components/date-picker`,
     status: 'ready',
     note: 'showroom.catalog.datePicker.note',
@@ -255,7 +258,7 @@ const PATTERNS: readonly CatalogEntry[] = [
   {
     id: 'pattern-keyboard',
     name: 'showroom.catalog.patternKeyboard.name',
-    selector: 'KeyboardShortcuts',
+    selectors: ['KeyboardShortcuts', 'ewmsShortcutsHost'],
     route: `${SHOWROOM_BASE}/patterns/keyboard`,
     status: 'ready',
     note: 'showroom.catalog.patternKeyboard.note',
@@ -263,7 +266,7 @@ const PATTERNS: readonly CatalogEntry[] = [
   {
     id: 'pattern-search-create-edit',
     name: 'showroom.catalog.patternSearchCreateEdit.name',
-    selector: null,
+    selectors: [],
     route: `${SHOWROOM_BASE}/patterns/search-create-edit`,
     status: 'ready',
     note: 'showroom.catalog.patternSearchCreateEdit.note',
@@ -271,7 +274,7 @@ const PATTERNS: readonly CatalogEntry[] = [
   {
     id: 'pattern-form',
     name: 'showroom.catalog.patternForm.name',
-    selector: 'ewmsForm',
+    selectors: ['ewmsForm'],
     route: `${SHOWROOM_BASE}/patterns/form`,
     status: 'ready',
     note: 'showroom.catalog.patternForm.note',
@@ -279,7 +282,7 @@ const PATTERNS: readonly CatalogEntry[] = [
   {
     id: 'pattern-filters',
     name: 'showroom.catalog.patternFilters.name',
-    selector: 'ewms-filter-bar',
+    selectors: ['ewms-filter-bar'],
     route: `${SHOWROOM_BASE}/patterns/filters`,
     status: 'ready',
     note: 'showroom.catalog.patternFilters.note',
@@ -287,7 +290,7 @@ const PATTERNS: readonly CatalogEntry[] = [
   {
     id: 'pattern-empty',
     name: 'showroom.catalog.patternEmpty.name',
-    selector: 'ewms-empty-state',
+    selectors: ['ewms-empty-state'],
     route: `${SHOWROOM_BASE}/patterns/empty-state`,
     status: 'ready',
     note: 'showroom.catalog.patternEmpty.note',
@@ -326,7 +329,7 @@ export function filterCatalog(
     entries: section.entries.filter(
       (entry) =>
         nameOf(entry).toLowerCase().includes(needle) ||
-        (entry.selector?.toLowerCase().includes(needle) ?? false),
+        entry.selectors.some((selector) => selector.toLowerCase().includes(needle)),
     ),
   })).filter((section) => section.entries.length > 0);
 }

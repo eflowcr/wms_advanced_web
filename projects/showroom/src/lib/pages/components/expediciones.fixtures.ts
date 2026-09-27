@@ -1,4 +1,4 @@
-import type { EstadoExpedicion, ExpedicionRow } from './expediciones';
+import type { ShipmentStatus, ExpedicionRow } from './expediciones';
 
 /**
  * Registros de ejemplo que simulan lo que mandaría el backend: clientes, artículos y el texto de
@@ -25,7 +25,7 @@ const ARTICULOS = [
   'Bolsa de burbuja',
 ] as const;
 
-const ESTADO_KEYS: readonly EstadoExpedicion[] = [
+const ESTADO_KEYS: readonly ShipmentStatus[] = [
   'pendiente',
   'en-proceso',
   'completada',

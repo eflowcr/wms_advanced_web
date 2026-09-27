@@ -15,18 +15,18 @@ export interface ExpedicionRow {
   /** ISO 8601: ordena y filtra como cadena sin parsear. */
   readonly fecha: string;
   readonly bultos: number;
-  readonly estado: EstadoExpedicion;
+  readonly estado: ShipmentStatus;
   readonly hijos?: readonly ExpedicionRow[];
 }
 
-export type EstadoExpedicion = 'pendiente' | 'en-proceso' | 'completada' | 'con-incidencia';
+export type ShipmentStatus = 'pendiente' | 'en-proceso' | 'completada' | 'con-incidencia';
 
 /**
  * El color de cada estado es el que fijó la ficha Tabla; `label`, la clave de su nombre.
  * t(showroom.common.shipments.states.pending, showroom.common.shipments.states.inProgress,
  *   showroom.common.shipments.states.completed, showroom.common.shipments.states.withIssue)
  */
-const ESTADOS: Readonly<Record<EstadoExpedicion, BadgeDescriptor>> = {
+const ESTADOS: Readonly<Record<ShipmentStatus, BadgeDescriptor>> = {
   pendiente: { variant: 'neutral', label: 'showroom.common.shipments.states.pending' },
   'en-proceso': { variant: 'warning', label: 'showroom.common.shipments.states.inProgress' },
   completada: { variant: 'success', label: 'showroom.common.shipments.states.completed' },

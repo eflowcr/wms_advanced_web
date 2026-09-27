@@ -382,7 +382,8 @@
         "hoverBorder": "Borde en hover (seleccionable)",
         "radius": "Radio de la caja",
         "restBackground": "Fondo en reposo",
-        "restBorder": "Borde en reposo"
+        "restBorder": "Borde en reposo (contenedor)",
+        "restBorderSelectable": "Borde en reposo (seleccionable): el de los controles, 3,56:1"
       }
     },
     "contract": {
@@ -463,7 +464,7 @@
       "caption": "Los dos usos de la card por sus cuatro estados",
       "content": "De contenido (suelta)",
       "contentSame": "<b>La card de contenido es la misma en las cuatro columnas, y eso es la información.</b> No tiene hover, no tiene selección y no se puede deshabilitar: es layout. La fila de arriba es la que cambia.",
-      "forced": "<b>Hover es la única celda forzada</b>, con el mismo token que usa la regla del componente (<code>--color-border-strong</code>): no se puede sostener el puntero quieto en una grilla. <b>Focus no está</b>, por lo mismo que en el Input y el Select: el anillo es un <code>box-shadow</code> de <code>:focus-visible</code>, y una clase envolvente no puede producirlo sin mentir sobre cuándo aparece. Se recorre con Tab en la demo de arriba, que es donde de verdad se ve.",
+      "forced": "<b>Hover es la única celda forzada</b>, con el mismo token que usa la regla del componente (<code>--color-border-strong-hover</code>): no se puede sostener el puntero quieto en una grilla. <b>Focus no está</b>, por lo mismo que en el Input y el Select: el anillo es un <code>box-shadow</code> de <code>:focus-visible</code>, y una clase envolvente no puede producirlo sin mentir sobre cuándo aparece. Se recorre con Tab en la demo de arriba, que es donde de verdad se ve.",
       "intro": "Los dos usos contra los cuatro estados de la ficha. Todas las celdas menos una son entradas reales.",
       "option": "Seleccionable (en grupo)",
       "rowHeader": "Uso",

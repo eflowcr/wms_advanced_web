@@ -44,7 +44,7 @@ const MATRIX_ROW_HEADER = 'showroom.cards.states.rowHeader';
  * Hover forzado con el mismo token del componente. Vive en la página, no en el widget,
  * junto a las clases con que se compara.
  */
-const FORCED_HOVER = '[&_[role=radio]]:border-(--color-border-strong)';
+const FORCED_HOVER = '[&_[role=radio]]:border-(--color-border-strong-hover)';
 
 /**
  * Verificada contra card.ts y card-group.ts.
@@ -105,6 +105,7 @@ const PROPS: readonly PropRow[] = [
 
 /**
  * t(showroom.cards.anatomy.parts.restBackground, showroom.cards.anatomy.parts.restBorder,
+ *   showroom.cards.anatomy.parts.restBorderSelectable,
  *   showroom.cards.anatomy.parts.hoverBorder, showroom.cards.anatomy.parts.chosenBackground,
  *   showroom.cards.anatomy.parts.chosenBorder, showroom.cards.anatomy.parts.disabledBackground,
  *   showroom.cards.anatomy.parts.disabledText, showroom.cards.anatomy.parts.focusRing,
@@ -113,7 +114,8 @@ const PROPS: readonly PropRow[] = [
 const ANATOMY = [
   { part: 'showroom.cards.anatomy.parts.restBackground', token: '--color-surface' },
   { part: 'showroom.cards.anatomy.parts.restBorder', token: '--color-border' },
-  { part: 'showroom.cards.anatomy.parts.hoverBorder', token: '--color-border-strong' },
+  { part: 'showroom.cards.anatomy.parts.restBorderSelectable', token: '--color-border-strong' },
+  { part: 'showroom.cards.anatomy.parts.hoverBorder', token: '--color-border-strong-hover' },
   { part: 'showroom.cards.anatomy.parts.chosenBackground', token: '--color-row-selected' },
   { part: 'showroom.cards.anatomy.parts.chosenBorder', token: '--color-bg-primary' },
   { part: 'showroom.cards.anatomy.parts.disabledBackground', token: '--color-bg-secondary' },
