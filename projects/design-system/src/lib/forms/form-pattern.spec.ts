@@ -306,7 +306,7 @@ describe('confirmDiscard', () => {
     const options = {
       title: 'Hay cambios sin guardar',
       body: '¿Salir igual?',
-      tone: 'danger' as const,
+      variant: 'danger' as const,
       confirmLabel: 'Salir',
       cancelLabel: 'Seguir',
     };

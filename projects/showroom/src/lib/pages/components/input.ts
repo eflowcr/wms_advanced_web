@@ -13,7 +13,6 @@ import {
   DESIGN_SYSTEM_VERSION,
   Input,
   type FieldSize,
-  type FieldState,
   type InputType,
 } from '@ewms/design-system';
 import { TranslocoPipe } from '@jsverse/transloco';
@@ -52,13 +51,6 @@ const SIZES: readonly MatrixAxis[] = [
  */
 const ROW_HEADER = 'showroom.input.states.rowHeader';
 
-const STATE_BY_ID: Readonly<Record<string, FieldState>> = {
-  default: 'default',
-  error: 'error',
-  disabled: 'disabled',
-  readonly: 'readonly',
-};
-
 const SIZE_BY_ID: Readonly<Record<string, FieldSize>> = {
   sm: 'sm',
   md: 'md',
@@ -86,7 +78,7 @@ const TYPES: readonly TypeSample[] = [
 /**
  * Verificada contra input.ts, no contra la ficha: dos filas corrigen la ficha (bloque 8).
  * t(showroom.input.props.label, showroom.input.props.type, showroom.input.props.size,
- *   showroom.input.props.placeholder, showroom.input.props.hint, showroom.input.props.state,
+ *   showroom.input.props.placeholder, showroom.input.props.hint, showroom.input.props.error,
  *   showroom.input.props.required, showroom.input.props.disabled,
  *   showroom.input.props.showPasswordLabel, showroom.input.props.hidePasswordLabel,
  *   showroom.input.props.clearLabel, showroom.input.props.fieldFocus,
@@ -124,10 +116,10 @@ const PROPS: readonly PropRow[] = [
     description: 'showroom.input.props.hint',
   },
   {
-    name: 'state',
-    type: "'default' | 'error' | 'disabled' | 'readonly'",
-    default: "'default'",
-    description: 'showroom.input.props.state',
+    name: 'error',
+    type: 'boolean',
+    default: 'false',
+    description: 'showroom.input.props.error',
   },
   {
     name: 'required',
@@ -276,7 +268,6 @@ export class ShowroomInput {
     '  [formField]="alta.sku"',
     "  [label]=\"'articulos.sku' | transloco\"",
     "  [hint]=\"'articulos.skuFormato' | transloco\"",
-    '  [state]="form.controls.sku.invalid && form.controls.sku.touched ? \'error\' : \'default\'"',
     '  (fieldBlur)="onBlur()"',
     '/>',
   ].join('\n');
@@ -300,8 +291,17 @@ export class ShowroomInput {
     });
   }
 
-  protected stateFor(id: string): FieldState {
-    return STATE_BY_ID[id] ?? 'default';
+  /** Cada estado de la matriz con su propia entrada, como en el Select. */
+  protected isError(id: string): boolean {
+    return id === 'error';
+  }
+
+  protected isDisabled(id: string): boolean {
+    return id === 'disabled';
+  }
+
+  protected isReadonly(id: string): boolean {
+    return id === 'readonly';
   }
 
   protected sizeFor(id: string): FieldSize {

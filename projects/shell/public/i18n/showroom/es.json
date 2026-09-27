@@ -1094,6 +1094,7 @@
       "caption": "Propiedades de <ewms-input>",
       "clearLabel": "Nombre accesible de la × que vacía un campo de búsqueda. Sin él el botón no se renderiza.",
       "disabled": "Dentro de un formulario lo pone la regla <code>disabled()</code> del esquema: Angular prohíbe enlazar <code>[disabled]</code> en el mismo nodo que <code>[formField]</code>.",
+      "error": "Solo dibujo: el componente no valida nada. Con <code>[formField]</code> el error llega solo; esto es para las demos. Deshabilitado y solo lectura son sus propias entradas.",
       "fieldBlur": "Lo mismo para <code>(blur)</code>. Es también donde el formulario recibe <code>onTouched</code>.",
       "fieldFocus": "Prefijado a propósito: <code>(focus)</code> nativo burbujea hasta el mismo binding del consumidor. Ver el bloque 8.",
       "hidePasswordLabel": "El mismo contrato, para ocultar.",
@@ -1103,7 +1104,6 @@
       "required": "Pinta el asterisco junto al label y pone el atributo nativo.",
       "showPasswordLabel": "Nombre accesible del botón de mostrar contraseña, ya traducido. Sin él (y sin <code>hidePasswordLabel</code>) el botón NO se renderiza.",
       "size": "Las mismas tres alturas de control que el Botón y el Select: 32 / 40 / 48.",
-      "state": "Puramente visual: el componente no valida nada. Quien decide si un valor está mal es el formulario padre.",
       "type": "Los cinco del bloque 4."
     },
     "purpose": {
@@ -1206,11 +1206,26 @@
       }
     },
     "backdrop": "Backdrop",
+    "byVariant": {
+      "backdrop": {
+        "closes": "Cierra",
+        "stays": "No cierra"
+      },
+      "confirm": {
+        "danger": "Danger",
+        "primary": "Primary"
+      },
+      "names": {
+        "danger": "Danger",
+        "info": "Info",
+        "warning": "Warning"
+      }
+    },
     "demo": {
       "answer": {
-        "confirmed": "{{ tone }}: confirmado (true)",
+        "confirmed": "{{ variant }}: confirmado (true)",
         "none": "(todavía ninguna)",
-        "rejected": "{{ tone }}: no confirmado (false)"
+        "rejected": "{{ variant }}: no confirmado (false)"
       },
       "answerLabel": "Lo que devolvió la promesa:",
       "dialogs": {
@@ -1254,7 +1269,7 @@
       "injector": "El de la pantalla que abre: el componente ve sus textos y servicios. Un formulario lo necesita. Sin él, la raíz.",
       "open": "La variante formulario. Devuelve la referencia del CDK, no una promesa: no es una pregunta.",
       "title": "<b>Obligatoria.</b> El titular. Nombra el diálogo: es a donde apunta <code>aria-labelledby</code>.",
-      "tone": "<b>Obligatoria.</b> Elige el glifo, la variante del botón de confirmar y si el backdrop cierra. Info se pinta neutral."
+      "variant": "<b>Obligatoria.</b> Elige el glifo, la variante del botón de confirmar y si el backdrop cierra. Info se pinta neutral."
     },
     "purpose": {
       "cdk": "Sobre <code>@angular/cdk/dialog</code>. La trampa de foco, el <code>role</code>, dejar el resto del documento inerte y devolver el foco al cerrar son del CDK y <b>no se reconstruyen acá</b>.",
@@ -1268,33 +1283,18 @@
       "width": "La caja tiene un ancho máximo y crece con su contenido hasta ahí. La ficha declara como pendiente <i>«si existe una variante de tamaño lg para formularios más largos»</i>, y este encargo no la resuelve: sin un formulario real que la necesite, un tamaño más sería una variante que nadie usa."
     },
     "states": {
-      "caption": "Los tres tonos y lo que cada uno decide",
+      "caption": "Las tres variantes y lo que cada una decide",
       "columns": {
         "backdrop": "Click en el backdrop",
         "confirm": "Botón de confirmar",
         "glyph": "Glifo"
       },
-      "intro": "Los tres tonos contra lo que cada uno decide. La primera columna dibuja el glifo de verdad, con el mismo ícono y color; las otras dos son hechos.",
+      "intro": "Las tres variantes contra lo que cada una decide. La primera columna dibuja el glifo de verdad, con el mismo ícono y color; las otras dos son hechos.",
       "noHover": "Tampoco hay Hover, Focus ni Disabled. El diálogo no es un control: lo que se pulsa son sus botones, que tienen su propia ficha y su propia matriz.",
       "sideBySide": "<b>No hay tres diálogos abiertos lado a lado, y no se puede haberlos:</b> son modales, y dos modales a la vez no son dos modales. Lo que sí se puede dibujar quieto es el glifo, con el mismo ícono y la misma clase de color que usa el componente."
     },
     "title": "Dialog",
-    "tone": "Tono",
-    "tones": {
-      "backdrop": {
-        "closes": "Cierra",
-        "stays": "No cierra"
-      },
-      "confirm": {
-        "danger": "Danger",
-        "primary": "Primary"
-      },
-      "names": {
-        "danger": "Danger",
-        "info": "Info",
-        "warning": "Warning"
-      }
-    },
+    "variant": "Variante",
     "variants": {
       "backdrop": {
         "disableClose": "Implementarlo pedía separar las dos cosas: el interruptor del CDK (<code>disableClose</code>) gobierna Escape <i>y</i> el backdrop a la vez. Está en <code>true</code> siempre, y el servicio contesta los dos eventos por su cuenta.",
@@ -1302,7 +1302,7 @@
         "friction": "<b>Fricción deliberada, de la ficha.</b> Un click perdido es el gesto más barato que hay, y todo el sentido del diálogo es que la respuesta destructiva cueste más que la segura.",
         "title": "El backdrop no cierra un diálogo destructivo"
       },
-      "caption": "Qué decide el tono",
+      "caption": "Qué decide la variante",
       "columns": {
         "confirm": "Confirmar",
         "family": "Familia"
@@ -1312,7 +1312,7 @@
         "info": "<b>Info se pinta neutral, no azul.</b> El registro de Figma de este componente lo tenía azul; quedó superado por la regla de marca —el azul significa «se hace clic»— y la propia ficha lo corrige en su cabecera.",
         "title": "Un glifo del catálogo, sin círculo ni halo"
       },
-      "intro": "Tres tonos, y el tono decide tres cosas a la vez: el glifo, la variante del botón que confirma y si el backdrop cierra."
+      "intro": "Tres variantes, y la variante decide tres cosas a la vez: el glifo, la variante del botón que confirma y si el backdrop cierra."
     }
   },
   "navigation": {
@@ -1663,8 +1663,8 @@
         "noResults": "no-results"
       },
       "sizes": {
-        "compact": "compact — tabla, panel, card",
-        "page": "page — pantalla entera"
+        "lg": "lg — pantalla entera",
+        "sm": "sm — tabla, panel, card"
       },
       "title": "Matriz — cuatro casos en los dos tamaños"
     },
@@ -1674,7 +1674,7 @@
       "description": "Una o dos líneas. En <code>no-access</code> dice a quién pedir el permiso.",
       "icon": "Solo <code>no-data</code>: el ícono del contexto, del catálogo (<code>package</code> si no se dice).",
       "kind": "Por qué no hay nada. Decide el ícono, el color de la acción y si se anuncia.",
-      "size": "<code>compact</code> dentro de tabla, panel o card; <code>page</code> ocupa la pantalla.",
+      "size": "<code>sm</code> dentro de tabla, panel o card; <code>lg</code> ocupa la pantalla.",
       "title": "<b>Obligatoria.</b> Ya traducido. No sale como tooltip del navegador aunque se escriba literal."
     },
     "purpose": {
@@ -1685,8 +1685,8 @@
       "tableAndSelect": "La Tabla elige el caso sola: sin filtros es <code>no-data</code>, con alguno <code>no-results</code> con «Limpiar filtros», y si la fuente falla, <code>error</code> con «Reintentar». El Select usa <code>no-results</code> en su panel."
     },
     "sizes": {
-      "compact": "<b><code>compact</code></b> — dentro de una tabla, del panel de un select o de una card. Título en H4, ícono <code>lg</code>, acción <code>sm</code>. Es un párrafo, no un encabezado: no rompe el esquema de la página.",
-      "page": "<b><code>page</code></b> — la pantalla entera. Título en H3 como <code><h2></code>, ícono <code>xl</code>, acción <code>md</code>."
+      "lg": "<b><code>lg</code></b> — la pantalla entera. Título en H3 como <code><h2></code>, ícono <code>xl</code>, acción <code>md</code>.",
+      "sm": "<b><code>sm</code></b> — dentro de una tabla, del panel de un select o de una card. Título en H4, ícono <code>lg</code>, acción <code>sm</code>. Es un párrafo, no un encabezado: no rompe el esquema de la página."
     },
     "variants": {
       "caption": "Cuándo va cada caso",

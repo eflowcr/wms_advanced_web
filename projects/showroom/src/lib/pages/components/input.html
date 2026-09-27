@@ -152,7 +152,9 @@
         <ng-template let-variant="variant" let-state="state">
           <ewms-input
             [label]="(variant.label | transloco) + ' ' + (state.label | transloco)"
-            [state]="stateFor(variant.id)"
+            [error]="isError(variant.id)"
+            [disabled]="isDisabled(variant.id)"
+            [readonly]="isReadonly(variant.id)"
             [size]="sizeFor(state.id)"
             [placeholder]="'showroom.input.states.placeholder' | transloco"
           />

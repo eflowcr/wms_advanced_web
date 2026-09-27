@@ -1094,6 +1094,7 @@
       "caption": "<ewms-input> properties",
       "clearLabel": "Accessible name of the × that empties a search field. Without it the button is not rendered.",
       "disabled": "Inside a form it is set by the schema’s <code>disabled()</code> rule: Angular forbids binding <code>[disabled]</code> on the same node as <code>[formField]</code>.",
+      "error": "Drawing only: the component validates nothing. With <code>[formField]</code> the error arrives by itself; this is for demos. Disabled and read-only are their own inputs.",
       "fieldBlur": "The same for <code>(blur)</code>. It is also where the form receives <code>onTouched</code>.",
       "fieldFocus": "Prefixed on purpose: the native <code>(focus)</code> bubbles up to the same consumer binding. See block 8.",
       "hidePasswordLabel": "The same contract, for hiding.",
@@ -1103,7 +1104,6 @@
       "required": "Paints the asterisk next to the label and sets the native attribute.",
       "showPasswordLabel": "Accessible name of the show-password button, already translated. Without it (and without <code>hidePasswordLabel</code>) the button is NOT rendered.",
       "size": "The same three control heights as the Button and the Select: 32 / 40 / 48.",
-      "state": "Purely visual: the component validates nothing. Whoever decides whether a value is wrong is the parent form.",
       "type": "The five in block 4."
     },
     "purpose": {
@@ -1206,11 +1206,26 @@
       }
     },
     "backdrop": "Backdrop",
+    "byVariant": {
+      "backdrop": {
+        "closes": "Closes",
+        "stays": "Does not close"
+      },
+      "confirm": {
+        "danger": "Danger",
+        "primary": "Primary"
+      },
+      "names": {
+        "danger": "Danger",
+        "info": "Info",
+        "warning": "Warning"
+      }
+    },
     "demo": {
       "answer": {
-        "confirmed": "{{ tone }}: confirmed (true)",
+        "confirmed": "{{ variant }}: confirmed (true)",
         "none": "(none yet)",
-        "rejected": "{{ tone }}: not confirmed (false)"
+        "rejected": "{{ variant }}: not confirmed (false)"
       },
       "answerLabel": "What the promise returned:",
       "dialogs": {
@@ -1254,7 +1269,7 @@
       "injector": "The injector of the screen that opens it: the component sees that screen’s texts and services. A form needs it. Without it, the root injector.",
       "open": "The form variant. It returns the CDK reference, not a promise: it is not a question.",
       "title": "<b>Required.</b> The headline. It names the dialog: it is what <code>aria-labelledby</code> points to.",
-      "tone": "<b>Required.</b> It chooses the glyph, the variant of the confirm button and whether the backdrop closes. Info is painted neutral."
+      "variant": "<b>Required.</b> It chooses the glyph, the variant of the confirm button and whether the backdrop closes. Info is painted neutral."
     },
     "purpose": {
       "cdk": "Built on <code>@angular/cdk/dialog</code>. The focus trap, the <code>role</code>, making the rest of the document inert and returning the focus on closing belong to the CDK and <b>are not rebuilt here</b>.",
@@ -1268,33 +1283,18 @@
       "width": "The box has a maximum width and grows with its content up to it. The sheet lists as pending <i>“whether there is an lg size variant for longer forms”</i>, and this job does not settle it: without a real form that needs it, one more size would be a variant nobody uses."
     },
     "states": {
-      "caption": "The three tones and what each one decides",
+      "caption": "The three variants and what each one decides",
       "columns": {
         "backdrop": "Click on the backdrop",
         "confirm": "Confirm button",
         "glyph": "Glyph"
       },
-      "intro": "The three tones against what each one decides. The first column draws the real glyph, with the same icon and colour; the other two are facts.",
+      "intro": "The three variants against what each one decides. The first column draws the real glyph, with the same icon and colour; the other two are facts.",
       "noHover": "There is no Hover, Focus or Disabled either. The dialog is not a control: what gets pressed are its buttons, which have their own sheet and their own matrix.",
       "sideBySide": "<b>There are no three dialogs open side by side, and there cannot be:</b> they are modal, and two modals at once are not two modals. What can be drawn standing still is the glyph, with the same icon and the same colour class the component uses."
     },
     "title": "Dialog",
-    "tone": "Tone",
-    "tones": {
-      "backdrop": {
-        "closes": "Closes",
-        "stays": "Does not close"
-      },
-      "confirm": {
-        "danger": "Danger",
-        "primary": "Primary"
-      },
-      "names": {
-        "danger": "Danger",
-        "info": "Info",
-        "warning": "Warning"
-      }
-    },
+    "variant": "Variant",
     "variants": {
       "backdrop": {
         "disableClose": "Implementing it meant separating the two: the CDK switch (<code>disableClose</code>) governs Escape <i>and</i> the backdrop at once. It is always <code>true</code>, and the service answers both events itself.",
@@ -1302,7 +1302,7 @@
         "friction": "<b>Deliberate friction, from the sheet.</b> A stray click is the cheapest gesture there is, and the whole point of the dialog is that the destructive answer costs more than the safe one.",
         "title": "The backdrop does not close a destructive dialog"
       },
-      "caption": "What the tone decides",
+      "caption": "What the variant decides",
       "columns": {
         "confirm": "Confirm",
         "family": "Family"
@@ -1312,7 +1312,7 @@
         "info": "<b>Info is painted neutral, not blue.</b> The Figma record of this component had it blue; it was overridden by the brand rule —blue means “you can click this”— and the sheet itself corrects it in its header.",
         "title": "A glyph from the catalogue, with no circle or halo"
       },
-      "intro": "Three tones, and the tone decides three things at once: the glyph, the variant of the button that confirms and whether the backdrop closes."
+      "intro": "Three variants, and the variant decides three things at once: the glyph, the variant of the button that confirms and whether the backdrop closes."
     }
   },
   "navigation": {
@@ -1663,8 +1663,8 @@
         "noResults": "no-results"
       },
       "sizes": {
-        "compact": "compact — table, panel, card",
-        "page": "page — full screen"
+        "lg": "lg — full screen",
+        "sm": "sm — table, panel, card"
       },
       "title": "Matrix — four cases in both sizes"
     },
@@ -1674,7 +1674,7 @@
       "description": "One or two lines. In <code>no-access</code> it says whom to ask for permission.",
       "icon": "Only <code>no-data</code>: the icon of the context, from the catalogue (<code>package</code> if none is given).",
       "kind": "Why there is nothing. It decides the icon, the colour of the action and whether it is announced.",
-      "size": "<code>compact</code> inside a table, panel or card; <code>page</code> takes up the screen.",
+      "size": "<code>sm</code> inside a table, panel or card; <code>lg</code> takes up the screen.",
       "title": "<b>Required.</b> Already translated. It does not show up as a browser tooltip even when written as a literal."
     },
     "purpose": {
@@ -1685,8 +1685,8 @@
       "tableAndSelect": "The Table picks the case by itself: with no filters it is <code>no-data</code>, with any filter <code>no-results</code> with “Clear filters”, and if the source fails, <code>error</code> with “Retry”. The Select uses <code>no-results</code> in its panel."
     },
     "sizes": {
-      "compact": "<b><code>compact</code></b> — inside a table, a select’s panel or a card. Title in H4, icon <code>lg</code>, action <code>sm</code>. It is a paragraph, not a heading: it does not break the page outline.",
-      "page": "<b><code>page</code></b> — the whole screen. Title in H3 as an <code><h2></code>, icon <code>xl</code>, action <code>md</code>."
+      "lg": "<b><code>lg</code></b> — the whole screen. Title in H3 as an <code><h2></code>, icon <code>xl</code>, action <code>md</code>.",
+      "sm": "<b><code>sm</code></b> — inside a table, a select’s panel or a card. Title in H4, icon <code>lg</code>, action <code>sm</code>. It is a paragraph, not a heading: it does not break the page outline."
     },
     "variants": {
       "caption": "When each case applies",

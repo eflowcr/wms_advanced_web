@@ -472,7 +472,7 @@
           <tr role="row" class="bg-surface" data-load-error>
             <td role="gridcell" [attr.colspan]="columnCount()">
               <ewms-empty-state
-                size="compact"
+                size="sm"
                 kind="error"
                 [title]="text().loadFailed"
                 [action]="retryAction()"
@@ -493,7 +493,7 @@
               } @else {
                 <!-- La tabla elige el caso: sin filtros, `no-data`; con alguno, `no-results` que limpia. -->
                 <ewms-empty-state
-                  size="compact"
+                  size="sm"
                   [kind]="emptyKind()"
                   [title]="emptyKind() === 'no-data' ? text().noData : text().noResults"
                   [description]="emptyKind() === 'no-data' ? '' : text().noResultsHint"

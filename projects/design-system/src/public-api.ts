@@ -57,7 +57,7 @@ export * from './lib/card/card-group';
 // Dialog (DS-3), sobre el CDK. La confirmación no se exporta: se usa `confirm()`, así no
 // hay dos caminos que terminen en dos confirmaciones distintas.
 export * from './lib/dialog/dialog.service';
-export { type ConfirmOptions, type DialogTone } from './lib/dialog/dialog.types';
+export { type ConfirmOptions, type DialogVariant } from './lib/dialog/dialog.types';
 
 // Split button (2026-09-21): acción principal y alternativas, sobre el menú de la Tabla.
 export * from './lib/split-button/split-button';

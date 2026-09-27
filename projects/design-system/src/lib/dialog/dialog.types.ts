@@ -1,13 +1,13 @@
 import type { IconName } from '../../icons/icons.generated';
 
-/** Tonos de confirmación. `info` se pinta neutral: el azul es solo acción. Ver vault: Modal. */
-export type DialogTone = 'danger' | 'warning' | 'info';
+/** Variantes de confirmación. `info` se pinta neutral: el azul es solo acción. Ver vault: Modal. */
+export type DialogVariant = 'danger' | 'warning' | 'info';
 
 /** Lo que toma `DialogService.confirm`. Todo texto ya traducido (ADR 0008). */
 export interface ConfirmOptions {
   readonly title: string;
   readonly body: string;
-  readonly tone: DialogTone;
+  readonly variant: DialogVariant;
   readonly confirmLabel: string;
   readonly cancelLabel: string;
 }
@@ -22,13 +22,16 @@ export interface ConfirmDialogData extends ConfirmOptions {
  * Fricción deliberada: el fondo no descarta un destructivo. Escape cierra los tres
  * siempre: tragarlo sería una trampa de teclado (WCAG 2.1.2). Ver vault: Modal.
  */
-export function backdropDismisses(tone: DialogTone): boolean {
-  return tone !== 'danger';
+export function backdropDismisses(variant: DialogVariant): boolean {
+  return variant !== 'danger';
 }
 
 /** Glifo del catálogo en el color de la familia, sin fondo ni sombra (Modal v1.2, 2026-09-21). */
-export function dialogIcon(tone: DialogTone): { readonly name: IconName; readonly color: string } {
-  switch (tone) {
+export function dialogIcon(variant: DialogVariant): {
+  readonly name: IconName;
+  readonly color: string;
+} {
+  switch (variant) {
     case 'danger':
       return { name: 'alert-triangle', color: 'text-danger' };
     case 'warning':
@@ -39,8 +42,8 @@ export function dialogIcon(tone: DialogTone): { readonly name: IconName; readonl
 }
 
 /** Danger para lo destructivo, Primary para el resto. Cancelar siempre es Secondary. */
-export function confirmButtonVariant(tone: DialogTone): 'danger' | 'primary' {
-  return tone === 'danger' ? 'danger' : 'primary';
+export function confirmButtonVariant(variant: DialogVariant): 'danger' | 'primary' {
+  return variant === 'danger' ? 'danger' : 'primary';
 }
 
 /**

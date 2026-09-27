@@ -60,8 +60,8 @@ const PROPS: readonly PropRow[] = [
   },
   {
     name: 'size',
-    type: "'compact' | 'page'",
-    default: "'page'",
+    type: "'sm' | 'lg'",
+    default: "'lg'",
     description: 'showroom.patternEmpty.props.size',
   },
   {
@@ -155,10 +155,10 @@ const MATRIX_VARIANTS: readonly MatrixAxis[] = CASES.map((item) => ({
   label: item.name,
 }));
 
-/** t(showroom.patternEmpty.matrix.sizes.compact, showroom.patternEmpty.matrix.sizes.page) */
+/** t(showroom.patternEmpty.matrix.sizes.sm, showroom.patternEmpty.matrix.sizes.lg) */
 const MATRIX_SIZES: readonly MatrixAxis[] = [
-  { id: 'compact', label: 'showroom.patternEmpty.matrix.sizes.compact' },
-  { id: 'page', label: 'showroom.patternEmpty.matrix.sizes.page' },
+  { id: 'sm', label: 'showroom.patternEmpty.matrix.sizes.sm' },
+  { id: 'lg', label: 'showroom.patternEmpty.matrix.sizes.lg' },
 ];
 
 /** El encabezado de la columna de filas de la matriz. t(showroom.patternEmpty.matrix.case) */
@@ -267,7 +267,7 @@ export class ShowroomEmptyState {
     return kind as EmptyStateKind;
   }
 
-  protected sizeOf(size: string): 'compact' | 'page' {
-    return size === 'page' ? 'page' : 'compact';
+  protected sizeOf(size: string): 'sm' | 'lg' {
+    return size === 'lg' ? 'lg' : 'sm';
   }
 }

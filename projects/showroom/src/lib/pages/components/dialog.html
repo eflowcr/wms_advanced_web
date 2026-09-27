@@ -54,12 +54,12 @@
       <ewms-demo-frame ground="canvas" [label]="'showroom.modal.demo.frame' | transloco">
         <div class="flex flex-col gap-4" data-demo-dialog>
           <div class="flex flex-wrap gap-2">
-            @for (row of tones; track row.tone) {
+            @for (row of variantRows; track row.variant) {
               <ewms-button
                 variant="secondary"
                 size="sm"
-                [attr.data-open]="row.tone"
-                (click)="ask(row.tone)"
+                [attr.data-open]="row.variant"
+                (click)="ask(row.variant)"
               >
                 {{ row.name | transloco }}
               </ewms-button>
@@ -72,7 +72,7 @@
               <dt class="text-secondary">{{ 'showroom.modal.demo.answerLabel' | transloco }}</dt>
               <dd class="font-mono text-primary" data-last-answer>
                 @if (lastAnswer(); as answer) {
-                  {{ answer.key | transloco: { tone: (answer.tone | transloco) } }}
+                  {{ answer.key | transloco: { variant: (answer.variant | transloco) } }}
                 } @else {
                   {{ 'showroom.modal.demo.answer.none' | transloco }}
                 }
@@ -105,8 +105,8 @@
 
     <ewms-doc-table
       [caption]="'showroom.modal.variants.caption' | transloco"
-      [columns]="toneColumns"
-      [rows]="tones"
+      [columns]="variantColumns"
+      [rows]="variantRows"
     >
       <ng-template let-row let-column="column">
         @switch (column.id) {
@@ -151,7 +151,7 @@
       <ewms-state-matrix
         [variants]="matrixVariants"
         [states]="matrixStates"
-        [rowHeader]="toneHeader"
+        [rowHeader]="variantHeader"
         [caption]="'showroom.modal.states.caption' | transloco"
       >
         <ng-template let-variant="variant" let-state="state">

@@ -55,7 +55,7 @@ const DESIGN_SYSTEM = [
   'DateRange',
   'DetailTemplate',
   'DialogService',
-  'DialogTone',
+  'DialogVariant',
   'EWMS_DATE_PICKER_MESSAGES',
   'EWMS_FAVORITES_STORE',
   'EWMS_FAVORITE_LABELS',
