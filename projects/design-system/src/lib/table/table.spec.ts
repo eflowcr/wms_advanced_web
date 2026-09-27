@@ -685,11 +685,22 @@ describe('Table', () => {
       cell.dispatchEvent(new KeyboardEvent('keydown', { key, ctrlKey, bubbles: true }));
     }
 
+    // La parada puede ser la celda o, en la de selección, su checkbox (APG grid): se lee su celda.
     function tabbable(): string[] {
-      return [...fixture.nativeElement.querySelectorAll('td[tabindex="0"]')].map(
-        (cell) => (cell as HTMLElement).dataset['cell'] ?? '',
+      return [...fixture.nativeElement.querySelectorAll('tbody [tabindex="0"]')].map(
+        (stop) => (stop as HTMLElement).closest<HTMLElement>('[data-cell]')?.dataset['cell'] ?? '',
       );
     }
+
+    // La casilla marca la parada rotatoria pero sigue en el orden de Tab, como todo control de una
+    // celda: con -1 en las demás, la E2E del orden de Tab encontró 11 inalcanzables.
+    it('leaves every row checkbox reachable by Tab', () => {
+      const boxes = [
+        ...fixture.nativeElement.querySelectorAll('tbody input[type="checkbox"]'),
+      ] as HTMLInputElement[];
+      expect(boxes.length).toBeGreaterThan(1);
+      expect(boxes.filter((box) => box.tabIndex < 0).length).toBe(0);
+    });
 
     it('is ONE tab stop; moves down a column, and stops at the ends instead of wrapping', async () => {
       expect(tabbable()).toEqual(['0-0']);

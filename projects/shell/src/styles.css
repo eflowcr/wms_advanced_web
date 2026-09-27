@@ -230,6 +230,8 @@
   html {
     background-color: var(--color-canvas);
     color: var(--color-text-primary);
+    /* WCAG 2.4.11: al enfocar, el desplazamiento descuenta la cabecera y la tira fijas. */
+    scroll-padding-top: var(--shell-chrome-height);
   }
 
   body {

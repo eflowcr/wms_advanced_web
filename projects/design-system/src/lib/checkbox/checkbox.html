@@ -13,6 +13,7 @@
       [disabled]="disabled()"
       [attr.aria-checked]="ariaChecked()"
       [attr.aria-label]="ariaLabel() || null"
+      [attr.tabindex]="inputTabIndex()"
       [attr.aria-invalid]="showError() ? 'true' : null"
       [attr.aria-describedby]="fieldError() ? noteId : null"
       (change)="onNativeChange($event)"

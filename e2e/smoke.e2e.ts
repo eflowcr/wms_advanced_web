@@ -1,4 +1,4 @@
-import AxeBuilder from '@axe-core/playwright';
+import { axe } from './axe';
 import { expect, test } from '@playwright/test';
 import { KEYBOARD, PAGES, ROUTE_BUDGET_MS, SEARCH_CREATE_EDIT, UNDER_CONSTRUCTION } from './routes';
 import { watchConsole } from './console-watch';
@@ -370,6 +370,6 @@ test('the application chrome has no axe violations', async ({ page }) => {
   await page.goto('/');
   await expect(page.getByRole('heading', { name: 'eWMS Advance' })).toBeVisible();
 
-  const results = await new AxeBuilder({ page }).analyze();
+  const results = await axe(page).analyze();
   expect(results.violations, JSON.stringify(results.violations, null, 2)).toEqual([]);
 });

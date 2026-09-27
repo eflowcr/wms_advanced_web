@@ -1,4 +1,4 @@
-import AxeBuilder from '@axe-core/playwright';
+import { axe } from './axe';
 import { expect, test, type Page } from '@playwright/test';
 import { chooseLanguage } from './language';
 
@@ -60,7 +60,7 @@ test.describe('case B: the default dictionary does not load', () => {
     await expect(notice).toHaveCSS('color', 'rgb(1, 15, 66)');
     expect(cspViolations).toEqual([]);
 
-    const results = await new AxeBuilder({ page }).analyze();
+    const results = await axe(page).analyze();
     expect(results.violations).toEqual([]);
   });
 
@@ -131,7 +131,7 @@ test.describe('case A: a dictionary other than the default does not load', () =>
   test('has no accessibility violations with the notice on screen', async ({ page }) => {
     await expect(notice(page)).toBeVisible();
 
-    const results = await new AxeBuilder({ page }).analyze();
+    const results = await axe(page).analyze();
     expect(results.violations).toEqual([]);
   });
 });

@@ -1,4 +1,4 @@
-import AxeBuilder from '@axe-core/playwright';
+import { axe } from './axe';
 import { expect, test, type Page } from '@playwright/test';
 import { watchConsole, type ConsoleWatch } from './console-watch';
 import { chooseLanguage } from './language';
@@ -98,7 +98,7 @@ test.describe('i18n with a Spanish browser', () => {
         await switchTo(page, 'Idioma', 'en');
         await expect(page.locator('html')).toHaveAttribute('lang', 'en');
       }
-      const results = await new AxeBuilder({ page }).analyze();
+      const results = await axe(page).analyze();
       expect(results.violations).toEqual([]);
     });
   }

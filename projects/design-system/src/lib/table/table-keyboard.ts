@@ -130,10 +130,17 @@ export class TableKeyboard<T> {
     this.focusColumn.set(columnIndex);
 
     this.host.reveal(rowIndex);
-    queueMicrotask(() =>
-      this.host.element.querySelector<HTMLElement>(`[data-cell="${rowIndex}-${columnIndex}"]`)?.focus(),
-    );
+    queueMicrotask(() => focusCell(this.host.element, rowIndex, columnIndex));
   }
+}
+
+/** Una celda con un solo control (`data-cell-widget`) no se enfoca: se enfoca el control (APG grid). */
+function focusCell(root: HTMLElement, rowIndex: number, columnIndex: number): void {
+  const cell = root.querySelector<HTMLElement>(`[data-cell="${rowIndex}-${columnIndex}"]`);
+  const target = cell?.hasAttribute('data-cell-widget')
+    ? cell.querySelector<HTMLElement>('input, button')
+    : cell;
+  target?.focus();
 }
 
 function parentIndexOf<T>(rows: readonly FlatRow<T>[], from: number): number {

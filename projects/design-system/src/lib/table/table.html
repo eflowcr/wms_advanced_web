@@ -296,16 +296,18 @@
                 [class.bg-inherit]="layout.selectionPinned()"
                 [style.left.px]="layout.selectionPinned() ? 0 : null"
                 [attr.data-cell]="rowIndex + '-0'"
-                [attr.tabindex]="keys.isFocused(rowIndex, 0) ? 0 : -1"
+                data-cell-widget
                 (click)="onSelectClick($event)"
-                (focus)="keys.onCellFocus(rowIndex, 0)"
+                (focusin)="keys.onCellFocus(rowIndex, 0)"
                 (keydown)="keys.onKeydown($event, rowIndex)"
               >
-                <!-- En flex: suelto, el checkbox se alineaba a la línea de base y quedaba alto. -->
+                <!-- La celda con un solo control no es parada: lo es el checkbox (APG grid), así no hay
+                     un blanco dentro de otro (WCAG 2.5.8). En flex: suelto, se alineaba a la base. -->
                 <span class="flex items-center">
                   <ewms-checkbox
                     [checked]="isSelected(flat)"
                     [ariaLabel]="text().selectRow"
+                    [inputTabIndex]="keys.isFocused(rowIndex, 0) ? 0 : null"
                     (checkedChange)="toggleRow(flat)"
                   />
                 </span>
@@ -348,7 +350,7 @@
                     @if (flat.hasChildren) {
                       <button
                         type="button"
-                        class="tree-toggle inline-flex shrink-0 cursor-pointer rounded-sm outline-none focus-visible:shadow-(--focus-ring-shadow)"
+                        class="tree-toggle -m-1 inline-flex shrink-0 cursor-pointer rounded-sm p-1 outline-none focus-visible:shadow-(--focus-ring-shadow)"
                         [attr.aria-label]="flat.expanded ? text().collapse : text().expand"
                         [attr.data-toggle]="rowIndex"
                         (click)="toggleExpanded(flat)"

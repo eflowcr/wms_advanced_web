@@ -46,6 +46,9 @@ export class Checkbox implements FormCheckboxControl {
   /** Sin texto visible, como en una columna de casillas: el nombre dice cuál fila. */
   readonly ariaLabel = input<string>('');
 
+  /** Dentro de una grilla, el `tabindex` rotatorio lo decide la grilla (patrón grid de las APG). */
+  readonly inputTabIndex = input<number | null>(null);
+
   // Del contrato `FormCheckboxControl`: el `[formField]` las llena solo.
   readonly errors = input<readonly ValidationError[]>([]);
   readonly invalid = input<boolean>(false);

@@ -1,4 +1,4 @@
-import AxeBuilder from '@axe-core/playwright';
+import { axe } from './axe';
 import { expect, test } from '@playwright/test';
 
 /**
@@ -32,7 +32,7 @@ test.describe('the runtime configuration is invalid or missing', () => {
     }
     await expect(page.locator('app-root')).toBeEmpty();
 
-    const results = await new AxeBuilder({ page }).analyze();
+    const results = await axe(page).analyze();
     expect(results.violations).toEqual([]);
   });
 

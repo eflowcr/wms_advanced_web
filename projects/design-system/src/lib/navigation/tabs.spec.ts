@@ -99,11 +99,23 @@ describe('Tabs', () => {
   });
 
   it('a document tab is a pill chip: the selected one in navy, the rest in grey', () => {
-    // La barra de chips de YouTube con la pintura del sistema (decisión del usuario, 2026-09-25).
-    expect(tab('articles').className).toContain('rounded-full');
-    expect(tab('articles').className).toContain('bg-brand-navy');
-    expect(tab('clients').className).toContain('bg-chip');
-    expect(tab('clients').className).not.toContain('bg-brand-navy');
+    // La barra de chips de YouTube con la pintura del sistema (decisión del usuario, 2026-09-25). La
+    // pinta la píldora que envuelve la pestaña y su ×.
+    const pill = (id: string) => tab(id).parentElement as HTMLElement;
+    expect(pill('articles').className).toContain('rounded-full');
+    expect(pill('articles').className).toContain('bg-brand-navy');
+    expect(pill('clients').className).toContain('bg-chip');
+    expect(pill('clients').className).not.toContain('bg-brand-navy');
+  });
+
+  it('the close glyph sits BESIDE its tab, not inside it, and is 24 px (WCAG 2.5.8)', () => {
+    const glyph = closeGlyphs()[0]!;
+
+    expect(tab('articles').contains(glyph)).toBe(false);
+    expect(glyph.parentElement).toBe(tab('articles').parentElement);
+    // Ícono `sm` (16 px) y `p-1` (4 por lado): 24 px de blanco.
+    expect(glyph.className).toContain('p-1');
+    expect(glyph.querySelector('ewms-icon')?.getAttribute('size')).toBe('sm');
   });
 
   it('section mode underlines the selected tab, and only that one', async () => {
@@ -260,6 +272,20 @@ describe('Tabs', () => {
       forward()!.click();
 
       expect(scrollBy).toHaveBeenCalledWith({ left: 240, behavior: 'smooth' });
+    });
+
+    it('with reduced motion the strip jumps instead of gliding', async () => {
+      await lay(0);
+      const scrollBy = vi.fn();
+      strip.scrollBy = scrollBy as unknown as typeof strip.scrollBy;
+      vi.stubGlobal('matchMedia', (query: string) => ({
+        matches: query === '(prefers-reduced-motion: reduce)',
+      }));
+
+      forward()!.click();
+
+      expect(scrollBy).toHaveBeenCalledWith({ left: 240, behavior: 'auto' });
+      vi.unstubAllGlobals();
     });
 
     it('when the focused arrow goes away at the edge, the focus goes to the selected tab', async () => {

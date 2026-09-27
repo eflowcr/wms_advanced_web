@@ -46,7 +46,7 @@ export interface FilterChip {
             >
             <button
               type="button"
-              class="inline-flex cursor-pointer rounded-full p-0.5 text-secondary outline-none hover:bg-ghost-hover focus-visible:shadow-(--focus-ring-shadow)"
+              class="-m-0.5 inline-flex cursor-pointer rounded-full p-1 text-secondary outline-none hover:bg-ghost-hover focus-visible:shadow-(--focus-ring-shadow)"
               [attr.aria-label]="text().removeFilter(chip.column)"
               (click)="remove.emit(chip.key)"
             >
