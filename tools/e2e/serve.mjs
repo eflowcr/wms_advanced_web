@@ -8,6 +8,7 @@ import { stat } from 'node:fs/promises';
 import { createServer } from 'node:http';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { headersFor } from '../deploy/headers.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 export const DIST = path.join(ROOT, 'dist/shell/browser');
@@ -40,21 +41,33 @@ export async function resolveFile(urlPath, root = DIST) {
   return path.extname(decoded) === '' ? { status: 200, file: path.join(root, 'index.html') } : { status: 404 };
 }
 
-function main() {
-  const at = process.argv.indexOf('--port');
-  const port = at === -1 ? 4400 : Number(process.argv[at + 1]);
-  createServer(async (request, response) => {
-    const { status, file } = await resolveFile(request.url ?? '/');
+/**
+ * Sin opciones, `no-store`: las E2E nunca miran una copia vieja. Con `contract`, las cabeceras
+ * del contrato de despliegue (tools/deploy/headers.mjs), para verificarlo contra algo servido.
+ */
+export function createStaticServer({ root = DIST, contract = false } = {}) {
+  return createServer(async (request, response) => {
+    const url = request.url ?? '/';
+    const { status, file } = await resolveFile(url, root);
     if (file === undefined) {
       response.writeHead(status).end();
       return;
     }
     response.writeHead(status, {
       'Content-Type': TYPES[path.extname(file)] ?? 'application/octet-stream',
-      'Cache-Control': 'no-store',
+      ...(contract ? headersFor(url) : { 'Cache-Control': 'no-store' }),
     });
     createReadStream(file).pipe(response);
-  }).listen(port, () => console.log(`dist/shell/browser en http://localhost:${port}`));
+  });
+}
+
+function main() {
+  const at = process.argv.indexOf('--port');
+  const port = at === -1 ? 4400 : Number(process.argv[at + 1]);
+  const contract = process.argv.includes('--headers');
+  createStaticServer({ contract }).listen(port, () =>
+    console.log(`dist/shell/browser en http://localhost:${port}${contract ? ' (contrato)' : ''}`),
+  );
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
