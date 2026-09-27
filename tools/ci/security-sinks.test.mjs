@@ -1,6 +1,8 @@
 // Cada sumidero de código y de almacenamiento, probado con ESLint sobre una ruta virtual: la regla
 // 9 lo rechaza, y lo inocente de al lado pasa. Ver vault: 02-Arquitectura/Integracion Continua.md.
 import assert from 'node:assert/strict';
+import { execFileSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { describe, it } from 'node:test';
 import { fileURLToPath } from 'node:url';
@@ -61,5 +63,40 @@ describe('the storage message', () => {
       assert.doesNotMatch(message, /token store/i);
       assert.doesNotMatch(message, /disable this rule/i);
     }
+  });
+});
+
+// REQ-FE-DS4-002 PACQ-01.4: los favoritos no guardan nada en el navegador, y nada lo esconde.
+describe('favorites keep nothing in the browser', () => {
+  const STORAGE_RULES = new Set(['no-restricted-globals', 'no-restricted-syntax']);
+
+  it('the storage rules reach the favorites code and the shell that provides it', async () => {
+    for (const file of [
+      'projects/design-system/src/lib/favorites/probe.ts',
+      'projects/shell/src/app/probe.ts',
+    ]) {
+      const errors = await securityErrors(`localStorage.setItem('k', 'v');`, file);
+      assert.notEqual(errors.length, 0, file);
+    }
+  });
+
+  it('no line silences them, except the language preference (ADR 0008)', () => {
+    const files = execFileSync('git', ['ls-files', '-z'], { cwd: ROOT, encoding: 'utf8' })
+      .split('\0')
+      .filter((file) => /\.(ts|mts|cts|js|mjs|cjs|html)$/.test(file));
+    const silencing = [];
+    for (const file of files) {
+      const source = readFileSync(path.join(ROOT, file), 'utf8');
+      const directives = /(?:\/\/|\/\*|<!--)\s*eslint-disable(?:-next-line|-line)?(?![\w-])(.*)/g;
+      for (const [, rest] of source.matchAll(directives)) {
+        const [named] = rest.split(/\s--\s|\*\/|-->/);
+        const rules = named.split(',').map((rule) => rule.trim());
+        // Sin reglas nombradas, el directivo apaga todas: también las de almacenamiento.
+        if (rules.every((rule) => rule === '') || rules.some((rule) => STORAGE_RULES.has(rule))) {
+          silencing.push(file);
+        }
+      }
+    }
+    assert.deepEqual(silencing, ['projects/core/src/lib/i18n/language.service.ts']);
   });
 });

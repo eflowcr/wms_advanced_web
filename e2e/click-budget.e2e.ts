@@ -391,6 +391,27 @@ test.describe('the shortcut rules, in a browser', () => {
     await expect(opener).toBeFocused();
   });
 
+  // REQ-FE-DS4-001 PACQ-01.1: dos pantallas reales registran `search`; navega el router, no un goto.
+  test('two screens register search, and after a navigation only the active one answers', async ({
+    page,
+  }) => {
+    const keyboardHeading = page.getByRole('heading', { level: 1, name: 'Atajos de teclado' });
+    await page.goto(KEYBOARD);
+    await expect(keyboardHeading).toBeVisible();
+    await page.keyboard.press('/');
+    await expect(page.locator('[data-demo-search-hits]')).toHaveText('1');
+
+    await page.locator(`[data-sidebar] a[href="${SCREEN}"]`).click();
+    await expect(page.getByRole('heading', { level: 1, name: SCREEN_HEADING })).toBeVisible();
+    await page.keyboard.press('/');
+    await expect(page.locator('[data-search-host] input')).toBeFocused();
+
+    await page.locator(`[data-sidebar] a[href="${KEYBOARD}"]`).click();
+    await expect(keyboardHeading).toBeVisible();
+    await page.keyboard.press('/');
+    await expect(page.locator('[data-demo-search-hits]')).toHaveText('1');
+  });
+
   test('WCAG 2.1.4: the switch silences / and ?, and leaves Alt+N alone', async ({ page }) => {
     await open(page);
     await page.keyboard.press('?');
