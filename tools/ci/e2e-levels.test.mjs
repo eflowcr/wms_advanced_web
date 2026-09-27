@@ -1,10 +1,7 @@
 /**
- * El filtro por rutas del job showroom, ejercitado en vez de confiado. Un filtro
- * permisivo de más solo gasta minutos; uno estricto de más deja pasar un cambio del
- * sistema de diseño sin la suite que lo documenta, y ese es el fallo que merece prueba.
- * La expresión se lee de `ci.yml`, no se copia: una copia coincidiría consigo misma.
- *
- * `npm run test:tools`.
+ * El filtro por rutas del job showroom, ejercitado: uno estricto de más deja un cambio sin la
+ * suite que lo documenta. La expresión se lee de ci.yml, no se copia. `npm run test:tools`.
+ * Ver vault: Integracion Continua §11.
  */
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
@@ -109,11 +106,9 @@ test('the domain level runs in CI, even while it has no test', async () => {
 });
 
 /**
- * Los nombres de job que el ruleset «Protect» ya exige, copiados letra por letra. Son
- * entradas, no decisiones: el ruleset vive en GitHub y editarlo pide admin (comprobado
- * 2026-09-20). Un check exigido que nadie reporta no falla: espera para siempre (pasó
- * en 3dab2a3 y en el cierre de DS-5). Esta prueba hace fallar un renombrado acá, en la
- * PR. Los `Analyze (...)` son de codeql.yml. Ver vault: Integracion Continua.md §4.
+ * Los nombres que el ruleset «Protect» exige, letra por letra (vive en GitHub y editarlo pide
+ * admin): un check exigido que nadie reporta espera para siempre. Esto falla en la PR.
+ * Ver vault: Integracion Continua §11.
  */
 const REQUIRED_JOB_NAMES = {
   verify: 'Types, lint, tests, budgets',

@@ -14,9 +14,8 @@ import { fieldErrorText, fieldNoteId } from '../forms/field-note';
 let nextRadioGroupId = 0;
 
 /**
- * El campo que eligen los radios: `fieldset` con `legend`, una sola parada de Tab y flechas que
- * mueven y eligen. Las tres cosas las da el navegador con radios nativos que comparten `name`
- * (APG *radio group*); acá vive el valor, el nombre del grupo y el mensaje. Ver vault:
+ * El campo: `fieldset` con `legend`; la parada única de Tab y las flechas las dan radios nativos
+ * con un `name` compartido (APG radio group). Acá viven valor, nombre y mensaje. Ver vault:
  * Checkbox-Radio.
  */
 @Component({

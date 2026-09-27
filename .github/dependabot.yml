@@ -20,10 +20,8 @@ updates:
           - minor
           - patch
     ignore:
-      # Angular 22 pinea el rango de TypeScript en @angular/compiler-cli y el de
-      # Vitest en @angular/build:unit-test. Un major aca no es actualizar, es
-      # romper el build. Se suben cuando suba Angular, y como un cambio propio
-      # con su PR, no por un bump automatico.
+      # Angular 22 fija el rango de TypeScript y de Vitest: un major acá rompe el build. Suben con
+      # Angular, en su propio PR. Ver vault: Integracion Continua §11.
       - dependency-name: 'typescript'
         update-types: ['version-update:semver-major']
       - dependency-name: 'vitest'

@@ -250,10 +250,8 @@ export class MainLayout {
       });
     });
 
-    // `/` va al buscador del header solo si ninguna pantalla lo reclamó. El shell
-    // no registra `search` (el motor lanza ante un doble registro y, sin zonas, no
-    // hay momento para soltarlo): contesta solo los eventos `unregistered`.
-    // Ver vault: 08-Sistema-de-Diseno/Componentes/App-Shell.
+    // `/` va al buscador solo si ninguna pantalla lo reclamó: el shell no registra `search` y
+    // contesta los eventos `unregistered`. Ver vault: Integracion Continua §11.
     this.shortcuts.events.pipe(takeUntilDestroyed()).subscribe((event) => {
       if (event.action === 'search' && event.outcome === 'unregistered') {
         this.focusSearch();

@@ -1,6 +1,6 @@
 /**
  * Regla 16: un bloque de comentario tiene tres líneas de texto como máximo; el porqué largo va al
- * vault. `--base <ref>` mira solo lo creado o tocado desde el ancestro común; sin él, informa todo.
+ * vault. Mira todo el repositorio; `--base <ref>` se limita a lo creado o tocado desde el ancestro.
  * Ver vault: 02-Arquitectura/Integracion Continua.md §4, regla 16.
  */
 import { execFileSync } from 'node:child_process';
@@ -331,13 +331,9 @@ function main() {
     `comment block of ${block.textLines} lines (max ${MAX_TEXT_LINES}). Keep the fact, move the why ` +
     `to the vault and leave one line with the link.`;
 
-  if (base === null) {
-    for (const block of found) console.log(`${block.file}:${block.start} ${message(block)}`);
-    console.log(`\nComments: ${found.length} block(s) over ${MAX_TEXT_LINES} lines in the repository (report only).`);
-    return;
-  }
+  const scope = base === null ? 'in the repository' : `created or touched since ${base}`;
   if (found.length === 0) {
-    console.log(`Comments: no block over ${MAX_TEXT_LINES} lines created or touched since ${base}.`);
+    console.log(`Comments: no block over ${MAX_TEXT_LINES} lines ${scope}.`);
     return;
   }
   for (const block of found) {
@@ -347,7 +343,7 @@ function main() {
         : `${block.file}:${block.start} ${message(block)}`,
     );
   }
-  console.error(`\nComments: ${found.length} block(s) over ${MAX_TEXT_LINES} lines created or touched since ${base}.`);
+  console.error(`\nComments: ${found.length} block(s) over ${MAX_TEXT_LINES} lines ${scope}.`);
   process.exitCode = 1;
 }
 

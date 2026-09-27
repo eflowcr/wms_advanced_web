@@ -69,11 +69,8 @@ const NO_TRANSLATION_LIBRARY = {
  */
 const NO_LEGACY_FORMS = [
   {
-    // `regex` y no `group`: un `group` de '@angular/forms' matchea la carpeta entera y se
-    // llevaría puesto '@angular/forms/signals', que es justo el que hay que usar. De
-    // `@angular/forms` salen `ReactiveFormsModule`, `FormsModule`, `FormControl`, `FormGroup`,
-    // `FormBuilder`, `NgControl`, `NG_VALUE_ACCESSOR` y `ControlValueAccessor`; del otro, la
-    // capa de compatibilidad que el ADR 0013 descartó.
+    // `regex` y no `group`: un `group` de '@angular/forms' se llevaría '@angular/forms/signals',
+    // que es el que hay que usar. Ver vault: Integracion Continua §11.
     regex: '^@angular/forms(/signals-compat)?$',
     message:
       'Los formularios van sobre Signal Forms: importá de `@angular/forms/signals`. Un campo ' +
@@ -328,10 +325,8 @@ module.exports = tseslint.config(
   },
 
   /*
-   * El único import profundo permitido hacia projects/ no se configura acá: es un
-   * disable con su razón en e2e/click-budget.e2e.ts, que lee los presupuestos del mismo
-   * archivo que la pantalla (REQ-FE-DS4-003 HG-02). El barrel público cargaría toda la
-   * biblioteca Angular en Node desde Playwright. La única fuente la cuida check-click-budget.mjs.
+   * El único import profundo a projects/ es un disable con su razón en e2e/click-budget.e2e.ts:
+   * el barril cargaría Angular en Node. Ver vault: Integracion Continua §11.
    */
 
   // ------------------------------------------------------------ plantillas HTML

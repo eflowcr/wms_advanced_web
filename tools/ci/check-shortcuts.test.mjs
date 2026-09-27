@@ -1,9 +1,6 @@
 /**
- * Pruebas del escaneo de atajos, y el escaneo mismo sobre este repo. Los casos unitarios
- * fijan qué hacen los patrones (una regex que deja de coincidir pasa en vacío un año);
- * correr el escaneo real acá lo mete en `npm test`, que ya bloquea.
- *
- * node:test sin Angular. `npm run test:tools` (parte de `npm test`).
+ * Fija qué hacen los patrones del escaneo de atajos (una regex que deja de coincidir pasa en
+ * vacío) y corre el escaneo real en `npm test`. node:test sin Angular: `npm run test:tools`.
  */
 import assert from 'node:assert/strict';
 import { execFile } from 'node:child_process';

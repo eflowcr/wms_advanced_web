@@ -1,15 +1,8 @@
 name: CI
 
-# Todo job de acá rompe el build: nada es aviso. Una regla demasiado estricta se
-# cambia a propósito en un PR, nunca se degrada a warning para poner verde una rama.
-#
-# Los `name:` de los jobs son el contrato con el ruleset «Protect», que exige checks
-# por nombre letra por letra y vive en GitHub (sin permiso de admin para editarlo).
-# Fijos: `Types, lint, tests, budgets` · `Playwright smoke` · `Gitleaks`. Un
-# renombrado no falla: deja la PR esperando para siempre (pasó en 3dab2a3 y en el
-# cierre de DS-5). `Playwright showroom` es el único libre. Ningún nombre lleva
-# «Gate N»: los números de regla viven en el vault. Lo guarda
-# tools/ci/e2e-levels.test.mjs. Ver vault: 02-Arquitectura/Integracion Continua.md §4.
+# Todo job rompe el build: nada es aviso. Los `name:` de los jobs son el contrato con el ruleset
+# «Protect» (`Types, lint, tests, budgets` · `Playwright smoke` · `Gitleaks`): renombrar uno
+# deja la PR esperando. Lo guarda tools/ci/e2e-levels.test.mjs. Ver vault: Integracion Continua §4.
 
 on:
   push:
@@ -41,9 +34,6 @@ jobs:
     timeout-minutes: 7
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
-        with:
-          # La compuerta de comentarios compara contra el ancestro común con la base.
-          fetch-depth: 0
 
       - name: Set up Node
         uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
@@ -98,11 +88,9 @@ jobs:
       - name: Design system only (no native controls outside the library)
         run: npm run lint:ds
 
-      # Regla 16: un bloque de comentario tiene tres líneas como máximo, en lo que la rama crea o toca.
+      # Regla 16: un bloque de comentario tiene tres líneas como máximo, en todo el repositorio.
       - name: Comments (three lines per block)
-        env:
-          BASE_REF: ${{ github.base_ref || 'development' }}
-        run: npm run lint:comments -- --base "origin/$BASE_REF"
+        run: npm run lint:comments
 
       # Antes que las pruebas: host-page.test.mjs lee la CSP del artefacto. Los presupuestos, en angular.json.
       - name: Production build and bundle budgets
@@ -123,9 +111,8 @@ jobs:
         run: npm run audit:ci
 
   # -------------------------------------------------------------- smoke, showroom
-  # Niveles de la suite E2E (proyectos de Playwright en playwright.config.ts). smoke:
-  # todo PR y todo push, menos de dos minutos. showroom: en un PR solo si cambió lo
-  # que documenta; en push, siempre. Ver vault: Integracion Continua.md §4.1.
+  # smoke: todo PR y todo push. showroom: en un PR solo si cambió lo que documenta; en push,
+  # siempre. Ver vault: Integracion Continua §4.1.
 
   smoke:
     # Nombre exigido por el ruleset, letra por letra. Ver la cabecera.

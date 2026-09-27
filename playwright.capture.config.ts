@@ -4,14 +4,9 @@ const PORT = 4200;
 const BASE_URL = `http://localhost:${PORT}`;
 
 /**
- * El arnés visual: un banco de desarrollo, no parte de `npm run e2e`. Renderiza cada
- * ruta del showroom a un viewport fijo, espera a Montserrat, guarda una captura por ruta
- * y vuelca geometría y estilos computados a un texto. No afirma nada.
- * Va aparte porque una captura sin línea base no afirma nada, y versionar líneas base
- * haría de cada cambio visual deliberado una revisión de diff binario; lo que vale
- * defender quedó como aserción en e2e/showroom.e2e.ts. Nunca corre en CI.
- *
- * `npm run showroom:capture`. Salida: showroom-captures/ (ignorada).
+ * El arnés visual: captura cada ruta del showroom y vuelca geometría y estilos; no afirma nada y
+ * nunca corre en CI. `npm run showroom:capture` → showroom-captures/ (ignorada).
+ * Ver vault: Integracion Continua §11.
  */
 export default defineConfig({
   testDir: './e2e/capture',

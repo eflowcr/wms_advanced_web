@@ -1,11 +1,6 @@
 /*
- * Única entrada legal a @ewms/design-system; src/lib/** está cercado en eslint.config.js.
- *
- * Criterio, uno solo: se exporta lo que necesita quien consume la biblioteca —el shell, el
- * showroom, un dominio futuro o quien implemente una fuente del backend— y nada que solo exista
- * para que la biblioteca funcione por dentro. Un tipo de contrato o de entrada pública se queda
- * aunque hoy no lo importe nadie; un ayudante interno se va aunque sea útil.
- * Ver vault: 02-Arquitectura/Anatomia del Workspace §design-system.
+ * Única entrada legal a @ewms/design-system (src/lib/** está cercado en eslint.config.js). Sale
+ * lo que necesita quien la consume, nada interno. Ver vault: Anatomia del Workspace.
  */
 
 // `export *` por módulo y no la lista de nombres: esbuild no poda un barril con nombres y
@@ -132,10 +127,9 @@ export * from './lib/navigation/tabs';
 export * from './lib/navigation/breadcrumbs';
 
 /*
- * Favoritos (DS-5, REQ-FE-DS4-002 v1.2): `InMemoryFavoritesStore` se exporta porque lo usan
- * shell y showroom. Se pierde al recargar (decisión del usuario, 2026-09-19, hasta el
- * Security Core); un E2E afirma la pérdida para que el backend obligue a actualizar la doc.
- * `EWMS_FAVORITE_LABELS` (v1.3): el nombre de una ruta se pregunta al pintar, nunca se guarda.
+ * Favoritos (REQ-FE-DS4-002): InMemoryFavoritesStore, que usan shell y showroom, pierde todo
+ * al recargar hasta el Security Core; una ruta se nombra al pintar.
+ * Ver vault: Integracion Continua §11.
  */
 export * from './lib/favorites/favorites';
 export * from './lib/favorites/favorite-toggle';

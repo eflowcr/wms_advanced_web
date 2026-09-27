@@ -1828,10 +1828,8 @@ test.describe('DS-3 lote C: la tabla', () => {
   });
 
   /*
-   * Ordenar por el valor crudo y filtrar un rango con las dos cajas no necesitan navegador: son
-   * lógica, y los afirman `table.spec.ts` «SORTS BY THE RAW VALUE, not by the formatted text»,
-   * «filters text by substring (the whole query goes out), and a number range» y «A CLEARED BOX
-   * IS UNBOUNDED, NOT ZERO».
+   * Ordenar por el valor crudo y filtrar un rango no necesitan navegador: los afirman las unitarias
+   * de table.spec.ts. Ver vault: Integracion Continua §11.
    */
 
   test('the filters hide and come back with the button and Alt+R, and the chips never hide', async ({
@@ -2234,10 +2232,8 @@ test.describe('DS-3 lote D: detalle, menú, ventana y paginador', () => {
   });
 
   /*
-   * Elegir una entrada del menú y las filas de carga y de fallo de los hijos perezosos no piden
-   * navegador: los afirman `table.spec.ts` «emits the row AND the entry, and closes», «draws the
-   * toggle before any child exists, a busy row on the way, then the children» y «shows the failure
-   * in line, expanded; folded it goes away; the retry can succeed».
+   * El menú de la fila y las filas de carga y de fallo de los hijos perezosos no piden navegador:
+   * los afirman las unitarias de table.spec.ts. Ver vault: Integracion Continua §11.
    */
 
   test('FIVE THOUSAND ROWS, A HANDFUL IN THE DOM, and the count is still five thousand', async ({

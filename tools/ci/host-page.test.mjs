@@ -1,10 +1,7 @@
 /**
- * La página host del shell contra su propia CSP. La CSP (style-src y script-src 'self')
- * bloquea en silencio <style> y <script> inline, style="" y on*="": la página carga y
- * el estilo o el handler no se aplica. index.html es donde se escribe ese markup a mano
- * (el aviso de fallo de arranque), así que esto vuelve ruidoso el error.
- * Permitir un <style> por hash no aguanta: el servidor de desarrollo reescribe los
- * estilos inline (les agrega un source map). Ver vault: i18n.md. `npm run test:tools`.
+ * index.html contra su propia CSP, que bloquea en silencio <style>, <script>, style="" y on*=""
+ * escritos a mano (el aviso de fallo de arranque). `npm run test:tools`.
+ * Ver vault: Integracion Continua §11.
  */
 import assert from 'node:assert/strict';
 import { existsSync } from 'node:fs';

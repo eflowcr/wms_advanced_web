@@ -24,10 +24,9 @@ export interface ExpedicionDraft {
 }
 
 /**
- * Formulario de crear y editar: uno solo para ambos flujos, porque el presupuesto lo garantiza
- * el patrón (REQ-FE-DS4-003 RFE-05) y dos formularios terminan con clics distintos. Desde el
- * 2026-09-22 sigue el patrón Formulario, sobre Signal Forms (ADR 0013): `[ewmsForm]` valida al
- * salir del campo y al enviar, y Ctrl+S sale del mapa de atajos sin que este componente registre nada.
+ * Un solo formulario para crear y editar: dos terminarían con clics distintos (REQ-FE-DS4-003).
+ * Patrón Formulario sobre Signal Forms (ADR 0013); Ctrl+S sale del mapa de atajos.
+ * Ver vault: Integracion Continua §11.
  */
 @Component({
   selector: 'ewms-shipment-form',

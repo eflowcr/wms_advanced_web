@@ -1,14 +1,7 @@
 /**
- * Regla 11: iconos (ADR 0011). Dos controles, los dos bloqueantes.
- *
- *   1. icons.generated.ts está al día: se regenera en memoria con build-icons.mjs y se
- *      compara byte a byte con el versionado, como un lockfile. Se arregla con
- *      `npm run icons:build`, nunca a mano.
- *   2. Ningún <svg> escrito a mano en una plantilla (.html y .ts bajo projects/): todo
- *      icono pasa por <ewms-icon>. Solo se permiten las fuentes de iconos y el componente
- *      que los pinta. Los .svg estáticos (logos) no son plantillas y no se escanean.
- *
- * `npm run lint:icons`.
+ * Regla 11 (ADR 0011): icons.generated.ts igual byte a byte a lo que genera build-icons.mjs (se
+ * arregla con `npm run icons:build`) y ningún <svg> a mano en una plantilla. `npm run lint:icons`.
+ * Ver vault: Integracion Continua §11.
  */
 import { readdir, readFile } from 'node:fs/promises';
 import path from 'node:path';

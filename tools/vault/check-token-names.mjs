@@ -1,13 +1,7 @@
 /**
- * Lista los nombres --color-* citados en el vault que tokens.css no define. No es
- * compuerta de CI: el vault no está en este repo. Se corre a mano antes de dar por
- * cerrada una ficha, porque un nombre que no existe se pudre en silencio.
- *
- *   npm run vault:check-tokens -- <ruta-al-vault> [--exclude <dir>]...
- *
- * Recorre los .md salteando carpetas ocultas y 99-Archivo (historia por definición).
- * Un nombre dentro de una frase que narra historia se lista igual: se decide leyendo.
- * Salida: 0 si todo existe, 1 si no, 2 ante un uso incorrecto.
+ * Lista los --color-* del vault que tokens.css no define; se corre a mano, no es compuerta:
+ * `npm run vault:check-tokens -- <ruta-al-vault> [--exclude <dir>]...` (sale 0, 1 o 2).
+ * Ver vault: Integracion Continua §11.
  */
 import { readdir, readFile } from 'node:fs/promises';
 import path from 'node:path';

@@ -6,19 +6,9 @@ const BASE_URL = `http://localhost:${PORT}`;
 const CI = Boolean(process.env['CI']);
 
 /**
- * Configuración e2e. Las specs viven en e2e/ y se llaman *.e2e.ts para que Vitest nunca
- * las tome. Tres niveles por lo que cada uno defiende, cada uno con su disparador en
- * .github/workflows/ci.yml: hasta DS-5 eran 183 pruebas en una cola con un worker, y
- * cada dominio de DS-6 iba a sumar a esa misma cola.
- *
- *   smoke     la app arranca, toda ruta responde y los tres patrones andan con teclado.
- *             Todo PR y todo push, menos de dos minutos.
- *   showroom  la documentación del catálogo. Cuando cambia lo que documenta, y siempre
- *             en development y main. Una sola máquina.
- *   domain    los dominios de DS-6. Vacío hoy.
- *
- * No se borró ni se debilitó nada: todo sigue corriendo en `npm run e2e`.
- * Ver vault: 02-Arquitectura/Integracion Continua.md §4.1.
+ * E2E en e2e/*.e2e.ts (Vitest no las toma), en tres niveles con su disparador en ci.yml: smoke
+ * (todo PR y push), showroom (el catálogo) y domain (DS-6, vacío). Todo corre en `npm run e2e`.
+ * Ver vault: Integracion Continua §4.1 y §11.
  */
 export default defineConfig({
   testDir: './e2e',

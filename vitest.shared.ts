@@ -1,13 +1,9 @@
 import { defineConfig } from 'vitest/config';
 
 /**
- * Configuración base del runner de `@angular/build:unit-test`, compartida por cada
- * `vitest.<proyecto>.config.ts`, que solo aporta sus umbrales medidos.
- *
- * Un config por proyecto, a propósito (DS-2): un umbral por ruta dentro de un solo config
- * no se evalúa en la corrida de su proyecto sino en toda corrida que toque esos archivos,
- * y `ng test shell` cubre core de paso al 74.73 %. No los vuelvas a juntar.
- * Ver vault: 02-Arquitectura/Integracion Continua.md §8.
+ * Base del runner de `@angular/build:unit-test`; cada vitest.<proyecto>.config.ts pone sus pisos.
+ * Un config por proyecto a propósito: un umbral por ruta se evalúa en toda corrida.
+ * Ver vault: Integracion Continua §8.
  */
 
 export interface CoverageThresholds {
@@ -18,11 +14,9 @@ export interface CoverageThresholds {
 }
 
 /**
- * `alsoExclude` saca del reporte los archivos de otro proyecto, que la corrida cubre solo
- * como este los usa (caso extremo: showroom sobre el design-system). Es `exclude` y no
- * `include`: con `include` el builder no atribuye cobertura a nada, un 0 % seguro de sí.
- * No debilita nada: cada proyecto se mide en su propia corrida. Se pasa solo donde la
- * contaminación es real (desde DS-2 PR 3).
+ * `alsoExclude` saca del reporte los archivos de otro proyecto que esta corrida cubre de paso.
+ * Es `exclude` y no `include`: con `include` el builder no atribuye nada.
+ * Ver vault: Integracion Continua §11.
  */
 
 /**
