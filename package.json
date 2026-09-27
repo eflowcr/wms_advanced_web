@@ -1,6 +1,6 @@
 {
   "name": "wms-advanced-web",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "scripts": {
     "prepare": "git config core.hooksPath .githooks",
     "start": "ng serve shell",
@@ -19,6 +19,7 @@
     "lint:comments": "node tools/ci/check-comments.mjs",
     "lint:critical-path": "node tools/ci/check-critical-path.mjs",
     "i18n:format": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON tools/ci/check-i18n.mjs --write",
+    "i18n:versions": "node tools/i18n/dictionary-versions.mjs",
     "icons:build": "node tools/icons/build-icons.mjs",
     "vault:check-tokens": "node tools/vault/check-token-names.mjs",
     "e2e": "playwright test",

@@ -27,6 +27,13 @@ npm start        # http://localhost:4200
 > Review the Node major in **Q1 2027**: Node 24 enters Maintenance on
 > 2026-10-20 when Node 26 takes Active LTS, and runs until April 2028.
 
+## Versions and branches
+
+SemVer on the root `package.json`, one entry per release in `CHANGELOG.md`;
+the `vX.Y.Z` tag is set when `development` is merged into `main`. Work branches
+are named `STG-<TOPIC>` and go back to `development` through a PR. The why
+lives in the vault (ADR 0018).
+
 ## Commands
 
 | Command | What it does |

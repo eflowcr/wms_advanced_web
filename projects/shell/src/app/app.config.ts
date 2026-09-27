@@ -11,6 +11,7 @@ import {
 } from '@ewms/core';
 import { routes } from './app.routes';
 import { CDK_STYLES_FROM_STYLESHEET } from './cdk.providers';
+import { DICTIONARY_VERSIONS } from './dictionary-versions.generated';
 import { EwmsTitleStrategy } from './title.strategy';
 
 export const appConfig: ApplicationConfig = {
@@ -23,7 +24,8 @@ export const appConfig: ApplicationConfig = {
     // El loader de i18n y la configuración leen con HttpClient; cada petición lleva su traza.
     provideHttpClient(withFetch(), withInterceptors([traceparentInterceptor])),
     provideRuntimeConfig(),
-    provideEwmsI18n(),
+    // Cada diccionario con la huella de su contenido en la URL: ningún caché sirve uno viejo.
+    provideEwmsI18n({ versions: DICTIONARY_VERSIONS }),
     // Título traducido por ruta (WCAG 2.4.2); el `title` de Angular lo congelaría en un idioma.
     { provide: TitleStrategy, useClass: EwmsTitleStrategy },
     CDK_STYLES_FROM_STYLESHEET,

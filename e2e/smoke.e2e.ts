@@ -19,6 +19,8 @@ test.describe('the application is alive', () => {
     await expect(page.getByRole('heading', { name: 'eWMS Advance' })).toBeVisible();
     // Cada petición sale con su traza W3C (AUD-003/004); la del diccionario sirve de muestra.
     expect((await dictionary).headers()['traceparent']).toMatch(/^00-[0-9a-f]{32}-[0-9a-f]{16}-00$/);
+    // Y el diccionario se pide con la huella de su contenido: ningún caché sirve uno viejo.
+    expect((await dictionary).url()).toMatch(/\/i18n\/es\.json\?v=[0-9a-f]{10}$/);
     // Es el artefacto de producción: las utilidades `ng` de depuración solo existen en desarrollo.
     expect(await page.evaluate(() => 'ng' in window)).toBe(false);
 

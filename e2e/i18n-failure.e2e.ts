@@ -8,8 +8,9 @@ import { chooseLanguage } from './language';
  * (un despliegue sin public/, un 404, un corte de red).
  */
 
-const ES_DICTIONARY = '**/i18n/es.json';
-const EN_DICTIONARY = '**/i18n/en.json';
+// Con o sin `?v=<huella>` (ADR 0018): el diccionario es el mismo.
+const ES_DICTIONARY = /\/i18n\/es\.json(\?|$)/;
+const EN_DICTIONARY = /\/i18n\/en\.json(\?|$)/;
 
 /** El aviso del caso A es un Toast, en la única región de notificaciones del shell. */
 const notice = (page: Page) => page.getByRole('status', { name: 'Notificaciones' }).locator('p');

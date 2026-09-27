@@ -17,14 +17,18 @@ import { LanguageService } from './language.service';
 import { DEFAULT_LANGUAGE, LANGUAGE_LOCALES, LANGUAGES } from './language.types';
 import { EwmsMissingHandler } from './missing-handler';
 import { NoFallbackStrategy } from './no-fallback.strategy';
-import { HttpTranslocoLoader } from './transloco.loader';
+import { DICTIONARY_VERSIONS, HttpTranslocoLoader } from './transloco.loader';
 
 /**
  * Todos los providers de i18n (ADR 0008); requiere provideHttpClient(). No se pinta sin el
- * diccionario inicial; si ninguno carga, rechaza con DictionaryUnavailableError.
+ * diccionario inicial; si ninguno carga, rechaza con DictionaryUnavailableError. `versions`: las
+ * huellas de los diccionarios, que el shell genera (ADR 0018).
  */
-export function provideEwmsI18n(): EnvironmentProviders {
+export function provideEwmsI18n(
+  options: { versions?: Readonly<Record<string, string>> } = {},
+): EnvironmentProviders {
   return makeEnvironmentProviders([
+    { provide: DICTIONARY_VERSIONS, useValue: options.versions ?? {} },
     ...provideTransloco({
       config: {
         availableLangs: [...LANGUAGES],
