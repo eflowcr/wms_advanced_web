@@ -100,6 +100,7 @@
 
   /* Animaciones: el token en tokens.css y los @keyframes más abajo; siempre con `motion-safe:`. */
   --animate-nav-drawer: var(--animate-nav-drawer);
+  --animate-spin: var(--animate-spin);
 
   --shadow-sm: var(--shadow-sm);
   --shadow-md: var(--shadow-md);
@@ -222,6 +223,13 @@
 @keyframes nav-drawer-in {
   from {
     translate: -100%;
+  }
+}
+
+/* El spinner: una vuelta entera y vuelve a empezar. `motion-safe:` lo deja quieto con `reduce`. */
+@keyframes spin {
+  to {
+    rotate: 360deg;
   }
 }
 

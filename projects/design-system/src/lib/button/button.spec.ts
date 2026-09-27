@@ -222,6 +222,12 @@ describe('Button', () => {
       expect(fixture.debugElement.query(By.css('ewms-icon[name="spinner"]'))).not.toBeNull();
     });
 
+    it('turns the spinner, and leaves it still under prefers-reduced-motion', () => {
+      const svg = button().querySelector('ewms-icon[name="spinner"] svg');
+      // `motion-safe:` es la condición: la animación solo existe sin `reduce`.
+      expect(svg?.classList.contains('motion-safe:animate-spin')).toBe(true);
+    });
+
     it('suppresses click and Enter, and stops bubbling to a parent listener', () => {
       button().click();
       button().dispatchEvent(

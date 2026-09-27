@@ -145,4 +145,28 @@ describe('Icon', () => {
       },
     );
   });
+
+  // Igual que el tamaño: jsdom no tiene la hoja; que gire y que se detenga con movimiento reducido
+  // lo afirma e2e/showroom.e2e.ts con los valores calculados.
+  describe('motion', () => {
+    it('turns the spinner, only where motion is welcome', async () => {
+      const { svg } = await render({ name: 'spinner', size: 'sm' });
+      expect([...svg.classList].sort()).toEqual([
+        'block',
+        'motion-safe:animate-spin',
+        'size-icon-sm',
+        'stroke-icon-sm',
+      ]);
+    });
+
+    it('keeps every other icon still', async () => {
+      for (const name of Object.keys(ICONS) as IconName[]) {
+        if (name === 'spinner') {
+          continue;
+        }
+        const { svg } = await render({ name });
+        expect([...svg.classList].filter((token) => token.includes('animate')), name).toEqual([]);
+      }
+    });
+  });
 });

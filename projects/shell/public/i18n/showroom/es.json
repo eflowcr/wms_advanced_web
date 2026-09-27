@@ -271,7 +271,8 @@
         "primaryBackground": "Fondo, variante Primary",
         "radius": "Radio de esquina",
         "secondaryBackground": "Fondo, variante Secondary",
-        "secondaryBorder": "Borde, variante Secondary"
+        "secondaryBorder": "Borde, variante Secondary",
+        "spinner": "Giro del spinner en Loading (quieto con movimiento reducido)"
       }
     },
     "contract": {

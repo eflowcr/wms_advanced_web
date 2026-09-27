@@ -271,7 +271,8 @@
         "primaryBackground": "Background, Primary variant",
         "radius": "Corner radius",
         "secondaryBackground": "Background, Secondary variant",
-        "secondaryBorder": "Border, Secondary variant"
+        "secondaryBorder": "Border, Secondary variant",
+        "spinner": "Spinner rotation in Loading (still with reduced motion)"
       }
     },
     "contract": {

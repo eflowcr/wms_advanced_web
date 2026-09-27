@@ -119,6 +119,7 @@
   --ms-50: 50ms;
   --ms-200: 200ms;
   --ms-300: 300ms;
+  --ms-1000: 1000ms;
   --ms-3000: 3000ms;
   --ms-5000: 5000ms;
 
@@ -287,6 +288,8 @@
   /* Entrada del cajón: se desliza en 200 ms, desacelerando (@keyframes en styles.css). Una propiedad
    * y no tres utilidades: duración y curva por clase registraban @property en la hoja inicial. */
   --animate-nav-drawer: nav-drawer-in var(--ms-200) var(--ease-out);
+  /* Giro del spinner: una vuelta por segundo a velocidad constante (@keyframes en styles.css). */
+  --animate-spin: spin var(--ms-1000) linear infinite;
 
   /* Capas del marco. `<main>` aísla la página: lo de adentro nunca se pinta sobre el marco, tenga la
    * capa que tenga. Tira y marca de agua; lo que flota (cajón, barra inferior, hoja, toasts) y su

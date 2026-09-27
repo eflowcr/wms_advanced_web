@@ -31,7 +31,6 @@ import {
   TOOLTIP,
 } from './routes';
 
-/** Las fuentes cambian todo ancho medido: nada se mide antes de que carguen. */
 /** La parada de Tab de una celda: ella, o su único control si lo tiene (patrón grid de las APG). */
 function cellStop(page: Page, scope: string, cell: string) {
   return page.locator(
@@ -39,6 +38,7 @@ function cellStop(page: Page, scope: string, cell: string) {
   );
 }
 
+/** Las fuentes cambian todo ancho medido: nada se mide antes de que carguen. */
 async function ready(page: Page): Promise<void> {
   await page.evaluate(async () => {
     await Promise.all(
@@ -264,6 +264,19 @@ test.describe('Loading does not change the size of the control', () => {
     expect(round(loadingBox?.width), 'Loading must not change the box').toBe(round(idleBox?.width));
     expect(round(loadingBox?.height)).toBe(round(idleBox?.height));
     await expect(loading).toHaveAttribute('aria-busy', 'true');
+  });
+
+  // D2: el arco era estático. Una sola animación, la de la hoja global, quieta con `reduce`.
+  test('the spinner turns, and stands still with reduced motion', async ({ page }) => {
+    await page.goto(BUTTON);
+    await ready(page);
+
+    const spinner = page.locator('[data-demo-iconbutton-loading] ewms-icon[name="spinner"] svg');
+    await expect(spinner).toHaveCSS('animation-name', 'spin');
+    await expect(spinner).toHaveCSS('animation-iteration-count', 'infinite');
+
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await expect(spinner).toHaveCSS('animation-name', 'none');
   });
 });
 
