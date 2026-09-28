@@ -54,6 +54,28 @@ test('every job has a time limit', async () => {
   }
 });
 
+/**
+ * Segundos de cada job en la última corrida real, la del PR que fusionó 3ff8116 (CI 36360922074,
+ * CodeQL 36360922076; de la matriz, la pata más larga). El tope es el doble, al minuto de arriba.
+ */
+const MEASURED = {
+  'ci.yml': { run: '36360922074', jobs: { verify: 190, smoke: 77, showroom: 164, secrets: 6 } },
+  'codeql.yml': { run: '36360922076', jobs: { analyze: 80 } },
+};
+
+test('every limit is twice what its job took in the measured run, rounded up, and cites it', async () => {
+  for (const [name, { run, jobs }] of Object.entries(MEASURED)) {
+    const text = await workflow(name);
+    assert.deepEqual(jobIds(text).sort(), Object.keys(jobs).sort(), `${name}: a job with no measurement`);
+    for (const [id, seconds] of Object.entries(jobs)) {
+      const limit = Number(/^ {4}timeout-minutes: (\d+)\s*$/m.exec(jobBlock(text, id))?.[1]);
+      assert.equal(limit, Math.ceil((2 * seconds) / 60), `${name}: ${id} took ${seconds} s`);
+    }
+    const raw = await readFile(path.join(ROOT, '.github', 'workflows', name), 'utf8');
+    assert.match(raw, new RegExp(`^\\s*#.*\\b${run}\\b`, 'm'), `${name} does not cite run ${run}`);
+  }
+});
+
 test('gitleaks is checked against its pinned and its official sha256 before it runs', async () => {
   const text = await workflow('ci.yml');
   assert.match(text, /GITLEAKS_SHA256: '[0-9a-f]{64}'/, 'no pinned sha256 for gitleaks');

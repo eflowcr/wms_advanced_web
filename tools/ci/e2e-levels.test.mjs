@@ -46,6 +46,11 @@ test('the showroom suite runs when what it documents changed', async () => {
     'package.json',
     'package-lock.json',
     'tools/e2e/serve.mjs',
+    // Lo que arma el build que la suite prueba, y las compuertas que la acompañan.
+    'angular.json',
+    'tsconfig.json',
+    'tsconfig.typecheck.json',
+    'tools/ci/check-design-tokens.mjs',
   ]) {
     assert.equal(runsShowroom(filter, [file]), true, `${file} debería disparar showroom`);
   }
@@ -57,7 +62,7 @@ test('and does not run for a change it does not document', async () => {
   for (const file of [
     'projects/api-client/src/public-api.ts',
     'projects/testing/src/public-api.ts',
-    'tools/ci/check-i18n.mjs',
+    'tools/vault/check-token-names.mjs',
     'README.md',
     '.github/dependabot.yml',
   ]) {
@@ -103,6 +108,20 @@ test('the domain level runs in CI, even while it has no test', async () => {
 
   assert.match(workflow, /--project=domain\b/);
   assert.match(workflow, /--pass-with-no-tests\b/);
+});
+
+test('smoke and domain are two commands: a smoke that finds no test fails', async () => {
+  const runs = (await job('smoke'))
+    .split(/\r?\n/)
+    .filter((line) => /^\s*run: /.test(line))
+    .map((line) => line.trim());
+  const smoke = runs.filter((line) => /e2e:smoke/.test(line));
+  const domain = runs.filter((line) => /--project=domain\b/.test(line));
+
+  assert.equal(smoke.length, 1, 'one smoke command in the smoke job');
+  assert.doesNotMatch(smoke[0] ?? '', /--pass-with-no-tests|--project=domain/);
+  assert.equal(domain.length, 1, 'one domain command in the smoke job');
+  assert.match(domain[0] ?? '', /--pass-with-no-tests\b/);
 });
 
 /**
