@@ -17,7 +17,7 @@
       [value]="value()"
       [disabled]="disabled()"
       (input)="onInput($event)"
-      (keydown.enter)="submit()"
+      (keydown)="onKeydown($event)"
     />
 
     <!-- Sobre el relleno derecho del campo, como el sufijo de Input. -->

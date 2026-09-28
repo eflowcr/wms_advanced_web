@@ -53,8 +53,8 @@ const DRAWER_CLASSES =
 
 /**
  * Árbol de navegación: no conoce router, menú real ni permisos. Rail o panel por token; plegado,
- * ícono sobre etiqueta corta y tooltip. En pantalla media, abierto es un cajón con velo que atrapa
- * el foco. Teclado treeview de las APG. Ver vault: Navegacion.
+ * ícono sobre etiqueta corta y tooltip. En pantalla media, abierto es un cajón modal con velo que
+ * atrapa el foco. Teclado treeview de las APG. Ver vault: Navegacion.
  */
 @Component({
   selector: 'ewms-nav-rail',
@@ -101,6 +101,8 @@ export class NavRail {
   private readonly panel = viewChild.required<ElementRef<HTMLElement>>('panel');
 
   private trap: FocusTrap | null = null;
+  /** Deshace el `inert` de lo que tapaba el velo. */
+  private restore: (() => void) | null = null;
   /** A quién devolver el foco al cerrar el cajón: la hamburguesa que lo abrió. Se recuerda. */
   private opener: HTMLElement | null = null;
 
@@ -147,7 +149,12 @@ export class NavRail {
       const open = this.drawerOpen();
       untracked(() => (open ? this.trapFocus() : this.releaseFocus()));
     });
-    inject(DestroyRef).onDestroy(() => this.trap?.destroy());
+    inject(DestroyRef).onDestroy(() => {
+      this.trap?.destroy();
+      // Sin trampa vigente, un `becomeModal` que llegue tarde no marca nada.
+      this.trap = null;
+      this.restore?.();
+    });
   }
 
   /** Exactamente un item con `tabindex="0"`. */
@@ -221,15 +228,30 @@ export class NavRail {
         }
         this.trap = this.focusTraps.create(this.panel().nativeElement);
         void this.trap.focusFirstTabbableElementWhenReady();
+        void this.becomeModal(this.trap);
       },
       { injector: this.injector },
     );
   }
 
+  /** Perezoso: volver modal el cajón no pesa en la ruta crítica de `/` (regla 17). */
+  private async becomeModal(trap: FocusTrap): Promise<void> {
+    const { makeModal } = await import('../overlay/make-modal');
+    const host = this.host.nativeElement;
+    const veil = host.querySelector('[data-nav-drawer-veil]');
+    // Cerrado, o abierto otra vez, mientras cargaba: esa trampa ya no es la vigente.
+    if (this.trap === trap && veil !== null) {
+      this.restore = makeModal(host, veil, this.label());
+    }
+  }
+
+  // Primero se quita `inert`: un elemento inerte no recibe el foco que se le devuelve.
   private releaseFocus(): void {
     if (this.trap === null) {
       return;
     }
+    this.restore?.();
+    this.restore = null;
     this.trap.destroy();
     this.trap = null;
     if (this.opener?.isConnected) {

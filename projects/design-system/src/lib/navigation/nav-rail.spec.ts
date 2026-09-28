@@ -358,6 +358,31 @@ describe('NavRail', () => {
       expect(document.querySelectorAll('.cdk-focus-trap-anchor').length).toBe(2);
     });
 
+    it('open, it is a modal dialog, and the page under its veil is inert until it closes', async () => {
+      const page = document.createElement('main');
+      // Sobre el velo, como la cabecera del marco con su hamburguesa: sigue al alcance.
+      const header = document.createElement('header');
+      header.style.cssText = 'position: sticky; z-index: 20';
+      document.body.append(page, header);
+      await open();
+      const rail = fixture.nativeElement.querySelector('ewms-nav-rail') as HTMLElement;
+
+      // Lo que lo vuelve modal carga perezoso: se espera a que llegue.
+      await vi.waitFor(() => expect(rail.getAttribute('aria-modal')).toBe('true'));
+      expect(rail.getAttribute('role')).toBe('dialog');
+      expect(rail.getAttribute('aria-modal')).toBe('true');
+      expect(rail.getAttribute('aria-label')).toBe('Menú principal');
+      expect(page.hasAttribute('inert')).toBe(true);
+      expect(header.hasAttribute('inert')).toBe(false);
+
+      host.expanded.set(false);
+      await settle();
+      expect(rail.hasAttribute('aria-modal')).toBe(false);
+      expect(document.querySelectorAll('[inert]').length).toBe(0);
+      page.remove();
+      header.remove();
+    });
+
     it('the veil asks to close it too', async () => {
       await open();
       veil()?.click();
@@ -420,6 +445,5 @@ describe('NavRail backdrop', () => {
     expect(element.querySelector('[role="tree"]')?.className).toContain('relative');
     expect(element.querySelector('nav')?.className).toContain('relative');
   });
-
 
 });

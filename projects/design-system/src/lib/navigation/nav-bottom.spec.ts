@@ -217,6 +217,27 @@ describe('NavBottom', () => {
     });
   });
 
+  it('OPEN, THE SHEET IS MODAL: the page under its veil is inert until it closes', async () => {
+    const page = document.createElement('main');
+    document.body.appendChild(page);
+    more().click();
+    await settle();
+
+    // Lo que la vuelve modal carga perezoso: se espera a que llegue.
+    await vi.waitFor(() => expect(sheet()?.getAttribute('aria-modal')).toBe('true'));
+    expect(sheet()?.getAttribute('role')).toBe('dialog');
+    expect(sheet()?.getAttribute('aria-modal')).toBe('true');
+    expect(sheet()?.getAttribute('aria-label')).toBe('Más');
+    expect(page.hasAttribute('inert')).toBe(true);
+    expect(fixture.nativeElement.querySelector('[data-nav-bottom]')?.hasAttribute('inert')).toBe(true);
+
+    (fixture.nativeElement.querySelector('[data-nav-bottom-close]') as HTMLElement).click();
+    await settle();
+    expect(document.querySelectorAll('[inert]').length).toBe(0);
+    expect(document.activeElement).toBe(more());
+    page.remove();
+  });
+
   it('with nothing left over there is no «Más» at all', async () => {
     host.items.set([{ id: 'only', label: 'Solo', icon: 'home', route: '/' }]);
     await settle();

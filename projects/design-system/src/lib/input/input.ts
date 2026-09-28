@@ -138,7 +138,6 @@ export class Input implements FormValueControl<string> {
     return this.type();
   });
 
-
   protected readonly hasPasswordToggle = computed(
     () =>
       this.isPassword() && Boolean(this.showPasswordLabel()) && Boolean(this.hidePasswordLabel()),
@@ -207,7 +206,6 @@ export class Input implements FormValueControl<string> {
   protected readonly hintClasses = computed(() =>
     this.isInvalid() ? 'text-danger' : 'text-secondary',
   );
-
 
   /**
    * Del contrato `FormUiControl`: el control real y no el host, que no es enfocable. De acá entra

@@ -22,6 +22,7 @@ import {
   INPUT,
   PAGINATION,
   RADIO,
+  SEARCH_BOX,
   SELECT,
   SPACING,
   TABLE,
@@ -528,6 +529,31 @@ test.describe('the component sheets measure what they claim', () => {
     await page.mouse.move(0, 0);
     await host.hover();
     await expect(page.locator('[role="tooltip"]')).toHaveCount(0);
+  });
+});
+
+test.describe('the search box', () => {
+  test('an Enter that confirms a composition does not search: it only chose the character', async ({
+    page,
+  }) => {
+    await page.goto(SEARCH_BOX);
+    await ready(page);
+    const field = page.locator('[data-demo-search-box] input');
+    const last = page.locator('[data-demo-last]');
+    const before = await last.textContent();
+
+    await field.fill('caja');
+    await field.evaluate((input) =>
+      input.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'Enter', isComposing: true, bubbles: true }),
+      ),
+    );
+    // Dos cuadros: la detección de cambios ya corrió, y una búsqueda se vería acá.
+    await page.evaluate(() => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done))));
+    expect(await last.textContent()).toBe(before);
+
+    await field.press('Enter');
+    await expect(last).toHaveText('caja');
   });
 });
 
