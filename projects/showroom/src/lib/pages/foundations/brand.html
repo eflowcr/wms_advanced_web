@@ -27,7 +27,7 @@
 
   <section class="flex flex-col gap-4" aria-labelledby="brand-shapes">
     <h2 id="brand-shapes" class="text-h2">{{ 'showroom.brand.shapes.title' | transloco }}</h2>
-    <ul class="grid grid-cols-[repeat(auto-fit,minmax(min(20rem,100%),1fr))] gap-4">
+    <ul class="grid grid-cols-cards gap-4">
       @for (shape of shapes; track shape.id) {
         <li class="flex flex-col gap-2" [attr.data-shape]="shape.id">
           <ewms-demo-frame ground="surface" [label]="shape.name | transloco">
@@ -48,7 +48,7 @@
   <section class="flex flex-col gap-4" aria-labelledby="brand-grounds">
     <h2 id="brand-grounds" class="text-h2">{{ 'showroom.brand.grounds.title' | transloco }}</h2>
     <p class="text-secondary" [ewmsProse]="'showroom.brand.grounds.intro' | transloco"></p>
-    <div class="grid grid-cols-[repeat(auto-fit,minmax(min(20rem,100%),1fr))] gap-4">
+    <div class="grid grid-cols-cards gap-4">
       <ewms-demo-frame
         ground="canvas"
         [label]="'showroom.brand.grounds.monoCanvas.frame' | transloco"
@@ -89,7 +89,7 @@
       <span class="text-h4 text-secondary">{{ 'showroom.brand.space.pending' | transloco }}</span>
     </h2>
     <p class="text-secondary">{{ 'showroom.brand.space.intro' | transloco }}</p>
-    <div class="grid grid-cols-[repeat(auto-fit,minmax(min(20rem,100%),1fr))] gap-4">
+    <div class="grid grid-cols-cards gap-4">
       <ewms-demo-frame ground="surface" [label]="'showroom.brand.space.minSize.frame' | transloco">
         <div class="flex items-end gap-6">
           <div class="flex flex-col items-center gap-2">
@@ -143,7 +143,7 @@
 
   <section class="flex flex-col gap-4" aria-labelledby="brand-misuse">
     <h2 id="brand-misuse" class="text-h2">{{ 'showroom.brand.misuse.title' | transloco }}</h2>
-    <ul class="grid grid-cols-[repeat(auto-fit,minmax(min(18rem,100%),1fr))] gap-4">
+    <ul class="grid grid-cols-tiles gap-4">
       <li class="flex flex-col gap-2">
         <ewms-demo-frame ground="surface">
           <img
@@ -207,7 +207,7 @@
   <section class="flex flex-col gap-4" aria-labelledby="brand-eprac">
     <h2 id="brand-eprac" class="text-h2">{{ 'showroom.brand.eprac.title' | transloco }}</h2>
     <p class="text-secondary">{{ 'showroom.brand.eprac.intro' | transloco }}</p>
-    <ul class="grid grid-cols-[repeat(auto-fit,minmax(min(18rem,100%),1fr))] gap-4">
+    <ul class="grid grid-cols-tiles gap-4">
       @for (logo of eprac; track logo.id) {
         <li class="flex flex-col gap-2" [attr.data-eprac]="logo.id">
           <ewms-demo-frame [ground]="logo.ground" [label]="logo.name | transloco">

@@ -26,7 +26,7 @@
   <!-- ================================================ 2. Qué resuelve / cuándo no -->
   <section class="flex flex-col gap-4" aria-labelledby="se-purpose" data-block="2-proposito">
     <h2 id="se-purpose" class="text-h2">{{ 'showroom.common.sections.purpose' | transloco }}</h2>
-    <div class="grid grid-cols-[repeat(auto-fit,minmax(min(20rem,100%),1fr))] gap-4">
+    <div class="grid grid-cols-cards gap-4">
       <div class="flex flex-col gap-2 rounded-md border border-default bg-surface p-4">
         <h3 class="text-h3">{{ 'showroom.common.sections.solves' | transloco }}</h3>
         <p [ewmsProse]="'showroom.select.purpose.solves' | transloco"></p>
@@ -50,7 +50,7 @@
   <section class="flex flex-col gap-4" aria-labelledby="se-demo" data-block="3-demo">
     <h2 id="se-demo" class="text-h2">{{ 'showroom.select.demo.title' | transloco }}</h2>
     <p class="text-secondary" [ewmsProse]="'showroom.select.demo.intro' | transloco"></p>
-    <div class="grid grid-cols-[repeat(auto-fit,minmax(min(20rem,100%),1fr))] gap-6">
+    <div class="grid grid-cols-cards gap-6">
       <ewms-demo-frame ground="canvas" [label]="'showroom.select.demo.short.frame' | transloco">
         <div class="flex flex-col gap-3" data-demo-select>
           <ewms-select
@@ -107,7 +107,7 @@
       </ewms-demo-frame>
     </div>
 
-    <div class="grid grid-cols-[repeat(auto-fit,minmax(min(20rem,100%),1fr))] gap-4">
+    <div class="grid grid-cols-cards gap-4">
       <div class="flex flex-col gap-2 rounded-md border border-strong bg-secondary p-3">
         <p class="text-h4">{{ 'showroom.select.demo.behaviour.title' | transloco }}</p>
         <div class="flex flex-wrap gap-2">
@@ -192,7 +192,7 @@
     <h2 id="se-variants" class="text-h2">{{ 'showroom.common.sections.variants' | transloco }}</h2>
     <p class="text-secondary" [ewmsProse]="'showroom.select.variants.intro' | transloco"></p>
 
-    <div class="grid grid-cols-[repeat(auto-fit,minmax(min(20rem,100%),1fr))] gap-4">
+    <div class="grid grid-cols-cards gap-4">
       <div class="flex flex-col gap-2 rounded-md border border-default bg-surface p-4">
         <h3 class="text-h4">{{ 'showroom.select.variants.scanner.title' | transloco }}</h3>
         <p
@@ -214,7 +214,7 @@
     </div>
 
     <h3 class="text-h3">{{ 'showroom.select.variants.selectedActive.title' | transloco }}</h3>
-    <div class="grid grid-cols-[repeat(auto-fit,minmax(min(18rem,100%),1fr))] gap-4">
+    <div class="grid grid-cols-tiles gap-4">
       <div class="flex flex-col gap-2 rounded-md border border-default bg-surface p-4">
         <h4 class="text-h4">
           {{ 'showroom.select.variants.selectedActive.selected.title' | transloco }}

@@ -26,7 +26,7 @@
   <!-- ================================================ 2. Qué resuelve / cuándo no -->
   <section class="flex flex-col gap-4" aria-labelledby="ra-purpose" data-block="2-proposito">
     <h2 id="ra-purpose" class="text-h2">{{ 'showroom.common.sections.purpose' | transloco }}</h2>
-    <div class="grid grid-cols-[repeat(auto-fit,minmax(min(20rem,100%),1fr))] gap-4">
+    <div class="grid grid-cols-cards gap-4">
       <div class="flex flex-col gap-2 rounded-md border border-default bg-surface p-4">
         <h3 class="text-h3">{{ 'showroom.common.sections.solves' | transloco }}</h3>
         <p [ewmsProse]="'showroom.radio.purpose.solves' | transloco"></p>
@@ -50,7 +50,7 @@
   <!-- ========================================================= 3. Demo principal -->
   <section class="flex flex-col gap-4" aria-labelledby="ra-demo" data-block="3-demo">
     <h2 id="ra-demo" class="text-h2">{{ 'showroom.common.sections.demo' | transloco }}</h2>
-    <div class="grid grid-cols-[repeat(auto-fit,minmax(min(24rem,100%),1fr))] gap-6">
+    <div class="grid grid-cols-demos gap-6">
       <ewms-demo-frame ground="canvas" [label]="'showroom.radio.demo.frame' | transloco">
         <div class="flex flex-col gap-3" data-demo-group>
           <!-- El grupo es el campo: el fieldset con su legend lo dibuja él. -->

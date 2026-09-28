@@ -32,7 +32,7 @@
 
   <section class="flex flex-col gap-4" aria-labelledby="spacing-radii">
     <h2 id="spacing-radii" class="text-h2">{{ 'showroom.spacing.radii.title' | transloco }}</h2>
-    <ul class="grid grid-cols-[repeat(auto-fit,minmax(min(16rem,100%),1fr))] gap-4">
+    <ul class="grid grid-cols-samples gap-4">
       @for (radius of radii; track radius.token) {
         <li class="flex flex-col gap-2" [attr.data-radius]="radius.token">
           <span

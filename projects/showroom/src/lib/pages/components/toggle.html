@@ -26,7 +26,7 @@
   <!-- ================================================ 2. Qué resuelve / cuándo no -->
   <section class="flex flex-col gap-4" aria-labelledby="tg-purpose" data-block="2-proposito">
     <h2 id="tg-purpose" class="text-h2">{{ 'showroom.common.sections.purpose' | transloco }}</h2>
-    <div class="grid grid-cols-[repeat(auto-fit,minmax(min(20rem,100%),1fr))] gap-4">
+    <div class="grid grid-cols-cards gap-4">
       <div class="flex flex-col gap-2 rounded-md border border-default bg-surface p-4">
         <h3 class="text-h3">{{ 'showroom.common.sections.solves' | transloco }}</h3>
         <p [ewmsProse]="'showroom.toggle.purpose.solves' | transloco"></p>
@@ -46,7 +46,7 @@
     </div>
     <div class="flex flex-col gap-2 rounded-md border border-strong bg-secondary p-4">
       <h3 class="text-h4">{{ 'showroom.toggle.versus.title' | transloco }}</h3>
-      <div class="grid grid-cols-[repeat(auto-fit,minmax(min(18rem,100%),1fr))] gap-4">
+      <div class="grid grid-cols-tiles gap-4">
         <div class="flex flex-col gap-1">
           <h4 class="text-h4">{{ 'showroom.catalog.toggle.name' | transloco }}</h4>
           <p class="text-caption" [ewmsProse]="'showroom.toggle.versus.toggle' | transloco"></p>
@@ -64,7 +64,7 @@
   <section class="flex flex-col gap-4" aria-labelledby="tg-demo" data-block="3-demo">
     <h2 id="tg-demo" class="text-h2">{{ 'showroom.common.sections.demo' | transloco }}</h2>
     <p class="text-secondary" [ewmsProse]="'showroom.toggle.demo.intro' | transloco"></p>
-    <div class="grid grid-cols-[repeat(auto-fit,minmax(min(24rem,100%),1fr))] gap-6">
+    <div class="grid grid-cols-demos gap-6">
       <ewms-demo-frame ground="canvas" [label]="'showroom.toggle.demo.frame' | transloco">
         <div class="flex flex-col gap-3" data-demo-preferences>
           <ul class="flex flex-col gap-3">

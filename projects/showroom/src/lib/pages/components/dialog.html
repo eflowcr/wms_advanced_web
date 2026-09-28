@@ -26,7 +26,7 @@
   <!-- ================================================ 2. Qué resuelve / cuándo no -->
   <section class="flex flex-col gap-4" aria-labelledby="di-purpose" data-block="2-proposito">
     <h2 id="di-purpose" class="text-h2">{{ 'showroom.common.sections.purpose' | transloco }}</h2>
-    <div class="grid grid-cols-[repeat(auto-fit,minmax(min(20rem,100%),1fr))] gap-4">
+    <div class="grid grid-cols-cards gap-4">
       <div class="flex flex-col gap-2 rounded-md border border-default bg-surface p-4">
         <h3 class="text-h3">{{ 'showroom.common.sections.solves' | transloco }}</h3>
         <p [ewmsProse]="'showroom.modal.purpose.solves' | transloco"></p>
@@ -50,7 +50,7 @@
   <section class="flex flex-col gap-4" aria-labelledby="di-demo" data-block="3-demo">
     <h2 id="di-demo" class="text-h2">{{ 'showroom.common.sections.demo' | transloco }}</h2>
     <p class="text-secondary" [ewmsProse]="'showroom.modal.demo.intro' | transloco"></p>
-    <div class="grid grid-cols-[repeat(auto-fit,minmax(min(24rem,100%),1fr))] gap-6">
+    <div class="grid grid-cols-demos gap-6">
       <ewms-demo-frame ground="canvas" [label]="'showroom.modal.demo.frame' | transloco">
         <div class="flex flex-col gap-4" data-demo-dialog>
           <div class="flex flex-wrap gap-2">
@@ -225,7 +225,7 @@
     ><code>{{ snippet }}</code></pre>
 
     <h3 class="text-h3">{{ 'showroom.modal.a11y.title' | transloco }}</h3>
-    <div class="grid grid-cols-[repeat(auto-fit,minmax(min(20rem,100%),1fr))] gap-4">
+    <div class="grid grid-cols-cards gap-4">
       <div class="flex flex-col gap-2 rounded-md border border-success bg-success-surface p-4">
         <h4 class="text-h4">{{ 'showroom.modal.a11y.name.title' | transloco }}</h4>
         <p class="text-caption" [ewmsProse]="'showroom.modal.a11y.name.ids' | transloco"></p>
