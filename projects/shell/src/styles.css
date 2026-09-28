@@ -2,7 +2,7 @@
  * tokens.css va acá, junto al import de Tailwind: v4 solo convierte un `@theme` en utilidades
  * si lo resuelve en la hoja que procesa. Sin valores crudos: la compuerta 10 la escanea.
  */
-@import 'tailwindcss';
+@import 'tailwindcss' source(none);
 @import '../../design-system/src/styles/tokens.css';
 
 /*
@@ -14,8 +14,14 @@
 /* La trampa de foco y el anuncio del CDK esconden nodos con `.cdk-visually-hidden`. */
 @import '@angular/cdk/a11y-prebuilt.css';
 
-/* Los íconos son geometría y nombres, no clases: escaneados, sus nombres emitían utilidades. */
-@source not '../../design-system/src/icons';
+/*
+ * Tailwind lee solo el código de UI, sin specs (decisión del usuario, 2026-09-26): las palabras de
+ * pruebas, diccionarios, tools y docs emitían CSS muerto. Los íconos (src/icons) quedan afuera.
+ */
+@source '../../design-system/src/lib';
+@source '../../showroom/src';
+@source '../../shell/src';
+@source not '../../**/*.spec.ts';
 
 /*
  * Tailwind como motor, no como design system (ADR 0009). `--*: initial` borra su tema: solo
@@ -60,6 +66,8 @@
   --radius-full: var(--radius-full);
   /* El Modal está un nivel más allá de la escala de radios: no es `lg` con otro nombre. */
   --radius-dialog: var(--radius-dialog);
+  /* El borde del menú lateral hacia el contenido. */
+  --radius-nav: var(--radius-nav);
 
   /* Un solo desenfoque, el del fondo del Modal. */
   --blur-dialog: var(--backdrop-blur);
@@ -81,10 +89,17 @@
    */
 
   --shell-header-height: var(--shell-header-height);
+  --shell-body-height: var(--shell-body-height);
   --nav-rail-width: var(--nav-rail-width);
   --nav-panel-width: var(--nav-panel-width);
+  --nav-row-height: var(--nav-row-height);
+  --nav-row-height-collapsed: var(--nav-row-height-collapsed);
+  --search-max-width: var(--search-max-width);
+  --chip-height: var(--chip-height);
   --nav-bottom-height: var(--nav-bottom-height);
-  --tab-height: var(--tab-height);
+
+  /* Animaciones: el token en tokens.css y los @keyframes más abajo; siempre con `motion-safe:`. */
+  --animate-nav-drawer: var(--animate-nav-drawer);
 
   --shadow-sm: var(--shadow-sm);
   --shadow-md: var(--shadow-md);
@@ -96,6 +111,7 @@
   --shadow-pin-end: var(--shadow-pin-end);
 
   --background-color-canvas: var(--color-canvas);
+  --background-color-shell-header: var(--color-shell-header-bg);
   --background-color-surface: var(--color-surface);
   --background-color-brand-navy: var(--color-brand-navy);
   --background-color-secondary: var(--color-bg-secondary);
@@ -123,6 +139,10 @@
   --background-color-row-danger: var(--color-row-danger);
   --background-color-row-warning: var(--color-row-warning);
   --background-color-overlay: var(--color-overlay);
+  --background-color-chip: var(--color-chip-bg);
+  --background-color-chip-hover: var(--color-chip-bg-hover);
+  --background-color-chip-close-hover: var(--color-chip-close-hover);
+  --background-color-chip-active-close-hover: var(--color-chip-active-close-hover);
 
   --text-color-primary: var(--color-text-primary);
   --text-color-secondary: var(--color-text-secondary);
@@ -144,9 +164,7 @@
   --border-color-neutral: var(--color-neutral-border);
 
   --outline-color-focus: var(--color-focus-ring);
-  --outline-color-focus-on-dark: var(--color-focus-ring-on-dark);
   --ring-color-focus: var(--color-focus-ring);
-  --ring-color-focus-on-dark: var(--color-focus-ring-on-dark);
 }
 
 /*
@@ -198,6 +216,13 @@
     U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329,
     U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F,
     U+A720-A7FF;
+}
+
+/* El cajón entra desde el borde; es el mismo `<nav>` que cambia de clases, no uno nuevo. */
+@keyframes nav-drawer-in {
+  from {
+    translate: -100%;
+  }
 }
 
 /* Peso explícito para no depender de `normal` contra una fuente variable. */

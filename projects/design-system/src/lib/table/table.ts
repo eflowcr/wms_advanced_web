@@ -38,9 +38,8 @@ import { KeyboardShortcuts } from '../keyboard/keyboard-shortcuts';
 import { Input as TextInput } from '../input/input';
 import { Pagination } from '../pagination/pagination';
 import { Tooltip } from '../tooltip/tooltip';
-
+import { DELAY_SEARCH_INPUT_TOKEN } from '../select/select.types';
 import { readMilliseconds } from '../tokens/read-token';
-const DELAY_SEARCH_INPUT_TOKEN = '--delay-search-input';
 import { CellTemplate, TableColumn } from './column';
 import { TABLE_CONTEXT, type TableContext } from './table-context';
 import { TableFilters } from './table-filters';
@@ -95,7 +94,6 @@ import type { FlatRow } from './tree';
 
 export type { CellContext } from './column';
 export { TableColumn, CellTemplate } from './column';
-export type { FlatRow } from './tree';
 
 @Directive({ selector: '[ewmsDetail]' })
 export class DetailTemplate<T = unknown> {

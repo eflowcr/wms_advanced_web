@@ -138,7 +138,6 @@ export class Input implements FormValueControl<string> {
     return this.type();
   });
 
-  protected readonly hasPrefixIcon = computed(() => this.isSearch());
 
   protected readonly hasPasswordToggle = computed(
     () =>
@@ -169,7 +168,7 @@ export class Input implements FormValueControl<string> {
   /** El relleno de un lado pisa al horizontal: Tailwind lo emite después, sin importar el orden. */
   protected readonly paddingClasses = computed(() => {
     const classes = [FIELD_PADDING_CLASSES[this.size()]];
-    if (this.hasPrefixIcon()) {
+    if (this.isSearch()) {
       classes.push(PREFIX_PADDING_CLASSES[this.size()]);
     }
     if (this.hasSuffix()) {

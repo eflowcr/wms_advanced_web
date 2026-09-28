@@ -1,4 +1,13 @@
-import { MENU_DESTINATIONS, menuEntryFor, routeMatches } from './menu';
+import { DICTIONARIES } from '../i18n.testing';
+import { MENU, MENU_DESTINATIONS, menuEntryFor, routeMatches } from './menu';
+
+/** El texto de una clave con puntos. */
+function text(dictionary: unknown, key: string): string {
+  const value = key
+    .split('.')
+    .reduce<unknown>((node, part) => (node as Record<string, unknown>)[part], dictionary);
+  return String(value);
+}
 
 describe('the menu as the name of a route', () => {
   it('matches a route, its children and its query string, and nothing that only shares a prefix', () => {
@@ -23,5 +32,24 @@ describe('the menu as the name of a route', () => {
     expect(menuEntryFor('/')?.route).toBe('/');
     expect(menuEntryFor('/no-existe')).toBeUndefined();
     expect(MENU_DESTINATIONS.every((entry) => entry.route !== undefined)).toBe(true);
+  });
+});
+
+describe('the folded menu', () => {
+  it('shows only words that are inside the full name, in both languages (WCAG 2.5.3)', () => {
+    // Plegado se ve la etiqueta corta y el nombre accesible es la entera: quien dicta lo que ve
+    // tiene que acertar. Ver vault: Navegacion.
+    const shortened = MENU.flatMap((entry) => [entry, ...(entry.children ?? [])]).filter(
+      (entry) => entry.shortLabelKey !== undefined,
+    );
+    expect(shortened.length).toBeGreaterThan(0);
+
+    for (const lang of ['es', 'en'] as const) {
+      for (const entry of shortened) {
+        const full = text(DICTIONARIES[lang], entry.labelKey).toLocaleLowerCase(lang);
+        const short = text(DICTIONARIES[lang], entry.shortLabelKey!).toLocaleLowerCase(lang);
+        expect(full, `${lang}: ${entry.id}`).toContain(short);
+      }
+    }
   });
 });

@@ -4,7 +4,5 @@
  */
 export { showroomRoutes } from './lib/showroom.routes';
 
-export { provideShowroomDesignSystem } from './lib/showroom.providers';
-
 /** Para que el shell nombre una página del catálogo (favorito, pestaña) con su nombre traducido. */
 export { catalogKeyFor } from './lib/catalog';

@@ -57,11 +57,6 @@ export class ScanDetector {
     return this.run.length >= SCAN_MIN_KEYSTROKES ? BURST : KEY;
   }
 
-  /** Para decidir sin darle una tecla (lo usa el selector con búsqueda ante Enter). */
-  get length(): number {
-    return this.run.length;
-  }
-
   /** Se llama cuando la superficie pierde el foco. */
   reset(): void {
     this.run = [];

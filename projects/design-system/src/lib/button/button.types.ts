@@ -3,6 +3,8 @@ import type { IconSize } from '../icon/icon';
 export type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'ghost' | 'link';
 export type ButtonSize = 'sm' | 'md' | 'lg';
 export type ButtonIconPosition = 'left' | 'right';
+/** El fondo donde va el botón. Sobre navy solo cambia `ghost`: las demás traen su propio relleno. */
+export type ButtonGround = 'surface' | 'navy';
 
 /** `lg` usa el icono `md` a propósito: uno más grande desbalancea una barra de herramientas. */
 export const BUTTON_ICON_SIZES: Readonly<Record<ButtonSize, IconSize>> = {
@@ -52,7 +54,11 @@ export const BUTTON_BASE_CLASSES =
  * oscurece el texto (4.38:1 no pasa, 5.65:1 sí) y en línea no hay hover. Link descansa en el tono
  * de hover: el de marca mide 4.31:1 sobre la superficie de peligro. Ver vault: Boton.
  */
-export function buttonVariantClasses(variant: ButtonVariant, disabled: boolean): string {
+export function buttonVariantClasses(
+  variant: ButtonVariant,
+  disabled: boolean,
+  ground: ButtonGround = 'surface',
+): string {
   if (disabled) {
     switch (variant) {
       case 'primary':
@@ -75,6 +81,10 @@ export function buttonVariantClasses(variant: ButtonVariant, disabled: boolean):
     case 'danger':
       return 'bg-danger hover:bg-danger-hover active:bg-danger-active text-on-primary cursor-pointer';
     case 'ghost':
+      // Sobre navy, claro y con el hover de las filas del menú (la hamburguesa, 2026-09-25).
+      if (ground === 'navy') {
+        return 'bg-transparent hover:bg-primary-hover cursor-pointer text-on-dark';
+      }
       return (
         'bg-transparent hover:bg-ghost-hover cursor-pointer ' +
         'text-(color:--color-bg-primary) hover:text-(color:--color-bg-primary-hover)'
@@ -85,7 +95,10 @@ export function buttonVariantClasses(variant: ButtonVariant, disabled: boolean):
 }
 
 /** Hereda el frente, salvo donde el texto de la variante no es lo que debería girar. */
-export function buttonSpinnerColor(variant: ButtonVariant): string {
+export function buttonSpinnerColor(variant: ButtonVariant, ground: ButtonGround = 'surface'): string {
+  if (variant === 'ghost' && ground === 'navy') {
+    return 'inherit';
+  }
   switch (variant) {
     case 'secondary':
       return 'var(--color-text-secondary)';

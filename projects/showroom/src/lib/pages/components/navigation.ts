@@ -17,7 +17,11 @@ import { PropTable, type PropRow } from '../../ui/prop-table';
 import { Prose } from '../../ui/prose';
 import { TokenValue } from '../../ui/token-value';
 import { translated } from '../../ui/translated';
-import { DEEP_TRAIL_RECORDS, RAIL_FOOTER_SESSION } from './navigation.fixtures';
+import {
+  DEEP_TRAIL_RECORDS,
+  RAIL_FOOTER_CUSTOMER,
+  SHEET_FOOTER_STAMP,
+} from './navigation.fixtures';
 
 /** Una pestaña abierta sin su etiqueta: la etiqueta sale del árbol traducido. */
 type OpenTab = Omit<Tab, 'label'>;
@@ -25,7 +29,8 @@ type OpenTab = Omit<Tab, 'label'>;
 /**
  * t(showroom.navigation.props.rail.items, showroom.navigation.props.rail.label,
  *   showroom.navigation.props.rail.activeId, showroom.navigation.props.rail.expanded,
- *   showroom.navigation.props.rail.toggleLabel, showroom.navigation.props.rail.itemSelect,
+ *   showroom.navigation.props.rail.toggleLabel, showroom.navigation.props.rail.drawer,
+ *   showroom.navigation.props.rail.itemSelect,
  *   showroom.navigation.props.rail.expandedChange, showroom.navigation.props.rail.top,
  *   showroom.navigation.props.rail.footer)
  */
@@ -57,8 +62,14 @@ const RAIL_PROPS: readonly PropRow[] = [
   {
     name: 'toggleLabel',
     type: 'string',
-    default: '—',
+    default: "''",
     description: 'showroom.navigation.props.rail.toggleLabel',
+  },
+  {
+    name: 'drawer',
+    type: 'boolean',
+    default: 'false',
+    description: 'showroom.navigation.props.rail.drawer',
   },
   {
     name: 'itemSelect',
@@ -162,27 +173,45 @@ const CRUMB_PROPS: readonly PropRow[] = [
 ];
 
 /**
- * t(showroom.navigation.anatomy.parts.railBackground, showroom.navigation.anatomy.parts.textOnNavy,
- *   showroom.navigation.anatomy.parts.activePill, showroom.navigation.anatomy.parts.activeText,
+ * El marco (decisiones del usuario, 2026-09-25): menú navy con rutas, chips, subrayado y cajón.
+ * t(showroom.navigation.anatomy.parts.railBackground, showroom.navigation.anatomy.parts.rowHover,
+ *   showroom.navigation.anatomy.parts.activeRow, showroom.navigation.anatomy.parts.activeText,
  *   showroom.navigation.anatomy.parts.railWidth, showroom.navigation.anatomy.parts.panelWidth,
- *   showroom.navigation.anatomy.parts.tabHeight, showroom.navigation.anatomy.parts.bottomHeight,
+ *   showroom.navigation.anatomy.parts.railCorner,
+ *   showroom.navigation.anatomy.parts.rowHeight, showroom.navigation.anatomy.parts.rowHeightCollapsed,
+ *   showroom.navigation.anatomy.parts.drawerTransition, showroom.navigation.anatomy.parts.chip,
+ *   showroom.navigation.anatomy.parts.chipHover, showroom.navigation.anatomy.parts.chipClose,
+ *   showroom.navigation.anatomy.parts.chipFade, showroom.navigation.anatomy.parts.tabHeight,
+ *   showroom.navigation.anatomy.parts.tabIndicator, showroom.navigation.anatomy.parts.bottomHeight,
  *   showroom.navigation.anatomy.parts.bottomBreakpoint,
- *   showroom.navigation.anatomy.parts.focusRingOnNavy)
+ *   showroom.navigation.anatomy.parts.drawerBreakpoint)
  */
 const ANATOMY: readonly { readonly part: string; readonly token: string }[] = [
-  { part: 'showroom.navigation.anatomy.parts.railBackground', token: '--color-brand-navy' },
-  { part: 'showroom.navigation.anatomy.parts.textOnNavy', token: '--color-text-on-dark' },
-  { part: 'showroom.navigation.anatomy.parts.activePill', token: '--color-bg-primary' },
-  { part: 'showroom.navigation.anatomy.parts.activeText', token: '--color-text-on-primary' },
+  { part: 'showroom.navigation.anatomy.parts.railBackground', token: '--gradient-nav' },
+  { part: 'showroom.navigation.anatomy.parts.rowHover', token: '--color-bg-primary-hover' },
+  { part: 'showroom.navigation.anatomy.parts.activeRow', token: '--color-surface' },
+  { part: 'showroom.navigation.anatomy.parts.activeText', token: '--color-text-primary' },
   { part: 'showroom.navigation.anatomy.parts.railWidth', token: '--nav-rail-width' },
   { part: 'showroom.navigation.anatomy.parts.panelWidth', token: '--nav-panel-width' },
-  { part: 'showroom.navigation.anatomy.parts.tabHeight', token: '--tab-height' },
+  { part: 'showroom.navigation.anatomy.parts.railCorner', token: '--radius-nav' },
+  { part: 'showroom.navigation.anatomy.parts.rowHeight', token: '--nav-row-height' },
+  {
+    part: 'showroom.navigation.anatomy.parts.rowHeightCollapsed',
+    token: '--nav-row-height-collapsed',
+  },
+  {
+    part: 'showroom.navigation.anatomy.parts.drawerTransition',
+    token: '--animate-nav-drawer',
+  },
+  { part: 'showroom.navigation.anatomy.parts.chip', token: '--color-chip-bg' },
+  { part: 'showroom.navigation.anatomy.parts.chipHover', token: '--color-chip-bg-hover' },
+  { part: 'showroom.navigation.anatomy.parts.chipClose', token: '--color-chip-close-hover' },
+  { part: 'showroom.navigation.anatomy.parts.chipFade', token: '--gradient-chip-fade-start' },
+  { part: 'showroom.navigation.anatomy.parts.tabHeight', token: '--chip-height' },
+  { part: 'showroom.navigation.anatomy.parts.tabIndicator', token: '--tab-indicator-width' },
   { part: 'showroom.navigation.anatomy.parts.bottomHeight', token: '--nav-bottom-height' },
   { part: 'showroom.navigation.anatomy.parts.bottomBreakpoint', token: '--breakpoint-nav-bottom' },
-  {
-    part: 'showroom.navigation.anatomy.parts.focusRingOnNavy',
-    token: '--color-focus-ring-on-dark',
-  },
+  { part: 'showroom.navigation.anatomy.parts.drawerBreakpoint', token: '--breakpoint-nav-drawer' },
 ];
 
 /**
@@ -209,12 +238,17 @@ const STATE_COLUMNS: readonly DocColumn[] = [
  *   showroom.navigation.states.singleCrumb.seen, showroom.navigation.states.singleCrumb.why,
  *   showroom.navigation.states.bottomNoOverflow.name,
  *   showroom.navigation.states.bottomNoOverflow.seen,
- *   showroom.navigation.states.bottomNoOverflow.why)
+ *   showroom.navigation.states.bottomNoOverflow.why, showroom.navigation.states.drawerOpen.name,
+ *   showroom.navigation.states.drawerOpen.seen, showroom.navigation.states.drawerOpen.why,
+ *   showroom.navigation.states.stripOverflow.name, showroom.navigation.states.stripOverflow.seen,
+ *   showroom.navigation.states.stripOverflow.why)
  */
 const STATES = [
   'railCollapsed',
   'activeItem',
   'groupWithActive',
+  'drawerOpen',
+  'stripOverflow',
   'tabNotClosable',
   'tabDisabled',
   'singleCrumb',
@@ -265,7 +299,8 @@ export class ShowroomNavigation {
   protected readonly anatomy = ANATOMY;
   protected readonly stateColumns = STATE_COLUMNS;
   protected readonly states = STATES;
-  protected readonly session = RAIL_FOOTER_SESSION;
+  protected readonly customer = RAIL_FOOTER_CUSTOMER;
+  protected readonly stamp = SHEET_FOOTER_STAMP;
 
   /**
    * Árbol real del App Shell, recortado: un grupo con muchos hijos y otro con pocos
@@ -273,8 +308,8 @@ export class ShowroomNavigation {
    * t(showroom.navigation.demo.tree.dashboard, showroom.navigation.demo.tree.catalogs,
    *   showroom.navigation.demo.tree.articles, showroom.navigation.demo.tree.clients,
    *   showroom.navigation.demo.tree.locations, showroom.navigation.demo.tree.lots,
-   *   showroom.navigation.demo.tree.settings, showroom.navigation.demo.tree.users,
-   *   showroom.navigation.demo.tree.params)
+   *   showroom.navigation.demo.tree.settings, showroom.navigation.demo.tree.settingsShort,
+   *   showroom.navigation.demo.tree.users, showroom.navigation.demo.tree.params)
    */
   protected readonly tree = translated((t): readonly NavItem[] => [
     {
@@ -318,6 +353,8 @@ export class ShowroomNavigation {
     {
       id: 'settings',
       label: t('showroom.navigation.demo.tree.settings'),
+      // Plegado se ve esta, dentro del nombre entero (WCAG 2.5.3).
+      shortLabel: t('showroom.navigation.demo.tree.settingsShort'),
       icon: 'settings',
       children: [
         {
@@ -366,6 +403,8 @@ export class ShowroomNavigation {
   ]);
 
   protected readonly expanded = signal(true);
+  /** La variante de pantalla media: abierto, el rail es un cajón sobre la página real. */
+  protected readonly drawerOpen = signal(false);
   protected readonly activeId = signal('articles');
 
   /** Las pestañas abiertas. En el App Shell esto lo lleva `TabsService`. */
@@ -422,6 +461,12 @@ export class ShowroomNavigation {
     this.open.update((tabs) =>
       tabs.some((tab) => tab.id === item.id) ? tabs : [...tabs, { id: item.id }],
     );
+  }
+
+  /** Desde el cajón: lo mismo que desde el rail, y el cajón se cierra, como en el App Shell. */
+  protected onDrawerSelect(item: NavItem): void {
+    this.onItemSelect(item);
+    this.drawerOpen.set(false);
   }
 
   /** Elegir una pestaña: mueve el rail y la miga. El mismo estado. */

@@ -256,7 +256,7 @@ export class TableViewState {
           : 'border-s border-s-(color:--color-border-strong) after:absolute after:inset-y-0 after:start-0 after:w-px after:shadow-pin-end'
         : '';
     // En la cabecera las no fijadas son `relative` (por el separador) y se pintarían encima.
-    return `sticky ${header ? 'z-3' : 'z-1 bg-inherit'} ${separator}`.trim();
+    return `sticky ${header ? 'z-(--layer-table-pin-head)' : 'z-(--layer-table-pin) bg-inherit'} ${separator}`.trim();
   }
 
   pinStart(column: TableColumn): number | null {

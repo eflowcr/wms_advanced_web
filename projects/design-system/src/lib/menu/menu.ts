@@ -5,18 +5,8 @@ import { createConnectedOverlay, type ConnectedPositionList } from '../overlay/c
 import { moveActiveIndex } from '../listbox/listbox.types';
 import type { MenuItem } from './menu.types';
 
-export { moveActiveIndex };
-
-/**
- * Menú de la fila de la Tabla y del split button. No es un componente: overlay y lista ya
- * compartidos; uno propio duplicaría teclado (HG-04).
- */
-export interface MenuAnchor {
-  /** Una celda en clic derecho, el kebab si se pulsó. */
-  readonly element: HTMLElement;
-  /** Clave de `trackBy`. */
-  readonly key: unknown;
-}
+// Menú de la fila de la Tabla y del split button. No es un componente: overlay y lista ya
+// compartidos; uno propio duplicaría teclado (HG-04).
 
 // Alineadas al final primero: el kebab está a la derecha y alineado al inicio el menú se sale
 // de la ventana (así salió en la primera captura).

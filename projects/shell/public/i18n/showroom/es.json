@@ -156,7 +156,7 @@
       "white": {
         "alt": "Logo de ePRAC en blanco",
         "name": "Blanco",
-        "use": "Sobre el rail navy y sobre cualquier superficie oscura."
+        "use": "Sobre el menú navy y sobre cualquier superficie oscura."
       }
     },
     "grounds": {
@@ -311,6 +311,7 @@
       "content": "<b>Texto proyectado.</b> El texto del botón. Llega traducido desde el consumidor: el sistema no habla ningún idioma.",
       "controls": "<code>aria-controls</code>: el id del panel o menú que abre.",
       "disabled": "Independiente de <code>loading</code>. Usa el atributo nativo <code>disabled</code>.",
+      "ground": "El fondo donde va. Sobre <code>navy</code> solo cambia Ghost: ícono claro y el hover de las filas del menú (la hamburguesa de la cabecera). Las demás traen su propio relleno.",
       "icon": "Nombre del catálogo cerrado. Un nombre fuera de la lista no compila. Se renderiza sin <code>label</code>: es decorativo, el texto del botón ya lo dice.",
       "iconOnly": "Sin texto visible: caja cuadrada, y <code>label</code> pasa a ser el nombre y el tooltip.",
       "iconPosition": "Sólo aplica si hay icono.",
@@ -567,6 +568,10 @@
       "name": "Radio",
       "note": "La misma caja que el Checkbox, agrupada por name nativo y sin tercer estado."
     },
+    "searchBox": {
+      "name": "Buscador",
+      "note": "Píldora con el botón pegado y la pista de la tecla: el buscador de la cabecera."
+    },
     "sections": {
       "components": "Componentes",
       "foundations": "Fundamentos",
@@ -734,8 +739,7 @@
         "familyText": "Texto de la familia sobre su propia superficie.",
         "focusRing": "El anillo contrasta contra la superficie, no contra el control: por eso lleva separación.",
         "focusRingOnCanvas": "El anillo sobre el canvas.",
-        "focusRingOnDark": "Existe porque el azul de marca sobre navy queda sin aire.",
-        "navyBars": "Barra superior y rail navy.",
+        "navyBars": "El menú lateral y la barra inferior, sobre su degradado navy, y el chip activo.",
         "neutralBadge": "Badge neutral: surface + text, nunca solid + blanco.",
         "onDangerSolid": "Blanco sobre la severidad danger.",
         "onSuccessSolid": "Blanco sobre la severidad success.",
@@ -1312,18 +1316,27 @@
   },
   "navigation": {
     "anatomy": {
-      "contrast": "<b>Los contrastes sobre navy están medidos</b>, no supuestos: <code>--color-text-on-dark</code> sobre <code>--color-brand-navy</code>, el icono, y la pastilla activa. Los números y el método están en el reporte de DS-5 y en <mono>Fundamentos de Marca</mono>.",
+      "contrast": "<b>Los contrastes del marco están medidos en el navegador</b>, sobre las piezas pintadas y con hover: el texto claro sobre todo el degradado navy del menú, la fila apuntada, la píldora activa, el chip activo (<code>--color-text-on-dark</code> sobre <code>--color-brand-navy</code>) y los chips en reposo. Todos pasan AA; la tabla completa, con los números, está en la ficha de Navegación. Las rutas del fondo son decoración: quedan detrás del texto y fuera del árbol de accesibilidad.",
       "parts": {
-        "activePill": "Pastilla del ítem activo",
-        "activeText": "Texto del ítem activo",
+        "activeRow": "Fila y destino activos: píldora clara",
+        "activeText": "Texto e íconos de lo activo",
         "bottomBreakpoint": "Punto de corte de la barra inferior",
         "bottomHeight": "Alto de la barra inferior",
-        "focusRingOnNavy": "Anillo de foco sobre navy",
+        "chip": "Chip en reposo",
+        "chipClose": "Círculo de la × apuntada",
+        "chipFade": "Degradado de las flechas de la tira",
+        "chipHover": "Chip apuntado",
+        "drawerBreakpoint": "Corte del cajón: debajo, el menú abierto se superpone",
+        "drawerTransition": "Entrada del cajón (se desliza desde el borde)",
         "panelWidth": "Ancho del panel expandido",
-        "railBackground": "Fondo del rail y de la barra inferior",
+        "railBackground": "Fondo del menú y de la barra inferior: degradado navy",
+        "railCorner": "Borde del menú hacia el contenido, redondeado arriba y abajo",
         "railWidth": "Ancho del rail colapsado",
+        "rowHeight": "Alto de una fila, abierto",
+        "rowHeightCollapsed": "Alto de una fila, plegado (ícono sobre etiqueta)",
+        "rowHover": "Fila apuntada",
         "tabHeight": "Alto de una pestaña",
-        "textOnNavy": "Texto e iconos sobre navy"
+        "tabIndicator": "Subrayado de la sección activa"
       }
     },
     "demo": {
@@ -1351,6 +1364,7 @@
         "lots": "Lotes",
         "params": "Parámetros",
         "settings": "Configuración",
+        "settingsShort": "Config",
         "users": "Usuarios"
       }
     },
@@ -1378,20 +1392,21 @@
       "crumbsCaption": "Propiedades de <ewms-breadcrumbs>",
       "rail": {
         "activeId": "Cuál es la pantalla en la que está. Abre el grupo que la contiene.",
-        "expanded": "Panel de 232 o rail de 72. Lo decide el consumidor; el rail sólo lo pide.",
+        "drawer": "Pantalla media, entre la barra inferior y 1280 px: abierto, el panel se superpone al contenido con un velo, atrapa el foco, y <kbd>Escape</kbd> o el velo piden cerrarlo; al cerrarse, el foco vuelve a quien lo abrió. Plegado sigue en el flujo.",
+        "expanded": "Panel de 240 o rail de 72. Lo decide el consumidor; el rail sólo lo pide.",
         "expandedChange": "El ancho pedido. El rail no se lo cambia solo.",
-        "footer": "Ranura proyectada, al pie. Credenciales y logo del cliente en el App Shell.",
+        "footer": "Ranura proyectada, al pie. En el App Shell, el logo del cliente, sin línea encima.",
         "itemSelect": "Un destino elegido. Un grupo nunca emite: abre.",
-        "items": "<b>Obligatoria.</b> El árbol. Un ítem con <code>children</code> es un grupo: abre, no navega.",
+        "items": "<b>Obligatoria.</b> El árbol. Un ítem con <code>children</code> es un grupo: abre, no navega. Con <code>shortLabel</code>, plegado se ve esa etiqueta bajo el ícono; tiene que estar dentro de <code>label</code>, que sigue siendo el nombre (WCAG 2.5.3).",
         "label": "<b>Obligatoria.</b> El nombre del landmark, ya traducido. Una página tiene más de un nav.",
-        "toggleLabel": "<b>Obligatoria.</b> Nombre del control que cambia el ancho, ya traducido.",
+        "toggleLabel": "Nombre del botón de ancho al pie del rail, ya traducido. Vacía, el botón no se dibuja: en la app el único conmutador es la hamburguesa de la cabecera.",
         "top": "Ranura proyectada, encima del árbol. Ahí va el bloque de favoritos; el rail no sabe qué es."
       },
       "railCaption": "Propiedades de <ewms-nav-rail>",
       "tabs": {
         "activeId": "Cuál está seleccionada. El panel lo pone el consumidor.",
         "label": "<b>Obligatoria.</b> Nombre del tablist, ya traducido.",
-        "mode": "Subrayado para subsecciones; tarjeta cerrable para el MDI del App Shell.",
+        "mode": "Subrayado navy bajo la activa para subsecciones, como las pestañas de un canal de YouTube; chip en píldora con × para el MDI del App Shell, activo en navy.",
         "tabClose": "La pestaña que se pidió cerrar. Cerrarla es del consumidor.",
         "tabSelect": "La pestaña elegida. No cambia la selección por su cuenta.",
         "tabs": "<b>Obligatoria.</b> <code>'{ id, label, closable?, disabled? }'</code>. Cerrable salvo que diga lo contrario."
@@ -1408,12 +1423,12 @@
     },
     "sizes": {
       "breakpoint": "<b>El punto de corte es un token y se lee desde TypeScript</b>, no como un <code>md:</code> de Tailwind. Mapearlo al <code>@theme</code> emite <code>@media (width >= var(--breakpoint-nav-bottom))</code>, y una propiedad personalizada no se sustituye dentro de una media query: compila, no falla nada, y el diseño no cambia nunca. Lo lee <code>Viewport</code> con <code>readPixels</code>, igual que el Toast lee su duración.",
-      "intro": "Los tres números de la hoja de Figma del App Shell, y ninguno escrito en una plantilla: el header mide <code>--shell-header-height</code>, el rail <code>--nav-rail-width</code> y el panel <code>--nav-panel-width</code>."
+      "intro": "Todas las medidas del marco son tokens y ninguna está escrita en una plantilla: la cabecera, el menú plegado y abierto, sus filas, la tira de chips, la barra inferior y los dos cortes."
     },
     "states": {
       "activeItem": {
         "name": "Ítem activo",
-        "seen": "Pastilla azul y <code>aria-current=\"page\"</code>",
+        "seen": "Píldora clara con texto navy y <code>aria-current=\"page\"</code>",
         "why": "El color solo no basta; el atributo lo dice sin verlo"
       },
       "bottomNoOverflow": {
@@ -1427,6 +1442,11 @@
         "state": "Estado",
         "why": "Por qué"
       },
+      "drawerOpen": {
+        "name": "Menú abierto en pantalla media",
+        "seen": "Cajón sobre la página, con velo; el foco queda adentro y <kbd>Escape</kbd> lo cierra",
+        "why": "Entre la barra inferior y 1280 px el panel no cabe al lado del contenido: empujarlo dejaría la pantalla en una columna angosta"
+      },
       "groupWithActive": {
         "name": "Grupo con la activa dentro",
         "seen": "Se abre solo",
@@ -1434,13 +1454,18 @@
       },
       "railCollapsed": {
         "name": "Rail colapsado",
-        "seen": "Sólo iconos, cada uno con tooltip",
+        "seen": "Ícono sobre la etiqueta corta, y el nombre entero en el tooltip y en <code>aria-label</code>",
         "why": "Un rail de glifos sin nombre sólo lo usa quien ya conoce el producto"
       },
       "singleCrumb": {
         "name": "Migas de un nivel",
         "seen": "Un solo texto, sin enlaces",
         "why": "Un enlace a donde ya está no lleva a ninguna parte"
+      },
+      "stripOverflow": {
+        "name": "Tira de pestañas desbordada",
+        "seen": "Una flecha por lado con algo escondido, y la activa a la vista",
+        "why": "Una flecha que no mueve nada es un control que miente, y una pestaña activa fuera de vista no dice dónde está"
       },
       "tabDisabled": {
         "name": "Pestaña deshabilitada",
@@ -1470,6 +1495,12 @@
         "note": "El <b>«…» es un botón</b> y dice cuántos niveles esconde. Tres puntos que no se pueden pulsar avisan de que el camino se acortó y no dan forma de recuperarlo. El primero y el último nunca se pliegan: uno es la salida y el otro es dónde está.",
         "title": "Migas: el pliegue, a partir de cinco niveles",
         "warehouses": "Almacenes"
+      },
+      "drawer": {
+        "frame": "El rail con drawer, plegado en el flujo",
+        "label": "Menú de ejemplo en cajón",
+        "note": "Pulse el botón del pie: el cajón se abre <b>sobre esta página</b>, bajo la cabecera, como en la aplicación entre 768 y 1280 px. El foco queda adentro; <kbd>Escape</kbd>, el velo o el mismo botón lo cierran y el foco vuelve a quien lo abrió. En la app el conmutador es la hamburguesa.",
+        "title": "Pantalla media: el cajón"
       },
       "tabs": {
         "audit": "Auditoría",
@@ -2216,6 +2247,72 @@
     "variants": {
       "none": "No hay <code>variant</code>, igual que el Checkbox. Y a diferencia del Checkbox, <b>tampoco hay un tercer valor</b>: un radio está elegido o no lo está.",
       "onlyDifference": "Esa ausencia es la única diferencia real de expresión entre los dos controles de selección, que por lo demás comparten hasta el archivo de estilos. El Checkbox tiene <code>indeterminate</code> porque una casilla puede hablar <i>de un conjunto de otras cosas</i>; un radio sólo habla de sí mismo."
+    }
+  },
+  "searchBox": {
+    "a11y": {
+      "clear": "La <b>×</b> aparece solo con texto: sobre un campo vacío sería un control que no hace nada. Al limpiar, el foco vuelve al campo.",
+      "label": "La etiqueta no se ve, pero es un <code><label for></code> de verdad: el placeholder desaparece al escribir y muchos lectores no lo anuncian. El campo tiene <code>role=\"searchbox\"</code>.",
+      "shortcut": "La tecla se anuncia una vez, con <code>aria-keyshortcuts</code> en el campo. El <code><kbd></code> que se ve va <code>aria-hidden</code>: si no, se leería dos veces.",
+      "submit": "El botón buscar está apagado mientras no hay nada que buscar (vacío o solo espacios), con el ícono en gris. Apagado no es parada de <kbd>Tab</kbd>, y <kbd>Enter</kbd> ya busca desde el campo; con texto se enciende y entra al orden de <kbd>Tab</kbd>."
+    },
+    "anatomy": {
+      "parts": {
+        "border": "Borde de la píldora",
+        "button": "Fondo del botón buscar",
+        "buttonHover": "Botón buscar en hover",
+        "field": "Fondo del campo",
+        "focusRing": "Anillo de foco",
+        "hint": "Placeholder, pista de tecla e ícono del botón apagado",
+        "maxWidth": "Ancho máximo",
+        "shape": "Forma de píldora"
+      }
+    },
+    "demo": {
+      "frame": "El buscador de la cabecera, con la pista de «/»",
+      "keyboard": "Escriba y pulse <kbd>Enter</kbd>, o el botón. Lo que sale va sin espacios en los bordes ni repetidos; un campo vacío o con solo espacios no busca.",
+      "label": "Buscar en la aplicación",
+      "last": "Última búsqueda:",
+      "nothingYet": "(todavía nada)",
+      "placeholder": "Buscar…"
+    },
+    "mistakes": {
+      "native": "<b>Esperar un <code>(search)</code>.</b> La salida se llama <code>(searchSubmit)</code>: <code>search</code> es un evento nativo, y con ese nombre el consumidor recibiría el <code>Event</code> del navegador en vez del texto, como pasó con <code>(change)</code> en el Checkbox.",
+      "searching": "<b>Creer que busca.</b> El componente dice <i>qué</i> buscar; <i>dónde</i> y <i>cómo</i> es del dominio que lo usa."
+    },
+    "notApplicable": "Dos: variantes (hay una sola forma) y tamaños (una sola altura).",
+    "props": {
+      "caption": "Entradas y salidas de <ewms-search-box>",
+      "disabled": "Deshabilita el campo y el botón, y no ofrece limpiar.",
+      "focus": "Lleva el foco al campo. Es lo que llama el atajo <kbd>/</kbd> de la cabecera.",
+      "label": "<b>Obligatoria.</b> El nombre accesible del campo, ya traducido. No se ve: la píldora no tiene lugar para una etiqueta.",
+      "messages": "Pisa, en esta instancia, los nombres de los dos botones que llegan por <code>EWMS_SEARCH_BOX_MESSAGES</code>. Sin ninguno de los dos, en desarrollo lanza: un botón sin nombre no se dibuja.",
+      "placeholder": "Texto de ejemplo dentro del campo, ya traducido. No reemplaza a la etiqueta.",
+      "searchSubmit": "El texto normalizado, al pulsar <kbd>Enter</kbd> o el botón. Vacío no sale.",
+      "shortcut": "La tecla que lleva el foco al campo, dibujada adentro mientras está vacío y anunciada con <code>aria-keyshortcuts</code>.",
+      "value": "Lo escrito, en los dos sentidos."
+    },
+    "purpose": {
+      "notAFilter": "<b>No filtra una tabla.</b> Eso es el filtro rápido de la Tabla o un Input de tipo <code>search</code> en la barra de filtros: la píldora con botón es la búsqueda de toda la aplicación.",
+      "notAPicker": "<b>No elige un registro.</b> Para elegir un artículo o una ubicación de una lista está el Select, que busca mientras se escribe.",
+      "notWired": "Todavía no busca nada: conectarlo es de los dominios. El componente entrega el texto y nada más.",
+      "solves": "El buscador de la aplicación, en la cabecera: un campo en <b>píldora</b> con el botón de buscar <b>pegado a la derecha</b>, la pista de la tecla <kbd>/</kbd> adentro y un botón para limpiar cuando hay texto. La estructura es la de YouTube; la pintura, la del sistema."
+    },
+    "sizes": {
+      "one": "Una sola altura, la del control <code>md</code>, igual que los botones de la cabecera. Lo que cambia es el ancho: llena su lugar hasta <code>--search-max-width</code>."
+    },
+    "states": {
+      "caption": "El buscador vacío y con texto, en cada estado",
+      "intro": "Hover y foco se fuerzan con la misma utilidad del token que usa el componente. Con texto, la <b>×</b> ocupa el lugar de la pista.",
+      "rowHeader": "Estado",
+      "rows": {
+        "empty": "Vacío",
+        "filled": "Con texto"
+      },
+      "sample": "caja plegable"
+    },
+    "variants": {
+      "one": "Una sola forma: la píldora con el botón pegado. Un buscador por aplicación no pide variantes."
     }
   },
   "select": {

@@ -4,7 +4,6 @@
 /dist
 /tmp
 /out-tsc
-/bazel-out
 
 # Node
 /node_modules
@@ -31,13 +30,7 @@ yarn-error.log
 
 # Varios
 /.angular/cache
-.sass-cache/
-/connect.lock
 /coverage
-/libpeerconnection.log
-testem.log
-/typings
-__screenshots__/
 
 # Configuración local del agente de desarrollo
 # La config local del agente es de la máquina (rutas y permisos de acá). Se ignora el

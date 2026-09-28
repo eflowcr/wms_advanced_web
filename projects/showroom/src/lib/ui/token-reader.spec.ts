@@ -51,11 +51,6 @@ describe('TokenReader', () => {
     expect(reader().chain('--color-does-not-exist').status).toBe('missing');
   });
 
-  it('resolves several at once, in the order asked for', () => {
-    const chains = reader().chains(['--color-surface', '--color-text-primary']);
-    expect(chains.map((chain) => chain.name)).toEqual(['--color-surface', '--color-text-primary']);
-  });
-
   it('stops at a declaration naming more than one token', () => {
     const chain = reader().chain('--focus-ring-shadow');
     expect(chain.links).toHaveLength(1);

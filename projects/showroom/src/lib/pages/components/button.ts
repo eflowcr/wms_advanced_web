@@ -86,7 +86,8 @@ const FORCED: Readonly<Record<string, Readonly<Record<string, string>>>> = {
  * código y se corrige la ficha (ver la nota sobre (click) en el bloque de contrato).
  * t(showroom.button.props.variant, showroom.button.props.size, showroom.button.props.icon,
  *   showroom.button.props.iconPosition, showroom.button.props.disabled,
- *   showroom.button.props.loading, showroom.button.props.iconOnly, showroom.button.props.label,
+ *   showroom.button.props.loading, showroom.button.props.ground, showroom.button.props.iconOnly,
+ *   showroom.button.props.label,
  *   showroom.button.props.pressedExpanded, showroom.button.props.controls,
  *   showroom.button.props.type, showroom.button.props.content)
  */
@@ -126,6 +127,12 @@ const PROPS: readonly PropRow[] = [
     type: 'boolean',
     default: 'false',
     description: 'showroom.button.props.loading',
+  },
+  {
+    name: 'ground',
+    type: "'surface' | 'navy'",
+    default: "'surface'",
+    description: 'showroom.button.props.ground',
   },
   {
     name: 'iconOnly',

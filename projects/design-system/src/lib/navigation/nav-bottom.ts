@@ -16,6 +16,12 @@ import {
 import { Icon } from '../icon/icon';
 import { isGroup, type NavItem } from './navigation.types';
 
+/**
+ * Sobre el degradado navy, el activo es una baldosa surface con texto primario, como en el menú
+ * lateral (decisión del usuario, 2026-09-25). Por estado y no con variantes `aria-*`.
+ */
+const ACTIVE_CLASSES = 'bg-surface text-primary';
+
 /** Cuatro destinos entran al ancho más angosto; el quinto lugar es «Más». */
 export const BOTTOM_NAV_SLOTS = 4;
 
@@ -70,6 +76,16 @@ export class NavBottom {
   protected readonly hasMore = computed(
     () => this.barItems().length < this.items().length || this.items().some(isGroup),
   );
+
+  protected barClasses(item: NavItem): string {
+    return this.activeId() === item.id ? ACTIVE_CLASSES : 'hover:bg-primary-hover';
+  }
+
+  protected sheetClasses(item: NavItem): string {
+    return this.activeId() === item.id
+      ? `${ACTIVE_CLASSES} text-h4`
+      : 'text-p hover:bg-primary-hover';
+  }
 
   protected isGroup(item: NavItem): boolean {
     return isGroup(item);

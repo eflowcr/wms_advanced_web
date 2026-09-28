@@ -1,12 +1,6 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
-import {
-  KEYBOARD,
-  PAGES,
-  ROUTE_BUDGET_MS,
-  SEARCH_CREATE_EDIT,
-  UNDER_CONSTRUCTION,
-} from './routes';
+import { KEYBOARD, PAGES, ROUTE_BUDGET_MS, SEARCH_CREATE_EDIT, UNDER_CONSTRUCTION } from './routes';
 import { watchConsole } from './console-watch';
 
 /**
@@ -52,7 +46,9 @@ test.describe('the patterns still work, on the keyboard', () => {
   // el diálogo abre con foco y Ctrl+S guarda el formulario y no la página del navegador.
   test('buscar, crear y editar, sin tocar el ratón', async ({ page }) => {
     await page.goto(SEARCH_CREATE_EDIT);
-    await expect(page.getByRole('heading', { level: 1, name: 'Buscar, crear, editar' })).toBeVisible();
+    await expect(
+      page.getByRole('heading', { level: 1, name: 'Buscar, crear, editar' }),
+    ).toBeVisible();
 
     // Crear va primero a propósito: Alt+N no dispara dentro de un campo (REQ-FE-DS4-001 PACQ-02.5)
     // y elegir un resultado deja el foco en el buscador, así que buscar antes haría fallar la prueba.
@@ -166,6 +162,47 @@ test.describe('the App Shell', () => {
     }
   });
 
+  test('the page never paints over the chrome: a sticky table header stays under the tabs and the stamp', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto('/design-system/components/table');
+    await expect(page.locator('ewms-table thead').first()).toBeVisible();
+
+    // Lo que se pinta encima lo dice el hit testing. La marca de agua no toma el puntero: se le
+    // devuelve solo para medirla.
+    const covered = await page.evaluate(async () => {
+      const settle = (): Promise<unknown> =>
+        new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)));
+      const head = document.querySelector('ewms-table thead') as HTMLElement;
+      const strip = document.querySelector('ewms-tabs')?.closest('nav') as HTMLElement;
+      const stamp = document.querySelector('footer[data-shell-stamp]') as HTMLElement;
+      const misses: string[] = [];
+
+      window.scrollBy(0, head.getBoundingClientRect().top - strip.getBoundingClientRect().top - 8);
+      await settle();
+      const tabs = strip.getBoundingClientRect();
+      for (const x of [tabs.left + 8, tabs.left + tabs.width / 2, tabs.right - 8]) {
+        const hit = document.elementFromPoint(x, tabs.top + tabs.height / 2);
+        if (!strip.contains(hit)) misses.push(`tira, x=${Math.round(x)}: ${hit?.tagName}`);
+      }
+
+      const mark = stamp.getBoundingClientRect();
+      const box = head.getBoundingClientRect();
+      window.scrollBy(0, box.top + box.height / 2 - (mark.top + mark.height / 2));
+      await settle();
+      const cell = head.getBoundingClientRect();
+      const x = (Math.max(mark.left, cell.left) + Math.min(mark.right, cell.right)) / 2;
+      stamp.style.pointerEvents = 'auto';
+      const hit = document.elementFromPoint(x, mark.top + mark.height / 2);
+      stamp.style.pointerEvents = '';
+      if (!stamp.contains(hit)) misses.push(`marca de agua, x=${Math.round(x)}: ${hit?.tagName}`);
+      return misses;
+    });
+
+    expect(covered, 'la página se pintó sobre el marco').toEqual([]);
+  });
+
   test('at 375 px the rail becomes the bottom bar, and the header does not scroll', async ({
     page,
   }) => {
@@ -190,6 +227,90 @@ test.describe('the App Shell', () => {
     await page.keyboard.press('Escape');
     await expect(sheet).toHaveCount(0);
     await expect(more).toBeFocused();
+  });
+
+  test('at 1024 px the open menu is a drawer: it traps the focus, and Escape or the veil give it back', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1024, height: 768 });
+    await page.goto('/');
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+
+    // Entre la barra inferior y 1280 px el menú llega plegado y en el flujo (decisión del usuario, 2026-09-25).
+    const drawer = page.locator('[data-nav-drawer]');
+    await expect(page.locator('ewms-nav-rail')).toBeVisible();
+    await expect(drawer).toHaveCount(0);
+
+    const hamburger = page.locator('[data-rail-toggle] button');
+    await hamburger.click();
+    await expect(drawer).toBeVisible();
+    await expect(hamburger).toHaveAttribute('aria-expanded', 'true');
+    // Entra con una animación de verdad: `@starting-style` no se veía, el `<nav>` no es nuevo.
+    await expect(drawer).toHaveCSS('animation-name', 'nav-drawer-in');
+
+    // Atrapado: ni Tab ni Shift+Tab lo sacan del cajón.
+    const inside = (): Promise<boolean> =>
+      drawer.evaluate((el) => el.contains(document.activeElement));
+    await expect.poll(inside).toBe(true);
+    for (const key of ['Tab', 'Tab', 'Tab', 'Shift+Tab', 'Shift+Tab', 'Shift+Tab']) {
+      await page.keyboard.press(key);
+      expect(await inside(), `${key} left the drawer`).toBe(true);
+    }
+
+    await page.keyboard.press('Escape');
+    await expect(drawer).toHaveCount(0);
+    await expect(hamburger).toBeFocused();
+
+    // El velo cierra igual, por el mismo camino.
+    await hamburger.click();
+    await expect(drawer).toBeVisible();
+    await page.locator('[data-nav-drawer-veil]').click({ position: { x: 700, y: 400 } });
+    await expect(drawer).toHaveCount(0);
+    await expect(hamburger).toBeFocused();
+
+    // Con movimiento reducido aparece quieto.
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await hamburger.click();
+    await expect(drawer).toBeVisible();
+    await expect(drawer).toHaveCSS('animation-name', 'none');
+  });
+
+  test('any navigation closes the drawer: the logo, going back, and a wider window leave none open', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1024, height: 768 });
+    await page.goto('/catalogos/articulos');
+    await expect(page.locator('[data-page-heading]')).toBeVisible();
+    const drawer = page.locator('[data-nav-drawer]');
+    const hamburger = page.locator('[data-rail-toggle] button');
+
+    // Elegir la pantalla que ya está abierta no navega, y el cajón se cierra igual.
+    await hamburger.click();
+    await drawer.locator('[data-nav-item="articles"]').click();
+    await expect(drawer).toHaveCount(0);
+
+    // El logo está en la cabecera, encima del velo: navega sin pasar por el menú.
+    await hamburger.click();
+    await expect(drawer).toBeVisible();
+    await page.locator('[data-shell-home]').click();
+    await expect(page).toHaveURL(/\/$/);
+    await expect(drawer).toHaveCount(0);
+    await expect(page.locator('[data-page-heading]')).toBeFocused();
+
+    await hamburger.click();
+    await expect(drawer).toBeVisible();
+    await page.goBack();
+    await expect(page).toHaveURL(/\/catalogos\/articulos$/);
+    await expect(drawer).toHaveCount(0);
+
+    // Desde 1280 el menú es panel; al volver a 1024 no reaparece un cajón que quedó abierto.
+    await hamburger.click();
+    await expect(drawer).toBeVisible();
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await expect(drawer).toHaveCount(0);
+    await page.setViewportSize({ width: 1024, height: 768 });
+    await expect(page.locator('ewms-nav-rail')).toBeVisible();
+    await expect(drawer).toHaveCount(0);
   });
 
   test('a favourite is ONE click from anywhere, and is lost on reload', async ({ page }) => {

@@ -4,6 +4,8 @@ import type { IconName } from '@ewms/design-system';
 export interface MenuEntry {
   readonly id: string;
   readonly labelKey: string;
+  /** Plegado, bajo el ícono, cuando la etiqueta no entra. Debe estar dentro de la etiqueta (WCAG 2.5.3). */
+  readonly shortLabelKey?: string;
   readonly icon: IconName;
   /** Ausente en un grupo. */
   readonly route?: string;
@@ -18,7 +20,7 @@ export interface MenuEntry {
 // El marcador de abajo declara las claves al extractor, que no ve `entry.labelKey`. Va en una
 // sola línea (parte por comas: un `*` de continuación entraría en la clave), y citarlo en prosa
 // también registra claves. Si una clave falta de un lado, la compuerta 12 falla.
-/** t(shell.menu.dashboard, shell.menu.catalogs, shell.menu.articles, shell.menu.clients, shell.menu.suppliers, shell.menu.locations, shell.menu.warehouses, shell.menu.units, shell.menu.lots, shell.menu.serials, shell.menu.carriers, shell.menu.rates, shell.menu.settings, shell.menu.users, shell.menu.profiles, shell.menu.params, shell.menu.designSystem) */
+/** t(shell.menu.dashboard, shell.menu.catalogs, shell.menu.articles, shell.menu.clients, shell.menu.suppliers, shell.menu.locations, shell.menu.warehouses, shell.menu.units, shell.menu.lots, shell.menu.serials, shell.menu.carriers, shell.menu.rates, shell.menu.settings, shell.menu.users, shell.menu.profiles, shell.menu.params, shell.menu.designSystem, shell.menu.short.settings, shell.menu.short.designSystem) */
 export const MENU: readonly MenuEntry[] = [
   { id: 'dashboard', labelKey: 'shell.menu.dashboard', icon: 'dashboard', route: '/' },
   {
@@ -71,6 +73,7 @@ export const MENU: readonly MenuEntry[] = [
   {
     id: 'settings',
     labelKey: 'shell.menu.settings',
+    shortLabelKey: 'shell.menu.short.settings',
     icon: 'settings',
     children: [
       {
@@ -96,6 +99,7 @@ export const MENU: readonly MenuEntry[] = [
   {
     id: 'design-system',
     labelKey: 'shell.menu.designSystem',
+    shortLabelKey: 'shell.menu.short.designSystem',
     icon: 'controls',
     route: '/design-system',
   },

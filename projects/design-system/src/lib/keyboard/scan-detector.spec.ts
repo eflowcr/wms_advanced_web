@@ -86,7 +86,8 @@ describe('ScanDetector', () => {
 
       expect(verdicts.some((v) => v.kind === 'scan')).toBe(false);
       expect(detector.accept(key('Tab'), THRESHOLD, 10_100)).toEqual({ kind: 'key' });
-      expect(detector.length).toBe(0);
+      // El Tab cortó la ráfaga: un Enter enseguida ya no cierra nada.
+      expect(detector.accept(key('Enter'), THRESHOLD, 10_105)).toEqual({ kind: 'key' });
     });
 
     it('one slow gap starts the run over, and the code carries only what came after', () => {
@@ -137,12 +138,11 @@ describe('ScanDetector', () => {
   });
 
   it('reset forgets the open run', () => {
-    type(detector, 'ABCD', 5);
-    expect(detector.length).toBe(SCAN_MIN_KEYSTROKES);
+    // Una ráfaga abierta: sin reset, el Enter la cerraría como escaneo de «ABCD».
+    expect(type(detector, 'ABCD', 5).at(-1)).toEqual({ kind: 'burst' });
 
     detector.reset();
 
-    expect(detector.length).toBe(0);
     expect(detector.accept(key('Enter'), THRESHOLD, 10_100)).toEqual({ kind: 'key' });
   });
 });

@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, input, output, signal } from '@angular/core';
 import { Icon } from '../icon/icon';
-import { CRUMB_FOLD_THRESHOLD, foldCrumbs, type Crumb } from './navigation.types';
+import { foldCrumbs, type Crumb } from './navigation.types';
 
 /** `<ol>` en un `<nav>` con nombre; la última miga es actual y no enlace. Ver vault: Navegacion. */
 @Component({
@@ -25,7 +25,6 @@ export class Breadcrumbs {
   /** Abierto por la persona; se cierra al cambiar el rastro. */
   private readonly unfolded = signal(false);
 
-  protected readonly threshold = CRUMB_FOLD_THRESHOLD;
 
   private readonly folded = computed(() => foldCrumbs(this.items(), this.unfolded()));
 

@@ -9,36 +9,44 @@ import {
   untracked,
   viewChild,
 } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
-import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
-import { filter, map, startWith } from 'rxjs';
+import {
+  NavigationEnd,
+  NavigationSkipped,
+  Router,
+  RouterLink,
+  RouterOutlet,
+} from '@angular/router';
+import { filter, map } from 'rxjs';
 import { SessionContext } from '@ewms/core';
 import { catalogKeyFor } from '@ewms/showroom';
 import {
   Breadcrumbs,
-  Favorites,
   FavoriteToggle,
   FavoritesNav,
   Button,
-  Input,
   KeyboardShortcuts,
   NavBottom,
   NavRail,
+  SearchBox,
   ShortcutsHost,
   Tabs,
   ToastOutlet,
   ToastService,
   Viewport,
+  isSingleCharacter,
   type Crumb,
   type Favorite,
   type NavItem,
   type Tab,
 } from '@ewms/design-system';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
-import { BRAND_NAME } from '../brand';
+import { BRAND_EDITION, BRAND_NAME } from '../brand';
 import { provideEwmsDesignSystem } from '../design-system.providers';
+import { APP_VERSION } from '../version';
 import { LanguageSwitcher } from './language-switcher';
-import { MENU, MENU_DESTINATIONS, menuEntryFor, type MenuEntry } from './menu';
+import { MENU, menuEntryFor, type MenuEntry } from './menu';
 import { MAX_OPEN_TABS, TabsService } from './tabs.service';
 
 /**
@@ -52,11 +60,13 @@ import { MAX_OPEN_TABS, TabsService } from './tabs.service';
     FavoriteToggle,
     FavoritesNav,
     Button,
-    Input,
     LanguageSwitcher,
     NavBottom,
     NavRail,
+    NgTemplateOutlet,
+    RouterLink,
     RouterOutlet,
+    SearchBox,
     ShortcutsHost,
     Tabs,
     ToastOutlet,
@@ -75,20 +85,38 @@ export class MainLayout {
   private readonly transloco = inject(TranslocoService);
   private readonly toasts = inject(ToastService);
   private readonly tabsService = inject(TabsService);
-  private readonly favorites = inject(Favorites);
   private readonly shortcuts = inject(KeyboardShortcuts);
 
   protected readonly session = inject(SessionContext);
   protected readonly viewport = inject(Viewport);
 
   protected readonly brandName = BRAND_NAME;
-  protected readonly maxTabs = MAX_OPEN_TABS;
+  protected readonly brandEdition = BRAND_EDITION;
+  protected readonly appVersion = APP_VERSION;
 
   private readonly main = viewChild<ElementRef<HTMLElement>>('main');
-  private readonly searchField = viewChild<Input>('headerSearch');
+  private readonly searchField = viewChild<SearchBox>('headerSearch');
 
-  /** Rail colapsado o panel expandido; solo en memoria. */
+  /** La pista sale del mapa y se apaga con los atajos de un carácter (WCAG 2.2 2.1.4). */
+  protected readonly searchShortcut = computed(() => {
+    const binding = this.shortcuts.bindings()?.search;
+    if (binding === undefined) {
+      return '';
+    }
+    const off = isSingleCharacter(binding) && !this.shortcuts.singleKeyShortcuts();
+    return off ? '' : binding.chord.join('+');
+  });
+
+  /** Desde el corte del cajón: panel abierto o rail plegado; solo en memoria. */
   protected readonly railExpanded = signal(true);
+
+  /** Pantalla media: el cajón empieza cerrado y su estado no pisa el del panel. */
+  protected readonly drawerOpen = signal(false);
+
+  /** Lo que la hamburguesa muestra y cambia, según el ancho. */
+  protected readonly menuOpen = computed(() =>
+    this.viewport.panelFits() ? this.railExpanded() : this.drawerOpen(),
+  );
 
   /** Lo que anuncia la región viva tras un cambio de ruta. */
   protected readonly routeAnnouncement = signal('');
@@ -101,12 +129,11 @@ export class MainLayout {
     initialValue: this.transloco.getActiveLang(),
   });
 
-  /** `startWith` porque la primera navegación ya terminó al construirse. */
+  /** `initialValue` porque la primera navegación ya terminó al construirse. */
   private readonly url = toSignal(
     this.router.events.pipe(
       filter((event): event is NavigationEnd => event instanceof NavigationEnd),
       map((event) => event.urlAfterRedirects),
-      startWith(this.router.url),
     ),
     { initialValue: this.router.url },
   );
@@ -117,10 +144,12 @@ export class MainLayout {
     return MENU.map((entry) => this.toNavItem(entry));
   });
 
-  protected readonly activeId = computed(() => menuEntryFor(this.url())?.id ?? null);
+  /** El destino del menú de la ruta actual: marca el menú y cierra la miga. */
+  private readonly activeEntry = computed(() => menuEntryFor(this.url()));
+  protected readonly activeId = computed(() => this.activeEntry()?.id ?? null);
 
-  protected readonly tabs = computed<readonly Tab[]>(() => this.tabsService.tabs());
-  protected readonly activeTabId = computed(() => this.tabsService.activeRoute());
+  protected readonly tabs = this.tabsService.tabs;
+  protected readonly activeTabId = this.tabsService.activeRoute;
 
   /**
    * Inicio › grupo › pantalla. Se arma acá porque la miga es un hecho del menú;
@@ -128,19 +157,16 @@ export class MainLayout {
    */
   protected readonly crumbs = computed<readonly Crumb[]>(() => {
     this.activeLang();
-    const active = this.activeId();
-    if (active === null) {
+    const item = this.activeEntry();
+    if (item === undefined) {
       return [];
     }
-    const group = MENU.find((entry) => entry.children?.some((child) => child.id === active));
-    const item = MENU_DESTINATIONS.find((entry) => entry.id === active);
+    const group = MENU.find((entry) => entry.children?.some((child) => child.id === item.id));
     const trail: Crumb[] = [{ label: this.transloco.translate('shell.menu.home'), route: '/' }];
     if (group !== undefined) {
       trail.push({ label: this.transloco.translate(group.labelKey) });
     }
-    if (item !== undefined) {
-      trail.push({ label: this.transloco.translate(item.labelKey) });
-    }
+    trail.push({ label: this.transloco.translate(item.labelKey) });
     return trail;
   });
 
@@ -165,25 +191,41 @@ export class MainLayout {
       // él el efecto se relanza a sí mismo en un bucle síncrono que cuelga la
       // pestaña antes del primer pintado. Las pruebas unitarias no lo ven.
       untracked(() => {
-        const opened = this.tabsService.activate(url, title, url !== '/');
-        if (!opened) {
-          this.toasts.show(
-            'warning',
-            this.transloco.translate('shell.tabs.limit', { max: MAX_OPEN_TABS }),
-          );
-        } else {
-          // Una pestaña ya abierta sigue al idioma actual.
-          this.tabsService.relabel(url, title);
+        // Solo al navegar. Un cambio de idioma también relanza este efecto (lee el título):
+        // reabría la pestaña y, con la tira llena, repetía el aviso. Las etiquetas de las
+        // pestañas abiertas las cambia el efecto de abajo.
+        if (url !== this.previousUrl) {
+          const opened = this.tabsService.activate(url, title, url !== '/');
+          if (!opened) {
+            this.toasts.show(
+              'warning',
+              this.transloco.translate('shell.tabs.limit', { max: MAX_OPEN_TABS }),
+            );
+          }
+          // No en la primera carga: Chrome pinta el `h1` como `:focus-visible` porque aún
+          // no hubo puntero.
+          if (this.previousUrl !== null) {
+            this.focusPage();
+          }
+          this.previousUrl = url;
         }
-
-        // Solo al navegar: en la primera carga Chrome pinta el `h1` como `:focus-visible`
-        // porque aún no hubo puntero, y un cambio de idioma no es una navegación.
-        if (this.previousUrl !== null && this.previousUrl !== url) {
-          this.focusPage();
-        }
-        this.previousUrl = url;
         this.routeAnnouncement.set(title);
       });
+    });
+
+    // Toda navegación cierra el cajón: menú, favorito, logo, pestaña, miga o atrás, y también la que
+    // vuelve a la pantalla abierta (NavigationSkipped). Un solo lugar. Ver vault: App-Shell.
+    this.router.events
+      .pipe(
+        filter((event) => event instanceof NavigationEnd || event instanceof NavigationSkipped),
+        takeUntilDestroyed(),
+      )
+      .subscribe(() => this.drawerOpen.set(false));
+
+    // Al cruzar el corte del cajón se olvida: agrandar la ventana y volver no reabre uno escondido.
+    effect(() => {
+      this.viewport.panelFits();
+      untracked(() => this.drawerOpen.set(false));
     });
 
     // Un cambio de idioma reetiqueta todas las pestañas abiertas, no solo la activa:
@@ -247,12 +289,8 @@ export class MainLayout {
     }
   }
 
-  protected onRailExpandedChange(expanded: boolean): void {
-    this.railExpanded.set(expanded);
-  }
-
-  protected favoritesCount(): number {
-    return this.favorites.count();
+  protected onMenuOpenChange(open: boolean): void {
+    (this.viewport.panelFits() ? this.railExpanded : this.drawerOpen).set(open);
   }
 
   /**
@@ -281,6 +319,9 @@ export class MainLayout {
       id: entry.id,
       label: this.transloco.translate(entry.labelKey),
       icon: entry.icon,
+      ...(entry.shortLabelKey === undefined
+        ? {}
+        : { shortLabel: this.transloco.translate(entry.shortLabelKey) }),
     };
     // Spread y no `route: undefined`: con `exactOptionalPropertyTypes` no son el
     // mismo tipo, y esa diferencia sostiene que un grupo no tiene ruta.

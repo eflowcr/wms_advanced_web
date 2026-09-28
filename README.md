@@ -36,7 +36,7 @@ npm start        # http://localhost:4200
 | `npm run typecheck` | `tsc` in full strict mode |
 | `npm run lint` | ESLint, including the boundary and security rules, zero warnings |
 | `npm test` | Vitest per library + coverage thresholds + axe-core, then the tool tests |
-| `npm run lint:tokens` / `lint:icons` / `lint:i18n` / `lint:shortcuts` / `lint:click-budget` | The project's own CI gates |
+| `npm run lint:tokens` / `lint:icons` / `lint:i18n` / `lint:shortcuts` / `lint:click-budget` / `lint:ds` | The project's own CI gates |
 | `npm run e2e:smoke` | Playwright: the app boots, every route answers, the patterns work by keyboard |
 | `npm run e2e:showroom` | Playwright: the whole catalogue (axe, keyboard, overflow, behaviour) |
 | `npm run showroom:capture` | Screenshots of every catalogue page, for review; not a test |
@@ -52,7 +52,7 @@ projects/
   showroom/         @ewms/showroom        internal route /design-system, not Storybook
   core/             @ewms/core            cross-cutting runtime concerns
   shared/           @ewms/shared          leaf utilities (filters in the URL), depends on nothing
-  api-client/       @ewms/api-client      generated from OpenAPI, depends on nothing
+  api-client/       @ewms/api-client      reserved for the client generated from OpenAPI (empty until the backend publishes it), depends on nothing
   testing/          @ewms/testing         dev-only test helpers
 e2e/                Playwright specs (*.e2e.ts)
 ```

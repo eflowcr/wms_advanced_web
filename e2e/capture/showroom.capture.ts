@@ -1,6 +1,7 @@
 import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { expect, test, type Page } from '@playwright/test';
+import { EMPTY_STATE, FILTERS, FORM, PAGES, SEARCH_CREATE_EDIT, TABLE } from '../routes';
 
 /**
  * Renderiza cada ruta del showroom, la captura y anota lo que midió.
@@ -9,43 +10,16 @@ import { expect, test, type Page } from '@playwright/test';
 
 const OUT = path.resolve('showroom-captures');
 
-const ROUTES = [
-  { name: '01-home', url: '/design-system' },
-  { name: '02-foundations-brand', url: '/design-system/foundations/brand' },
-  { name: '03-foundations-colors', url: '/design-system/foundations/colors' },
-  { name: '04-foundations-typography', url: '/design-system/foundations/typography' },
-  { name: '05-foundations-spacing', url: '/design-system/foundations/spacing' },
-  { name: '06-foundations-icons', url: '/design-system/foundations/icons' },
-  { name: '07-components-button', url: '/design-system/components/button' },
-  { name: '08-components-text', url: '/design-system/components/text' },
-  { name: '10-components-tooltip', url: '/design-system/components/tooltip' },
-  { name: '11-components-input', url: '/design-system/components/input' },
-  { name: '12-components-select', url: '/design-system/components/select' },
-  { name: '13-components-checkbox', url: '/design-system/components/checkbox' },
-  { name: '14-components-radio', url: '/design-system/components/radio' },
-  { name: '15-components-toggle', url: '/design-system/components/toggle' },
-  { name: '16-components-banner', url: '/design-system/components/banner' },
-  { name: '17-components-toast', url: '/design-system/components/toast' },
-  { name: '18-components-card', url: '/design-system/components/card' },
-  { name: '19-components-dialog', url: '/design-system/components/dialog' },
-  { name: '21-components-table', url: '/design-system/components/table' },
-  { name: '22-components-pagination', url: '/design-system/components/pagination' },
-  { name: '23-components-split-button', url: '/design-system/components/split-button' },
-  { name: '24-components-date-picker', url: '/design-system/components/date-picker' },
-  { name: '40-patterns-search-create-edit', url: '/design-system/patterns/search-create-edit' },
-  { name: '41-patterns-empty-state', url: '/design-system/patterns/empty-state' },
-  { name: '42-patterns-filters', url: '/design-system/patterns/filters' },
-  { name: '43-patterns-form', url: '/design-system/patterns/form' },
-] as const;
+// De la lista única de e2e/routes.ts: la copia de acá se había quedado sin tres páginas.
+const slug = (url: string): string =>
+  url.replace(/^\/design-system\/?/, '').replaceAll('/', '-') || 'home';
+const ROUTES = PAGES.map((page, index) => ({
+  name: `${String(index + 1).padStart(2, '0')}-${slug(page.url)}`,
+  url: page.url,
+}));
 
 /** A 390 px, una pasada por las páginas que más cambian con el ancho. */
-const NARROW = [
-  '21-components-table',
-  '40-patterns-search-create-edit',
-  '41-patterns-empty-state',
-  '42-patterns-filters',
-  '43-patterns-form',
-];
+const NARROW: readonly string[] = [TABLE, SEARCH_CREATE_EDIT, EMPTY_STATE, FILTERS, FORM];
 
 /**
  * Con la fuente de respaldo en pantalla todo ancho medido está mal. document.fonts.ready solo no
@@ -189,7 +163,7 @@ test.describe('showroom capture rig', () => {
 
   test('captures the narrow pass at 390 px', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
-    for (const route of ROUTES.filter((candidate) => NARROW.includes(candidate.name))) {
+    for (const route of ROUTES.filter((candidate) => NARROW.includes(candidate.url))) {
       await page.goto(route.url);
       await waitForMontserrat(page);
       await page.waitForTimeout(250);

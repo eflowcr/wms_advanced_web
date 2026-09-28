@@ -10,6 +10,7 @@ import {
   EWMS_FAVORITES_STORE,
   EWMS_SELECT_MESSAGES,
   EWMS_SHORTCUT_HELP_MESSAGES,
+  EWMS_SEARCH_BOX_MESSAGES,
   EWMS_SPLIT_BUTTON_MESSAGES,
   EWMS_SHORTCUT_MAP,
   EWMS_TABLE_FORMATTERS,
@@ -25,6 +26,7 @@ import {
   type PaginationMessages,
   type SelectMessages,
   type ShortcutHelpMessages,
+  type SearchBoxMessages,
   type SplitButtonMessages,
   type TableFormatters,
   type TableMessages,
@@ -95,6 +97,10 @@ export function provideEwmsDesignSystem(): Provider[] {
     {
       provide: EWMS_SPLIT_BUTTON_MESSAGES,
       useFactory: splitButtonMessages,
+    },
+    {
+      provide: EWMS_SEARCH_BOX_MESSAGES,
+      useFactory: searchBoxMessages,
     },
     {
       provide: EWMS_DATE_PICKER_MESSAGES,
@@ -480,6 +486,18 @@ function shortcutHelpMessages(): ShortcutHelpMessages {
   };
 }
 
+function searchBoxMessages(): SearchBoxMessages {
+  const transloco = injectTranslator();
+  return {
+    get submit() {
+      return transloco.translate('ds.searchBox.submit');
+    },
+    get clear() {
+      return transloco.translate('ds.searchBox.clear');
+    },
+  };
+}
+
 function splitButtonMessages(): SplitButtonMessages {
   const transloco = injectTranslator();
   return {
@@ -511,7 +529,10 @@ function datePickerMessages(): DatePickerMessages {
   };
 }
 
-/** Día y mes con dos dígitos, igual que en la tabla: 16/03/2026 y no 16/3/2026. */
+/**
+ * Día y mes con dos dígitos, 16/03/2026 y no 16/3/2026: en la tabla y en los límites de fecha del
+ * formulario.
+ */
 const DATE_LIMIT_FORMAT = { day: '2-digit', month: '2-digit', year: 'numeric' } as const;
 
 function tableFormatters(): TableFormatters {
@@ -531,11 +552,7 @@ function tableFormatters(): TableFormatters {
       // Día y mes con dos dígitos: en columna se leen alineados (16/03/2026).
       return parsed === null
         ? String(value)
-        : locale.localizeDate(parsed, undefined, {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric',
-          });
+        : locale.localizeDate(parsed, undefined, DATE_LIMIT_FORMAT);
     },
     number: (value) => {
       lang();

@@ -7,7 +7,7 @@
 </label>
 
 <div class="relative block">
-  @if (hasPrefixIcon()) {
+  @if (isSearch()) {
     <!-- Decorativo, sin `label`; el color lo hereda del contenedor por currentColor (ADR 0011). -->
     <span
       class="absolute top-1/2 -translate-y-1/2 flex items-center pointer-events-none text-secondary"

@@ -12,7 +12,7 @@ export const TOAST_DURATION_TOKEN = '--duration-toast';
 
 /** Abajo a la derecha, bajo los overlays: detrás de un modal a propósito. Ver vault: Notificaciones. */
 export const TOAST_OUTLET_CLASSES =
-  'fixed right-4 bottom-4 z-10 flex flex-col items-end gap-2 pointer-events-none';
+  'fixed right-4 bottom-4 z-(--layer-overlay) flex flex-col items-end gap-2 pointer-events-none';
 
 /** Reactiva el puntero que el contenedor apaga para no tragarse clics de la página. */
 export const TOAST_CLASSES =

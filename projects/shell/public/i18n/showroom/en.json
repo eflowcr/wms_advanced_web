@@ -156,7 +156,7 @@
       "white": {
         "alt": "ePRAC logo in white",
         "name": "White",
-        "use": "On the navy rail and on any dark surface."
+        "use": "On the navy menu and on any dark surface."
       }
     },
     "grounds": {
@@ -311,6 +311,7 @@
       "content": "<b>Projected text.</b> The button's text. It arrives already translated by the consumer: the system speaks no language.",
       "controls": "<code>aria-controls</code>: the id of the panel or menu it opens.",
       "disabled": "Independent of <code>loading</code>. Uses the native <code>disabled</code> attribute.",
+      "ground": "The ground it sits on. On <code>navy</code> only Ghost changes: a light icon and the hover of the menu rows (the header hamburger). The others bring their own fill.",
       "icon": "A name from the closed catalogue. A name outside the list does not compile. It is rendered without a <code>label</code>: it is decorative, the button's text already says it.",
       "iconOnly": "No visible text: a square box, and <code>label</code> becomes the name and the tooltip.",
       "iconPosition": "Only applies if there is an icon.",
@@ -567,6 +568,10 @@
       "name": "Radio",
       "note": "The same box as the Checkbox, grouped by the native name and with no third state."
     },
+    "searchBox": {
+      "name": "Search box",
+      "note": "A pill with the button attached and the key hint: the header search."
+    },
     "sections": {
       "components": "Components",
       "foundations": "Foundations",
@@ -734,8 +739,7 @@
         "familyText": "The family's text on its own surface.",
         "focusRing": "The ring contrasts with the surface, not with the control: that is why it has a gap.",
         "focusRingOnCanvas": "The ring on the canvas.",
-        "focusRingOnDark": "It exists because the brand blue on navy has no room to breathe.",
-        "navyBars": "Top bar and navy rail.",
+        "navyBars": "The side menu and the bottom bar, on their navy gradient, and the active chip.",
         "neutralBadge": "Neutral badge: surface + text, never solid + white.",
         "onDangerSolid": "White on the danger severity.",
         "onSuccessSolid": "White on the success severity.",
@@ -1312,18 +1316,27 @@
   },
   "navigation": {
     "anatomy": {
-      "contrast": "<b>The contrasts on navy are measured</b>, not assumed: <code>--color-text-on-dark</code> on <code>--color-brand-navy</code>, the icon, and the active pill. The figures and the method are in the DS-5 report and in <mono>Fundamentos de Marca</mono>.",
+      "contrast": "<b>The contrasts of the frame are measured in the browser</b>, on the painted pieces and with hover: light text across the whole navy gradient of the menu, the hovered row, the active pill, the active chip (<code>--color-text-on-dark</code> on <code>--color-brand-navy</code>) and the chips at rest. All pass AA; the full table, with the numbers, is in the Navigation sheet. The background routes are decoration: they sit behind the text and outside the accessibility tree.",
       "parts": {
-        "activePill": "Active item pill",
-        "activeText": "Active item text",
+        "activeRow": "Active row and destination: light pill",
+        "activeText": "Text and icons of what is active",
         "bottomBreakpoint": "Bottom bar breakpoint",
         "bottomHeight": "Bottom bar height",
-        "focusRingOnNavy": "Focus ring on navy",
+        "chip": "Chip at rest",
+        "chipClose": "Circle of the hovered ×",
+        "chipFade": "Gradient behind the strip arrows",
+        "chipHover": "Hovered chip",
+        "drawerBreakpoint": "Drawer breakpoint: below it, the open menu lies over the page",
+        "drawerTransition": "Drawer entrance (slides in from the edge)",
         "panelWidth": "Expanded panel width",
-        "railBackground": "Rail and bottom bar background",
+        "railBackground": "Background of the menu and the bottom bar: navy gradient",
+        "railCorner": "Edge of the menu facing the content, rounded top and bottom",
         "railWidth": "Collapsed rail width",
+        "rowHeight": "Row height, open",
+        "rowHeightCollapsed": "Row height, folded (icon over label)",
+        "rowHover": "Hovered row",
         "tabHeight": "Tab height",
-        "textOnNavy": "Text and icons on navy"
+        "tabIndicator": "Underline of the active section"
       }
     },
     "demo": {
@@ -1351,6 +1364,7 @@
         "lots": "Lots",
         "params": "Parameters",
         "settings": "Settings",
+        "settingsShort": "Settings",
         "users": "Users"
       }
     },
@@ -1378,20 +1392,21 @@
       "crumbsCaption": "Properties of <ewms-breadcrumbs>",
       "rail": {
         "activeId": "Which screen you are on. It opens the group that contains it.",
-        "expanded": "A 232 panel or a 72 rail. The consumer decides; the rail only asks.",
+        "drawer": "Medium screens, between the bottom bar and 1280 px: open, the panel lies over the content with a veil, traps the focus, and <kbd>Escape</kbd> or the veil ask to close it; on closing, the focus goes back to whoever opened it. Folded, it stays in the flow.",
+        "expanded": "A 240 panel or a 72 rail. The consumer decides; the rail only asks.",
         "expandedChange": "The requested width. The rail does not change it by itself.",
-        "footer": "Projected slot, at the foot. Credentials and the customer's logo in the App Shell.",
+        "footer": "Projected slot, at the foot. The customer's logo in the App Shell, with no rule above it.",
         "itemSelect": "A chosen destination. A group never emits: it opens.",
-        "items": "<b>Required.</b> The tree. An item with <code>children</code> is a group: it opens, it does not navigate.",
+        "items": "<b>Required.</b> The tree. An item with <code>children</code> is a group: it opens, it does not navigate. With <code>shortLabel</code>, the folded rail shows that label under the icon; it must be inside <code>label</code>, which stays the name (WCAG 2.5.3).",
         "label": "<b>Required.</b> The name of the landmark, already translated. A page has more than one nav.",
-        "toggleLabel": "<b>Required.</b> Name of the control that changes the width, already translated.",
+        "toggleLabel": "Name of the width button at the foot of the rail, already translated. Empty, the button is not drawn: in the app the only toggle is the header hamburger.",
         "top": "Projected slot, above the tree. The favourites block goes there; the rail does not know what it is."
       },
       "railCaption": "Properties of <ewms-nav-rail>",
       "tabs": {
         "activeId": "Which one is selected. The consumer supplies the panel.",
         "label": "<b>Required.</b> Name of the tablist, already translated.",
-        "mode": "Underline for subsections; closable card for the App Shell's MDI.",
+        "mode": "A navy underline under the active one for subsections, like a YouTube channel's tabs; a pill chip with × for the App Shell MDI, the active one in navy.",
         "tabClose": "The tab that was asked to close. Closing it is the consumer's job.",
         "tabSelect": "The chosen tab. It does not change the selection on its own.",
         "tabs": "<b>Required.</b> <code>'{ id, label, closable?, disabled? }'</code>. Closable unless it says otherwise."
@@ -1408,12 +1423,12 @@
     },
     "sizes": {
       "breakpoint": "<b>The breakpoint is a token and is read from TypeScript</b>, not as a Tailwind <code>md:</code>. Mapping it into <code>@theme</code> emits <code>@media (width >= var(--breakpoint-nav-bottom))</code>, and a custom property is not substituted inside a media query: it compiles, nothing fails, and the layout never changes. <code>Viewport</code> reads it with <code>readPixels</code>, just as the Toast reads its duration.",
-      "intro": "The three numbers from the App Shell Figma sheet, and none of them written into a template: the header measures <code>--shell-header-height</code>, the rail <code>--nav-rail-width</code> and the panel <code>--nav-panel-width</code>."
+      "intro": "Every measure of the frame is a token and none is written in a template: the header, the folded and open menu, its rows, the chip strip, the bottom bar and the two breakpoints."
     },
     "states": {
       "activeItem": {
         "name": "Active item",
-        "seen": "Blue pill and <code>aria-current=\"page\"</code>",
+        "seen": "Light pill with navy text and <code>aria-current=\"page\"</code>",
         "why": "Colour alone is not enough; the attribute says it without being seen"
       },
       "bottomNoOverflow": {
@@ -1427,6 +1442,11 @@
         "state": "State",
         "why": "Why"
       },
+      "drawerOpen": {
+        "name": "Menu open on a medium screen",
+        "seen": "Drawer over the page, with a veil; the focus stays inside and <kbd>Escape</kbd> closes it",
+        "why": "Between the bottom bar and 1280 px the panel does not fit beside the content: pushing it would leave the screen as a narrow column"
+      },
       "groupWithActive": {
         "name": "Group with the active item inside",
         "seen": "Opens by itself",
@@ -1434,13 +1454,18 @@
       },
       "railCollapsed": {
         "name": "Collapsed rail",
-        "seen": "Icons only, each with a tooltip",
+        "seen": "Icon over the short label, and the full name in the tooltip and in <code>aria-label</code>",
         "why": "A rail of unnamed glyphs is only usable by someone who already knows the product"
       },
       "singleCrumb": {
         "name": "Single-level breadcrumbs",
         "seen": "A single text, no links",
         "why": "A link to where you already are leads nowhere"
+      },
+      "stripOverflow": {
+        "name": "Overflowing tab strip",
+        "seen": "One arrow per side that hides something, and the active tab in view",
+        "why": "An arrow that moves nothing is a control that lies, and an active tab out of view does not say where you are"
       },
       "tabDisabled": {
         "name": "Disabled tab",
@@ -1470,6 +1495,12 @@
         "note": "The <b>“…” is a button</b> and says how many levels it hides. Three dots that cannot be pressed warn that the path was shortened and give no way of getting it back. The first and the last never fold: one is the way out and the other is where you are.",
         "title": "Breadcrumbs: the fold, from five levels up",
         "warehouses": "Warehouses"
+      },
+      "drawer": {
+        "frame": "The rail with drawer, folded in the flow",
+        "label": "Example menu as a drawer",
+        "note": "Press the button at its foot: the drawer opens <b>over this page</b>, under the header, as in the application between 768 and 1280 px. The focus stays inside; <kbd>Escape</kbd>, the veil or the same button close it, and the focus goes back to whoever opened it. In the app the toggle is the hamburger.",
+        "title": "Medium screens: the drawer"
       },
       "tabs": {
         "audit": "Audit",
@@ -2216,6 +2247,72 @@
     "variants": {
       "none": "There is no <code>variant</code>, just like the Checkbox. And unlike the Checkbox, <b>there is no third value either</b>: a radio is either chosen or it is not.",
       "onlyDifference": "That absence is the only real difference in expression between the two selection controls, which otherwise share even the style file. The Checkbox has <code>indeterminate</code> because a checkbox can speak <i>about a set of other things</i>; a radio only speaks about itself."
+    }
+  },
+  "searchBox": {
+    "a11y": {
+      "clear": "The <b>×</b> appears only when there is text: on an empty field it would be a control that does nothing. After clearing, the focus goes back to the field.",
+      "label": "The label is not visible, but it is a real <code><label for></code>: the placeholder disappears while typing and many screen readers do not announce it. The field has <code>role=\"searchbox\"</code>.",
+      "shortcut": "The key is announced once, with <code>aria-keyshortcuts</code> on the field. The visible <code><kbd></code> is <code>aria-hidden</code>: otherwise it would be read twice.",
+      "submit": "The search button is off while there is nothing to search (empty or only spaces), with its icon in grey. Off is not a <kbd>Tab</kbd> stop, and <kbd>Enter</kbd> already searches from the field; with text it turns on and joins the <kbd>Tab</kbd> order."
+    },
+    "anatomy": {
+      "parts": {
+        "border": "Pill border",
+        "button": "Search button background",
+        "buttonHover": "Search button on hover",
+        "field": "Field background",
+        "focusRing": "Focus ring",
+        "hint": "Placeholder, key hint and the icon of the idle button",
+        "maxWidth": "Maximum width",
+        "shape": "Pill shape"
+      }
+    },
+    "demo": {
+      "frame": "The header search, with the “/” hint",
+      "keyboard": "Type and press <kbd>Enter</kbd>, or the button. What comes out has no spaces at the ends and no repeated ones; an empty field, or one with only spaces, does not search.",
+      "label": "Search the application",
+      "last": "Last search:",
+      "nothingYet": "(nothing yet)",
+      "placeholder": "Search…"
+    },
+    "mistakes": {
+      "native": "<b>Expecting a <code>(search)</code>.</b> The output is called <code>(searchSubmit)</code>: <code>search</code> is a native event, and with that name the consumer would receive the browser’s <code>Event</code> instead of the text, as happened with <code>(change)</code> on the Checkbox.",
+      "searching": "<b>Believing it searches.</b> The component says <i>what</i> to search for; <i>where</i> and <i>how</i> belong to the domain that uses it."
+    },
+    "notApplicable": "Two: variants (there is a single shape) and sizes (a single height).",
+    "props": {
+      "caption": "Inputs and outputs of <ewms-search-box>",
+      "disabled": "Disables the field and the button, and offers nothing to clear.",
+      "focus": "Moves the focus to the field. It is what the header’s <kbd>/</kbd> shortcut calls.",
+      "label": "<b>Required.</b> The field’s accessible name, already translated. It is not visible: the pill has no room for a label.",
+      "messages": "Overrides, for this instance, the names of both buttons that arrive through <code>EWMS_SEARCH_BOX_MESSAGES</code>. Without either, it throws in development: a button with no name is not drawn.",
+      "placeholder": "Sample text inside the field, already translated. It does not replace the label.",
+      "searchSubmit": "The tidied text, on <kbd>Enter</kbd> or the button. Nothing comes out when it is empty.",
+      "shortcut": "The key that moves the focus to the field, drawn inside while it is empty and announced with <code>aria-keyshortcuts</code>.",
+      "value": "What has been typed, both ways."
+    },
+    "purpose": {
+      "notAFilter": "<b>It does not filter a table.</b> That is the Table’s quick filter, or a <code>search</code> Input in the filter bar: the pill with a button is the search for the whole application.",
+      "notAPicker": "<b>It does not pick a record.</b> To choose an item or a location from a list there is the Select, which searches as you type.",
+      "notWired": "It does not search anything yet: wiring it up belongs to the domains. The component hands over the text and nothing else.",
+      "solves": "The application search, in the header: a <b>pill</b> field with the search button <b>attached on the right</b>, the <kbd>/</kbd> key hint inside and a button to clear when there is text. The structure is YouTube’s; the paint is the system’s."
+    },
+    "sizes": {
+      "one": "A single height, that of the <code>md</code> control, the same as the header buttons. What changes is the width: it fills its place up to <code>--search-max-width</code>."
+    },
+    "states": {
+      "caption": "The search box empty and with text, in each state",
+      "intro": "Hover and focus are forced with the same token utility the component uses. With text, the <b>×</b> takes the place of the hint.",
+      "rowHeader": "State",
+      "rows": {
+        "empty": "Empty",
+        "filled": "With text"
+      },
+      "sample": "folding box"
+    },
+    "variants": {
+      "one": "A single shape: the pill with the attached button. One search per application does not call for variants."
     }
   },
   "select": {

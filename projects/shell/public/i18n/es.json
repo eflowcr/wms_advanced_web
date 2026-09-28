@@ -40,6 +40,10 @@
       "previousPage": "Página anterior",
       "rowsTotal": "{total, plural, =0 {Sin filas} one {# fila} other {# filas}}"
     },
+    "searchBox": {
+      "clear": "Limpiar la búsqueda",
+      "submit": "Buscar"
+    },
     "select": {
       "error": "No se pudo consultar el catálogo.",
       "more": "Ver más resultados",
@@ -162,6 +166,10 @@
       "rates": "Tarifas",
       "serials": "Series",
       "settings": "Configuración",
+      "short": {
+        "designSystem": "Diseño",
+        "settings": "Config"
+      },
       "suppliers": "Proveedores",
       "units": "Unidades",
       "users": "Usuarios",
@@ -178,7 +186,9 @@
       "placeholder": "Buscar…"
     },
     "session": {
-      "signOut": "Salir"
+      "signOut": "Salir",
+      "stamp": "Versión y sesión, para soporte",
+      "version": "v{{ version }}"
     },
     "shortcuts": {
       "actionColumn": "Acción",

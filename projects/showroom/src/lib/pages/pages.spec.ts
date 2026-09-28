@@ -36,6 +36,7 @@ import { ShowroomCard } from './components/card';
 import { ShowroomCheckbox } from './components/checkbox';
 import { ShowroomDialog } from './components/dialog';
 import { ShowroomInput } from './components/input';
+import { ShowroomSearchBox } from './components/search-box';
 import { ShowroomNavigation } from './components/navigation';
 import { ShowroomPagination } from './components/pagination';
 import { ShowroomRadio } from './components/radio';
@@ -618,6 +619,7 @@ const SHEETS: readonly { name: string; component: Type<unknown>; heading: string
   { name: 'ShowroomText', component: ShowroomText, heading: 'Texto' },
   { name: 'ShowroomTooltip', component: ShowroomTooltip, heading: 'Tooltip' },
   { name: 'ShowroomInput', component: ShowroomInput, heading: 'Input' },
+  { name: 'ShowroomSearchBox', component: ShowroomSearchBox, heading: 'Buscador' },
   { name: 'ShowroomSelect', component: ShowroomSelect, heading: 'Select' },
   { name: 'ShowroomCheckbox', component: ShowroomCheckbox, heading: 'Checkbox' },
   { name: 'ShowroomRadio', component: ShowroomRadio, heading: 'Radio' },
@@ -1478,7 +1480,9 @@ describe('ShowroomTable', () => {
       tint.getAttribute('data-tint'),
     );
     expect(tints).toEqual(['neutral', 'warning', 'success', 'danger']);
-    expect(element.querySelectorAll('[data-block="5-matriz"] ewms-state-matrix ewms-badge').length).toBe(4);
+    expect(
+      element.querySelectorAll('[data-block="5-matriz"] ewms-state-matrix ewms-badge').length,
+    ).toBe(4);
     // Y la matriz de fila: siete estados, con la marca lateral donde hay excepción.
     const states = [...element.querySelectorAll('[data-row-state]')];
     expect(states.map((row) => row.getAttribute('data-row-state'))).toEqual([
@@ -1535,7 +1539,9 @@ describe('ShowroomTable', () => {
     // Mover una columna se anuncia con las palabras del showroom.
     element.querySelector<HTMLButtonElement>('[data-demo-table] [data-view-menu] button')!.click();
     await fixture.whenStable();
-    document.querySelector<HTMLButtonElement>('[data-column-row="cliente"] [data-column-down] button')!.click();
+    document
+      .querySelector<HTMLButtonElement>('[data-column-row="cliente"] [data-column-down] button')!
+      .click();
     await fixture.whenStable();
     expect(element.querySelector('[data-demo-table] [data-table-announce]')?.textContent).toBe(
       'Cliente / artículo, posición 3 de 5',
@@ -1631,7 +1637,9 @@ describe('ShowroomTable — composición avanzada', () => {
     // prueba en e2e: acá no hay hoja de estilos, ni altura de fila, ni ventana, y 5000 filas
     // en jsdom son 5000 filas.
     expect(element.querySelector('[data-loaded-count]')?.textContent).toContain('60');
-    expect(element.querySelector<HTMLButtonElement>('[data-load-all] button')?.disabled).toBe(false);
+    expect(element.querySelector<HTMLButtonElement>('[data-load-all] button')?.disabled).toBe(
+      false,
+    );
     expect(element.querySelector('[data-load-all]')?.textContent).toContain('5000');
   });
 });
@@ -1724,13 +1732,45 @@ describe('ShowroomNavigation', () => {
   it('the rail asks for the other width and the page grants it', async () => {
     const { fixture, element } = await render(ShowroomNavigation);
     expect(rail(element, 'dashboard').textContent?.trim()).toBe('Dashboard');
+    expect(rail(element, 'dashboard').getAttribute('aria-label')).toBeNull();
 
     element.querySelector<HTMLButtonElement>('[data-nav-rail-toggle]')!.click();
     await fixture.whenStable();
 
-    // Colapsado: se van las etiquetas, quedan los destinos.
+    // Plegado: quedan los destinos, con el nombre en aria-label (abierto, el texto es el nombre).
     expect(rail(element, 'dashboard')).not.toBeNull();
-    expect(rail(element, 'dashboard').textContent?.trim()).toBe('');
+    expect(rail(element, 'dashboard').getAttribute('aria-label')).toBe('Dashboard');
+  });
+
+  it('the drawer variant opens over the page, and Escape asks it closed', async () => {
+    const { fixture, element } = await render(ShowroomNavigation);
+    const demo = element.querySelector<HTMLElement>('[data-demo-drawer]')!;
+    expect(demo.querySelector('[data-nav-drawer]')).toBeNull();
+
+    demo.querySelector<HTMLButtonElement>('[data-nav-rail-toggle]')!.click();
+    await fixture.whenStable();
+    const drawer = demo.querySelector<HTMLElement>('[data-nav-drawer]');
+    expect(drawer).not.toBeNull();
+
+    // El ancho es de la página: el rail pide cerrar y la página se lo concede.
+    drawer!.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }),
+    );
+    await fixture.whenStable();
+    expect(demo.querySelector('[data-nav-drawer]')).toBeNull();
+  });
+
+  it('choosing in the drawer moves the demo and closes the drawer, as the App Shell does', async () => {
+    const { fixture, element } = await render(ShowroomNavigation);
+    const demo = element.querySelector<HTMLElement>('[data-demo-drawer]')!;
+    demo.querySelector<HTMLButtonElement>('[data-nav-rail-toggle]')!.click();
+    await fixture.whenStable();
+
+    demo.querySelector<HTMLButtonElement>('[data-nav-drawer] [data-nav-item="dashboard"]')!.click();
+    await fixture.whenStable();
+
+    expect(demo.querySelector('[data-nav-drawer]')).toBeNull();
+    expect(element.querySelector('[data-demo-active]')?.textContent?.trim()).toBe('dashboard');
   });
 
   it('a crumb reports itself and the page says which: a miga does not navigate', async () => {
@@ -1916,7 +1956,9 @@ describe('ShowroomForm', () => {
     await settle();
     form.requestSubmit();
     await settle();
-    expect(element.querySelector('[data-form-save] button')?.getAttribute('aria-busy')).toBe('true');
+    expect(element.querySelector('[data-form-save] button')?.getAttribute('aria-busy')).toBe(
+      'true',
+    );
 
     await new Promise((resolve) => setTimeout(resolve, 700));
     await settle();
@@ -1962,7 +2004,8 @@ describe('ShowroomForm', () => {
 describe('ShowroomFilters', () => {
   it('FILTERS GO TO THE SOURCE, and the table says «no results» with what is left empty', async () => {
     const { fixture, element } = await render(ShowroomFilters);
-    const rows = (): number => element.querySelectorAll('[data-demo-filters] tbody tr[data-row]').length;
+    const rows = (): number =>
+      element.querySelectorAll('[data-demo-filters] tbody tr[data-row]').length;
     expect(rows()).toBe(12);
 
     const bar = fixture.debugElement.query(By.directive(FilterBar)).componentInstance as {
@@ -2017,12 +2060,22 @@ describe('ShowroomEmptyState', () => {
     expect(matrix[6]?.querySelector('[data-empty-action]')).toBeNull();
 
     const ran: string[] = [];
-    for (const button of element.querySelectorAll<HTMLButtonElement>('[data-empty-action] button')) {
+    for (const button of element.querySelectorAll<HTMLButtonElement>(
+      '[data-empty-action] button',
+    )) {
       button.click();
       fixture.detectChanges();
       ran.push(element.querySelector('[data-demo-last]')?.textContent ?? '');
     }
     // La demo y las seis de la matriz que tienen acción (no-access no tiene).
-    expect(ran).toEqual(['Crear', 'Crear', 'Crear', 'Limpiar filtros', 'Limpiar filtros', 'Reintentar', 'Reintentar']);
+    expect(ran).toEqual([
+      'Crear',
+      'Crear',
+      'Crear',
+      'Limpiar filtros',
+      'Limpiar filtros',
+      'Reintentar',
+      'Reintentar',
+    ]);
   });
 });

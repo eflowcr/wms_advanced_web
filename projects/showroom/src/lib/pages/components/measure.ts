@@ -32,14 +32,6 @@ export function formatHeight(rect: DOMRect | null): string {
   return rect ? `${heightOf(rect)} px` : NOT_MEASURED;
 }
 
-/**
- * Mínimo cuadrado en ambos ejes; WCAG 2.2 2.5.8 (AA) pide 24 por 24. Sin rectángulo
- * no se aprueba: el badge en verde diría «no se pudo verificar».
- */
-export function clearsSquare(rect: DOMRect | null, minimum: number): boolean {
-  return rect !== null && widthOf(rect) >= minimum && heightOf(rect) >= minimum;
-}
-
 /** Si dos controles quedaron con la misma altura, al píxel. */
 export function sameHeight(first: DOMRect | null, second: DOMRect | null): boolean {
   return first !== null && second !== null && heightOf(first) === heightOf(second);

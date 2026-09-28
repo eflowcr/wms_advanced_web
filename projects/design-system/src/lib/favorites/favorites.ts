@@ -13,8 +13,6 @@ export class Favorites {
 
   readonly list: Signal<readonly Favorite[]> = this.items.asReadonly();
 
-  readonly count = computed(() => this.items().length);
-
   constructor() {
     void this.refresh();
   }

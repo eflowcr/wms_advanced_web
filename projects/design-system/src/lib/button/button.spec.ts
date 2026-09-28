@@ -5,7 +5,7 @@ import { expectNoAxeViolations } from '@ewms/testing';
 import type { IconName } from '../../icons/icons.generated';
 import { Icon } from '../icon/icon';
 import { Button } from './button';
-import type { ButtonIconPosition, ButtonSize, ButtonVariant } from './button.types';
+import type { ButtonGround, ButtonIconPosition, ButtonSize, ButtonVariant } from './button.types';
 
 @Component({
   template: `
@@ -22,6 +22,7 @@ import type { ButtonIconPosition, ButtonSize, ButtonVariant } from './button.typ
         [pressed]="pressed()"
         [expanded]="expanded()"
         [controls]="controls()"
+        [ground]="ground()"
         (click)="onButtonClick($event)"
       >
         Save Changes
@@ -42,6 +43,7 @@ class TestHost {
   readonly pressed = signal<boolean | null>(null);
   readonly expanded = signal<boolean | null>(null);
   readonly controls = signal<string | null>(null);
+  readonly ground = signal<ButtonGround>('surface');
 
   buttonClicked = false;
 
@@ -172,6 +174,21 @@ describe('Button', () => {
     host.variant.set('ghost');
     await settle();
   }
+
+  it('on navy, ghost paints light with the menu hover; the variants with a fill stay as they are', async () => {
+    // La hamburguesa va sobre la celda navy de la cabecera (decisión del usuario, 2026-09-25).
+    await asIconOnly();
+    host.ground.set('navy');
+    await settle();
+    expect(button().className).toContain('text-on-dark');
+    expect(button().className).toContain('hover:bg-primary-hover');
+    expect(button().className).not.toContain('hover:bg-ghost-hover');
+
+    host.variant.set('primary');
+    await settle();
+    expect(button().className).toContain('bg-primary');
+    expect(button().className).toContain('text-on-primary');
+  });
 
   it('is named by its projected text', () => {
     expect(accessibleName()).toBe('Save Changes');

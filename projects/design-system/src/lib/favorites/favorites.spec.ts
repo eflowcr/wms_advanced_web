@@ -103,7 +103,6 @@ describe('Favorites', () => {
 
     expect(marked()).toBe(true);
     expect(favorites.list()).toHaveLength(1);
-    expect(favorites.count()).toBe(1);
   });
 
   it('PACQ-01.2: toggling twice returns to exactly where it started', async () => {
@@ -200,6 +199,7 @@ describe('Favorites', () => {
       emptyLabel="Marque una pantalla con la estrella"
       [expanded]="expanded()"
       [activeRoute]="activeRoute()"
+      [ground]="ground()"
       (favoriteSelect)="chosen = $event.route"
     />
   `,
@@ -214,6 +214,7 @@ class TestHost {
   readonly route = '/articulos';
   readonly expanded = signal(true);
   readonly activeRoute = signal<string | null>(null);
+  readonly ground = signal<'navy' | 'surface'>('surface');
   chosen: string | null = null;
 }
 
@@ -314,6 +315,43 @@ describe('the star and the block, together', () => {
         fixture.nativeElement.querySelector('[data-favorite="/articulos"]') as HTMLElement
       ).getAttribute('aria-current'),
     ).toBe('page');
+  });
+
+  it('on the navy menu the active favourite is a light pill, and on light it is navy', async () => {
+    star().click();
+    host.activeRoute.set('/articulos');
+    await settle();
+    const row = (): HTMLElement =>
+      fixture.nativeElement.querySelector('[data-favorite="/articulos"]') as HTMLElement;
+    const block = (): HTMLElement =>
+      fixture.nativeElement.querySelector('[data-favorites-nav]') as HTMLElement;
+
+    expect(row().className).toContain('bg-brand-navy');
+    expect(block().className).toContain('text-primary');
+    // En el catálogo la columna ya trae su relleno: el bloque no suma otro.
+    expect(block().className).not.toContain('px-2');
+    expect(row().className).toContain('px-2');
+
+    // El menú lateral y la hoja inferior son navy (decisión del usuario, 2026-09-25).
+    host.ground.set('navy');
+    await settle();
+    expect(row().className).toContain('bg-surface');
+    expect(block().className).toContain('text-on-dark');
+    // En el menú se alinea con las filas del árbol.
+    expect(block().className).toContain('px-2.5');
+    expect(row().className).toContain('px-4');
+  });
+
+  it('collapsed on navy, the current favourite is an indicator around the icon, as in the tree', async () => {
+    star().click();
+    host.ground.set('navy');
+    host.activeRoute.set('/articulos');
+    host.expanded.set(false);
+    await settle();
+    const row = fixture.nativeElement.querySelector('[data-favorite="/articulos"]') as HTMLElement;
+
+    expect(row.querySelector('[data-favorite-indicator]')?.className).toContain('bg-surface');
+    expect(row.className).not.toContain('bg-surface');
   });
 
   it('collapsed, the block drops the labels and keeps the destinations', async () => {

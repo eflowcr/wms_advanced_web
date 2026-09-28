@@ -13,7 +13,6 @@ import { Favorites } from './favorites';
       [iconOnly]="true"
       icon="star"
       [variant]="marked() ? 'primary' : 'ghost'"
-      [size]="size()"
       [label]="marked() ? removeLabel() : addLabel()"
       [pressed]="marked()"
       (click)="onToggle()"
@@ -37,8 +36,6 @@ export class FavoriteToggle {
   /** Lo que dice la región viva después. */
   readonly addedMessage = input.required<string>();
   readonly removedMessage = input.required<string>();
-
-  readonly size = input<'sm' | 'md' | 'lg'>('md');
 
   private readonly favorites = inject(Favorites);
 
