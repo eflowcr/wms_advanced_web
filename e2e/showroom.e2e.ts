@@ -557,6 +557,26 @@ test.describe('the search box', () => {
   });
 });
 
+test.describe('fonts', () => {
+  test('JetBrains Mono downloads only where there is code: never on /, always on the Table page', async ({
+    page,
+  }) => {
+    const mono: string[] = [];
+    page.on('request', (request) => {
+      if (/jetbrains-mono/.test(request.url())) mono.push(new URL(request.url()).pathname);
+    });
+
+    await page.goto('/');
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+    await ready(page);
+    expect(mono).toEqual([]);
+
+    await page.goto(TABLE);
+    await ready(page);
+    await expect.poll(() => mono).toContain('/fonts/jetbrains-mono-latin-400-normal.woff2');
+  });
+});
+
 test.describe('accessibility', () => {
   for (const { url, heading } of PAGES) {
     test(`${url} has no axe violations, and a clean console`, async ({ page }) => {
