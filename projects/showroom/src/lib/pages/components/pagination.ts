@@ -57,10 +57,10 @@ const ANATOMY: readonly { readonly part: string; readonly token: string }[] = [
 ];
 
 /** Cuántas páginas tiene la demo. Un número redondo y visiblemente finito. */
-const PAGINAS = 7;
+const PAGES = 7;
 
 /** Cuántas filas dice haber. Ni redondo ni divisible: una cifra de verdad. */
-const FILAS = 163;
+const ROWS = 163;
 
 /**
  * /design-system/components/pagination: ficha de ewms-pagination. Es un componente propio,
@@ -90,18 +90,18 @@ export class ShowroomPagination {
   protected readonly stateColumns = STATE_COLUMNS;
   protected readonly props = PROPS;
   protected readonly anatomy = ANATOMY;
-  protected readonly paginas = PAGINAS;
+  protected readonly pages = PAGES;
 
-  protected readonly pagina = signal(0);
-  protected readonly conTotal = signal(true);
+  protected readonly page = signal(0);
+  protected readonly withTotal = signal(true);
 
-  protected readonly total = computed(() => (this.conTotal() ? FILAS : null));
+  protected readonly total = computed(() => (this.withTotal() ? ROWS : null));
 
-  protected irA(page: number): void {
-    this.pagina.set(page);
+  protected goTo(page: number): void {
+    this.page.set(page);
   }
 
-  protected alternarTotal(): void {
-    this.conTotal.update((value) => !value);
+  protected toggleTotal(): void {
+    this.withTotal.update((value) => !value);
   }
 }

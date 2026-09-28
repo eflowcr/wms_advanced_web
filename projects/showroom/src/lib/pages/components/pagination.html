@@ -54,22 +54,22 @@
     <ewms-demo-frame ground="surface" [label]="'showroom.pagination.demo.frame' | transloco">
       <div class="flex flex-col gap-4" data-demo-pagination>
         <ewms-pagination
-          [page]="pagina()"
-          [pageCount]="paginas"
+          [page]="page()"
+          [pageCount]="pages"
           [total]="total()"
-          (pageChange)="irA($event)"
+          (pageChange)="goTo($event)"
         />
 
         <div class="flex flex-wrap items-center gap-3">
-          <ewms-button variant="secondary" size="sm" data-toggle-total (click)="alternarTotal()">
-            @if (conTotal()) {
+          <ewms-button variant="secondary" size="sm" data-toggle-total (click)="toggleTotal()">
+            @if (withTotal()) {
               {{ 'showroom.pagination.demo.dropTotal' | transloco }}
             } @else {
               {{ 'showroom.pagination.demo.restoreTotal' | transloco }}
             }
           </ewms-button>
           <span class="font-mono text-caption text-primary" data-page-value>
-            {{ 'showroom.pagination.demo.pageValue' | transloco: { page: pagina() } }}
+            {{ 'showroom.pagination.demo.pageValue' | transloco: { page: page() } }}
           </span>
         </div>
       </div>
@@ -139,19 +139,19 @@
               @switch (row) {
                 @case ('first') {
                   {{
-                    'showroom.pagination.states.announced' | transloco: { page: 1, pages: paginas }
+                    'showroom.pagination.states.announced' | transloco: { page: 1, pages: pages }
                   }}
                 }
                 @case ('middle') {
                   {{
                     'showroom.pagination.states.announced'
-                      | transloco: { page: 'N', pages: paginas }
+                      | transloco: { page: 'N', pages: pages }
                   }}
                 }
                 @default {
                   {{
                     'showroom.pagination.states.announced'
-                      | transloco: { page: paginas, pages: paginas }
+                      | transloco: { page: pages, pages: pages }
                   }}
                 }
               }

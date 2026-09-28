@@ -93,6 +93,10 @@ jobs:
       - name: Comments (three lines per block)
         run: npm run lint:comments
 
+      # Identificadores y nombres de archivo en inglés: el texto en español vive en los diccionarios.
+      - name: Identifiers in English (no Spanish names)
+        run: npm run lint:identifiers
+
       # Antes que las pruebas: host-page.test.mjs lee la CSP del artefacto. Los presupuestos, en angular.json.
       - name: Production build and bundle budgets
         run: npm run build

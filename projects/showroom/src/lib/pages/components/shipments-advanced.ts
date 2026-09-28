@@ -4,13 +4,13 @@ import { map } from 'rxjs/operators';
 import type { MenuItem, TablePage, TableQuery, TableSource } from '@ewms/design-system';
 import { ArrayTableSource } from '@ewms/design-system';
 import { translated } from '../../ui/translated';
-import type { ExpedicionRow } from './expediciones';
-import { EXPEDICIONES } from './expediciones.fixtures';
+import type { ShipmentRow } from './shipments';
+import { SHIPMENTS } from './shipments.fixtures';
 import {
-  ESTADO_QUE_FALLA,
-  generarUbicaciones,
-  SIN_RESPUESTA,
-  type UbicacionRow,
+  FAILING_STATUS,
+  generateLocations,
+  NO_ANSWER,
+  type LocationRow,
 } from './table.fixtures';
 
 /**
@@ -19,11 +19,11 @@ import {
  */
 
 /** Cuánto tarda en «llegar» un hijo perezoso. Suficiente para verlo. */
-const RETRASO_HIJOS = 900;
+const CHILDREN_DELAY_MS = 900;
 
 /** Solo cabeceras: la demo de detalle y menú enseña el panel, no la jerarquía. */
-export const HEADER_ROWS: readonly ExpedicionRow[] = EXPEDICIONES.map(
-  ({ hijos: _sinHijos, ...cabecera }) => cabecera,
+export const HEADER_ROWS: readonly ShipmentRow[] = SHIPMENTS.map(
+  ({ children: _children, ...header }) => header,
 );
 
 /**
@@ -33,7 +33,7 @@ export const HEADER_ROWS: readonly ExpedicionRow[] = EXPEDICIONES.map(
  * t(showroom.table.actions.view, showroom.table.actions.printDeliveryNote,
  *   showroom.table.actions.duplicate, showroom.table.actions.cancel)
  */
-const ACCIONES_FILA: readonly MenuItem[] = [
+const ROW_ACTIONS: readonly MenuItem[] = [
   { id: 'ver', label: 'showroom.table.actions.view', icon: 'eye' },
   {
     id: 'imprimir',
@@ -55,7 +55,7 @@ const ACCIONES_FILA: readonly MenuItem[] = [
  * Lo que se hace con varias a la vez: la barra de la tabla las muestra con la selección.
  * t(showroom.table.actions.printLabels, showroom.table.actions.cancel)
  */
-const ACCIONES_MASIVAS: readonly MenuItem[] = [
+const BULK_ACTIONS: readonly MenuItem[] = [
   { id: 'imprimir', label: 'showroom.table.actions.printLabels', icon: 'label-print' },
   { id: 'anular', label: 'showroom.table.actions.cancel', icon: 'trash', tone: 'danger' },
 ];
@@ -63,14 +63,14 @@ const ACCIONES_MASIVAS: readonly MenuItem[] = [
 /** El menú de fila, con sus textos en el idioma activo: el menú no habla ninguno. */
 export function injectRowActions(): Signal<readonly MenuItem[]> {
   return translated((translate) =>
-    ACCIONES_FILA.map((item) => ({ ...item, label: translate(item.label) })),
+    ROW_ACTIONS.map((item) => ({ ...item, label: translate(item.label) })),
   );
 }
 
 /** Las acciones masivas, igual. */
-export function injectAccionesMasivas(): Signal<readonly MenuItem[]> {
+export function injectBulkActions(): Signal<readonly MenuItem[]> {
   return translated((translate) =>
-    ACCIONES_MASIVAS.map((item) => ({ ...item, label: translate(item.label) })),
+    BULK_ACTIONS.map((item) => ({ ...item, label: translate(item.label) })),
   );
 }
 
@@ -78,41 +78,41 @@ export function injectAccionesMasivas(): Signal<readonly MenuItem[]> {
  * Hijos con retraso; los de una cabecera con incidencia fallan siempre. La tabla
  * pinta «Cargando…» y «No se pudo cargar» con reintento sin que el consumidor escriba nada.
  */
-export function lazyChildren(row: ExpedicionRow): Observable<readonly ExpedicionRow[]> {
-  const original = EXPEDICIONES.find((expedicion) => expedicion.id === row.id);
-  const hijos = original?.hijos ?? [];
+export function lazyChildren(row: ShipmentRow): Observable<readonly ShipmentRow[]> {
+  const original = SHIPMENTS.find((shipment) => shipment.id === row.id);
+  const children = original?.children ?? [];
 
-  if (row.estado === ESTADO_QUE_FALLA) {
-    return timer(RETRASO_HIJOS).pipe(
+  if (row.status === FAILING_STATUS) {
+    return timer(CHILDREN_DELAY_MS).pipe(
       map(() => {
-        throw new Error(SIN_RESPUESTA);
+        throw new Error(NO_ANSWER);
       }),
     );
   }
 
-  return of(hijos).pipe(delay(RETRASO_HIJOS));
+  return of(children).pipe(delay(CHILDREN_DELAY_MS));
 }
 
 /**
  * Filas iniciales: sesenta ya desplazan y muestran la ventana. Las cinco mil se
  * cargan con un botón para no hacer lenta la apertura de la ficha.
  */
-export const UBICACIONES_MUESTRA = 60;
+export const SAMPLE_LOCATIONS = 60;
 
 /** Tamaño a partir del cual la ventana virtual se vuelve necesaria. */
-export const UBICACIONES_TOTAL = 5000;
+export const TOTAL_LOCATIONS = 5000;
 
 /**
  * Pagina de verdad (página + total), así la tabla monta el paginador. Sin retraso:
  * los controles aparecerían tarde y el recorrido de tabulador del e2e fallaba.
  */
-export class PagedSource implements TableSource<UbicacionRow> {
-  private readonly base = new ArrayTableSource<UbicacionRow>(
-    generarUbicaciones(UBICACIONES_TOTAL),
-    ['codigo', 'pasillo'],
+export class PagedSource implements TableSource<LocationRow> {
+  private readonly base = new ArrayTableSource<LocationRow>(
+    generateLocations(TOTAL_LOCATIONS),
+    ['code', 'aisle'],
   );
 
-  load(query: TableQuery): Observable<TablePage<UbicacionRow>> {
+  load(query: TableQuery): Observable<TablePage<LocationRow>> {
     return this.base.load(query);
   }
 }

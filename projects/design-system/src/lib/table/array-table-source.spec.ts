@@ -3,17 +3,17 @@ import { ArrayTableSource, matchesFilter, sortRows } from './array-table-source'
 import { emptyQuery, type TableQuery } from './table-source';
 
 interface Row {
-  readonly codigo: string;
-  readonly cliente: string;
-  readonly fecha: string;
-  readonly bultos: number;
+  readonly code: string;
+  readonly customer: string;
+  readonly date: string;
+  readonly packages: number;
 }
 
 const ROWS: readonly Row[] = [
-  { codigo: 'EXP-0001', cliente: 'Andes', fecha: '2026-01-15', bultos: 1200 },
-  { codigo: 'EXP-0002', cliente: 'Valle', fecha: '2026-02-03', bultos: 900 },
-  { codigo: 'EXP-0003', cliente: 'Norte', fecha: '2026-03-21', bultos: 40 },
-  { codigo: 'EXP-0004', cliente: 'Ñandú', fecha: '2026-01-02', bultos: 0 },
+  { code: 'EXP-0001', customer: 'Andes', date: '2026-01-15', packages: 1200 },
+  { code: 'EXP-0002', customer: 'Valle', date: '2026-02-03', packages: 900 },
+  { code: 'EXP-0003', customer: 'Norte', date: '2026-03-21', packages: 40 },
+  { code: 'EXP-0004', customer: 'Ñandú', date: '2026-01-02', packages: 0 },
 ];
 
 function query(partial: Partial<TableQuery> = {}): TableQuery {
@@ -32,30 +32,30 @@ describe('ArrayTableSource', () => {
 
   it('pages', async () => {
     const first = await firstValueFrom(source.load(query({ pageSize: 2 })));
-    expect(first.rows.map((row) => row.codigo)).toEqual(['EXP-0001', 'EXP-0002']);
+    expect(first.rows.map((row) => row.code)).toEqual(['EXP-0001', 'EXP-0002']);
 
     const second = await firstValueFrom(source.load(query({ pageSize: 2, page: 1 })));
-    expect(second.rows.map((row) => row.codigo)).toEqual(['EXP-0003', 'EXP-0004']);
+    expect(second.rows.map((row) => row.code)).toEqual(['EXP-0003', 'EXP-0004']);
     // El total es de lo que coincide, no de la página: si no, no hay segunda página.
     expect(second.total).toBe(4);
   });
 
   it('searches every top-level property by default', async () => {
     const page = await firstValueFrom(source.load(query({ search: 'norte' })));
-    expect(page.rows.map((row) => row.codigo)).toEqual(['EXP-0003']);
+    expect(page.rows.map((row) => row.code)).toEqual(['EXP-0003']);
   });
 
   it('searches only the named properties when it is given some', async () => {
-    const narrow = new ArrayTableSource(ROWS, ['codigo']);
+    const narrow = new ArrayTableSource(ROWS, ['code']);
     const page = await firstValueFrom(narrow.load(query({ search: 'norte' })));
     expect(page.rows).toEqual([]);
   });
 
   it('applies a per-column filter alongside the search', async () => {
     const page = await firstValueFrom(
-      source.load(query({ search: 'EXP', filters: { cliente: 'val' } })),
+      source.load(query({ search: 'EXP', filters: { customer: 'val' } })),
     );
-    expect(page.rows.map((row) => row.cliente)).toEqual(['Valle']);
+    expect(page.rows.map((row) => row.customer)).toEqual(['Valle']);
   });
 });
 
@@ -135,56 +135,56 @@ describe('sortRows', () => {
 
   it('SORTS NUMBERS NUMERICALLY, not as the text somebody would see', () => {
     // Ordenar por el texto formateado pondría «1.200» antes de «900».
-    const sorted = sortRows(ROWS, query({ sort: [{ key: 'bultos', direction: 'asc' }] }));
-    expect(sorted.map((row) => row.bultos)).toEqual([0, 40, 900, 1200]);
+    const sorted = sortRows(ROWS, query({ sort: [{ key: 'packages', direction: 'asc' }] }));
+    expect(sorted.map((row) => row.packages)).toEqual([0, 40, 900, 1200]);
   });
 
   it('sorts descending too, and a second key breaks the ties of the first', () => {
-    const sorted = sortRows(ROWS, query({ sort: [{ key: 'bultos', direction: 'desc' }] }));
-    expect(sorted.map((row) => row.bultos)).toEqual([1200, 900, 40, 0]);
+    const sorted = sortRows(ROWS, query({ sort: [{ key: 'packages', direction: 'desc' }] }));
+    expect(sorted.map((row) => row.packages)).toEqual([1200, 900, 40, 0]);
 
     const tied = [
-      { codigo: 'a', cliente: 'Norte', bultos: 2 },
-      { codigo: 'b', cliente: 'Andes', bultos: 2 },
-      { codigo: 'c', cliente: 'Valle', bultos: 1 },
+      { code: 'a', customer: 'Norte', packages: 2 },
+      { code: 'b', customer: 'Andes', packages: 2 },
+      { code: 'c', customer: 'Valle', packages: 1 },
     ];
     const byBoth = [
-      { key: 'bultos', direction: 'desc' },
-      { key: 'cliente', direction: 'asc' },
+      { key: 'packages', direction: 'desc' },
+      { key: 'customer', direction: 'asc' },
     ] as const;
-    expect(sortRows(tied, query({ sort: byBoth })).map((row) => row.codigo)).toEqual(['b', 'a', 'c']);
+    expect(sortRows(tied, query({ sort: byBoth })).map((row) => row.code)).toEqual(['b', 'a', 'c']);
   });
 
   it('sorts text by collation, so an accent is not a different letter', () => {
-    const sorted = sortRows(ROWS, query({ sort: [{ key: 'cliente', direction: 'asc' }] }));
+    const sorted = sortRows(ROWS, query({ sort: [{ key: 'customer', direction: 'asc' }] }));
     // `localeCompare` pone «Ñandú» entre «Andes» y «Norte»; por punto de código iría tras la Z.
-    expect(sorted.map((row) => row.cliente)).toEqual(['Andes', 'Ñandú', 'Norte', 'Valle']);
+    expect(sorted.map((row) => row.customer)).toEqual(['Andes', 'Ñandú', 'Norte', 'Valle']);
   });
 
   it('puts rows with nothing LAST in both directions', () => {
     const withGaps: readonly Partial<Row>[] = [
-      { codigo: 'a', cliente: 'Zeta' },
-      { codigo: 'b' },
-      { codigo: 'c', cliente: 'Alfa' },
+      { code: 'a', customer: 'Zeta' },
+      { code: 'b' },
+      { code: 'c', customer: 'Alfa' },
     ];
 
-    const ascending = sortRows(withGaps, query({ sort: [{ key: 'cliente', direction: 'asc' }] }));
-    expect(ascending.map((row) => row.codigo)).toEqual(['c', 'a', 'b']);
+    const ascending = sortRows(withGaps, query({ sort: [{ key: 'customer', direction: 'asc' }] }));
+    expect(ascending.map((row) => row.code)).toEqual(['c', 'a', 'b']);
 
-    const descending = sortRows(withGaps, query({ sort: [{ key: 'cliente', direction: 'desc' }] }));
+    const descending = sortRows(withGaps, query({ sort: [{ key: 'customer', direction: 'desc' }] }));
     // Siguen al final: descendente no puede abrir con una pantalla de blancos.
-    expect(descending.map((row) => row.codigo)).toEqual(['a', 'c', 'b']);
+    expect(descending.map((row) => row.code)).toEqual(['a', 'c', 'b']);
   });
 
   it('leaves two empty values in their original order', () => {
-    const rows = [{ codigo: 'a' }, { codigo: 'b' }];
-    const sorted = sortRows(rows, query({ sort: [{ key: 'cliente', direction: 'asc' }] }));
-    expect(sorted.map((row) => row.codigo)).toEqual(['a', 'b']);
+    const rows = [{ code: 'a' }, { code: 'b' }];
+    const sorted = sortRows(rows, query({ sort: [{ key: 'customer', direction: 'asc' }] }));
+    expect(sorted.map((row) => row.code)).toEqual(['a', 'b']);
   });
 
   it('does not mutate what it was given', () => {
     const original = [...ROWS];
-    sortRows(ROWS, query({ sort: [{ key: 'bultos', direction: 'desc' }] }));
+    sortRows(ROWS, query({ sort: [{ key: 'packages', direction: 'desc' }] }));
     expect(ROWS).toEqual(original);
   });
 });

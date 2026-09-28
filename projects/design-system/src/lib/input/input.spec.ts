@@ -58,7 +58,7 @@ class TestHost {
 }
 
 @Component({
-  template: ` <ewms-input label="Lote" hint="Tres letras" [formField]="lote" /> `,
+  template: ` <ewms-input label="Lote" hint="Tres letras" [formField]="lot" /> `,
   imports: [Input, FormField],
 })
 class FormHost {
@@ -66,19 +66,19 @@ class FormHost {
   readonly own = signal<'none' | 'withMessage' | 'withoutMessage'>('none');
 
   readonly locked = signal(false);
-  readonly model = signal({ lote: '' });
+  readonly model = signal({ lot: '' });
   readonly form = form(this.model, (path) => {
-    required(path.lote);
-    minLength(path.lote, 3);
-    disabled(path.lote, () => this.locked());
-    validate(path.lote, () => {
+    required(path.lot);
+    minLength(path.lot, 3);
+    disabled(path.lot, () => this.locked());
+    validate(path.lot, () => {
       if (this.own() === 'withMessage') {
         return { kind: 'shipmentCode', message: 'El código de expedición es EXP-0000' };
       }
       return this.own() === 'withoutMessage' ? { kind: 'unaCosaRara' } : undefined;
     });
   });
-  readonly lote = this.form.lote;
+  readonly lot = this.form.lot;
 }
 
 /** Como `getByLabelText`: pasa por el par for/id a propósito, porque ese par es el criterio. */
@@ -477,25 +477,25 @@ describe('Input inside a signal form', () => {
   }
 
   it('writes the form value into the field, and typing back into the form', async () => {
-    host.model.set({ lote: 'L-0042' });
+    host.model.set({ lot: 'L-0042' });
     await settle();
     expect(field().value).toBe('L-0042');
 
     field().value = 'L-0099';
     field().dispatchEvent(new Event('input'));
     await settle();
-    expect(host.form.lote().value()).toBe('L-0099');
+    expect(host.form.lot().value()).toBe('L-0099');
   });
 
   it('marks the field touched when the focus leaves, not on typing', async () => {
     field().value = 'L-0099';
     field().dispatchEvent(new Event('input'));
     await settle();
-    expect(host.form.lote().touched()).toBe(false);
+    expect(host.form.lot().touched()).toBe(false);
 
     focusThenLeave(field());
     await settle();
-    expect(host.form.lote().touched()).toBe(true);
+    expect(host.form.lot().touched()).toBe(true);
   });
 
   it('shows the hint while typing and the failing validator after leaving', async () => {
@@ -516,7 +516,7 @@ describe('Input inside a signal form', () => {
   });
 
   it('prefers the message of the validator, and falls back to the token by kind', async () => {
-    host.model.set({ lote: 'ABC' });
+    host.model.set({ lot: 'ABC' });
     host.own.set('withMessage');
     focusThenLeave(field());
     await settle();

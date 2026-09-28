@@ -56,7 +56,7 @@
           <!-- El grupo es el campo: el fieldset con su legend lo dibuja él. -->
           <ewms-radio-group
             [label]="'showroom.radio.demo.groupLabel' | transloco"
-            [formField]="form.tipo"
+            [formField]="form.type"
           >
             @for (option of options(); track option.value) {
               <ewms-radio [value]="option.value" [label]="option.label" />

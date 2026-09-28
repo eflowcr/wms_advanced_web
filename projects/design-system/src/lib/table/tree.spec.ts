@@ -2,7 +2,7 @@ import { expandableKeys, flattenTree, type FlattenOptions } from './tree';
 
 interface Node {
   readonly id: string;
-  readonly hijos?: readonly Node[];
+  readonly children?: readonly Node[];
   /** Padre perezoso: tiene hijos y no están acá. */
   readonly lazy?: boolean;
 }
@@ -10,7 +10,7 @@ interface Node {
 const TREE: readonly Node[] = [
   {
     id: 'a',
-    hijos: [{ id: 'a1', hijos: [{ id: 'a1x' }, { id: 'a1y' }] }, { id: 'a2' }],
+    children: [{ id: 'a1', children: [{ id: 'a1x' }, { id: 'a1y' }] }, { id: 'a2' }],
   },
   { id: 'b' },
   { id: 'c', lazy: true },
@@ -21,8 +21,8 @@ function options(
   extra: Partial<FlattenOptions<Node>> = {},
 ): FlattenOptions<Node> {
   return {
-    children: (node) => (node.lazy ? undefined : (node.hijos ?? null)),
-    hasChildren: (node) => Boolean(node.lazy) || (node.hijos?.length ?? 0) > 0,
+    children: (node) => (node.lazy ? undefined : (node.children ?? null)),
+    hasChildren: (node) => Boolean(node.lazy) || (node.children?.length ?? 0) > 0,
     key: (node) => node.id,
     expanded: new Set(expanded),
     loading: new Set(),
@@ -109,7 +109,7 @@ describe('flattenTree', () => {
   });
 
   it('treats a parent with an empty child array as a leaf', () => {
-    const rows: readonly Node[] = [{ id: 'solo', hijos: [] }];
+    const rows: readonly Node[] = [{ id: 'solo', children: [] }];
     const flat = flattenTree(rows, options());
     expect(flat[0]?.hasChildren).toBe(false);
   });

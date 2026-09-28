@@ -29,19 +29,19 @@ import { Prose } from '../../ui/prose';
 import { StateMatrix, type MatrixAxis } from '../../ui/state-matrix';
 import { TokenValue } from '../../ui/token-value';
 import { translated } from '../../ui/translated';
-import { injectEstados, type ExpedicionRow } from './expediciones';
-import { EXPEDICIONES } from './expediciones.fixtures';
+import { injectStatuses, type ShipmentRow } from './shipments';
+import { SHIPMENTS } from './shipments.fixtures';
 import {
   HEADER_ROWS,
   PagedSource,
   lazyChildren,
   injectRowActions,
-  injectAccionesMasivas,
-  UBICACIONES_MUESTRA,
-  UBICACIONES_TOTAL,
-} from './expediciones-avanzado';
+  injectBulkActions,
+  SAMPLE_LOCATIONS,
+  TOTAL_LOCATIONS,
+} from './shipments-advanced';
 import { NOT_MEASURED } from './measure';
-import { CODIGO_MUESTRA, generarUbicaciones, type UbicacionRow } from './table.fixtures';
+import { SAMPLE_CODE, generateLocations, type LocationRow } from './table.fixtures';
 
 /**
  * Plantilla del consumidor: es lo que table.html renderiza debajo, textos traducidos incluidos.
@@ -49,36 +49,36 @@ import { CODIGO_MUESTRA, generarUbicaciones, type UbicacionRow } from './table.f
  */
 const TEMPLATE_SNIPPET = [
   '<ewms-table',
-  '  [source]="expediciones"',
-  '  children="hijos"',
-  '  rowState="estado"',
-  '  [trackBy]="porId"',
+  '  [source]="shipments"',
+  '  children="children"',
+  '  rowState="status"',
+  '  [trackBy]="byId"',
   '  [selectable]="true"',
   '  [quickFilter]="true"',
   '  [columnChooser]="true"',
   '  [exportable]="true"',
-  '  [bulkActions]="masivas()"',
+  '  [bulkActions]="bulkActions()"',
   "  [ariaLabel]=\"'showroom.table.demo.ariaLabel' | transloco\"",
-  '  (rowActivate)="abrir($event)"',
-  '  (selectionChange)="seleccion.set($event)"',
-  '  (bulkAction)="masiva($event)"',
-  '  (queryChange)="consulta.set($event)"',
+  '  (rowActivate)="open($event)"',
+  '  (selectionChange)="selection.set($event)"',
+  '  (bulkAction)="bulk($event)"',
+  '  (queryChange)="query.set($event)"',
   '>',
-  "  <ewms-column key=\"codigo\" [header]=\"'showroom.table.columns.code' | transloco\" width=\"md\" pinned=\"start\" [sortable]=\"true\" [filterable]=\"true\" />",
-  "  <ewms-column key=\"cliente\" [header]=\"'showroom.table.columns.customerItem' | transloco\" width=\"fill\" [filterable]=\"true\" />",
-  "  <ewms-column key=\"fecha\" [header]=\"'showroom.table.columns.date' | transloco\" type=\"date\" width=\"md\" [sortable]=\"true\" [filterable]=\"true\" />",
-  "  <ewms-column key=\"bultos\" [header]=\"'showroom.table.columns.packages' | transloco\" type=\"number\" width=\"sm\" aggregate=\"sum\" [sortable]=\"true\" [filterable]=\"true\" />",
-  "  <ewms-column key=\"estado\" [header]=\"'showroom.table.columns.status' | transloco\" type=\"badge\" width=\"md\" [badges]=\"estados()\" [filterable]=\"true\" />",
+  "  <ewms-column key=\"code\" [header]=\"'showroom.table.columns.code' | transloco\" width=\"md\" pinned=\"start\" [sortable]=\"true\" [filterable]=\"true\" />",
+  "  <ewms-column key=\"customer\" [header]=\"'showroom.table.columns.customerItem' | transloco\" width=\"fill\" [filterable]=\"true\" />",
+  "  <ewms-column key=\"date\" [header]=\"'showroom.table.columns.date' | transloco\" type=\"date\" width=\"md\" [sortable]=\"true\" [filterable]=\"true\" />",
+  "  <ewms-column key=\"packages\" [header]=\"'showroom.table.columns.packages' | transloco\" type=\"number\" width=\"sm\" aggregate=\"sum\" [sortable]=\"true\" [filterable]=\"true\" />",
+  "  <ewms-column key=\"status\" [header]=\"'showroom.table.columns.status' | transloco\" type=\"badge\" width=\"md\" [badges]=\"statuses()\" [filterable]=\"true\" />",
   '</ewms-table>',
 ].join('\n');
 
 /** Y el componente entero que hay detrás. Estados y acciones siguen al idioma: son señales. */
 const COMPONENT_SNIPPET = [
-  'protected readonly expediciones = new ArrayTableSource(EXPEDICIONES);',
-  'protected readonly porId = (row: ExpedicionRow) => row.id;',
-  'protected readonly estados = injectEstados();',
-  'protected readonly masivas = injectAccionesMasivas();',
-  'protected masiva(event: BulkActionEvent<ExpedicionRow>) { /* imprimir, anular… */ }',
+  'protected readonly shipments = new ArrayTableSource(SHIPMENTS);',
+  'protected readonly byId = (row: ShipmentRow) => row.id;',
+  'protected readonly statuses = injectStatuses();',
+  'protected readonly bulkActions = injectBulkActions();',
+  'protected bulk(event: BulkActionEvent<ShipmentRow>) { /* imprimir, anular… */ }',
 ].join('\n');
 
 /**
@@ -384,10 +384,10 @@ const KEYBOARD_COLUMNS: readonly DocColumn[] = [
  * El nombre que la interfaz da a cada nivel de fila.
  * t(showroom.table.levels.header, showroom.table.levels.line, showroom.table.levels.serial)
  */
-const LEVELS: Readonly<Record<ExpedicionRow['nivel'], string>> = {
-  cabecera: 'showroom.table.levels.header',
-  linea: 'showroom.table.levels.line',
-  serie: 'showroom.table.levels.serial',
+const LEVELS: Readonly<Record<ShipmentRow['level'], string>> = {
+  'cabecera': 'showroom.table.levels.header',
+  'linea': 'showroom.table.levels.line',
+  'serie': 'showroom.table.levels.serial',
 };
 
 /**
@@ -444,10 +444,10 @@ export class ShowroomTable {
   protected readonly keyboardColumns = KEYBOARD_COLUMNS;
   protected readonly matrixVariants = MATRIX_VARIANTS;
   protected readonly matrixStates = MATRIX_STATES;
-  protected readonly estados = injectEstados();
+  protected readonly statuses = injectStatuses();
   protected readonly consumerTemplate = TEMPLATE_SNIPPET;
   protected readonly consumerComponent = COMPONENT_SNIPPET;
-  protected readonly sampleCode = CODIGO_MUESTRA;
+  protected readonly sampleCode = SAMPLE_CODE;
 
   /** La matriz de fila, con los nombres en el idioma activo. */
   protected readonly rowMatrix = translated((translate) =>
@@ -459,95 +459,95 @@ export class ShowroomTable {
   );
 
   /** Una línea: ArrayTableSource ya filtra, ordena y pagina, por eso vive en la librería. */
-  protected readonly expediciones = new ArrayTableSource<ExpedicionRow>(EXPEDICIONES, [
-    'codigo',
-    'cliente',
+  protected readonly shipments = new ArrayTableSource<ShipmentRow>(SHIPMENTS, [
+    'code',
+    'customer',
   ]);
 
-  protected readonly porId = (row: ExpedicionRow): unknown => row.id;
+  protected readonly byId = (row: ShipmentRow): unknown => row.id;
 
   // --------------------------------------------------------------- lote D
 
-  protected readonly accionesFila = injectRowActions();
-  protected readonly masivas = injectAccionesMasivas();
+  protected readonly rowActions = injectRowActions();
+  protected readonly bulkActions = injectBulkActions();
   protected readonly lazyChildren = lazyChildren;
 
   /** Las cabeceras solas, para la demo de detalle y menú. */
-  protected readonly cabeceras = new ArrayTableSource<ExpedicionRow>(HEADER_ROWS, [
-    'codigo',
-    'cliente',
+  protected readonly headers = new ArrayTableSource<ShipmentRow>(HEADER_ROWS, [
+    'code',
+    'customer',
   ]);
 
   /** La misma lista, con los hijos detrás de un Observable que tarda. */
-  protected readonly perezosa = new ArrayTableSource<ExpedicionRow>(HEADER_ROWS, [
-    'codigo',
-    'cliente',
+  protected readonly lazy = new ArrayTableSource<ShipmentRow>(HEADER_ROWS, [
+    'code',
+    'customer',
   ]);
 
   /**
    * Arranca con una muestra; las cinco mil filas se cargan solo cuando se piden,
    * para no hacer lenta la ficha a quien no mira esta demo.
    */
-  protected readonly ubicaciones = signal<TableSource<UbicacionRow>>(
-    new ArrayTableSource<UbicacionRow>(generarUbicaciones(UBICACIONES_MUESTRA), [
-      'codigo',
-      'pasillo',
+  protected readonly locations = signal<TableSource<LocationRow>>(
+    new ArrayTableSource<LocationRow>(generateLocations(SAMPLE_LOCATIONS), [
+      'code',
+      'aisle',
     ]),
   );
 
-  protected readonly ubicacionesCargadas = signal(UBICACIONES_MUESTRA);
-  protected readonly ubicacionesTotal = UBICACIONES_TOTAL;
+  protected readonly loadedLocations = signal(SAMPLE_LOCATIONS);
+  protected readonly totalLocations = TOTAL_LOCATIONS;
 
-  protected readonly paginada = new PagedSource();
+  protected readonly paged = new PagedSource();
 
-  protected readonly porUbicacion = (row: UbicacionRow): unknown => row.id;
+  protected readonly byLocation = (row: LocationRow): unknown => row.id;
 
   /** Toda expedición tiene algo que enseñar; una línea suelta no. */
-  protected readonly esMaestra = (row: ExpedicionRow): boolean => row.nivel === 'cabecera';
+  protected readonly isMaster = (row: ShipmentRow): boolean => row.level === 'cabecera';
 
   /** Lo último que eligió o pidió cada demo, null mientras no haya nada: el texto sale abajo. */
-  private readonly masivaElegida = signal<{ readonly id: string; readonly count: number } | null>(
+  private readonly chosenBulk = signal<{ readonly id: string; readonly count: number } | null>(
     null,
   );
-  private readonly accionElegida = signal<{ readonly id: string; readonly codigo: string } | null>(
+  private readonly chosenAction = signal<{ readonly id: string; readonly code: string } | null>(
     null,
   );
-  private readonly descargaPedida = signal<string | null>(null);
-  private readonly filaActivada = signal<ExpedicionRow | null>(null);
+  private readonly requestedDownload = signal<string | null>(null);
+  private readonly activatedRow = signal<ShipmentRow | null>(null);
 
-  protected readonly seleccion = signal<readonly ExpedicionRow[]>([]);
-  protected readonly consulta = signal<TableQuery | null>(null);
+  protected readonly selection = signal<readonly ShipmentRow[]>([]);
+  protected readonly query = signal<TableQuery | null>(null);
 
   /** Lo mismo, escrito para quien mira y en el idioma activo: si cambia, se vuelve a escribir. */
-  protected readonly ultimaMasiva = translated((translate) => {
-    const choice = this.masivaElegida();
+  protected readonly lastBulk = translated((translate) => {
+    const choice = this.chosenBulk();
     return choice
       ? translate(LOG.bulkChoice, {
-          action: labelOf(this.masivas(), choice.id),
+          action: labelOf(this.bulkActions(), choice.id),
           count: choice.count,
         })
       : translate(LOG.none);
   });
 
-  protected readonly ultimaAccion = translated((translate) => {
-    const choice = this.accionElegida();
+  protected readonly lastAction = translated((translate) => {
+    const choice = this.chosenAction();
     return choice
-      ? `${labelOf(this.accionesFila(), choice.id)} · ${choice.codigo}`
+      ? `${labelOf(this.rowActions(), choice.id)} · ${choice.code}`
       : translate(LOG.none);
   });
 
-  protected readonly ultimaDescarga = translated(
-    (translate) => this.descargaPedida() ?? translate(LOG.none),
+  protected readonly lastDownload = translated(
+    (translate) => this.requestedDownload() ?? translate(LOG.none),
   );
 
-  protected readonly ultimaActivada = translated((translate) => {
-    const row = this.filaActivada();
-    return row ? `${row.codigo} (${translate(LEVELS[row.nivel])})` : translate(LOG.none);
+  protected readonly lastActivated = translated((translate) => {
+    const row = this.activatedRow();
+    return row ? `${row.code} (${translate(LEVELS[row.level])})` : translate(LOG.none);
   });
 
   /** La última consulta, en una línea legible. */
-  protected readonly consultaResumen = translated((translate) => {
-    const query = this.consulta();
+  protected readonly querySummary = translated((translate) => {
+    const query = this.query();
     if (!query) {
       return translate(LOG.queryNone);
     }
@@ -584,37 +584,37 @@ export class ShowroomTable {
     });
   }
 
-  protected abrir(event: RowActivateEvent<ExpedicionRow>): void {
-    this.filaActivada.set(event.row);
+  protected open(event: RowActivateEvent<ShipmentRow>): void {
+    this.activatedRow.set(event.row);
   }
 
-  protected cargarTodas(): void {
-    this.ubicaciones.set(
-      new ArrayTableSource<UbicacionRow>(generarUbicaciones(UBICACIONES_TOTAL), [
-        'codigo',
-        'pasillo',
+  protected loadAll(): void {
+    this.locations.set(
+      new ArrayTableSource<LocationRow>(generateLocations(TOTAL_LOCATIONS), [
+        'code',
+        'aisle',
       ]),
     );
-    this.ubicacionesCargadas.set(UBICACIONES_TOTAL);
+    this.loadedLocations.set(TOTAL_LOCATIONS);
   }
 
   /** No hace nada: lo anota, como el resto de las demos. */
-  protected masiva(event: BulkActionEvent<ExpedicionRow>): void {
-    this.masivaElegida.set({ id: event.item.id, count: event.rows.length });
+  protected bulk(event: BulkActionEvent<ShipmentRow>): void {
+    this.chosenBulk.set({ id: event.item.id, count: event.rows.length });
   }
 
-  protected elegir(event: RowMenuEvent<ExpedicionRow>): void {
-    this.accionElegida.set({ id: event.item.id, codigo: event.row.codigo });
+  protected choose(event: RowMenuEvent<ShipmentRow>): void {
+    this.chosenAction.set({ id: event.item.id, code: event.row.code });
   }
 
   /** No descarga nada, solo lo anota: ninguna demo tiene datos reales ni red. */
-  protected descargar(row: ExpedicionRow): void {
-    this.descargaPedida.set(row.codigo);
+  protected download(row: ShipmentRow): void {
+    this.requestedDownload.set(row.code);
   }
 
   /** Cuántas líneas cuelgan de una cabecera, según la lista completa. */
-  protected lineasDe(row: ExpedicionRow): number {
-    return EXPEDICIONES.find((expedicion) => expedicion.id === row.id)?.hijos?.length ?? 0;
+  protected linesOf(row: ShipmentRow): number {
+    return SHIPMENTS.find((shipment) => shipment.id === row.id)?.children?.length ?? 0;
   }
 
   protected tintFor(variant: string): string {
@@ -627,7 +627,7 @@ export class ShowroomTable {
 
   /** El nombre del estado que pinta esa variante, del mismo diccionario que el badge de la tabla. */
   protected labelFor(variant: string): string {
-    return Object.values(this.estados()).find((badge) => badge.variant === variant)?.label ?? '';
+    return Object.values(this.statuses()).find((badge) => badge.variant === variant)?.label ?? '';
   }
 
   protected isBadge(stateId: string): boolean {

@@ -236,7 +236,7 @@ export class ShowroomInput {
   protected readonly anatomyColumns = ANATOMY_COLUMNS;
 
   /** Un form() real; el Input se enlaza solo por [formField]. */
-  protected readonly model = signal({ sku: 'SKU-04871-B', clave: '', busqueda: '' });
+  protected readonly model = signal({ sku: 'SKU-04871-B', password: '', search: '' });
 
   /**
    * `required` va en el esquema y no en la plantilla: Angular prohíbe enlazar `[required]` en el

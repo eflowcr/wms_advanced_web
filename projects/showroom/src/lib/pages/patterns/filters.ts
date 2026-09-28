@@ -15,8 +15,8 @@ import { DemoFrame } from '../../ui/demo-frame';
 import { PropTable, type PropRow } from '../../ui/prop-table';
 import { Prose } from '../../ui/prose';
 import { translated, type Translate } from '../../ui/translated';
-import { injectEstados } from '../components/expediciones';
-import { ALMACENES, CLIENTES, FILAS, type FilaConAlmacen } from './filters.fixtures';
+import { injectStatuses } from '../components/shipments';
+import { WAREHOUSES, CUSTOMERS, ROWS, type RowWithWarehouse } from './filters.fixtures';
 
 /**
  * Cinco campos: los tres primeros a la vista, los otros dos detrás de «Más filtros». Las
@@ -25,50 +25,50 @@ import { ALMACENES, CLIENTES, FILAS, type FilaConAlmacen } from './filters.fixtu
  *   showroom.patternFilters.fields.status, showroom.patternFilters.fields.customer,
  *   showroom.patternFilters.fields.search)
  */
-function campos(t: Translate, estados: BadgeDictionary): readonly FilterField[] {
+function fields(t: Translate, statuses: BadgeDictionary): readonly FilterField[] {
   return [
     {
       kind: 'select',
-      key: 'almacen',
+      key: 'warehouse',
       label: t('showroom.patternFilters.fields.warehouse'),
-      options: ALMACENES,
+      options: WAREHOUSES,
     },
-    { kind: 'date-range', key: 'fecha', label: t('showroom.patternFilters.fields.period') },
+    { kind: 'date-range', key: 'date', label: t('showroom.patternFilters.fields.period') },
     {
       kind: 'select',
-      key: 'estado',
+      key: 'status',
       label: t('showroom.patternFilters.fields.status'),
-      options: Object.entries(estados).map(([value, badge]) => ({ label: badge.label, value })),
+      options: Object.entries(statuses).map(([value, badge]) => ({ label: badge.label, value })),
     },
     {
       kind: 'select',
-      key: 'cliente',
+      key: 'customer',
       label: t('showroom.patternFilters.fields.customer'),
-      options: CLIENTES,
+      options: CUSTOMERS,
     },
-    { kind: 'search', key: 'texto', label: t('showroom.patternFilters.fields.search') },
+    { kind: 'search', key: 'text', label: t('showroom.patternFilters.fields.search') },
   ];
 }
 
-const CLAVES = ['almacen', 'fecha', 'estado', 'cliente', 'texto'];
+const KEYS = ['warehouse', 'date', 'status', 'customer', 'text'];
 
 /** Los filtros van a la fuente: la tabla recibe las filas que quedan, no un filtro. */
-function filtrar(
-  filas: readonly FilaConAlmacen[],
-  valores: FilterValues,
-): readonly FilaConAlmacen[] {
-  return filas.filter((fila) =>
-    Object.entries(valores).every(([clave, valor]) => {
-      if (clave === 'fecha' && typeof valor === 'object') {
+function filterRows(
+  rows: readonly RowWithWarehouse[],
+  values: FilterValues,
+): readonly RowWithWarehouse[] {
+  return rows.filter((row) =>
+    Object.entries(values).every(([key, value]) => {
+      if (key === 'date' && typeof value === 'object') {
         return (
-          (valor.from === undefined || fila.fecha >= valor.from) &&
-          (valor.to === undefined || fila.fecha <= valor.to)
+          (value.from === undefined || row.date >= value.from) &&
+          (value.to === undefined || row.date <= value.to)
         );
       }
-      if (clave === 'texto') {
-        return fila.codigo.toLowerCase().includes(String(valor).toLowerCase());
+      if (key === 'text') {
+        return row.code.toLowerCase().includes(String(value).toLowerCase());
       }
-      return String(fila[clave as 'almacen' | 'estado' | 'cliente']) === String(valor);
+      return String(row[key as 'warehouse' | 'status' | 'customer']) === String(value);
     }),
   );
 }
@@ -126,32 +126,32 @@ const PROPS: readonly PropRow[] = [
 export class ShowroomFilters {
   protected readonly version = DESIGN_SYSTEM_VERSION;
   protected readonly props = PROPS;
-  protected readonly estados = injectEstados();
-  protected readonly campos = translated((t) => campos(t, this.estados()));
+  protected readonly statuses = injectStatuses();
+  protected readonly fields = translated((t) => fields(t, this.statuses()));
 
   /** Los filtros viven en la URL: un enlace filtrado se comparte y «atrás» deshace el último. */
-  private readonly url = filtersInUrl(CLAVES);
-  protected readonly valor = this.url.value;
+  private readonly url = filtersInUrl(KEYS);
+  protected readonly value = this.url.value;
 
-  protected readonly activos = computed(() => Object.keys(this.valor()).length);
+  protected readonly activeCount = computed(() => Object.keys(this.value()).length);
 
-  protected readonly fuente = computed(
-    () => new ArrayTableSource<FilaConAlmacen>(filtrar(FILAS, this.valor()), ['codigo', 'cliente']),
+  protected readonly source = computed(
+    () => new ArrayTableSource<RowWithWarehouse>(filterRows(ROWS, this.value()), ['code', 'customer']),
   );
 
-  protected readonly porId = (fila: FilaConAlmacen): unknown => fila.id;
+  protected readonly byId = (row: RowWithWarehouse): unknown => row.id;
 
-  protected aplicar(valores: FilterValues): void {
-    this.url.set(valores);
+  protected apply(values: FilterValues): void {
+    this.url.set(values);
   }
 
-  protected limpiar(): void {
+  protected clear(): void {
     this.url.set({});
   }
 
   protected readonly snippet = [
-    '<ewms-filter-bar [fields]="filtros" [value]="valor()" (valueChange)="aplicar($event)" />',
+    '<ewms-filter-bar [fields]="fields()" [value]="value()" (valueChange)="apply($event)" />',
     '',
-    '<ewms-table [source]="fuente()" [screenFilters]="activos()" (filtersCleared)="limpiar()" …>',
+    '<ewms-table [source]="source()" [screenFilters]="activeCount()" (filtersCleared)="clear()" …>',
   ].join('\n');
 }

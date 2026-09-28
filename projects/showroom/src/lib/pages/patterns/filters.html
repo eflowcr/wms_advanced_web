@@ -56,52 +56,52 @@
 
     <ewms-demo-frame ground="canvas" [label]="'showroom.patternFilters.demo.frame' | transloco">
       <div class="flex flex-col gap-4" data-demo-filters>
-        <ewms-filter-bar [fields]="campos()" [value]="valor()" (valueChange)="aplicar($event)" />
+        <ewms-filter-bar [fields]="fields()" [value]="value()" (valueChange)="apply($event)" />
 
         <ewms-table
-          [source]="fuente()"
-          [trackBy]="porId"
-          [screenFilters]="activos()"
+          [source]="source()"
+          [trackBy]="byId"
+          [screenFilters]="activeCount()"
           [ariaLabel]="'showroom.patternFilters.demo.table' | transloco"
-          (filtersCleared)="limpiar()"
+          (filtersCleared)="clear()"
         >
           <ewms-column
-            key="codigo"
+            key="code"
             [header]="'showroom.patternFilters.demo.columns.code' | transloco"
             width="md"
             [sortable]="true"
           />
           <ewms-column
-            key="cliente"
+            key="customer"
             [header]="'showroom.patternFilters.demo.columns.customer' | transloco"
             width="fill"
           />
           <ewms-column
-            key="fecha"
+            key="date"
             [header]="'showroom.patternFilters.demo.columns.date' | transloco"
             type="date"
             width="md"
             [sortable]="true"
           />
           <ewms-column
-            key="bultos"
+            key="packages"
             [header]="'showroom.patternFilters.demo.columns.packages' | transloco"
             type="number"
             width="sm"
             [sortable]="true"
           />
           <ewms-column
-            key="estado"
+            key="status"
             [header]="'showroom.patternFilters.demo.columns.status' | transloco"
             type="badge"
             width="md"
-            [badges]="estados()"
+            [badges]="statuses()"
           />
         </ewms-table>
 
         <p class="text-caption text-secondary">
           {{ 'showroom.patternFilters.demo.active' | transloco }}
-          <span class="font-mono text-primary" data-active-filters>{{ activos() }}</span>
+          <span class="font-mono text-primary" data-active-filters>{{ activeCount() }}</span>
         </p>
       </div>
     </ewms-demo-frame>

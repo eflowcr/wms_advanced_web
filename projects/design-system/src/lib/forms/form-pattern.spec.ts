@@ -51,19 +51,19 @@ const MESSAGES: FormMessages = {
   requiredLegend: '* obligatorio',
 };
 
-interface Alta {
-  codigo: string;
-  cliente: string;
-  etiquetas: boolean;
+interface NewShipment {
+  code: string;
+  customer: string;
+  labels: boolean;
 }
 
 @Component({
   template: `
     <div ewmsShortcutsHost>
-      <form [ewmsForm]="alta" [ewmsFormAction]="guardar" #pat="ewmsForm">
-        <ewms-input label="Código" [formField]="alta.codigo" data-codigo />
-        <ewms-input label="Cliente" [formField]="alta.cliente" data-cliente />
-        <ewms-checkbox label="Etiquetas impresas" [formField]="alta.etiquetas" data-etiquetas />
+      <form [ewmsForm]="newShipment" [ewmsFormAction]="save" #pat="ewmsForm">
+        <ewms-input label="Código" [formField]="newShipment.code" data-codigo />
+        <ewms-input label="Cliente" [formField]="newShipment.customer" data-cliente />
+        <ewms-checkbox label="Etiquetas impresas" [formField]="newShipment.labels" data-etiquetas />
         <ewms-button type="submit" [loading]="pat.busy()" data-save>Guardar</ewms-button>
       </form>
     </div>
@@ -74,18 +74,18 @@ class TestHost {
   saved = 0;
   private release: (() => void) | null = null;
 
-  readonly model = signal<Alta>({ codigo: '', cliente: '', etiquetas: false });
+  readonly model = signal<NewShipment>({ code: '', customer: '', labels: false });
 
-  readonly alta = form(this.model, (path) => {
-    required(path.codigo);
-    patternRule(path.codigo, /^EXP-\d{4}$/);
-    minLength(path.cliente, 3);
+  readonly newShipment = form(this.model, (path) => {
+    required(path.code);
+    patternRule(path.code, /^EXP-\d{4}$/);
+    minLength(path.customer, 3);
     // El equivalente de `requiredTrue`: `required` mira si está vacío, y `false` no lo está.
-    validate(path.etiquetas, ({ value }) => (value() ? undefined : requiredError()));
+    validate(path.labels, ({ value }) => (value() ? undefined : requiredError()));
   });
 
   /** Queda pendiente hasta que la prueba la suelta: así se mira el botón en carga. */
-  readonly guardar = async (): Promise<void> => {
+  readonly save = async (): Promise<void> => {
     this.saved += 1;
     await new Promise<void>((resolve) => {
       this.release = resolve;
@@ -214,19 +214,19 @@ describe('FormPattern', () => {
 describe('el formulario sin resumen y sin palabras', () => {
   @Component({
     template: `
-      <form [ewmsForm]="alta" [ewmsFormAction]="guardar" [summary]="false">
-        <ewms-input label="Código" [formField]="alta.codigo" data-codigo />
+      <form [ewmsForm]="newShipment" [ewmsFormAction]="save" [summary]="false">
+        <ewms-input label="Código" [formField]="newShipment.code" data-codigo />
       </form>
     `,
     imports: [FormField, FormPattern, TextInput],
   })
   class BareHost {
     saved = 0;
-    readonly model = signal({ codigo: '' });
-    readonly alta = form(this.model, (path) => {
-      required(path.codigo);
+    readonly model = signal({ code: '' });
+    readonly newShipment = form(this.model, (path) => {
+      required(path.code);
     });
-    readonly guardar = (): void => {
+    readonly save = (): void => {
       this.saved += 1;
     };
   }
@@ -253,8 +253,8 @@ describe('el formulario sin resumen y sin palabras', () => {
 describe('el resumen nombra un campo que no tiene etiqueta', () => {
   @Component({
     template: `
-      <form [ewmsForm]="alta" [ewmsFormAction]="guardar">
-        <ewms-card-group label="Almacén" [formField]="alta.almacen">
+      <form [ewmsForm]="newShipment" [ewmsFormAction]="save">
+        <ewms-card-group label="Almacén" [formField]="newShipment.warehouse">
           <ewms-card optionValue="norte"><span>Norte</span></ewms-card>
           <ewms-card optionValue="central"><span>Central</span></ewms-card>
         </ewms-card-group>
@@ -263,11 +263,11 @@ describe('el resumen nombra un campo que no tiene etiqueta', () => {
     imports: [Card, CardGroup, FormField, FormPattern],
   })
   class GroupHost {
-    readonly model = signal<{ almacen: string | null }>({ almacen: null });
-    readonly alta = form(this.model, (path) => {
-      required(path.almacen);
+    readonly model = signal<{ warehouse: string | null }>({ warehouse: null });
+    readonly newShipment = form(this.model, (path) => {
+      required(path.warehouse);
     });
-    readonly guardar = (): void => undefined;
+    readonly save = (): void => undefined;
   }
 
   it('lo nombra por su nombre accesible, y el enlace enfoca su control', async () => {
@@ -319,8 +319,8 @@ describe('confirmDiscard', () => {
 
     // Un `FieldTree` de verdad. `dirty` es «lo cambió quien lo usa»: escribir el modelo desde el
     // código no ensucia nada, y eso es lo correcto.
-    const tree = TestBed.runInInjectionContext(() => form(signal({ codigo: '' })));
-    tree.codigo().markAsDirty();
+    const tree = TestBed.runInInjectionContext(() => form(signal({ code: '' })));
+    tree.code().markAsDirty();
     const answer = TestBed.runInInjectionContext(() => confirmDiscard(tree, options));
     expect(await answer).toBe(false);
     expect(asked).toBe(1);

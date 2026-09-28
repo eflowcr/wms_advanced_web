@@ -63,8 +63,8 @@
 
     <ewms-demo-frame ground="surface" [label]="'showroom.patternForm.demo.frame' | transloco">
       <form
-        [ewmsForm]="alta"
-        [ewmsFormAction]="guardar"
+        [ewmsForm]="newShipment"
+        [ewmsFormAction]="save"
         #pattern="ewmsForm"
         class="flex max-w-160 flex-col gap-4"
         data-demo-form
@@ -81,44 +81,44 @@
             [label]="'showroom.patternForm.demo.shipment.code' | transloco"
             [placeholder]="'showroom.patternForm.demo.shipment.codePlaceholder' | transloco"
             [hint]="'showroom.patternForm.demo.shipment.codeHint' | transloco"
-            [formField]="alta.codigo"
+            [formField]="newShipment.code"
             data-form-codigo
           />
           <ewms-input
             [label]="'showroom.patternForm.demo.shipment.customer' | transloco"
-            [formField]="alta.cliente"
+            [formField]="newShipment.customer"
             data-form-cliente
           />
           <!-- `type="text"`: la caja del sistema no tiene tipo email; el validador sí. -->
           <ewms-input
             [label]="'showroom.patternForm.demo.shipment.email' | transloco"
             [hint]="'showroom.patternForm.demo.shipment.emailHint' | transloco"
-            [formField]="alta.correo"
+            [formField]="newShipment.email"
             data-form-correo
           />
           <!-- Dos columnas solo para campos cortos emparentados, y solo en pantalla ancha. -->
           <div class="grid grid-cols-[repeat(auto-fit,minmax(min(14rem,100%),1fr))] gap-4">
             <ewms-select
               [label]="'showroom.patternForm.demo.shipment.warehouse' | transloco"
-              [options]="almacenes"
-              [formField]="alta.almacen"
+              [options]="warehouses"
+              [formField]="newShipment.warehouse"
               data-form-almacen
             />
             <ewms-date-picker
               [label]="'showroom.patternForm.demo.shipment.date' | transloco"
-              [formField]="alta.fecha"
+              [formField]="newShipment.date"
               data-form-fecha
             />
             <ewms-select
               [label]="'showroom.patternForm.demo.shipment.status' | transloco"
-              [options]="estados()"
-              [formField]="alta.estado"
+              [options]="statuses()"
+              [formField]="newShipment.status"
               data-form-estado
             />
             <ewms-input
               [label]="'showroom.patternForm.demo.shipment.packages' | transloco"
               type="number"
-              [formField]="alta.bultos"
+              [formField]="newShipment.packages"
               data-form-bultos
             />
           </div>
@@ -130,19 +130,19 @@
           </legend>
           <ewms-toggle
             [label]="'showroom.patternForm.demo.preparation.urgent' | transloco"
-            [formField]="alta.urgente"
+            [formField]="newShipment.urgent"
             data-form-urgente
           />
           <ewms-checkbox
             [label]="'showroom.patternForm.demo.preparation.labels' | transloco"
-            [formField]="alta.etiquetas"
+            [formField]="newShipment.labels"
             data-form-etiquetas
           />
         </fieldset>
 
         <!-- Pie: Cancelar y la acción primaria a la derecha. -->
         <div class="flex flex-wrap items-center justify-end gap-2">
-          <ewms-button variant="secondary" data-form-leave (click)="salir()">
+          <ewms-button variant="secondary" data-form-leave (click)="leave()">
             {{ 'showroom.patternForm.demo.leave' | transloco }}
           </ewms-button>
           <ewms-button variant="primary" type="submit" [loading]="pattern.busy()" data-form-save>

@@ -249,11 +249,11 @@ export class ShowroomEmptyState {
     '<ewms-empty-state',
     '  kind="no-data"',
     '  title="Todavía no hay expediciones"',
-    '  [action]="crear"',
+    '  [action]="create"',
     '/>',
   ].join('\n');
 
-  protected readonly crear = computed(() => this.actions()[KIND_SNIPPETS.noData]);
+  protected readonly create = computed(() => this.actions()[KIND_SNIPPETS.noData]);
 
   protected caseOf(kind: string): Case {
     return CASES.find((item) => item.kind === kind) ?? CASES[0]!;

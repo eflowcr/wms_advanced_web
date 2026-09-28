@@ -192,10 +192,10 @@ export class ShowroomRadio {
 
   protected readonly box = signal<SelectionBox>(SELECTION_BOX);
 
-  protected readonly model = signal<{ tipo: string | null }>({ tipo: 'proveedor' });
+  protected readonly model = signal<{ type: string | null }>({ type: 'proveedor' });
   protected readonly form = form(this.model);
 
-  protected readonly chosen = computed(() => this.form.tipo().value());
+  protected readonly chosen = computed(() => this.form.type().value());
 
   protected readonly snippet = [
     '<fieldset>',

@@ -186,45 +186,45 @@
 
         <ewms-table
           [source]="table()"
-          rowState="estado"
-          [trackBy]="porId"
+          rowState="status"
+          [trackBy]="byId"
           [quickFilter]="true"
           [ariaLabel]="'showroom.patternSearchCreateEdit.demo.table.label' | transloco"
           (rowActivate)="onRowActivate($event)"
         >
           <ewms-column
-            key="codigo"
+            key="code"
             [header]="'showroom.patternSearchCreateEdit.demo.table.code' | transloco"
             width="md"
             [sortable]="true"
             [filterable]="true"
           />
           <ewms-column
-            key="cliente"
+            key="customer"
             [header]="'showroom.patternSearchCreateEdit.demo.table.customer' | transloco"
             width="fill"
             [filterable]="true"
           />
           <ewms-column
-            key="fecha"
+            key="date"
             [header]="'showroom.patternSearchCreateEdit.demo.table.date' | transloco"
             type="date"
             width="md"
             [sortable]="true"
           />
           <ewms-column
-            key="bultos"
+            key="packages"
             [header]="'showroom.patternSearchCreateEdit.demo.table.packages' | transloco"
             type="number"
             width="sm"
             [sortable]="true"
           />
           <ewms-column
-            key="estado"
+            key="status"
             [header]="'showroom.patternSearchCreateEdit.demo.table.state' | transloco"
             type="badge"
             width="md"
-            [badges]="estados()"
+            [badges]="statuses()"
           />
         </ewms-table>
 

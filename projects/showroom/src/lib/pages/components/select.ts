@@ -326,18 +326,18 @@ export class ShowroomSelect {
   ]);
 
   protected readonly model = signal<{
-    estado: string | null;
+    status: string | null;
     rack: string | null;
-    articulo: Article | null;
-  }>({ estado: 'preparacion', rack: null, articulo: null });
+    article: Article | null;
+  }>({ status: 'preparacion', rack: null, article: null });
 
   protected readonly form = signalForm(this.model);
 
-  protected readonly chosen = computed(() => this.form.estado().value());
+  protected readonly chosen = computed(() => this.form.status().value());
 
   protected readonly rack = computed(() => this.form.rack().value());
 
-  protected readonly article = computed(() => this.form.articulo().value());
+  protected readonly article = computed(() => this.form.article().value());
 
   /** Comportamiento de la fuente, para ver los estados de falla. */
   protected readonly behaviour = signal<SourceBehaviour>('normal');

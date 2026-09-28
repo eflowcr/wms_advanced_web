@@ -11,7 +11,7 @@ import {
 import { provideI18nTesting } from '@ewms/testing';
 import { TranslocoService } from '@jsverse/transloco';
 import { firstValueFrom } from 'rxjs';
-import { provideShipmentCodeMessage, SHIPMENT_CODE } from './pages/patterns/expedicion.rules';
+import { provideShipmentCodeMessage, SHIPMENT_CODE } from './pages/patterns/shipment.rules';
 import { provideShowroomDesignSystem } from './showroom.providers';
 import {
   loadShowroomScope,

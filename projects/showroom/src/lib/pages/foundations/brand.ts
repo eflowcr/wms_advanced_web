@@ -32,7 +32,7 @@ const BRAND_BASE = '/brand';
 })
 export class ShowroomBrand {
   protected readonly lockup = `${BRAND_BASE}/ewms-lockup.svg`;
-  protected readonly isotipoMono = `${BRAND_BASE}/ewms-isotipo-mono.svg`;
+  protected readonly isotypeMono = `${BRAND_BASE}/ewms-isotipo-mono.svg`;
   protected readonly lockupMono = `${BRAND_BASE}/ewms-lockup-mono.svg`;
 
   /**

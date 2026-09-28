@@ -39,14 +39,14 @@ class TestHost {
 }
 
 @Component({
-  template: ` <ewms-checkbox label="Reetiquetar" [formField]="form.reetiquetar" /> `,
+  template: ` <ewms-checkbox label="Reetiquetar" [formField]="form.relabel" /> `,
   imports: [Checkbox, FormField],
 })
 class FormHost {
   readonly locked = signal(false);
-  readonly model = signal({ reetiquetar: false });
+  readonly model = signal({ relabel: false });
   readonly form = form(this.model, (path) => {
-    disabledRule(path.reetiquetar, () => this.locked());
+    disabledRule(path.relabel, () => this.locked());
   });
 }
 
@@ -271,13 +271,13 @@ describe('Checkbox inside a signal form', () => {
   }
 
   it('writes the form value into the box, and a click back into the form', async () => {
-    fixture.componentInstance.model.set({ reetiquetar: true });
+    fixture.componentInstance.model.set({ relabel: true });
     await settle();
     expect(box().checked).toBe(true);
 
     box().click();
     await settle();
-    expect(fixture.componentInstance.form.reetiquetar().value()).toBe(false);
+    expect(fixture.componentInstance.form.relabel().value()).toBe(false);
   });
 
   it('follows the disabled rule of the schema in both directions', async () => {
@@ -293,10 +293,10 @@ describe('Checkbox inside a signal form', () => {
   it('marks the field touched when the focus leaves, not on the click', async () => {
     box().click();
     await settle();
-    expect(fixture.componentInstance.form.reetiquetar().touched()).toBe(false);
+    expect(fixture.componentInstance.form.relabel().touched()).toBe(false);
 
     focusThenLeave(box());
     await settle();
-    expect(fixture.componentInstance.form.reetiquetar().touched()).toBe(true);
+    expect(fixture.componentInstance.form.relabel().touched()).toBe(true);
   });
 });

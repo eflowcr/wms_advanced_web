@@ -53,7 +53,7 @@
         <div class="flex max-w-80 flex-col gap-3" data-demo-date>
           <ewms-date-picker
             [label]="'showroom.datePicker.demo.delivery.label' | transloco"
-            [formField]="form.entrega"
+            [formField]="form.delivery"
             [placeholder]="'showroom.datePicker.demo.delivery.placeholder' | transloco"
             [hint]="'showroom.datePicker.demo.delivery.hint' | transloco"
             [minDate]="today"
@@ -77,7 +77,7 @@
         <ewms-date-picker
           [label]="'showroom.datePicker.variants.period' | transloco"
           mode="range"
-          [formField]="form.periodo"
+          [formField]="form.dateRange"
         />
         <p class="text-caption text-secondary">
           {{ 'showroom.datePicker.demo.value' | transloco }}

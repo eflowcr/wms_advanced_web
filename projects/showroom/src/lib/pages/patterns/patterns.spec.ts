@@ -132,9 +132,9 @@ describe('the DS-4 pattern pages, driven', () => {
       press('n', { altKey: true });
       await settle();
 
-      const codigo = query<HTMLInputElement>('[data-form-codigo] input');
-      codigo!.value = 'EXP-2026-0777';
-      codigo!.dispatchEvent(new Event('input', { bubbles: true }));
+      const code = query<HTMLInputElement>('[data-form-codigo] input');
+      code!.value = 'EXP-2026-0777';
+      code!.dispatchEvent(new Event('input', { bubbles: true }));
       await settle();
 
       query<HTMLButtonElement>('[data-form-save] button')!.click();
@@ -160,9 +160,9 @@ describe('the DS-4 pattern pages, driven', () => {
     it('cancelling changes nothing and asks nothing', async () => {
       press('n', { altKey: true });
       await settle();
-      const codigo = query<HTMLInputElement>('[data-form-codigo] input');
-      codigo!.value = 'no se guarda';
-      codigo!.dispatchEvent(new Event('input', { bubbles: true }));
+      const code = query<HTMLInputElement>('[data-form-codigo] input');
+      code!.value = 'no se guarda';
+      code!.dispatchEvent(new Event('input', { bubbles: true }));
       await settle();
 
       query<HTMLButtonElement>('[data-form-cancel] button')!.click();
@@ -188,12 +188,12 @@ describe('the DS-4 pattern pages, driven', () => {
     it('Ctrl+S saves the open form from inside a field', async () => {
       press('n', { altKey: true });
       await settle();
-      const codigo = query<HTMLInputElement>('[data-form-codigo] input');
-      codigo!.value = 'EXP-2026-0778';
-      codigo!.dispatchEvent(new Event('input', { bubbles: true }));
+      const code = query<HTMLInputElement>('[data-form-codigo] input');
+      code!.value = 'EXP-2026-0778';
+      code!.dispatchEvent(new Event('input', { bubbles: true }));
       await settle();
 
-      press('s', { ctrlKey: true }, codigo!);
+      press('s', { ctrlKey: true }, code!);
       await settle();
 
       expect(query('[data-last-saved]')?.textContent?.trim()).toBe('EXP-2026-0778');
@@ -248,9 +248,9 @@ describe('the DS-4 pattern pages, driven', () => {
       query<HTMLButtonElement>('[data-edit-button] button')!.click();
       await settle();
 
-      const cliente = query<HTMLInputElement>('[data-form-cliente] input')!;
-      cliente.value = 'Cliente corregido';
-      cliente.dispatchEvent(new Event('input', { bubbles: true }));
+      const customer = query<HTMLInputElement>('[data-form-cliente] input')!;
+      customer.value = 'Cliente corregido';
+      customer.dispatchEvent(new Event('input', { bubbles: true }));
       await settle();
       query<HTMLButtonElement>('[data-form-save] button')!.click();
       await settle();
@@ -351,30 +351,30 @@ describe('the DS-4 pattern pages, driven', () => {
     it('activating a row in the table opens it for editing', async () => {
       // Doble clic: la mitad de mouse de `(rowActivate)`; la otra es Enter sobre la fila enfocada.
       const row = page.querySelector<HTMLElement>('tbody [role="row"]')!;
-      const codigo = row.textContent ?? '';
+      const code = row.textContent ?? '';
       row.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
       await settle();
 
       const opened = query<HTMLInputElement>('[data-form-codigo] input')?.value ?? '';
       expect(opened).not.toBe('');
-      expect(codigo).toContain(opened);
+      expect(code).toContain(opened);
     });
 
     it('the form carries the state and the urgent switch back out', async () => {
       press('n', { altKey: true });
       await settle();
 
-      const estado = query<HTMLInputElement>('[data-form-estado] input[role="combobox"]');
-      expect(estado).not.toBeNull();
+      const status = query<HTMLInputElement>('[data-form-estado] input[role="combobox"]');
+      expect(status).not.toBeNull();
 
-      const urgente = query<HTMLInputElement>('[data-form-urgente] input')!;
-      urgente.click();
+      const urgent = query<HTMLInputElement>('[data-form-urgente] input')!;
+      urgent.click();
       await settle();
-      expect(urgente.checked).toBe(true);
+      expect(urgent.checked).toBe(true);
 
-      const codigo = query<HTMLInputElement>('[data-form-codigo] input')!;
-      codigo.value = 'EXP-2026-0779';
-      codigo.dispatchEvent(new Event('input', { bubbles: true }));
+      const code = query<HTMLInputElement>('[data-form-codigo] input')!;
+      code.value = 'EXP-2026-0779';
+      code.dispatchEvent(new Event('input', { bubbles: true }));
       await settle();
 
       query<HTMLButtonElement>('[data-form-save] button')!.click();
@@ -405,9 +405,9 @@ describe('the DS-4 pattern pages, driven', () => {
       // de un solo campo; la única forma honesta de mantener vivo ese cable es ejercitarlo.
       press('n', { altKey: true });
       await settle();
-      const codigo = query<HTMLInputElement>('[data-form-codigo] input')!;
-      codigo.value = 'EXP-2026-0780';
-      codigo.dispatchEvent(new Event('input', { bubbles: true }));
+      const code = query<HTMLInputElement>('[data-form-codigo] input')!;
+      code.value = 'EXP-2026-0780';
+      code.dispatchEvent(new Event('input', { bubbles: true }));
       await settle();
 
       query('[data-expedicion-form]')!.dispatchEvent(
@@ -425,14 +425,14 @@ describe('the DS-4 pattern pages, driven', () => {
       query<HTMLInputElement>('[data-form-estado] input')!.click();
       await settle();
       const options = [...(overlay()?.querySelectorAll<HTMLElement>('[role="option"]') ?? [])];
-      const completada = options.find((option) => option.textContent?.includes('Completada'));
-      expect(completada).toBeDefined();
-      completada!.click();
+      const completed = options.find((option) => option.textContent?.includes('Completada'));
+      expect(completed).toBeDefined();
+      completed!.click();
       await settle();
 
-      const codigo = query<HTMLInputElement>('[data-form-codigo] input')!;
-      codigo.value = 'EXP-2026-0781';
-      codigo.dispatchEvent(new Event('input', { bubbles: true }));
+      const code = query<HTMLInputElement>('[data-form-codigo] input')!;
+      code.value = 'EXP-2026-0781';
+      code.dispatchEvent(new Event('input', { bubbles: true }));
       await settle();
       query<HTMLButtonElement>('[data-form-save] button')!.click();
       await settle();

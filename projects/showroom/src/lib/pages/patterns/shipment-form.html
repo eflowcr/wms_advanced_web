@@ -4,7 +4,7 @@
   que solo corre la acción si el formulario es válido. Ver vault: Patron-Formulario.
 -->
 <form
-  [ewmsForm]="alta"
+  [ewmsForm]="newShipment"
   [ewmsFormAction]="save"
   #pattern="ewmsForm"
   class="flex w-full max-w-120 flex-col gap-4 rounded-dialog border border-default border-solid bg-surface p-6 shadow-dialog"
@@ -22,21 +22,21 @@
     [label]="'showroom.common.shipmentForm.code' | transloco"
     [placeholder]="codePlaceholder"
     [hint]="'showroom.common.shipmentForm.codeHint' | transloco"
-    [formField]="alta.codigo"
+    [formField]="newShipment.code"
     data-form-codigo
   />
 
   <ewms-input
     [label]="'showroom.common.shipmentForm.customer' | transloco"
     [placeholder]="customerPlaceholder"
-    [formField]="alta.cliente"
+    [formField]="newShipment.customer"
     data-form-cliente
   />
 
   <ewms-select
     [label]="'showroom.common.shipmentForm.state' | transloco"
-    [options]="estados()"
-    [formField]="alta.estado"
+    [options]="statuses()"
+    [formField]="newShipment.status"
     data-form-estado
   />
 
@@ -46,7 +46,7 @@
   -->
   <ewms-toggle
     [label]="'showroom.common.shipmentForm.urgent' | transloco"
-    [formField]="alta.urgente"
+    [formField]="newShipment.urgent"
     data-form-urgente
   />
 
