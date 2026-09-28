@@ -1,4 +1,4 @@
-import type { EstadoExpedicion } from './expediciones';
+import type { ShipmentStatus } from './expediciones';
 
 /**
  * Registros de ejemplo de la ficha Tabla que simulan lo que mandaría el backend: ubicaciones,
@@ -30,7 +30,7 @@ export function generarUbicaciones(cuantas: number): readonly UbicacionRow[] {
 export const CODIGO_MUESTRA = 'EXP-2026-0400';
 
 /** El estado de las cabeceras cuyos hijos nunca llegan: la fuente simulada falla siempre con él. */
-export const ESTADO_QUE_FALLA: EstadoExpedicion = 'con-incidencia';
+export const ESTADO_QUE_FALLA: ShipmentStatus = 'con-incidencia';
 
 /** Lo que contesta la fuente simulada cuando falla. */
 export const SIN_RESPUESTA = 'sin respuesta';

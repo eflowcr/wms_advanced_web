@@ -1,23 +1,7 @@
 /**
- * Regla 12: i18n (ADR 0008). Cinco controles, todos bloqueantes.
- *
- *   1. Claves usadas contra definidas (`transloco-keys-manager find`), en los dos
- *      sentidos. Una clave armada por concatenación aparece como sobrante.
- *   2. Todo diccionario tiene exactamente las claves del diccionario por defecto de su grupo:
- *      el raíz y cada scope (`<scope>/<lang>.json`) se comparan por separado.
- *   3. Formato canónico como un lockfile (claves ordenadas, 2 espacios, LF, salto final;
- *      lo arregla `npm run i18n:format`), segmentos en camelCase, hojas no vacías e ICU
- *      válido según el intérprete de @ewms/core, que se importa para no discrepar.
- *   4. Sin texto humano quemado en plantillas (.html e inline `template:`): texto visible
- *      fuera de una interpolación y literales de atributos que se leen o se oyen. Se
- *      saltean <code>, <pre>, atributos técnicos y texto sin letras. La lista EXEMPT no
- *      crece para callar ruido: el ruido se reporta.
- *   5. Sin texto humano quemado en literales de TypeScript, leídos con la API de TypeScript.
- *      No cuentan specs, soporte de pruebas, `*.fixtures.ts`, imports, metadatos de componente,
- *      claves, cadenas de clases, selectores, lo que se lanza o va a la consola, ni código.
- *      Una línea se escapa a sabiendas con `// i18n-exempt: <razón>`; el reporte las lista.
- *
- * `npm run lint:i18n`.
+ * Regla 12: i18n (ADR 0008), seis controles bloqueantes: claves usadas y definidas, mismas claves
+ * por idioma, formato canónico con ICU válido, sin texto quemado en plantillas ni en literales, y
+ * huellas de los diccionarios al día. `npm run lint:i18n`. Detalle: vault, Integracion Continua §4.
  */
 import { spawnSync } from 'node:child_process';
 import { cp, mkdtemp, readdir, readFile, rm, stat, writeFile } from 'node:fs/promises';
@@ -32,6 +16,7 @@ import {
   TmplAstRecursiveVisitor,
   tmplAstVisitAll,
 } from '@angular/compiler';
+import { checkDictionaryVersions, OUTPUT as VERSIONS_FILE } from '../i18n/dictionary-versions.mjs';
 import { parseIcu } from '../../projects/core/src/lib/i18n/icu.ts';
 import { DEFAULT_LANGUAGE, LANGUAGES } from '../../projects/core/src/lib/i18n/language.types.ts';
 
@@ -646,6 +631,18 @@ async function checkLiterals() {
   return problems;
 }
 
+/** Control 6: la tabla de huellas que usa el loader es la que dan los diccionarios (ADR 0018). */
+async function checkVersions() {
+  const problems = [];
+  for (const message of await checkDictionaryVersions(ROOT)) {
+    report(problems, VERSIONS_FILE, 0, message);
+  }
+  if (!problems.length) {
+    console.log(`i18n: dictionary fingerprints are up to date (${VERSIONS_FILE}).`);
+  }
+  return problems;
+}
+
 async function main() {
   const write = process.argv.includes('--write');
   const { groups, problems } = await readDictionaries();
@@ -658,6 +655,7 @@ async function main() {
       ...(await checkFormat(groups, false)),
       ...(await checkTemplates()),
       ...(await checkLiterals()),
+      ...(await checkVersions()),
     );
   }
   if (problems.length) {

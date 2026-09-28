@@ -1,5 +1,6 @@
-import AxeBuilder from '@axe-core/playwright';
+import { axe } from './axe';
 import { expect, test, type Page } from '@playwright/test';
+import { watchConsole, type ConsoleWatch } from './console-watch';
 import { chooseLanguage } from './language';
 
 /**
@@ -14,25 +15,19 @@ async function switchTo(page: Page, from: string, value: 'es' | 'en'): Promise<v
 test.describe('i18n with a Spanish browser', () => {
   test.use({ locale: 'es-CR' });
 
-  // Una violación de CSP (un compilador ICU con eval) o una clave faltante en desarrollo
-  // aparecen acá como error de consola.
-  let consoleErrors: string[];
+  // Un error de consola, una violación de CSP (un compilador ICU con eval) o una clave sin
+  // traducir, que en producción se ve como su ruta, hacen fallar la prueba al terminar.
+  let watch: ConsoleWatch;
 
   test.beforeEach(async ({ page }) => {
-    consoleErrors = [];
-    page.on('console', (message) => {
-      if (message.type() === 'error') {
-        consoleErrors.push(message.text());
-      }
-    });
-    page.on('pageerror', (error) => consoleErrors.push(error.message));
+    watch = await watchConsole(page);
     await page.goto('/');
     await expect(page.getByRole('treeitem', { name: 'Dashboard' })).toBeVisible();
     await expect(page.getByRole('navigation', { name: 'Menú principal' })).toBeVisible();
   });
 
-  test.afterEach(() => {
-    expect(consoleErrors).toEqual([]);
+  test.afterEach(async () => {
+    await watch.clean('i18n');
   });
 
   test('switching language changes the text on screen without reloading', async ({ page }) => {
@@ -103,7 +98,7 @@ test.describe('i18n with a Spanish browser', () => {
         await switchTo(page, 'Idioma', 'en');
         await expect(page.locator('html')).toHaveAttribute('lang', 'en');
       }
-      const results = await new AxeBuilder({ page }).analyze();
+      const results = await axe(page).analyze();
       expect(results.violations).toEqual([]);
     });
   }

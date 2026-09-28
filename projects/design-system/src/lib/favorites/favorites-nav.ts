@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
+import type { ButtonGround } from '../button/button.types';
 import { Icon } from '../icon/icon';
 import { Tooltip } from '../tooltip/tooltip';
 import type { IconName } from '../../icons/icons.generated';
@@ -55,7 +56,7 @@ export class FavoritesNav {
   readonly activeRoute = input<string | null>(null);
 
   /** El menú lateral y la hoja inferior son navy; el catálogo, claro. */
-  readonly ground = input<'navy' | 'surface'>('surface');
+  readonly ground = input<ButtonGround>('surface');
 
   protected readonly blockClasses = computed(() =>
     this.ground() === 'navy' ? NAVY_BLOCK_CLASSES : SURFACE_BLOCK_CLASSES,

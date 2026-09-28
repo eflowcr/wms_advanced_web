@@ -20,6 +20,15 @@ test('version.ts says the same version as the package.json of the library', asyn
   assert.equal(literal, manifest.version);
 });
 
+test('the app has a SemVer version with its own CHANGELOG entry (DEV-007, ADR 0018)', async () => {
+  const { version } = JSON.parse(await readFile(path.join(ROOT, 'package.json'), 'utf8'));
+  const changelog = await readFile(path.join(ROOT, 'CHANGELOG.md'), 'utf8').catch(() => '');
+
+  assert.match(version, /^\d+\.\d+\.\d+$/);
+  assert.notEqual(version, '0.0.0', 'the app starts numbered at 0.1.0');
+  assert.match(changelog, new RegExp(`^## \\[${version.replace(/\./g, '\\.')}\\]`, 'm'));
+});
+
 test('the shell version.ts says the same version as the root package.json', async () => {
   const manifest = JSON.parse(await readFile(path.join(ROOT, 'package.json'), 'utf8'));
   const source = await readFile(path.join(ROOT, 'projects/shell/src/app/version.ts'), 'utf8');

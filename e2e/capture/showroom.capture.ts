@@ -43,8 +43,8 @@ interface Measured {
 }
 
 /**
- * Geometría y propiedades calculadas de todo lo marcado con data-measure: leerlas del navegador
- * es la única forma de saber que un token se aplicó.
+ * Geometría y propiedades calculadas de lo marcado con data-measure (y -box, -track, que usan las
+ * páginas de selección): leerlas del navegador es la única forma de saber que un token se aplicó.
  */
 async function measure(page: Page): Promise<readonly Measured[]> {
   return page.evaluate(() => {
@@ -63,7 +63,9 @@ async function measure(page: Page): Promise<readonly Measured[]> {
       'gap',
       'outline-color',
     ];
-    return [...document.querySelectorAll('[data-measure]')].map((element) => {
+    const MARKS = ['data-measure', 'data-measure-box', 'data-measure-track'];
+    const marked = document.querySelectorAll(MARKS.map((mark) => `[${mark}]`).join(', '));
+    return [...marked].map((element) => {
       const rect = element.getBoundingClientRect();
       const computed = getComputedStyle(element);
       const styles: Record<string, string> = {};
@@ -74,7 +76,10 @@ async function measure(page: Page): Promise<readonly Measured[]> {
         }
       }
       return {
-        name: element.getAttribute('data-measure') ?? '(unnamed)',
+        name:
+          element.getAttribute('data-measure') ||
+          MARKS.find((mark) => element.hasAttribute(mark)) ||
+          '(unnamed)',
         box: `${rect.width.toFixed(2)} x ${rect.height.toFixed(2)}`,
         styles,
       };

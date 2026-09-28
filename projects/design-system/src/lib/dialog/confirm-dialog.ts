@@ -27,9 +27,9 @@ export class ConfirmDialog {
 
   protected readonly boxClasses = DIALOG_BOX_CLASSES;
 
-  protected readonly icon = computed(() => dialogIcon(this.options.tone));
+  protected readonly icon = computed(() => dialogIcon(this.options.variant));
 
-  protected readonly confirmVariant = computed(() => confirmButtonVariant(this.options.tone));
+  protected readonly confirmVariant = computed(() => confirmButtonVariant(this.options.variant));
 
   protected confirm(): void {
     this.dialogRef.close(true);

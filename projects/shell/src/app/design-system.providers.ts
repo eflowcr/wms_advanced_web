@@ -31,10 +31,10 @@ import {
   type TableFormatters,
   type TableMessages,
 } from '@ewms/design-system';
-import { catalogKeyFor } from '@ewms/showroom';
 import { TranslocoService } from '@jsverse/transloco';
 import { TranslocoLocaleService } from '@jsverse/transloco-locale';
 import { menuEntryFor } from './layout/menu';
+import { RouteTitles } from './route-titles';
 import { SHORTCUT_MAP } from './shortcuts.map';
 
 /**
@@ -140,6 +140,7 @@ function injectTranslator(): {
  */
 function favoriteLabels(): FavoriteLabelResolver {
   const transloco = inject(TranslocoService);
+  const routeTitles = inject(RouteTitles);
   const lang = activeLanguage();
   return {
     labelFor: (route) =>
@@ -147,7 +148,7 @@ function favoriteLabels(): FavoriteLabelResolver {
         lang();
         // Una página del showroom se llama como en su catálogo: el menú solo sabe decir
         // «Sistema de diseño», y trece favoritos con el mismo nombre no son favoritos.
-        const key = catalogKeyFor(route) ?? menuEntryFor(route)?.labelKey;
+        const key = routeTitles.keyFor(route) ?? menuEntryFor(route)?.labelKey;
         return key === undefined ? '' : transloco.translate(key);
       }),
     iconFor: (route) => menuEntryFor(route)?.icon ?? null,

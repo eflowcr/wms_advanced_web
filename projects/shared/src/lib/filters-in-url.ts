@@ -57,10 +57,8 @@ export interface UrlFilterState {
 }
 
 /**
- * Filtros de pantalla en los `queryParams`: un enlace filtrado se comparte, recargar no pierde
- * nada y «atrás» deshace el último filtro. Se llama desde un contexto de inyección.
- * Único ayudante del router que vive en `shared`, por la excepción estrecha del ADR 0014.
- * Ver vault: 02-Arquitectura/Decisiones/0014 - Ayudantes del router en shared.md
+ * Filtros de pantalla en los `queryParams`: un enlace filtrado se comparte y «atrás» deshace el
+ * último filtro. Desde un contexto de inyección; excepción del ADR 0014 (ayudantes del router).
  */
 export function filtersInUrl(keys: readonly string[]): UrlFilterState {
   const route = inject(ActivatedRoute);

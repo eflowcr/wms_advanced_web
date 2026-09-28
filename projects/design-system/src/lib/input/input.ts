@@ -37,7 +37,7 @@ let nextInputId = 0;
 
 /**
  * Comparte caja con `ewms-select` (field.types.ts) para que una fila se alinee sola. No valida:
- * `state="error"` es solo dibujo. Borde y anillo de foco van en el control nativo.
+ * `[error]` es solo dibujo. Borde y anillo de foco van en el control nativo.
  */
 @Component({
   selector: 'ewms-input',
@@ -67,7 +67,7 @@ export class Input implements FormValueControl<string> {
   readonly hint = input<string>('');
 
   /** Solo dibujo, para las demos del catálogo: quien valida es el formulario. */
-  readonly state = input<FieldState>('default');
+  readonly error = input<boolean>(false);
 
   // Del contrato `FormValueControl`: el `[formField]` las llena solo. Ninguna que no se lea acá.
   readonly errors = input<readonly ValidationError[]>([]);
@@ -116,11 +116,11 @@ export class Input implements FormValueControl<string> {
     if (this.disabled()) {
       return 'disabled';
     }
-    // El validador que falló manda sobre `state`: el error es del formulario, no del dibujo.
-    if (this.showError() || this.state() === 'error') {
+    // El validador que falló manda: el error es del formulario, no del dibujo.
+    if (this.showError() || this.error()) {
       return 'error';
     }
-    return this.readonly() ? 'readonly' : this.state();
+    return this.readonly() ? 'readonly' : 'default';
   });
 
   /** El mensaje del validador reemplaza al hint: dos líneas debajo del campo se pisan. */

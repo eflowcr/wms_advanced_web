@@ -5,7 +5,6 @@ import {
   DestroyRef,
   effect,
   inject,
-  InjectionToken,
   input,
   output,
   signal,
@@ -23,6 +22,7 @@ import { DELAY_SEARCH_INPUT_TOKEN } from '../select/select.types';
 import { parseTableDate } from '../table/table.tokens';
 import type { DateRange } from '../table/table-source';
 import { readMilliseconds } from '../tokens/read-token';
+import { EWMS_FILTER_BAR_MESSAGES } from './filter-bar.types';
 import { FilterChips, type FilterChip } from './filter-chips';
 
 /** Lo que vale un filtro de pantalla: un valor elegido, un texto o un período. */
@@ -36,17 +36,6 @@ export type FilterField =
   | { readonly kind: 'select'; readonly key: string; readonly label: string; readonly options: readonly SelectOption[] }
   | { readonly kind: 'date-range'; readonly key: string; readonly label: string }
   | { readonly kind: 'search'; readonly key: string; readonly label: string };
-
-/** Textos ya traducidos, provistos una vez por token (ADR 0008). */
-export interface FilterBarMessages {
-  /** «Más filtros», o «Más filtros (2)» con filtros activos escondidos. */
-  readonly moreFilters: (active: number) => string;
-  readonly fewerFilters: string;
-}
-
-export const EWMS_FILTER_BAR_MESSAGES = new InjectionToken<FilterBarMessages>(
-  'EWMS_FILTER_BAR_MESSAGES',
-);
 
 /** Los primeros tres a la vista; el resto detrás de «Más filtros». */
 const ALWAYS_VISIBLE = 3;

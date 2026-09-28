@@ -4,13 +4,13 @@
   <head>
     <meta charset="utf-8" />
     <!--
-      CSP estricta (PLN-WMS-003 §4), primera en <head> para regir todo lo que sigue. Nada en línea:
-      lo bloquea en silencio y lo vigila tools/ci/host-page.test.mjs. En <meta> se ignora
-      frame-ancestors: el anti-clickjacking tiene que llegar como cabecera HTTP del servidor.
+      CSP estricta (PLN-WMS-003 §4), primera en <head>. Nada en línea, y Trusted Types sin ninguna
+      política: HTML o código desde una cadena lanza. Lo vigila tools/ci/host-page.test.mjs.
+      En <meta> se ignora frame-ancestors: tiene que llegar como cabecera HTTP del servidor.
     -->
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self'; connect-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'"
+      content="default-src 'self'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self'; connect-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; require-trusted-types-for 'script'; trusted-types 'none'"
     />
     <title>eWMS Advance</title>
     <base href="/" />
@@ -33,19 +33,28 @@
   <body>
     <app-root></app-root>
     <!--
-      Aviso del caso B, lo revela main.ts. Bilingüe y a mano porque lo que falló es i18n; cada
-      línea con su lang. Único texto de UI escrito a mano: la compuerta 12 exime esta página.
+      Aviso de arranque fallido (sin diccionario o sin configuración), lo revela main.ts con el
+      mensaje de su data-cause. Bilingüe y a mano: i18n puede ser lo que falló. La compuerta 12
+      exime esta página.
     -->
     <div id="startup-failure" class="startup-failure" hidden>
       <main class="startup-failure__panel">
         <h1 class="startup-failure__brand">eWMS Advance</h1>
         <div role="alert">
-          <p class="startup-failure__message" lang="es">
+          <p class="startup-failure__message" data-cause="dictionary" lang="es">
             No se pudo cargar el idioma de la interfaz. Vuelva a intentarlo; si el problema
             continúa, avise a soporte.
           </p>
-          <p class="startup-failure__message" lang="en">
+          <p class="startup-failure__message" data-cause="dictionary" lang="en">
             The interface language could not be loaded. Please try again; if the problem
+            continues, contact support.
+          </p>
+          <p class="startup-failure__message" data-cause="config" lang="es" hidden>
+            No se pudo cargar la configuración de la aplicación. Vuelva a intentarlo; si el
+            problema continúa, avise a soporte.
+          </p>
+          <p class="startup-failure__message" data-cause="config" lang="en" hidden>
+            The application configuration could not be loaded. Please try again; if the problem
             continues, contact support.
           </p>
         </div>

@@ -1,9 +1,9 @@
 import { projectRunner } from './vitest.shared';
 
-/** core. Medido 2026-09-18 (DS-2): 95.10 / 86.28 / 97.56 / 96.00, truncado. */
+/** core. Piso = medido y truncado (2026-09-27, B15: 97.14 / 91.62 / 100 / 97.45). Solo sube. */
 export default projectRunner({
-  statements: 95,
-  branches: 86,
-  functions: 97,
-  lines: 96,
+  statements: 97,
+  branches: 91,
+  functions: 100,
+  lines: 97,
 });

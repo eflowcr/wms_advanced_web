@@ -3,14 +3,9 @@ import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { expectNoAxeViolations } from '@ewms/testing';
 import { EWMS_DATE_PICKER_MESSAGES } from '../date-picker/date-picker.types';
 import { EWMS_SELECT_MESSAGES } from '../select/select.types';
-import { EWMS_FILTER_CHIPS_MESSAGES, type FilterChipsMessages } from './filter-chips';
-import {
-  EWMS_FILTER_BAR_MESSAGES,
-  FilterBar,
-  type FilterBarMessages,
-  type FilterField,
-  type FilterValues,
-} from './filter-bar';
+import { EWMS_FILTER_CHIPS_MESSAGES, type FilterChipsMessages } from './filter-chips.types';
+import { FilterBar, type FilterField, type FilterValues } from './filter-bar';
+import { EWMS_FILTER_BAR_MESSAGES, type FilterBarMessages } from './filter-bar.types';
 
 const MESSAGES: FilterBarMessages = {
   moreFilters: (active) => (active === 0 ? 'Más filtros' : `Más filtros (${active})`),

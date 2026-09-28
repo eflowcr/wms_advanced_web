@@ -45,7 +45,7 @@ export class DialogService {
       titleId: `ewms-dialog-${id}-title`,
       bodyId: `ewms-dialog-${id}-body`,
     };
-    const dismissOnBackdrop = backdropDismisses(options.tone);
+    const dismissOnBackdrop = backdropDismisses(options.variant);
 
     const ref = this.dialog.open<boolean, ConfirmDialogData, ConfirmDialog>(ConfirmDialog, {
       ...this.baseConfig<ConfirmDialogData, DialogRef<boolean, ConfirmDialog>>(dismissOnBackdrop),

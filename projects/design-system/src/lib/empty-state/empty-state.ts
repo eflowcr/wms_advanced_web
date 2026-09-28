@@ -6,8 +6,8 @@ import { Icon } from '../icon/icon';
 /** Por qué no hay nada: cada caso tiene su ícono y su acción. Ver vault: Estado-Vacio. */
 export type EmptyStateKind = 'no-data' | 'no-results' | 'error' | 'no-access';
 
-/** `compact` dentro de tabla, panel o card; `page` ocupa la pantalla. */
-export type EmptyStateSize = 'compact' | 'page';
+/** `sm` dentro de tabla, panel o card; `lg` ocupa la pantalla. El vocabulario de tamaños de siempre. */
+export type EmptyStateSize = 'sm' | 'lg';
 
 /** Una sola acción, ya traducida: la primaria del contexto, «Limpiar filtros» o «Reintentar». */
 export interface EmptyStateAction {
@@ -48,15 +48,15 @@ const ACTION_VARIANT: Readonly<Record<EmptyStateKind, ButtonVariant>> = {
       [attr.data-empty-state]="kind()"
     >
       <span [class]="iconClasses()" aria-hidden="true" [attr.data-icon]="iconName()">
-        <ewms-icon [name]="iconName()" [size]="compact() ? 'lg' : 'xl'" />
+        <ewms-icon [name]="iconName()" [size]="small() ? 'lg' : 'xl'" />
       </span>
-      @if (compact()) {
+      @if (small()) {
         <p class="text-h4 text-primary">{{ title() }}</p>
       } @else {
         <h2 class="text-h3 text-primary">{{ title() }}</h2>
       }
       @if (description()) {
-        <p class="max-w-120 text-secondary" [class.text-caption]="compact()">
+        <p class="max-w-120 text-secondary" [class.text-caption]="small()">
           {{ description() }}
         </p>
       }
@@ -64,7 +64,7 @@ const ACTION_VARIANT: Readonly<Record<EmptyStateKind, ButtonVariant>> = {
         <ewms-button
           class="mt-1"
           [variant]="actionVariant()"
-          [size]="compact() ? 'sm' : 'md'"
+          [size]="small() ? 'sm' : 'md'"
           [icon]="act.icon ?? null"
           data-empty-action
           (click)="act.run()"
@@ -87,12 +87,12 @@ export class EmptyState {
   /** Sin acción en `no-access`: el texto dice a quién pedirlo. */
   readonly action = input<EmptyStateAction | null>(null);
 
-  readonly size = input<EmptyStateSize>('page');
+  readonly size = input<EmptyStateSize>('lg');
 
   /** Solo `no-data`: el ícono del contexto, del catálogo. */
   readonly icon = input<IconName | null>(null);
 
-  protected readonly compact = computed(() => this.size() === 'compact');
+  protected readonly small = computed(() => this.size() === 'sm');
 
   protected readonly iconName = computed(() =>
     this.kind() === 'no-data' ? (this.icon() ?? ICONS['no-data']) : ICONS[this.kind()],
@@ -108,13 +108,13 @@ export class EmptyState {
   protected readonly boxClasses = computed(
     () =>
       'flex flex-col items-center text-center ' +
-      (this.compact() ? 'gap-2 px-4 py-6' : 'gap-3 px-6 py-16'),
+      (this.small() ? 'gap-2 px-4 py-6' : 'gap-3 px-6 py-16'),
   );
 
   protected readonly iconClasses = computed(
     () =>
       'inline-flex rounded-full ' +
-      (this.compact() ? 'p-2 ' : 'p-3 ') +
+      (this.small() ? 'p-2 ' : 'p-3 ') +
       (this.kind() === 'error' ? 'bg-danger-surface text-danger' : 'bg-secondary text-secondary'),
   );
 }

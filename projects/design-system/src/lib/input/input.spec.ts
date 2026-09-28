@@ -26,7 +26,8 @@ const MESSAGES: FormMessages = {
       [label]="label()"
       [placeholder]="placeholder()"
       [hint]="hint()"
-      [state]="state()"
+      [error]="error()"
+      [readonly]="readonly()"
       [required]="required()"
       [disabled]="disabled()"
       [showPasswordLabel]="showPasswordLabel()"
@@ -44,7 +45,8 @@ class TestHost {
   readonly label = signal('Codigo de articulo');
   readonly placeholder = signal('');
   readonly hint = signal('');
-  readonly state = signal<FieldState>('default');
+  readonly error = signal(false);
+  readonly readonly = signal(false);
   readonly required = signal(false);
   readonly disabled = signal(false);
   readonly showPasswordLabel = signal('');
@@ -114,6 +116,13 @@ describe('Input', () => {
     await fixture.whenStable();
   }
 
+  /** Cada estado con su propia entrada: desde B13 no hay un `state` que los dibuje todos. */
+  function drawState(state: FieldState): void {
+    host.error.set(state === 'error');
+    host.disabled.set(state === 'disabled');
+    host.readonly.set(state === 'readonly');
+  }
+
   function root(): Element {
     return fixture.nativeElement as Element;
   }
@@ -179,11 +188,11 @@ describe('Input', () => {
 
     it('turns danger-coloured in error and secondary otherwise', async () => {
       host.hint.set('Formato ABC-123');
-      host.state.set('error');
+      host.error.set(true);
       await settle();
       expect(root().querySelector('p')?.classList.contains('text-danger')).toBe(true);
 
-      host.state.set('default');
+      host.error.set(false);
       await settle();
       expect(root().querySelector('p')?.classList.contains('text-secondary')).toBe(true);
     });
@@ -191,17 +200,17 @@ describe('Input', () => {
 
   describe('States', () => {
     it('marks aria-invalid in error, and nowhere else', async () => {
-      host.state.set('error');
+      host.error.set(true);
       await settle();
       expect(control().getAttribute('aria-invalid')).toBe('true');
 
-      host.state.set('default');
+      host.error.set(false);
       await settle();
       expect(control().hasAttribute('aria-invalid')).toBe(false);
     });
 
     it('does not announce read-only as disabled', async () => {
-      host.state.set('readonly');
+      host.readonly.set(true);
       await settle();
 
       // No editable, pero enfocable, seleccionable y no anunciado como no disponible.
@@ -215,7 +224,7 @@ describe('Input', () => {
     });
 
     it('applies the native disabled attribute in the disabled state', async () => {
-      host.state.set('disabled');
+      host.disabled.set(true);
       await settle();
 
       expect(control().disabled).toBe(true);
@@ -224,7 +233,7 @@ describe('Input', () => {
     });
 
     it('keeps the danger border when an error field also has focus', async () => {
-      host.state.set('error');
+      host.error.set(true);
       await settle();
 
       const before = control().style.borderColor;
@@ -402,13 +411,9 @@ describe('Input', () => {
   });
 
   describe('Disabled', () => {
-    it('is disabled by the entrada, or by state="disabled"', async () => {
+    // Un solo dueño (Nomenclatura): el `state="disabled"` que también deshabilitaba se fue en B13.
+    it('is disabled by its disabled input', async () => {
       host.disabled.set(true);
-      await settle();
-      expect(control().disabled).toBe(true);
-
-      host.disabled.set(false);
-      host.state.set('disabled');
       await settle();
       expect(control().disabled).toBe(true);
     });
@@ -427,7 +432,7 @@ describe('Input', () => {
     });
 
     it.each(STATES)('passes axe in state "%s"', async (state) => {
-      host.state.set(state);
+      drawState(state);
       host.hint.set('Formato ABC-123');
       await settle();
 

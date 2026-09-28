@@ -11,6 +11,9 @@ const SIZE_CLASSES: Readonly<Record<IconSize, string>> = {
   xl: 'size-icon-xl stroke-icon-xl',
 };
 
+/** Solo el spinner gira, y solo sin `prefers-reduced-motion: reduce` (token `--animate-spin`). */
+const SPIN_CLASS = 'motion-safe:animate-spin';
+
 /**
  * Única vía para un icono (ADR 0011): geometría como dato, sin innerHTML; color por
  * `currentColor`. Sin `label` es decorativo; con `label`, `role="img"` con ese nombre.
@@ -27,6 +30,10 @@ export class Icon {
   readonly label = input<string | undefined>(undefined);
 
   protected readonly primitives = computed(() => ICONS[this.name()]);
-  protected readonly sizeClass = computed(() => SIZE_CLASSES[this.size()]);
+  protected readonly svgClasses = computed(() =>
+    this.name() === 'spinner'
+      ? `${SIZE_CLASSES[this.size()]} ${SPIN_CLASS}`
+      : SIZE_CLASSES[this.size()],
+  );
   protected readonly informative = computed(() => Boolean(this.label()));
 }

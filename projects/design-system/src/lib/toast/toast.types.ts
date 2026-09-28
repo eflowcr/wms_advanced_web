@@ -10,9 +10,18 @@ export interface Toast {
 
 export const TOAST_DURATION_TOKEN = '--duration-toast';
 
-/** Abajo a la derecha, bajo los overlays: detrás de un modal a propósito. Ver vault: Notificaciones. */
+/** Los que se ven a la vez: el cuarto saca al más viejo (decisión del usuario, 2026-09-26). */
+export const TOAST_LIMIT = 3;
+
+/** Bajo los overlays: detrás de un modal a propósito. Ver vault: Notificaciones. */
 export const TOAST_OUTLET_CLASSES =
-  'fixed right-4 bottom-4 z-(--layer-overlay) flex flex-col items-end gap-2 pointer-events-none';
+  'fixed right-4 z-(--layer-overlay) flex flex-col items-end gap-2 pointer-events-none';
+
+/** Desde el corte de la barra inferior: abajo a la derecha. */
+export const TOAST_OUTLET_WIDE_CLASSES = 'bottom-4';
+
+/** Bajo el corte: encima de la barra inferior, y con los dos bordes para no salirse de 375 px. */
+export const TOAST_OUTLET_COMPACT_CLASSES = 'left-4 bottom-(--toast-bottom-compact)';
 
 /** Reactiva el puntero que el contenedor apaga para no tragarse clics de la página. */
 export const TOAST_CLASSES =

@@ -24,6 +24,8 @@ jobs:
   analyze:
     name: Analyze (${{ matrix.language }})
     runs-on: ubuntu-latest
+    # El doble de la mayor duración medida (83 s, 2026-09-25), al minuto de arriba.
+    timeout-minutes: 3
     permissions:
       contents: read
       security-events: write
@@ -34,11 +36,11 @@ jobs:
         # del evento, tokens con permisos de más).
         language: [javascript-typescript, actions]
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
 
       # Sin build: CodeQL extrae TypeScript y los workflows directo del código fuente.
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v4
+        uses: github/codeql-action/init@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2 # v4.38.2
         with:
           languages: ${{ matrix.language }}
           build-mode: none
@@ -50,6 +52,6 @@ jobs:
               - coverage
 
       - name: Perform CodeQL analysis
-        uses: github/codeql-action/analyze@v4
+        uses: github/codeql-action/analyze@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2 # v4.38.2
         with:
           category: '/language:${{ matrix.language }}'

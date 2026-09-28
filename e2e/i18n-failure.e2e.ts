@@ -1,4 +1,4 @@
-import AxeBuilder from '@axe-core/playwright';
+import { axe } from './axe';
 import { expect, test, type Page } from '@playwright/test';
 import { chooseLanguage } from './language';
 
@@ -8,8 +8,9 @@ import { chooseLanguage } from './language';
  * (un despliegue sin public/, un 404, un corte de red).
  */
 
-const ES_DICTIONARY = '**/i18n/es.json';
-const EN_DICTIONARY = '**/i18n/en.json';
+// Con o sin `?v=<huella>` (ADR 0018): el diccionario es el mismo.
+const ES_DICTIONARY = /\/i18n\/es\.json(\?|$)/;
+const EN_DICTIONARY = /\/i18n\/en\.json(\?|$)/;
 
 /** El aviso del caso A es un Toast, en la única región de notificaciones del shell. */
 const notice = (page: Page) => page.getByRole('status', { name: 'Notificaciones' }).locator('p');
@@ -37,12 +38,16 @@ test.describe('case B: the default dictionary does not load', () => {
     const notice = page.locator('#startup-failure');
     await expect(notice).toBeVisible();
     await expect(notice.getByRole('heading', { level: 1 })).toHaveText('eWMS Advance');
-    await expect(notice.locator('p[lang="es"]')).toHaveText(
+    await expect(notice.locator('p[data-cause="dictionary"][lang="es"]')).toHaveText(
       'No se pudo cargar el idioma de la interfaz. Vuelva a intentarlo; si el problema continúa, avise a soporte.',
     );
-    await expect(notice.locator('p[lang="en"]')).toHaveText(
+    await expect(notice.locator('p[data-cause="dictionary"][lang="en"]')).toHaveText(
       'The interface language could not be loaded. Please try again; if the problem continues, contact support.',
     );
+    // El otro caso del aviso no se asoma: lo que falló es el idioma, no la configuración.
+    for (const message of await notice.locator('p[data-cause="config"]').all()) {
+      await expect(message).toBeHidden();
+    }
     const retry = page.getByRole('button', { name: 'Reintentar / Try again' });
     await expect(retry).toBeVisible();
 
@@ -55,7 +60,7 @@ test.describe('case B: the default dictionary does not load', () => {
     await expect(notice).toHaveCSS('color', 'rgb(1, 15, 66)');
     expect(cspViolations).toEqual([]);
 
-    const results = await new AxeBuilder({ page }).analyze();
+    const results = await axe(page).analyze();
     expect(results.violations).toEqual([]);
   });
 
@@ -126,7 +131,7 @@ test.describe('case A: a dictionary other than the default does not load', () =>
   test('has no accessibility violations with the notice on screen', async ({ page }) => {
     await expect(notice(page)).toBeVisible();
 
-    const results = await new AxeBuilder({ page }).analyze();
+    const results = await axe(page).analyze();
     expect(results.violations).toEqual([]);
   });
 });

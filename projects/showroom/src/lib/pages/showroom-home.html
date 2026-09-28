@@ -39,8 +39,8 @@
                 </span>
               }
             </p>
-            @if (entry.selector) {
-              <p class="font-mono text-caption text-secondary">{{ entry.selector }}</p>
+            @if (entry.selectors.length > 0) {
+              <p class="font-mono text-caption text-secondary">{{ entry.selectors.join(' · ') }}</p>
             }
             <p class="text-caption text-secondary">{{ entry.note | transloco }}</p>
           </li>

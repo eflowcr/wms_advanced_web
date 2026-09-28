@@ -1,10 +1,7 @@
 /**
- * Regla 15: solo el sistema de diseño. Fuera de `projects/design-system/src/lib/` ninguna
- * plantilla (.html o `template:` inline) escribe un control nativo: <button>, <input>, <select>,
- * <textarea> o <table>. Si el sistema no tiene la pieza, se agrega al sistema; nunca se arma
- * con clases sueltas en una pantalla. `<a>` para navegar sigue siendo `<a>`.
- *
- * `npm run lint:ds`. Ver vault: 08-Sistema-de-Diseno/Nomenclatura de Componentes y Tokens.
+ * Regla 15: fuera de design-system/src/lib ninguna plantilla escribe <button>, <input>, <select>,
+ * <textarea> ni <table>; `<a>` para navegar sigue siendo `<a>`. `npm run lint:ds`.
+ * Ver vault: Integracion Continua §11.
  */
 import { readdir, readFile } from 'node:fs/promises';
 import path from 'node:path';

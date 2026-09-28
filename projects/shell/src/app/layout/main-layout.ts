@@ -20,7 +20,6 @@ import {
 } from '@angular/router';
 import { filter, map } from 'rxjs';
 import { SessionContext } from '@ewms/core';
-import { catalogKeyFor } from '@ewms/showroom';
 import {
   Breadcrumbs,
   FavoriteToggle,
@@ -44,6 +43,8 @@ import {
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { BRAND_EDITION, BRAND_NAME } from '../brand';
 import { provideEwmsDesignSystem } from '../design-system.providers';
+import { deepestTitleKey } from '../route-title-key';
+import { RouteTitles } from '../route-titles';
 import { APP_VERSION } from '../version';
 import { LanguageSwitcher } from './language-switcher';
 import { MENU, menuEntryFor, type MenuEntry } from './menu';
@@ -86,6 +87,7 @@ export class MainLayout {
   private readonly toasts = inject(ToastService);
   private readonly tabsService = inject(TabsService);
   private readonly shortcuts = inject(KeyboardShortcuts);
+  private readonly routeTitles = inject(RouteTitles);
 
   protected readonly session = inject(SessionContext);
   protected readonly viewport = inject(Viewport);
@@ -130,13 +132,14 @@ export class MainLayout {
   });
 
   /** `initialValue` porque la primera navegación ya terminó al construirse. */
-  private readonly url = toSignal(
+  private readonly navigation = toSignal(
     this.router.events.pipe(
       filter((event): event is NavigationEnd => event instanceof NavigationEnd),
-      map((event) => event.urlAfterRedirects),
+      map((event) => this.landedOn(event.urlAfterRedirects)),
     ),
-    { initialValue: this.router.url },
+    { initialValue: this.landedOn(this.router.url) },
   );
+  private readonly url = computed(() => this.navigation().url);
 
   /** menu.ts guarda claves; leer `activeLang()` redibuja el menú sin recargar. */
   protected readonly navItems = computed<readonly NavItem[]>(() => {
@@ -176,7 +179,7 @@ export class MainLayout {
   /** Nombre de la página, para su pestaña y para el anuncio. */
   private readonly pageTitle = computed(() => {
     this.activeLang();
-    const key = this.titleKeyFor(this.url());
+    const key = this.navigation().key ?? this.titleKeyFor(this.url());
     return key === null ? this.brandName : this.transloco.translate(key);
   });
 
@@ -195,6 +198,10 @@ export class MainLayout {
         // reabría la pestaña y, con la tira llena, repetía el aviso. Las etiquetas de las
         // pestañas abiertas las cambia el efecto de abajo.
         if (url !== this.previousUrl) {
+          const key = this.navigation().key;
+          if (key !== null) {
+            this.routeTitles.record(url, key);
+          }
           const opened = this.tabsService.activate(url, title, url !== '/');
           if (!opened) {
             this.toasts.show(
@@ -243,10 +250,8 @@ export class MainLayout {
       });
     });
 
-    // `/` va al buscador del header solo si ninguna pantalla lo reclamó. El shell
-    // no registra `search` (el motor lanza ante un doble registro y, sin zonas, no
-    // hay momento para soltarlo): contesta solo los eventos `unregistered`.
-    // Ver vault: 08-Sistema-de-Diseno/Componentes/App-Shell.
+    // `/` va al buscador solo si ninguna pantalla lo reclamó: el shell no registra `search` y
+    // contesta los eventos `unregistered`. Ver vault: Integracion Continua §11.
     this.shortcuts.events.pipe(takeUntilDestroyed()).subscribe((event) => {
       if (event.action === 'search' && event.outcome === 'unregistered') {
         this.focusSearch();
@@ -339,11 +344,16 @@ export class MainLayout {
     this.transloco.translate('shell.breadcrumbs.expand', { hidden });
 
   /**
-   * La clave del nombre de una ruta: la página del catálogo por su nombre (el menú solo diría
-   * «Sistema de diseño» para todas), o su destino del menú.
+   * La clave del nombre de una ruta: la de su `data.titleKey` al navegar (una página del catálogo
+   * por su nombre, no «Sistema de diseño»), o la de su destino del menú.
    */
   private titleKeyFor(route: string): string | null {
-    return catalogKeyFor(route) ?? menuEntryFor(route)?.labelKey ?? null;
+    return this.routeTitles.keyFor(route) ?? menuEntryFor(route)?.labelKey ?? null;
+  }
+
+  /** Adónde llegó una navegación: la URL y la clave de título que declara su ruta. */
+  private landedOn(url: string): { readonly url: string; readonly key: string | null } {
+    return { url, key: deepestTitleKey(this.router.routerState.snapshot.root) ?? null };
   }
 
   /** Destino del atajo `/`: el campo real, no el host, que no es enfocable. */

@@ -1,7 +1,14 @@
 import { DestroyRef, inject, Injectable, signal, type Signal } from '@angular/core';
 import type { FeedbackVariant } from '../feedback/feedback.types';
 import { readMilliseconds } from '../tokens/read-token';
-import { TOAST_DURATION_TOKEN, type Toast } from './toast.types';
+import { TOAST_DURATION_TOKEN, TOAST_LIMIT, type Toast } from './toast.types';
+
+/** Lo que le queda a un mensaje: corre o está en pausa (`timer` vacío). */
+interface Lifetime {
+  remaining: number;
+  startedAt: number;
+  timer: ReturnType<typeof setTimeout> | undefined;
+}
 
 /**
  * Una cola y un outlet por aplicación: una sola región viva. Duración de `--duration-toast`;
@@ -14,7 +21,9 @@ export class ToastService {
   /** Del más viejo al más nuevo. */
   readonly toasts: Signal<readonly Toast[]> = this.queue.asReadonly();
 
-  private readonly timers = new Map<number, ReturnType<typeof setTimeout>>();
+  private readonly lifetimes = new Map<number, Lifetime>();
+
+  private paused = false;
 
   private nextId = 0;
 
@@ -27,24 +36,24 @@ export class ToastService {
   show(variant: FeedbackVariant, message: string, duration?: number): number {
     const id = ++this.nextId;
     this.queue.update((current) => [...current, { id, variant, message }]);
+    for (const evicted of this.queue().slice(0, -TOAST_LIMIT)) {
+      this.dismiss(evicted.id);
+    }
 
     const lifetime = duration ?? readMilliseconds(TOAST_DURATION_TOKEN);
     if (lifetime !== null && lifetime > 0) {
-      this.timers.set(
-        id,
-        setTimeout(() => this.dismiss(id), lifetime),
-      );
+      this.lifetimes.set(id, { remaining: lifetime, startedAt: 0, timer: undefined });
+      if (!this.paused) {
+        this.run(id);
+      }
     }
     return id;
   }
 
   /** Un id que ya no está no hace nada. */
   dismiss(id: number): void {
-    const timer = this.timers.get(id);
-    if (timer !== undefined) {
-      clearTimeout(timer);
-      this.timers.delete(id);
-    }
+    clearTimeout(this.lifetimes.get(id)?.timer);
+    this.lifetimes.delete(id);
     this.queue.update((current) => current.filter((toast) => toast.id !== id));
   }
 
@@ -56,11 +65,45 @@ export class ToastService {
     }
   }
 
-  clear(): void {
-    for (const timer of this.timers.values()) {
-      clearTimeout(timer);
+  /** WCAG 2.2.1: con el puntero o el foco en la pila, ningún mensaje se va; guarda lo que quedaba. */
+  pause(): void {
+    if (this.paused) {
+      return;
     }
-    this.timers.clear();
+    this.paused = true;
+    const now = Date.now();
+    for (const lifetime of this.lifetimes.values()) {
+      clearTimeout(lifetime.timer);
+      lifetime.timer = undefined;
+      lifetime.remaining -= now - lifetime.startedAt;
+    }
+  }
+
+  /** Cada mensaje sigue con el tiempo que le quedaba, no con uno nuevo. */
+  resume(): void {
+    if (!this.paused) {
+      return;
+    }
+    this.paused = false;
+    for (const id of this.lifetimes.keys()) {
+      this.run(id);
+    }
+  }
+
+  clear(): void {
+    for (const lifetime of this.lifetimes.values()) {
+      clearTimeout(lifetime.timer);
+    }
+    this.lifetimes.clear();
     this.queue.set([]);
+  }
+
+  private run(id: number): void {
+    const lifetime = this.lifetimes.get(id);
+    if (lifetime === undefined) {
+      return;
+    }
+    lifetime.startedAt = Date.now();
+    lifetime.timer = setTimeout(() => this.dismiss(id), lifetime.remaining);
   }
 }

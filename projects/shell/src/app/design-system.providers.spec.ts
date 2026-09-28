@@ -14,7 +14,9 @@ import {
 import { provideI18nTesting } from '@ewms/testing';
 import { TranslocoService } from '@jsverse/transloco';
 import { firstValueFrom } from 'rxjs';
+import { showroomRoutes } from '@ewms/showroom';
 import { provideEwmsDesignSystem } from './design-system.providers';
+import { RouteTitles } from './route-titles';
 import { WITH_SHOWROOM } from './i18n.testing';
 
 /**
@@ -171,8 +173,14 @@ describe('the design-system texts the shell provides', () => {
 
     it('names a catalogue page as its catalogue does, and follows a change of language', async () => {
       await start('es-CR');
-      // El catálogo carga su diccionario al abrirse; un favorito suyo existe solo después.
+      // El catálogo carga su diccionario al abrirse; un favorito suyo existe solo después, y al
+      // navegar el marco deja la clave que la ruta declara.
       await firstValueFrom(TestBed.inject(TranslocoService).load('showroom/es'));
+      const page = showroomRoutes[0]?.children?.find((route) => route.path === 'components/button');
+      TestBed.inject(RouteTitles).record(
+        '/design-system/components/button',
+        page?.data?.['titleKey'] as string,
+      );
       const label = TestBed.inject(EWMS_FAVORITE_LABELS).labelFor(
         '/design-system/components/button',
       );

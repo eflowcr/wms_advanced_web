@@ -10,7 +10,7 @@ import {
 } from '@ewms/design-system';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { Prose } from '../../ui/prose';
-import { injectEstadoOptions, type EstadoExpedicion } from '../components/expediciones';
+import { injectEstadoOptions, type ShipmentStatus } from '../components/expediciones';
 import { CLIENTE_EJEMPLO, CODIGO_EJEMPLO } from './expedicion-form.fixtures';
 import { provideShipmentCodeMessage, shipmentCode } from './expedicion.rules';
 
@@ -19,25 +19,24 @@ export interface ExpedicionDraft {
   readonly id: string | null;
   codigo: string;
   cliente: string;
-  estado: EstadoExpedicion;
+  estado: ShipmentStatus;
   urgente: boolean;
 }
 
 /**
- * Formulario de crear y editar: uno solo para ambos flujos, porque el presupuesto lo garantiza
- * el patrón (REQ-FE-DS4-003 RFE-05) y dos formularios terminan con clics distintos. Desde el
- * 2026-09-22 sigue el patrón Formulario, sobre Signal Forms (ADR 0013): `[ewmsForm]` valida al
- * salir del campo y al enviar, y Ctrl+S sale del mapa de atajos sin que este componente registre nada.
+ * Un solo formulario para crear y editar: dos terminarían con clics distintos (REQ-FE-DS4-003).
+ * Patrón Formulario sobre Signal Forms (ADR 0013); Ctrl+S sale del mapa de atajos.
+ * Ver vault: Integracion Continua §11.
  */
 @Component({
-  selector: 'ewms-expedicion-form',
+  selector: 'ewms-shipment-form',
   imports: [Button, EwmsInput, FormField, FormPattern, Prose, Select, Toggle, TranslocoPipe],
-  templateUrl: './expedicion-form.html',
+  templateUrl: './shipment-form.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { class: 'contents' },
   providers: [provideShipmentCodeMessage()],
 })
-export class ExpedicionForm {
+export class ShipmentForm {
   private readonly dialogRef = inject<DialogRef<ExpedicionDraft | undefined>>(DialogRef);
 
   protected readonly titleId = 'ewms-expedicion-form-title';
@@ -70,7 +69,7 @@ export class ExpedicionForm {
       id: this.initial.id,
       codigo: value.codigo.trim(),
       cliente: value.cliente.trim(),
-      estado: value.estado as EstadoExpedicion,
+      estado: value.estado as ShipmentStatus,
       urgente: value.urgente,
     });
   };

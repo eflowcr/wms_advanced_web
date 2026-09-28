@@ -18,7 +18,7 @@ import { EmptyState, type EmptyStateAction, type EmptyStateKind } from './empty-
 class TestHost {
   readonly kind = signal<EmptyStateKind>('no-data');
   readonly description = signal('Las crea el operario al cerrar una ola.');
-  readonly size = signal<'compact' | 'page'>('page');
+  readonly size = signal<'sm' | 'lg'>('lg');
   runs = 0;
   readonly action = signal<EmptyStateAction | null>({
     label: 'Crear expedición',
@@ -64,9 +64,9 @@ describe('EmptyState', () => {
     });
   }
 
-  it('page is a heading; compact is a paragraph', async () => {
+  it('lg is a heading; sm is a paragraph', async () => {
     expect(box().querySelector('h2')?.textContent).toContain('Todavía no hay expediciones');
-    host.size.set('compact');
+    host.size.set('sm');
     await settle();
     expect(box().querySelector('h2')).toBeNull();
     expect(box().querySelector('p.text-h4')?.textContent).toContain('Todavía no hay');
@@ -83,7 +83,7 @@ describe('EmptyState', () => {
 
   it('passes axe in both sizes', async () => {
     await expectNoAxeViolations(root());
-    host.size.set('compact');
+    host.size.set('sm');
     host.kind.set('no-results');
     await settle();
     await expectNoAxeViolations(root());

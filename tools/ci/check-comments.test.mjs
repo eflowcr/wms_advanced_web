@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { after, describe, it } from 'node:test';
@@ -118,5 +118,25 @@ describe('findLongBlocks --base', () => {
       findLongBlocks({ cwd: repo, base: 'main' }).map(({ file, start }) => `${file}:${start}`),
       ['new.ts:1', 'old.ts:1'],
     );
+  });
+});
+
+// B17: la regla vale para todo el repositorio, no solo para lo que toca una rama.
+describe('the repository itself', () => {
+  it('has no comment block over three lines anywhere', () => {
+    assert.deepEqual(
+      findLongBlocks().map(({ file, start }) => `${file}:${start}`),
+      [],
+    );
+  });
+
+  it('is what CI checks: the step runs over everything, with no --base', () => {
+    const workflow = readFileSync(
+      new URL('../../.github/workflows/ci.yml', import.meta.url),
+      'utf8',
+    );
+    const step = /- name: Comments \(three lines per block\)\n([\s\S]*?)\n\s*\n/.exec(workflow);
+    assert.ok(step, 'the Comments step is missing from ci.yml');
+    assert.match(step[1], /run: npm run lint:comments$/m);
   });
 });

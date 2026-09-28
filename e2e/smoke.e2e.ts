@@ -1,4 +1,4 @@
-import AxeBuilder from '@axe-core/playwright';
+import { axe } from './axe';
 import { expect, test } from '@playwright/test';
 import { KEYBOARD, PAGES, ROUTE_BUDGET_MS, SEARCH_CREATE_EDIT, UNDER_CONSTRUCTION } from './routes';
 import { watchConsole } from './console-watch';
@@ -13,9 +13,36 @@ const KNOWN_CODE = 'EXP-2026-0403';
 
 test.describe('the application is alive', () => {
   test('the shell boots and renders the home page', async ({ page }) => {
+    const dictionary = page.waitForRequest((request) => /\/i18n\/es\.json(\?|$)/.test(request.url()));
     await page.goto('/');
 
     await expect(page.getByRole('heading', { name: 'eWMS Advance' })).toBeVisible();
+    // Cada petición sale con su traza W3C (AUD-003/004); la del diccionario sirve de muestra.
+    expect((await dictionary).headers()['traceparent']).toMatch(/^00-[0-9a-f]{32}-[0-9a-f]{16}-00$/);
+    // Y el diccionario se pide con la huella de su contenido: ningún caché sirve uno viejo.
+    expect((await dictionary).url()).toMatch(/\/i18n\/es\.json\?v=[0-9a-f]{10}$/);
+    // Es el artefacto de producción: las utilidades `ng` de depuración solo existen en desarrollo.
+    expect(await page.evaluate(() => 'ng' in window)).toBe(false);
+
+    // Trusted Types en vigor: HTML desde una cadena lanza y no se puede crear ninguna política.
+    // DOMParser es la sonda porque ESLint ya prohíbe escribir innerHTML, también en una prueba.
+    const trustedTypes = await page.evaluate(() => {
+      const outcome = (act: () => unknown) => {
+        try {
+          act();
+          return 'allowed';
+        } catch (error) {
+          return (error as Error).name;
+        }
+      };
+      const factory = (window as { trustedTypes?: { createPolicy(name: string, rules: object): unknown } })
+        .trustedTypes;
+      return {
+        html: outcome(() => new DOMParser().parseFromString('<b>x</b>', 'text/html')),
+        policy: outcome(() => factory?.createPolicy('probe', {})),
+      };
+    });
+    expect(trustedTypes).toEqual({ html: 'TypeError', policy: 'TypeError' });
   });
 
   test('the showroom route responds at /design-system', async ({ page }) => {
@@ -343,6 +370,6 @@ test('the application chrome has no axe violations', async ({ page }) => {
   await page.goto('/');
   await expect(page.getByRole('heading', { name: 'eWMS Advance' })).toBeVisible();
 
-  const results = await new AxeBuilder({ page }).analyze();
+  const results = await axe(page).analyze();
   expect(results.violations, JSON.stringify(results.violations, null, 2)).toEqual([]);
 });

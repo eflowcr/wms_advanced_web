@@ -271,7 +271,8 @@
         "primaryBackground": "Fondo, variante Primary",
         "radius": "Radio de esquina",
         "secondaryBackground": "Fondo, variante Secondary",
-        "secondaryBorder": "Borde, variante Secondary"
+        "secondaryBorder": "Borde, variante Secondary",
+        "spinner": "Giro del spinner en Loading (quieto con movimiento reducido)"
       }
     },
     "contract": {
@@ -381,7 +382,8 @@
         "hoverBorder": "Borde en hover (seleccionable)",
         "radius": "Radio de la caja",
         "restBackground": "Fondo en reposo",
-        "restBorder": "Borde en reposo"
+        "restBorder": "Borde en reposo (contenedor)",
+        "restBorderSelectable": "Borde en reposo (seleccionable): el de los controles, 3,56:1"
       }
     },
     "contract": {
@@ -462,7 +464,7 @@
       "caption": "Los dos usos de la card por sus cuatro estados",
       "content": "De contenido (suelta)",
       "contentSame": "<b>La card de contenido es la misma en las cuatro columnas, y eso es la información.</b> No tiene hover, no tiene selección y no se puede deshabilitar: es layout. La fila de arriba es la que cambia.",
-      "forced": "<b>Hover es la única celda forzada</b>, con el mismo token que usa la regla del componente (<code>--color-border-strong</code>): no se puede sostener el puntero quieto en una grilla. <b>Focus no está</b>, por lo mismo que en el Input y el Select: el anillo es un <code>box-shadow</code> de <code>:focus-visible</code>, y una clase envolvente no puede producirlo sin mentir sobre cuándo aparece. Se recorre con Tab en la demo de arriba, que es donde de verdad se ve.",
+      "forced": "<b>Hover es la única celda forzada</b>, con el mismo token que usa la regla del componente (<code>--color-border-strong-hover</code>): no se puede sostener el puntero quieto en una grilla. <b>Focus no está</b>, por lo mismo que en el Input y el Select: el anillo es un <code>box-shadow</code> de <code>:focus-visible</code>, y una clase envolvente no puede producirlo sin mentir sobre cuándo aparece. Se recorre con Tab en la demo de arriba, que es donde de verdad se ve.",
       "intro": "Los dos usos contra los cuatro estados de la ficha. Todas las celdas menos una son entradas reales.",
       "option": "Seleccionable (en grupo)",
       "rowHeader": "Uso",
@@ -1093,6 +1095,7 @@
       "caption": "Propiedades de <ewms-input>",
       "clearLabel": "Nombre accesible de la × que vacía un campo de búsqueda. Sin él el botón no se renderiza.",
       "disabled": "Dentro de un formulario lo pone la regla <code>disabled()</code> del esquema: Angular prohíbe enlazar <code>[disabled]</code> en el mismo nodo que <code>[formField]</code>.",
+      "error": "Solo dibujo: el componente no valida nada. Con <code>[formField]</code> el error llega solo; esto es para las demos. Deshabilitado y solo lectura son sus propias entradas.",
       "fieldBlur": "Lo mismo para <code>(blur)</code>. Es también donde el formulario recibe <code>onTouched</code>.",
       "fieldFocus": "Prefijado a propósito: <code>(focus)</code> nativo burbujea hasta el mismo binding del consumidor. Ver el bloque 8.",
       "hidePasswordLabel": "El mismo contrato, para ocultar.",
@@ -1102,7 +1105,6 @@
       "required": "Pinta el asterisco junto al label y pone el atributo nativo.",
       "showPasswordLabel": "Nombre accesible del botón de mostrar contraseña, ya traducido. Sin él (y sin <code>hidePasswordLabel</code>) el botón NO se renderiza.",
       "size": "Las mismas tres alturas de control que el Botón y el Select: 32 / 40 / 48.",
-      "state": "Puramente visual: el componente no valida nada. Quien decide si un valor está mal es el formulario padre.",
       "type": "Los cinco del bloque 4."
     },
     "purpose": {
@@ -1205,11 +1207,26 @@
       }
     },
     "backdrop": "Backdrop",
+    "byVariant": {
+      "backdrop": {
+        "closes": "Cierra",
+        "stays": "No cierra"
+      },
+      "confirm": {
+        "danger": "Danger",
+        "primary": "Primary"
+      },
+      "names": {
+        "danger": "Danger",
+        "info": "Info",
+        "warning": "Warning"
+      }
+    },
     "demo": {
       "answer": {
-        "confirmed": "{{ tone }}: confirmado (true)",
+        "confirmed": "{{ variant }}: confirmado (true)",
         "none": "(todavía ninguna)",
-        "rejected": "{{ tone }}: no confirmado (false)"
+        "rejected": "{{ variant }}: no confirmado (false)"
       },
       "answerLabel": "Lo que devolvió la promesa:",
       "dialogs": {
@@ -1253,7 +1270,7 @@
       "injector": "El de la pantalla que abre: el componente ve sus textos y servicios. Un formulario lo necesita. Sin él, la raíz.",
       "open": "La variante formulario. Devuelve la referencia del CDK, no una promesa: no es una pregunta.",
       "title": "<b>Obligatoria.</b> El titular. Nombra el diálogo: es a donde apunta <code>aria-labelledby</code>.",
-      "tone": "<b>Obligatoria.</b> Elige el glifo, la variante del botón de confirmar y si el backdrop cierra. Info se pinta neutral."
+      "variant": "<b>Obligatoria.</b> Elige el glifo, la variante del botón de confirmar y si el backdrop cierra. Info se pinta neutral."
     },
     "purpose": {
       "cdk": "Sobre <code>@angular/cdk/dialog</code>. La trampa de foco, el <code>role</code>, dejar el resto del documento inerte y devolver el foco al cerrar son del CDK y <b>no se reconstruyen acá</b>.",
@@ -1267,33 +1284,18 @@
       "width": "La caja tiene un ancho máximo y crece con su contenido hasta ahí. La ficha declara como pendiente <i>«si existe una variante de tamaño lg para formularios más largos»</i>, y este encargo no la resuelve: sin un formulario real que la necesite, un tamaño más sería una variante que nadie usa."
     },
     "states": {
-      "caption": "Los tres tonos y lo que cada uno decide",
+      "caption": "Las tres variantes y lo que cada una decide",
       "columns": {
         "backdrop": "Click en el backdrop",
         "confirm": "Botón de confirmar",
         "glyph": "Glifo"
       },
-      "intro": "Los tres tonos contra lo que cada uno decide. La primera columna dibuja el glifo de verdad, con el mismo ícono y color; las otras dos son hechos.",
+      "intro": "Las tres variantes contra lo que cada una decide. La primera columna dibuja el glifo de verdad, con el mismo ícono y color; las otras dos son hechos.",
       "noHover": "Tampoco hay Hover, Focus ni Disabled. El diálogo no es un control: lo que se pulsa son sus botones, que tienen su propia ficha y su propia matriz.",
       "sideBySide": "<b>No hay tres diálogos abiertos lado a lado, y no se puede haberlos:</b> son modales, y dos modales a la vez no son dos modales. Lo que sí se puede dibujar quieto es el glifo, con el mismo ícono y la misma clase de color que usa el componente."
     },
     "title": "Dialog",
-    "tone": "Tono",
-    "tones": {
-      "backdrop": {
-        "closes": "Cierra",
-        "stays": "No cierra"
-      },
-      "confirm": {
-        "danger": "Danger",
-        "primary": "Primary"
-      },
-      "names": {
-        "danger": "Danger",
-        "info": "Info",
-        "warning": "Warning"
-      }
-    },
+    "variant": "Variante",
     "variants": {
       "backdrop": {
         "disableClose": "Implementarlo pedía separar las dos cosas: el interruptor del CDK (<code>disableClose</code>) gobierna Escape <i>y</i> el backdrop a la vez. Está en <code>true</code> siempre, y el servicio contesta los dos eventos por su cuenta.",
@@ -1301,7 +1303,7 @@
         "friction": "<b>Fricción deliberada, de la ficha.</b> Un click perdido es el gesto más barato que hay, y todo el sentido del diálogo es que la respuesta destructiva cueste más que la segura.",
         "title": "El backdrop no cierra un diálogo destructivo"
       },
-      "caption": "Qué decide el tono",
+      "caption": "Qué decide la variante",
       "columns": {
         "confirm": "Confirmar",
         "family": "Familia"
@@ -1311,7 +1313,7 @@
         "info": "<b>Info se pinta neutral, no azul.</b> El registro de Figma de este componente lo tenía azul; quedó superado por la regla de marca —el azul significa «se hace clic»— y la propia ficha lo corrige en su cabecera.",
         "title": "Un glifo del catálogo, sin círculo ni halo"
       },
-      "intro": "Tres tonos, y el tono decide tres cosas a la vez: el glifo, la variante del botón que confirma y si el backdrop cierra."
+      "intro": "Tres variantes, y la variante decide tres cosas a la vez: el glifo, la variante del botón que confirma y si el backdrop cierra."
     }
   },
   "navigation": {
@@ -1662,8 +1664,8 @@
         "noResults": "no-results"
       },
       "sizes": {
-        "compact": "compact — tabla, panel, card",
-        "page": "page — pantalla entera"
+        "lg": "lg — pantalla entera",
+        "sm": "sm — tabla, panel, card"
       },
       "title": "Matriz — cuatro casos en los dos tamaños"
     },
@@ -1673,7 +1675,7 @@
       "description": "Una o dos líneas. En <code>no-access</code> dice a quién pedir el permiso.",
       "icon": "Solo <code>no-data</code>: el ícono del contexto, del catálogo (<code>package</code> si no se dice).",
       "kind": "Por qué no hay nada. Decide el ícono, el color de la acción y si se anuncia.",
-      "size": "<code>compact</code> dentro de tabla, panel o card; <code>page</code> ocupa la pantalla.",
+      "size": "<code>sm</code> dentro de tabla, panel o card; <code>lg</code> ocupa la pantalla.",
       "title": "<b>Obligatoria.</b> Ya traducido. No sale como tooltip del navegador aunque se escriba literal."
     },
     "purpose": {
@@ -1684,8 +1686,8 @@
       "tableAndSelect": "La Tabla elige el caso sola: sin filtros es <code>no-data</code>, con alguno <code>no-results</code> con «Limpiar filtros», y si la fuente falla, <code>error</code> con «Reintentar». El Select usa <code>no-results</code> en su panel."
     },
     "sizes": {
-      "compact": "<b><code>compact</code></b> — dentro de una tabla, del panel de un select o de una card. Título en H4, ícono <code>lg</code>, acción <code>sm</code>. Es un párrafo, no un encabezado: no rompe el esquema de la página.",
-      "page": "<b><code>page</code></b> — la pantalla entera. Título en H3 como <code><h2></code>, ícono <code>xl</code>, acción <code>md</code>."
+      "lg": "<b><code>lg</code></b> — la pantalla entera. Título en H3 como <code><h2></code>, ícono <code>xl</code>, acción <code>md</code>.",
+      "sm": "<b><code>sm</code></b> — dentro de una tabla, del panel de un select o de una card. Título en H4, ícono <code>lg</code>, acción <code>sm</code>. Es un párrafo, no un encabezado: no rompe el esquema de la página."
     },
     "variants": {
       "caption": "Cuándo va cada caso",
@@ -3086,8 +3088,9 @@
   },
   "toast": {
     "a11y": {
-      "escape": "<b>Escape escucha en el documento</b>, porque un toast nunca tiene el foco: no es una parada de tabulación y no debe robarle el foco a lo que el operario está haciendo. Un <code>Escape</code> que otro ya manejó —el de un diálogo, el del Select— se deja pasar.",
+      "escape": "<b>Escape escucha en el documento</b>: cierra el más reciente esté donde esté el foco. Un toast nunca toma el foco solo, para no robárselo a lo que el operario está haciendo. Un <code>Escape</code> que otro ya manejó —el de un diálogo, el del Select— se deja pasar.",
       "oneRegion": "<b>Una sola región viva, siempre en el documento</b>, esté vacía o no. Una región que aparece junto con su primer mensaje se anuncia de forma inconsistente —varios lectores de pantalla se pierden el contenido que llega en el mismo cuadro que la región—, así que la región espera y lo único que cambia es su contenido.",
+      "pause": "<b>WCAG 2.2.1:</b> con el puntero o el foco en la pila, ningún mensaje se va; al salir, cada uno sigue con lo que le quedaba. El botón de cerrar se alcanza con <code>Tab</code>, y hay tres a la vez como máximo: el cuarto saca al más viejo.",
       "polite": "<code>polite</code> y nunca <code>assertive</code>: un toast cuenta algo que ya pasó. Lo que de verdad no puede esperar es un Banner con <code>role=\"alert\"</code>, que es el otro componente.",
       "severity": "Cada icono lleva la severidad como nombre accesible, por las mismas palabras que el consumidor tradujo al montar la salida. El color no es la única señal."
     },
@@ -3097,6 +3100,7 @@
         "accent": "Acento de 4 px (Success)",
         "accentInfo": "Acento de 4 px (Info — neutral)",
         "border": "Borde del toast, por familia (Success)",
+        "compactBottom": "Distancia al borde inferior con barra inferior (debajo del corte)",
         "duration": "Cuánto vive un mensaje",
         "elevation": "Elevación de la pila",
         "iconSize": "Tamaño del icono (md)",
@@ -3133,11 +3137,14 @@
     },
     "notApplicable": "Uno: <b>tamaños</b>, porque el toast tiene uno solo. Está escrito arriba en lugar de borrado.",
     "props": {
-      "caption": "Métodos de ToastService, y las dos entradas de <ewms-toast-outlet>",
+      "caption": "Métodos de ToastService, y las tres entradas de <ewms-toast-outlet>",
       "clear": "Vacía la cola, timers incluidos. Se llama sola al destruirse el inyector.",
       "dismiss": "Saca uno. Un id que ya no está no es un error.",
+      "dismissLabel": "<b>Obligatoria.</b> Entrada de la salida. Nombre del botón de cerrar de cada mensaje, como el <code>dismissLabel</code> del Banner.",
       "dismissLatest": "Saca el más reciente. Es lo que hace Escape.",
+      "pause": "Detiene la vida de todos los mensajes y guarda lo que le quedaba a cada uno. La salida lo llama con el puntero o el foco en la pila.",
       "regionLabel": "<b>Obligatoria.</b> Entrada de la salida. Nombra la región viva, para que el lector de pantalla diga de dónde viene el mensaje.",
+      "resume": "Cada mensaje sigue con el tiempo que le quedaba, no con uno nuevo.",
       "severityLabels": "<b>Obligatoria.</b> Entrada de la salida. Las cuatro severidades en palabras, para el nombre accesible de cada icono. Se traducen una vez, donde se monta.",
       "show": "Encola un mensaje y devuelve su id. <code>duration</code> en milisegundos pisa el token para esa llamada; <code>0</code> significa «no expira».",
       "toasts": "Lo que la salida renderiza, del más viejo al más nuevo."
@@ -3434,12 +3441,12 @@
   },
   "typography": {
     "families": {
-      "mono": "La familia mono es todavía la pila del sistema: JetBrains Mono entra con su primer consumidor real, la Tabla. Hasta entonces el token existe y apunta a la pila, que es lo honesto — no se declara una cara que no se está sirviendo.",
+      "mono": "La familia mono es <b>JetBrains Mono</b>, auto-hospedada como Montserrat: Regular y Bold, solo el subconjunto latin en woff2 y sin precarga, así que solo la baja la página que muestra código. Detrás queda la pila del sistema, por si el archivo no llega.",
       "title": "Las dos familias"
     },
     "gaps": {
-      "body": "Cuatro valores siguen sin decidir en <code>tokens.css</code>: el interlineado de H4, el de Caption, y el peso y el interlineado de Mono. Arriba salen marcados <b>(pendiente)</b> en vez de rellenarse con un número inventado o de borrarse la fila. Mientras tanto el navegador aplica su valor normal, que es exactamente lo que se está viendo.",
-      "title": "Los huecos son información, no descuido"
+      "body": "Hasta el 2026-09-27 cuatro valores no estaban en <code>tokens.css</code>: el interlineado de H4, el de Caption, y el peso y el interlineado de Mono. Se marcaban como pendientes en vez de inventarles un número. Se declararon con lo que el navegador ya aplicaba —1,5 de interlineado y peso 400—, así que en pantalla nada se movió: ahora lo dice el token.",
+      "title": "La escala está cerrada"
     },
     "header": {
       "intro": "Una sola familia de interfaz: <b>Montserrat</b>, variable 100–900, auto-hospedada. No se carga desde un CDN — la CSP sólo permite <code>font-src 'self'</code>. La familia mono es de apoyo, para códigos y SKU."

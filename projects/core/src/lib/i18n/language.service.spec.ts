@@ -136,6 +136,12 @@ describe('LanguageService', () => {
   });
 
   describe('use()', () => {
+    it('reports the default language while Transloco holds one the app does not speak', async () => {
+      const service = await start(storage);
+      TestBed.inject(TranslocoService).setActiveLang('fr');
+      expect(service.active()).toBe('es');
+    });
+
     it('switches dictionary and locale, persists the choice and updates <html lang>', async () => {
       browserLanguage('es-CR');
       const service = await start(storage);

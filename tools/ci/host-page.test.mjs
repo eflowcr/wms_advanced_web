@@ -1,12 +1,10 @@
 /**
- * La página host del shell contra su propia CSP. La CSP (style-src y script-src 'self')
- * bloquea en silencio <style> y <script> inline, style="" y on*="": la página carga y
- * el estilo o el handler no se aplica. index.html es donde se escribe ese markup a mano
- * (el aviso de fallo de arranque), así que esto vuelve ruidoso el error.
- * Permitir un <style> por hash no aguanta: el servidor de desarrollo reescribe los
- * estilos inline (les agrega un source map). Ver vault: i18n.md. `npm run test:tools`.
+ * index.html contra su propia CSP, que bloquea en silencio <style>, <script>, style="" y on*=""
+ * escritos a mano (el aviso de fallo de arranque). `npm run test:tools`.
+ * Ver vault: Integracion Continua §11.
  */
 import assert from 'node:assert/strict';
+import { existsSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { test } from 'node:test';
@@ -39,6 +37,13 @@ test('the CSP stays strict: no unsafe-inline, no unsafe-eval, no hash, no nonce'
   assert.doesNotMatch(csp, /'unsafe-inline'|'unsafe-eval'|'unsafe-hashes'|'sha(256|384|512)-|'nonce-/);
 });
 
+test('the CSP turns Trusted Types on and allows no policy', () => {
+  const directives = csp.split(';').map((directive) => directive.trim());
+  assert.ok(directives.includes("require-trusted-types-for 'script'"), 'Trusted Types is off');
+  // Ninguna política: la única que trae Angular es la de bypassSecurityTrust*, prohibido.
+  assert.ok(directives.includes("trusted-types 'none'"), 'the CSP allows Trusted Types policies');
+});
+
 test('the host page has nothing inline that the CSP would drop', () => {
   assert.doesNotMatch(html, /<style[\s>]/i, 'inline <style> is blocked: use a stylesheet in public/');
   assert.doesNotMatch(html, /<script(?![^>]*\bsrc=)[^>]*>/i, 'inline <script> is blocked');
@@ -57,4 +62,16 @@ test('every stylesheet the host page links exists in public/', async () => {
       `${href} is linked from ${HOST_PAGE} but missing from projects/shell/public`,
     );
   }
+});
+
+// El artefacto, no el fuente: la CSP que se despliega es la del build. ci.yml construye antes de
+// esta prueba; sin dist/ falla pidiendo el build, nunca se salta.
+const BUILT_PAGE = path.join(ROOT, 'dist/shell/browser/index.html');
+
+test('the production build keeps the CSP word for word', async () => {
+  assert.ok(existsSync(BUILT_PAGE), `${BUILT_PAGE} is missing: run npm run build first`);
+  const deployed = stripHtmlComments(await readFile(BUILT_PAGE, 'utf8'));
+  const deployedCsp =
+    /<meta\s+http-equiv="Content-Security-Policy"\s+content="([^"]*)"/i.exec(deployed)?.[1];
+  assert.equal(deployedCsp, csp, 'the build changed or dropped the CSP of the host page');
 });

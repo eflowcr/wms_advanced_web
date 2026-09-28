@@ -1,5 +1,5 @@
-import AxeBuilder from '@axe-core/playwright';
-import { expect, test, type Page } from '@playwright/test';
+import { axe } from './axe';
+import { expect, test, type Locator, type Page } from '@playwright/test';
 import { watchConsole } from './console-watch';
 import { chooseLanguage } from './language';
 
@@ -12,6 +12,7 @@ import {
   FILTERS,
   FORM,
   PAGES,
+  UNDER_CONSTRUCTION,
   ROUTE_BUDGET_MS,
   BANNER,
   BUTTON,
@@ -29,6 +30,13 @@ import {
   TOGGLE,
   TOOLTIP,
 } from './routes';
+
+/** La parada de Tab de una celda: ella, o su único control si lo tiene (patrón grid de las APG). */
+function cellStop(page: Page, scope: string, cell: string) {
+  return page.locator(
+    `${scope} [data-cell="${cell}"]:not([data-cell-widget]), ${scope} [data-cell="${cell}"][data-cell-widget] input`,
+  );
+}
 
 /** Las fuentes cambian todo ancho medido: nada se mide antes de que carguen. */
 async function ready(page: Page): Promise<void> {
@@ -256,6 +264,19 @@ test.describe('Loading does not change the size of the control', () => {
     expect(round(loadingBox?.width), 'Loading must not change the box').toBe(round(idleBox?.width));
     expect(round(loadingBox?.height)).toBe(round(idleBox?.height));
     await expect(loading).toHaveAttribute('aria-busy', 'true');
+  });
+
+  // D2: el arco era estático. Una sola animación, la de la hoja global, quieta con `reduce`.
+  test('the spinner turns, and stands still with reduced motion', async ({ page }) => {
+    await page.goto(BUTTON);
+    await ready(page);
+
+    const spinner = page.locator('[data-demo-iconbutton-loading] ewms-icon[name="spinner"] svg');
+    await expect(spinner).toHaveCSS('animation-name', 'spin');
+    await expect(spinner).toHaveCSS('animation-iteration-count', 'infinite');
+
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await expect(spinner).toHaveCSS('animation-name', 'none');
   });
 });
 
@@ -520,7 +541,23 @@ test.describe('accessibility', () => {
       // renderizar reporta unas sesenta violaciones que van y vienen con la carga de la máquina.
       await expect(page.getByRole('heading', { level: 1, name: heading.es })).toBeVisible();
       await ready(page);
-      const results = await new AxeBuilder({ page }).analyze();
+      const results = await axe(page).analyze();
+      expect(results.violations).toEqual([]);
+      await watch.clean(url);
+    });
+  }
+
+  // Las pantallas «En construcción» son del shell, no del catálogo, y hasta el 2026-09-26 nadie las
+  // escaneaba aunque el vault decía que sí.
+  for (const { url, heading } of UNDER_CONSTRUCTION) {
+    test(`${url} (under construction) has no axe violations, and a clean console`, async ({
+      page,
+    }) => {
+      const watch = await watchConsole(page);
+      await page.goto(url);
+      await expect(page.locator('[data-page-heading]')).toHaveText(heading);
+      await ready(page);
+      const results = await axe(page).analyze();
       expect(results.violations).toEqual([]);
       await watch.clean(url);
     });
@@ -528,7 +565,7 @@ test.describe('accessibility', () => {
 });
 
 // El catálogo se traduce (2026-09-25): con el navegador en inglés cada página arranca en inglés.
-// Una clave que falta lanza en desarrollo, así que la consola limpia dice que no falta ninguna.
+// Una clave que falta se ve como su ruta y la vigilancia la busca: limpia, no falta ninguna.
 test.describe('the catalogue in English', () => {
   test.use({ locale: 'en-GB' });
 
@@ -810,6 +847,85 @@ function duplicates(visited: readonly (string | null)[]): readonly string[] {
   return twice;
 }
 
+/** Un ciclo de Tab por la página: cada control una vez, ninguno deshabilitado ni sin foco visible. */
+async function expectTabCycle(page: Page, url: string): Promise<void> {
+  const { expected, labels, disabled, roving } = await stampFocusable(page);
+  const stops = await walkTabCycle(page);
+
+  expect(stops.length, `${url}: the tab cycle never closed`).toBeLessThan(MAX_TABS);
+
+  const visited = stops.map((stop) => stop.kbd);
+
+  // Una parada sin marca es un elemento que no estaba cuando se midió la página.
+  expect(
+    stops.filter((stop) => stop.kbd === null).map((stop) => stop.label),
+    `${url}: focus landed on an unstamped element`,
+  ).toEqual([]);
+
+  expect(
+    expected.filter((kbd) => !visited.includes(kbd)).map((kbd) => labels[kbd]),
+    `${url}: never reached by Tab`,
+  ).toEqual([]);
+
+  expect(
+    duplicates(visited).map((kbd) => labels[kbd]),
+    `${url}: focused twice in one cycle`,
+  ).toEqual([]);
+
+  expect(
+    disabled.filter((kbd) => visited.includes(kbd)).map((kbd) => labels[kbd]),
+    `${url}: disabled control in the tab order`,
+  ).toEqual([]);
+
+  // Tampoco un radio que no es la entrada de su grupo.
+  expect(
+    roving.filter((kbd) => visited.includes(kbd)).map((kbd) => labels[kbd]),
+    `${url}: a radio group was split into several tab stops`,
+  ).toEqual([]);
+
+  // Cada tree o tablist es exactamente una parada: cero es inalcanzable, dos es el roving tabindex roto.
+  const composites = await page.evaluate(() =>
+    Array.from(document.querySelectorAll('[role="tree"],[role="tablist"]'))
+      .filter((widget) => (widget as HTMLElement).offsetParent !== null)
+      .map((widget) => ({
+        name: widget.getAttribute('aria-label') ?? widget.getAttribute('role') ?? '?',
+        stops: Array.from(widget.querySelectorAll('[data-kbd]:not([tabindex="-1"])')).length,
+      })),
+  );
+  expect(
+    composites.filter((widget) => widget.stops !== 1),
+    `${url}: a composite widget is not exactly one tab stop`,
+  ).toEqual([]);
+
+  // WCAG 2.4.7: box-shadow (--focus-ring-shadow) o contorno. Las celdas de la Tabla usan
+  // contorno de token para no invadir la vecina como una sombra de 3px.
+  // Atrapó un span enfocable sin estilo de foco en la página del tooltip.
+  expect(
+    stops
+      .filter((stop) => {
+        const shadow = stop.boxShadow !== 'none' && stop.boxShadow !== '';
+        const outline = stop.outlineStyle !== 'none' && parseFloat(stop.outlineWidth || '0') > 0;
+        return !shadow && !outline;
+      })
+      .map((stop) => stop.label),
+    `${url}: focused with no visible focus indicator`,
+  ).toEqual([]);
+
+  // Y el indicador tiene que ser nuestro: outline-style auto es el anillo del navegador y el catálogo
+  // no puede caer en él. El marco del App Shell queda fuera de esta regla.
+  expect(
+    stops
+      .filter(
+        (stop) =>
+          stop.inShowroom &&
+          (stop.boxShadow === 'none' || stop.boxShadow === '') &&
+          stop.outlineStyle === 'auto',
+      )
+      .map((stop) => stop.label),
+    `${url}: showroom control falling back to the browser's own focus ring`,
+  ).toEqual([]);
+}
+
 test.describe('keyboard only', () => {
   for (const { url, heading } of PAGES) {
     test(`${url}: the tab order reaches every control, once`, async ({ page }) => {
@@ -817,82 +933,111 @@ test.describe('keyboard only', () => {
       await expect(page.getByRole('heading', { level: 1, name: heading.es })).toBeVisible();
       await ready(page);
 
-      const { expected, labels, disabled, roving } = await stampFocusable(page);
-      const stops = await walkTabCycle(page);
+      await expectTabCycle(page, url);
+    });
+  }
 
-      expect(stops.length, `${url}: the tab cycle never closed`).toBeLessThan(MAX_TABS);
+  // WCAG 2.4.11: al volver con Shift+Tab el navegador deja el control arriba, bajo la cabecera y la
+  // tira fijas. Ida y vuelta por la página más larga, a 1280 x 720.
+  test('WCAG 2.4.11: no control reached by Tab hides under the header or the tab strip', async ({
+    page,
+  }) => {
+    test.setTimeout(PAGES.length * ROUTE_BUDGET_MS);
+    await page.setViewportSize({ width: 1280, height: 720 });
+    await page.goto(TABLE);
+    await expect(page.getByRole('heading', { level: 1, name: 'Tabla de datos' })).toBeVisible();
+    await ready(page);
 
-      const visited = stops.map((stop) => stop.kbd);
+    const obscured = (): Promise<string | null> =>
+      page.evaluate(() => {
+        const focused = document.activeElement as HTMLElement | null;
+        if (focused === null || focused.closest('main') === null) {
+          return null;
+        }
+        const chrome = [
+          document.querySelector('header'),
+          document.querySelector('[role="tablist"]')?.closest('nav'),
+        ];
+        const bottom = Math.max(
+          ...chrome.map((element) => element?.getBoundingClientRect().bottom ?? 0),
+        );
+        const box = focused.getBoundingClientRect();
+        // Lo que cabe bajo el marco, por su centro; lo más alto, solo si queda entero debajo (2.4.11).
+        const tall = box.height > window.innerHeight - bottom;
+        return (tall ? box.bottom <= bottom : box.top + box.height / 2 < bottom)
+          ? (focused.getAttribute('aria-label') ??
+              focused.textContent?.trim().slice(0, 40) ??
+              focused.tagName)
+          : null;
+      });
 
-      // Una parada sin marca es un elemento que no estaba cuando se midió la página.
-      expect(
-        stops.filter((stop) => stop.kbd === null).map((stop) => stop.label),
-        `${url}: focus landed on an unstamped element`,
-      ).toEqual([]);
+    const hidden: string[] = [];
+    for (const key of ['Tab', 'Shift+Tab']) {
+      for (let press = 0; press < 60; press += 1) {
+        await page.keyboard.press(key);
+        const label = await obscured();
+        if (label !== null) {
+          hidden.push(`${key}: ${label}`);
+        }
+      }
+    }
 
-      expect(
-        expected.filter((kbd) => !visited.includes(kbd)).map((kbd) => labels[kbd]),
-        `${url}: never reached by Tab`,
-      ).toEqual([]);
-
-      expect(
-        duplicates(visited).map((kbd) => labels[kbd]),
-        `${url}: focused twice in one cycle`,
-      ).toEqual([]);
-
-      expect(
-        disabled.filter((kbd) => visited.includes(kbd)).map((kbd) => labels[kbd]),
-        `${url}: disabled control in the tab order`,
-      ).toEqual([]);
-
-      // Tampoco un radio que no es la entrada de su grupo.
-      expect(
-        roving.filter((kbd) => visited.includes(kbd)).map((kbd) => labels[kbd]),
-        `${url}: a radio group was split into several tab stops`,
-      ).toEqual([]);
-
-      // Cada tree o tablist es exactamente una parada: cero es inalcanzable, dos es el roving tabindex roto.
-      const composites = await page.evaluate(() =>
-        Array.from(document.querySelectorAll('[role="tree"],[role="tablist"]'))
-          .filter((widget) => (widget as HTMLElement).offsetParent !== null)
-          .map((widget) => ({
-            name: widget.getAttribute('aria-label') ?? widget.getAttribute('role') ?? '?',
-            stops: Array.from(widget.querySelectorAll('[data-kbd]:not([tabindex="-1"])')).length,
-          })),
+    // El caso que el recorrido no garantiza: el control ya está en la ventana pero bajo el marco, y
+    // ahí el navegador no desplaza. Se estaciona cada uno ahí y recibe el foco (mismo «si hace falta»).
+    const parked = await page.evaluate(() => {
+      const chrome = [
+        document.querySelector('header'),
+        document.querySelector('[role="tablist"]')?.closest('nav'),
+      ];
+      const bottom = Math.max(
+        ...chrome.map((element) => element?.getBoundingClientRect().bottom ?? 0),
       );
-      expect(
-        composites.filter((widget) => widget.stops !== 1),
-        `${url}: a composite widget is not exactly one tab stop`,
-      ).toEqual([]);
+      // Lo que va pegado (la barra del catálogo) nunca pasa bajo el marco: se muestrea el contenido.
+      const pinned = (element: HTMLElement): boolean => {
+        for (let node: HTMLElement | null = element; node !== null; node = node.parentElement) {
+          if (['sticky', 'fixed'].includes(getComputedStyle(node).position)) {
+            return true;
+          }
+        }
+        return false;
+      };
+      // Uno deshabilitado no recibe el foco: Tab no llega y `focus()` no lo desplaza.
+      const controls = [
+        ...document.querySelectorAll<HTMLElement>(
+          'main button, main a[href], main input, main [tabindex="0"]',
+        ),
+      ].filter(
+        (control) =>
+          control.offsetParent !== null && !control.matches(':disabled') && !pinned(control),
+      );
+      const step = Math.max(1, Math.floor(controls.length / 25));
+      const under: string[] = [];
+      for (const control of controls.filter((_, index) => index % step === 0)) {
+        const box = control.getBoundingClientRect();
+        window.scrollBy(0, box.top + box.height / 2 - (bottom - 8));
+        control.focus();
+        const after = control.getBoundingClientRect();
+        const tall = after.height > window.innerHeight - bottom;
+        if (tall ? after.bottom <= bottom : after.top + after.height / 2 < bottom) {
+          under.push(
+            control.getAttribute('aria-label') ?? control.textContent?.trim().slice(0, 40) ?? '',
+          );
+        }
+      }
+      return under;
+    });
+    expect({ walked: hidden, parked }).toEqual({ walked: [], parked: [] });
+  });
 
-      // WCAG 2.4.7: box-shadow (--focus-ring-shadow) o contorno. Las celdas de la Tabla usan
-      // contorno de token para no invadir la vecina como una sombra de 3px.
-      // Atrapó un span enfocable sin estilo de foco en la página del tooltip.
-      expect(
-        stops
-          .filter((stop) => {
-            const shadow = stop.boxShadow !== 'none' && stop.boxShadow !== '';
-            const outline =
-              stop.outlineStyle !== 'none' && parseFloat(stop.outlineWidth || '0') > 0;
-            return !shadow && !outline;
-          })
-          .map((stop) => stop.label),
-        `${url}: focused with no visible focus indicator`,
-      ).toEqual([]);
-
-      // Y el indicador tiene que ser nuestro: outline-style auto es el anillo del navegador y el catálogo
-      // no puede caer en él. El marco del App Shell queda fuera de esta regla.
-      expect(
-        stops
-          .filter(
-            (stop) =>
-              stop.inShowroom &&
-              (stop.boxShadow === 'none' || stop.boxShadow === '') &&
-              stop.outlineStyle === 'auto',
-          )
-          .map((stop) => stop.label),
-        `${url}: showroom control falling back to the browser's own focus ring`,
-      ).toEqual([]);
+  // Las «En construcción» son del shell y hasta el 2026-09-26 no las recorría nadie.
+  for (const { url, heading } of UNDER_CONSTRUCTION) {
+    test(`${url} (under construction): the tab order reaches every control, once`, async ({
+      page,
+    }) => {
+      await page.goto(url);
+      await expect(page.locator('[data-page-heading]')).toHaveText(heading);
+      await ready(page);
+      await expectTabCycle(page, url);
     });
   }
 
@@ -1654,17 +1799,17 @@ test.describe('DS-3 lote C: la tabla', () => {
     await ready(page);
 
     // Una sola parada para la tabla: se enfoca la primera celda, como tras un Tab.
-    await page.locator(`${DEMO} [data-cell="0-0"]`).focus();
+    await cellStop(page, DEMO, '0-0').focus();
 
     await page.keyboard.press('ArrowRight');
     await expect(page.locator(`${ROWS}[aria-level="2"]`).first()).toBeVisible();
 
     await page.keyboard.press('ArrowDown');
-    await expect(page.locator(`${DEMO} [data-cell="1-0"]`)).toBeFocused();
+    await expect(cellStop(page, DEMO, '1-0')).toBeFocused();
 
     await page.keyboard.press('ArrowLeft');
     // Primera celda de una fila hija: sube al padre en vez de ir al costado.
-    await expect(page.locator(`${DEMO} [data-cell="0-0"]`)).toBeFocused();
+    await expect(cellStop(page, DEMO, '0-0')).toBeFocused();
 
     await page.keyboard.press('ArrowLeft');
     await expect(page.locator(`${ROWS}[aria-level="2"]`)).toHaveCount(0);
@@ -1674,7 +1819,7 @@ test.describe('DS-3 lote C: la tabla', () => {
     await page.goto(TABLE);
     await ready(page);
 
-    await page.locator(`${DEMO} [data-cell="1-0"]`).focus();
+    await cellStop(page, DEMO, '1-0').focus();
     await page.keyboard.press(' ');
     await expect(page.locator('[data-selection-count]')).toHaveText('1');
 
@@ -1683,10 +1828,8 @@ test.describe('DS-3 lote C: la tabla', () => {
   });
 
   /*
-   * Ordenar por el valor crudo y filtrar un rango con las dos cajas no necesitan navegador: son
-   * lógica, y los afirman `table.spec.ts` «SORTS BY THE RAW VALUE, not by the formatted text»,
-   * «filters text by substring (the whole query goes out), and a number range» y «A CLEARED BOX
-   * IS UNBOUNDED, NOT ZERO».
+   * Ordenar por el valor crudo y filtrar un rango no necesitan navegador: los afirman las unitarias
+   * de table.spec.ts. Ver vault: Integracion Continua §11.
    */
 
   test('the filters hide and come back with the button and Alt+R, and the chips never hide', async ({
@@ -1705,7 +1848,7 @@ test.describe('DS-3 lote C: la tabla', () => {
     await expect(toggle).toHaveText(/Filtros \(1\)/);
 
     // Con el foco en la tabla, el atajo del mapa oculta la fila; el chip sigue diciendo qué filtra.
-    await page.locator(`${DEMO} [data-cell="0-0"]`).focus();
+    await cellStop(page, DEMO, '0-0').focus();
     await page.keyboard.press('Alt+r');
     await expect(filterRow).toBeHidden();
     await expect(page.locator(`${DEMO} [data-chip="codigo"]`)).toContainText('Código: 0403');
@@ -1836,7 +1979,7 @@ test.describe('DS-3 lote C: la tabla', () => {
       'Imprimir etiquetas · 4 expediciones',
     );
 
-    await page.locator(`${DEMO} [data-cell="0-1"]`).focus();
+    await cellStop(page, DEMO, '0-1').focus();
     await page.keyboard.press('Control+c');
     await expect(page.locator(`${DEMO} [data-table-announce]`)).toHaveText('4 filas copiadas');
     const pasted = await page.evaluate(() => navigator.clipboard.readText());
@@ -2063,7 +2206,7 @@ test.describe('DS-3 lote D: detalle, menú, ventana y paginador', () => {
     await page.goto(TABLE);
     await ready(page);
 
-    await page.locator(`${DETALLE} [data-cell="0-0"]`).focus();
+    await cellStop(page, DETALLE, '0-0').focus();
     await page.keyboard.press('Shift+F10');
     const menu = page.locator('[role="menu"]');
     await expect(menu).toBeFocused();
@@ -2085,14 +2228,12 @@ test.describe('DS-3 lote D: detalle, menú, ventana y paginador', () => {
       .toBe(true);
 
     await page.keyboard.press('Escape');
-    await expect(page.locator(`${DETALLE} [data-cell="0-0"]`)).toBeFocused();
+    await expect(cellStop(page, DETALLE, '0-0')).toBeFocused();
   });
 
   /*
-   * Elegir una entrada del menú y las filas de carga y de fallo de los hijos perezosos no piden
-   * navegador: los afirman `table.spec.ts` «emits the row AND the entry, and closes», «draws the
-   * toggle before any child exists, a busy row on the way, then the children» y «shows the failure
-   * in line, expanded; folded it goes away; the retry can succeed».
+   * El menú de la fila y las filas de carga y de fallo de los hijos perezosos no piden navegador:
+   * los afirman las unitarias de table.spec.ts. Ver vault: Integracion Continua §11.
    */
 
   test('FIVE THOUSAND ROWS, A HANDFUL IN THE DOM, and the count is still five thousand', async ({
@@ -2259,5 +2400,117 @@ test.describe('DS-3 lote D: detalle, menú, ventana y paginador', () => {
     await expect(page.locator(`${demo} tbody tr[data-row] td:nth-child(4)`).first()).toHaveText(
       /^\s*\d{2}\/\d{2}\/2026\s*$/,
     );
+  });
+});
+
+// B11 (decisión del usuario, 2026-09-26). El reloj de la página se detiene: una máquina lenta no
+// vence un toast antes de tiempo; cada `runFor` corto deja correr la detección de cambios.
+test.describe('the toast on a phone (375 px)', () => {
+  test.use({ viewport: { width: 375, height: 812 } });
+
+  async function tick(page: Page, ms = 100): Promise<void> {
+    await page.clock.runFor(ms);
+  }
+
+  // Con el reloj detenido no hay cuadros, y `click()`/`hover()` esperan uno: ratón en el centro.
+  async function pointAt(target: Locator): Promise<{ x: number; y: number }> {
+    const box = await target.boundingBox();
+    if (box === null) {
+      throw new Error('the target has no box');
+    }
+    return { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+  }
+
+  async function press(page: Page, target: Locator): Promise<void> {
+    const { x, y } = await pointAt(target);
+    await page.mouse.click(x, y);
+    await tick(page);
+  }
+
+  test('shows three at most, above the bottom bar and inside the screen', async ({ page }) => {
+    await page.clock.install();
+    await page.goto(TOAST);
+    await ready(page);
+    // El reloj se detiene con la demo pintada y a la vista: sin cuadros, nada se pinta ni desplaza.
+    await page.locator('[data-demo-toast]').scrollIntoViewIfNeeded();
+    await page.clock.pauseAt(Date.now() + 1_000);
+
+    const toasts = page.locator('ewms-toast-outlet [role="status"] > div');
+    for (const variant of ['success', 'warning', 'danger', 'info']) {
+      await press(page, page.locator(`[data-raise="${variant}"] button`));
+    }
+    await expect(toasts).toHaveCount(3);
+    // Sale el más viejo (success): el primero que queda es el segundo que se levantó.
+    await expect(toasts.locator('> span.bg-success-solid')).toHaveCount(0);
+    await expect(toasts.first().locator('> span')).toHaveClass(/bg-warning-solid/);
+
+    const bar = await page.locator('[data-nav-bottom]').boundingBox();
+    for (const box of await Promise.all((await toasts.all()).map((toast) => toast.boundingBox()))) {
+      expect(
+        round((box?.y ?? 0) + (box?.height ?? 0)),
+        'toast over the bottom bar',
+      ).toBeLessThanOrEqual(round(bar?.y));
+      expect(box?.x ?? -1, 'toast off the left edge').toBeGreaterThanOrEqual(0);
+      expect((box?.x ?? 0) + (box?.width ?? 0), 'toast off the right edge').toBeLessThanOrEqual(
+        375,
+      );
+    }
+  });
+
+  test('pauses under the pointer and the focus, and resumes where it was', async ({ page }) => {
+    await page.clock.install();
+    await page.goto(TOAST);
+    await ready(page);
+    // El reloj se detiene con la demo pintada y a la vista: sin cuadros, nada se pinta ni desplaza.
+    await page.locator('[data-demo-toast]').scrollIntoViewIfNeeded();
+    await page.clock.pauseAt(Date.now() + 1_000);
+
+    const toasts = page.locator('ewms-toast-outlet [role="status"] > div');
+    await press(page, page.locator('[data-raise="success"] button'));
+    await expect(toasts).toHaveCount(1);
+
+    const over = await pointAt(toasts.first());
+    await page.mouse.move(over.x, over.y);
+    await tick(page, 10_000);
+    await expect(toasts, 'paused under the pointer').toHaveCount(1);
+
+    await page.mouse.move(10, 10);
+    await tick(page, 3_000);
+    await expect(toasts, 'resumed when the pointer left').toHaveCount(0);
+
+    await press(page, page.locator('[data-raise="success"] button'));
+    await page.mouse.move(10, 10);
+    await toasts.first().getByRole('button').focus();
+    await tick(page, 10_000);
+    await expect(toasts, 'paused while focused').toHaveCount(1);
+
+    await page.locator('[data-raise="success"] button').focus();
+    await tick(page, 3_000);
+    await expect(toasts, 'resumed when the focus left').toHaveCount(0);
+  });
+
+  test('closes by its button, named in the page language', async ({ page }) => {
+    await page.goto(TOAST);
+    await ready(page);
+
+    const toasts = page.locator('ewms-toast-outlet [role="status"] > div');
+    await page.locator('[data-raise-sticky] button').click();
+    await page.locator('[data-raise-sticky] button').click();
+    await expect(toasts).toHaveCount(2);
+
+    await toasts.first().getByRole('button', { name: 'Cerrar notificación' }).click();
+    await expect(toasts).toHaveCount(1);
+  });
+
+  test('has no axe violations with toasts up', async ({ page }) => {
+    await page.goto(TOAST);
+    await ready(page);
+
+    const toasts = page.locator('ewms-toast-outlet [role="status"] > div');
+    await page.locator('[data-raise-sticky] button').click();
+    await page.locator('[data-raise-sticky] button').click();
+    await expect(toasts).toHaveCount(2);
+
+    expect((await axe(page).analyze()).violations).toEqual([]);
   });
 });

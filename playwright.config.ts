@@ -1,30 +1,22 @@
 import { defineConfig, devices } from '@playwright/test';
 
-const PORT = 4200;
+// No 4200: el servidor de desarrollo que alguien tenga abierto nunca se confunde con el artefacto.
+const PORT = 4400;
 const BASE_URL = `http://localhost:${PORT}`;
 const CI = Boolean(process.env['CI']);
 
 /**
- * Configuración e2e. Las specs viven en e2e/ y se llaman *.e2e.ts para que Vitest nunca
- * las tome. Tres niveles por lo que cada uno defiende, cada uno con su disparador en
- * .github/workflows/ci.yml: hasta DS-5 eran 183 pruebas en una cola con un worker, y
- * cada dominio de DS-6 iba a sumar a esa misma cola.
- *
- *   smoke     la app arranca, toda ruta responde y los tres patrones andan con teclado.
- *             Todo PR y todo push, menos de dos minutos.
- *   showroom  la documentación del catálogo. Cuando cambia lo que documenta, y siempre
- *             en development y main. Una sola máquina.
- *   domain    los dominios de DS-6. Vacío hoy.
- *
- * No se borró ni se debilitó nada: todo sigue corriendo en `npm run e2e`.
- * Ver vault: 02-Arquitectura/Integracion Continua.md §4.1.
+ * E2E en e2e/*.e2e.ts (Vitest no las toma), en tres niveles con su disparador en ci.yml: smoke
+ * (todo PR y push), showroom (el catálogo) y domain (DS-6, vacío). Todo corre en `npm run e2e`.
+ * Ver vault: Integracion Continua §4.1 y §11.
  */
 export default defineConfig({
   testDir: './e2e',
   testMatch: '**/*.e2e.ts',
   fullyParallel: true,
   forbidOnly: CI,
-  retries: CI ? 2 : 0,
+  // Sin reintentos, también en CI: una prueba inestable se arregla, no se repite hasta que pase.
+  retries: 0,
 
   // Cuatro workers en CI, no uno. Si una prueba deja de pasar en paralelo, el defecto es
   // esa prueba (estado compartido, puerto fijo): serializar esconde el acoplamiento. Cuatro
@@ -34,7 +26,10 @@ export default defineConfig({
   reporter: CI ? [['list'], ['html', { open: 'never' }]] : [['list']],
   use: {
     baseURL: BASE_URL,
-    trace: 'on-first-retry',
+    // Sin reintentos no hay «primer reintento». Grabar la traza de todas duplicó el catálogo
+    // (138 → 280 s, 2026-09-26): al fallar quedan la captura y el error-context.
+    trace: 'off',
+    screenshot: 'only-on-failure',
     // La app sigue al idioma del navegador y las aserciones están en español. Una prueba en
     // inglés lo pide con `test.use({ locale })`.
     locale: 'es-CR',
@@ -58,6 +53,7 @@ export default defineConfig({
         'iconography.e2e.ts',
         'i18n.e2e.ts',
         'i18n-failure.e2e.ts',
+        'config-failure.e2e.ts',
         'click-budget.e2e.ts',
       ],
       use: { ...devices['Desktop Chrome'] },
@@ -71,8 +67,10 @@ export default defineConfig({
     },
   ],
 
+  // El artefacto que se despliega: build de producción servido estático, así la vigilancia de
+  // consola y CSP mira lo mismo que un usuario. Ver vault: Integracion Continua §4.1.
   webServer: {
-    command: `npm run start -- --port ${PORT}`,
+    command: `npm run build && node tools/e2e/serve.mjs --port ${PORT}`,
     url: BASE_URL,
     reuseExistingServer: !CI,
     timeout: 180_000,

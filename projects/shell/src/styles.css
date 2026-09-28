@@ -52,12 +52,16 @@
   --text-h3--line-height: var(--text-h3-line-height);
   --text-h4: var(--text-h4-size);
   --text-h4--font-weight: var(--text-h4-weight);
+  --text-h4--line-height: var(--text-h4-line-height);
   --text-p: var(--text-p-size);
   --text-p--font-weight: var(--text-p-weight);
   --text-p--line-height: var(--text-p-line-height);
   --text-caption: var(--text-caption-size);
   --text-caption--font-weight: var(--text-caption-weight);
+  --text-caption--line-height: var(--text-caption-line-height);
   --text-mono: var(--text-mono-size);
+  --text-mono--font-weight: var(--text-mono-weight);
+  --text-mono--line-height: var(--text-mono-line-height);
 
   --radius-sm: var(--radius-sm);
   --radius-control: var(--radius-control);
@@ -100,6 +104,7 @@
 
   /* Animaciones: el token en tokens.css y los @keyframes más abajo; siempre con `motion-safe:`. */
   --animate-nav-drawer: var(--animate-nav-drawer);
+  --animate-spin: var(--animate-spin);
 
   --shadow-sm: var(--shadow-sm);
   --shadow-md: var(--shadow-md);
@@ -218,10 +223,40 @@
     U+A720-A7FF;
 }
 
+/* JetBrains Mono (OFL): los dos estáticos, solo latin y sin precarga; la bajan las páginas con código. */
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/jetbrains-mono-latin-400-normal.woff2') format('woff2');
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+    U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/fonts/jetbrains-mono-latin-700-normal.woff2') format('woff2');
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+    U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
 /* El cajón entra desde el borde; es el mismo `<nav>` que cambia de clases, no uno nuevo. */
 @keyframes nav-drawer-in {
   from {
     translate: -100%;
+  }
+}
+
+/* El spinner: una vuelta entera y vuelve a empezar. `motion-safe:` lo deja quieto con `reduce`. */
+@keyframes spin {
+  to {
+    rotate: 360deg;
   }
 }
 
@@ -230,6 +265,8 @@
   html {
     background-color: var(--color-canvas);
     color: var(--color-text-primary);
+    /* WCAG 2.4.11: al enfocar, el desplazamiento descuenta la cabecera y la tira fijas. */
+    scroll-padding-top: var(--shell-chrome-height);
   }
 
   body {

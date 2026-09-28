@@ -426,10 +426,11 @@ describe('ShowroomTypography', () => {
     expect(element.querySelector('[data-scale-step="p"] p')).not.toBeNull();
   });
 
-  it('shows the four undecided values as pending instead of inventing them', async () => {
+  // B12 cerró los cuatro «(pendiente)» con lo que ya se veía: la escala entera sale de tokens.
+  it('declares every value of the scale, and says the gaps were closed', async () => {
     const { element } = await render(ShowroomTypography);
-    expect(element.textContent).toContain('(pendiente)');
-    expect(element.textContent).toContain('Los huecos son información, no descuido');
+    expect(element.textContent).not.toContain('(pendiente)');
+    expect(element.textContent).toContain('La escala está cerrada');
   });
 });
 
@@ -714,7 +715,6 @@ describe('ShowroomText', () => {
       sampleFor(id: string): string;
       tagFor(id: string): string;
       isHeading(id: string): boolean;
-      isPending(row: { pending: readonly string[] }, token: string): boolean;
     };
 
     expect(page.variantFor('caption')).toBe('caption');
@@ -725,9 +725,6 @@ describe('ShowroomText', () => {
 
     expect(page.isHeading('h4')).toBe(true);
     expect(page.isHeading('caption')).toBe(false);
-
-    expect(page.isPending({ pending: ['--text-mono-weight'] }, '--text-mono-weight')).toBe(true);
-    expect(page.isPending({ pending: [] }, '--text-mono-weight')).toBe(false);
   });
 });
 
@@ -819,11 +816,20 @@ describe('ShowroomInput', () => {
   it('keeps the matrix ids inside the component unions, with no cast', async () => {
     const { fixture } = await render(ShowroomInput);
     const page = fixture.componentInstance as unknown as {
-      stateFor(id: string): string;
+      isError(id: string): boolean;
+      isDisabled(id: string): boolean;
+      isReadonly(id: string): boolean;
       sizeFor(id: string): string;
     };
-    expect(page.stateFor('readonly')).toBe('readonly');
-    expect(page.stateFor('no-such-state')).toBe('default');
+    // Cada estado con su entrada (B13): un id desconocido no dibuja ninguno.
+    expect(page.isReadonly('readonly')).toBe(true);
+    expect(page.isError('error')).toBe(true);
+    expect(page.isDisabled('disabled')).toBe(true);
+    expect([
+      page.isError('no-such-state'),
+      page.isDisabled('no-such-state'),
+      page.isReadonly('no-such-state'),
+    ]).toEqual([false, false, false]);
     expect(page.sizeFor('lg')).toBe('lg');
     expect(page.sizeFor('no-such-size')).toBe('md');
   });
@@ -1271,23 +1277,23 @@ describe('ShowroomDialog', () => {
     }
   });
 
-  it('falls back to Info for a tone no row carries, and says nothing for an unknown state', async () => {
+  it('falls back to Info for a variant no row carries, and says nothing for an unknown state', async () => {
     const { fixture } = await render(ShowroomDialog);
     const page = fixture.componentInstance as unknown as {
-      rowFor(tone: string): { name: string };
-      fact(tone: string, stateId: string): string;
+      rowFor(variant: string): { name: string };
+      fact(variant: string, stateId: string): string;
       isGlyph(stateId: string): boolean;
-      glyphFor(tone: string): unknown;
+      glyphFor(variant: string): unknown;
     };
     // Las filas guardan claves; lo que se ve es su texto.
     const text = (key: string) => TestBed.inject(TranslocoService).translate(key);
-    expect(text(page.rowFor('no-such-tone').name)).toBe('Info');
+    expect(text(page.rowFor('no-such-variant').name)).toBe('Info');
     expect(text(page.fact('danger', 'confirm'))).toBe('Danger');
     expect(text(page.fact('danger', 'backdrop'))).toBe('No cierra');
     expect(page.fact('danger', 'glyph')).toBe('');
     expect(page.isGlyph('glyph')).toBe(true);
     expect(page.isGlyph('confirm')).toBe(false);
-    expect(page.glyphFor('no-such-tone')).toBeNull();
+    expect(page.glyphFor('no-such-variant')).toBeNull();
   });
 });
 

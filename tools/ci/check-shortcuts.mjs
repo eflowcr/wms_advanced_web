@@ -1,14 +1,7 @@
 /**
- * Las dos afirmaciones de REQ-FE-DS4-001 sobre la fuente, comprobadas:
- *
- *   1. RFE-01 / PACQ-01.3: solo el mapa nombra una tecla. Una pantalla con
- *      `case 'Escape':` para cancelar conservaría la tecla vieja el día que se reasigne.
- *   2. RFE-03 / HG-04: un único listener global de teclado. Uno fuera de `keyboard/` es
- *      un segundo motor, y con dos motores cada atajo dispara dos veces.
- *
- * Escaneo de fuente y no prueba en ejecución: ambas tratan de código que todavía no
- * corre. `KeyboardShortcuts.mount` además lanza ante un segundo host en ejecución.
- * `npm run lint:shortcuts`; lo afirma check-shortcuts.test.mjs.
+ * Regla 13 (REQ-FE-DS4-001): solo el mapa nombra una tecla (RFE-01) y hay un único listener global
+ * (RFE-03). Escaneo de fuente: es código que todavía no corre. `npm run lint:shortcuts`.
+ * Ver vault: Integracion Continua §11.
  */
 import { readdir, readFile } from 'node:fs/promises';
 import path from 'node:path';

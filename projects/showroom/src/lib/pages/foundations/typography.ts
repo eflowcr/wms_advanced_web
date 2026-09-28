@@ -18,8 +18,6 @@ interface ScaleStep {
   readonly size: string;
   readonly weight: string;
   readonly lineHeight: string;
-  /** Tokens que este paso no tiene, a sabiendas. */
-  readonly pending: readonly string[];
 }
 
 /**
@@ -40,7 +38,6 @@ const SCALE: readonly ScaleStep[] = [
     size: '--text-h1-size',
     weight: '--text-h1-weight',
     lineHeight: '--text-h1-line-height',
-    pending: [],
   },
   {
     variant: 'h2',
@@ -50,7 +47,6 @@ const SCALE: readonly ScaleStep[] = [
     size: '--text-h2-size',
     weight: '--text-h2-weight',
     lineHeight: '--text-h2-line-height',
-    pending: [],
   },
   {
     variant: 'h3',
@@ -60,7 +56,6 @@ const SCALE: readonly ScaleStep[] = [
     size: '--text-h3-size',
     weight: '--text-h3-weight',
     lineHeight: '--text-h3-line-height',
-    pending: [],
   },
   {
     variant: 'h4',
@@ -70,7 +65,6 @@ const SCALE: readonly ScaleStep[] = [
     size: '--text-h4-size',
     weight: '--text-h4-weight',
     lineHeight: '--text-h4-line-height',
-    pending: ['--text-h4-line-height'],
   },
   {
     variant: 'p',
@@ -80,7 +74,6 @@ const SCALE: readonly ScaleStep[] = [
     size: '--text-p-size',
     weight: '--text-p-weight',
     lineHeight: '--text-p-line-height',
-    pending: [],
   },
   {
     variant: 'caption',
@@ -90,7 +83,6 @@ const SCALE: readonly ScaleStep[] = [
     size: '--text-caption-size',
     weight: '--text-caption-weight',
     lineHeight: '--text-caption-line-height',
-    pending: ['--text-caption-line-height'],
   },
   {
     variant: 'mono',
@@ -100,7 +92,6 @@ const SCALE: readonly ScaleStep[] = [
     size: '--text-mono-size',
     weight: '--text-mono-weight',
     lineHeight: '--text-mono-line-height',
-    pending: ['--text-mono-weight', '--text-mono-line-height'],
   },
 ];
 
@@ -116,8 +107,4 @@ const SCALE: readonly ScaleStep[] = [
 })
 export class ShowroomTypography {
   protected readonly scale = SCALE;
-
-  protected isPending(step: ScaleStep, token: string): boolean {
-    return step.pending.includes(token);
-  }
 }

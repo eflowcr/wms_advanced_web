@@ -1,7 +1,6 @@
 import {
   ChangeDetectionStrategy,
   Component,
-  InjectionToken,
   computed,
   inject,
   input,
@@ -9,6 +8,13 @@ import {
 } from '@angular/core';
 import { Button } from '../button/button';
 import { Icon } from '../icon/icon';
+import { EWMS_FILTER_CHIPS_MESSAGES, type FilterChipsMessages } from './filter-chips.types';
+
+/** Sin proveedor los chips andan igual; solo se quedan mudos, como el Select. */
+const NO_FILTER_CHIPS_MESSAGES: FilterChipsMessages = {
+  removeFilter: () => '',
+  clearFilters: '',
+};
 
 /** Un filtro activo, para su chip: columna o campo, y el valor ya legible. */
 export interface FilterChip {
@@ -16,23 +22,6 @@ export interface FilterChip {
   readonly column: string;
   readonly value: string;
 }
-
-/** Textos ya traducidos, provistos una vez por token (ADR 0008). */
-export interface FilterChipsMessages {
-  /** Nombre del × de un chip: «Quitar el filtro Estado». */
-  readonly removeFilter: (column: string) => string;
-  readonly clearFilters: string;
-}
-
-export const EWMS_FILTER_CHIPS_MESSAGES = new InjectionToken<FilterChipsMessages>(
-  'EWMS_FILTER_CHIPS_MESSAGES',
-);
-
-/** Sin proveedor los chips andan igual; solo se quedan mudos, como el Select. */
-export const NO_FILTER_CHIPS_MESSAGES: FilterChipsMessages = {
-  removeFilter: () => '',
-  clearFilters: '',
-};
 
 /**
  * Los chips de los filtros activos y «Limpiar filtros»: la misma pieza en la barra de la tabla
@@ -57,7 +46,7 @@ export const NO_FILTER_CHIPS_MESSAGES: FilterChipsMessages = {
             >
             <button
               type="button"
-              class="inline-flex cursor-pointer rounded-full p-0.5 text-secondary outline-none hover:bg-ghost-hover focus-visible:shadow-(--focus-ring-shadow)"
+              class="-m-0.5 inline-flex cursor-pointer rounded-full p-1 text-secondary outline-none hover:bg-ghost-hover focus-visible:shadow-(--focus-ring-shadow)"
               [attr.aria-label]="text().removeFilter(chip.column)"
               (click)="remove.emit(chip.key)"
             >

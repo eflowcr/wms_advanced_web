@@ -235,7 +235,7 @@ export class ShowroomForm {
         body: this.transloco.translate(DISCARD.body),
         confirmLabel: this.transloco.translate(DISCARD.confirm),
         cancelLabel: this.transloco.translate(DISCARD.cancel),
-        tone: 'danger',
+        variant: 'danger',
       }),
     );
     this.left.set(leave ? OUTCOME.left : OUTCOME.stayed);

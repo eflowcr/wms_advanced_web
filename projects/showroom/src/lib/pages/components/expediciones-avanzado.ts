@@ -22,7 +22,7 @@ import {
 const RETRASO_HIJOS = 900;
 
 /** Solo cabeceras: la demo de detalle y menú enseña el panel, no la jerarquía. */
-export const CABECERAS: readonly ExpedicionRow[] = EXPEDICIONES.map(
+export const HEADER_ROWS: readonly ExpedicionRow[] = EXPEDICIONES.map(
   ({ hijos: _sinHijos, ...cabecera }) => cabecera,
 );
 
@@ -61,7 +61,7 @@ const ACCIONES_MASIVAS: readonly MenuItem[] = [
 ];
 
 /** El menú de fila, con sus textos en el idioma activo: el menú no habla ninguno. */
-export function injectAccionesFila(): Signal<readonly MenuItem[]> {
+export function injectRowActions(): Signal<readonly MenuItem[]> {
   return translated((translate) =>
     ACCIONES_FILA.map((item) => ({ ...item, label: translate(item.label) })),
   );
@@ -78,7 +78,7 @@ export function injectAccionesMasivas(): Signal<readonly MenuItem[]> {
  * Hijos con retraso; los de una cabecera con incidencia fallan siempre. La tabla
  * pinta «Cargando…» y «No se pudo cargar» con reintento sin que el consumidor escriba nada.
  */
-export function hijosPerezosos(row: ExpedicionRow): Observable<readonly ExpedicionRow[]> {
+export function lazyChildren(row: ExpedicionRow): Observable<readonly ExpedicionRow[]> {
   const original = EXPEDICIONES.find((expedicion) => expedicion.id === row.id);
   const hijos = original?.hijos ?? [];
 
@@ -106,7 +106,7 @@ export const UBICACIONES_TOTAL = 5000;
  * Pagina de verdad (página + total), así la tabla monta el paginador. Sin retraso:
  * los controles aparecerían tarde y el recorrido de tabulador del e2e fallaba.
  */
-export class FuentePaginada implements TableSource<UbicacionRow> {
+export class PagedSource implements TableSource<UbicacionRow> {
   private readonly base = new ArrayTableSource<UbicacionRow>(
     generarUbicaciones(UBICACIONES_TOTAL),
     ['codigo', 'pasillo'],

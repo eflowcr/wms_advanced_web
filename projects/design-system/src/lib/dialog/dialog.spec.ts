@@ -3,12 +3,12 @@ import { Component, inject, InjectionToken, Injector } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { expectNoAxeViolations } from '@ewms/testing';
 import { DialogService } from './dialog.service';
-import { backdropDismisses, type ConfirmOptions, type DialogTone } from './dialog.types';
+import { backdropDismisses, type ConfirmOptions, type DialogVariant } from './dialog.types';
 
 const BASE: ConfirmOptions = {
   title: 'Eliminar la expedición',
   body: 'Se van a soltar 34 bultos ya asignados. No se puede deshacer.',
-  tone: 'danger',
+  variant: 'danger',
   confirmLabel: 'Eliminar',
   cancelLabel: 'Cancelar',
 };
@@ -126,16 +126,16 @@ describe('DialogService', () => {
   });
 
   describe('the three tones', () => {
-    const CASES: readonly (readonly [DialogTone, string, string])[] = [
+    const CASES: readonly (readonly [DialogVariant, string, string])[] = [
       ['danger', 'danger', 'bg-danger'],
       ['warning', 'warning', 'bg-primary'],
       // Info se pinta neutral: la regla de marca reemplazó el azul de Figma.
       ['info', 'neutral', 'bg-primary'],
     ];
 
-    for (const [tone, family, confirmClass] of CASES) {
-      it(`${tone} paints its glyph ${family}, with nothing behind it, and its confirm button ${confirmClass}`, async () => {
-        void host.dialogs.confirm({ ...BASE, tone });
+    for (const [variant, family, confirmClass] of CASES) {
+      it(`${variant} paints its glyph ${family}, with nothing behind it, and its confirm button ${confirmClass}`, async () => {
+        void host.dialogs.confirm({ ...BASE, variant });
         await settle();
 
         const glyph = box()?.querySelector('[data-dialog-icon]') as HTMLElement;
@@ -149,16 +149,16 @@ describe('DialogService', () => {
   });
 
   describe('Escape and the backdrop', () => {
-    it('Escape closes every tone, and answers false', async () => {
-      for (const tone of ['danger', 'warning', 'info'] as const) {
-        const answer = host.dialogs.confirm({ ...BASE, tone });
+    it('Escape closes every variant, and answers false', async () => {
+      for (const variant of ['danger', 'warning', 'info'] as const) {
+        const answer = host.dialogs.confirm({ ...BASE, variant });
         await settle();
 
         pressEscape();
         await settle();
 
-        expect(await answer, tone).toBe(false);
-        expect(box(), tone).toBeNull();
+        expect(await answer, variant).toBe(false);
+        expect(box(), variant).toBeNull();
       }
     });
 
@@ -178,7 +178,7 @@ describe('DialogService', () => {
     });
 
     it('the backdrop does NOT close a destructive dialog: deliberate friction', async () => {
-      void host.dialogs.confirm({ ...BASE, tone: 'danger' });
+      void host.dialogs.confirm({ ...BASE, variant: 'danger' });
       await settle();
 
       backdrop()?.click();
@@ -188,7 +188,7 @@ describe('DialogService', () => {
     });
 
     it('the backdrop does close an informative one', async () => {
-      const answer = host.dialogs.confirm({ ...BASE, tone: 'info' });
+      const answer = host.dialogs.confirm({ ...BASE, variant: 'info' });
       await settle();
 
       backdrop()?.click();

@@ -1,13 +1,7 @@
 /**
- * REQ-FE-DS4-003 HG-02: el presupuesto de clics no se escribe dos veces.
- *
- * `click-budget.ts` guarda la única copia del estándar del vault que el código puede
- * tener, y la pantalla de ejemplo y la prueba e2e la importan. Dos controles: ningún
- * consumidor imprime un presupuesto como literal, y la prueba e2e importa las constantes.
- * Es un escaneo de fuente porque un `2` renderizado es idéntico venga de la constante o
- * de la plantilla; la spec de la página cubre la mitad que el DOM sí puede responder.
- *
- * `npm run lint:click-budget`; lo afirma check-click-budget.test.mjs.
+ * Regla 14 (REQ-FE-DS4-003 HG-02): las cifras viven solo en @ewms/shared (RFE-05), nadie imprime un
+ * «Máximo N» y la e2e importa las constantes. Escaneo de fuente: un `2` en pantalla no dice su
+ * origen. Ver vault: Integracion Continua §4, regla 14; lo afirma check-click-budget.test.mjs.
  */
 import { readdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
@@ -16,7 +10,7 @@ import { fileURLToPath } from 'node:url';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 
 /** El único archivo que puede tener los números. */
-export const BUDGET_FILE = 'projects/showroom/src/lib/pages/patterns/click-budget.ts';
+export const BUDGET_FILE = 'projects/shared/src/lib/click-budget.ts';
 
 /** Lo que consume el presupuesto y por eso solo puede leerlo. */
 export const CONSUMERS = ['projects/showroom/src/lib/pages/patterns'];
@@ -24,7 +18,7 @@ export const CONSUMERS = ['projects/showroom/src/lib/pages/patterns'];
 /**
  * La prueba e2e. Se buscan los nombres importados y no dígitos sueltos: una prueba está
  * llena de números que no son presupuestos, y una regla que los atrapara se apagaría en
- * una semana. Llega por `@ewms/showroom`, no por ruta relativa: lo exigen las fronteras.
+ * una semana. Llega por ruta, a ese solo archivo: el alias arrastra Angular a Node.
  */
 export const BUDGET_TEST = 'e2e/click-budget.e2e.ts';
 

@@ -1,7 +1,7 @@
-/* Workspace TypeScript configuration.
- * Path aliases point at library SOURCE (public-api.ts), not ./dist, so the app and the
- * tests compile without pre-building every library. Crossing a library boundary is only
- * legal through these aliases -- see eslint.config.js for the enforcing rules.
+/*
+ * Los alias @ewms/* apuntan al public-api.ts de cada biblioteca, no a dist/: se compila sin
+ * construirlas antes, y cruzar una frontera solo es legal por ellos.
+ * Ver vault: Integracion Continua §11.
  */
 {
   "compileOnSave": false,

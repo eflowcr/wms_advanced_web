@@ -1,17 +1,7 @@
 /**
- * Genera icons.generated.ts desde icons.manifest.json, la lista permitida y única fuente
- * de verdad: nombre semántico -> archivo. `custom/<nombre>` lee custom/<nombre>.svg; lo
- * demás es Tabler outline. Los dos pasan por la misma extracción (ADR 0011).
- *
- *   - Tabler: el primer hijo debe ser la caja invisible `M0 0h24v24H0z`, que se descarta;
- *     si falta, cambió el formato del paquete y falla. En los propios es opcional.
- *   - Una caja en cualquier posición que no sea la primera falla.
- *   - Solo <path> y solo `d`: otro elemento falla con la solución (convertirlo a path), y
- *     otro atributo falla en vez de descartarse, porque tirar un `fill` cambia el icono.
- *   - Salida determinista (iconos por nombre, primitivas en orden de archivo): check-icons
- *     la regenera en memoria y compara byte a byte. Un SVG propio sin entrada falla.
- *
- * El archivo generado se versiona; no se produce en el build. `npm run icons:build`.
+ * Genera icons.generated.ts desde icons.manifest.json (la lista permitida; ADR 0011), determinista
+ * para que check-icons compare byte a byte. Se versiona; `npm run icons:build`.
+ * Ver vault: Integracion Continua §11.
  */
 import { readdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';

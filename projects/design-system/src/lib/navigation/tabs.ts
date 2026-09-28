@@ -27,9 +27,12 @@ let nextTabsId = 0;
  * Documento: chip en píldora como la barra de YouTube (decisión del usuario, 2026-09-25). Activo en
  * navy con texto claro; el resto en gris y un tono más oscuro en hover.
  */
-const CHIP_CLASSES = 'h-(--chip-height) rounded-full px-3';
+const CHIP_CLASSES = 'h-(--chip-height) rounded-full';
 const CHIP_ACTIVE_CLASSES = 'bg-brand-navy text-h4 text-on-dark';
 const CHIP_REST_CLASSES = 'bg-chip text-p text-primary hover:bg-chip-hover';
+
+/** La pestaña llena la píldora salvo la ×, que es su hermana y no un blanco dentro de otro (2.5.8). */
+const CHIP_TAB_CLASSES = 'h-full rounded-full px-3';
 
 /** Sección: pestañas de un canal de YouTube, con el subrayado navy bajo la activa. */
 const SECTION_CLASSES = 'relative rounded-sm px-3 py-2';
@@ -103,11 +106,20 @@ export class Tabs {
     });
   }
 
-  protected tabClasses(tab: Tab): string {
-    const active = this.activeId() === tab.id;
-    if (this.isDocument()) {
-      return `${CHIP_CLASSES} ${active ? CHIP_ACTIVE_CLASSES : CHIP_REST_CLASSES}`;
+  /** La píldora del modo documento; en sección no hay píldora. */
+  protected pillClasses(tab: Tab): string {
+    if (!this.isDocument()) {
+      return '';
     }
+    const paint = this.activeId() === tab.id ? CHIP_ACTIVE_CLASSES : CHIP_REST_CLASSES;
+    return `${CHIP_CLASSES} ${paint}${this.isClosable(tab) ? ' pe-1' : ''}`;
+  }
+
+  protected tabClasses(tab: Tab): string {
+    if (this.isDocument()) {
+      return CHIP_TAB_CLASSES;
+    }
+    const active = this.activeId() === tab.id;
     return `${SECTION_CLASSES} ${active ? SECTION_ACTIVE_CLASSES : SECTION_REST_CLASSES}`;
   }
 
@@ -194,7 +206,14 @@ export class Tabs {
     if (element === undefined) {
       return;
     }
-    element.scrollBy({ left: direction * element.clientWidth * 0.8, behavior: 'smooth' });
+    // Con movimiento reducido la tira salta en vez de deslizarse.
+    const reduce = this.document.defaultView?.matchMedia?.(
+      '(prefers-reduced-motion: reduce)',
+    ).matches;
+    element.scrollBy({
+      left: direction * element.clientWidth * 0.8,
+      behavior: reduce ? 'auto' : 'smooth',
+    });
   }
 
   /** Solo si no se ve entera: centrarla siempre movería la tira a cada clic. */

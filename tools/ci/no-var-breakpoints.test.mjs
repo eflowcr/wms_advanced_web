@@ -1,10 +1,7 @@
 /**
- * Un breakpoint mapeado con `var()` compila y nunca se cumple: Tailwind lo vuelve
- * `@media (width >= var(...))`, y una propiedad personalizada no se sustituye dentro de
- * una media query. Nada falla y el layout nunca cambia. DS-5 cayó en eso (ver
- * styles.css); `--breakpoint-nav-bottom` se lee desde TypeScript con `readPixels` y se
- * aplica con `matchMedia`. La regla 10 no lo ve: la forma rota no lleva px crudo.
- * Ver vault: 08-Sistema-de-Diseno/Componentes/Navegacion.md. `npm run test:tools`.
+ * Un breakpoint con `var()` compila y nunca se cumple: una propiedad no se sustituye en una media
+ * query; se leen con `readPixels` y `matchMedia`. `npm run test:tools`.
+ * Ver vault: Integracion Continua §11.
  */
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';

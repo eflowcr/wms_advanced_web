@@ -218,6 +218,7 @@
       "scrollForward": "Show the next tabs"
     },
     "toast": {
+      "dismiss": "Close notification",
       "region": "Notifications",
       "severity": {
         "danger": "Error",

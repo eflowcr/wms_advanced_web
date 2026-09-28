@@ -107,6 +107,15 @@ describe('the catalogue', () => {
       expect(sections[0]?.entries[0]?.id).toBe('select');
     });
 
+    // D4: con un selector por entrada, el que venía después del primero no se encontraba.
+    it('finds the page of every name its component exports, not only the first one', () => {
+      const pageOf = (query: string): string | undefined =>
+        filterCatalog(query, spanish).flatMap((section) => section.entries)[0]?.id;
+      expect(pageOf('ewms-tabs')).toBe('navigation');
+      expect(pageOf('ToastService')).toBe('toast');
+      expect(pageOf('ewms-radio-group')).toBe('radio');
+    });
+
     it('drops a section that ends up empty rather than leaving a bare heading', () => {
       const sections = filterCatalog('marca', spanish);
       expect(sections).toHaveLength(1);

@@ -32,12 +32,12 @@ import { Prose } from '../../ui/prose';
 import { injectEstados, type ExpedicionRow } from '../components/expediciones';
 import { EXPEDICIONES } from '../components/expediciones.fixtures';
 import { FLOW_BUDGETS, type FlowId } from './click-budget';
-import { ExpedicionForm, type ExpedicionDraft } from './expedicion-form';
+import { ShipmentForm, type ExpedicionDraft } from './shipment-form';
 import { ExpedicionSource } from './expedicion-source';
 
 // Solo cabeceras: el árbol se demuestra en la ficha de Tabla; acá sumaría un clic de
 // expandir a cada conteo que nada tiene que ver con buscar o editar.
-const CABECERAS = EXPEDICIONES.map(({ hijos: _hijos, ...row }) => row);
+const HEADER_ROWS = EXPEDICIONES.map(({ hijos: _hijos, ...row }) => row);
 
 // Controles cuyo clic avanza un flujo (REQ-FE-DS4-003 §2.1). Abrir un panel o desplegable
 // cuenta a propósito: el REQ lo cuenta aunque no sea el paso final.
@@ -158,7 +158,7 @@ export class ShowroomSearchCreateEdit {
   protected readonly estados = injectEstados();
 
   /** Las expediciones como estado: guardar una cambia la tabla y la búsqueda. */
-  private readonly rows = signal<readonly ExpedicionRow[]>(CABECERAS);
+  private readonly rows = signal<readonly ExpedicionRow[]>(HEADER_ROWS);
 
   protected readonly table = computed(
     () => new ArrayTableSource<ExpedicionRow>(this.rows(), ['codigo', 'cliente']),
@@ -221,8 +221,8 @@ export class ShowroomSearchCreateEdit {
       urgente: false,
     };
 
-    const ref = this.dialogs.open<ExpedicionDraft | undefined, ExpedicionDraft, ExpedicionForm>(
-      ExpedicionForm,
+    const ref = this.dialogs.open<ExpedicionDraft | undefined, ExpedicionDraft, ShipmentForm>(
+      ShipmentForm,
       { data: draft, ariaLabelledBy: 'ewms-expedicion-form-title', injector: this.injector },
     );
 

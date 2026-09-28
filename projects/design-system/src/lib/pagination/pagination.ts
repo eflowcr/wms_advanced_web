@@ -1,28 +1,16 @@
 import {
   ChangeDetectionStrategy,
   Component,
-  InjectionToken,
   computed,
   inject,
   input,
   output,
 } from '@angular/core';
 import { Button } from '../button/button';
-
-/** Textos ya traducidos, provistos una vez por token (ADR 0008). */
-export interface PaginationMessages {
-  readonly previousPage: string;
-  readonly nextPage: string;
-  readonly pageOf: (page: number, pages: number) => string;
-  readonly rowsTotal: (total: number) => string;
-}
-
-export const EWMS_PAGINATION_MESSAGES = new InjectionToken<PaginationMessages>(
-  'EWMS_PAGINATION_MESSAGES',
-);
+import { EWMS_PAGINATION_MESSAGES, type PaginationMessages } from './pagination.types';
 
 /** Sin proveedor el paginador anda igual; solo se queda mudo, como el Select. */
-export const NO_PAGINATION_MESSAGES: PaginationMessages = {
+const NO_PAGINATION_MESSAGES: PaginationMessages = {
   previousPage: '',
   nextPage: '',
   pageOf: () => '',

@@ -126,7 +126,7 @@ const ANATOMY = [
     token: '--threshold-scan-keystroke',
   },
   { part: 'showroom.patternKeyboard.anatomy.parts.kbdBackground', token: '--color-bg-secondary' },
-  { part: 'showroom.patternKeyboard.anatomy.parts.kbdBorder', token: '--color-border-default' },
+  { part: 'showroom.patternKeyboard.anatomy.parts.kbdBorder', token: '--color-border' },
   { part: 'showroom.patternKeyboard.anatomy.parts.dialogRadius', token: '--radius-dialog' },
   { part: 'showroom.patternKeyboard.anatomy.parts.dialogElevation', token: '--shadow-dialog' },
 ] as const;

@@ -1,10 +1,7 @@
 /**
- * El filtro por rutas del job showroom, ejercitado en vez de confiado. Un filtro
- * permisivo de más solo gasta minutos; uno estricto de más deja pasar un cambio del
- * sistema de diseño sin la suite que lo documenta, y ese es el fallo que merece prueba.
- * La expresión se lee de `ci.yml`, no se copia: una copia coincidiría consigo misma.
- *
- * `npm run test:tools`.
+ * El filtro por rutas del job showroom, ejercitado: uno estricto de más deja un cambio sin la
+ * suite que lo documenta. La expresión se lee de ci.yml, no se copia. `npm run test:tools`.
+ * Ver vault: Integracion Continua §11.
  */
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
@@ -39,6 +36,16 @@ test('the showroom suite runs when what it documents changed', async () => {
     'projects/shell/src/app/layout/main-layout.html',
     'e2e/showroom.e2e.ts',
     'playwright.config.ts',
+    // Lo que el catálogo usa sin documentarlo: i18n, el shell entero, las dependencias.
+    'projects/core/src/lib/i18n/icu.ts',
+    'projects/shared/src/public-api.ts',
+    'projects/shell/src/app/pages/home.ts',
+    'projects/shell/public/i18n/es.json',
+    'projects/shell/src/index.html',
+    'projects/shell/src/styles.css',
+    'package.json',
+    'package-lock.json',
+    'tools/e2e/serve.mjs',
   ]) {
     assert.equal(runsShowroom(filter, [file]), true, `${file} debería disparar showroom`);
   }
@@ -48,11 +55,11 @@ test('and does not run for a change it does not document', async () => {
   const filter = await showroomFilter();
 
   for (const file of [
-    'projects/core/src/lib/i18n/icu.ts',
     'projects/api-client/src/public-api.ts',
-    'projects/shell/src/app/pages/home.ts',
+    'projects/testing/src/public-api.ts',
     'tools/ci/check-i18n.mjs',
     'README.md',
+    '.github/dependabot.yml',
   ]) {
     assert.equal(runsShowroom(filter, [file]), false, `${file} no debería disparar showroom`);
   }
@@ -64,7 +71,7 @@ test('one matching file in a long list is enough', async () => {
   assert.equal(
     runsShowroom(filter, [
       'README.md',
-      'projects/core/src/lib/i18n/icu.ts',
+      'projects/api-client/src/public-api.ts',
       'projects/design-system/src/styles/tokens.css',
     ]),
     true,
@@ -81,12 +88,27 @@ test('the three levels exist in the Playwright configuration', async () => {
   assert.match(config, /workers: CI \? 4 : undefined/);
 });
 
+test('no retries, in CI either: an unstable test is fixed, never retried', async () => {
+  const config = await readFile(path.join(ROOT, 'playwright.config.ts'), 'utf8');
+
+  assert.match(config, /^\s*retries: 0,\s*$/m);
+});
+
+test('the domain level runs in CI, even while it has no test', async () => {
+  // Una compuerta que ningún job llama es muda, como lo fueron la 13 y la 14 hasta DS-5.
+  const workflow = (await readFile(WORKFLOW, 'utf8'))
+    .split(/\r?\n/)
+    .filter((line) => !/^\s*#/.test(line))
+    .join('\n');
+
+  assert.match(workflow, /--project=domain\b/);
+  assert.match(workflow, /--pass-with-no-tests\b/);
+});
+
 /**
- * Los nombres de job que el ruleset «Protect» ya exige, copiados letra por letra. Son
- * entradas, no decisiones: el ruleset vive en GitHub y editarlo pide admin (comprobado
- * 2026-09-20). Un check exigido que nadie reporta no falla: espera para siempre (pasó
- * en 3dab2a3 y en el cierre de DS-5). Esta prueba hace fallar un renombrado acá, en la
- * PR. Los `Analyze (...)` son de codeql.yml. Ver vault: Integracion Continua.md §4.
+ * Los nombres que el ruleset «Protect» exige, letra por letra (vive en GitHub y editarlo pide
+ * admin): un check exigido que nadie reporta espera para siempre. Esto falla en la PR.
+ * Ver vault: Integracion Continua §11.
  */
 const REQUIRED_JOB_NAMES = {
   verify: 'Types, lint, tests, budgets',

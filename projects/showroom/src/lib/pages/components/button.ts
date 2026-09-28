@@ -183,7 +183,7 @@ const PROPS: readonly PropRow[] = [
  *   showroom.button.anatomy.parts.radius, showroom.button.anatomy.parts.focusRing,
  *   showroom.button.anatomy.parts.focusRingColour, showroom.button.anatomy.parts.fontSize,
  *   showroom.button.anatomy.parts.fontWeight, showroom.button.anatomy.parts.iconMedium,
- *   showroom.button.anatomy.parts.iconSmall)
+ *   showroom.button.anatomy.parts.iconSmall, showroom.button.anatomy.parts.spinner)
  */
 const ANATOMY = [
   { part: 'showroom.button.anatomy.parts.primaryBackground', token: '--color-bg-primary' },
@@ -207,6 +207,7 @@ const ANATOMY = [
   { part: 'showroom.button.anatomy.parts.fontWeight', token: '--text-control-weight' },
   { part: 'showroom.button.anatomy.parts.iconMedium', token: '--size-icon-md' },
   { part: 'showroom.button.anatomy.parts.iconSmall', token: '--size-icon-sm' },
+  { part: 'showroom.button.anatomy.parts.spinner', token: '--animate-spin' },
 ] as const;
 
 interface SizeSample {
