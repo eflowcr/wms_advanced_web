@@ -77,8 +77,7 @@ added to `tokens.css` first — never inlined into a component "for now".
 `npm run lint:tokens` fails the build on a raw value.
 
 Figma is archived design reference, not a live dependency. Where Figma and this
-file disagree, this file wins: it is what compiles. See ADR 0005 (which
-supersedes ADR 0004 and its Figma → Style Dictionary pipeline).
+file disagree, this file wins: it is what compiles. See ADR 0005.
 
 <!--
   projects/domains/ does not exist yet. The eight business domains land there,

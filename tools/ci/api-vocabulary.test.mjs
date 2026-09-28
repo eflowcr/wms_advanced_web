@@ -1,6 +1,6 @@
 /**
  * Un solo vocabulario de API (B13, hallazgo D5): la misma idea se pide con el mismo nombre en
- * todo componente, y los nombres viejos no quedan en projects/. Ver vault: Nomenclatura.
+ * todo componente, y los nombres viejos no quedan en projects/. Ver vault: Nomenclatura de Componentes y Tokens.
  */
 import assert from 'node:assert/strict';
 import { readdir, readFile } from 'node:fs/promises';

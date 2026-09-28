@@ -393,11 +393,14 @@ export function hasHeading(noteText, heading) {
   return [...headings(noteText), ...rawHeadings(noteText)].some((key) => headingKey(key).includes(wanted));
 }
 
+/** Esta compuerta y sus pruebas citan el marcador como dato: no son referencias al vault. */
+const SELF = new Set(['tools/vault/check-vault.mjs', 'tools/vault/check-vault.test.mjs']);
+
 function repoFiles() {
   return execFileSync('git', ['ls-files', '-z'], { cwd: ROOT, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 })
     .split('\0')
     .filter((file) => file && /\.(?:ts|mjs|js|html|css|scss|json|md|ya?ml)$|^\.githooks\//.test(file))
-    .filter((file) => file !== 'package-lock.json');
+    .filter((file) => file !== 'package-lock.json' && !SELF.has(file));
 }
 
 export function checkCodeReferences(vault, live) {
