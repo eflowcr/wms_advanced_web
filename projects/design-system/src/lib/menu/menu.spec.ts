@@ -5,7 +5,7 @@ const ITEMS: readonly MenuItem[] = [
   { id: 'ver', label: 'Ver detalle' },
   { id: 'imprimir', label: 'Imprimir', disabled: true },
   { id: 'duplicar', label: 'Duplicar' },
-  { id: 'anular', label: 'Anular', tone: 'danger', separatorBefore: true },
+  { id: 'anular', label: 'Anular', variant: 'danger', separatorBefore: true },
 ];
 
 describe('moveMenuIndex', () => {

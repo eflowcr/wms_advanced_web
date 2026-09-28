@@ -185,13 +185,13 @@ export class NavRail {
 
   protected rowClasses(item: NavItem, child: boolean): string {
     const current = this.isCurrent(item);
-    const tone = current ? ACTIVE_ROW_CLASSES : 'hover:bg-primary-hover';
+    const paint = current ? ACTIVE_ROW_CLASSES : 'hover:bg-primary-hover';
     if (!this.expanded()) {
       // Plegado, lo activo va en el indicador del ícono; la fila solo lleva el hover.
-      return current ? FOLDED_ROW_CLASSES : `${FOLDED_ROW_CLASSES} ${tone}`;
+      return current ? FOLDED_ROW_CLASSES : `${FOLDED_ROW_CLASSES} ${paint}`;
     }
     // Abierta, el activo va en semibold.
-    return `${OPEN_ROW_CLASSES} ${child ? 'pl-10' : 'pl-4'} ${current ? 'text-h4' : 'text-p'} ${tone}`;
+    return `${OPEN_ROW_CLASSES} ${child ? 'pl-10' : 'pl-4'} ${current ? 'text-h4' : 'text-p'} ${paint}`;
   }
 
   /** Plegado: la píldora activa rodea solo el ícono, como el indicador de un navigation rail. */

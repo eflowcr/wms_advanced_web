@@ -6,7 +6,7 @@ export interface MenuItem {
   readonly label: string;
   readonly icon?: IconName;
   /** Lo pinta como respuesta destructiva. */
-  readonly tone?: 'danger';
+  readonly variant?: 'danger';
   readonly separatorBefore?: boolean;
   readonly disabled?: boolean;
 }

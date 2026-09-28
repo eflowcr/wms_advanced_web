@@ -226,7 +226,7 @@ class TestHost {
   lastQuery: TableQuery | null = null;
   readonly bulk: readonly MenuItem[] = [
     { id: 'imprimir', label: 'Imprimir etiquetas' },
-    { id: 'anular', label: 'Anular', tone: 'danger' },
+    { id: 'anular', label: 'Anular', variant: 'danger' },
   ];
   lastBulk: BulkActionEvent<Row> | null = null;
 }
@@ -1257,7 +1257,7 @@ const MENU: readonly MenuItem[] = [
   { id: 'ver', label: 'Ver detalle' },
   { id: 'imprimir', label: 'Imprimir', disabled: true },
   { id: 'duplicar', label: 'Duplicar' },
-  { id: 'anular', label: 'Anular', tone: 'danger', separatorBefore: true },
+  { id: 'anular', label: 'Anular', variant: 'danger', separatorBefore: true },
 ];
 
 @Component({

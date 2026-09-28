@@ -46,7 +46,7 @@ const ROW_ACTIONS: readonly MenuItem[] = [
     id: 'anular',
     label: 'showroom.table.actions.cancel',
     icon: 'trash',
-    tone: 'danger',
+    variant: 'danger',
     separatorBefore: true,
   },
 ];
@@ -57,7 +57,7 @@ const ROW_ACTIONS: readonly MenuItem[] = [
  */
 const BULK_ACTIONS: readonly MenuItem[] = [
   { id: 'imprimir', label: 'showroom.table.actions.printLabels', icon: 'label-print' },
-  { id: 'anular', label: 'showroom.table.actions.cancel', icon: 'trash', tone: 'danger' },
+  { id: 'anular', label: 'showroom.table.actions.cancel', icon: 'trash', variant: 'danger' },
 ];
 
 /** El menú de fila, con sus textos en el idioma activo: el menú no habla ninguno. */

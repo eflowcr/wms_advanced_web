@@ -339,7 +339,7 @@ describe('Button', () => {
       await settle();
     });
 
-    it('is text on no background or border, one tone deeper on hover, with an underline', () => {
+    it('is text on no background or border, one shade deeper on hover, with an underline', () => {
       expect(classes()).toContain('text-(color:--color-bg-primary-hover)');
       expect(classes()).toContain('hover:underline');
       expect(classes()).toContain('bg-transparent');
@@ -375,7 +375,7 @@ describe('Button', () => {
       expect(host.buttonClicked).toBe(false);
     });
 
-    it('follows the same loading contract, with the spinner in its own tone', async () => {
+    it('follows the same loading contract, with the spinner in its own colour', async () => {
       host.loading.set(true);
       await settle();
 

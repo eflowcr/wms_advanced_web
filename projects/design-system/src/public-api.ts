@@ -17,9 +17,9 @@ export * from './lib/text/text';
 export * from './lib/button/button';
 export * from './lib/tooltip/tooltip';
 
-// Campos (DS-2, Signal Forms desde 2026-09-22). `FieldSize` y `FieldState`
-// se exportan una vez: Input y Select comparten escala y un segundo nombre derivaría.
-export { type FieldSize, type FieldState } from './lib/field/field.types';
+// Campos, sobre Signal Forms. `FieldSize` se exporta una vez: Input, Select y DatePicker comparten
+// escala y un segundo nombre derivaría. `FieldState` es interno: ningún consumidor lo nombra.
+export { type FieldSize } from './lib/field/field.types';
 export * from './lib/input/input';
 export * from './lib/checkbox/checkbox';
 export * from './lib/radio/radio';
