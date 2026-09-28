@@ -146,10 +146,10 @@ describe('Icon', () => {
     );
   });
 
-  // Igual que el tamaño: jsdom no tiene la hoja; que gire y que se detenga con movimiento reducido
-  // lo afirma e2e/showroom.e2e.ts con los valores calculados.
+  // Igual que el tamaño: jsdom no tiene la hoja. Que gire y que se detenga con movimiento reducido
+  // lo afirma e2e/showroom.e2e.ts, «the spinner turns, and stands still with reduced motion».
   describe('motion', () => {
-    it('turns the spinner, only where motion is welcome', async () => {
+    it('gives the spinner its turn only behind motion-safe:', async () => {
       const { svg } = await render({ name: 'spinner', size: 'sm' });
       expect([...svg.classList].sort()).toEqual([
         'block',

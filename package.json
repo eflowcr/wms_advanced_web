@@ -54,6 +54,7 @@
     "@jsverse/transloco-keys-manager": "8.1.1",
     "@playwright/test": "1.63.0",
     "@tabler/icons": "3.46.0",
+    "@tailwindcss/oxide": "4.3.3",
     "@tailwindcss/postcss": "4.3.3",
     "@types/node": "^26.5.1",
     "@vitest/coverage-v8": "4.1.11",

@@ -16,7 +16,7 @@ const GENERATED = new Set(['projects/design-system/src/icons/icons.generated.ts'
 
 const SLASH_SYNTAX = new Set(['.ts', '.mts', '.cts', '.js', '.mjs', '.cjs', '.json']);
 const MARKUP_SYNTAX = new Set(['.html', '.svg', '.xml']);
-const HASH_SYNTAX = /(?:^|\/)(?:\.npmrc|\.gitignore)$|\.ya?ml$/;
+const HASH_SYNTAX = /(?:^|\/)(?:\.npmrc|\.gitignore)$|\.ya?ml$|^\.githooks\//;
 
 /** Cómo comenta un archivo: `slash`, `css`, `markup`, `hash`, o `null` si la regla no lo mira. */
 export function syntaxOf(file) {

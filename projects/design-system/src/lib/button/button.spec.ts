@@ -222,9 +222,10 @@ describe('Button', () => {
       expect(fixture.debugElement.query(By.css('ewms-icon[name="spinner"]'))).not.toBeNull();
     });
 
-    it('turns the spinner, and leaves it still under prefers-reduced-motion', () => {
+    it('puts the spin of the spinner behind motion-safe:, the variant reduced motion switches off', () => {
       const svg = button().querySelector('ewms-icon[name="spinner"] svg');
-      // `motion-safe:` es la condición: la animación solo existe sin `reduce`.
+      // Que se quede quieto con movimiento reducido lo afirma e2e/showroom.e2e.ts, «the spinner
+      // turns, and stands still with reduced motion»: jsdom no tiene la hoja ni el media query.
       expect(svg?.classList.contains('motion-safe:animate-spin')).toBe(true);
     });
 

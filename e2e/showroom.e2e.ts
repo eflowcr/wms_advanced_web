@@ -988,7 +988,8 @@ test.describe('keyboard only', () => {
   test('WCAG 2.4.11: no control reached by Tab hides under the header or the tab strip', async ({
     page,
   }) => {
-    test.setTimeout(PAGES.length * ROUTE_BUDGET_MS);
+    // Una página: 7,3 s con la suite entera en local y 2,9 s en CI (2026-09-28); el doble, al segundo.
+    test.setTimeout(15_000);
     await page.setViewportSize({ width: 1280, height: 720 });
     await page.goto(TABLE);
     await expect(page.getByRole('heading', { level: 1, name: 'Tabla de datos' })).toBeVisible();
