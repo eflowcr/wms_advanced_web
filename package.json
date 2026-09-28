@@ -23,6 +23,7 @@
     "i18n:versions": "node tools/i18n/dictionary-versions.mjs",
     "icons:build": "node tools/icons/build-icons.mjs",
     "vault:check-tokens": "node tools/vault/check-token-names.mjs",
+    "vault:check": "node tools/vault/check-vault.mjs",
     "e2e": "playwright test",
     "e2e:smoke": "playwright test --project=smoke",
     "e2e:showroom": "playwright test --project=showroom",
