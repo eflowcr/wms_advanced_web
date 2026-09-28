@@ -23,7 +23,7 @@ describe('traceparent', () => {
 
   afterEach(() => backend.verify());
 
-  it('every request leaves with a valid W3C traceparent', () => {
+  it('every request to its own origin leaves with a valid W3C traceparent', () => {
     http.get('i18n/es.json').subscribe();
     http.post('api/anything', {}).subscribe();
 
@@ -35,6 +35,28 @@ describe('traceparent', () => {
     // Una traza por petición: dos pedidos no comparten identificador.
     const [first, second] = headers;
     expect(first?.get(TRACEPARENT)).not.toBe(second?.get(TRACEPARENT));
+  });
+
+  it('a request to another origin leaves without one', () => {
+    http.get('https://other.example/api/anything').subscribe();
+    http.get('//other.example/api/anything').subscribe();
+
+    const requests = backend.match(() => true);
+    expect(requests).toHaveLength(2);
+    for (const request of requests) {
+      expect(request.request.headers.has(TRACEPARENT)).toBe(false);
+    }
+  });
+
+  it('a relative request and an absolute one to its own origin both carry it', () => {
+    http.get('api/anything').subscribe();
+    http.get(`${location.origin}/api/anything`).subscribe();
+
+    const headers = backend.match(() => true).map((request) => request.request.headers);
+    expect(headers).toHaveLength(2);
+    for (const header of headers) {
+      expect(header.get(TRACEPARENT)).toMatch(W3C);
+    }
   });
 
   it('a request that already carries one keeps it', () => {
