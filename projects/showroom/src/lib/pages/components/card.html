@@ -27,7 +27,7 @@
   <!-- ================================================ 2. Qué resuelve / cuándo no -->
   <section class="flex flex-col gap-4" aria-labelledby="ca-purpose" data-block="2-proposito">
     <h2 id="ca-purpose" class="text-h2">{{ 'showroom.common.sections.purpose' | transloco }}</h2>
-    <div class="grid grid-cols-[repeat(auto-fit,minmax(min(20rem,100%),1fr))] gap-4">
+    <div class="grid grid-cols-cards gap-4">
       <div class="flex flex-col gap-2 rounded-md border border-default bg-surface p-4">
         <h3 class="text-h3">{{ 'showroom.common.sections.solves' | transloco }}</h3>
         <p [ewmsProse]="'showroom.cards.purpose.solves' | transloco"></p>
@@ -50,7 +50,7 @@
   <!-- ========================================================= 3. Demo principal -->
   <section class="flex flex-col gap-4" aria-labelledby="ca-demo" data-block="3-demo">
     <h2 id="ca-demo" class="text-h2">{{ 'showroom.common.sections.demo' | transloco }}</h2>
-    <div class="grid grid-cols-[repeat(auto-fit,minmax(min(24rem,100%),1fr))] gap-6">
+    <div class="grid grid-cols-demos gap-6">
       <ewms-demo-frame ground="canvas" [label]="'showroom.cards.demo.frame' | transloco">
         <div class="flex flex-col gap-4">
           <p class="text-caption text-secondary" id="ca-warehouse-label">
@@ -58,7 +58,7 @@
           </p>
           <div data-demo-warehouses>
             <ewms-card-group
-              [formField]="form.almacen"
+              [formField]="form.warehouse"
               [label]="'showroom.cards.demo.warehouse' | transloco"
             >
               @for (warehouse of warehouses; track warehouse.value) {
@@ -122,7 +122,7 @@
     <h2 id="ca-variants" class="text-h2">{{ 'showroom.common.sections.variants' | transloco }}</h2>
     <p class="text-secondary" [ewmsProse]="'showroom.cards.variants.intro' | transloco"></p>
 
-    <div class="grid grid-cols-[repeat(auto-fit,minmax(min(20rem,100%),1fr))] gap-4">
+    <div class="grid grid-cols-cards gap-4">
       <div class="flex flex-col gap-3">
         <h3 class="text-h3">{{ 'showroom.cards.variants.content.title' | transloco }}</h3>
         <ewms-demo-frame ground="canvas">

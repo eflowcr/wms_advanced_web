@@ -87,16 +87,16 @@ export class ShowroomDatePicker {
   protected readonly anatomy = ANATOMY;
   protected readonly today = today();
 
-  protected readonly model = signal<{ entrega: DatePickerValue; periodo: DatePickerValue }>({
-    entrega: null,
-    periodo: { from: '2026-09-01', to: '2026-09-15' },
+  protected readonly model = signal<{ delivery: DatePickerValue; dateRange: DatePickerValue }>({
+    delivery: null,
+    dateRange: { from: '2026-09-01', to: '2026-09-15' },
   });
 
   protected readonly form = signalForm(this.model);
 
-  protected readonly delivery = computed(() => this.form.entrega().value());
+  protected readonly delivery = computed(() => this.form.delivery().value());
 
-  protected readonly period = computed(() => this.form.periodo().value());
+  protected readonly period = computed(() => this.form.dateRange().value());
 
   protected readonly snippet = [
     '<ewms-date-picker',

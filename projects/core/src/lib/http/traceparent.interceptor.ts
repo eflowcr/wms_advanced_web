@@ -1,4 +1,6 @@
+import { DOCUMENT } from '@angular/common';
 import type { HttpInterceptorFn } from '@angular/common/http';
+import { inject } from '@angular/core';
 
 /** Cabecera de W3C Trace Context. El nombre y el formato final se acuerdan con backend (AUD-003/004). */
 export const TRACEPARENT = 'traceparent';
@@ -28,10 +30,16 @@ export function newTraceparent(random: RandomBytes = cryptoBytes): string {
   return `00-${nonZero(random, 16)}-${nonZero(random, 8)}-00`;
 }
 
-/** Cada petición sale con su traza, salvo que ya traiga una. */
-export const traceparentInterceptor: HttpInterceptorFn = (request, next) =>
-  next(
-    request.headers.has(TRACEPARENT)
+/**
+ * Cada petición al propio origen sale con su traza, salvo que ya traiga una. A otro origen, nunca:
+ * la traza no es de un tercero y la cabecera le forzaría un preflight de CORS. Ver vault: Traza W3C.
+ */
+export const traceparentInterceptor: HttpInterceptorFn = (request, next) => {
+  const document = inject(DOCUMENT);
+  const sameOrigin = new URL(request.url, document.baseURI).origin === document.location.origin;
+  return next(
+    !sameOrigin || request.headers.has(TRACEPARENT)
       ? request
       : request.clone({ setHeaders: { [TRACEPARENT]: newTraceparent() } }),
   );
+};

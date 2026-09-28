@@ -1,11 +1,11 @@
-import type { ShipmentStatus, ExpedicionRow } from './expediciones';
+import type { ShipmentStatus, ShipmentRow } from './shipments';
 
 /**
  * Registros de ejemplo que simulan lo que mandaría el backend: clientes, artículos y el texto de
  * cada fila van tal cual, sin traducir. Lo que la interfaz nombra (el estado) se traduce en
- * expediciones.ts. Sintética y con semilla para que las capturas sean comparables.
+ * shipments.ts. Sintética y con semilla para que las capturas sean comparables.
  */
-const CLIENTES = [
+const CUSTOMERS = [
   'Distribuidora Andes',
   'Comercial del Valle',
   'Ferretería Norte',
@@ -14,7 +14,7 @@ const CLIENTES = [
   'Importadora Centro',
 ] as const;
 
-const ARTICULOS = [
+const ARTICLES = [
   'Caja plegable 60x40',
   'Film estirable 23 micras',
   'Etiqueta térmica 100x150',
@@ -25,7 +25,7 @@ const ARTICULOS = [
   'Bolsa de burbuja',
 ] as const;
 
-const ESTADO_KEYS: readonly ShipmentStatus[] = [
+const STATUS_KEYS: readonly ShipmentStatus[] = [
   'pendiente',
   'en-proceso',
   'completada',
@@ -48,63 +48,63 @@ function pick<T>(random: () => number, from: readonly T[]): T {
 }
 
 /** Doce cabeceras, idénticas en cada carga. */
-export const EXPEDICIONES: readonly ExpedicionRow[] = buildExpediciones();
+export const SHIPMENTS: readonly ShipmentRow[] = buildShipments();
 
-function buildExpediciones(): readonly ExpedicionRow[] {
+function buildShipments(): readonly ShipmentRow[] {
   const random = seeded(20260919);
-  const cabeceras: ExpedicionRow[] = [];
+  const headers: ShipmentRow[] = [];
 
   for (let index = 0; index < 12; index += 1) {
     const lineCount = 3 + Math.floor(random() * 6);
-    const lineas: ExpedicionRow[] = [];
+    const lines: ShipmentRow[] = [];
 
     for (let line = 0; line < lineCount; line += 1) {
-      const bultos = 1 + Math.floor(random() * 40);
-      const estado = pick(random, ESTADO_KEYS);
+      const packages = 1 + Math.floor(random() * 40);
+      const status = pick(random, STATUS_KEYS);
       // Series o lotes, nunca ambos: ningún almacén rastrea un mismo SKU de las dos formas.
       const serialised = random() > 0.5;
       const childCount = 1 + Math.floor(random() * 3);
-      const hijos: ExpedicionRow[] = [];
+      const children: ShipmentRow[] = [];
 
       for (let child = 0; child < childCount; child += 1) {
-        hijos.push({
+        children.push({
           id: `EXP-${index}-${line}-${child}`,
-          nivel: 'serie',
-          codigo: serialised
+          level: 'serie',
+          code: serialised
             ? `SN-${String(400000 + index * 100 + line * 10 + child)}`
             : `LOTE-${String(2026000 + index * 10 + child)}`,
-          cliente: serialised ? 'Serie' : 'Lote',
-          fecha: isoDate(random),
-          bultos: serialised ? 1 : Math.max(1, Math.floor(bultos / childCount)),
-          estado,
+          customer: serialised ? 'Serie' : 'Lote',
+          date: isoDate(random),
+          packages: serialised ? 1 : Math.max(1, Math.floor(packages / childCount)),
+          status,
         });
       }
 
-      lineas.push({
+      lines.push({
         id: `EXP-${index}-${line}`,
-        nivel: 'linea',
-        codigo: `SKU-${String(88000 + index * 10 + line)}`,
-        cliente: pick(random, ARTICULOS),
-        fecha: isoDate(random),
-        bultos,
-        estado,
-        hijos,
+        level: 'linea',
+        code: `SKU-${String(88000 + index * 10 + line)}`,
+        customer: pick(random, ARTICLES),
+        date: isoDate(random),
+        packages,
+        status,
+        children,
       });
     }
 
-    cabeceras.push({
+    headers.push({
       id: `EXP-${index}`,
-      nivel: 'cabecera',
-      codigo: `EXP-2026-${String(400 + index).padStart(4, '0')}`,
-      cliente: pick(random, CLIENTES),
-      fecha: isoDate(random),
-      bultos: lineas.reduce((total, linea) => total + linea.bultos, 0),
-      estado: pick(random, ESTADO_KEYS),
-      hijos: lineas,
+      level: 'cabecera',
+      code: `EXP-2026-${String(400 + index).padStart(4, '0')}`,
+      customer: pick(random, CUSTOMERS),
+      date: isoDate(random),
+      packages: lines.reduce((total, lineRow) => total + lineRow.packages, 0),
+      status: pick(random, STATUS_KEYS),
+      children: lines,
     });
   }
 
-  return cabeceras;
+  return headers;
 }
 
 /** Fecha del primer trimestre de 2026, en ISO 8601. */

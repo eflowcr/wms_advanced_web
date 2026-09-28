@@ -89,8 +89,8 @@ describe('TokenValue', () => {
   beforeEach(() => {
     style = document.createElement('style');
     style.textContent =
-      ':root { --tone-7: navy; --color-text-primary: var(--tone-7);' +
-      ' --a-shadow: 0 0 0 2q var(--color-text-primary), 0 0 0 5q var(--tone-7); }';
+      ':root { --shade-7: navy; --color-text-primary: var(--shade-7);' +
+      ' --a-shadow: 0 0 0 2q var(--color-text-primary), 0 0 0 5q var(--shade-7); }';
     document.head.appendChild(style);
   });
 
@@ -100,7 +100,7 @@ describe('TokenValue', () => {
     const { element } = await render(Host);
     const text = element.textContent ?? '';
     expect(text).toContain('--color-text-primary');
-    expect(text).toContain('--tone-7');
+    expect(text).toContain('--shade-7');
   });
 
   it('draws a swatch only when asked, and only when the value is a colour', async () => {

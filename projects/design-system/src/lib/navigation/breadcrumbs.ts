@@ -25,7 +25,6 @@ export class Breadcrumbs {
   /** Abierto por la persona; se cierra al cambiar el rastro. */
   private readonly unfolded = signal(false);
 
-
   private readonly folded = computed(() => foldCrumbs(this.items(), this.unfolded()));
 
   protected readonly visible = computed(() => this.folded().visible);

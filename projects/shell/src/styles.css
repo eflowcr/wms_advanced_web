@@ -102,6 +102,16 @@
   --chip-height: var(--chip-height);
   --nav-bottom-height: var(--nav-bottom-height);
 
+  /* Las rejillas del catálogo: `grid-cols-cards`, `grid-cols-demos`… (valores en tokens.css). */
+  --grid-template-columns-cards: var(--grid-cards);
+  --grid-template-columns-demos: var(--grid-demos);
+  --grid-template-columns-tiles: var(--grid-tiles);
+  --grid-template-columns-index: var(--grid-index);
+  --grid-template-columns-samples: var(--grid-samples);
+  --grid-template-columns-fields: var(--grid-fields);
+  --grid-template-columns-facts: var(--grid-facts);
+  --grid-template-columns-icons: var(--grid-icons);
+
   /* Animaciones: el token en tokens.css y los @keyframes más abajo; siempre con `motion-safe:`. */
   --animate-nav-drawer: var(--animate-nav-drawer);
   --animate-spin: var(--animate-spin);

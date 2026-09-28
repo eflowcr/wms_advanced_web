@@ -17,7 +17,7 @@
       [value]="value()"
       [disabled]="disabled()"
       (input)="onInput($event)"
-      (keydown.enter)="submit()"
+      (keydown)="onKeydown($event)"
     />
 
     <!-- Sobre el relleno derecho del campo, como el sufijo de Input. -->
@@ -34,12 +34,15 @@
         />
       </span>
     } @else if (shortcut() && !hasText() && !disabled()) {
-      <!-- Decorativa: la tecla ya la dice `aria-keyshortcuts`. -->
-      <kbd
-        class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 rounded-sm border border-default px-1 font-mono text-caption text-secondary"
+      <!--
+        Decorativa: la tecla ya la dice `aria-keyshortcuts`. Un `<span>` en la fuente de la interfaz:
+        `<kbd>` hereda la mono, y la mono solo va en códigos y en la tabla (no se baja en `/`).
+      -->
+      <span
+        class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 rounded-sm border border-default px-1 text-caption text-secondary"
         aria-hidden="true"
         data-search-shortcut
-        >{{ shortcut() }}</kbd
+        >{{ shortcut() }}</span
       >
     }
   </div>

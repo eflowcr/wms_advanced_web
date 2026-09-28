@@ -181,10 +181,10 @@ export class ShowroomCard {
   protected readonly contrastColumns = CONTRAST_COLUMNS;
   protected readonly keyboardColumns = KEYBOARD_COLUMNS;
 
-  protected readonly model = signal<{ almacen: string | null }>({ almacen: 'central' });
+  protected readonly model = signal<{ warehouse: string | null }>({ warehouse: 'central' });
   protected readonly form = signalForm(this.model);
 
-  protected readonly chosen = computed(() => this.form.almacen().value());
+  protected readonly chosen = computed(() => this.form.warehouse().value());
 
   /**
    * Lo que dice la lectura en vivo cuando el formulario tiene un valor sin card.

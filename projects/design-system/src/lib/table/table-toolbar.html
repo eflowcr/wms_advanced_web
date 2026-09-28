@@ -144,7 +144,7 @@
     </span>
     @for (item of table.bulkActions(); track item.id) {
       <ewms-button
-        [variant]="item.tone === 'danger' ? 'danger' : 'secondary'"
+        [variant]="item.variant === 'danger' ? 'danger' : 'secondary'"
         size="sm"
         [icon]="item.icon ?? null"
         [disabled]="item.disabled ?? false"

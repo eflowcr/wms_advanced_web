@@ -1,8 +1,7 @@
 #!/bin/sh
-# PLN-WMS-003 §7: todo commit asistido por un agente de IA se identifica en sus
-# metadatos, con un trailer propio y neutral (sin marca comercial en la historia).
-# No detecta asistencia: normaliza lo que dejó la herramienta. Un agente que no deje
-# nada agrega `Assisted-By:` él mismo. Ver vault: Integracion Continua.md §10.
+# PLN-WMS-003 §7: el commit asistido por IA lleva un trailer propio y neutral. Normaliza lo que
+# dejó la herramienta, no detecta asistencia: un agente que no deje nada agrega `Assisted-By:`.
+# Ver vault: Integracion Continua.md §10.
 
 msg="$1"
 tmp="$msg.hook"

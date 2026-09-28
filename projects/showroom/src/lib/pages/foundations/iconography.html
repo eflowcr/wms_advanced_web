@@ -13,7 +13,7 @@
     <h2 id="iconography-sizes" class="text-h2">{{ 'showroom.icons.sizes.title' | transloco }}</h2>
     <p class="text-secondary" [ewmsProse]="'showroom.icons.sizes.intro' | transloco"></p>
     <ewms-demo-frame ground="canvas">
-      <ul class="grid grid-cols-[repeat(auto-fit,minmax(min(24rem,100%),1fr))] gap-6">
+      <ul class="grid grid-cols-demos gap-6">
         @for (size of sizes; track size) {
           <li class="flex items-center gap-4" [attr.data-icon-size]="size">
             <ewms-icon name="pallet" [size]="size" [attr.data-measure]="'icon-' + size" />
@@ -33,7 +33,7 @@
       {{ 'showroom.icons.grounds.title' | transloco }}
     </h2>
     <p class="text-secondary">{{ 'showroom.icons.grounds.intro' | transloco }}</p>
-    <div class="grid grid-cols-[repeat(auto-fit,minmax(min(18rem,100%),1fr))] gap-4">
+    <div class="grid grid-cols-tiles gap-4">
       <ewms-demo-frame ground="surface" [label]="'showroom.icons.grounds.light' | transloco">
         <ul class="flex flex-wrap items-center gap-6">
           @for (name of topBar; track name) {
@@ -57,7 +57,7 @@
         {{ group.title | transloco }}
         <span class="text-secondary">({{ group.names.length }})</span>
       </h2>
-      <ul class="grid grid-cols-[repeat(auto-fill,minmax(min(8rem,100%),1fr))] gap-2">
+      <ul class="grid grid-cols-icons gap-2">
         @for (name of group.names; track name) {
           <!-- El ícono se mira; el nombre se copia. El botón es del sistema, con su anillo de foco. -->
           <li class="flex flex-col items-center gap-2 rounded-md p-4 text-primary">

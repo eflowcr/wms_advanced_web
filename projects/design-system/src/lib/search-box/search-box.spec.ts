@@ -105,6 +105,17 @@ describe('SearchBox', () => {
     expect(submitButton().className).toContain('text-primary');
   });
 
+  it('an Enter that confirms a composition does not search: it only chose the character', async () => {
+    await type('caja');
+    field().dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', isComposing: true }));
+    await settle();
+    expect(fixture.componentInstance.searched).toEqual([]);
+
+    field().dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
+    await settle();
+    expect(fixture.componentInstance.searched).toEqual(['caja']);
+  });
+
   it('does not search for nothing', async () => {
     await type('   ');
     field().dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));

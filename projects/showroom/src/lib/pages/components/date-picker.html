@@ -26,7 +26,7 @@
   <!-- ================================================ 2. Qué resuelve / cuándo no -->
   <section class="flex flex-col gap-4" aria-labelledby="dp-purpose" data-block="2-proposito">
     <h2 id="dp-purpose" class="text-h2">{{ 'showroom.common.sections.purpose' | transloco }}</h2>
-    <div class="grid grid-cols-[repeat(auto-fit,minmax(min(20rem,100%),1fr))] gap-4">
+    <div class="grid grid-cols-cards gap-4">
       <div class="flex flex-col gap-2 rounded-md border border-default bg-surface p-4">
         <h3 class="text-h3">{{ 'showroom.common.sections.solves' | transloco }}</h3>
         <p [ewmsProse]="'showroom.datePicker.purpose.solves' | transloco"></p>
@@ -48,12 +48,12 @@
   <!-- ========================================================= 3. Demo principal -->
   <section class="flex flex-col gap-4" aria-labelledby="dp-demo" data-block="3-demo">
     <h2 id="dp-demo" class="text-h2">{{ 'showroom.common.sections.demo' | transloco }}</h2>
-    <div class="grid grid-cols-[repeat(auto-fit,minmax(min(24rem,100%),1fr))] gap-6">
+    <div class="grid grid-cols-demos gap-6">
       <ewms-demo-frame ground="canvas" [label]="'showroom.datePicker.demo.frame' | transloco">
         <div class="flex max-w-80 flex-col gap-3" data-demo-date>
           <ewms-date-picker
             [label]="'showroom.datePicker.demo.delivery.label' | transloco"
-            [formField]="form.entrega"
+            [formField]="form.delivery"
             [placeholder]="'showroom.datePicker.demo.delivery.placeholder' | transloco"
             [hint]="'showroom.datePicker.demo.delivery.hint' | transloco"
             [minDate]="today"
@@ -77,7 +77,7 @@
         <ewms-date-picker
           [label]="'showroom.datePicker.variants.period' | transloco"
           mode="range"
-          [formField]="form.periodo"
+          [formField]="form.dateRange"
         />
         <p class="text-caption text-secondary">
           {{ 'showroom.datePicker.demo.value' | transloco }}

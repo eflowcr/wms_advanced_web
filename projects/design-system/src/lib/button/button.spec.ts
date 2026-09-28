@@ -222,9 +222,10 @@ describe('Button', () => {
       expect(fixture.debugElement.query(By.css('ewms-icon[name="spinner"]'))).not.toBeNull();
     });
 
-    it('turns the spinner, and leaves it still under prefers-reduced-motion', () => {
+    it('puts the spin of the spinner behind motion-safe:, the variant reduced motion switches off', () => {
       const svg = button().querySelector('ewms-icon[name="spinner"] svg');
-      // `motion-safe:` es la condición: la animación solo existe sin `reduce`.
+      // Que se quede quieto con movimiento reducido lo afirma e2e/showroom.e2e.ts, «the spinner
+      // turns, and stands still with reduced motion»: jsdom no tiene la hoja ni el media query.
       expect(svg?.classList.contains('motion-safe:animate-spin')).toBe(true);
     });
 
@@ -339,7 +340,7 @@ describe('Button', () => {
       await settle();
     });
 
-    it('is text on no background or border, one tone deeper on hover, with an underline', () => {
+    it('is text on no background or border, one shade deeper on hover, with an underline', () => {
       expect(classes()).toContain('text-(color:--color-bg-primary-hover)');
       expect(classes()).toContain('hover:underline');
       expect(classes()).toContain('bg-transparent');
@@ -375,7 +376,7 @@ describe('Button', () => {
       expect(host.buttonClicked).toBe(false);
     });
 
-    it('follows the same loading contract, with the spinner in its own tone', async () => {
+    it('follows the same loading contract, with the spinner in its own colour', async () => {
       host.loading.set(true);
       await settle();
 

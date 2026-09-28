@@ -34,14 +34,14 @@ class TestHost {
 }
 
 @Component({
-  template: ` <ewms-toggle label="Modo compacto" [formField]="form.compacto" /> `,
+  template: ` <ewms-toggle label="Modo compacto" [formField]="form.compact" /> `,
   imports: [Toggle, FormField],
 })
 class FormHost {
   readonly locked = signal(false);
-  readonly model = signal({ compacto: false });
+  readonly model = signal({ compact: false });
   readonly form = form(this.model, (path) => {
-    disabledRule(path.compacto, () => this.locked());
+    disabledRule(path.compact, () => this.locked());
   });
 }
 
@@ -261,14 +261,14 @@ describe('Toggle inside a signal form', () => {
   }
 
   it('writes the form value into the switch, and a flip back into the form', async () => {
-    fixture.componentInstance.model.set({ compacto: true });
+    fixture.componentInstance.model.set({ compact: true });
     await settle();
     expect(track().checked).toBe(true);
     expect(track().getAttribute('aria-checked')).toBe('true');
 
     track().click();
     await settle();
-    expect(fixture.componentInstance.form.compacto().value()).toBe(false);
+    expect(fixture.componentInstance.form.compact().value()).toBe(false);
   });
 
   it('follows the disabled rule of the schema in both directions', async () => {
@@ -284,10 +284,10 @@ describe('Toggle inside a signal form', () => {
   it('marks the field touched when the focus leaves, not on the flip', async () => {
     track().click();
     await settle();
-    expect(fixture.componentInstance.form.compacto().touched()).toBe(false);
+    expect(fixture.componentInstance.form.compact().touched()).toBe(false);
 
     focusThenLeave(track());
     await settle();
-    expect(fixture.componentInstance.form.compacto().touched()).toBe(true);
+    expect(fixture.componentInstance.form.compact().touched()).toBe(true);
   });
 });

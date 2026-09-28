@@ -24,7 +24,8 @@ env:
   # La del archivo oficial de sumas de esa versión; el paso de instalación verifica las dos.
   GITLEAKS_SHA256: '551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb'
 
-# Cada `timeout-minutes`: el doble de la mayor duración medida (2026-09-25), al minuto de arriba.
+# Cada `timeout-minutes`: el doble de lo que tardó su job en la corrida 36360922074 (la del PR que
+# fusionó 3ff8116), al minuto de arriba. Lo guarda tools/ci/workflow-hardening.test.mjs.
 jobs:
   # ---------------------------------------------------------------------- verify
   verify:
@@ -92,6 +93,10 @@ jobs:
       - name: Comments (three lines per block)
         run: npm run lint:comments
 
+      # Identificadores y nombres de archivo en inglés: el texto en español vive en los diccionarios.
+      - name: Identifiers in English (no Spanish names)
+        run: npm run lint:identifiers
+
       # Antes que las pruebas: host-page.test.mjs lee la CSP del artefacto. Los presupuestos, en angular.json.
       - name: Production build and bundle budgets
         run: npm run build
@@ -134,9 +139,13 @@ jobs:
       - name: Install Playwright browser
         run: npx playwright install chromium --with-deps
 
-      # El nivel de dominio corre acá, con un solo build: vacío hoy, no una compuerta muda.
-      - name: Playwright smoke and domain suites
-        run: npm run e2e:smoke -- --project=domain --pass-with-no-tests
+      # Sin --pass-with-no-tests: un smoke que no encuentra pruebas falla.
+      - name: Playwright smoke suite
+        run: npm run e2e:smoke
+
+      # El nivel de dominio corre en cada PR; vacío hoy, la bandera lo deja pasar sin pruebas.
+      - name: Playwright domain suite
+        run: npm run e2e -- --project=domain --pass-with-no-tests
 
       - name: Upload Playwright report
         if: failure()
@@ -151,7 +160,7 @@ jobs:
     # el día que el ruleset lo exija. El filtro es un paso, no un job.
     name: Playwright showroom
     runs-on: ubuntu-latest
-    timeout-minutes: 7
+    timeout-minutes: 6
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
         with:
@@ -174,9 +183,9 @@ jobs:
           CHANGED=$(git diff --name-only "$BASE_SHA" HEAD)
           echo "Changed files:"
           echo "$CHANGED"
-          # Lo que la suite defiende y lo que usa: bibliotecas, shell, specs, su servidor y
-          # las dependencias. La prueba e2e-levels lee esta expresión.
-          if printf '%s\n' "$CHANGED" | grep -Eq '^(projects/(design-system|showroom|shell|core|shared)/|e2e/|tools/e2e/|playwright[^/]*\.ts$|package(-lock)?\.json$)'; then
+          # Lo que la suite defiende y lo que usa: bibliotecas, shell, specs, su servidor, las
+          # dependencias, lo que arma el build y las compuertas. La prueba e2e-levels lee esta expresión.
+          if printf '%s\n' "$CHANGED" | grep -Eq '^(projects/(design-system|showroom|shell|core|shared)/|e2e/|tools/(e2e|ci)/|playwright[^/]*\.ts$|package(-lock)?\.json$|angular\.json$|tsconfig[^/]*\.json$)'; then
             echo "showroom=true" >> "$GITHUB_OUTPUT"
           else
             echo "Nothing the showroom documents changed: the suite does not run."

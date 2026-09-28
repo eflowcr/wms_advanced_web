@@ -4,6 +4,7 @@ import {
   classCandidates,
   primitiveTokenMatches,
   rawLayerMatches,
+  rawLengthMatches,
   rawValueMatches,
 } from './check-design-tokens.mjs';
 
@@ -68,6 +69,38 @@ describe('rawLayerMatches', () => {
   it('accepts a layer token and auto', () => {
     assert.deepEqual(rawLayerMatches(`<div class="${z('(--layer-shell)')} ${z('auto')}"></div>`, '.html'), []);
     assert.deepEqual(rawLayerMatches(`const top = 'focus:${z('(--layer-skip-link)')}';`, '.ts'), []);
+  });
+});
+
+describe('rawLengthMatches', () => {
+  const lengths = (content, extension = '.html') =>
+    rawLengthMatches(content, extension).map(({ length }) => length);
+
+  it('rejects rem, em, vh, vw, ch and px inside an arbitrary utility, minmax() and calc() too', () => {
+    const grid = 'grid-cols-[repeat(auto-fit,minmax(min(20rem,100%),1fr))]';
+    assert.deepEqual(lengths(`<div class="grid ${grid} gap-4"></div>`), ['20rem']);
+    assert.deepEqual(lengths('<div class="w-[calc(100%-2rem)] max-w-[24rem]"></div>'), ['2rem', '24rem']);
+    assert.deepEqual(lengths('<p class="h-[50vh] w-[10vw] p-[1.5em] max-w-[60ch] top-[3px]"></p>'), [
+      '50vh',
+      '10vw',
+      '1.5em',
+      '60ch',
+      '3px',
+    ]);
+  });
+
+  it('finds them in a TypeScript literal and behind a variant', () => {
+    assert.deepEqual(lengths("const grid = 'md:grid-cols-[minmax(8rem,1fr)_auto]';", '.ts'), ['8rem']);
+  });
+
+  it('accepts a token, a percentage, a fraction, a bare number and a length outside a class', () => {
+    assert.deepEqual(
+      lengths(
+        '<div class="grid-cols-[repeat(auto-fit,minmax(min(var(--grid-min),100%),1fr))] w-(--nav-rail-width)' +
+          ' [backdrop-filter:var(--backdrop)] basis-[50%] grid-cols-[1fr_2fr] leading-[1.5]">prosa de 20rem</div>',
+      ),
+      [],
+    );
   });
 });
 

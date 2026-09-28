@@ -10,17 +10,17 @@ import {
 } from '@ewms/design-system';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { Prose } from '../../ui/prose';
-import { injectEstadoOptions, type ShipmentStatus } from '../components/expediciones';
-import { CLIENTE_EJEMPLO, CODIGO_EJEMPLO } from './expedicion-form.fixtures';
-import { provideShipmentCodeMessage, shipmentCode } from './expedicion.rules';
+import { injectStatusOptions, type ShipmentStatus } from '../components/shipments';
+import { EXAMPLE_CUSTOMER, EXAMPLE_CODE } from './shipment-form.fixtures';
+import { provideShipmentCodeMessage, shipmentCode } from './shipment.rules';
 
 /** Lo que edita el formulario; un registro nuevo llega con los campos en blanco. */
-export interface ExpedicionDraft {
+export interface ShipmentDraft {
   readonly id: string | null;
-  codigo: string;
-  cliente: string;
-  estado: ShipmentStatus;
-  urgente: boolean;
+  code: string;
+  customer: string;
+  status: ShipmentStatus;
+  urgent: boolean;
 }
 
 /**
@@ -37,40 +37,40 @@ export interface ExpedicionDraft {
   providers: [provideShipmentCodeMessage()],
 })
 export class ShipmentForm {
-  private readonly dialogRef = inject<DialogRef<ExpedicionDraft | undefined>>(DialogRef);
+  private readonly dialogRef = inject<DialogRef<ShipmentDraft | undefined>>(DialogRef);
 
   protected readonly titleId = 'ewms-expedicion-form-title';
-  protected readonly estados = injectEstadoOptions();
-  protected readonly codePlaceholder = CODIGO_EJEMPLO;
-  protected readonly customerPlaceholder = CLIENTE_EJEMPLO;
+  protected readonly statuses = injectStatusOptions();
+  protected readonly codePlaceholder = EXAMPLE_CODE;
+  protected readonly customerPlaceholder = EXAMPLE_CUSTOMER;
 
-  private readonly initial = inject<ExpedicionDraft>(DIALOG_DATA);
+  private readonly initial = inject<ShipmentDraft>(DIALOG_DATA);
 
   protected readonly isNew = this.initial.id === null;
 
   private readonly model = signal({
-    codigo: this.initial.codigo,
-    cliente: this.initial.cliente,
-    estado: this.initial.estado as string,
-    urgente: this.initial.urgente,
+    code: this.initial.code,
+    customer: this.initial.customer,
+    status: this.initial.status as string,
+    urgent: this.initial.urgent,
   });
 
   /** El esquema vive acá: el campo solo dibuja el mensaje del validador que falló. */
-  protected readonly alta = form(this.model, (path) => {
+  protected readonly newShipment = form(this.model, (path) => {
     // Sin `required`: esta pantalla completa lo que falta («EXP-2026-XXXX», «Sin cliente») y su
     // presupuesto de clics fija guardar en uno (REQ-FE-DS4-003). Lo escrito sí se valida.
-    shipmentCode(path.codigo);
-    minLength(path.cliente, 3);
+    shipmentCode(path.code);
+    minLength(path.customer, 3);
   });
 
   protected readonly save = (): void => {
     const value = this.model();
     this.dialogRef.close({
       id: this.initial.id,
-      codigo: value.codigo.trim(),
-      cliente: value.cliente.trim(),
-      estado: value.estado as ShipmentStatus,
-      urgente: value.urgente,
+      code: value.code.trim(),
+      customer: value.customer.trim(),
+      status: value.status as ShipmentStatus,
+      urgent: value.urgent,
     });
   };
 

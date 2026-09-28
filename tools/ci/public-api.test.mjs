@@ -84,7 +84,6 @@ const DESIGN_SYSTEM = [
   'FavoritesStore',
   'FeedbackVariant',
   'FieldSize',
-  'FieldState',
   'FilterBar',
   'FilterBarMessages',
   'FilterChipsMessages',

@@ -109,7 +109,7 @@ function unmount(fixture: ComponentFixture<unknown>): void {
       [placeholder]="'Elegir bodega'"
       [hint]="hint()"
       [error]="error()"
-      [formField]="bodega"
+      [formField]="warehouse"
     />
   `,
   imports: [Select, FormField],
@@ -121,11 +121,11 @@ class ListHost {
   readonly hint = signal('');
   readonly error = signal(false);
   readonly locked = signal(false);
-  readonly model = signal<{ bodega: string | null }>({ bodega: null });
+  readonly model = signal<{ warehouse: string | null }>({ warehouse: null });
   readonly form = form(this.model, (path) => {
-    disabled(path.bodega, () => this.locked());
+    disabled(path.warehouse, () => this.locked());
   });
-  readonly bodega = this.form.bodega;
+  readonly warehouse = this.form.warehouse;
 }
 
 describe('Select, options in memory', () => {
@@ -157,7 +157,7 @@ describe('Select, options in memory', () => {
   });
 
   it('a click opens every option on the value, and the mouse keeps the focus on the field', async () => {
-    host.model.set({ bodega: 'BS' });
+    host.model.set({ warehouse: 'BS' });
     // Un `settle` antes de abrir: el modelo llega al campo en un efecto, no en la misma vuelta.
     await settle();
     await openPanel();
@@ -180,7 +180,7 @@ describe('Select, options in memory', () => {
     row(1).click();
     await settle();
     expect(document.activeElement).toBe(field());
-    expect(host.form.bodega().value()).toBe('BN');
+    expect(host.form.warehouse().value()).toBe('BN');
     expect(field().hasAttribute('aria-controls')).toBe(false);
     expect(field().hasAttribute('aria-activedescendant')).toBe(false);
   });
@@ -203,8 +203,8 @@ describe('Select, options in memory', () => {
     await press('Enter');
 
     expect(listbox()).toBeNull();
-    expect(host.form.bodega().value()).toBe('BN');
-    expect(host.form.bodega().touched()).toBe(true);
+    expect(host.form.warehouse().value()).toBe('BN');
+    expect(host.form.warehouse().touched()).toBe(true);
     expect(field().value).toBe('Bodega norte');
     expect(document.activeElement).toBe(field());
   });
@@ -217,11 +217,11 @@ describe('Select, options in memory', () => {
     expect(rows()).toHaveLength(1);
     await press('ArrowDown');
     await press('Enter');
-    expect(host.form.bodega().value()).toBe('BN');
+    expect(host.form.warehouse().value()).toBe('BN');
   });
 
   it('closes on Escape, Tab or a click outside without changing the value', async () => {
-    host.model.set({ bodega: 'BC' });
+    host.model.set({ warehouse: 'BC' });
     for (const close of [
       () => press('Escape'),
       () => press('Tab'),
@@ -234,7 +234,7 @@ describe('Select, options in memory', () => {
       await press('ArrowDown');
       await close();
       expect(listbox()).toBeNull();
-      expect(host.form.bodega().value()).toBe('BC');
+      expect(host.form.warehouse().value()).toBe('BC');
     }
   });
 
@@ -300,7 +300,7 @@ describe('Select, options in memory', () => {
   });
 
   it('shows the value that comes back, even when it comes back before a render', async () => {
-    host.model.set({ bodega: 'BC' });
+    host.model.set({ warehouse: 'BC' });
     await settle();
     await openPanel();
 
@@ -311,7 +311,7 @@ describe('Select, options in memory', () => {
     reject.unsubscribe();
     await settle();
 
-    expect(host.form.bodega().value()).toBe('BC');
+    expect(host.form.warehouse().value()).toBe('BC');
     expect(field().value).toBe('Bodega central');
   });
 
@@ -321,7 +321,7 @@ describe('Select, options in memory', () => {
       { label: 'English', value: 'en', lang: 'en' },
       { label: 'Sin idioma', value: 'none' },
     ]);
-    host.model.set({ bodega: 'en' });
+    host.model.set({ warehouse: 'en' });
     await settle();
     expect(field().getAttribute('lang')).toBe('en');
 
@@ -338,7 +338,7 @@ describe('Select, options in memory', () => {
     <ewms-select
       [source]="source()"
       [display]="display"
-      [formField]="articulo"
+      [formField]="article"
       label="Artículo"
       placeholder="Código o descripción"
       [hint]="hint()"
@@ -352,9 +352,9 @@ class SourceHost {
     label: (item: Article) => `${item.code} — ${item.name}`,
     code: (item: Article) => item.code,
   };
-  readonly model = signal<{ articulo: Article | null }>({ articulo: null });
+  readonly model = signal<{ article: Article | null }>({ article: null });
   readonly form = form(this.model);
-  readonly articulo = this.form.articulo;
+  readonly article = this.form.article;
   readonly hint = signal('');
 }
 
@@ -490,7 +490,7 @@ describe('Select, a backend source (REQ-FE-DS3-001)', () => {
     it('PACQ-03.1: no results repeats the text searched, and keeps the value', async () => {
       await search('ZZZ', []);
       expect(listbox()?.textContent).toContain('Sin resultados para «ZZZ»');
-      expect(host.form.articulo().value()).toBeNull();
+      expect(host.form.article().value()).toBeNull();
     });
 
     it('PACQ-03.2/3: the error carries a retry in the flow, which repeats the query', async () => {
@@ -530,7 +530,7 @@ describe('Select, a backend source (REQ-FE-DS3-001)', () => {
 
       source.resolve([CATALOGUE[2]!]);
       await settle();
-      expect(host.form.articulo().value()?.code).toBe('SKU-90001');
+      expect(host.form.article().value()?.code).toBe('SKU-90001');
 
       // La consulta retrasada detrás de la ráfaga no reabre el panel.
       await waitForDelay();
@@ -544,7 +544,7 @@ describe('Select, a backend source (REQ-FE-DS3-001)', () => {
       await scan('SKU-9');
       source.resolve([CATALOGUE[2]!]);
       await settle();
-      expect(host.form.articulo().value()).toBeNull();
+      expect(host.form.article().value()).toBeNull();
       expect(rows()).toHaveLength(1);
     });
 
@@ -559,7 +559,7 @@ describe('Select, a backend source (REQ-FE-DS3-001)', () => {
         await press(name);
       }
 
-      expect(host.form.articulo().value()).toEqual(CATALOGUE[0]);
+      expect(host.form.article().value()).toEqual(CATALOGUE[0]);
       expect(source.calls.length).toBe(1);
     });
 
@@ -584,7 +584,7 @@ describe('Select, a backend source (REQ-FE-DS3-001)', () => {
       await search();
       rows()[1]?.click();
       await settle();
-      expect(host.form.articulo().value()).toEqual(CATALOGUE[1]);
+      expect(host.form.article().value()).toEqual(CATALOGUE[1]);
       expect(field().value).toBe('SKU-88214 — Caja plegable 80x60');
 
       // RFE-03: vaciar la caja no busca ni borra el valor.
@@ -602,8 +602,8 @@ describe('Select, a backend source (REQ-FE-DS3-001)', () => {
       field().blur();
       await settle();
       expect(field().value).toBe('SKU-88214 — Caja plegable 80x60');
-      expect(host.form.articulo().value()).toEqual(CATALOGUE[1]);
-      expect(host.form.articulo().touched()).toBe(true);
+      expect(host.form.article().value()).toEqual(CATALOGUE[1]);
+      expect(host.form.article().touched()).toBe(true);
     });
 
     it('PACQ-06.2: Escape closes, leaves the value alone and keeps the focus', async () => {
@@ -612,7 +612,7 @@ describe('Select, a backend source (REQ-FE-DS3-001)', () => {
       const event = await press('Escape');
 
       expect(listbox()).toBeNull();
-      expect(host.form.articulo().value()).toBeNull();
+      expect(host.form.article().value()).toBeNull();
       expect(document.activeElement).toBe(field());
       expect(event.defaultPrevented).toBe(true);
     });

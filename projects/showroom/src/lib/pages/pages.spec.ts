@@ -777,11 +777,11 @@ describe('ShowroomInput', () => {
   it('drives the demo from a real signal form, not from a local copy', async () => {
     const { fixture, element } = await render(ShowroomInput);
     const page = fixture.componentInstance as unknown as {
-      model: { set(value: { sku: string; clave: string; busqueda: string }): void };
+      model: { set(value: { sku: string; password: string; search: string }): void };
     };
 
     // Escribir el modelo debe cambiar la lectura: prueba de que el campo está atado de verdad.
-    page.model.set({ sku: 'SKU-99999-Z', clave: '', busqueda: '' });
+    page.model.set({ sku: 'SKU-99999-Z', password: '', search: '' });
     await fixture.whenStable();
     expect(element.querySelector('[data-demo-value]')?.textContent).toContain('SKU-99999-Z');
 
@@ -882,11 +882,11 @@ describe('ShowroomSelect', () => {
     const { fixture, element } = await render(ShowroomSelect);
     const page = fixture.componentInstance as unknown as {
       model: {
-        set(value: { estado: string | null; rack: null; articulo: null }): void;
+        set(value: { status: string | null; rack: null; article: null }): void;
       };
       chosenLabel(): string | null;
     };
-    page.model.set({ estado: 'una-que-no-existe', rack: null, articulo: null });
+    page.model.set({ status: 'una-que-no-existe', rack: null, article: null });
     await fixture.whenStable();
     // Ninguna opción la nombra; la plantilla escribe «sin elegir» en el idioma en pantalla.
     expect(page.chosenLabel()).toBeNull();
@@ -1016,10 +1016,10 @@ describe('ShowroomRadio', () => {
   it('says so when the form holds a value no option carries', async () => {
     const { fixture } = await render(ShowroomRadio);
     const page = fixture.componentInstance as unknown as {
-      model: { set(value: { tipo: string | null }): void };
+      model: { set(value: { type: string | null }): void };
       chosenLabel(): string;
     };
-    page.model.set({ tipo: 'una-que-no-existe' });
+    page.model.set({ type: 'una-que-no-existe' });
     await fixture.whenStable();
     expect(page.chosenLabel()).toBe('(ninguno)');
   });
@@ -1209,10 +1209,10 @@ describe('ShowroomCard', () => {
   it('says so when the form holds a warehouse no card carries', async () => {
     const { fixture } = await render(ShowroomCard);
     const page = fixture.componentInstance as unknown as {
-      model: { set(value: { almacen: string }): void };
+      model: { set(value: { warehouse: string }): void };
       chosenLabel(): string;
     };
-    page.model.set({ almacen: 'una-que-no-existe' });
+    page.model.set({ warehouse: 'una-que-no-existe' });
     await fixture.whenStable();
     expect(page.chosenLabel()).toBe('(ninguno)');
   });
@@ -1305,9 +1305,9 @@ describe('ShowroomDatePicker', () => {
       '"from":"2026-09-01"',
     );
     const page = fixture.componentInstance as unknown as {
-      model: { set(value: { entrega: string; periodo: null }): void };
+      model: { set(value: { delivery: string; dateRange: null }): void };
     };
-    page.model.set({ entrega: '2099-01-02', periodo: null });
+    page.model.set({ delivery: '2099-01-02', dateRange: null });
     await fixture.whenStable();
     expect(element.querySelector('[data-demo-date-value]')?.textContent).toContain('2099-01-02');
   });
@@ -1440,11 +1440,11 @@ describe('ShowroomTable', () => {
     const { element } = await render(ShowroomTable);
     const snippet = element.querySelector('[data-consumer-template]')?.textContent ?? '';
     // No es una paráfrasis: cada columna de la demo está en el fragmento.
-    for (const key of ['codigo', 'cliente', 'fecha', 'bultos', 'estado']) {
+    for (const key of ['code', 'customer', 'date', 'packages', 'status']) {
       expect(snippet).toContain(`key="${key}"`);
     }
-    expect(snippet).toContain('children="hijos"');
-    expect(snippet).toContain('rowState="estado"');
+    expect(snippet).toContain('children="children"');
+    expect(snippet).toContain('rowState="status"');
   });
 
   it('expands a header into its lines, in the same table', async () => {
@@ -1509,13 +1509,13 @@ describe('ShowroomTable', () => {
       tintFor(variant: string): string;
       labelFor(variant: string): string;
       isBadge(stateId: string): boolean;
-      consultaResumen(): string;
+      querySummary(): string;
     };
     expect(page.tintFor('no-such-state')).toBe('');
     expect(page.labelFor('no-such-state')).toBe('');
     expect(page.isBadge('badge')).toBe(true);
     expect(page.isBadge('tint')).toBe(false);
-    expect(page.consultaResumen()).toContain('sin búsqueda');
+    expect(page.querySummary()).toContain('sin búsqueda');
   });
 
   it('reports the selection, and sorts by clicking a header', async () => {
@@ -1535,18 +1535,18 @@ describe('ShowroomTable', () => {
       'Imprimir etiquetas · 1 expedición',
     );
 
-    element.querySelector<HTMLButtonElement>('[data-demo-table] [data-sort="bultos"]')!.click();
+    element.querySelector<HTMLButtonElement>('[data-demo-table] [data-sort="packages"]')!.click();
     element
-      .querySelector('[data-demo-table] [data-sort="codigo"]')!
+      .querySelector('[data-demo-table] [data-sort="code"]')!
       .dispatchEvent(new MouseEvent('click', { bubbles: true, shiftKey: true }));
     await fixture.whenStable();
-    expect(element.querySelector('[data-query]')?.textContent).toContain('bultos asc, codigo asc');
+    expect(element.querySelector('[data-query]')?.textContent).toContain('packages asc, code asc');
 
     // Mover una columna se anuncia con las palabras del showroom.
     element.querySelector<HTMLButtonElement>('[data-demo-table] [data-view-menu] button')!.click();
     await fixture.whenStable();
     document
-      .querySelector<HTMLButtonElement>('[data-column-row="cliente"] [data-column-down] button')!
+      .querySelector<HTMLButtonElement>('[data-column-row="customer"] [data-column-down] button')!
       .click();
     await fixture.whenStable();
     expect(element.querySelector('[data-demo-table] [data-table-announce]')?.textContent).toBe(
@@ -1560,31 +1560,31 @@ describe('ShowroomTable', () => {
  * perezosa. Viven dentro del bloque demo: toda ficha lleva los mismos ocho bloques, no nueve.
  */
 describe('ShowroomTable — composición avanzada', () => {
-  const DETALLE = '[data-demo-detalle]';
+  const DETAIL = '[data-demo-detalle]';
 
   it('offers the detail panel on the headers, and the panel is projected', async () => {
     const { fixture, element } = await render(ShowroomTable);
 
     const toggle = element.querySelector<HTMLButtonElement>(
-      `${DETALLE} [data-detail-toggle="0"] button`,
+      `${DETAIL} [data-detail-toggle="0"] button`,
     );
     expect(toggle).not.toBeNull();
 
     toggle!.click();
     await fixture.whenStable();
 
-    const panel = element.querySelector(`${DETALLE} [data-detail="0"]`);
+    const panel = element.querySelector(`${DETAIL} [data-detail="0"]`);
     expect(panel?.textContent).toContain('Bultos totales');
     expect(panel?.querySelector('button')?.textContent).toContain('Descargar');
   });
 
   it('writes down the download instead of pretending to serve one', async () => {
     const { fixture, element } = await render(ShowroomTable);
-    element.querySelector<HTMLButtonElement>(`${DETALLE} [data-detail-toggle="0"] button`)!.click();
+    element.querySelector<HTMLButtonElement>(`${DETAIL} [data-detail-toggle="0"] button`)!.click();
     await fixture.whenStable();
 
     expect(element.querySelector('[data-download]')?.textContent).toContain('(ninguna)');
-    element.querySelector<HTMLButtonElement>(`${DETALLE} [data-detail] button`)!.click();
+    element.querySelector<HTMLButtonElement>(`${DETAIL} [data-detail] button`)!.click();
     await fixture.whenStable();
 
     // No hay backend, y una demo que abriera un PDF estaría enseñando uno.
@@ -1594,7 +1594,7 @@ describe('ShowroomTable — composición avanzada', () => {
   it('opens the row menu from the kebab and reports what was chosen', async () => {
     const { fixture, element } = await render(ShowroomTable);
 
-    element.querySelector<HTMLButtonElement>(`${DETALLE} [data-kebab="0"] button`)!.click();
+    element.querySelector<HTMLButtonElement>(`${DETAIL} [data-kebab="0"] button`)!.click();
     await fixture.whenStable();
 
     const menu = document.querySelector('[role="menu"]');
@@ -1610,7 +1610,7 @@ describe('ShowroomTable — composición avanzada', () => {
 
   it('keeps the disabled entry visible and out of reach', async () => {
     const { fixture, element } = await render(ShowroomTable);
-    element.querySelector<HTMLButtonElement>(`${DETALLE} [data-kebab="0"] button`)!.click();
+    element.querySelector<HTMLButtonElement>(`${DETAIL} [data-kebab="0"] button`)!.click();
     await fixture.whenStable();
 
     const entry = document.querySelector('[data-menu-item="imprimir"]');
@@ -1949,15 +1949,15 @@ describe('ShowroomForm', () => {
     expect(element.querySelector('[data-form-saved]')?.textContent).toBe('(todavía nada)');
 
     page.model.set({
-      codigo: 'EXP-2026-0001',
-      cliente: 'Distribuidora Andes',
-      correo: '',
-      almacen: 'central',
-      fecha: null,
-      estado: 'pendiente',
-      bultos: '3',
-      urgente: false,
-      etiquetas: true,
+      code: 'EXP-2026-0001',
+      customer: 'Distribuidora Andes',
+      email: '',
+      warehouse: 'central',
+      date: null,
+      status: 'pendiente',
+      packages: '3',
+      urgent: false,
+      labels: true,
     });
     await settle();
     form.requestSubmit();
@@ -1972,7 +1972,7 @@ describe('ShowroomForm', () => {
     expect(element.querySelector('[data-form-save] button')?.getAttribute('aria-busy')).toBeNull();
 
     // Guardado y limpio: salir no pregunta nada (`confirmDiscard` solo pregunta si está sucio).
-    await (fixture.componentInstance as unknown as { salir(): Promise<void> }).salir();
+    await (fixture.componentInstance as unknown as { leave(): Promise<void> }).leave();
     await settle();
     expect(element.querySelector('[data-form-left]')?.textContent).toBe('salió sin guardar');
   });
@@ -1983,10 +1983,10 @@ describe('ShowroomForm', () => {
       useValue: { confirm: () => ((asked += 1), Promise.resolve(false)) },
     });
     const { fixture, element } = await render(ShowroomForm);
-    const page = fixture.componentInstance as unknown as { salir(): Promise<void> };
+    const page = fixture.componentInstance as unknown as { leave(): Promise<void> };
 
     // Limpio: no pregunta.
-    await page.salir();
+    await page.leave();
     await fixture.whenStable();
     expect(asked).toBe(0);
 
@@ -1999,7 +1999,7 @@ describe('ShowroomForm', () => {
 
     // Corre en el contexto de inyección del componente, como el `canDeactivate` del router:
     // llamarlo suelto desde un clic falla con NG0203.
-    await page.salir();
+    await page.leave();
     await fixture.whenStable();
     fixture.detectChanges();
     expect(asked).toBe(1);
@@ -2017,24 +2017,24 @@ describe('ShowroomFilters', () => {
     const bar = fixture.debugElement.query(By.directive(FilterBar)).componentInstance as {
       valueChange: { emit(value: FilterValues): void };
     };
-    bar.valueChange.emit({ almacen: 'central' });
+    bar.valueChange.emit({ warehouse: 'central' });
     await fixture.whenStable();
     fixture.detectChanges();
     expect(rows()).toBe(6);
     expect(element.querySelector('[data-active-filters]')?.textContent).toBe('1');
 
     // Un período recorta por cualquiera de sus extremos.
-    bar.valueChange.emit({ fecha: { from: '2026-03-01' } });
+    bar.valueChange.emit({ date: { from: '2026-03-01' } });
     await fixture.whenStable();
     fixture.detectChanges();
     expect(rows()).toBe(2);
-    bar.valueChange.emit({ fecha: { to: '2026-01-31' } });
+    bar.valueChange.emit({ date: { to: '2026-01-31' } });
     await fixture.whenStable();
     fixture.detectChanges();
     expect(rows()).toBe(5);
 
     // Sin resultados, «Limpiar filtros» de la tabla limpia también los de pantalla.
-    bar.valueChange.emit({ almacen: 'central', texto: 'no-existe' });
+    bar.valueChange.emit({ warehouse: 'central', text: 'no-existe' });
     await fixture.whenStable();
     fixture.detectChanges();
     expect(rows()).toBe(0);

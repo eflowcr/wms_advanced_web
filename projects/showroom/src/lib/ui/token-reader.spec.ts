@@ -24,12 +24,12 @@ describe('TokenReader', () => {
     style = document.createElement('style');
     style.textContent = `
       :root {
-        --tone-7: navy;
-        --tone-100: white;
-        --tone-7-a06: teal;
+        --shade-7: navy;
+        --shade-100: white;
+        --shade-7-a06: teal;
         --accent-48: blue;
-        --color-text-primary: var(--tone-7);
-        --color-surface: var(--tone-100);
+        --color-text-primary: var(--shade-7);
+        --color-surface: var(--shade-100);
         --focus-ring-shadow: ${SHADOW};
       }
       .not-root { --color-ignored: black; }
@@ -43,8 +43,8 @@ describe('TokenReader', () => {
   it('walks a semantic down to its primitive', () => {
     const chain = reader().chain('--color-text-primary');
     expect(chain.status).toBe('resolved');
-    expect(chain.links.map((link) => link.name)).toEqual(['--color-text-primary', '--tone-7']);
-    expect(chain.primitive).toBe('--tone-7');
+    expect(chain.links.map((link) => link.name)).toEqual(['--color-text-primary', '--shade-7']);
+    expect(chain.primitive).toBe('--shade-7');
   });
 
   it('reports a token that does not exist as missing', () => {
@@ -63,20 +63,20 @@ describe('TokenReader', () => {
 
   it('lists the primitives, which is every declaration with no reference in it', () => {
     const primitives = reader().primitiveNames();
-    expect(primitives).toContain('--tone-7');
+    expect(primitives).toContain('--shade-7');
     expect(primitives).toContain('--accent-48');
     expect(primitives).not.toContain('--color-text-primary');
   });
 
-  it('groups the tone ramps by family and keeps the translucent ones out', () => {
-    const [tone, accent] = reader().toneFamilies(['tone', 'accent']);
-    expect(tone?.names).toEqual(['--tone-7', '--tone-100']);
-    expect(tone?.names).not.toContain('--tone-7-a06');
+  it('groups the colour ramps by family and keeps the translucent ones out', () => {
+    const [shade, accent] = reader().toneFamilies(['shade', 'accent']);
+    expect(shade?.names).toEqual(['--shade-7', '--shade-100']);
+    expect(shade?.names).not.toContain('--shade-7-a06');
     expect(accent?.names).toEqual(['--accent-48']);
   });
 
   it('lists the translucent primitives separately', () => {
-    expect(reader().alphaPrimitives('tone')).toEqual(['--tone-7-a06']);
+    expect(reader().alphaPrimitives('shade')).toEqual(['--shade-7-a06']);
     expect(reader().alphaPrimitives('accent')).toEqual([]);
   });
 

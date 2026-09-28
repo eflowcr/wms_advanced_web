@@ -47,9 +47,9 @@ describe('commentBlocks', () => {
     assert.equal(longBlocks('<svg><!-- a\nb\nc\nd --></svg>', 'b.svg').length, 1);
   });
 
-  it('reads # runs in .yml, .npmrc and .gitignore, and nothing in files it does not own', () => {
+  it('reads # runs in .yml, .npmrc, .gitignore and the git hooks, and nothing in files it does not own', () => {
     const hash = [...lines(4, '# '), 'key: value'].join('\n');
-    for (const file of ['.github/workflows/ci.yml', '.npmrc', '.gitignore']) {
+    for (const file of ['.github/workflows/ci.yml', '.npmrc', '.gitignore', '.githooks/commit-msg']) {
       assert.deepEqual(commentBlocks(hash, file), [{ start: 1, end: 4, textLines: 4 }], file);
     }
     assert.deepEqual(commentBlocks(hash, 'README.md'), []);

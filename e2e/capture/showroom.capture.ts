@@ -259,42 +259,42 @@ test.describe('showroom capture rig', () => {
   // hijos pedidos y cinco mil filas construidas.
   test('captures the DS-3 lote D states', async ({ page }) => {
     const TABLE_PAGE = '/design-system/components/table';
-    const DETALLE = '[data-demo-detalle]';
-    const PEREZOSA = '[data-demo-perezosa]';
+    const DETAIL = '[data-demo-detalle]';
+    const LAZY = '[data-demo-perezosa]';
     const VIRTUAL = '[data-demo-virtual]';
-    const PAGINADA = '[data-demo-paginada]';
+    const PAGED = '[data-demo-paginada]';
 
     await page.goto(TABLE_PAGE);
     await waitForMontserrat(page);
     await page.waitForTimeout(250);
 
-    await page.locator(`${DETALLE} [data-detail-toggle="0"] button`).click();
-    await page.locator(`${DETALLE} [data-detail="0"]`).scrollIntoViewIfNeeded();
+    await page.locator(`${DETAIL} [data-detail-toggle="0"] button`).click();
+    await page.locator(`${DETAIL} [data-detail="0"]`).scrollIntoViewIfNeeded();
     await page.waitForTimeout(200);
     await page.screenshot({ path: path.join(OUT, '30-table-detail-open.png') });
     report.push(render('table page, detail panel open', await measure(page)));
 
     // El menú de fila (kebab) es un overlay: ninguna captura de página completa lo contiene.
-    await page.locator(`${DETALLE} [data-kebab="1"] button`).click();
+    await page.locator(`${DETAIL} [data-kebab="1"] button`).click();
     await page.waitForTimeout(250);
     await page.screenshot({ path: path.join(OUT, '31-table-row-menu.png') });
     await page.keyboard.press('Escape');
 
     // Hijos en camino e hijos que nunca llegan: la fila de carga dura lo que la demora de la demo.
-    const failing = page.locator(`${PEREZOSA} tr.bg-row-danger`).first();
+    const failing = page.locator(`${LAZY} tr.bg-row-danger`).first();
     const failingRow = await failing.getAttribute('data-row');
-    const ok = page.locator(`${PEREZOSA} tr[data-row]:not(.bg-row-danger)`).first();
+    const ok = page.locator(`${LAZY} tr[data-row]:not(.bg-row-danger)`).first();
     const okRow = await ok.getAttribute('data-row');
 
     // Dos filas distintas: plegar la que falla para reusarla se llevaría su fila de error,
     // que es el comportamiento correcto.
-    await page.locator(`${PEREZOSA} [data-toggle="${okRow}"]`).click();
-    await page.locator(`${PEREZOSA} [data-loading="${okRow}"]`).scrollIntoViewIfNeeded();
+    await page.locator(`${LAZY} [data-toggle="${okRow}"]`).click();
+    await page.locator(`${LAZY} [data-loading="${okRow}"]`).scrollIntoViewIfNeeded();
     await page.screenshot({ path: path.join(OUT, '32-table-children-loading.png') });
 
-    await page.locator(`${PEREZOSA} [data-toggle="${failingRow}"]`).click();
-    await expect(page.locator(`${PEREZOSA} [data-failed="${failingRow}"]`)).toBeVisible();
-    await page.locator(`${PEREZOSA} [data-failed="${failingRow}"]`).scrollIntoViewIfNeeded();
+    await page.locator(`${LAZY} [data-toggle="${failingRow}"]`).click();
+    await expect(page.locator(`${LAZY} [data-failed="${failingRow}"]`)).toBeVisible();
+    await page.locator(`${LAZY} [data-failed="${failingRow}"]`).scrollIntoViewIfNeeded();
     await page.screenshot({ path: path.join(OUT, '33-table-children-failed.png') });
 
     await page.locator('[data-load-all]').click();
@@ -311,8 +311,8 @@ test.describe('showroom capture rig', () => {
     await page.waitForTimeout(250);
     await page.screenshot({ path: path.join(OUT, '35-table-virtual-scrolled.png') });
 
-    await page.locator(PAGINADA).scrollIntoViewIfNeeded();
-    await page.locator(`${PAGINADA} [data-next-page] button`).click();
+    await page.locator(PAGED).scrollIntoViewIfNeeded();
+    await page.locator(`${PAGED} [data-next-page] button`).click();
     await page.waitForTimeout(200);
     await page.screenshot({ path: path.join(OUT, '36-table-paginator.png') });
     report.push(render('table page, paginator on page two', await measure(page)));

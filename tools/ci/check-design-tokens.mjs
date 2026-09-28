@@ -41,6 +41,11 @@ const RAW_VALUES = [
 // sale de un token --layer-*. Tailwind escanea este archivo: acá no se escribe una clase entera.
 const RAW_LAYER = /^(?:\S*:)?!?-?z-(?:\d+|\[[^\]]*\])!?$/;
 
+// Una longitud escrita dentro de una utilidad arbitraria (`[…]`, también en `minmax()` y `calc()`)
+// sale de un token, como cualquier medida. Un px ahí lo atrapa además la regla de valores crudos.
+const ARBITRARY = /\[[^\]]*\]/g;
+const RAW_LENGTH = /(?<![\w.])\d*\.?\d+(?:rem|em|vh|vw|ch|px)(?![\w-])/gi;
+
 // ----------------------------------------------------------------- archivos
 
 async function listFiles(dir) {
@@ -212,6 +217,25 @@ export function rawLayerMatches(content, extension) {
     .map(({ token }) => token);
 }
 
+/**
+ * Cada longitud cruda dentro de una utilidad arbitraria: `{ token, length, index }`. La clase se corta
+ * solo por espacios: una utilidad arbitraria lleva comas (`minmax(…,…)`) y `candidates` corta en ellas.
+ */
+export function rawLengthMatches(content, extension) {
+  const found = [];
+  for (const segment of classSegments(content, extension)) {
+    for (const word of segment.text.matchAll(/[^\s"'`<>]+/g)) {
+      for (const group of word[0].matchAll(ARBITRARY)) {
+        for (const length of group[0].matchAll(RAW_LENGTH)) {
+          const index = segment.offset + word.index + group.index + length.index;
+          found.push({ token: word[0], length: length[0], index });
+        }
+      }
+    }
+  }
+  return found;
+}
+
 export function rawValueMatches(content) {
   return RAW_VALUES.flatMap(({ pattern, label }) =>
     [...content.matchAll(pattern)].map((match) => ({ value: match[0], label, index: match.index })),
@@ -285,6 +309,15 @@ async function main() {
         content,
         match.index,
         `primitive token \`${match.value}\` used outside tokens.css. Consume the semantic token that aliases it.`,
+      );
+    }
+
+    for (const { token, length, index } of rawLengthMatches(content, path.extname(file))) {
+      report(
+        file,
+        content,
+        index,
+        `raw length \`${length}\` in the arbitrary utility \`${token}\`. Use a semantic token from tokens.css, over a primitive.`,
       );
     }
 

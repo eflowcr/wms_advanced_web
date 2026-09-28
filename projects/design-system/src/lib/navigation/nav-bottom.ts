@@ -26,8 +26,8 @@ const ACTIVE_CLASSES = 'bg-surface text-primary';
 export const BOTTOM_NAV_SLOTS = 4;
 
 /**
- * Barra inferior (decisión del usuario, 2026-09-19): deja doce destinos a dos toques. La hoja
- * usa `FocusTrap` del CDK, no `DialogService`: es un panel, no un modal. Ver vault: Navegacion.
+ * Barra inferior (decisión del usuario, 2026-09-19): deja doce destinos a dos toques. La hoja es
+ * modal sobre `FocusTrap` del CDK, no `DialogService`: se ancla a la barra. Ver vault: Navegacion.
  */
 @Component({
   selector: 'ewms-nav-bottom',
@@ -56,6 +56,8 @@ export class NavBottom {
   private readonly injector = inject(Injector);
 
   private trap: FocusTrap | null = null;
+  /** Deshace el `inert` de lo que tapaba el velo. */
+  private restore: (() => void) | null = null;
   /** A quién devolver el foco: se recuerda, nunca se adivina. */
   private opener: HTMLElement | null = null;
 
@@ -63,7 +65,12 @@ export class NavBottom {
 
   constructor() {
     // Una vez acá: registrarlo en cada apertura suma callbacks y mantiene vivas las trampas.
-    this.destroyRef.onDestroy(() => this.trap?.destroy());
+    this.destroyRef.onDestroy(() => {
+      this.trap?.destroy();
+      // Sin trampa vigente, un `becomeModal` que llegue tarde no marca nada.
+      this.trap = null;
+      this.restore?.();
+    });
   }
 
   // Un grupo de primer nivel nunca va a la barra: sería «Más» con otro nombre.
@@ -117,17 +124,29 @@ export class NavBottom {
         }
         this.trap = this.focusTraps.create(element);
         void this.trap.focusFirstTabbableElementWhenReady();
+        void this.becomeModal(this.trap, element);
       },
       { injector: this.injector },
     );
   }
 
-  /** Escape, cierre o fondo: un solo camino. */
+  /** Perezoso, como en el cajón: volver modal la hoja no pesa en la ruta crítica de `/`. */
+  private async becomeModal(trap: FocusTrap, sheet: HTMLElement): Promise<void> {
+    const { makeModal } = await import('../overlay/make-modal');
+    const backdrop = sheet.parentElement?.querySelector('[data-nav-bottom-backdrop]');
+    if (this.trap === trap && backdrop) {
+      this.restore = makeModal(sheet, backdrop, this.moreLabel());
+    }
+  }
+
+  /** Escape, cierre o fondo: un solo camino. `inert` se quita antes de devolver el foco. */
   protected close(): void {
     if (!this.open()) {
       return;
     }
     this.open.set(false);
+    this.restore?.();
+    this.restore = null;
     this.trap?.destroy();
     this.trap = null;
     this.opener?.focus();

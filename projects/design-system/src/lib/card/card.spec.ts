@@ -58,7 +58,7 @@ class ContentHost {}
 
 @Component({
   template: `
-    <ewms-card-group label="Almacén" [formField]="form.almacen">
+    <ewms-card-group label="Almacén" [formField]="form.warehouse">
       <ewms-card optionValue="norte"><span>Norte</span></ewms-card>
       <ewms-card optionValue="central"><span>Central</span></ewms-card>
     </ewms-card-group>
@@ -67,9 +67,9 @@ class ContentHost {}
 })
 class FormHost {
   readonly locked = signal(false);
-  readonly model = signal<{ almacen: string | null }>({ almacen: 'central' });
+  readonly model = signal<{ warehouse: string | null }>({ warehouse: 'central' });
   readonly form = form(this.model, (path) => {
-    disabled(path.almacen, () => this.locked());
+    disabled(path.warehouse, () => this.locked());
   });
 }
 
@@ -296,11 +296,11 @@ describe('Card', () => {
     });
 
     it('writes the chosen value back to the form and marks it touched', async () => {
-      expect(host.form.almacen().touched()).toBe(false);
+      expect(host.form.warehouse().touched()).toBe(false);
       radios()[0]?.click();
       await settle();
-      expect(host.form.almacen().value()).toBe('norte');
-      expect(host.form.almacen().touched()).toBe(true);
+      expect(host.form.warehouse().value()).toBe('norte');
+      expect(host.form.warehouse().touched()).toBe(true);
     });
 
     it('follows the schema when the schema disables it', async () => {

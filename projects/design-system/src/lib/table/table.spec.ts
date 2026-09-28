@@ -36,32 +36,32 @@ import type {
 
 interface Row {
   readonly id: string;
-  readonly codigo: string;
-  readonly bultos: number;
-  readonly fecha: string;
-  readonly estado: string;
-  readonly hijos?: readonly Row[];
+  readonly code: string;
+  readonly packages: number;
+  readonly date: string;
+  readonly status: string;
+  readonly children?: readonly Row[];
 }
 
-const ESTADOS: BadgeDictionary = {
-  pendiente: { variant: 'neutral', label: 'Pendiente' },
+const STATUSES: BadgeDictionary = {
+  'pendiente': { variant: 'neutral', label: 'Pendiente' },
   'con-incidencia': { variant: 'danger', label: 'Con incidencia' },
 };
 
 const ROWS: readonly Row[] = [
   {
     id: '1',
-    codigo: 'EXP-0001',
-    bultos: 1200,
-    fecha: '2026-01-15',
-    estado: 'pendiente',
-    hijos: [
-      { id: '1a', codigo: 'SKU-1', bultos: 900, fecha: '2026-01-16', estado: 'pendiente' },
-      { id: '1b', codigo: 'SKU-2', bultos: 300, fecha: '2026-01-17', estado: 'con-incidencia' },
+    code: 'EXP-0001',
+    packages: 1200,
+    date: '2026-01-15',
+    status: 'pendiente',
+    children: [
+      { id: '1a', code: 'SKU-1', packages: 900, date: '2026-01-16', status: 'pendiente' },
+      { id: '1b', code: 'SKU-2', packages: 300, date: '2026-01-17', status: 'con-incidencia' },
     ],
   },
-  { id: '2', codigo: 'EXP-0002', bultos: 900, fecha: '2026-02-03', estado: 'con-incidencia' },
-  { id: '3', codigo: 'EXP-0003', bultos: 40, fecha: '2026-03-21', estado: 'pendiente' },
+  { id: '2', code: 'EXP-0002', packages: 900, date: '2026-02-03', status: 'con-incidencia' },
+  { id: '3', code: 'EXP-0003', packages: 40, date: '2026-03-21', status: 'pendiente' },
 ];
 
 const MESSAGES: TableMessages = {
@@ -174,34 +174,34 @@ const TABLE_PROVIDERS = [
   template: `
     <ewms-table
       [source]="source()"
-      [children]="withTree() ? 'hijos' : null"
-      rowState="estado"
+      [children]="withTree() ? 'children' : null"
+      rowState="status"
       [trackBy]="byId"
       [selectable]="selectable()"
       [quickFilter]="true"
       [density]="density()"
       ariaLabel="Expediciones"
-      (rowActivate)="activated = $event.row.codigo"
+      (rowActivate)="activated = $event.row.code"
       (selectionChange)="selection = $event"
       (queryChange)="lastQuery = $event"
       [bulkActions]="bulk"
       (bulkAction)="lastBulk = $event"
     >
-      <ewms-column key="codigo" header="Código" [sortable]="true" [filterable]="true" />
+      <ewms-column key="code" header="Código" [sortable]="true" [filterable]="true" />
       <ewms-column
-        key="bultos"
+        key="packages"
         header="Bultos"
         type="number"
         [sortable]="true"
         [filterable]="true"
         [aggregate]="aggregate()"
       />
-      <ewms-column key="fecha" header="Fecha" type="date" [filterable]="true" />
+      <ewms-column key="date" header="Fecha" type="date" [filterable]="true" />
       <ewms-column
-        key="estado"
+        key="status"
         header="Estado"
         type="badge"
-        [badges]="estados"
+        [badges]="statuses"
         [filterable]="true"
       />
 
@@ -213,8 +213,8 @@ const TABLE_PROVIDERS = [
   imports: [Table, TableColumn, EmptyTemplate],
 })
 class TestHost {
-  readonly estados = ESTADOS;
-  readonly source = signal<TableSource<Row>>(new ArrayTableSource(ROWS, ['codigo']));
+  readonly statuses = STATUSES;
+  readonly source = signal<TableSource<Row>>(new ArrayTableSource(ROWS, ['code']));
   readonly withTree = signal(true);
   readonly selectable = signal(true);
   readonly density = signal<'md' | 'sm'>('md');
@@ -226,7 +226,7 @@ class TestHost {
   lastQuery: TableQuery | null = null;
   readonly bulk: readonly MenuItem[] = [
     { id: 'imprimir', label: 'Imprimir etiquetas' },
-    { id: 'anular', label: 'Anular', tone: 'danger' },
+    { id: 'anular', label: 'Anular', variant: 'danger' },
   ];
   lastBulk: BulkActionEvent<Row> | null = null;
 }
@@ -415,7 +415,7 @@ describe('Table', () => {
 
     it('SORTS BY THE RAW VALUE, not by the formatted text', async () => {
       // El formateador prefija ambos números: como cadenas ordenan al revés que como números.
-      header('bultos').click();
+      header('packages').click();
       await settle();
 
       expect(bodyRows().map((row) => row.textContent?.match(/n:\d+/)?.[0])).toEqual([
@@ -426,40 +426,40 @@ describe('Table', () => {
     });
 
     it('goes ascending, descending, then back to none', async () => {
-      expect(ariaSortOf('bultos')).toBeNull();
+      expect(ariaSortOf('packages')).toBeNull();
 
-      header('bultos').click();
+      header('packages').click();
       await settle();
-      expect(ariaSortOf('bultos')).toBe('ascending');
+      expect(ariaSortOf('packages')).toBe('ascending');
 
-      header('bultos').click();
+      header('packages').click();
       await settle();
-      expect(ariaSortOf('bultos')).toBe('descending');
+      expect(ariaSortOf('packages')).toBe('descending');
 
-      header('bultos').click();
+      header('packages').click();
       await settle();
-      expect(ariaSortOf('bultos')).toBeNull();
+      expect(ariaSortOf('packages')).toBeNull();
     });
 
     it('SHIFT ADDS A COLUMN TO THE SORT, with its priority; aria-sort stays on the first', async () => {
-      header('bultos').click();
-      header('codigo').dispatchEvent(new MouseEvent('click', { bubbles: true, shiftKey: true }));
+      header('packages').click();
+      header('code').dispatchEvent(new MouseEvent('click', { bubbles: true, shiftKey: true }));
       await settle();
-      expect(host.lastQuery?.sort.map((sort) => sort.key)).toEqual(['bultos', 'codigo']);
-      expect(ariaSortOf('codigo')).toBeNull();
-      expect(header('codigo').querySelector('[data-sort-priority]')?.textContent?.trim()).toBe('2');
+      expect(host.lastQuery?.sort.map((sort) => sort.key)).toEqual(['packages', 'code']);
+      expect(ariaSortOf('code')).toBeNull();
+      expect(header('code').querySelector('[data-sort-priority]')?.textContent?.trim()).toBe('2');
       // Ordenadas en primario; las demás, en el secundario de la cabecera.
-      expect(header('codigo').className).toContain('text-primary');
-      expect(header('codigo').querySelector('svg[aria-label]')?.getAttribute('aria-label')).toBe(
+      expect(header('code').className).toContain('text-primary');
+      expect(header('code').querySelector('svg[aria-label]')?.getAttribute('aria-label')).toBe(
         'Orden ascendente, prioridad 2',
       );
 
       // Shift+Enter la cicla en su lugar; un clic simple deja solo esa (y la tercera vez, ninguna).
       const shiftEnter = { key: 'Enter', shiftKey: true, bubbles: true };
-      header('codigo').dispatchEvent(new KeyboardEvent('keydown', shiftEnter));
+      header('code').dispatchEvent(new KeyboardEvent('keydown', shiftEnter));
       await settle();
-      expect(host.lastQuery?.sort[1]).toEqual({ key: 'codigo', direction: 'desc' });
-      header('codigo').click();
+      expect(host.lastQuery?.sort[1]).toEqual({ key: 'code', direction: 'desc' });
+      header('code').click();
       await settle();
       expect(host.lastQuery?.sort).toEqual([]);
     });
@@ -478,22 +478,22 @@ describe('Table', () => {
     }
 
     it('THE SHAPE COMES FROM THE COLUMN TYPE: one box for text and dates, two for numbers', () => {
-      expect(boxes('codigo').length).toBe(1);
-      expect(boxes('bultos').length).toBe(2);
+      expect(boxes('code').length).toBe(1);
+      expect(boxes('packages').length).toBe(2);
       // La fecha es un date picker de rango: un campo, la fila queda en una altura.
-      expect(boxes('fecha').length).toBe(1);
+      expect(boxes('date').length).toBe(1);
     });
 
     it('filters text by substring (the whole query goes out), and a number range', async () => {
-      type(boxes('codigo')[0]!, '0002');
+      type(boxes('code')[0]!, '0002');
       await settle();
       expect(bodyRows().length).toBe(1);
-      expect(host.lastQuery?.filters).toEqual({ codigo: '0002' });
+      expect(host.lastQuery?.filters).toEqual({ code: '0002' });
       expect(host.lastQuery?.page).toBe(0);
       // Un control reconstruido en cada ciclo borraría lo tipeado.
-      expect(boxes('codigo')[0]?.value).toBe('0002');
-      type(boxes('codigo')[0]!, '');
-      const [min, max] = boxes('bultos');
+      expect(boxes('code')[0]?.value).toBe('0002');
+      type(boxes('code')[0]!, '');
+      const [min, max] = boxes('packages');
       type(min!, '100');
       type(max!, '1000');
       await settle();
@@ -502,7 +502,7 @@ describe('Table', () => {
     });
 
     it('A CLEARED BOX IS UNBOUNDED, NOT ZERO', async () => {
-      const [min, max] = boxes('bultos');
+      const [min, max] = boxes('packages');
       type(max!, '1000');
       await settle();
       expect(bodyRows().length).toBe(2);
@@ -517,14 +517,14 @@ describe('Table', () => {
     });
 
     it('filters a date range, written in the language of the app', async () => {
-      const [range] = boxes('fecha');
+      const [range] = boxes('date');
       type(range!, '1/2/2026 – 28/2/2026');
       range!.focus();
       range!.blur();
       await settle();
       expect(bodyRows().length).toBe(1);
       expect(textOf(0)).toContain('EXP-0002');
-      expect(host.lastQuery?.filters).toEqual({ fecha: { from: '2026-02-01', to: '2026-02-28' } });
+      expect(host.lastQuery?.filters).toEqual({ date: { from: '2026-02-01', to: '2026-02-28' } });
 
       type(range!, '');
       range!.focus();
@@ -557,7 +557,7 @@ describe('Table', () => {
     it('emits the chosen rows, and SELECTED WINS OVER THE STATE TINT', async () => {
       tick(checkboxes()[1]!);
       await settle();
-      expect(host.selection.map((row) => row.codigo)).toEqual(['EXP-0002']);
+      expect(host.selection.map((row) => row.code)).toEqual(['EXP-0002']);
       expect(bodyRows()[1]?.getAttribute('aria-selected')).toBe('true');
       // El estado ya lo dice el badge (ícono y texto); la selección, solo tinte y casilla.
       expect(bodyRows()[1]?.className).toContain('bg-row-selected');
@@ -585,7 +585,7 @@ describe('Table', () => {
       await settle();
       checkboxes()[2]!.dispatchEvent(new MouseEvent('click', { bubbles: true, shiftKey: true }));
       await settle();
-      expect(host.selection.map((row) => row.codigo)).toEqual(['EXP-0001', 'EXP-0002', 'EXP-0003']);
+      expect(host.selection.map((row) => row.code)).toEqual(['EXP-0001', 'EXP-0002', 'EXP-0003']);
 
       // Con el teclado: se limpia y el rango va de la fila 2 a la 0.
       (fixture.nativeElement.querySelector('[data-clear-selection] button') as HTMLElement).click();
@@ -617,7 +617,7 @@ describe('Table', () => {
 
       (bar.querySelector('[data-bulk-action="imprimir"] button') as HTMLElement).click();
       expect(host.lastBulk?.item.id).toBe('imprimir');
-      expect(host.lastBulk?.rows.map((row) => row.codigo)).toEqual(['EXP-0001', 'EXP-0003']);
+      expect(host.lastBulk?.rows.map((row) => row.code)).toEqual(['EXP-0001', 'EXP-0003']);
 
       // Una acción deshabilitada se ve y no hace nada.
       host.lastBulk = null;
@@ -761,7 +761,7 @@ describe('Table', () => {
       cell.dispatchEvent(event);
       await settle();
 
-      expect(host.selection.map((row) => row.codigo)).toEqual(['EXP-0002']);
+      expect(host.selection.map((row) => row.code)).toEqual(['EXP-0002']);
       expect(event.defaultPrevented).toBe(true);
     });
 
@@ -831,9 +831,9 @@ describe('Table', () => {
     const chips = (): HTMLElement[] =>
       [...fixture.nativeElement.querySelectorAll('[data-chip]')] as HTMLElement[];
 
-    async function filterCodigo(value: string): Promise<void> {
+    async function filterCode(value: string): Promise<void> {
       const box = fixture.nativeElement.querySelector(
-        '[data-filter="codigo"] input',
+        '[data-filter="code"] input',
       ) as HTMLInputElement;
       box.value = value;
       box.dispatchEvent(new Event('input'));
@@ -850,7 +850,7 @@ describe('Table', () => {
       expect(filterRow().hidden).toBe(false);
       expect(toggle().getAttribute('aria-expanded')).toBe('true');
       toggle().click();
-      await filterCodigo('0002');
+      await filterCode('0002');
       expect(toggle().textContent?.trim()).toBe('Filtros (1)');
       expect(chips().map((chip) => chip.textContent?.replace(/\s+/g, ' ').trim())).toEqual([
         'Código: 0002',
@@ -859,17 +859,17 @@ describe('Table', () => {
     });
 
     it('the chip × takes that filter off, box included; «Limpiar filtros» takes them all', async () => {
-      await filterCodigo('0002');
+      await filterCode('0002');
       chips()[0]!.querySelector('button')!.click();
       await settle();
       expect(bodyRows().length).toBe(3);
       expect(chips().length).toBe(0);
       expect(
-        (fixture.nativeElement.querySelector('[data-filter="codigo"] input') as HTMLInputElement)
+        (fixture.nativeElement.querySelector('[data-filter="code"] input') as HTMLInputElement)
           .value,
       ).toBe('');
 
-      await filterCodigo('EXP');
+      await filterCode('EXP');
       (fixture.nativeElement.querySelector('[data-clear-filters]') as HTMLButtonElement).click();
       await settle();
       expect(host.lastQuery?.filters).toEqual({});
@@ -878,7 +878,7 @@ describe('Table', () => {
 
     it('writes each chip in the shape of its column: ranges with their bounds', async () => {
       const [min, max] = [
-        ...fixture.nativeElement.querySelectorAll('[data-filter="bultos"] input'),
+        ...fixture.nativeElement.querySelectorAll('[data-filter="packages"] input'),
       ] as HTMLInputElement[];
       min!.value = '100';
       min!.dispatchEvent(new Event('input'));
@@ -896,7 +896,7 @@ describe('Table', () => {
       expect(chips()[0]?.textContent).toContain('≤ n:1000');
 
       const range = fixture.nativeElement.querySelector(
-        '[data-filter="fecha"] input',
+        '[data-filter="date"] input',
       ) as HTMLInputElement;
       range.value = '1/2/2026 – 28/2/2026';
       range.dispatchEvent(new Event('input'));
@@ -908,7 +908,7 @@ describe('Table', () => {
 
     describe('a badge column: a set of its states', () => {
       const trigger = (): HTMLButtonElement =>
-        fixture.nativeElement.querySelector('[data-filter="estado"] button') as HTMLButtonElement;
+        fixture.nativeElement.querySelector('[data-filter="status"] button') as HTMLButtonElement;
       const box = (selector: string): HTMLInputElement =>
         document.querySelector(`${selector} input`) as HTMLInputElement;
 
@@ -931,7 +931,7 @@ describe('Table', () => {
         expect(bodyRows().map((row) => row.textContent)).toEqual([
           expect.stringContaining('EXP-0002'),
         ]);
-        expect(host.lastQuery?.filters).toEqual({ estado: ['con-incidencia'] });
+        expect(host.lastQuery?.filters).toEqual({ status: ['con-incidencia'] });
         expect(trigger().textContent?.trim()).toBe('Estado: 1 de 2');
         expect(box('[data-set-all]').getAttribute('aria-checked')).toBe('mixed');
         expect(chips()[0]?.textContent).toContain('Estado: Con incidencia');
@@ -966,7 +966,7 @@ describe('Table', () => {
       box.checked = true;
       box.dispatchEvent(new Event('change'));
       toggle().click();
-      await filterCodigo('EXP');
+      await filterCode('EXP');
       await expectNoAxeViolations(fixture.nativeElement);
     });
   });
@@ -1085,19 +1085,19 @@ describe('Table with a failing source', () => {
 describe('Table with lazy children', () => {
   interface Lazy {
     readonly id: string;
-    readonly codigo: string;
+    readonly code: string;
   }
 
-  const ROOTS: readonly Lazy[] = [{ id: 'r1', codigo: 'EXP-1' }];
+  const ROOTS: readonly Lazy[] = [{ id: 'r1', code: 'EXP-1' }];
   const KIDS: readonly Lazy[] = [
-    { id: 'k1', codigo: 'SKU-1' },
-    { id: 'k2', codigo: 'SKU-2' },
+    { id: 'k1', code: 'SKU-1' },
+    { id: 'k2', code: 'SKU-2' },
   ];
 
   @Component({
     template: `
       <ewms-table [source]="source" [children]="children" [trackBy]="byId" ariaLabel="Perezosa">
-        <ewms-column key="codigo" header="Código" />
+        <ewms-column key="code" header="Código" />
       </ewms-table>
     `,
     imports: [Table, TableColumn],
@@ -1257,7 +1257,7 @@ const MENU: readonly MenuItem[] = [
   { id: 'ver', label: 'Ver detalle' },
   { id: 'imprimir', label: 'Imprimir', disabled: true },
   { id: 'duplicar', label: 'Duplicar' },
-  { id: 'anular', label: 'Anular', tone: 'danger', separatorBefore: true },
+  { id: 'anular', label: 'Anular', variant: 'danger', separatorBefore: true },
 ];
 
 @Component({
@@ -1268,27 +1268,27 @@ const MENU: readonly MenuItem[] = [
       [isRowMaster]="isMaster"
       [menuItems]="menu()"
       ariaLabel="Expediciones"
-      (rowMenu)="chosen = $event.item.id + ':' + $event.row.codigo"
+      (rowMenu)="chosen = $event.item.id + ':' + $event.row.code"
     >
-      <ewms-column key="codigo" header="Código" />
-      <ewms-column key="bultos" header="Bultos" type="number" />
-      <ewms-column key="acciones" header="Acciones" type="actions" />
+      <ewms-column key="code" header="Código" />
+      <ewms-column key="packages" header="Bultos" type="number" />
+      <ewms-column key="actions" header="Acciones" type="actions" />
 
       <!-- codigoOf y no row.codigo: ewmsDetail tipa la fila como unknown (hueco reportado, ver vault: Tabla). -->
       <ng-template ewmsDetail let-row>
-        <p data-detail-body>Detalle de {{ codigoOf(row) }}</p>
+        <p data-detail-body>Detalle de {{ codeOf(row) }}</p>
       </ng-template>
     </ewms-table>
   `,
   imports: [Table, TableColumn, DetailTemplate],
 })
 class DetailHost {
-  readonly source = new ArrayTableSource<Row>(ROWS, ['codigo']);
+  readonly source = new ArrayTableSource<Row>(ROWS, ['code']);
   readonly byId = (row: Row): unknown => row.id;
-  readonly isMaster = (row: Row): boolean => row.bultos > 100;
+  readonly isMaster = (row: Row): boolean => row.packages > 100;
   readonly menu = signal<readonly MenuItem[]>(MENU);
 
-  readonly codigoOf = (row: unknown): string => (row as Row).codigo;
+  readonly codeOf = (row: unknown): string => (row as Row).code;
 
   chosen = '';
 }
@@ -1539,13 +1539,13 @@ describe('Table master/detail', () => {
 
 interface Big {
   readonly id: number;
-  readonly codigo: string;
+  readonly code: string;
 }
 
 function bigRows(count: number): readonly Big[] {
   return Array.from({ length: count }, (_unused, index) => ({
     id: index,
-    codigo: `EXP-${String(index).padStart(5, '0')}`,
+    code: `EXP-${String(index).padStart(5, '0')}`,
   }));
 }
 
@@ -1560,13 +1560,13 @@ const HUGE = bigRows(5000);
       [pageSize]="5000"
       ariaLabel="Expediciones"
     >
-      <ewms-column key="codigo" header="Código" />
+      <ewms-column key="code" header="Código" />
     </ewms-table>
   `,
   imports: [Table, TableColumn],
 })
 class HugeHost {
-  readonly source = signal<TableSource<Big>>(new ArrayTableSource(HUGE, ['codigo']));
+  readonly source = signal<TableSource<Big>>(new ArrayTableSource(HUGE, ['code']));
   readonly byId = (row: Big): unknown => row.id;
 }
 
@@ -1582,7 +1582,7 @@ async function hugeFixture(rows: readonly Big[]): Promise<ComponentFixture<HugeH
 
   const fixture = TestBed.createComponent(HugeHost);
   // Antes del primer render: la ventana decide si hay una docena de filas en el DOM o todas.
-  fixture.componentInstance.source.set(new ArrayTableSource(rows, ['codigo']));
+  fixture.componentInstance.source.set(new ArrayTableSource(rows, ['code']));
   fixture.detectChanges();
   await fixture.whenStable();
   fixture.detectChanges();
@@ -1712,11 +1712,11 @@ describe('Table and the `filters` shortcut', () => {
       <div ewmsShortcutsHost>
         <button id="outside" type="button">afuera</button>
         <ewms-table id="plain" [source]="source" ariaLabel="Sin filtros">
-          <ewms-column key="codigo" header="Código" />
+          <ewms-column key="code" header="Código" />
         </ewms-table>
         <ewms-table id="filtered" [source]="source" [quickFilter]="true" ariaLabel="Con filtros">
-          <ewms-column key="codigo" header="Código" [filterable]="true" />
-          <ewms-column key="bultos" header="Bultos" type="number" />
+          <ewms-column key="code" header="Código" [filterable]="true" />
+          <ewms-column key="packages" header="Bultos" type="number" />
         </ewms-table>
       </div>
     `,
@@ -1727,7 +1727,7 @@ describe('Table and the `filters` shortcut', () => {
     ],
   })
   class ShortcutHost {
-    readonly source = new ArrayTableSource(ROWS, ['codigo']);
+    readonly source = new ArrayTableSource(ROWS, ['code']);
   }
 
   let fixture: ComponentFixture<ShortcutHost>;
@@ -1785,7 +1785,7 @@ describe('Table and the `filters` shortcut', () => {
   });
 
   it('Alt+Shift+→ moves the column whose header has the focus, and the focus follows it', async () => {
-    const handle = fixture.nativeElement.querySelector('#filtered [data-resize="codigo"]');
+    const handle = fixture.nativeElement.querySelector('#filtered [data-resize="code"]');
     handle.focus();
     handle.dispatchEvent(
       new KeyboardEvent('keydown', { key: 'ArrowRight', altKey: true, shiftKey: true, bubbles: true }),
@@ -1795,8 +1795,8 @@ describe('Table and the `filters` shortcut', () => {
     const keys = [...fixture.nativeElement.querySelectorAll('#filtered th[data-col]')].map(
       (th) => (th as HTMLElement).dataset['col'],
     );
-    expect(keys).toEqual(['bultos', 'codigo']);
-    expect(document.activeElement?.getAttribute('data-resize')).toBe('codigo');
+    expect(keys).toEqual(['packages', 'code']);
+    expect(document.activeElement?.getAttribute('data-resize')).toBe('code');
     expect(fixture.nativeElement.querySelector('#filtered [data-table-announce]').textContent).toBe(
       'Código, posición 2 de 2',
     );
@@ -1820,16 +1820,16 @@ describe('Table columns', () => {
         ariaLabel="Columnas"
         (viewChange)="view = $event"
       >
-        <ewms-column key="bultos" header="Bultos" type="number" />
-        <ewms-column key="codigo" header="Código" pinned="start" [hideable]="false" />
-        <ewms-column key="fecha" header="Fecha" type="date" />
-        <ewms-column key="acciones" header="Acciones" type="actions" pinned="end" />
+        <ewms-column key="packages" header="Bultos" type="number" />
+        <ewms-column key="code" header="Código" pinned="start" [hideable]="false" />
+        <ewms-column key="date" header="Fecha" type="date" />
+        <ewms-column key="actions" header="Acciones" type="actions" pinned="end" />
       </ewms-table>
     `,
     imports: [Table, TableColumn],
   })
   class ColumnsHost {
-    readonly source = new ArrayTableSource(ROWS, ['codigo']);
+    readonly source = new ArrayTableSource(ROWS, ['code']);
     readonly byId = (row: Row): unknown => row.id;
     view: TableView | null = null;
   }
@@ -1895,16 +1895,16 @@ describe('Table columns', () => {
     // Vuelve a medir cuando la tabla cambia de tamaño (y la barra, para compactarse).
     expect(observed).toContain(fixture.nativeElement.querySelector('table'));
     expect(observed).toContain(fixture.nativeElement.querySelector('ewms-table-toolbar'));
-    expect(headers()).toEqual(['codigo', 'bultos', 'fecha', 'acciones']);
-    expect(header('codigo').className).toContain('sticky');
-    expect(header('codigo').className).not.toContain('border-e');
+    expect(headers()).toEqual(['code', 'packages', 'date', 'actions']);
+    expect(header('code').className).toContain('sticky');
+    expect(header('code').className).not.toContain('border-e');
     const box = fixture.nativeElement.querySelector('[data-scroll-box]') as HTMLElement;
     box.scrollLeft = 40;
     box.dispatchEvent(new Event('scroll'));
     await settle();
-    expect(header('codigo').className).toContain('after:shadow-pin-start');
-    expect(header('acciones').className).toContain('sticky');
-    expect(header('acciones').style.right).toBe(pixels(0));
+    expect(header('code').className).toContain('after:shadow-pin-start');
+    expect(header('actions').className).toContain('sticky');
+    expect(header('actions').style.right).toBe(pixels(0));
     // La casilla se queda con ellas, a la izquierda.
     expect(fixture.nativeElement.querySelector('th[data-col-select]').className).toContain(
       'sticky',
@@ -1915,31 +1915,31 @@ describe('Table columns', () => {
 
   it('hides and shows from the chooser, and never lets go of one that says no', async () => {
     await openChooser();
-    expect(option('codigo').disabled).toBe(true);
+    expect(option('code').disabled).toBe(true);
 
-    option('bultos').click();
+    option('packages').click();
     await settle();
-    expect(headers()).toEqual(['codigo', 'fecha', 'acciones']);
+    expect(headers()).toEqual(['code', 'date', 'actions']);
     expect(fixture.nativeElement.querySelector('table').getAttribute('aria-colcount')).toBe('4');
-    expect(fixture.componentInstance.view?.hidden).toEqual(['bultos']);
+    expect(fixture.componentInstance.view?.hidden).toEqual(['packages']);
 
-    option('bultos').click();
+    option('packages').click();
     await settle();
-    expect(headers()).toEqual(['codigo', 'bultos', 'fecha', 'acciones']);
+    expect(headers()).toEqual(['code', 'packages', 'date', 'actions']);
   });
 
   it('NEVER HIDES THE LAST VISIBLE ONE: its box goes disabled', async () => {
     @Component({
       template: `
         <ewms-table [source]="source" [columnChooser]="true" ariaLabel="Dos">
-          <ewms-column key="codigo" header="Código" />
-          <ewms-column key="bultos" header="Bultos" type="number" />
+          <ewms-column key="code" header="Código" />
+          <ewms-column key="packages" header="Bultos" type="number" />
         </ewms-table>
       `,
       imports: [Table, TableColumn],
     })
     class TwoHost {
-      readonly source = new ArrayTableSource(ROWS, ['codigo']);
+      readonly source = new ArrayTableSource(ROWS, ['code']);
     }
     const two = TestBed.createComponent(TwoHost);
     document.body.appendChild(two.nativeElement);
@@ -1949,11 +1949,11 @@ describe('Table columns', () => {
     two.detectChanges();
     await two.whenStable();
 
-    option('codigo').click();
+    option('code').click();
     two.detectChanges();
     await two.whenStable();
-    expect(option('bultos').disabled).toBe(true);
-    option('bultos').click();
+    expect(option('packages').disabled).toBe(true);
+    option('packages').click();
     two.detectChanges();
     expect(two.nativeElement.querySelectorAll('th[data-col]').length).toBe(1);
     two.nativeElement.remove();
@@ -1962,7 +1962,7 @@ describe('Table columns', () => {
   it('THE COLUMN MENU: ⋮ or Shift+F10, what is done disabled; it pins and hides', async () => {
     const entry = (id: string): HTMLElement =>
       document.querySelector(`[data-menu-item="${id}"]`) as HTMLElement;
-    const open = header('bultos').querySelector('[data-column-menu] button') as HTMLElement;
+    const open = header('packages').querySelector('[data-column-menu] button') as HTMLElement;
     open.click();
     await settle();
     expect(document.querySelector('[role="menu"]')?.getAttribute('aria-label')).toBe(
@@ -1974,28 +1974,28 @@ describe('Table columns', () => {
     expect(entry('moveLeft').getAttribute('aria-disabled')).toBe('true');
     entry('pinStart').click();
     await settle();
-    expect(headers()).toEqual(['bultos', 'codigo', 'fecha', 'acciones']);
+    expect(headers()).toEqual(['packages', 'code', 'date', 'actions']);
     expect(fixture.componentInstance.view?.pinned).toEqual({
-      bultos: 'start',
-      codigo: 'start',
-      acciones: 'end',
+      packages: 'start',
+      code: 'start',
+      actions: 'end',
     });
     expect(document.activeElement).toBe(open);
 
-    separator('fecha').dispatchEvent(
+    separator('date').dispatchEvent(
       new KeyboardEvent('keydown', { key: 'F10', shiftKey: true, bubbles: true }),
     );
     await settle();
     entry('hide').click();
     await settle();
-    expect(fixture.componentInstance.view?.hidden).toEqual(['fecha']);
+    expect(fixture.componentInstance.view?.hidden).toEqual(['date']);
 
     // «Restablecer vista» vuelve a lo declarado: orden, visibles y fijadas.
     await openChooser();
     (document.querySelector('[data-reset-view] button') as HTMLButtonElement).click();
     await settle();
-    expect(headers()).toEqual(['codigo', 'bultos', 'fecha', 'acciones']);
-    expect(fixture.componentInstance.view?.pinned).toEqual({ codigo: 'start', acciones: 'end' });
+    expect(headers()).toEqual(['code', 'packages', 'date', 'actions']);
+    expect(fixture.componentInstance.view?.pinned).toEqual({ code: 'start', actions: 'end' });
   });
 
   it('REORDERS INSIDE ITS PIN GROUP, from the chooser and by dragging, and says where', async () => {
@@ -2008,96 +2008,96 @@ describe('Table columns', () => {
     const row = (key: string, button: string): HTMLButtonElement =>
       document.querySelector(`[data-column-row="${key}"] ${button} button`) as HTMLButtonElement;
     // Bultos es la primera normal: no sube por encima de la fijada.
-    expect(row('bultos', '[data-column-up]').disabled).toBe(true);
-    row('bultos', '[data-column-down]').click();
+    expect(row('packages', '[data-column-up]').disabled).toBe(true);
+    row('packages', '[data-column-down]').click();
     await settle();
-    expect(headers()).toEqual(['codigo', 'fecha', 'bultos', 'acciones']);
-    expect(fixture.componentInstance.view?.order).toEqual(['codigo', 'fecha', 'bultos', 'acciones']);
+    expect(headers()).toEqual(['code', 'date', 'packages', 'actions']);
+    expect(fixture.componentInstance.view?.order).toEqual(['code', 'date', 'packages', 'actions']);
     expect(fixture.nativeElement.querySelector('[data-table-announce]').textContent).toBe(
       'Bultos, posición 3 de 4',
     );
     // jsdom mide cero: a la izquierda del centro es «antes»; la línea marca el lado.
-    drag('dragstart', 'bultos');
-    drag('dragover', 'fecha', -1);
-    drag('dragover', 'fecha', -1);
+    drag('dragstart', 'packages');
+    drag('dragover', 'date', -1);
+    drag('dragover', 'date', -1);
     await settle();
-    expect(header('fecha').className).toContain('before:start-0');
-    drag('drop', 'fecha', -1);
+    expect(header('date').className).toContain('before:start-0');
+    drag('drop', 'date', -1);
     await settle();
-    expect(headers()).toEqual(['codigo', 'bultos', 'fecha', 'acciones']);
+    expect(headers()).toEqual(['code', 'packages', 'date', 'actions']);
 
     // Desde el separador se redimensiona; una normal no cae entre las fijadas.
-    separator('bultos').dispatchEvent(new MouseEvent('pointerdown', { bubbles: true }));
-    drag('dragstart', 'bultos');
-    drag('drop', 'fecha', -1);
-    header('bultos').dispatchEvent(new MouseEvent('pointerdown', { bubbles: true }));
-    drag('dragstart', 'bultos');
-    drag('dragover', 'codigo', -1);
-    drag('drop', 'codigo', -1);
+    separator('packages').dispatchEvent(new MouseEvent('pointerdown', { bubbles: true }));
+    drag('dragstart', 'packages');
+    drag('drop', 'date', -1);
+    header('packages').dispatchEvent(new MouseEvent('pointerdown', { bubbles: true }));
+    drag('dragstart', 'packages');
+    drag('dragover', 'code', -1);
+    drag('drop', 'code', -1);
     await settle();
-    expect(header('codigo').className).not.toContain('before:');
-    expect(headers()).toEqual(['codigo', 'bultos', 'fecha', 'acciones']);
+    expect(header('code').className).not.toContain('before:');
+    expect(headers()).toEqual(['code', 'packages', 'date', 'actions']);
   });
 
   it('is a window splitter: named, vertical, with its width; arrows step by token; it drags', async () => {
-    const handle = separator('fecha');
+    const handle = separator('date');
     expect(handle.getAttribute('role')).toBe('separator');
     expect(handle.getAttribute('aria-orientation')).toBe('vertical');
     expect(handle.getAttribute('aria-label')).toBe('Ancho de la columna Fecha');
     expect(handle.getAttribute('tabindex')).toBe('0');
     // Una columna de acciones no se redimensiona.
-    expect(separator('acciones')).toBeNull();
+    expect(separator('actions')).toBeNull();
 
     handle.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
     await settle();
     // jsdom mide cero: el mínimo manda.
-    expect(fixture.componentInstance.view?.widths).toEqual({ fecha: MIN });
+    expect(fixture.componentInstance.view?.widths).toEqual({ date: MIN });
     handle.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
     await settle();
-    expect(header('fecha').style.width).toBe(pixels(MIN + STEP));
+    expect(header('date').style.width).toBe(pixels(MIN + STEP));
     expect(handle.getAttribute('aria-valuenow')).toBe(String(MIN + STEP));
 
     handle.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true }));
     await settle();
-    expect(header('fecha').style.width).toBe(pixels(MIN));
+    expect(header('date').style.width).toBe(pixels(MIN));
 
     // Doble clic: ajusta a lo que pide la celda más ancha, con el tope del token.
-    const widest = fixture.nativeElement.querySelector('td[data-col="fecha"] .truncate');
+    const widest = fixture.nativeElement.querySelector('td[data-col="date"] .truncate');
     Object.defineProperty(widest, 'scrollWidth', { configurable: true, value: 900 });
     handle.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
     await settle();
-    expect(fixture.componentInstance.view?.widths).toEqual({ fecha: FIT });
+    expect(fixture.componentInstance.view?.widths).toEqual({ date: FIT });
 
     // Con el puntero, y nunca bajo el mínimo.
-    const grip = separator('bultos');
+    const grip = separator('packages');
     grip.dispatchEvent(new MouseEvent('pointerdown', { clientX: 100, bubbles: true }));
     grip.dispatchEvent(new MouseEvent('pointermove', { clientX: 260, bubbles: true }));
     grip.dispatchEvent(new MouseEvent('pointerup', { clientX: 260, bubbles: true }));
     await settle();
-    expect(header('bultos').style.width).toBe(pixels(160));
+    expect(header('packages').style.width).toBe(pixels(160));
 
     grip.dispatchEvent(new MouseEvent('pointerdown', { clientX: 100, bubbles: true }));
     grip.dispatchEvent(new MouseEvent('pointermove', { clientX: 0, bubbles: true }));
     await settle();
-    expect(header('bultos').style.width).toBe(pixels(MIN));
+    expect(header('packages').style.width).toBe(pixels(MIN));
   });
 
   it('LETS GO OF THE PINS when they would take more than half the box', async () => {
     const box = fixture.nativeElement.querySelector('[data-scroll-box]') as HTMLElement;
     Object.defineProperty(box, 'clientWidth', { configurable: true, value: 274 });
-    header('codigo').getBoundingClientRect = () => ({ width: 160 }) as DOMRect;
+    header('code').getBoundingClientRect = () => ({ width: 160 }) as DOMRect;
     // Cualquier cambio de la vista vuelve a medir.
-    separator('fecha').dispatchEvent(
+    separator('date').dispatchEvent(
       new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }),
     );
     await settle();
 
-    expect(header('codigo').className).not.toContain('sticky');
+    expect(header('code').className).not.toContain('sticky');
     expect(fixture.nativeElement.querySelector('th[data-col-select]').className).not.toContain(
       'sticky',
     );
     // El orden no cambia: lo fijado sigue en su borde, solo deja de pegarse.
-    expect(headers()[0]).toBe('codigo');
+    expect(headers()[0]).toBe('code');
   });
 
   it('has no axe violations with the chooser open', async () => {
@@ -2120,19 +2120,19 @@ describe('Table export', () => {
         ariaLabel="Expediciones"
         (exportRequest)="request = $event"
       >
-        <ewms-column key="codigo" header="Código" [sortable]="true" />
-        <ewms-column key="bultos" header="Bultos" type="number" [sortable]="true" />
-        <ewms-column key="fecha" header="Fecha" type="date" />
-        <ewms-column key="estado" header="Estado" type="badge" [badges]="estados" />
-        <ewms-column key="acciones" header="Acciones" type="actions" />
+        <ewms-column key="code" header="Código" [sortable]="true" />
+        <ewms-column key="packages" header="Bultos" type="number" [sortable]="true" />
+        <ewms-column key="date" header="Fecha" type="date" />
+        <ewms-column key="status" header="Estado" type="badge" [badges]="statuses" />
+        <ewms-column key="actions" header="Acciones" type="actions" />
       </ewms-table>
     `,
     imports: [Table, TableColumn],
   })
   class ExportHost {
-    readonly estados = ESTADOS;
+    readonly statuses = STATUSES;
     readonly source = signal<TableSource<Row>>(
-      new ArrayTableSource([...ROWS, { ...ROWS[1]!, id: '4', codigo: 'EXP-0004', bultos: 1234 }]),
+      new ArrayTableSource([...ROWS, { ...ROWS[1]!, id: '4', code: 'EXP-0004', packages: 1234 }]),
     );
     readonly byId = (row: Row): unknown => row.id;
     request: ExportRequest | null = null;
@@ -2199,7 +2199,7 @@ describe('Table export', () => {
   }
 
   it('CSV IS EVERYTHING FILTERED AND SORTED, not the page: BOM, raw numbers, ISO dates', async () => {
-    (fixture.nativeElement.querySelector('[data-sort="bultos"]') as HTMLElement).click();
+    (fixture.nativeElement.querySelector('[data-sort="packages"]') as HTMLElement).click();
     await settle();
     expect(fixture.nativeElement.querySelectorAll('tbody tr').length).toBe(2);
 
@@ -2265,7 +2265,7 @@ describe('Table export', () => {
     expect(downloads).toEqual([]);
     expect(fixture.componentInstance.request).toEqual({
       query: expect.objectContaining({ page: 0, pageSize: 2 }),
-      columns: ['codigo', 'bultos', 'fecha', 'estado', 'acciones'],
+      columns: ['code', 'packages', 'date', 'status', 'actions'],
       selectedOnly: false,
     });
   });

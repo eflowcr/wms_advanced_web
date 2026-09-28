@@ -106,6 +106,13 @@ export class SearchBox implements OnInit {
     this.value.set((event.target as HTMLInputElement).value);
   }
 
+  /** Enter busca, salvo el que confirma una composición (IME): ese solo elige el carácter. */
+  protected onKeydown(event: KeyboardEvent): void {
+    if (event.key === 'Enter' && !event.isComposing) {
+      this.submit();
+    }
+  }
+
   protected submit(): void {
     const query = normalizeQuery(this.value());
     if (query) {

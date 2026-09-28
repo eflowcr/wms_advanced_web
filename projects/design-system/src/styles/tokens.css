@@ -120,6 +120,15 @@
 
   --blur-8: 8px;
 
+  /* Mínimos de columna de las rejillas del catálogo: en rem, siguen al tamaño de letra del navegador. */
+  --rem-8: 8rem;
+  --rem-12: 12rem;
+  --rem-14: 14rem;
+  --rem-16: 16rem;
+  --rem-18: 18rem;
+  --rem-20: 20rem;
+  --rem-24: 24rem;
+
   --vh-70: 70vh;
   --dvh-100: 100dvh;
   --ms-50: 50ms;
@@ -291,6 +300,16 @@
   --shell-content-height: calc(var(--dvh-100) - var(--shell-chrome-height));
   /* Subrayado de la pestaña de sección activa. */
   --tab-indicator-width: var(--size-3);
+  /* Rejillas del catálogo: tantas columnas como entren, ninguna bajo su mínimo ni más ancha que la
+   * fila. `fit` reparte el sobrante entre las que hay; `fill` deja lugar a las que faltan. */
+  --grid-cards: repeat(auto-fit, minmax(min(var(--rem-20), 100%), 1fr));
+  --grid-demos: repeat(auto-fit, minmax(min(var(--rem-24), 100%), 1fr));
+  --grid-tiles: repeat(auto-fit, minmax(min(var(--rem-18), 100%), 1fr));
+  --grid-index: repeat(auto-fill, minmax(min(var(--rem-18), 100%), 1fr));
+  --grid-samples: repeat(auto-fit, minmax(min(var(--rem-16), 100%), 1fr));
+  --grid-fields: repeat(auto-fit, minmax(min(var(--rem-14), 100%), 1fr));
+  --grid-facts: repeat(auto-fit, minmax(min(var(--rem-12), 100%), 1fr));
+  --grid-icons: repeat(auto-fill, minmax(min(var(--rem-8), 100%), 1fr));
   /* Entrada del cajón: se desliza en 200 ms, desacelerando (@keyframes en styles.css). Una propiedad
    * y no tres utilidades: duración y curva por clase registraban @property en la hoja inicial. */
   --animate-nav-drawer: nav-drawer-in var(--ms-200) var(--ease-out);

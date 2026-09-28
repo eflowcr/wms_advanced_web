@@ -24,7 +24,7 @@ jobs:
   analyze:
     name: Analyze (${{ matrix.language }})
     runs-on: ubuntu-latest
-    # El doble de la mayor duración medida (83 s, 2026-09-25), al minuto de arriba.
+    # El doble de lo que tardó en la corrida 36360922076 (80 s, la pata más larga), al minuto de arriba.
     timeout-minutes: 3
     permissions:
       contents: read

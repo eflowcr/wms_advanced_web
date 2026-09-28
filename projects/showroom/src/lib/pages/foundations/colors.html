@@ -123,7 +123,7 @@
 
   <section class="flex flex-col gap-4" aria-labelledby="colors-rules">
     <h2 id="colors-rules" class="text-h2">{{ 'showroom.colors.rules.title' | transloco }}</h2>
-    <div class="grid grid-cols-[repeat(auto-fit,minmax(min(20rem,100%),1fr))] gap-4">
+    <div class="grid grid-cols-cards gap-4">
       <div class="flex flex-col gap-2 rounded-md border border-default bg-surface p-4">
         <h3 class="text-h3">{{ 'showroom.colors.rules.blue.title' | transloco }}</h3>
         <p [ewmsProse]="'showroom.colors.rules.blue.body' | transloco"></p>

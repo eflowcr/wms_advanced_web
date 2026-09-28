@@ -302,6 +302,41 @@ test.describe('the App Shell', () => {
     await expect(drawer).toHaveCSS('animation-name', 'none');
   });
 
+  test('open, the drawer and the «Más» sheet are modal: the page under their veil is inert until they close', async ({
+    page,
+  }) => {
+    const underVeil = (selector: string): Promise<boolean> =>
+      page.locator(selector).evaluate((element) => element.closest('[inert]') !== null);
+
+    await page.setViewportSize({ width: 1024, height: 768 });
+    await page.goto('/');
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+    await page.locator('[data-rail-toggle] button').click();
+    const modal = page.locator('[aria-modal="true"]');
+    await expect(modal).toHaveCount(1);
+    await expect(modal).toHaveAttribute('role', 'dialog');
+    await expect(modal.locator('[data-nav-drawer]')).toBeVisible();
+    expect(await underVeil('#main')).toBe(true);
+    expect(await underVeil('[data-shell-stamp]')).toBe(true);
+    // La cabecera se pinta sobre el velo: el logo y la hamburguesa siguen al alcance.
+    expect(await underVeil('[data-app-header]')).toBe(false);
+    await page.keyboard.press('Escape');
+    await expect(modal).toHaveCount(0);
+    await expect(page.locator('[inert]')).toHaveCount(0);
+
+    await page.setViewportSize({ width: 375, height: 812 });
+    await page.locator('[data-nav-bottom-more]').click();
+    const sheet = page.locator('[data-nav-bottom-sheet]');
+    await expect(sheet).toHaveAttribute('aria-modal', 'true');
+    await expect(sheet).toHaveAttribute('role', 'dialog');
+    expect(await underVeil('#main')).toBe(true);
+    expect(await underVeil('[data-nav-bottom]')).toBe(true);
+    await page.keyboard.press('Escape');
+    await expect(sheet).toHaveCount(0);
+    await expect(page.locator('[inert]')).toHaveCount(0);
+    await expect(page.locator('[data-nav-bottom-more]')).toBeFocused();
+  });
+
   test('any navigation closes the drawer: the logo, going back, and a wider window leave none open', async ({
     page,
   }) => {

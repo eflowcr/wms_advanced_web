@@ -29,15 +29,15 @@ import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { DemoFrame } from '../../ui/demo-frame';
 import { DocTable, type DocColumn } from '../../ui/doc-table';
 import { Prose } from '../../ui/prose';
-import { injectEstados, type ExpedicionRow } from '../components/expediciones';
-import { EXPEDICIONES } from '../components/expediciones.fixtures';
+import { injectStatuses, type ShipmentRow } from '../components/shipments';
+import { SHIPMENTS } from '../components/shipments.fixtures';
 import { FLOW_BUDGETS, type FlowId } from './click-budget';
-import { ShipmentForm, type ExpedicionDraft } from './shipment-form';
-import { ExpedicionSource } from './expedicion-source';
+import { ShipmentForm, type ShipmentDraft } from './shipment-form';
+import { ShipmentSource } from './shipment-source';
 
 // Solo cabeceras: el árbol se demuestra en la ficha de Tabla; acá sumaría un clic de
 // expandir a cada conteo que nada tiene que ver con buscar o editar.
-const HEADER_ROWS = EXPEDICIONES.map(({ hijos: _hijos, ...row }) => row);
+const HEADER_ROWS = SHIPMENTS.map(({ children: _children, ...row }) => row);
 
 // Controles cuyo clic avanza un flujo (REQ-FE-DS4-003 §2.1). Abrir un panel o desplegable
 // cuenta a propósito: el REQ lo cuenta aunque no sea el paso final.
@@ -155,29 +155,29 @@ export class ShowroomSearchCreateEdit {
   protected readonly situationColumns = SITUATION_COLUMNS;
   protected readonly situations = SITUATIONS;
   protected readonly budgetId = (budget: (typeof FLOW_BUDGETS)[number]): string => budget.id;
-  protected readonly estados = injectEstados();
+  protected readonly statuses = injectStatuses();
 
   /** Las expediciones como estado: guardar una cambia la tabla y la búsqueda. */
-  private readonly rows = signal<readonly ExpedicionRow[]>(HEADER_ROWS);
+  private readonly rows = signal<readonly ShipmentRow[]>(HEADER_ROWS);
 
   protected readonly table = computed(
-    () => new ArrayTableSource<ExpedicionRow>(this.rows(), ['codigo', 'cliente']),
+    () => new ArrayTableSource<ShipmentRow>(this.rows(), ['code', 'customer']),
   );
-  protected readonly porId = (row: ExpedicionRow): unknown => row.id;
+  protected readonly byId = (row: ShipmentRow): unknown => row.id;
 
   protected readonly failing = signal(false);
-  protected readonly source = new ExpedicionSource(
+  protected readonly source = new ShipmentSource(
     () => this.rows(),
     () => this.failing(),
   );
 
   /** `code` es contra lo que se compara un código escaneado; nunca se muestra solo. */
-  protected readonly display: SearchDisplay<ExpedicionRow> = {
-    label: (row) => `${row.codigo} — ${row.cliente}`,
-    code: (row) => row.codigo,
+  protected readonly display: SearchDisplay<ShipmentRow> = {
+    label: (row) => `${row.code} — ${row.customer}`,
+    code: (row) => row.code,
   };
 
-  protected readonly chosen = signal<ExpedicionRow | null>(null);
+  protected readonly chosen = signal<ShipmentRow | null>(null);
   protected readonly lastSaved = signal<string | null>(null);
 
   /** Clics reales de puntero sobre controles que avanzan un flujo, desde el último reinicio. */
@@ -212,21 +212,21 @@ export class ShowroomSearchCreateEdit {
     this.searchHost().nativeElement.querySelector('input')?.focus();
   }
 
-  protected async openForm(row: ExpedicionRow | null): Promise<void> {
-    const draft: ExpedicionDraft = {
+  protected async openForm(row: ShipmentRow | null): Promise<void> {
+    const draft: ShipmentDraft = {
       id: row?.id ?? null,
-      codigo: row?.codigo ?? '',
-      cliente: row?.cliente ?? '',
-      estado: row?.estado ?? 'pendiente',
-      urgente: false,
+      code: row?.code ?? '',
+      customer: row?.customer ?? '',
+      status: row?.status ?? 'pendiente',
+      urgent: false,
     };
 
-    const ref = this.dialogs.open<ExpedicionDraft | undefined, ExpedicionDraft, ShipmentForm>(
+    const ref = this.dialogs.open<ShipmentDraft | undefined, ShipmentDraft, ShipmentForm>(
       ShipmentForm,
       { data: draft, ariaLabelledBy: 'ewms-expedicion-form-title', injector: this.injector },
     );
 
-    const result = await new Promise<ExpedicionDraft | undefined>((resolve) => {
+    const result = await new Promise<ShipmentDraft | undefined>((resolve) => {
       const subscription = ref.closed.subscribe((value) => {
         subscription.unsubscribe();
         resolve(value);
@@ -249,12 +249,12 @@ export class ShowroomSearchCreateEdit {
   }
 
   /** Fila activada en la tabla: doble clic o Enter sobre la fila enfocada. */
-  protected onRowActivate(event: RowActivateEvent<ExpedicionRow>): void {
+  protected onRowActivate(event: RowActivateEvent<ShipmentRow>): void {
     this.chosen.set(event.row);
     void this.openForm(event.row);
   }
 
-  protected onChosen(row: ExpedicionRow | null): void {
+  protected onChosen(row: ShipmentRow | null): void {
     this.chosen.set(row);
   }
 
@@ -266,17 +266,17 @@ export class ShowroomSearchCreateEdit {
     this.failing.update((value) => !value);
   }
 
-  private commit(draft: ExpedicionDraft): void {
+  private commit(draft: ShipmentDraft): void {
     const id = draft.id;
     if (id === null) {
-      const row: ExpedicionRow = {
+      const row: ShipmentRow = {
         id: `EXP-NEW-${this.rows().length}`,
-        nivel: 'cabecera',
-        codigo: draft.codigo || 'EXP-2026-XXXX',
-        cliente: draft.cliente || this.transloco.translate(MESSAGES.noCustomer),
-        fecha: '2026-03-01',
-        bultos: 0,
-        estado: draft.estado,
+        level: 'cabecera',
+        code: draft.code || 'EXP-2026-XXXX',
+        customer: draft.customer || this.transloco.translate(MESSAGES.noCustomer),
+        date: '2026-03-01',
+        packages: 0,
+        status: draft.status,
       };
       this.rows.update((rows) => [row, ...rows]);
       this.chosen.set(row);
@@ -284,20 +284,20 @@ export class ShowroomSearchCreateEdit {
       this.rows.update((rows) =>
         rows.map((row) =>
           row.id === id
-            ? { ...row, codigo: draft.codigo, cliente: draft.cliente, estado: draft.estado }
+            ? { ...row, code: draft.code, customer: draft.customer, status: draft.status }
             : row,
         ),
       );
       this.chosen.set(this.rows().find((row) => row.id === id) ?? null);
     }
 
-    this.lastSaved.set(draft.codigo);
-    this.toasts.show('success', this.transloco.translate(MESSAGES.saved, { code: draft.codigo }));
+    this.lastSaved.set(draft.code);
+    this.toasts.show('success', this.transloco.translate(MESSAGES.saved, { code: draft.code }));
   }
 
   /** Llegó un código completo: elige la expedición que nombra, o avisa si no hay ninguna. */
   private resolveScan(code: string): void {
-    const match = this.rows().find((row) => row.codigo.toLowerCase() === code.trim().toLowerCase());
+    const match = this.rows().find((row) => row.code.toLowerCase() === code.trim().toLowerCase());
     if (match === undefined) {
       this.toasts.show('warning', this.transloco.translate(MESSAGES.unknownCode, { code }));
       return;
@@ -308,10 +308,10 @@ export class ShowroomSearchCreateEdit {
 
   // Lleva el foco a la fila escaneada. Se busca por el código que muestra y no por índice:
   // la tabla ordena, filtra y pagina, así que la quinta fila del modelo no es la quinta en pantalla.
-  private focusChosenRow(row: ExpedicionRow): void {
+  private focusChosenRow(row: ShipmentRow): void {
     const rows = this.root().nativeElement.querySelectorAll<HTMLElement>('tbody [role="row"]');
     for (const element of rows) {
-      if (element.textContent?.includes(row.codigo) === true) {
+      if (element.textContent?.includes(row.code) === true) {
         // La primera celda, no la de `tabindex="0"`: con tabindex rotatorio hay una sola en toda
         // la grilla y casi nunca está en esta fila (la primera versión no enfocaba nada). Cada
         // celda adopta el índice al recibir `(focus)`, así que enfocar una con -1 es válido.

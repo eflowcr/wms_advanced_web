@@ -13,7 +13,7 @@ import { EWMS_DATE_PICKER_MESSAGES, type DatePickerMode } from './date-picker.ty
       [mode]="mode()"
       [minDate]="min()"
       [maxDate]="max()"
-      [formField]="entrega"
+      [formField]="delivery"
     />
   `,
   imports: [DatePicker, FormField],
@@ -23,11 +23,11 @@ class TestHost {
   readonly min = signal<string | null>(null);
   readonly max = signal<string | null>(null);
   readonly locked = signal(false);
-  readonly model = signal<{ entrega: DatePickerValue }>({ entrega: '2026-03-16' });
+  readonly model = signal<{ delivery: DatePickerValue }>({ delivery: '2026-03-16' });
   readonly form = form(this.model, (path) => {
-    disabled(path.entrega, () => this.locked());
+    disabled(path.delivery, () => this.locked());
   });
-  readonly entrega = this.form.entrega;
+  readonly delivery = this.form.delivery;
 }
 
 /** Con `viaLocaleId` el idioma llega por LOCALE_ID, el respaldo cuando el token no trae locale. */
@@ -74,10 +74,10 @@ describe('DatePicker', () => {
     fixture.nativeElement.querySelector('[data-date-trigger] button') as HTMLButtonElement;
   const dialog = () => document.querySelector<HTMLElement>('[role="dialog"]');
   const day = (iso: string) => document.querySelector<HTMLElement>(`[data-date="${iso}"]`)!;
-  const value = () => host().form.entrega().value();
+  const value = () => host().form.delivery().value();
   /** `settle` incluido: el modelo llega al campo en un efecto, no en la misma vuelta. */
   const setValue = async (next: DatePickerValue) => {
-    host().model.set({ entrega: next });
+    host().model.set({ delivery: next });
     await settle();
   };
 

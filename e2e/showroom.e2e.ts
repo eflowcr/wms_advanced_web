@@ -22,6 +22,7 @@ import {
   INPUT,
   PAGINATION,
   RADIO,
+  SEARCH_BOX,
   SELECT,
   SPACING,
   TABLE,
@@ -531,6 +532,51 @@ test.describe('the component sheets measure what they claim', () => {
   });
 });
 
+test.describe('the search box', () => {
+  test('an Enter that confirms a composition does not search: it only chose the character', async ({
+    page,
+  }) => {
+    await page.goto(SEARCH_BOX);
+    await ready(page);
+    const field = page.locator('[data-demo-search-box] input');
+    const last = page.locator('[data-demo-last]');
+    const before = await last.textContent();
+
+    await field.fill('caja');
+    await field.evaluate((input) =>
+      input.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'Enter', isComposing: true, bubbles: true }),
+      ),
+    );
+    // Dos cuadros: la detección de cambios ya corrió, y una búsqueda se vería acá.
+    await page.evaluate(() => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done))));
+    expect(await last.textContent()).toBe(before);
+
+    await field.press('Enter');
+    await expect(last).toHaveText('caja');
+  });
+});
+
+test.describe('fonts', () => {
+  test('JetBrains Mono downloads only where there is code: never on /, always on the Table page', async ({
+    page,
+  }) => {
+    const mono: string[] = [];
+    page.on('request', (request) => {
+      if (/jetbrains-mono/.test(request.url())) mono.push(new URL(request.url()).pathname);
+    });
+
+    await page.goto('/');
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+    await ready(page);
+    expect(mono).toEqual([]);
+
+    await page.goto(TABLE);
+    await ready(page);
+    await expect.poll(() => mono).toContain('/fonts/jetbrains-mono-latin-400-normal.woff2');
+  });
+});
+
 test.describe('accessibility', () => {
   for (const { url, heading } of PAGES) {
     test(`${url} has no axe violations, and a clean console`, async ({ page }) => {
@@ -942,7 +988,8 @@ test.describe('keyboard only', () => {
   test('WCAG 2.4.11: no control reached by Tab hides under the header or the tab strip', async ({
     page,
   }) => {
-    test.setTimeout(PAGES.length * ROUTE_BUDGET_MS);
+    // Una página: 7,3 s con la suite entera en local y 2,9 s en CI (2026-09-28); el doble, al segundo.
+    test.setTimeout(15_000);
     await page.setViewportSize({ width: 1280, height: 720 });
     await page.goto(TABLE);
     await expect(page.getByRole('heading', { level: 1, name: 'Tabla de datos' })).toBeVisible();
@@ -1673,11 +1720,11 @@ test.describe('el patrón Filtros', () => {
     const rows = page.locator(`${DEMO} tbody tr[data-row]`);
     await expect(rows).toHaveCount(12);
 
-    await page.locator(`${DEMO} [data-field="almacen"] input`).click();
+    await page.locator(`${DEMO} [data-field="warehouse"] input`).click();
     await page.getByRole('option', { name: 'Central' }).click();
-    await expect(page).toHaveURL(/almacen=central/);
+    await expect(page).toHaveURL(/warehouse=central/);
     await expect(rows).toHaveCount(6);
-    await expect(page.locator(`${DEMO} [data-chip="almacen"]`)).toContainText('Almacén: Central');
+    await expect(page.locator(`${DEMO} [data-chip="warehouse"]`)).toContainText('Almacén: Central');
 
     // El mismo enlace, abierto de nuevo: lo mismo.
     await page.reload();
@@ -1844,14 +1891,14 @@ test.describe('DS-3 lote C: la tabla', () => {
     await expect(toggle).toHaveAttribute('aria-expanded', 'false');
 
     await toggle.click();
-    await page.locator(`${DEMO} [data-filter="codigo"] input`).fill('0403');
+    await page.locator(`${DEMO} [data-filter="code"] input`).fill('0403');
     await expect(toggle).toHaveText(/Filtros \(1\)/);
 
     // Con el foco en la tabla, el atajo del mapa oculta la fila; el chip sigue diciendo qué filtra.
     await cellStop(page, DEMO, '0-0').focus();
     await page.keyboard.press('Alt+r');
     await expect(filterRow).toBeHidden();
-    await expect(page.locator(`${DEMO} [data-chip="codigo"]`)).toContainText('Código: 0403');
+    await expect(page.locator(`${DEMO} [data-chip="code"]`)).toContainText('Código: 0403');
     await expect(page.locator(ROWS)).toHaveCount(1);
 
     await page.locator(`${DEMO} [data-clear-filters]`).click();
@@ -1866,7 +1913,7 @@ test.describe('DS-3 lote C: la tabla', () => {
     await ready(page);
 
     await page.locator(`${DEMO} [data-filters-toggle] button`).click();
-    const trigger = page.locator(`${DEMO} [data-filter="estado"] button`);
+    const trigger = page.locator(`${DEMO} [data-filter="status"] button`);
     await trigger.click();
     const panel = page.getByRole('dialog', { name: 'Estado' });
     await expect(panel).toBeVisible();
@@ -1887,7 +1934,7 @@ test.describe('DS-3 lote C: la tabla', () => {
     await page.keyboard.press('Escape');
     await expect(panel).toHaveCount(0);
     await expect(trigger).toBeFocused();
-    await expect(page.locator(`${DEMO} [data-chip="estado"]`)).toContainText('Con incidencia');
+    await expect(page.locator(`${DEMO} [data-chip="status"]`)).toContainText('Con incidencia');
   });
 
   test('columns: the pinned stay in view while the table scrolls, and resize from the keyboard', async ({
@@ -1904,13 +1951,13 @@ test.describe('DS-3 lote C: la tabla', () => {
       element.scrollLeft = element.scrollWidth;
     });
     const boxLeft = (await box.boundingBox())!.x;
-    const codigo = page.locator(`${DEMO} th[data-col="codigo"]`);
+    const code = page.locator(`${DEMO} th[data-col="code"]`);
     const select = page.locator(`${DEMO} th[data-col-select]`);
     await expect
       .poll(async () => Math.round((await select.boundingBox())!.x - boxLeft))
       .toBeLessThanOrEqual(1);
     const selectBox = (await select.boundingBox())!;
-    expect(Math.round((await codigo.boundingBox())!.x)).toBe(
+    expect(Math.round((await code.boundingBox())!.x)).toBe(
       Math.round(selectBox.x + selectBox.width),
     );
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
@@ -1918,11 +1965,11 @@ test.describe('DS-3 lote C: la tabla', () => {
     );
 
     // El separador es una parada de teclado y anuncia su ancho.
-    const handle = page.locator(`${DEMO} [data-resize="cliente"]`);
+    const handle = page.locator(`${DEMO} [data-resize="customer"]`);
     await handle.focus();
     // Sin getAttribute (no reintenta): el ancho de partida es el de la cabecera medida.
     const before = Math.round(
-      (await page.locator(`${DEMO} th[data-col="cliente"]`).boundingBox())!.width,
+      (await page.locator(`${DEMO} th[data-col="customer"]`).boundingBox())!.width,
     );
     await expect(handle).toHaveAttribute('aria-valuenow', String(before));
     await page.keyboard.press('ArrowRight');
@@ -1932,13 +1979,13 @@ test.describe('DS-3 lote C: la tabla', () => {
     await page.locator(`${DEMO} [data-view-menu] button`).click();
     const view = page.getByRole('dialog', { name: 'Vista' });
     await view.getByRole('checkbox', { name: 'Fecha' }).uncheck();
-    await expect(page.locator(`${DEMO} th[data-col="fecha"]`)).toHaveCount(0);
+    await expect(page.locator(`${DEMO} th[data-col="date"]`)).toHaveCount(0);
 
     // «Restablecer vista» solo se habilita con algo cambiado, y vuelve a lo declarado.
     const reset = view.locator('[data-reset-view] button');
     await expect(reset).toBeEnabled();
     await reset.click();
-    await expect(page.locator(`${DEMO} th[data-col="fecha"]`)).toHaveCount(1);
+    await expect(page.locator(`${DEMO} th[data-col="date"]`)).toHaveCount(1);
     await expect(reset).toBeDisabled();
   });
 
@@ -2002,11 +2049,11 @@ test.describe('DS-3 lote C: la tabla', () => {
 
     const status = page.locator(`${DEMO} [data-table-status]`);
     await expect(status.locator('[data-status-rows]')).toHaveText('12 de 12 filas');
-    const bultos = page.locator(`${ROWS} td:nth-child(5)`);
-    const numbers = (await bultos.allTextContents()).map((text) => Number(text.replace(/\D/g, '')));
+    const packages = page.locator(`${ROWS} td:nth-child(5)`);
+    const numbers = (await packages.allTextContents()).map((text) => Number(text.replace(/\D/g, '')));
     const onScreen = numbers.reduce((total, value) => total + value, 0);
     // es-CR, el locale de la app en español (LANGUAGE_LOCALES): agrupa también los de cuatro cifras.
-    await expect(status.locator('[data-aggregate="bultos"]')).toHaveText(
+    await expect(status.locator('[data-aggregate="packages"]')).toHaveText(
       `Bultos en pantalla: ${new Intl.NumberFormat('es-CR').format(onScreen)}`,
     );
 
@@ -2014,7 +2061,7 @@ test.describe('DS-3 lote C: la tabla', () => {
     await boxes.nth(0).click();
     await boxes.nth(1).click();
     await expect(status.locator('[data-status-selected]')).toHaveText('2 seleccionadas');
-    await expect(status.locator('[data-aggregate="bultos"]')).toHaveText(
+    await expect(status.locator('[data-aggregate="packages"]')).toHaveText(
       `Bultos seleccionados: ${new Intl.NumberFormat('es-CR').format(numbers[0]! + numbers[1]!)}`,
     );
   });
@@ -2059,18 +2106,18 @@ test.describe('DS-3 lote C: la tabla', () => {
     const said = page.locator(`${DEMO} [data-table-announce]`);
     // Desde el relleno, lejos del separador vecino; cae en la mitad izquierda de Cliente.
     await page
-      .locator(`${DEMO} th[data-col="bultos"]`)
-      .dragTo(page.locator(`${DEMO} th[data-col="cliente"]`), {
+      .locator(`${DEMO} th[data-col="packages"]`)
+      .dragTo(page.locator(`${DEMO} th[data-col="customer"]`), {
         sourcePosition: { x: 16, y: 8 },
         targetPosition: { x: 8, y: 8 },
       });
-    await expect(heads.nth(1)).toHaveAttribute('data-col', 'bultos');
+    await expect(heads.nth(1)).toHaveAttribute('data-col', 'packages');
     await expect(said).toHaveText('Bultos, posición 2 de 5');
 
-    await page.locator(`${DEMO} [data-sort="bultos"]`).focus();
+    await page.locator(`${DEMO} [data-sort="packages"]`).focus();
     await page.keyboard.press('Alt+Shift+ArrowRight');
-    await expect(heads.nth(2)).toHaveAttribute('data-col', 'bultos');
-    await expect(page.locator(`${DEMO} [data-sort="bultos"]`)).toBeFocused();
+    await expect(heads.nth(2)).toHaveAttribute('data-col', 'packages');
+    await expect(page.locator(`${DEMO} [data-sort="packages"]`)).toBeFocused();
     await expect(said).toHaveText('Bultos, posición 3 de 5');
   });
 
@@ -2080,7 +2127,7 @@ test.describe('DS-3 lote C: la tabla', () => {
     await page.goto(TABLE);
     await ready(page);
 
-    await page.locator(`${DEMO} [data-sort="fecha"]`).focus();
+    await page.locator(`${DEMO} [data-sort="date"]`).focus();
     await page.keyboard.press('Shift+F10');
     const menu = page.locator('[role="menu"]');
     await expect(menu).toHaveAttribute('aria-label', 'Opciones de la columna Fecha');
@@ -2090,15 +2137,15 @@ test.describe('DS-3 lote C: la tabla', () => {
     await page.keyboard.press('ArrowDown');
     await page.keyboard.press('ArrowDown');
     await page.keyboard.press('Enter');
-    await expect(page.locator(`${DEMO} th[data-col="fecha"]`)).toHaveAttribute('data-pin', 'end');
-    await expect(page.locator(`${DEMO} th[data-col]`).last()).toHaveAttribute('data-col', 'fecha');
+    await expect(page.locator(`${DEMO} th[data-col="date"]`)).toHaveAttribute('data-pin', 'end');
+    await expect(page.locator(`${DEMO} th[data-col]`).last()).toHaveAttribute('data-col', 'date');
     // El foco vuelve a quien lo abrió: la cabecera, que se movió con la columna.
-    await expect(page.locator(`${DEMO} [data-sort="fecha"]`)).toBeFocused();
+    await expect(page.locator(`${DEMO} [data-sort="date"]`)).toBeFocused();
 
-    await page.locator(`${DEMO} [data-sort="bultos"]`).click();
-    await page.locator(`${DEMO} [data-sort="codigo"]`).click({ modifiers: ['Shift'] });
-    await expect(page.locator(`${DEMO} [data-sort="codigo"] [data-sort-priority]`)).toHaveText('2');
-    await expect(page.locator(`${DEMO} th[data-col="bultos"]`)).toHaveAttribute(
+    await page.locator(`${DEMO} [data-sort="packages"]`).click();
+    await page.locator(`${DEMO} [data-sort="code"]`).click({ modifiers: ['Shift'] });
+    await expect(page.locator(`${DEMO} [data-sort="code"] [data-sort-priority]`)).toHaveText('2');
+    await expect(page.locator(`${DEMO} th[data-col="packages"]`)).toHaveAttribute(
       'aria-sort',
       'ascending',
     );
@@ -2145,7 +2192,7 @@ test.describe('DS-3 lote C: la tabla', () => {
     await expect(exception.locator('td').first()).toHaveCSS('box-shadow', /inset/);
 
     // Números en la fuente del cuerpo, con dígitos de ancho fijo.
-    const number = page.locator(`${ROWS} td[data-col="bultos"]`).first();
+    const number = page.locator(`${ROWS} td[data-col="packages"]`).first();
     await expect(number).toHaveCSS('font-variant-numeric', 'tabular-nums');
     await expect(number).toHaveCSS('font-family', /Montserrat/);
   });
@@ -2155,16 +2202,16 @@ test.describe('DS-3 lote C: la tabla', () => {
 });
 
 test.describe('DS-3 lote D: detalle, menú, ventana y paginador', () => {
-  const DETALLE = '[data-demo-detalle]';
+  const DETAIL = '[data-demo-detalle]';
   const VIRTUAL = '[data-demo-virtual]';
-  const PAGINADA = '[data-demo-paginada]';
+  const PAGED = '[data-demo-paginada]';
 
   test('a master row unfolds a PANEL, and the tree unfolds ROWS', async ({ page }) => {
     await page.goto(TABLE);
     await ready(page);
 
-    await page.locator(`${DETALLE} [data-detail-toggle="0"] button`).click();
-    const panel = page.locator(`${DETALLE} [data-detail="0"]`);
+    await page.locator(`${DETAIL} [data-detail-toggle="0"] button`).click();
+    const panel = page.locator(`${DETAIL} [data-detail="0"]`);
     await expect(panel).toBeVisible();
 
     // Una celda a todo el ancho, con contenido propio del consumidor.
@@ -2172,14 +2219,14 @@ test.describe('DS-3 lote D: detalle, menú, ventana y paginador', () => {
     await expect(panel).toContainText('Bultos totales');
 
     // La tabla no creció: el panel es una fila del DOM, no una expedición, y no se anuncia como tal.
-    await expect(page.locator(`${DETALLE} table`)).toHaveAttribute('aria-rowcount', '12');
+    await expect(page.locator(`${DETAIL} table`)).toHaveAttribute('aria-rowcount', '12');
   });
 
   test('the toggle says on the BUTTON what it opened', async ({ page }) => {
     await page.goto(TABLE);
     await ready(page);
 
-    const button = page.locator(`${DETALLE} [data-detail-toggle="0"] button`);
+    const button = page.locator(`${DETAIL} [data-detail-toggle="0"] button`);
     await expect(button).toHaveAttribute('aria-expanded', 'false');
 
     await button.click();
@@ -2206,7 +2253,7 @@ test.describe('DS-3 lote D: detalle, menú, ventana y paginador', () => {
     await page.goto(TABLE);
     await ready(page);
 
-    await cellStop(page, DETALLE, '0-0').focus();
+    await cellStop(page, DETAIL, '0-0').focus();
     await page.keyboard.press('Shift+F10');
     const menu = page.locator('[role="menu"]');
     await expect(menu).toBeFocused();
@@ -2228,7 +2275,7 @@ test.describe('DS-3 lote D: detalle, menú, ventana y paginador', () => {
       .toBe(true);
 
     await page.keyboard.press('Escape');
-    await expect(cellStop(page, DETALLE, '0-0')).toBeFocused();
+    await expect(cellStop(page, DETAIL, '0-0')).toBeFocused();
   });
 
   /*
@@ -2286,7 +2333,7 @@ test.describe('DS-3 lote D: detalle, menú, ventana y paginador', () => {
     await page.goto(TABLE);
     await ready(page);
 
-    const paginator = page.locator(`${PAGINADA} [data-pagination]`);
+    const paginator = page.locator(`${PAGED} [data-pagination]`);
     await expect(paginator).toBeVisible();
     await expect(paginator.locator('[data-page-label]')).toContainText('Página 1 de');
 
@@ -2295,8 +2342,8 @@ test.describe('DS-3 lote D: detalle, menú, ventana y paginador', () => {
     await expect(paginator.locator('[data-page-label]')).toContainText('Página 2 de');
 
     // Veinticinco por página, y la página cambió de verdad.
-    await expect(page.locator(`${PAGINADA} [data-row]`)).toHaveCount(25);
-    await expect(page.locator(`${PAGINADA} [data-row="0"]`)).toContainText('UB-00026');
+    await expect(page.locator(`${PAGED} [data-row]`)).toHaveCount(25);
+    await expect(page.locator(`${PAGED} [data-row="0"]`)).toContainText('UB-00026');
   });
 
   test('the paginator sheet disables the ends and drops the total on demand', async ({ page }) => {
@@ -2327,7 +2374,7 @@ test.describe('DS-3 lote D: detalle, menú, ventana y paginador', () => {
 
     // Los filtros son Small, mismo token que la fila compacta (--row-height-sm): un campo en una
     // celda mide exactamente una fila, y la fecha es un solo campo de rango (2026-09-21).
-    for (const key of ['cliente', 'fecha']) {
+    for (const key of ['customer', 'date']) {
       const field = filterRow.locator(`[data-filter="${key}"] input`);
       await expect(field).toHaveCount(1);
       expect(round((await field.boundingBox())?.height), key).toBe(32);
@@ -2335,7 +2382,7 @@ test.describe('DS-3 lote D: detalle, menú, ventana y paginador', () => {
 
     // Las dos cajas numéricas van lado a lado y la columna crece antes que cortarlas: encogidas
     // se leían «Desc» y «Hast». El ancho es preferencia; la legibilidad, no.
-    const numbers = filterRow.locator('[data-filter="bultos"] input');
+    const numbers = filterRow.locator('[data-filter="packages"] input');
     await expect(numbers).toHaveCount(2);
     expect(round((await numbers.nth(0).boundingBox())?.y)).toBe(
       round((await numbers.nth(1).boundingBox())?.y),

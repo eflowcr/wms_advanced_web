@@ -20,16 +20,16 @@ const CHIP_MESSAGES: FilterChipsMessages = {
 const FIELDS: readonly FilterField[] = [
   {
     kind: 'select',
-    key: 'almacen',
+    key: 'warehouse',
     label: 'Almacén',
     options: [
       { label: 'Central', value: 'central' },
       { label: 'Norte', value: 'norte' },
     ],
   },
-  { kind: 'date-range', key: 'fecha', label: 'Período' },
-  { kind: 'search', key: 'texto', label: 'Buscar' },
-  { kind: 'select', key: 'cliente', label: 'Cliente', options: [{ label: 'Andes', value: 'andes' }] },
+  { kind: 'date-range', key: 'date', label: 'Período' },
+  { kind: 'search', key: 'text', label: 'Buscar' },
+  { kind: 'select', key: 'customer', label: 'Cliente', options: [{ label: 'Andes', value: 'andes' }] },
 ];
 
 @Component({
@@ -84,56 +84,56 @@ describe('FilterBar', () => {
   }
 
   it('SHOWS THREE FIELDS and keeps the rest behind «Más filtros», which counts the active ones', async () => {
-    expect(fields()).toEqual(['almacen', 'fecha', 'texto']);
+    expect(fields()).toEqual(['warehouse', 'date', 'text']);
     const more = root().querySelector('[data-more-filters] button') as HTMLButtonElement;
     expect(more.textContent?.trim()).toBe('Más filtros');
 
-    host.value.set({ cliente: 'andes' });
+    host.value.set({ customer: 'andes' });
     await settle();
     expect(more.textContent?.trim()).toBe('Más filtros (1)');
 
     more.click();
     await settle();
-    expect(fields()).toEqual(['almacen', 'fecha', 'texto', 'cliente']);
+    expect(fields()).toEqual(['warehouse', 'date', 'text', 'customer']);
     expect(root().querySelector('[data-more-filters] button')?.textContent?.trim()).toBe(
       'Menos filtros',
     );
   });
 
   it('applies on change, and the value rules the fields', async () => {
-    const box = root().querySelector('[data-field="texto"] input') as HTMLInputElement;
+    const box = root().querySelector('[data-field="text"] input') as HTMLInputElement;
     box.value = 'EXP-0002';
     box.dispatchEvent(new Event('input'));
     await settle();
-    expect(host.value()).toEqual({ texto: 'EXP-0002' });
+    expect(host.value()).toEqual({ text: 'EXP-0002' });
 
     // El valor llega de afuera (la URL, un enlace compartido) y el campo lo sigue.
-    host.value.set({ texto: 'otro' });
+    host.value.set({ text: 'otro' });
     await settle();
-    expect((root().querySelector('[data-field="texto"] input') as HTMLInputElement).value).toBe(
+    expect((root().querySelector('[data-field="text"] input') as HTMLInputElement).value).toBe(
       'otro',
     );
   });
 
   it('writes a chip per filter: the option label, the period in the language of the app', async () => {
-    host.value.set({ almacen: 'central', fecha: { from: '2026-03-01', to: '2026-03-31' } });
+    host.value.set({ warehouse: 'central', date: { from: '2026-03-01', to: '2026-03-31' } });
     await settle();
     expect(chips()).toEqual(['Almacén: Central', 'Período: 01/03/2026 – 31/03/2026']);
 
     // Un solo extremo, y una opción que ya no está en la lista: el valor crudo.
-    host.value.set({ fecha: { from: '2026-03-01' }, almacen: 'sur' });
+    host.value.set({ date: { from: '2026-03-01' }, warehouse: 'sur' });
     await settle();
     expect(chips()).toEqual(['Almacén: sur', 'Período: 01/03/2026']);
-    host.value.set({ fecha: { to: '2026-03-31' }, texto: 'EXP' });
+    host.value.set({ date: { to: '2026-03-31' }, text: 'EXP' });
     await settle();
     expect(chips()).toEqual(['Período: 31/03/2026', 'Buscar: EXP']);
-    host.value.set({ almacen: 'central', fecha: { from: '2026-03-01', to: '2026-03-31' } });
+    host.value.set({ warehouse: 'central', date: { from: '2026-03-01', to: '2026-03-31' } });
     await settle();
 
     // El × de un chip quita ese filtro; «Limpiar filtros», todos.
-    (root().querySelector('[data-chip="almacen"] button') as HTMLButtonElement).click();
+    (root().querySelector('[data-chip="warehouse"] button') as HTMLButtonElement).click();
     await settle();
-    expect(host.value()).toEqual({ fecha: { from: '2026-03-01', to: '2026-03-31' } });
+    expect(host.value()).toEqual({ date: { from: '2026-03-01', to: '2026-03-31' } });
     (root().querySelector('[data-clear-filters]') as HTMLButtonElement).click();
     await settle();
     expect(host.value()).toEqual({});
@@ -141,7 +141,7 @@ describe('FilterBar', () => {
   });
 
   it('has no axe violations with a filter on', async () => {
-    host.value.set({ almacen: 'central' });
+    host.value.set({ warehouse: 'central' });
     await settle();
     await expectNoAxeViolations(root());
   });

@@ -27,7 +27,7 @@
   <!-- ================================================ 2. Qué resuelve / cuándo no -->
   <section class="flex flex-col gap-4" aria-labelledby="ta-purpose" data-block="2-proposito">
     <h2 id="ta-purpose" class="text-h2">{{ 'showroom.common.sections.purpose' | transloco }}</h2>
-    <div class="grid grid-cols-[repeat(auto-fit,minmax(min(20rem,100%),1fr))] gap-4">
+    <div class="grid grid-cols-cards gap-4">
       <div class="flex flex-col gap-2 rounded-md border border-default bg-surface p-4">
         <h3 class="text-h3">{{ 'showroom.common.sections.solves' | transloco }}</h3>
         <p [ewmsProse]="'showroom.table.purpose.solves' | transloco"></p>
@@ -55,23 +55,23 @@
     <ewms-demo-frame ground="canvas" [label]="'showroom.table.demo.frame' | transloco">
       <div class="flex flex-col gap-4" data-demo-table>
         <ewms-table
-          [source]="expediciones"
-          children="hijos"
-          rowState="estado"
-          [trackBy]="porId"
+          [source]="shipments"
+          children="children"
+          rowState="status"
+          [trackBy]="byId"
           [selectable]="true"
           [quickFilter]="true"
           [columnChooser]="true"
           [exportable]="true"
-          [bulkActions]="masivas()"
+          [bulkActions]="bulkActions()"
           [ariaLabel]="'showroom.table.demo.ariaLabel' | transloco"
-          (rowActivate)="abrir($event)"
-          (selectionChange)="seleccion.set($event)"
-          (bulkAction)="masiva($event)"
-          (queryChange)="consulta.set($event)"
+          (rowActivate)="open($event)"
+          (selectionChange)="selection.set($event)"
+          (bulkAction)="bulk($event)"
+          (queryChange)="query.set($event)"
         >
           <ewms-column
-            key="codigo"
+            key="code"
             [header]="'showroom.table.columns.code' | transloco"
             width="md"
             pinned="start"
@@ -79,13 +79,13 @@
             [filterable]="true"
           />
           <ewms-column
-            key="cliente"
+            key="customer"
             [header]="'showroom.table.columns.customerItem' | transloco"
             width="fill"
             [filterable]="true"
           />
           <ewms-column
-            key="fecha"
+            key="date"
             [header]="'showroom.table.columns.date' | transloco"
             type="date"
             width="md"
@@ -93,7 +93,7 @@
             [filterable]="true"
           />
           <ewms-column
-            key="bultos"
+            key="packages"
             [header]="'showroom.table.columns.packages' | transloco"
             type="number"
             width="sm"
@@ -102,11 +102,11 @@
             [filterable]="true"
           />
           <ewms-column
-            key="estado"
+            key="status"
             [header]="'showroom.table.columns.status' | transloco"
             type="badge"
             width="md"
-            [badges]="estados()"
+            [badges]="statuses()"
             [filterable]="true"
           />
         </ewms-table>
@@ -116,19 +116,19 @@
         >
           <div class="flex flex-wrap gap-2">
             <dt class="text-secondary">{{ 'showroom.table.demo.selected' | transloco }}</dt>
-            <dd class="font-mono text-primary" data-selection-count>{{ seleccion().length }}</dd>
+            <dd class="font-mono text-primary" data-selection-count>{{ selection().length }}</dd>
           </div>
           <div class="flex flex-wrap gap-2">
             <dt class="text-secondary">{{ 'showroom.table.demo.lastBulk' | transloco }}</dt>
-            <dd class="text-primary" data-bulk-choice>{{ ultimaMasiva() }}</dd>
+            <dd class="text-primary" data-bulk-choice>{{ lastBulk() }}</dd>
           </div>
           <div class="flex flex-wrap gap-2">
             <dt class="text-secondary">{{ 'showroom.table.demo.lastActivated' | transloco }}</dt>
-            <dd class="text-primary" data-activated>{{ ultimaActivada() }}</dd>
+            <dd class="text-primary" data-activated>{{ lastActivated() }}</dd>
           </div>
           <div class="flex flex-wrap gap-2">
             <dt class="text-secondary">{{ 'showroom.table.demo.lastQuery' | transloco }}</dt>
-            <dd class="font-mono text-primary" data-query>{{ consultaResumen() }}</dd>
+            <dd class="font-mono text-primary" data-query>{{ querySummary() }}</dd>
           </div>
         </dl>
       </div>
@@ -165,7 +165,7 @@
     <h3 class="text-h3">{{ 'showroom.table.differentiators.title' | transloco }}</h3>
     <p class="text-secondary">{{ 'showroom.table.differentiators.intro' | transloco }}</p>
     <ul
-      class="grid grid-cols-[repeat(auto-fit,minmax(min(20rem,100%),1fr))] gap-4"
+      class="grid grid-cols-cards gap-4"
       data-differentiators
     >
       <li class="flex flex-col gap-1 rounded-md border border-default bg-surface p-4">
@@ -254,41 +254,41 @@
     <ewms-demo-frame ground="canvas" [label]="'showroom.table.advanced.detail.frame' | transloco">
       <div class="flex flex-col gap-4" data-demo-detalle>
         <ewms-table
-          [source]="cabeceras"
-          rowState="estado"
-          [trackBy]="porId"
-          [isRowMaster]="esMaestra"
-          [menuItems]="accionesFila()"
+          [source]="headers"
+          rowState="status"
+          [trackBy]="byId"
+          [isRowMaster]="isMaster"
+          [menuItems]="rowActions()"
           [ariaLabel]="'showroom.table.advanced.detail.ariaLabel' | transloco"
-          (rowMenu)="elegir($event)"
+          (rowMenu)="choose($event)"
         >
           <ewms-column
-            key="codigo"
+            key="code"
             [header]="'showroom.table.columns.code' | transloco"
             width="md"
             [sortable]="true"
           />
           <ewms-column
-            key="cliente"
+            key="customer"
             [header]="'showroom.table.columns.customer' | transloco"
             width="fill"
           />
           <ewms-column
-            key="bultos"
+            key="packages"
             [header]="'showroom.table.columns.packages' | transloco"
             type="number"
             width="sm"
             [sortable]="true"
           />
           <ewms-column
-            key="estado"
+            key="status"
             [header]="'showroom.table.columns.status' | transloco"
             type="badge"
             width="md"
-            [badges]="estados()"
+            [badges]="statuses()"
           />
           <ewms-column
-            key="acciones"
+            key="actions"
             [header]="'showroom.table.columns.actions' | transloco"
             type="actions"
             width="sm"
@@ -299,25 +299,25 @@
             El panel no repite las columnas (para eso está el árbol): muestra lo que la
             fila dejó fuera y una acción propia.
           -->
-          <ng-template ewmsDetail [rowsFrom]="cabeceras" let-row>
+          <ng-template ewmsDetail [rowsFrom]="headers" let-row>
             <div class="flex flex-wrap items-start justify-between gap-4">
               <dl class="grid grid-cols-2 gap-x-6 gap-y-1 text-caption">
                 <dt class="text-secondary">
                   {{ 'showroom.table.advanced.detail.shipment' | transloco }}
                 </dt>
-                <dd class="font-mono text-primary">{{ row.codigo }}</dd>
+                <dd class="font-mono text-primary">{{ row.code }}</dd>
                 <dt class="text-secondary">{{ 'showroom.table.columns.customer' | transloco }}</dt>
-                <dd class="text-primary">{{ row.cliente }}</dd>
+                <dd class="text-primary">{{ row.customer }}</dd>
                 <dt class="text-secondary">
                   {{ 'showroom.table.advanced.detail.lines' | transloco }}
                 </dt>
-                <dd class="font-mono text-primary">{{ lineasDe(row) }}</dd>
+                <dd class="font-mono text-primary">{{ linesOf(row) }}</dd>
                 <dt class="text-secondary">
                   {{ 'showroom.table.advanced.detail.totalPackages' | transloco }}
                 </dt>
-                <dd class="font-mono text-primary">{{ row.bultos }}</dd>
+                <dd class="font-mono text-primary">{{ row.packages }}</dd>
               </dl>
-              <ewms-button variant="secondary" size="sm" icon="download" (click)="descargar(row)">
+              <ewms-button variant="secondary" size="sm" icon="download" (click)="download(row)">
                 {{ 'showroom.table.advanced.detail.download' | transloco }}
               </ewms-button>
             </div>
@@ -331,13 +331,13 @@
             <dt class="text-secondary">
               {{ 'showroom.table.advanced.detail.lastAction' | transloco }}
             </dt>
-            <dd class="font-mono text-primary" data-menu-choice>{{ ultimaAccion() }}</dd>
+            <dd class="font-mono text-primary" data-menu-choice>{{ lastAction() }}</dd>
           </div>
           <div class="flex flex-wrap gap-2">
             <dt class="text-secondary">
               {{ 'showroom.table.advanced.detail.lastDownload' | transloco }}
             </dt>
-            <dd class="font-mono text-primary" data-download>{{ ultimaDescarga() }}</dd>
+            <dd class="font-mono text-primary" data-download>{{ lastDownload() }}</dd>
           </div>
         </dl>
       </div>
@@ -365,34 +365,34 @@
     <ewms-demo-frame ground="canvas" [label]="'showroom.table.advanced.lazy.frame' | transloco">
       <div data-demo-perezosa>
         <ewms-table
-          [source]="perezosa"
+          [source]="lazy"
           [children]="lazyChildren"
-          rowState="estado"
-          [trackBy]="porId"
+          rowState="status"
+          [trackBy]="byId"
           [ariaLabel]="'showroom.table.advanced.lazy.ariaLabel' | transloco"
         >
           <ewms-column
-            key="codigo"
+            key="code"
             [header]="'showroom.table.columns.code' | transloco"
             width="md"
           />
           <ewms-column
-            key="cliente"
+            key="customer"
             [header]="'showroom.table.columns.customerItem' | transloco"
             width="fill"
           />
           <ewms-column
-            key="bultos"
+            key="packages"
             [header]="'showroom.table.columns.packages' | transloco"
             type="number"
             width="sm"
           />
           <ewms-column
-            key="estado"
+            key="status"
             [header]="'showroom.table.columns.status' | transloco"
             type="badge"
             width="md"
-            [badges]="estados()"
+            [badges]="statuses()"
           />
         </ewms-table>
       </div>
@@ -415,20 +415,20 @@
             variant="secondary"
             size="sm"
             data-load-all
-            [disabled]="ubicacionesCargadas() === ubicacionesTotal"
-            (click)="cargarTodas()"
+            [disabled]="loadedLocations() === totalLocations"
+            (click)="loadAll()"
           >
-            {{ 'showroom.table.advanced.virtual.loadAll' | transloco: { total: ubicacionesTotal } }}
+            {{ 'showroom.table.advanced.virtual.loadAll' | transloco: { total: totalLocations } }}
           </ewms-button>
           <span class="font-mono text-caption text-primary" data-loaded-count>
             {{
-              'showroom.table.advanced.virtual.loaded' | transloco: { count: ubicacionesCargadas() }
+              'showroom.table.advanced.virtual.loaded' | transloco: { count: loadedLocations() }
             }}
           </span>
         </div>
         <ewms-table
-          [source]="ubicaciones()"
-          [trackBy]="porUbicacion"
+          [source]="locations()"
+          [trackBy]="byLocation"
           [virtual]="true"
           [pageSize]="5000"
           [quickFilter]="true"
@@ -436,19 +436,19 @@
           [ariaLabel]="'showroom.table.advanced.virtual.ariaLabel' | transloco"
         >
           <ewms-column
-            key="codigo"
+            key="code"
             [header]="'showroom.table.columns.location' | transloco"
             width="md"
             [sortable]="true"
           />
           <ewms-column
-            key="pasillo"
+            key="aisle"
             [header]="'showroom.table.columns.aisle' | transloco"
             width="fill"
             [filterable]="true"
           />
           <ewms-column
-            key="ocupacion"
+            key="occupancy"
             [header]="'showroom.table.columns.occupancy' | transloco"
             type="number"
             width="sm"
@@ -481,24 +481,24 @@
     >
       <div data-demo-paginada>
         <ewms-table
-          [source]="paginada"
-          [trackBy]="porUbicacion"
+          [source]="paged"
+          [trackBy]="byLocation"
           [pageSize]="25"
           [ariaLabel]="'showroom.table.advanced.pagination.ariaLabel' | transloco"
         >
           <ewms-column
-            key="codigo"
+            key="code"
             [header]="'showroom.table.columns.location' | transloco"
             width="md"
             [sortable]="true"
           />
           <ewms-column
-            key="pasillo"
+            key="aisle"
             [header]="'showroom.table.columns.aisle' | transloco"
             width="fill"
           />
           <ewms-column
-            key="ocupacion"
+            key="occupancy"
             [header]="'showroom.table.columns.occupancy' | transloco"
             type="number"
             width="sm"

@@ -14,7 +14,7 @@ const MESSAGES: FormMessages = {
 /** El grupo dentro de un formulario de señales, como se usa de verdad. */
 @Component({
   template: `
-    <ewms-radio-group label="Tipo de recepción" hint="El almacén lo pide" [formField]="tipo">
+    <ewms-radio-group label="Tipo de recepción" hint="El almacén lo pide" [formField]="type">
       <ewms-radio [value]="'ciega'" [label]="label()" />
       <ewms-radio [value]="'con-orden'" label="Contra orden de compra" [disabled]="lockSecond()" />
     </ewms-radio-group>
@@ -25,12 +25,12 @@ class GroupHost {
   readonly label = signal('Recepcion ciega');
   readonly lockSecond = signal(false);
   readonly locked = signal(false);
-  readonly model = signal<{ tipo: string | null }>({ tipo: null });
+  readonly model = signal<{ type: string | null }>({ type: null });
   readonly form = form(this.model, (path) => {
-    required(path.tipo);
-    disabled(path.tipo, () => this.locked());
+    required(path.type);
+    disabled(path.type, () => this.locked());
   });
-  readonly tipo = this.form.tipo;
+  readonly type = this.form.type;
 }
 
 /** Sin formulario: el grupo se ata con `[(value)]` y nombra sus radios igual. */
@@ -136,7 +136,7 @@ describe('RadioGroup', () => {
 
       expect(radio(0).checked).toBe(true);
       expect(radio(1).checked).toBe(false);
-      expect(host.form.tipo().value()).toBe('ciega');
+      expect(host.form.type().value()).toBe('ciega');
 
       radio(1).click();
       await settle();
@@ -144,11 +144,11 @@ describe('RadioGroup', () => {
       // El navegador desmarca el primero; el valor del campo confirma que coinciden.
       expect(radio(0).checked).toBe(false);
       expect(radio(1).checked).toBe(true);
-      expect(host.form.tipo().value()).toBe('con-orden');
+      expect(host.form.type().value()).toBe('con-orden');
     });
 
     it('derives checked by comparing the group value, never by storing it', async () => {
-      host.model.set({ tipo: 'con-orden' });
+      host.model.set({ type: 'con-orden' });
       await settle();
 
       expect(radio(0).checked).toBe(false);
@@ -176,7 +176,7 @@ describe('RadioGroup', () => {
       focusThenLeave(radio(0));
       await settle();
 
-      expect(host.form.tipo().touched()).toBe(true);
+      expect(host.form.type().touched()).toBe(true);
       expect(note()).toBe('Elija un tipo de recepción');
       // Un mensaje por grupo, no uno por opción.
       expect(root().querySelectorAll('p')).toHaveLength(1);
@@ -199,7 +199,7 @@ describe('RadioGroup', () => {
     it('shows the dot only when selected', async () => {
       expect(root().querySelectorAll('.size-2')).toHaveLength(0);
 
-      host.model.set({ tipo: 'ciega' });
+      host.model.set({ type: 'ciega' });
       await settle();
       expect(root().querySelectorAll('.size-2')).toHaveLength(1);
     });
@@ -219,7 +219,7 @@ describe('RadioGroup', () => {
     ];
 
     it.each(states)('passes axe in "%s"', async (_name, value) => {
-      host.model.set({ tipo: value });
+      host.model.set({ type: value });
       await settle();
 
       await expectNoAxeViolations(root());

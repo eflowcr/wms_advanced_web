@@ -1,6 +1,6 @@
 /**
  * Un solo vocabulario de API (B13, hallazgo D5): la misma idea se pide con el mismo nombre en
- * todo componente, y los nombres viejos no quedan en projects/. Ver vault: Nomenclatura.
+ * todo componente, y los nombres viejos no quedan en projects/. Ver vault: Nomenclatura de Componentes y Tokens.
  */
 import assert from 'node:assert/strict';
 import { readdir, readFile } from 'node:fs/promises';
@@ -18,6 +18,7 @@ const RETIRED = [
   [/DialogTone/, 'the Dialog paint is DialogVariant'],
   [/confirm\(\{[^}]*\btone:/s, 'DialogService.confirm takes variant, not tone'],
   [/size="(compact|page)"|'compact' \| 'page'/, "EmptyState sizes are 'sm' | 'lg'"],
+  [/\btone: 'danger'|\.tone === 'danger'/, 'MenuItem paints with variant, not tone'],
 ];
 
 async function listFiles(dir) {
@@ -48,6 +49,26 @@ test('semantic paint is `variant` in Banner, Badge and Dialog', async () => {
   const dialog = await source('dialog/dialog.types.ts');
   assert.match(dialog, /readonly variant: DialogVariant;/);
   assert.doesNotMatch(dialog, /\btone\b/);
+});
+
+test('MenuItem paints with `variant` too, like Banner, Badge and Dialog', async () => {
+  const menu = await source('menu/menu.types.ts');
+  assert.match(menu, /readonly variant\?: 'danger';/);
+  assert.doesNotMatch(menu, /\btone\b/);
+});
+
+test('FieldState stays inside the library: the public API does not export it and nobody outside names it', async () => {
+  assert.doesNotMatch(
+    await readFile(path.join(ROOT, 'projects/design-system/src/public-api.ts'), 'utf8'),
+    /^export[^;]*\bFieldState\b/m,
+  );
+  const outside = [];
+  for (const file of [...(await listFiles('projects')), ...(await listFiles('e2e'))]) {
+    if (!file.startsWith('projects/design-system/') && /\bFieldState\b/.test(await readFile(path.join(ROOT, file), 'utf8'))) {
+      outside.push(file);
+    }
+  }
+  assert.deepEqual(outside, []);
 });
 
 test('EmptyState sizes come from the shared size vocabulary', async () => {

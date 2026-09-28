@@ -33,9 +33,9 @@ import { DocTable, type DocColumn } from '../../ui/doc-table';
 import { PropTable, type PropRow } from '../../ui/prop-table';
 import { Prose } from '../../ui/prose';
 import { translated } from '../../ui/translated';
-import { injectEstadoOptions } from '../components/expediciones';
-import { numberRange, provideShipmentCodeMessage, shipmentCode } from './expedicion.rules';
-import { ALMACENES } from './form.fixtures';
+import { injectStatusOptions } from '../components/shipments';
+import { numberRange, provideShipmentCodeMessage, shipmentCode } from './shipment.rules';
+import { WAREHOUSES } from './form.fixtures';
 
 /**
  * Verificada contra form-pattern.ts. Lo obligatorio y lo opcional lo dice la descripción: el
@@ -128,17 +128,17 @@ const OUTCOME = {
 } as const;
 
 /** Lo que edita la demo. Los tipos salen de acá y el form() los sigue de extremo a extremo. */
-interface AltaExpedicion {
-  codigo: string;
-  cliente: string;
-  correo: string;
-  almacen: string;
-  fecha: string | null;
-  estado: string;
+interface NewShipment {
+  code: string;
+  customer: string;
+  email: string;
+  warehouse: string;
+  date: string | null;
+  status: string;
   /** Texto: `ewms-input` entrega lo que el DOM le da, y el DOM da dígitos. */
-  bultos: string;
-  urgente: boolean;
-  etiquetas: boolean;
+  packages: string;
+  urgent: boolean;
+  labels: boolean;
 }
 
 /**
@@ -172,34 +172,34 @@ export class ShowroomForm {
 
   protected readonly version = DESIGN_SYSTEM_VERSION;
   protected readonly props = PROPS;
-  protected readonly almacenes = ALMACENES;
-  protected readonly estados = injectEstadoOptions();
+  protected readonly warehouses = WAREHOUSES;
+  protected readonly statuses = injectStatusOptions();
   protected readonly stateColumns = STATE_COLUMNS;
   protected readonly stateRows = STATE_ROWS;
 
-  protected readonly model = signal<AltaExpedicion>({
-    codigo: '',
-    cliente: '',
-    correo: '',
-    almacen: '',
-    fecha: null,
-    estado: 'pendiente',
-    bultos: '1',
-    urgente: false,
-    etiquetas: false,
+  protected readonly model = signal<NewShipment>({
+    code: '',
+    customer: '',
+    email: '',
+    warehouse: '',
+    date: null,
+    status: 'pendiente',
+    packages: '1',
+    urgent: false,
+    labels: false,
   });
 
-  protected readonly alta = form(this.model, (path) => {
-    required(path.codigo);
+  protected readonly newShipment = form(this.model, (path) => {
+    required(path.code);
     // `shipmentCode` es una función de esquema del proyecto, con su `kind` y su mensaje por token.
-    shipmentCode(path.codigo);
-    required(path.cliente);
-    minLength(path.cliente, 3);
-    email(path.correo);
-    required(path.almacen);
-    numberRange(path.bultos, { min: 1, max: 999 });
+    shipmentCode(path.code);
+    required(path.customer);
+    minLength(path.customer, 3);
+    email(path.email);
+    required(path.warehouse);
+    numberRange(path.packages, { min: 1, max: 999 });
     // El equivalente de `requiredTrue`: `required` mira si está vacío, y `false` no lo está.
-    validate(path.etiquetas, ({ value }) => (value() ? undefined : requiredError()));
+    validate(path.labels, ({ value }) => (value() ? undefined : requiredError()));
   });
 
   /** Lo último que recibió el consumidor, que acá es esta misma página. */
@@ -215,12 +215,12 @@ export class ShowroomForm {
    * El guardado de verdad tarda; mientras, «Guardar» queda en carga y no se puede pulsar dos
    * veces. Devolver la promesa alcanza: `submit()` mira `submitting()` por su cuenta.
    */
-  protected readonly guardar = async (): Promise<void> => {
+  protected readonly save = async (): Promise<void> => {
     const value = this.model();
     await new Promise((resolve) => setTimeout(resolve, 600));
-    this.saved.set(`${value.codigo} · ${value.cliente}`);
+    this.saved.set(`${value.code} · ${value.customer}`);
     // Guardado: deja de estar sucio, así «Salir» no pregunta por nada.
-    this.alta().reset(value);
+    this.newShipment().reset(value);
   };
 
   /**
@@ -228,9 +228,9 @@ export class ShowroomForm {
    * `runInInjectionContext` porque esto sale de un clic y `confirmDiscard` inyecta el diálogo;
    * al `canDeactivate` el router ya se lo da (NG0203 si falta).
    */
-  protected async salir(): Promise<void> {
+  protected async leave(): Promise<void> {
     const leave = await runInInjectionContext(this.injector, () =>
-      confirmDiscard(this.alta, {
+      confirmDiscard(this.newShipment, {
         title: this.transloco.translate(DISCARD.title),
         body: this.transloco.translate(DISCARD.body),
         confirmLabel: this.transloco.translate(DISCARD.confirm),
@@ -242,13 +242,13 @@ export class ShowroomForm {
   }
 
   protected readonly snippet = [
-    'alta = form(this.model, (path) => {',
-    '  required(path.codigo);',
-    '  shipmentCode(path.codigo);   // función de esquema del proyecto',
+    'newShipment = form(this.model, (path) => {',
+    '  required(path.code);',
+    '  shipmentCode(path.code);   // función de esquema del proyecto',
     '});',
     '',
-    '<form [ewmsForm]="alta" [ewmsFormAction]="guardar" #form="ewmsForm">',
-    '  <ewms-input label="Código" [formField]="alta.codigo" />',
+    '<form [ewmsForm]="newShipment" [ewmsFormAction]="save" #form="ewmsForm">',
+    '  <ewms-input label="Código" [formField]="newShipment.code" />',
     '  …',
     '  <ewms-button type="submit" [loading]="form.busy()">Guardar</ewms-button>',
     '</form>',

@@ -4,7 +4,7 @@ import { EWMS_FORM_MESSAGES, type FormMessages } from '@ewms/design-system';
 import { TranslocoService } from '@jsverse/transloco';
 
 /** EXP-AAAA-NNNN: el código que lleva la etiqueta. */
-const CODIGO = /^EXP-\d{4}-\d{4}$/;
+const CODE = /^EXP-\d{4}-\d{4}$/;
 
 /**
  * El `kind` del proyecto para el formato del código. Su texto sale de `EWMS_FORM_MESSAGES` por
@@ -54,7 +54,7 @@ export function provideShipmentCodeMessage(): Provider {
  */
 export function shipmentCode(path: SchemaPath<string>): void {
   validate(path, ({ value }) =>
-    value() === '' || CODIGO.test(value()) ? undefined : { kind: SHIPMENT_CODE },
+    value() === '' || CODE.test(value()) ? undefined : { kind: SHIPMENT_CODE },
   );
 }
 
