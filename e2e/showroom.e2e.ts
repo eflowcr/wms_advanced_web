@@ -2041,6 +2041,20 @@ test.describe('DS-3 lote C: la tabla', () => {
     await expect(page.locator(`${DEMO} [data-bulk-bar]`)).toHaveCount(0);
   });
 
+  test('the bulk bar, which only exists with rows selected, has no axe violations: contrast included', async ({
+    page,
+  }) => {
+    await page.goto(TABLE);
+    await ready(page);
+
+    await page.locator(`${ROWS} input[type="checkbox"]`).nth(0).click();
+    await expect(page.locator(`${DEMO} [data-bulk-bar]`)).toBeVisible();
+
+    // La página sin selección no tiene la barra: el axe de la ruta nunca la mide.
+    const results = await axe(page).include(`${DEMO} [data-bulk-bar]`).analyze();
+    expect(results.violations).toEqual([]);
+  });
+
   test('the status bar counts the rows and adds up Bultos: on screen, then over the selection', async ({
     page,
   }) => {

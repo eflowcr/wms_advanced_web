@@ -102,28 +102,21 @@ proveedor, y con los iconos propios indistinguibles de los de Tabler.
 **Se sacrifica** el "agregar un icono en un minuto": cada icono nuevo es un PR
 que edita el manifiesto y regenera. Es el costo buscado.
 
-**Se sacrifica** tree-shaking por icono: la tabla completa viaja junta al primer
-consumidor: 17.382 B crudos / ≈3,9 kB gzip con 70 iconos (medido sobre
-`icons.generated.ts` el 2026-09-15: 3.911 B con zlib nivel 6), unos 248 B
-crudos y 56 B gzip por icono. Con un catálogo curado es aceptable; el umbral
-para revisarlo está abajo.
+**Se sacrifica** tree-shaking por icono: la tabla completa viaja junta, y viaja en la
+**ruta crítica de `/`**, porque el marco (navegación, cabecera, pestañas) dibuja iconos.
+Cuántos iconos tiene la tabla y lo que mide la ruta crítica que la lleva están en
+el vault: `01-Proyecto/Base del proyecto.md` §10.
 
 **Actualizar Tabler** es un bump de la `devDependency` + `npm run icons:build`;
 la compuerta 11 obliga a hacerlo en el mismo PR.
 
-## Revisión
+## Condición de revisión
 
-Se reevalúa si el catálogo supera **~180 iconos** (el costo de no poder hacer
-tree-shaking deja de ser despreciable) o si Tabler cambia de licencia.
+**Cada icono nuevo pasa por el techo de la ruta crítica de `/`**: la regla 17 de
+Integración Continua (`tools/ci/check-critical-path.mjs`), 532 kB crudos, Decisión del
+usuario (2026-09-26). Se agrega, se mide la ruta crítica, y si el techo no alcanza,
+se decide a propósito —el icono o el techo—, nunca en silencio.
 
-De dónde sale el 180: el mismo criterio de antes — que la tabla no se coma más
-de **la mitad del margen** entre el bundle inicial y el aviso de 400 kB del
-budget —, recalculado con la cifra real. Medición: `npm run build` del
-2026-09-16, *Initial total* **310.61 kB** crudos, así que el margen es
-**≈89 kB**. La mitad son ≈45 kB, y a 248 B por icono eso son **≈180 iconos**
-(≈10 kB gzip). La tabla termina en el bundle inicial en cuanto la barra
-superior use un icono.
-
-*Corregido el 2026-09-16:* decía ~300, justificado contra un bundle inicial de
-236 kB (margen de 164 kB). Con 310.61 kB, 300 iconos (≈75 kB) serían el 84 %
-del margen, no la mitad.
+Se reevalúa el vendorizado si el peso de la tabla en la ruta crítica deja de ser
+despreciable frente a ese techo (el costo de no poder hacer tree-shaking), o si
+Tabler cambia de licencia.

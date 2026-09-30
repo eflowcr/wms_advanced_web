@@ -233,7 +233,7 @@ test.describe('opening a favourite', () => {
   test(`costs at most ${OPEN_FAVORITE_MAX_CLICKS} click, from another screen`, async ({ page }) => {
     await open(page);
 
-    // Hay dos estrellas en pantalla, la del shell y la del catálogo (otro almacén, gracias a RFE-02).
+    // Hay una estrella en pantalla, la de la cabecera del App Shell.
     // Se prueba el flujo de la aplicación, así que todo localizador se acota al shell.
     await page.locator('[data-app-header] [data-favorite-toggle] button').click();
     await expect(page.locator('ewms-nav-rail [data-favorite]')).toHaveCount(1);

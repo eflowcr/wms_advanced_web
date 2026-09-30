@@ -24,7 +24,7 @@ env:
   # La del archivo oficial de sumas de esa versión; el paso de instalación verifica las dos.
   GITLEAKS_SHA256: '551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb'
 
-# Cada `timeout-minutes`: el doble de lo que tardó su job en la corrida 36360922074 (la del PR que
+# Cada `timeout-minutes`: cuatro veces lo que tardó su job en la corrida 36360922074 (la del PR que
 # fusionó 3ff8116), al minuto de arriba. Lo guarda tools/ci/workflow-hardening.test.mjs.
 jobs:
   # ---------------------------------------------------------------------- verify
@@ -32,7 +32,7 @@ jobs:
     # Nombre exigido por el ruleset, letra por letra. Ver la cabecera.
     name: Types, lint, tests, budgets
     runs-on: ubuntu-latest
-    timeout-minutes: 7
+    timeout-minutes: 13
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
@@ -123,7 +123,7 @@ jobs:
     # Nombre exigido por el ruleset, letra por letra. Ver la cabecera.
     name: Playwright smoke
     runs-on: ubuntu-latest
-    timeout-minutes: 3
+    timeout-minutes: 6
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
@@ -135,6 +135,12 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      # El espejo de apt de los runners a veces deja una descarga colgada hasta el tope del job.
+      # Con esto una descarga parada se corta a los 20 s y se reintenta tres veces.
+      - name: Set up apt retries and timeouts
+        run: |
+          printf 'Acquire::Retries "3";\nAcquire::http::Timeout "20";\nAcquire::https::Timeout "20";\n' | sudo tee /etc/apt/apt.conf.d/99-ci-network > /dev/null
 
       - name: Install Playwright browser
         run: npx playwright install chromium --with-deps
@@ -160,7 +166,7 @@ jobs:
     # el día que el ruleset lo exija. El filtro es un paso, no un job.
     name: Playwright showroom
     runs-on: ubuntu-latest
-    timeout-minutes: 6
+    timeout-minutes: 11
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -204,6 +210,13 @@ jobs:
       - name: Install dependencies
         if: steps.filter.outputs.showroom == 'true'
         run: npm ci
+
+      # El espejo de apt de los runners a veces deja una descarga colgada hasta el tope del job.
+      # Con esto una descarga parada se corta a los 20 s y se reintenta tres veces.
+      - name: Set up apt retries and timeouts
+        if: steps.filter.outputs.showroom == 'true'
+        run: |
+          printf 'Acquire::Retries "3";\nAcquire::http::Timeout "20";\nAcquire::https::Timeout "20";\n' | sudo tee /etc/apt/apt.conf.d/99-ci-network > /dev/null
 
       - name: Install Playwright browser
         if: steps.filter.outputs.showroom == 'true'

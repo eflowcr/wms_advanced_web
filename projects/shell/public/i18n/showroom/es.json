@@ -2886,7 +2886,7 @@
       "title": "El filtro lo decide el tipo, y el consumidor no configura nada"
     },
     "formatting": {
-      "locale": "Formatear una fecha o una cantidad exige una configuración regional, y el sistema de diseño <b>no habla ningún idioma</b> (ADR 0008). Así que define <code>EWMS_TABLE_FORMATTERS</code> y no lo implementa: el <i>shell</i> lo llena desde <code>core/i18n</code> con <code>transloco-locale</code>, y este catálogo —que no puede importar <code>core</code>— lo llena con <code>Intl</code>. El mismo componente, dos implementaciones detrás de la misma interfaz.",
+      "locale": "Formatear una fecha o una cantidad exige una configuración regional, y el sistema de diseño <b>no habla ningún idioma</b> (ADR 0008). Así que define <code>EWMS_TABLE_FORMATTERS</code> y no lo implementa: el <i>shell</i> lo llena desde <code>core/i18n</code> con <code>transloco-locale</code>, y las pruebas del catálogo —que no pueden importar <code>core</code>— lo llenan con <code>Intl</code>. El mismo componente, dos implementaciones detrás de la misma interfaz.",
       "rawValue": "<b>El orden y el filtro trabajan siempre sobre el valor crudo.</b> El formateador decide cómo se ve y nada más: una columna de números con <mono>[1200, 900]</mono> ordena <mono>900, 1200</mono> aunque en pantalla diga <mono>1.200</mono> y <mono>900</mono>. Ordenar por el texto formateado es el error que hace que la gente deje de confiar en la columna.",
       "title": "La tabla no formatea: pide el formato"
     },

@@ -2,6 +2,6 @@
 export const DICTIONARY_VERSIONS: Readonly<Record<string, string>> = {
   'en': '24c6418a5d',
   'es': '2f332ef680',
-  'showroom/en': '5e5917dd58',
-  'showroom/es': '46965f8b94',
+  'showroom/en': 'd400179a3f',
+  'showroom/es': '7352c66f22',
 };

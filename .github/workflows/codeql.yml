@@ -24,8 +24,8 @@ jobs:
   analyze:
     name: Analyze (${{ matrix.language }})
     runs-on: ubuntu-latest
-    # El doble de lo que tardó en la corrida 36360922076 (80 s, la pata más larga), al minuto de arriba.
-    timeout-minutes: 3
+    # Cuatro veces lo que tardó en la corrida 36360922076 (80 s, la pata más larga), al minuto de arriba.
+    timeout-minutes: 6
     permissions:
       contents: read
       security-events: write

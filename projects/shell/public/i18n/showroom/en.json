@@ -2886,7 +2886,7 @@
       "title": "The type decides the filter, and the consumer configures nothing"
     },
     "formatting": {
-      "locale": "Formatting a date or a quantity requires a locale, and the design system <b>speaks no language</b> (ADR 0008). So it defines <code>EWMS_TABLE_FORMATTERS</code> and does not implement it: the <i>shell</i> fills it from <code>core/i18n</code> with <code>transloco-locale</code>, and this catalogue —which cannot import <code>core</code>— fills it with <code>Intl</code>. The same component, two implementations behind the same interface.",
+      "locale": "Formatting a date or a quantity requires a locale, and the design system <b>speaks no language</b> (ADR 0008). So it defines <code>EWMS_TABLE_FORMATTERS</code> and does not implement it: the <i>shell</i> fills it from <code>core/i18n</code> with <code>transloco-locale</code>, and the catalogue's tests —which cannot import <code>core</code>— fill it with <code>Intl</code>. The same component, two implementations behind the same interface.",
       "rawValue": "<b>Sorting and filtering always work on the raw value.</b> The formatter decides how it looks and nothing more: a column of numbers with <mono>[1200, 900]</mono> sorts <mono>900, 1200</mono> even though the screen says <mono>1,200</mono> and <mono>900</mono>. Sorting by the formatted text is the mistake that makes people stop trusting the column.",
       "title": "The table does not format: it asks for the format"
     },

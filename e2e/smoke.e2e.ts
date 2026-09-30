@@ -5,7 +5,7 @@ import { watchConsole } from './console-watch';
 
 /**
  * Piso de la suite: corre en todo PR y todo push. Entra solo lo que, si falla, deja a nadie usar la app;
- * un flujo por patrón y por teclado (REQ-FE-DS4-003 §2.1). Tope: doce pruebas.
+ * un flujo por patrón y por teclado (REQ-FE-DS4-003 §2.1).
  * Ver vault: Integracion Continua (4.1, los tres niveles).
  */
 
