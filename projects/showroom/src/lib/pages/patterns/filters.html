@@ -54,7 +54,7 @@
     </h2>
     <p class="text-secondary" [ewmsProse]="'showroom.patternFilters.demo.intro' | transloco"></p>
 
-    <ewms-demo-frame ground="canvas" [label]="'showroom.patternFilters.demo.frame' | transloco">
+    <ewms-demo-frame ground="none" [label]="'showroom.patternFilters.demo.frame' | transloco">
       <div class="flex flex-col gap-4" data-demo-filters>
         <ewms-filter-bar [fields]="fields()" [value]="value()" (valueChange)="apply($event)" />
 

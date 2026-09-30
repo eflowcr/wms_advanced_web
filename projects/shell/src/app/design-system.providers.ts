@@ -240,6 +240,12 @@ function tableMessages(): TableMessages {
       chosen === total
         ? transloco.translate('ds.table.setSummaryAll', { column })
         : transloco.translate('ds.table.setSummary', { column, chosen, total }),
+    setChosen: (chosen, total) =>
+      chosen === total
+        ? transloco.translate('ds.table.setAll')
+        : chosen === 0
+          ? transloco.translate('ds.table.setNone')
+          : transloco.translate('ds.table.setChosen', { chosen, total }),
     get columns() {
       return transloco.translate('ds.table.columns');
     },

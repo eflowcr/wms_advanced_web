@@ -11,8 +11,9 @@ async function render(
   dictionaries: Partial<typeof DICTIONARIES> = DICTIONARIES,
 ): Promise<ComponentFixture<LanguageSwitcher>> {
   vi.spyOn(window.navigator, 'language', 'get').mockReturnValue(browser);
-  // Nada se guarda: la preferencia de una prueba decidiría el idioma de la siguiente.
+  // Nada se guarda ni se lee: la preferencia que dejó otra spec decidiría el idioma de esta.
   vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => undefined);
+  vi.spyOn(Storage.prototype, 'getItem').mockReturnValue(null);
   await TestBed.configureTestingModule({
     imports: [LanguageSwitcher],
     providers: [provideI18nTesting(dictionaries)],

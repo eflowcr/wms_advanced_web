@@ -104,8 +104,14 @@ export function columnHeaderClasses(type: TableColumnType): string {
  */
 export const TABLE_CLASSES = 'w-full border-separate border-spacing-0 text-p';
 
-export const HEADER_CELL_CLASSES =
-  'border-b border-strong bg-secondary px-3 text-caption text-secondary';
+/** Sin color de borde: la línea fuerte va entre la cabecera y el cuerpo, haya filtros o no. */
+export const HEADER_CELL_CLASSES = 'border-b bg-secondary px-3 text-caption text-secondary';
+
+/**
+ * La fila de filtros pesa menos que la cabecera: fondo del lienzo, aire arriba y abajo, y la línea
+ * fuerte que la separa del cuerpo. Los campos conservan su borde de control (WCAG 1.4.11).
+ */
+export const FILTER_CELL_CLASSES = 'border-b border-strong bg-canvas px-3 py-2';
 
 /**
  * Anillo de foco interior: afuera lo tapaba la celda vecina, y la sombra es de la marca de

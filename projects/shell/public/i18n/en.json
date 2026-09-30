@@ -113,6 +113,7 @@
       "selectRow": "Select the row",
       "selectedCount": "{count, plural, one {# selected} other {# selected}}",
       "setAll": "All",
+      "setChosen": "{{ chosen }} of {{ total }}",
       "setNone": "None",
       "setSummary": "{chosen, plural, =0 {{{ column }}: none} other {{{ column }}: # of {{ total }}}}",
       "setSummaryAll": "{{ column }}: all",

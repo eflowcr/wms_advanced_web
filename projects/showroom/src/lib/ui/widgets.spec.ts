@@ -37,7 +37,7 @@ describe('DemoFrame', () => {
     `,
   })
   class Host {
-    readonly ground = signal<'canvas' | 'surface' | 'navy'>('canvas');
+    readonly ground = signal<'canvas' | 'surface' | 'navy' | 'none'>('canvas');
     readonly label = signal('');
   }
 
@@ -61,6 +61,14 @@ describe('DemoFrame', () => {
     fixture.componentInstance.ground.set('surface');
     await fixture.whenStable();
     expect(element.querySelector('div')?.className).toContain('bg-surface');
+  });
+
+  it('draws no frame of its own for a component that brings one', async () => {
+    const { fixture, element } = await render(Host);
+    fixture.componentInstance.ground.set('none');
+    await fixture.whenStable();
+    expect(element.querySelector('div')?.className).toBe('');
+    expect(element.textContent).toContain('contenido');
   });
 
   it('shows a caption only when it is given one', async () => {

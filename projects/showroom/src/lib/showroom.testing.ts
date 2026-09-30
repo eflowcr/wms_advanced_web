@@ -95,6 +95,8 @@ const TABLE_MESSAGES: TableMessages = {
     }
     return chosen === 0 ? `${column}: ninguno` : `${column}: ${chosen} de ${total}`;
   },
+  setChosen: (chosen, total) =>
+    chosen === total ? 'Todos' : chosen === 0 ? 'Ninguno' : `${chosen} de ${total}`,
   columns: 'Columnas',
   resizeColumn: (column) => `Ancho de la columna ${column}`,
   moveEarlier: (column) => `Subir ${column}`,

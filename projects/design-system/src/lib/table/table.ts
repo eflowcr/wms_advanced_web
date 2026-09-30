@@ -65,6 +65,7 @@ import {
 } from './table.tokens';
 import {
   CELL_CLASSES,
+  FILTER_CELL_CLASSES,
   HEADER_CELL_CLASSES,
   ROW_HEIGHT,
   TABLE_CLASSES,
@@ -217,8 +218,14 @@ export class Table<T> implements TableContext {
   readonly filterRowId = `${this.tableId}-filters`;
 
   protected readonly tableClasses = TABLE_CLASSES;
-  protected readonly headerCellClasses = HEADER_CELL_CLASSES;
+  protected readonly filterCellClasses = FILTER_CELL_CLASSES;
   protected readonly cellClasses = CELL_CLASSES;
+
+  /** Con la fila de filtros abierta, la línea fuerte baja con ella: arriba queda una sutil. */
+  protected readonly headerCellClasses = computed(
+    () =>
+      `${HEADER_CELL_CLASSES} ${this.filtersOpen() && this.anyFilterable() ? 'border-default' : 'border-strong'}`,
+  );
 
   readonly text = computed(() => ({
     ...this.providedMessages,
@@ -627,11 +634,22 @@ export class Table<T> implements TableContext {
     return Object.entries(column.badges()).map(([key, badge]) => ({ key, label: badge.label }));
   }
 
+  /** El nombre accesible del botón del filtro: «Estado: 2 de 4». */
   protected setLabel(column: TableColumn): string {
-    const header = column.header() || column.key();
+    const [chosen, total] = this.setCount(column);
+    return this.text().setSummary(column.header() || column.key(), chosen, total);
+  }
+
+  /** Lo que se ve: «2 de 4». La cabecera, justo encima, ya nombra la columna. */
+  protected setCaption(column: TableColumn): string {
+    const [chosen, total] = this.setCount(column);
+    return this.text().setChosen(chosen, total);
+  }
+
+  private setCount(column: TableColumn): readonly [number, number] {
     const options = this.setOptions(column);
     const chosen = options.filter((option) => this.filtering.isChosen(column, option.key));
-    return this.text().setSummary(header, chosen.length, options.length);
+    return [chosen.length, options.length];
   }
 
   /** Oculta por defecto: se muestra lo que se usa. Ocultar no borra filtros (hay chips). */

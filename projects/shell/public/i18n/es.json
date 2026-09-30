@@ -113,6 +113,7 @@
       "selectRow": "Seleccionar la fila",
       "selectedCount": "{count, plural, one {# seleccionada} other {# seleccionadas}}",
       "setAll": "Todos",
+      "setChosen": "{{ chosen }} de {{ total }}",
       "setNone": "Ninguno",
       "setSummary": "{chosen, plural, =0 {{{ column }}: ninguno} other {{{ column }}: # de {{ total }}}}",
       "setSummaryAll": "{{ column }}: todos",

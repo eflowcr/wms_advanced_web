@@ -41,6 +41,8 @@ export interface TableMessages {
   readonly setNone: string;
   /** Texto del botón: «Estado: todos», «Estado: 2 de 4», «Estado: ninguno». */
   readonly setSummary: (column: string, chosen: number, total: number) => string;
+  /** Lo visible del botón, sin la columna: «Todos», «2 de 4», «Ninguno». */
+  readonly setChosen: (chosen: number, total: number) => string;
 
   // Columnas: selector y separador de ancho.
   readonly columns: string;

@@ -1925,7 +1925,9 @@ test.describe('DS-3 lote C: la tabla', () => {
       'aria-checked',
       'mixed',
     );
-    await expect(trigger).toHaveText(/Estado: 2 de 4/);
+    // Se ve la cuenta sola, bajo la cabecera que ya nombra la columna; el nombre la contiene.
+    await expect(trigger).toHaveAccessibleName('Estado: 2 de 4');
+    await expect(trigger.locator('[aria-hidden="true"]', { hasText: '2 de 4' })).toBeVisible();
 
     const badges = page.locator(`${ROWS} ewms-badge`);
     for (const text of await badges.allTextContents()) {
@@ -2418,6 +2420,75 @@ test.describe('DS-3 lote D: detalle, menú, ventana y paginador', () => {
       expect(fits, `box ${index} fits its placeholder`).toBe(true);
     }
   });
+
+  for (const width of [1280, 1024, 768]) {
+    const DEMO = '[data-demo-table]';
+    test(`ONE FRAME AND A LIGHT FILTER ROW at ${width} px: nothing cut, nothing touching, an edge that says there is more`, async ({
+      page,
+    }) => {
+      await page.setViewportSize({ width, height: 900 });
+      await page.goto(TABLE);
+      await ready(page);
+      await page.locator(`${DEMO} [data-filters-toggle] button`).click();
+      const filterRow = page.locator(`${DEMO} [data-filter-row]`);
+      await expect(filterRow).toBeVisible();
+
+      // Un solo marco: entre la tabla y la sección no hay otro borde.
+      const borders = await page.locator(`${DEMO} ewms-table`).evaluate((table) => {
+        let count = 0;
+        for (let node = table.parentElement; node && node.tagName !== 'SECTION'; node = node.parentElement) {
+          count += getComputedStyle(node).borderTopWidth === '0px' ? 0 : 1;
+        }
+        return count;
+      });
+      expect(borders, 'frames around the table').toBe(0);
+
+      // La fila de filtros pesa menos que la cabecera y deja aire antes y después de sus campos.
+      const look = await page.locator(DEMO).evaluate((demo) => {
+        const head = demo.querySelector<HTMLElement>('thead th[data-col="code"]')!;
+        const cell = demo.querySelector<HTMLElement>('[data-filter-row] td:last-child')!;
+        const field = demo.querySelector<HTMLElement>('[data-filter="code"] input')!;
+        const [c, f] = [cell.getBoundingClientRect(), field.getBoundingClientRect()];
+        return {
+          differentGround: getComputedStyle(head).backgroundColor !== getComputedStyle(cell).backgroundColor,
+          air: Math.min(f.top - c.top, c.bottom - f.bottom),
+        };
+      });
+      expect(look.differentGround).toBe(true);
+      expect(look.air).toBeGreaterThanOrEqual(8);
+
+      // «Desde» y «Hasta»: una línea, sin tocarse, con el marcador entero.
+      const numbers = filterRow.locator('[data-filter="packages"] input');
+      const [from, to] = [(await numbers.nth(0).boundingBox())!, (await numbers.nth(1).boundingBox())!];
+      expect(Math.round(from.y)).toBe(Math.round(to.y));
+      expect(to.x - (from.x + from.width)).toBeGreaterThanOrEqual(8);
+
+      // Estado nunca se corta: el botón entra en su columna y su texto en el botón.
+      const status = filterRow.locator('[data-filter="status"] button');
+      const clipped = await status.evaluate((button) => {
+        const cell = button.closest('td')!.getBoundingClientRect();
+        const own = button.getBoundingClientRect();
+        return button.scrollWidth > button.clientWidth || own.right > cell.right + 0.5;
+      });
+      expect(clipped).toBe(false);
+      await expect(status).toHaveAccessibleName('Estado: todos');
+
+      // Antes de desplazar: al final, una fijada tapa a medias el campo que pasa por debajo.
+      const results = await axe(page).include(`${DEMO} ewms-table`).analyze();
+      expect(results.violations).toEqual([]);
+
+      // Hay más columnas a la derecha: el borde lo dice; al final, ya no.
+      const box = page.locator(`${DEMO} [data-scroll-box]`);
+      const overflows = await box.evaluate((element) => element.scrollWidth > element.clientWidth);
+      await expect(page.locator(`${DEMO} [data-edge="end"]`)).toHaveCount(overflows ? 1 : 0);
+      await box.evaluate((element) => {
+        element.scrollLeft = element.scrollWidth;
+        element.dispatchEvent(new Event('scroll'));
+      });
+      await expect(page.locator(`${DEMO} [data-edge="end"]`)).toHaveCount(0);
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    });
+  }
 
   test('polish: the header stays while the rows scroll, only exceptions are tinted, dates read in a column', async ({
     page,

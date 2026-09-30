@@ -120,6 +120,9 @@ describe('the design-system texts the shell provides', () => {
     expect(table.setSummary('Estado', 4, 4)).toBe('Estado: todos');
     expect(table.setSummary('Estado', 2, 4)).toBe('Estado: 2 de 4');
     expect(table.setSummary('Estado', 0, 4)).toBe('Estado: ninguno');
+    expect(table.setChosen(4, 4)).toBe('Todos');
+    expect(table.setChosen(2, 4)).toBe('2 de 4');
+    expect(table.setChosen(0, 4)).toBe('Ninguno');
     expect(table.rowsShown(12, 340)).toBe('12 de 340 filas');
     expect(table.rowsShown(12, null)).toBe('12 filas');
     expect(table.selectedCount(1)).toBe('1 seleccionada');

@@ -92,6 +92,8 @@ const MESSAGES: TableMessages = {
   setNone: 'Ninguno',
   setSummary: (column, chosen, total) =>
     chosen === total ? `${column}: todos` : `${column}: ${chosen} de ${total}`,
+  setChosen: (chosen, total) =>
+    chosen === total ? 'Todos' : chosen === 0 ? 'Ninguno' : `${chosen} de ${total}`,
   columns: 'Columnas',
   resizeColumn: (column) => `Ancho de la columna ${column}`,
   moveEarlier: (column) => `Subir ${column}`,
@@ -319,6 +321,42 @@ describe('Table', () => {
       await settle();
       expect(search.value).toBe('');
       expect(bodyRows().length).toBe(3);
+    });
+  });
+
+  describe('one frame', () => {
+    /** jsdom no maqueta: la caja dice cuánto mide y cuánto desplaza, como un navegador. */
+    async function scrollTo(left: number): Promise<void> {
+      const box = fixture.nativeElement.querySelector('[data-scroll-box]') as HTMLElement;
+      Object.defineProperty(box, 'clientWidth', { configurable: true, value: 300 });
+      Object.defineProperty(box, 'scrollWidth', { configurable: true, value: 500 });
+      box.scrollLeft = left;
+      box.dispatchEvent(new Event('scroll'));
+      await settle();
+    }
+    const edge = (side: string): HTMLElement | null =>
+      fixture.nativeElement.querySelector(`[data-edge="${side}"]`);
+
+    it('is the only border around the table, with the status bar inside', () => {
+      const frames = fixture.nativeElement.querySelectorAll('[data-table-frame]');
+      expect(frames.length).toBe(1);
+      expect(frames[0].querySelector('[data-scroll-box]')).not.toBeNull();
+      expect(frames[0].querySelector('ewms-table-status')).not.toBeNull();
+    });
+
+    it('SAYS THERE ARE MORE COLUMNS on the side they are, and hides it from the reader', async () => {
+      await scrollTo(0);
+      expect(edge('start')).toBeNull();
+      expect(edge('end')?.getAttribute('aria-hidden')).toBe('true');
+      expect(edge('end')?.className).toContain('pointer-events-none');
+
+      await scrollTo(100);
+      expect(edge('start')).not.toBeNull();
+      expect(edge('end')).not.toBeNull();
+
+      await scrollTo(200);
+      expect(edge('start')).not.toBeNull();
+      expect(edge('end')).toBeNull();
     });
   });
 
@@ -858,6 +896,24 @@ describe('Table', () => {
       expect(bodyRows().length).toBe(1);
     });
 
+    it('THE FILTER ROW WEIGHS LESS THAN THE HEADER, and the strong line goes down with it', async () => {
+      const head = (): HTMLElement =>
+        fixture.nativeElement.querySelector('thead th[data-col="code"]') as HTMLElement;
+      expect(head().className).toContain('border-strong');
+
+      toggle().click();
+      await settle();
+      // Arriba una línea sutil; abajo, la fuerte que separa del cuerpo. Aire arriba y abajo.
+      expect(head().className).toContain('border-default');
+      expect(head().className).not.toContain('border-strong');
+      const cell = filterRow().querySelector('td:last-child') as HTMLElement;
+      expect(cell.className).toContain('border-strong');
+      expect(cell.className).toContain('bg-canvas');
+      expect(cell.className).toContain('py-2');
+      // Los campos son Small y conservan su borde de control.
+      expect(filterRow().querySelector('[data-filter="code"] input')?.className).toContain('h-8');
+    });
+
     it('the chip × takes that filter off, box included; «Limpiar filtros» takes them all', async () => {
       await filterCode('0002');
       chips()[0]!.querySelector('button')!.click();
@@ -911,6 +967,10 @@ describe('Table', () => {
         fixture.nativeElement.querySelector('[data-filter="status"] button') as HTMLButtonElement;
       const box = (selector: string): HTMLInputElement =>
         document.querySelector(`${selector} input`) as HTMLInputElement;
+      /** El nombre accesible entero, y lo que se ve: la cuenta sola, bajo la cabecera que nombra. */
+      const name = (): string => trigger().querySelector('.sr-only')?.textContent?.trim() ?? '';
+      const caption = (): string =>
+        trigger().querySelector('.sr-only')?.nextElementSibling?.textContent?.trim() ?? '';
 
       async function openSet(): Promise<void> {
         toggle().click();
@@ -923,7 +983,8 @@ describe('Table', () => {
 
       it('opens with every state ticked, and unticking one drops its rows', async () => {
         await openSet();
-        expect(trigger().textContent?.trim()).toBe('Estado: todos');
+        expect(name()).toBe('Estado: todos');
+        expect(caption()).toBe('Todos');
         expect(box('[data-set-all]').checked).toBe(true);
 
         box('[data-set-option="pendiente"]').click();
@@ -932,7 +993,9 @@ describe('Table', () => {
           expect.stringContaining('EXP-0002'),
         ]);
         expect(host.lastQuery?.filters).toEqual({ status: ['con-incidencia'] });
-        expect(trigger().textContent?.trim()).toBe('Estado: 1 de 2');
+        // Lo que se ve está dentro del nombre (WCAG 2.5.3): la cabecera ya dice la columna.
+        expect(name()).toBe('Estado: 1 de 2');
+        expect(caption()).toBe('1 de 2');
         expect(box('[data-set-all]').getAttribute('aria-checked')).toBe('mixed');
         expect(chips()[0]?.textContent).toContain('Estado: Con incidencia');
         await expectNoAxeViolations(document.querySelector('.cdk-overlay-container')!);
@@ -944,6 +1007,7 @@ describe('Table', () => {
         await settle();
         expect(bodyRows().length).toBe(0);
         expect(chips()[0]?.textContent).toContain('Estado: Ninguno');
+        expect(caption()).toBe('Ninguno');
 
         box('[data-set-all]').click();
         await settle();
@@ -1903,6 +1967,8 @@ describe('Table columns', () => {
     box.dispatchEvent(new Event('scroll'));
     await settle();
     expect(header('code').className).toContain('after:shadow-pin-start');
+    // Con fijadas en los dos bordes, su sombra ya avisa: no hay degradado encima.
+    expect(fixture.nativeElement.querySelector('[data-edge]')).toBeNull();
     expect(header('actions').className).toContain('sticky');
     expect(header('actions').style.right).toBe(pixels(0));
     // La casilla se queda con ellas, a la izquierda.

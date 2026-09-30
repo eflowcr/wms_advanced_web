@@ -219,6 +219,20 @@ export class TableViewState {
     }
   }
 
+  /**
+   * La sombra que avisa de columnas fuera de vista, por borde. Donde hay fijadas no hace falta: la
+   * suya ya lo dice. Ver vault: Tabla §14.
+   */
+  readonly edges = computed(() => {
+    const scrolled = this.scrolled();
+    const pinnedAt = (pin: TablePin): boolean =>
+      this.pinning() && this.visibleColumns().some((column) => this.pinnedOf(column) === pin);
+    return {
+      start: scrolled.start && !pinnedAt('start'),
+      end: scrolled.end && !pinnedAt('end'),
+    };
+  });
+
   /** Celdas cuyo texto no entra: solo esas llevan tooltip con el texto completo. */
   readonly clipped = signal<ReadonlySet<string>>(new Set());
 
