@@ -26,6 +26,8 @@ export interface TableMessages {
   readonly filters: (active: number) => string;
   /** También la acción del estado vacío con filtros puestos. */
   readonly clearFilters: string;
+  /** El nombre del chip de la búsqueda rápida: «Búsqueda: 0403». */
+  readonly searchChip: string;
   /** El botón que agrupa columnas, densidad y «Restablecer vista». */
   readonly view: string;
   readonly resetView: string;

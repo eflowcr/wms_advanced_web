@@ -4,6 +4,7 @@ import {
   computed,
   inject,
   input,
+  linkedSignal,
   output,
 } from '@angular/core';
 import { Button } from '../button/button';
@@ -14,6 +15,7 @@ import { EWMS_FILTER_CHIPS_MESSAGES, type FilterChipsMessages } from './filter-c
 const NO_FILTER_CHIPS_MESSAGES: FilterChipsMessages = {
   removeFilter: () => '',
   clearFilters: '',
+  activeCount: () => '',
 };
 
 /** Un filtro activo, para su chip: columna o campo, y el valor ya legible. */
@@ -33,33 +35,40 @@ export interface FilterChip {
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { class: 'block' },
   template: `
+    <!-- Siempre presente y vacía al nacer: anuncia solo cuando la cuenta cambia, no al cargar. -->
+    <p class="sr-only" role="status" aria-live="polite" data-filter-count-live>{{ announced() }}</p>
     @if (chips().length > 0) {
-      <ul class="flex flex-wrap items-center gap-2" data-filter-chips>
-        @for (chip of chips(); track chip.key) {
-          <li
-            class="inline-flex items-center gap-1 rounded-full border border-default bg-secondary py-0.5 ps-2 pe-1 text-caption text-primary"
-            [attr.data-chip]="chip.key"
-          >
-            <!-- &ngsp;: sin él el lector de pantalla junta «Código:0002». -->
-            <span
-              ><span class="text-secondary">{{ chip.column }}:</span>&ngsp;{{ chip.value }}</span
+      <div class="flex flex-wrap items-center gap-2">
+        <span class="text-caption text-secondary" data-filter-count>{{
+          text().activeCount(chips().length)
+        }}</span>
+        <ul class="flex flex-wrap items-center gap-2" data-filter-chips>
+          @for (chip of chips(); track chip.key) {
+            <li
+              class="inline-flex items-center gap-1 rounded-full border border-default bg-secondary py-0.5 ps-2 pe-1 text-caption text-primary"
+              [attr.data-chip]="chip.key"
             >
-            <button
-              type="button"
-              class="-m-0.5 inline-flex cursor-pointer rounded-full p-1 text-secondary outline-none hover:bg-ghost-hover focus-visible:shadow-(--focus-ring-shadow)"
-              [attr.aria-label]="text().removeFilter(chip.column)"
-              (click)="remove.emit(chip.key)"
-            >
-              <ewms-icon name="x" size="sm" />
-            </button>
+              <!-- &ngsp;: sin él el lector de pantalla junta «Código:0002». -->
+              <span
+                ><span class="text-secondary">{{ chip.column }}:</span>&ngsp;{{ chip.value }}</span
+              >
+              <button
+                type="button"
+                class="-m-0.5 inline-flex cursor-pointer rounded-full p-1 text-secondary outline-none hover:bg-ghost-hover focus-visible:shadow-(--focus-ring-shadow)"
+                [attr.aria-label]="text().removeFilter(chip.column)"
+                (click)="remove.emit(chip.key)"
+              >
+                <ewms-icon name="x" size="sm" />
+              </button>
+            </li>
+          }
+          <li>
+            <ewms-button variant="link" size="sm" data-clear-filters (click)="clearAll.emit()">
+              {{ text().clearFilters }}
+            </ewms-button>
           </li>
-        }
-        <li>
-          <ewms-button variant="link" size="sm" data-clear-filters (click)="clearAll.emit()">
-            {{ text().clearFilters }}
-          </ewms-button>
-        </li>
-      </ul>
+        </ul>
+      </div>
     }
   `,
 })
@@ -75,6 +84,13 @@ export class FilterChips {
     ...(this.providedMessages ?? NO_FILTER_CHIPS_MESSAGES),
     ...(this.messages() ?? {}),
   }));
+
+  /** Vacío al nacer; después, la cuenta cada vez que cambia. Editar un filtro puesto no la mueve. */
+  protected readonly announced = linkedSignal<number, string>({
+    source: () => this.chips().length,
+    computation: (count, previous) =>
+      previous === undefined ? '' : this.text().activeCount(count),
+  });
 
   /** La clave del chip cuyo × se pulsó. */
   readonly remove = output<string>();

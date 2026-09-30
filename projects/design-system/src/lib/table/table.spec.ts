@@ -81,6 +81,7 @@ const MESSAGES: TableMessages = {
   sortedDescending: 'Orden descendente',
   filters: (active) => (active === 0 ? 'Filtros' : `Filtros (${active})`),
   clearFilters: 'Limpiar filtros',
+  searchChip: 'Búsqueda',
   view: 'Vista',
   resetView: 'Restablecer vista',
   expandAll: 'Expandir todo',
@@ -139,6 +140,8 @@ const PAGE_WORDS: PaginationMessages = {
 const CHIP_WORDS: FilterChipsMessages = {
   clearFilters: 'Limpiar filtros',
   removeFilter: (column) => `Quitar el filtro ${column}`,
+  activeCount: (count) =>
+    count === 0 ? 'Sin filtros activos' : count === 1 ? '1 filtro activo' : `${count} filtros activos`,
 };
 
 const DATE_WORDS = {
@@ -186,6 +189,7 @@ const TABLE_PROVIDERS = [
       (rowActivate)="activated = $event.row.code"
       (selectionChange)="selection = $event"
       (queryChange)="lastQuery = $event"
+      (filtersCleared)="cleared = cleared + 1"
       [bulkActions]="bulk"
       (bulkAction)="lastBulk = $event"
     >
@@ -226,6 +230,7 @@ class TestHost {
   activated = '';
   selection: readonly Row[] = [];
   lastQuery: TableQuery | null = null;
+  cleared = 0;
   readonly bulk: readonly MenuItem[] = [
     { id: 'imprimir', label: 'Imprimir etiquetas' },
     { id: 'anular', label: 'Anular', variant: 'danger' },
@@ -930,6 +935,71 @@ describe('Table', () => {
       await settle();
       expect(host.lastQuery?.filters).toEqual({});
       expect(toggle().textContent?.trim()).toBe('Filtros');
+    });
+
+    it('THE CHIPS SAY HOW MANY, and the reader hears the count only when it changes', async () => {
+      const live = (): string =>
+        fixture.nativeElement.querySelector('[data-filter-count-live]')?.textContent?.trim() ?? '';
+      const count = (): string =>
+        fixture.nativeElement.querySelector('[data-filter-count]')?.textContent?.trim() ?? '';
+      // Al nacer la región existe y está callada: una tabla que carga no anuncia nada.
+      expect(fixture.nativeElement.querySelector('[data-filter-count-live]').getAttribute('role')).toBe(
+        'status',
+      );
+      expect(live()).toBe('');
+      expect(count()).toBe('');
+
+      await filterCode('EXP');
+      expect(count()).toBe('1 filtro activo');
+      expect(live()).toBe('1 filtro activo');
+
+      const min = fixture.nativeElement.querySelector(
+        '[data-filter="packages"] input',
+      ) as HTMLInputElement;
+      min.value = '100';
+      min.dispatchEvent(new Event('input'));
+      await settle();
+      expect(count()).toBe('2 filtros activos');
+      expect(live()).toBe('2 filtros activos');
+
+      // Cambiar el valor de un filtro puesto no mueve la cuenta: nada nuevo que decir.
+      await filterCode('EXP-0');
+      expect(live()).toBe('2 filtros activos');
+
+      (fixture.nativeElement.querySelector('[data-clear-filters]') as HTMLButtonElement).click();
+      await settle();
+      expect(count()).toBe('');
+      expect(live()).toBe('Sin filtros activos');
+    });
+
+    it('THE SEARCH IS A CHIP TOO: its × empties the box; «Limpiar filtros» takes search and columns', async () => {
+      const search = (): HTMLInputElement =>
+        fixture.nativeElement.querySelector('[data-quick-filter] input') as HTMLInputElement;
+      search().value = '0002';
+      search().dispatchEvent(new Event('input'));
+      await settle();
+      expect(chips().map((chip) => chip.textContent?.replace(/\s+/g, ' ').trim())).toEqual([
+        'Búsqueda: 0002',
+      ]);
+      expect(host.lastQuery?.search).toBe('0002');
+
+      chips()[0]!.querySelector('button')!.click();
+      await settle();
+      expect(search().value).toBe('');
+      expect(host.lastQuery?.search).toBe('');
+      expect(chips().length).toBe(0);
+
+      search().value = 'EXP';
+      search().dispatchEvent(new Event('input'));
+      await filterCode('0001');
+      expect(chips().map((chip) => chip.dataset['chip'])).toEqual([':search', 'code']);
+      (fixture.nativeElement.querySelector('[data-clear-filters]') as HTMLButtonElement).click();
+      await settle();
+      expect(host.lastQuery?.search).toBe('');
+      expect(host.lastQuery?.filters).toEqual({});
+      expect(search().value).toBe('');
+      // Los chips no limpian lo de la pantalla: eso es del estado vacío (`filtersCleared`).
+      expect(host.cleared).toBe(0);
     });
 
     it('writes each chip in the shape of its column: ranges with their bounds', async () => {

@@ -1906,6 +1906,39 @@ test.describe('DS-3 lote C: la tabla', () => {
     await expect(page.locator(`${DEMO} [data-chip]`)).toHaveCount(0);
   });
 
+  test('THE CHIPS ARE THE SIGNAL with the row closed: search and columns, how many, and one clear', async ({
+    page,
+  }) => {
+    await page.goto(TABLE);
+    await ready(page);
+
+    const toggle = page.locator(`${DEMO} [data-filters-toggle] button`);
+    await page.locator(`${DEMO} [data-quick-filter] input`).fill('EXP-2026-04');
+    await toggle.click();
+    await page.locator(`${DEMO} [data-filter="packages"] input`).first().fill('100');
+    await toggle.click();
+    await expect(page.locator(`${DEMO} [data-filter-row]`)).toBeHidden();
+
+    // Cerrada la fila, los chips dicen todo: cuántos, cuáles y con qué valor.
+    await expect(page.locator(`${DEMO} [data-filter-count]`)).toHaveText('2 filtros activos');
+    await expect(page.locator(`${DEMO} [data-chip=":search"]`)).toContainText('Búsqueda: EXP-2026-04');
+    await expect(page.locator(`${DEMO} [data-chip="packages"]`)).toContainText('Bultos: ≥ 100');
+    await expect(toggle).toHaveText(/Filtros \(1\)/);
+    await expect(page.locator(`${DEMO} [data-filter-count-live]`)).toHaveText('2 filtros activos');
+
+    const results = await axe(page).include(`${DEMO} ewms-table-toolbar`).analyze();
+    expect(results.violations).toEqual([]);
+
+    // El × quita solo ese filtro; «Limpiar filtros», todo lo demás.
+    await page.getByRole('button', { name: 'Quitar el filtro Búsqueda' }).click();
+    await expect(page.locator(`${DEMO} [data-quick-filter] input`)).toHaveValue('');
+    await expect(page.locator(`${DEMO} [data-filter-count]`)).toHaveText('1 filtro activo');
+    await page.locator(`${DEMO} [data-clear-filters]`).click();
+    await expect(page.locator(`${DEMO} [data-chip]`)).toHaveCount(0);
+    await expect(page.locator(`${DEMO} [data-filter-count-live]`)).toHaveText('Sin filtros activos');
+    await expect(page.locator(ROWS)).toHaveCount(12);
+  });
+
   test('the Estado filter is a set: «Con incidencia» plus «En proceso», and nothing else', async ({
     page,
   }) => {

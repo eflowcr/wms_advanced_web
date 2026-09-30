@@ -34,6 +34,7 @@ import {
   type EmptyStateAction,
   type EmptyStateKind,
 } from '../empty-state/empty-state';
+import type { FilterChip } from '../filters/filter-chips';
 import { KeyboardShortcuts } from '../keyboard/keyboard-shortcuts';
 import { Input as TextInput } from '../input/input';
 import { Pagination } from '../pagination/pagination';
@@ -117,6 +118,9 @@ export class EmptyTemplate {
 }
 
 let nextTableId = 0;
+
+/** La clave del chip de la búsqueda: una columna no puede llamarse así (`key` es un nombre). */
+const SEARCH_CHIP = ':search';
 
 const EMPTY_PAGE: TablePage<never> = { rows: [], page: 0, pageSize: 0, total: 0 };
 
@@ -283,10 +287,7 @@ export class Table<T> implements TableContext {
 
   /** Búsqueda y filtros de columna; los de pantalla los limpia quien los tiene. */
   clearQuery(): void {
-    this.searchText.set('');
-    this.search.set('');
-    this.pageIndex.set(0);
-    this.filtering.clearAll();
+    this.clearChips();
     this.filtersCleared.emit();
   }
 
@@ -628,6 +629,35 @@ export class Table<T> implements TableContext {
     changed: () => this.pageIndex.set(0),
     none: () => this.text().setNone,
   });
+
+  /** Todo lo que filtra, un chip cada uno: la búsqueda primero y después las columnas. */
+  readonly chips = computed<readonly FilterChip[]>(() => {
+    const search = this.search();
+    const columns = this.filtering.chips();
+    return search === ''
+      ? columns
+      : [{ key: SEARCH_CHIP, column: this.text().searchChip, value: search }, ...columns];
+  });
+
+  removeChip(key: string): void {
+    if (key === SEARCH_CHIP) {
+      this.clearSearch();
+    } else {
+      this.filtering.clear(key);
+    }
+  }
+
+  /** «Limpiar filtros» de los chips: búsqueda y columnas. Los de pantalla tienen sus chips. */
+  clearChips(): void {
+    this.clearSearch();
+    this.filtering.clearAll();
+  }
+
+  private clearSearch(): void {
+    this.searchText.set('');
+    this.search.set('');
+    this.pageIndex.set(0);
+  }
 
   /** Las opciones de un filtro de conjunto: el diccionario de la columna, en su orden. */
   protected setOptions(column: TableColumn): readonly { key: string; label: string }[] {

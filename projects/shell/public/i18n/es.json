@@ -16,6 +16,7 @@
       "moreFilters": "{active, plural, =0 {Más filtros} other {Más filtros (#)}}"
     },
     "filterChips": {
+      "activeCount": "{count, plural, =0 {Sin filtros activos} one {# filtro activo} other {# filtros activos}}",
       "clearFilters": "Limpiar filtros",
       "removeFilter": "Quitar el filtro {{ column }}"
     },
@@ -109,6 +110,7 @@
       "rowsShown": "{shown, plural, one {# fila} other {# filas}}",
       "rowsShownOf": "{{ shown }} de {total, plural, one {# fila} other {# filas}}",
       "search": "Buscar en la tabla",
+      "searchChip": "Búsqueda",
       "selectAll": "Seleccionar todas las filas visibles",
       "selectRow": "Seleccionar la fila",
       "selectedCount": "{count, plural, one {# seleccionada} other {# seleccionadas}}",

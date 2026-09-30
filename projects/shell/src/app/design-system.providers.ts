@@ -209,6 +209,9 @@ function tableMessages(): TableMessages {
     get clearFilters() {
       return transloco.translate('ds.table.clearFilters');
     },
+    get searchChip() {
+      return transloco.translate('ds.table.searchChip');
+    },
     get view() {
       return transloco.translate('ds.table.view');
     },
@@ -383,6 +386,7 @@ function filterChipsMessages(): FilterChipsMessages {
   const transloco = injectTranslator();
   return {
     removeFilter: (column) => transloco.translate('ds.filterChips.removeFilter', { column }),
+    activeCount: (count) => transloco.translate('ds.filterChips.activeCount', { count }),
     get clearFilters() {
       return transloco.translate('ds.filterChips.clearFilters');
     },

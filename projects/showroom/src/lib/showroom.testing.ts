@@ -26,6 +26,9 @@ import showroomEs from '../../../shell/public/i18n/showroom/es.json';
 /* eslint-enable no-restricted-imports */
 import { SHOWROOM_SCOPE } from './catalog';
 
+const activeFilters = (count: number): string =>
+  count === 0 ? 'Sin filtros activos' : count === 1 ? '1 filtro activo' : `${count} filtros activos`;
+
 /**
  * Soporte de las specs del catálogo, fuera del build (tsconfig.lib.json). Los diccionarios reales
  * para `provideI18nTesting`, y los textos del design system en español, que en la aplicación
@@ -80,6 +83,7 @@ const TABLE_MESSAGES: TableMessages = {
   sortedDescending: 'Orden descendente',
   filters: (active) => (active === 0 ? 'Filtros' : `Filtros (${active})`),
   clearFilters: 'Limpiar filtros',
+  searchChip: 'Búsqueda',
   view: 'Vista',
   resetView: 'Restablecer vista',
   expandAll: 'Expandir todo',
@@ -201,6 +205,7 @@ export function provideDesignSystemTextsTesting(): Provider[] {
       useValue: {
         clearFilters: 'Limpiar filtros',
         removeFilter: (column: string) => `Quitar el filtro ${column}`,
+        activeCount: (count: number) => activeFilters(count),
       },
     },
     {

@@ -1,4 +1,5 @@
 import { InjectionToken, type Signal, type WritableSignal } from '@angular/core';
+import type { FilterChip } from '../filters/filter-chips';
 import type { TableColumn } from './column';
 import type { TableFilters } from './table-filters';
 import type { TableTreeState } from './table-tree-state';
@@ -16,6 +17,10 @@ export interface TableContext {
   readonly quickFilter: Signal<boolean>;
   readonly searchText: WritableSignal<string>;
   readonly filtering: TableFilters;
+  /** La búsqueda y los filtros de columna, un chip cada uno. */
+  readonly chips: Signal<readonly FilterChip[]>;
+  removeChip(key: string): void;
+  clearChips(): void;
   readonly anyFilterable: Signal<boolean>;
   readonly filtersOpen: Signal<boolean>;
   readonly filterRowId: string;
