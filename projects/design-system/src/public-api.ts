@@ -98,6 +98,7 @@ export {
   type RowMenuEvent,
   type RowState,
   type TableChildren,
+  type TableColumnLimit,
   type TableColumnType,
   type TableColumnWidth,
   type TableDensity,

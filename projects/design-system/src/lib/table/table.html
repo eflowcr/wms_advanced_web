@@ -134,7 +134,7 @@
                   />
                 </div>
                 @if (column.type() !== 'actions') {
-                  <!-- Separador de ancho (APG window splitter): arrastre, flechas por token, doble clic. -->
+                  <!-- Separador de ancho (APG window splitter): arrastre, flechas por token, Inicio y Fin a los topes, doble clic. -->
                   <span
                     role="separator"
                     aria-orientation="vertical"
@@ -142,7 +142,8 @@
                     class="absolute inset-y-0 -end-1 z-(--layer-table-resize) w-2 cursor-col-resize touch-none rounded-sm outline-none hover:bg-ghost-hover focus-visible:shadow-(--focus-ring-shadow)"
                     [attr.aria-label]="text().resizeColumn(column.header() || column.key())"
                     [attr.aria-valuenow]="layout.widthNow(column)"
-                    [attr.aria-valuemin]="layout.minColumnWidth"
+                    [attr.aria-valuemin]="layout.minOf(column)"
+                    [attr.aria-valuemax]="layout.maxOf(column)"
                     [attr.data-resize]="column.key()"
                     (pointerdown)="layout.startResize($event, column)"
                     (keydown)="layout.onResizeKey($event, column)"

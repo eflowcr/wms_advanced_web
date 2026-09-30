@@ -2024,6 +2024,55 @@ test.describe('DS-3 lote C: la tabla', () => {
     await expect(reset).toBeDisabled();
   });
 
+  test('RESIZE WITH THE MOUSE OR THE KEYS, between the limits of each column, and the pins hold', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto(TABLE);
+    await ready(page);
+
+    const header = page.locator(`${DEMO} th[data-col="customer"]`);
+    const handle = page.locator(`${DEMO} [data-resize="customer"]`);
+    const width = async (): Promise<number> => Math.round((await header.boundingBox())!.width);
+
+    // Con el mouse: el separador sigue al puntero.
+    const start = await width();
+    const grip = (await handle.boundingBox())!;
+    await page.mouse.move(grip.x + grip.width / 2, grip.y + grip.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(grip.x + grip.width / 2 - 40, grip.y + grip.height / 2, { steps: 4 });
+    await page.mouse.up();
+    expect(await width()).toBeLessThan(start);
+
+    // Con el teclado: Fin al tope de la columna (`maxWidth="lg"`), Inicio al mínimo.
+    const max = Number(await handle.getAttribute('aria-valuemax'));
+    const min = Number(await handle.getAttribute('aria-valuemin'));
+    expect(max).toBeGreaterThan(min);
+    await handle.focus();
+    await page.keyboard.press('End');
+    await expect(handle).toHaveAttribute('aria-valuenow', String(max));
+    await page.keyboard.press('ArrowRight');
+    await expect(handle).toHaveAttribute('aria-valuenow', String(max));
+    await page.keyboard.press('Home');
+    await expect(handle).toHaveAttribute('aria-valuenow', String(min));
+
+    // Doble clic: al contenido, nunca pasado el tope.
+    await handle.dblclick();
+    expect(Number(await handle.getAttribute('aria-valuenow'))).toBeLessThanOrEqual(max);
+
+    // La fijada sigue en su lugar, y la columna se sigue moviendo con el teclado.
+    await expect(page.locator(`${DEMO} th[data-col="code"]`)).toHaveClass(/sticky/);
+    await handle.focus();
+    await page.keyboard.press('Alt+Shift+ArrowRight');
+    await expect(page.locator(`${DEMO} thead tr:first-child th[data-col]`).nth(2)).toHaveAttribute(
+      'data-col',
+      'customer',
+    );
+
+    const results = await axe(page).include(`${DEMO} ewms-table`).analyze();
+    expect(results.violations).toEqual([]);
+  });
+
   test('THE TOOLBAR IS FOUR CONTROLS, and at 390 px it takes two rows at most', async ({
     page,
   }) => {
@@ -2351,6 +2400,23 @@ test.describe('DS-3 lote D: detalle, menú, ventana y paginador', () => {
 
     // Los espaciadores sostienen la barra de desplazamiento al largo de la tabla entera.
     await expect(page.locator(`${VIRTUAL} [data-spacer="after"]`)).toBeAttached();
+  });
+
+  test('RESIZING KEEPS THE WINDOW: five thousand rows, a wider column, still a handful drawn', async ({
+    page,
+  }) => {
+    await page.goto(TABLE);
+    await ready(page);
+    await page.locator('[data-load-all]').click();
+    await expect(page.locator('[data-loaded-count]')).toContainText('5000');
+
+    const handle = page.locator(`${VIRTUAL} [data-resize="aisle"]`);
+    await handle.focus();
+    await page.keyboard.press('End');
+    await expect(handle).toHaveAttribute('aria-valuenow', (await handle.getAttribute('aria-valuemax'))!);
+    const drawn = page.locator(`${VIRTUAL} [data-row]`);
+    expect(await drawn.count()).toBeLessThan(80);
+    await expect(page.locator(`${VIRTUAL} table`)).toHaveAttribute('aria-rowcount', '5000');
   });
 
   test('the window moves with the scroll, and the index stays absolute', async ({ page }) => {

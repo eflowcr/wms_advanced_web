@@ -19,6 +19,9 @@ export type TableColumnType = 'text' | 'number' | 'date' | 'badge' | 'actions';
 /** Por nombre, nunca una medida CSS. `fill` no es token: toma lo que sobra. */
 export type TableColumnWidth = 'sm' | 'md' | 'lg' | 'fill';
 
+/** Un tope de redimensionado: los mismos nombres del ancho, sin `fill`. */
+export type TableColumnLimit = Exclude<TableColumnWidth, 'fill'>;
+
 export type TableChildren<T> = (row: T) => readonly T[] | Observable<readonly T[]> | null;
 
 export type { MenuItem } from '../menu/menu.types';

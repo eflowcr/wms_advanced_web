@@ -148,6 +148,7 @@ const DESIGN_SYSTEM = [
   'TableAggregate',
   'TableChildren',
   'TableColumn',
+  'TableColumnLimit',
   'TableColumnType',
   'TableColumnWidth',
   'TableDensity',

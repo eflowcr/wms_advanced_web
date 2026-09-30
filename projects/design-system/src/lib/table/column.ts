@@ -12,6 +12,7 @@ import type {
   BadgeDictionary,
   TableAggregate,
   TableColumnType,
+  TableColumnLimit,
   TableColumnWidth,
   TablePin,
 } from './table.types';
@@ -71,6 +72,10 @@ export class TableColumn {
 
   /** Solo en `type="number"`: la barra de estado lo calcula sobre la selección o lo visible. */
   readonly aggregate = input<TableAggregate | null>(null);
+
+  /** Lo menos y lo más que se deja redimensionar, por nombre; null: los topes de la tabla. */
+  readonly minWidth = input<TableColumnLimit | null>(null);
+  readonly maxWidth = input<TableColumnLimit | null>(null);
 
   readonly cell = contentChild(CellTemplate);
 }

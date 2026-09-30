@@ -2915,6 +2915,7 @@
       "children": "A function, or the name of a property. With it there is a tree and the role is treegrid; without it, grid.",
       "columnChooser": "Column chooser in the toolbar. The last visible column cannot be hidden.",
       "columnExtras": "Initial pinning (the user changes it in the ⋮ menu), no checkbox in View, or the total at the foot.",
+      "columnLimits": "The least and the most the user can resize it to, by the width names. Without them, the table limits.",
       "density": "The density it starts with; after that it is chosen in the toolbar. Row height by token.",
       "exportRequest": "Only with a remote source: the table does not download, it says what the user asked for.",
       "exportable": "Export: CSV on the client with ArrayTableSource; with a remote source, (exportRequest).",

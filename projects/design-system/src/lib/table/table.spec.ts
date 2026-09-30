@@ -1943,6 +1943,8 @@ describe('Table columns', () => {
   const STEP = 16;
   const MIN = 72;
   const FIT = 400;
+  /** El ancho `md`, que `maxWidth="md"` lee como tope de la columna. */
+  const MD = 160;
 
   @Component({
     template: `
@@ -1955,7 +1957,7 @@ describe('Table columns', () => {
         (viewChange)="view = $event"
       >
         <ewms-column key="packages" header="Bultos" type="number" />
-        <ewms-column key="code" header="Código" pinned="start" [hideable]="false" />
+        <ewms-column key="code" header="Código" pinned="start" [hideable]="false" maxWidth="md" />
         <ewms-column key="date" header="Fecha" type="date" />
         <ewms-column key="actions" header="Acciones" type="actions" pinned="end" />
       </ewms-table>
@@ -1989,6 +1991,7 @@ describe('Table columns', () => {
     document.documentElement.style.setProperty('--col-resize-step', pixels(STEP));
     document.documentElement.style.setProperty('--col-filter-min-width', pixels(MIN));
     document.documentElement.style.setProperty('--col-fit-max-width', pixels(FIT));
+    document.documentElement.style.setProperty('--col-width-md', pixels(MD));
     await TestBed.configureTestingModule({
       imports: [ColumnsHost],
       providers: TABLE_PROVIDERS,
@@ -2003,6 +2006,7 @@ describe('Table columns', () => {
     document.documentElement.style.removeProperty('--col-resize-step');
     document.documentElement.style.removeProperty('--col-filter-min-width');
     document.documentElement.style.removeProperty('--col-fit-max-width');
+    document.documentElement.style.removeProperty('--col-width-md');
     fixture.nativeElement.remove();
     clearOverlays();
   });
@@ -2216,6 +2220,36 @@ describe('Table columns', () => {
     grip.dispatchEvent(new MouseEvent('pointermove', { clientX: 0, bubbles: true }));
     await settle();
     expect(header('packages').style.width).toBe(pixels(MIN));
+  });
+
+  it('EACH COLUMN HAS ITS OWN LIMITS: Home and End go to them, and nothing passes them', async () => {
+    // Sin tope propio, los de la tabla: el mínimo de los filtros y el de «Ajustar al contenido».
+    expect(separator('date').getAttribute('aria-valuemin')).toBe(String(MIN));
+    expect(separator('date').getAttribute('aria-valuemax')).toBe(String(FIT));
+    // Con `maxWidth="md"`, el ancho de ese nombre.
+    const handle = separator('code');
+    expect(handle.getAttribute('aria-valuemax')).toBe(String(MD));
+
+    handle.dispatchEvent(new KeyboardEvent('keydown', { key: 'End', bubbles: true }));
+    await settle();
+    expect(header('code').style.width).toBe(pixels(MD));
+    expect(handle.getAttribute('aria-valuenow')).toBe(String(MD));
+    handle.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+    await settle();
+    expect(header('code').style.width).toBe(pixels(MD));
+
+    handle.dispatchEvent(new KeyboardEvent('keydown', { key: 'Home', bubbles: true }));
+    await settle();
+    expect(fixture.componentInstance.view?.widths).toEqual({ code: MIN });
+
+    // El arrastre tampoco lo pasa, y el ancho sale en la vista: es lo que se recuerda.
+    handle.dispatchEvent(new MouseEvent('pointerdown', { clientX: 100, bubbles: true }));
+    handle.dispatchEvent(new MouseEvent('pointermove', { clientX: 900, bubbles: true }));
+    handle.dispatchEvent(new MouseEvent('pointerup', { clientX: 900, bubbles: true }));
+    await settle();
+    expect(fixture.componentInstance.view?.widths).toEqual({ code: MD });
+    // Sigue fijada, con su separador intacto.
+    expect(header('code').className).toContain('sticky');
   });
 
   it('LETS GO OF THE PINS when they would take more than half the box', async () => {

@@ -2915,6 +2915,7 @@
       "children": "Una función, o el nombre de una propiedad. Con esto hay árbol y el rol es treegrid; sin esto, grid.",
       "columnChooser": "Selector de columnas en la barra. La última visible no se oculta.",
       "columnExtras": "Fijado inicial (el usuario lo cambia en el menú ⋮), sin casilla en Vista, o la suma al pie.",
+      "columnLimits": "Lo menos y lo más que el usuario puede redimensionarla, con los nombres del ancho. Sin ellos, los topes de la tabla.",
       "density": "Con qué densidad arranca; después se elige en la barra. Alto de fila por token.",
       "exportRequest": "Solo con fuente remota: la tabla no descarga, dice qué pidió el usuario.",
       "exportable": "Exportar: CSV en el cliente con ArrayTableSource; con fuente remota, (exportRequest).",
