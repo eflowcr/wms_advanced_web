@@ -89,12 +89,15 @@ export class TableKeyboard<T> {
         return;
 
       case 'Enter':
+        if (onControl(event)) {
+          return;
+        }
         event.preventDefault();
         this.host.activate(flat);
         return;
 
       case ' ':
-        if (this.host.selectable()) {
+        if (this.host.selectable() && !onControl(event)) {
           // Espacio hace scroll por defecto.
           event.preventDefault();
           this.host.select(flat, event.shiftKey);
@@ -132,6 +135,12 @@ export class TableKeyboard<T> {
     this.host.reveal(rowIndex);
     queueMicrotask(() => focusCell(this.host.element, rowIndex, columnIndex));
   }
+}
+
+/** Enter y Espacio sobre un botón o enlace de la celda (⋯, desplegar, reintentar) son de él. */
+function onControl(event: KeyboardEvent): boolean {
+  const target = event.target as HTMLElement | null;
+  return target !== event.currentTarget && target?.closest('button, a[href]') != null;
 }
 
 /** Una celda con un solo control (`data-cell-widget`) no se enfoca: se enfoca el control (APG grid). */

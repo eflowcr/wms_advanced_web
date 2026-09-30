@@ -2,6 +2,7 @@ import {
   afterNextRender,
   ChangeDetectionStrategy,
   Component,
+  computed,
   ElementRef,
   inject,
   signal,
@@ -476,6 +477,14 @@ export class ShowroomTable {
   // --------------------------------------------------------------- lote D
 
   protected readonly rowActions = injectRowActions();
+  /** Anular no aplica a lo ya completado: con una función, la tabla lo decide fila por fila. */
+  protected readonly rowActionsOf = computed(() => {
+    const items = this.rowActions();
+    return (row: ShipmentRow): readonly MenuItem[] =>
+      items.map((item) =>
+        item.id === 'anular' ? { ...item, disabled: row.status === 'completada' } : item,
+      );
+  });
   protected readonly bulkActions = injectBulkActions();
   protected readonly lazyChildren = lazyChildren;
 

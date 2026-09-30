@@ -29,6 +29,7 @@ import { Checkbox } from '../checkbox/checkbox';
 import { Icon } from '../icon/icon';
 import { Button } from '../button/button';
 import { DatePicker } from '../date-picker/date-picker';
+import { DialogService } from '../dialog/dialog.service';
 import {
   EmptyState,
   type EmptyStateAction,
@@ -177,7 +178,8 @@ export class Table<T> implements TableContext {
 
   readonly isRowMaster = input<((row: T) => boolean) | null>(null);
 
-  readonly menuItems = input<readonly MenuItem[]>([]);
+  /** Las acciones de fila; una función las decide por fila (deshabilitar lo que no aplica). */
+  readonly menuItems = input<readonly MenuItem[] | ((row: T) => readonly MenuItem[])>([]);
 
   /** Acciones sobre lo seleccionado: la barra las muestra con «3 seleccionadas». */
   readonly bulkActions = input<readonly MenuItem[]>([]);
@@ -794,9 +796,28 @@ export class Table<T> implements TableContext {
   }
 
   runBulk(item: MenuItem): void {
-    if (!item.disabled) {
-      this.bulkAction.emit({ item, rows: this.selection.rows() });
+    if (item.disabled) {
+      return;
     }
+    const rows = this.selection.rows();
+    void this.confirmed(item, rows.length).then((ok) => ok && this.bulkAction.emit({ item, rows }));
+  }
+
+  private readonly dialogs = inject(DialogService);
+
+  /** Lo destructivo se confirma con el diálogo del sistema; lo demás sale sin preguntar. */
+  private async confirmed(item: MenuItem, rows: number): Promise<boolean> {
+    if (item.variant !== 'danger') {
+      return true;
+    }
+    const text = this.text();
+    return this.dialogs.confirm({
+      title: text.confirmTitle(item.label, rows),
+      body: text.confirmBody,
+      variant: 'danger',
+      confirmLabel: item.label,
+      cancelLabel: text.confirmCancel,
+    });
   }
 
   private emitSelection(): void {
@@ -895,19 +916,38 @@ export class Table<T> implements TableContext {
 
   protected readonly menu = new TableMenu<FlatRow<T>>({
     id: `${this.tableId}-menu`,
-    items: () => this.menuItems(),
+    items: (flat) => {
+      const items = this.menuItems();
+      return typeof items === 'function' ? items(flat.row) : items;
+    },
     label: () => this.text().rowMenu,
     template: () => this.menuTemplate(),
     injector: this.injector,
     viewContainerRef: this.viewContainerRef,
     document: this.host.nativeElement.ownerDocument,
-    closed: (row) => {
+    // Abierto desde el ⋯, el foco vuelve al ⋯; con clic derecho o Shift+F10, a la celda.
+    closed: (row, anchor) => {
+      const kebab = anchor?.isConnected ? anchor.closest<HTMLElement>('[data-kebab]') : null;
+      if (kebab) {
+        kebab.querySelector('button')?.focus();
+        return;
+      }
       const index = this.rows().findIndex((flat) => flat.key === row.key);
       if (index >= 0) {
         this.keys.moveFocus(index, this.keys.focusColumn());
       }
     },
-    chosen: (row, item) => this.rowMenu.emit({ row: row.row, item }),
+    // Lo destructivo espera a que el foco vuelva: el diálogo lo devuelve adonde lo encontró.
+    chosen: (row, item) =>
+      item.variant === 'danger'
+        ? afterNextRender(
+            () =>
+              void this.confirmed(item, 1).then(
+                (ok) => ok && this.rowMenu.emit({ row: row.row, item }),
+              ),
+            { injector: this.injector },
+          )
+        : this.rowMenu.emit({ row: row.row, item }),
   });
 
   /** Un solo panel para los dos menús: el que esté abierto. */

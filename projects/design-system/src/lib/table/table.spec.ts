@@ -116,6 +116,9 @@ const MESSAGES: TableMessages = {
   sortPriority: (sorted, priority) => `${sorted}, prioridad ${priority}`,
   selectedCount: (count) => `${count} seleccionadas`,
   clearSelection: 'Quitar selección',
+  confirmTitle: (action, rows) => `¿${action} ${rows} ${rows === 1 ? 'fila' : 'filas'}?`,
+  confirmBody: 'Esta acción no se puede deshacer.',
+  confirmCancel: 'Cancelar',
   copied: (rows) => `${rows} filas copiadas`,
   loading: 'Cargando…',
   loadFailed: 'No se pudo cargar la tabla.',
@@ -661,6 +664,7 @@ describe('Table', () => {
       );
 
       (bar.querySelector('[data-bulk-action="imprimir"] button') as HTMLElement).click();
+      await settle();
       expect(host.lastBulk?.item.id).toBe('imprimir');
       expect(host.lastBulk?.rows.map((row) => row.code)).toEqual(['EXP-0001', 'EXP-0003']);
 
@@ -1444,7 +1448,7 @@ const MENU: readonly MenuItem[] = [
       [source]="source"
       [trackBy]="byId"
       [isRowMaster]="isMaster"
-      [menuItems]="menu()"
+      [menuItems]="perRow ?? menu()"
       ariaLabel="Expediciones"
       (rowMenu)="chosen = $event.item.id + ':' + $event.row.code"
     >
@@ -1465,6 +1469,7 @@ class DetailHost {
   readonly byId = (row: Row): unknown => row.id;
   readonly isMaster = (row: Row): boolean => row.packages > 100;
   readonly menu = signal<readonly MenuItem[]>(MENU);
+  perRow: ((row: Row) => readonly MenuItem[]) | null = null;
 
   readonly codeOf = (row: unknown): string => (row as Row).code;
 
@@ -1660,12 +1665,35 @@ describe('Table master/detail', () => {
     // Y con un clic.
     kebab(0)?.click();
     await settle();
-    entries()[3]?.click();
+    entries()[2]?.click();
     await settle();
+    expect(host.chosen).toBe('duplicar:EXP-0001');
+  });
+
+  it('A DESTRUCTIVE ENTRY ASKS FIRST, with the system dialog; cancelled, nothing is emitted', async () => {
+    const answer = async (which: 0 | 1): Promise<void> => {
+      await settle();
+      const buttons = [...document.querySelectorAll('ewms-confirm-dialog button')] as HTMLElement[];
+      expect(document.querySelector('ewms-confirm-dialog h2')?.textContent).toBe('¿Anular 1 fila?');
+      buttons[which]!.click();
+      await settle();
+      await new Promise((resolve) => setTimeout(resolve));
+    };
+
+    kebab(0)?.click();
+    await settle();
+    entries()[3]?.click();
+    await answer(0);
+    expect(host.chosen).toBe('');
+
+    kebab(0)?.click();
+    await settle();
+    entries()[3]?.click();
+    await answer(1);
     expect(host.chosen).toBe('anular:EXP-0001');
   });
 
-  it('gives the focus back to the row on Escape', async () => {
+  it('gives the focus back to the ⋯ that opened it on Escape', async () => {
     kebab(0)?.click();
     await settle();
     press('Escape');
@@ -1673,7 +1701,29 @@ describe('Table master/detail', () => {
     await Promise.resolve();
 
     expect(menu()).toBeNull();
-    expect((document.activeElement as HTMLElement).dataset['cell']).toBe('0-0');
+    expect(document.activeElement).toBe(kebab(0));
+  });
+
+  it('ENTER AND SPACE ON THE ⋯ ARE THE BUTTON’S: the grid lets them through', () => {
+    for (const key of ['Enter', ' ']) {
+      const event = new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true });
+      kebab(0)!.dispatchEvent(event);
+      // Sin `preventDefault`, el navegador convierte la tecla en el clic que abre el menú.
+      expect(event.defaultPrevented, key).toBe(false);
+    }
+  });
+
+  it('decides its entries row by row when given a function', async () => {
+    host.perRow = (row) => [{ id: 'anular', label: 'Anular', disabled: row.packages > 100 }];
+    await settle();
+    kebab(0)?.click();
+    await settle();
+    expect(entries()[0]?.getAttribute('aria-disabled')).toBe('true');
+    press('Escape');
+    await settle();
+    kebab(2)?.click();
+    await settle();
+    expect(entries()[0]?.getAttribute('aria-disabled')).toBeNull();
   });
 
   it('opens from the keyboard with Shift+F10 and with the menu key', async () => {

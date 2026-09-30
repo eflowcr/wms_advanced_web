@@ -2364,6 +2364,41 @@ test.describe('DS-3 lote D: detalle, menú, ventana y paginador', () => {
   // kebab, with the entries it was given» y «replaces the browser menu on a right click rather
   // than adding a second». Acá queda el camino de teclado, que sí necesita navegador.
 
+  test('THE ⋯ OF A ROW: keys all the way, back to the ⋯, and a destructive entry asks first', async ({
+    page,
+  }) => {
+    await page.goto(TABLE);
+    await ready(page);
+
+    // Enter abre, las flechas saltan lo deshabilitado, Escape cierra y devuelve el foco al ⋯.
+    const kebab = page.locator(`${DETAIL} [data-kebab="0"] button`);
+    await kebab.focus();
+    await page.keyboard.press('Enter');
+    const menu = page.getByRole('menu');
+    await expect(menu).toBeVisible();
+    const results = await axe(page).include('[role="menu"]').analyze();
+    expect(results.violations).toEqual([]);
+    await page.keyboard.press('Escape');
+    await expect(menu).toHaveCount(0);
+    await expect(kebab).toBeFocused();
+
+    // Anular pregunta con el diálogo del sistema; cancelar no hace nada, confirmar lo emite.
+    const choice = page.locator(`${DETAIL} [data-menu-choice]`);
+    const before = await choice.textContent();
+    await page.keyboard.press('Space');
+    await menu.getByRole('menuitem', { name: 'Anular' }).click();
+    const dialog = page.getByRole('alertdialog').or(page.getByRole('dialog'));
+    await expect(dialog).toContainText('¿Anular 1 fila?');
+    await dialog.getByRole('button', { name: 'Cancelar' }).click();
+    await expect(choice).toHaveText(before ?? '');
+    await expect(kebab).toBeFocused();
+
+    await page.keyboard.press('Enter');
+    await menu.getByRole('menuitem', { name: 'Anular' }).click();
+    await dialog.getByRole('button', { name: 'Anular' }).click();
+    await expect(choice).toContainText('Anular');
+  });
+
   test('the menu opens with Shift+F10 and gives the focus back on Escape', async ({ page }) => {
     await page.goto(TABLE);
     await ready(page);

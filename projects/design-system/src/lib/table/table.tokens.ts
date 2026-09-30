@@ -68,6 +68,10 @@ export interface TableMessages {
   /** «1 seleccionada», «3 seleccionadas». */
   readonly selectedCount: (count: number) => string;
   readonly clearSelection: string;
+  /** La confirmación de una acción destructiva (fila o masiva): «¿Anular 3 filas?». */
+  readonly confirmTitle: (action: string, rows: number) => string;
+  readonly confirmBody: string;
+  readonly confirmCancel: string;
   /** Lo copiado con Ctrl+C: «3 filas copiadas». */
   readonly copied: (rows: number) => string;
 

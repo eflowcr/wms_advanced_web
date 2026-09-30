@@ -297,6 +297,13 @@ function tableMessages(): TableMessages {
     get clearSelection() {
       return transloco.translate('ds.table.clearSelection');
     },
+    confirmTitle: (action, rows) => transloco.translate('ds.table.confirmTitle', { action, rows }),
+    get confirmBody() {
+      return transloco.translate('ds.table.confirmBody');
+    },
+    get confirmCancel() {
+      return transloco.translate('ds.table.confirmCancel');
+    },
     copied: (rows) => transloco.translate('ds.table.copied', { rows }),
     get loading() {
       return transloco.translate('ds.table.loading');
