@@ -2139,7 +2139,7 @@ test.describe('DS-3 lote C: la tabla', () => {
     expect(results.violations).toEqual([]);
   });
 
-  test('the status bar counts the rows and adds up Bultos: on screen, then over the selection', async ({
+  test('THE TOTALS ROW sits at the foot, aligned with its column: all rows, then the selection', async ({
     page,
   }) => {
     await page.goto(TABLE);
@@ -2149,19 +2149,36 @@ test.describe('DS-3 lote C: la tabla', () => {
     await expect(status.locator('[data-status-rows]')).toHaveText('12 de 12 filas');
     const packages = page.locator(`${ROWS} td:nth-child(5)`);
     const numbers = (await packages.allTextContents()).map((text) => Number(text.replace(/\D/g, '')));
-    const onScreen = numbers.reduce((total, value) => total + value, 0);
+    const all =numbers.reduce((total, value) => total + value, 0);
     // es-CR, el locale de la app en español (LANGUAGE_LOCALES): agrupa también los de cuatro cifras.
-    await expect(status.locator('[data-aggregate="packages"]')).toHaveText(
-      `Bultos en pantalla: ${new Intl.NumberFormat('es-CR').format(onScreen)}`,
-    );
+    const shown = (value: number): string => new Intl.NumberFormat('es-CR').format(value);
+
+    const total = page.locator(`${DEMO} tfoot [data-total="packages"]`);
+    const scope = page.locator(`${DEMO} tfoot [data-totals-scope]`);
+    await expect(scope).toHaveText('Total de 12 filas');
+    await expect(total).toHaveText(new RegExp(`Suma:\\s*${shown(all)}`));
+
+    // Alineado con su columna: el mismo borde derecho que la cabecera de Bultos.
+    const head = (await page.locator(`${DEMO} th[data-col="packages"]`).boundingBox())!;
+    const foot = (await total.boundingBox())!;
+    expect(Math.round(foot.x)).toBe(Math.round(head.x));
+    expect(Math.round(foot.width)).toBe(Math.round(head.width));
+
+    // Fija abajo: con la caja desplazada, el pie sigue en su borde inferior.
+    const box = page.locator(`${DEMO} [data-scroll-box]`);
+    const boxBottom = await box.evaluate((element) => element.getBoundingClientRect().bottom);
+    const footBottom = await total.evaluate((cell) => cell.getBoundingClientRect().bottom);
+    expect(Math.abs(boxBottom - footBottom)).toBeLessThanOrEqual(20);
+
+    const results = await axe(page).include(`${DEMO} tfoot`).analyze();
+    expect(results.violations).toEqual([]);
 
     const boxes = page.locator(`${ROWS} input[type="checkbox"]`);
     await boxes.nth(0).click();
     await boxes.nth(1).click();
     await expect(status.locator('[data-status-selected]')).toHaveText('2 seleccionadas');
-    await expect(status.locator('[data-aggregate="packages"]')).toHaveText(
-      `Bultos seleccionados: ${new Intl.NumberFormat('es-CR').format(numbers[0]! + numbers[1]!)}`,
-    );
+    await expect(scope).toHaveText('Total de 2 seleccionadas');
+    await expect(total).toHaveText(new RegExp(`Suma:\\s*${shown(numbers[0]! + numbers[1]!)}`));
   });
 
   test('export: a real CSV download, with a BOM, the filtered rows and Excel-readable values', async ({

@@ -126,7 +126,9 @@ const MESSAGES: TableMessages = {
   exportSelected: 'CSV de lo seleccionado',
   copyAll: 'Copiar al portapapeles',
   rowsShown: (shown, total) => (total === null ? `${shown} filas` : `${shown} de ${total} filas`),
-  aggregate: (kind, column, scope) => `${kind} ${column} ${scope}`,
+  aggregate: (kind) => kind,
+  totalsScope: (scope, rows) => `${scope} ${rows}`,
+  totalUnavailable: 'sin total',
 };
 
 // El paginador y los chips piden los suyos por su propio token, como el Select.
@@ -1105,18 +1107,30 @@ describe('Table', () => {
     });
   });
 
-  describe('the status bar', () => {
+  describe('the status bar and the totals row', () => {
     const status = (): string =>
       (fixture.nativeElement.querySelector('[data-table-status]') as HTMLElement).textContent
         ?.replace(/\s+/g, ' ')
         .trim() ?? '';
+    const total = (key: string): HTMLElement =>
+      fixture.nativeElement.querySelector(`tfoot [data-total="${key}"]`) as HTMLElement;
+    const said = (key: string): string =>
+      total(key).textContent?.replace(/\s+/g, ' ').trim() ?? '';
 
-    it('counts what is on screen against the total, and adds up a number column', () => {
-      // Las raíces de la página: 1200 + 900 + 40, sin contar dos veces las hijas.
-      expect(status()).toBe('3 de 3 filas sum Bultos shown: n:2140');
+    it('the status bar counts rows; the totals sit in a footer, one cell per column', () => {
+      expect(status()).toBe('3 de 3 filas');
+      const foot = fixture.nativeElement.querySelector('tfoot[data-totals]') as HTMLElement;
+      expect(foot.className).toContain('sticky');
+      expect(foot.className).toContain('bottom-0');
+      // Alineada: tantas celdas como la cabecera, en el mismo orden.
+      const heads = [...fixture.nativeElement.querySelectorAll('thead tr:first-child th')];
+      expect(foot.querySelectorAll('td').length).toBe(heads.length);
+      // Todo lo filtrado de la fuente en memoria, sin contar dos veces las hijas: 1200 + 900 + 40.
+      expect(said('packages')).toBe('sum: n:2140');
+      expect(total('code').textContent?.trim()).toBe('all 3');
     });
 
-    it('OVER THE SELECTION WHEN THERE IS ONE, and says how many', async () => {
+    it('OVER THE SELECTION WHEN THERE IS ONE, and says whose total it is', async () => {
       const boxes = [
         ...fixture.nativeElement.querySelectorAll('tbody input[type="checkbox"]'),
       ] as HTMLInputElement[];
@@ -1125,18 +1139,48 @@ describe('Table', () => {
         box.dispatchEvent(new Event('change'));
       }
       await settle();
-      expect(status()).toBe('3 de 3 filas 2 seleccionadas sum Bultos selected: n:1240');
+      expect(status()).toBe('3 de 3 filas 2 seleccionadas');
+      expect(said('packages')).toBe('sum: n:1240');
+      expect(total('code').textContent?.trim()).toBe('selected 2');
     });
 
-    it('averages and counts, and says «N filas» when the source does not count', async () => {
+    it('with a filter it is the total of the filtered rows, not only the page', async () => {
+      const box = fixture.nativeElement.querySelector('[data-filter="code"] input') as HTMLInputElement;
+      box.value = '0002';
+      box.dispatchEvent(new Event('input'));
+      await settle();
+      expect(total('code').textContent?.trim()).toBe('filtered 1');
+      expect(said('packages')).toBe('sum: n:900');
+    });
+
+    it('averages, counts, and a remote source that does not count shows a dash, never a number', async () => {
       host.aggregate.set('avg');
       await settle();
-      expect(status()).toContain('avg Bultos shown: n:713.3333333333334');
+      expect(said('packages')).toBe('avg: n:713.3333333333334');
+      host.aggregate.set('max');
+      await settle();
+      expect(said('packages')).toBe('max: n:1200');
 
+      // Remota con total: la página, y lo dice.
       host.aggregate.set('count');
+      host.source.set({ load: () => of({ rows: ROWS, page: 0, pageSize: 3, total: 30 }) });
+      await settle();
+      expect(total('code').textContent?.trim()).toBe('page 3');
+      expect(said('packages')).toBe('count: n:3');
+
+      // Remota que no cuenta: «—», y el lector oye por qué.
       host.source.set({ load: () => of({ rows: ROWS, page: 0, pageSize: 50, total: null }) });
       await settle();
-      expect(status()).toBe('3 filas count Bultos shown: n:3');
+      expect(status()).toBe('3 filas');
+      expect(said('packages')).toBe('count: —sin total');
+      expect(total('packages').querySelector('[aria-hidden="true"]')?.textContent).toBe('—');
+    });
+
+    it('has no footer when no column adds up, and no axe violations when it has one', async () => {
+      await expectNoAxeViolations(fixture.nativeElement);
+      host.aggregate.set(null);
+      await settle();
+      expect(fixture.nativeElement.querySelector('tfoot')).toBeNull();
     });
   });
 

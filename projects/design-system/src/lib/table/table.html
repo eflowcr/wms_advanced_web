@@ -507,6 +507,51 @@
             </tr>
           }
         </tbody>
+
+        @if (totals(); as totals) {
+          <!-- Fija abajo, una celda por columna: alineada aunque se redimensione, mueva o fije. -->
+          <tfoot class="sticky bottom-0 z-(--layer-table-head)" data-totals>
+            <tr role="row" [style.height]="rowHeight()">
+              @if (selectable()) {
+                <td
+                  role="gridcell"
+                  [class]="totalsCellClasses"
+                  [class.sticky]="layout.selectionPinned()"
+                  [class.z-(--layer-table-pin-head)]="layout.selectionPinned()"
+                  [style.left.px]="layout.selectionPinned() ? 0 : null"
+                ></td>
+              }
+              @for (column of visibleColumns(); track column.key()) {
+                <td
+                  role="gridcell"
+                  [class]="
+                    totalsCellClasses +
+                    ' ' +
+                    cellClassesFor(column) +
+                    ' ' +
+                    layout.pinClasses(column, true)
+                  "
+                  [style.left.px]="layout.pinStart(column)"
+                  [style.right.px]="layout.pinEnd(column)"
+                  [attr.data-total]="column.key()"
+                >
+                  @if (totals.values[column.key()]; as total) {
+                    <!-- El lector oye la operación y el número; la cabecera de la columna da el nombre. -->
+                    <span class="sr-only">{{ text().aggregate(total.kind) }}:&ngsp;</span>
+                    @if (total.text === null) {
+                      <span aria-hidden="true">—</span>
+                      <span class="sr-only">{{ text().totalUnavailable }}</span>
+                    } @else {
+                      <span>{{ total.text }}</span>
+                    }
+                  } @else if (column.key() === totals.labelKey) {
+                    <span class="text-caption text-secondary" data-totals-scope>{{ totals.label }}</span>
+                  }
+                </td>
+              }
+            </tr>
+          </tfoot>
+        }
       </table>
     </div>
     <!-- Columnas fuera de vista: la sombra de una fijada, en el borde por donde siguen. En la capa de

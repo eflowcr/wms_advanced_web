@@ -132,13 +132,16 @@ const TABLE_MESSAGES: TableMessages = {
   exportSelected: 'CSV de lo seleccionado',
   copyAll: 'Copiar al portapapeles',
   rowsShown: (shown, total) => (total === null ? `${shown} filas` : `${shown} de ${total} filas`),
-  aggregate: (kind, column, scope) => {
-    const where = scope === 'selected' ? 'seleccionados' : 'en pantalla';
-    if (kind === 'avg') {
-      return `Promedio de ${column} ${where}`;
-    }
-    return kind === 'count' ? `Filas con ${column} ${where}` : `${column} ${where}`;
-  },
+  aggregate: (kind) =>
+    ({ sum: 'Suma', avg: 'Promedio', count: 'Cuenta', min: 'Mínimo', max: 'Máximo' })[kind],
+  totalsScope: (scope, rows) =>
+    ({
+      selected: `Total de ${rows} seleccionadas`,
+      filtered: `Total de ${rows} filas filtradas`,
+      all: `Total de ${rows} filas`,
+      page: `Total de esta página (${rows} filas)`,
+    })[scope],
+  totalUnavailable: 'Total no disponible: la fuente no lo da',
 };
 
 const DAY = new Intl.DateTimeFormat('es', { day: '2-digit', month: '2-digit', year: 'numeric' });

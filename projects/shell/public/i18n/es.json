@@ -58,8 +58,11 @@
       "moreActions": "Más opciones"
     },
     "table": {
-      "avgSelected": "Promedio de {{ column }} seleccionados",
-      "avgShown": "Promedio de {{ column }} en pantalla",
+      "aggregateAvg": "Promedio",
+      "aggregateCount": "Cuenta",
+      "aggregateMax": "Máximo",
+      "aggregateMin": "Mínimo",
+      "aggregateSum": "Suma",
       "childrenFailed": "No se pudieron cargar las líneas.",
       "clearFilters": "Limpiar filtros",
       "clearSelection": "Quitar selección",
@@ -82,8 +85,6 @@
       "columns": "Columnas",
       "copied": "{rows, plural, one {# fila copiada} other {# filas copiadas}}",
       "copyAll": "Copiar al portapapeles",
-      "countSelected": "Filas con {{ column }} seleccionadas",
-      "countShown": "Filas con {{ column }} en pantalla",
       "density": "Densidad",
       "densityMd": "Media",
       "densitySm": "Compacta",
@@ -122,8 +123,11 @@
       "sortPriority": "{{ sorted }}, prioridad {{ priority }}",
       "sortedAscending": "Orden ascendente",
       "sortedDescending": "Orden descendente",
-      "sumSelected": "{{ column }} seleccionados",
-      "sumShown": "{{ column }} en pantalla",
+      "totalUnavailable": "Total no disponible: la fuente no lo da",
+      "totalsAll": "{rows, plural, one {Total de # fila} other {Total de # filas}}",
+      "totalsFiltered": "{rows, plural, one {Total de # fila filtrada} other {Total de # filas filtradas}}",
+      "totalsPage": "{rows, plural, one {Total de esta página (# fila)} other {Total de esta página (# filas)}}",
+      "totalsSelected": "{rows, plural, one {Total de # seleccionada} other {Total de # seleccionadas}}",
       "view": "Vista"
     }
   },

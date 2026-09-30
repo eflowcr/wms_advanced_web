@@ -327,14 +327,29 @@ function tableMessages(): TableMessages {
         ? transloco.translate('ds.table.rowsShown', { shown })
         : transloco.translate('ds.table.rowsShownOf', { shown, total }),
     // Una clave por combinación, literal: transloco-keys-manager lee la fuente (ver arriba).
-    aggregate: (kind, column, scope) => {
-      /** t(ds.table.sumSelected, ds.table.sumShown, ds.table.avgSelected, ds.table.avgShown, ds.table.countSelected, ds.table.countShown) */
+    aggregate: (kind) => {
+      /** t(ds.table.aggregateSum, ds.table.aggregateAvg, ds.table.aggregateCount, ds.table.aggregateMin, ds.table.aggregateMax) */
       const keys = {
-        sum: { selected: 'ds.table.sumSelected', shown: 'ds.table.sumShown' },
-        avg: { selected: 'ds.table.avgSelected', shown: 'ds.table.avgShown' },
-        count: { selected: 'ds.table.countSelected', shown: 'ds.table.countShown' },
+        sum: 'ds.table.aggregateSum',
+        avg: 'ds.table.aggregateAvg',
+        count: 'ds.table.aggregateCount',
+        min: 'ds.table.aggregateMin',
+        max: 'ds.table.aggregateMax',
       } as const;
-      return transloco.translate(keys[kind][scope], { column });
+      return transloco.translate(keys[kind]);
+    },
+    totalsScope: (scope, rows) => {
+      /** t(ds.table.totalsSelected, ds.table.totalsFiltered, ds.table.totalsAll, ds.table.totalsPage) */
+      const keys = {
+        selected: 'ds.table.totalsSelected',
+        filtered: 'ds.table.totalsFiltered',
+        all: 'ds.table.totalsAll',
+        page: 'ds.table.totalsPage',
+      } as const;
+      return transloco.translate(keys[scope], { rows });
+    },
+    get totalUnavailable() {
+      return transloco.translate('ds.table.totalUnavailable');
     },
   };
 }

@@ -1,5 +1,6 @@
 import { InjectionToken } from '@angular/core';
 import type { ColumnAction } from './table-column-menu';
+import type { TableAggregate, TableTotalsScope } from './table.types';
 
 // Textos y formatos se proveen una vez, no por tabla (ADR 0008): la biblioteca define los
 // tokens y el shell o el showroom los llenan. Ver vault: Tabla §2.
@@ -87,12 +88,14 @@ export interface TableMessages {
   // Barra de estado.
   /** «12 de 340 filas», o «12 filas» con `total` null. */
   readonly rowsShown: (shown: number, total: number | null) => string;
-  /** La etiqueta del agregado: «Bultos seleccionados», «Promedio de bultos en pantalla». */
-  readonly aggregate: (
-    kind: 'sum' | 'avg' | 'count',
-    column: string,
-    scope: 'selected' | 'shown',
-  ) => string;
+
+  // Fila de totales. Ver vault: Tabla §17.
+  /** El nombre de la operación, que el lector oye antes del número: «Suma», «Máximo». */
+  readonly aggregate: (kind: TableAggregate) => string;
+  /** De qué es el total: «Total de 3 seleccionadas», «Total de esta página (50 filas)». */
+  readonly totalsScope: (scope: TableTotalsScope, rows: number) => string;
+  /** Lo que se oye en lugar de «—»: la fuente no da el total. */
+  readonly totalUnavailable: string;
 }
 
 /** Solo lo que se muestra: ordenar y filtrar usan el valor crudo. Ver vault: Tabla §2. */

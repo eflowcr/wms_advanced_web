@@ -160,6 +160,7 @@ const DESIGN_SYSTEM = [
   'TableQuery',
   'TableSort',
   'TableSource',
+  'TableTotalsScope',
   'TableView',
   'Tabs',
   'TabsMode',

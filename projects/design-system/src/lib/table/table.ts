@@ -67,6 +67,7 @@ import {
 import {
   CELL_CLASSES,
   FILTER_CELL_CLASSES,
+  TOTALS_CELL_CLASSES,
   HEADER_CELL_CLASSES,
   ROW_HEIGHT,
   TABLE_CLASSES,
@@ -83,6 +84,7 @@ import {
   type RowMenuEvent,
   type RowState,
   type TableChildren,
+  type TableAggregate,
   type TableDensity,
   type TableView,
 } from './table.types';
@@ -90,6 +92,7 @@ import { TableColumnMenu, type ColumnAction } from './table-column-menu';
 import { TableKeyboard } from './table-keyboard';
 import { TableMenu } from './table-menu';
 import { TableSortState } from './table-sort';
+import { aggregateOf, totalsRows } from './table-totals';
 import { TableWindow } from './table-window';
 import { TableTreeState } from './table-tree-state';
 import type { FlatRow } from './tree';
@@ -123,6 +126,19 @@ let nextTableId = 0;
 const SEARCH_CHIP = ':search';
 
 const EMPTY_PAGE: TablePage<never> = { rows: [], page: 0, pageSize: 0, total: 0 };
+
+/** El total de una columna: su operación y el número ya formateado, o `null` («—»). */
+interface TotalValue {
+  readonly kind: TableAggregate;
+  readonly text: string | null;
+}
+
+interface Totals {
+  readonly label: string;
+  /** La columna que lleva la etiqueta: la primera visible que no agrega. */
+  readonly labelKey: string | null;
+  readonly values: Readonly<Record<string, TotalValue>>;
+}
 
 /** La tabla de datos: árbol aplanado, estado de fila como dato. Ver vault: Tabla. */
 @Component({
@@ -223,6 +239,7 @@ export class Table<T> implements TableContext {
 
   protected readonly tableClasses = TABLE_CLASSES;
   protected readonly filterCellClasses = FILTER_CELL_CLASSES;
+  protected readonly totalsCellClasses = TOTALS_CELL_CLASSES;
   protected readonly cellClasses = CELL_CLASSES;
 
   /** Con la fila de filtros abierta, la línea fuerte baja con ella: arriba queda una sutil. */
@@ -301,10 +318,37 @@ export class Table<T> implements TableContext {
   readonly pageRows = computed(() => this.page().rows);
   readonly pageTotal = computed(() => this.page().total);
 
-  /** Al pie: con una columna que agrega, o cuando ya hay barra (filtrar sin decir cuántas quedan…). */
-  protected readonly showStatus = computed(
-    () => this.showToolbar() || this.columns().some((column) => column.aggregate() !== null),
-  );
+  /** Al pie, con la barra: filtrar sin decir cuántas filas quedan sirve poco. */
+  protected readonly showStatus = computed(() => this.showToolbar());
+
+  /**
+   * La fila de totales: una celda por columna, con el agregado de las que lo declaran y, en la
+   * primera que no agrega, de qué filas es. Sin columnas que agreguen, no hay fila. Ver vault: Tabla §17.
+   */
+  protected readonly totals = computed<Totals | null>(() => {
+    const columns = this.visibleColumns().filter(
+      (column) => column.type() === 'number' && column.aggregate() !== null,
+    );
+    if (columns.length === 0) {
+      return null;
+    }
+    const page = this.page();
+    const { scope, count, rows } = totalsRows({
+      selected: this.selection.rows(),
+      matching: this.source().matching?.(this.query()),
+      page: page.rows,
+      total: page.total,
+      filtered: this.search() !== '' || this.filtering.count() > 0,
+    });
+    const values: Record<string, TotalValue> = {};
+    for (const column of columns) {
+      const kind = column.aggregate()!;
+      const value = rows === null ? null : aggregateOf(kind, rows, column.key());
+      values[column.key()] = { kind, text: value === null ? null : this.format().number(value) };
+    }
+    const label = this.visibleColumns().find((column) => values[column.key()] === undefined);
+    return { label: this.text().totalsScope(scope, count), labelKey: label?.key() ?? null, values };
+  });
 
   protected readonly pageCount = computed(() => {
     const total = this.page().total;

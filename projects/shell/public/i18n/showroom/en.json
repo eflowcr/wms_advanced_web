@@ -2875,8 +2875,8 @@
         "title": "Set filter"
       },
       "statusBar": {
-        "text": "At the foot: how many rows, how many are selected, and Packages added up (<code>aggregate=\"sum\"</code>) over the selection if there is one, or over what is on screen.",
-        "title": "Status bar and aggregates"
+        "text": "A totals row fixed at the foot, aligned with each column: Packages added up (<code>aggregate=\\\"sum\\\"</code>, also <code>avg</code>, <code>count</code>, <code>min</code> and <code>max</code>) over the selection if there is one, or over everything filtered, and it says whose total it is. The status bar counts rows.",
+        "title": "Totals row"
       },
       "title": "The differentiators, one by one"
     },

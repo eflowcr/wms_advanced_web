@@ -58,8 +58,11 @@
       "moreActions": "More options"
     },
     "table": {
-      "avgSelected": "Average selected {{ column }}",
-      "avgShown": "Average {{ column }} on screen",
+      "aggregateAvg": "Average",
+      "aggregateCount": "Count",
+      "aggregateMax": "Maximum",
+      "aggregateMin": "Minimum",
+      "aggregateSum": "Sum",
       "childrenFailed": "The lines could not be loaded.",
       "clearFilters": "Clear filters",
       "clearSelection": "Clear selection",
@@ -82,8 +85,6 @@
       "columns": "Columns",
       "copied": "{rows, plural, one {# row copied} other {# rows copied}}",
       "copyAll": "Copy to clipboard",
-      "countSelected": "Selected rows with {{ column }}",
-      "countShown": "Rows with {{ column }} on screen",
       "density": "Density",
       "densityMd": "Comfortable",
       "densitySm": "Compact",
@@ -122,8 +123,11 @@
       "sortPriority": "{{ sorted }}, priority {{ priority }}",
       "sortedAscending": "Ascending order",
       "sortedDescending": "Descending order",
-      "sumSelected": "Selected {{ column }}",
-      "sumShown": "{{ column }} on screen",
+      "totalUnavailable": "Total not available: the source does not provide it",
+      "totalsAll": "{rows, plural, one {Total of # row} other {Total of # rows}}",
+      "totalsFiltered": "{rows, plural, one {Total of # filtered row} other {Total of # filtered rows}}",
+      "totalsPage": "{rows, plural, one {Total of this page (# row)} other {Total of this page (# rows)}}",
+      "totalsSelected": "{rows, plural, one {Total of # selected} other {Total of # selected}}",
       "view": "View"
     }
   },

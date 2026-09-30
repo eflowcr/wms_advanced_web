@@ -2875,8 +2875,8 @@
         "title": "Filtro de conjunto"
       },
       "statusBar": {
-        "text": "Al pie: cuántas filas, cuántas seleccionadas, y Bultos sumados (<code>aggregate=\"sum\"</code>) sobre la selección si la hay, o sobre lo que está en pantalla.",
-        "title": "Barra de estado y agregados"
+        "text": "Una fila de totales fija abajo, alineada con cada columna: Bultos sumados (<code>aggregate=\\\"sum\\\"</code>, también <code>avg</code>, <code>count</code>, <code>min</code> y <code>max</code>) sobre la selección si la hay, o sobre todo lo filtrado, y dice de qué filas es. La barra de estado cuenta filas.",
+        "title": "Fila de totales"
       },
       "title": "Los diferenciadores, uno por uno"
     },

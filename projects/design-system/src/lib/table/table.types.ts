@@ -40,7 +40,10 @@ export type TableDensity = 'md' | 'sm';
 
 export type TablePin = 'start' | 'end';
 
-export type TableAggregate = 'sum' | 'avg' | 'count';
+export type TableAggregate = 'sum' | 'avg' | 'count' | 'min' | 'max';
+
+/** De qué filas es el total del pie: lo seleccionado, lo filtrado, todo o solo la página. */
+export type TableTotalsScope = 'selected' | 'filtered' | 'all' | 'page';
 
 /**
  * Lo que el usuario configuró, en memoria: sale por `(viewChange)` y no se guarda en el
@@ -123,6 +126,9 @@ export const FILTER_CELL_CLASSES = 'border-b border-strong bg-canvas px-3 py-2';
 export const CELL_CLASSES =
   'border-b border-default px-3 align-middle text-primary ' +
   'focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-focus';
+
+/** La fila de totales, fija abajo: el fondo y la línea fuerte de la cabecera, el texto del cuerpo. */
+export const TOTALS_CELL_CLASSES = 'border-t border-strong bg-secondary px-3 text-primary';
 
 /** Las dos excepciones que tiñen (decisión del usuario): con todas teñidas, ninguna destaca. */
 export type RowException = 'danger' | 'warning';
