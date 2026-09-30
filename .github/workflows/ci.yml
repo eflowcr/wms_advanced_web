@@ -136,6 +136,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # El espejo de apt de los runners a veces deja una descarga colgada hasta el tope del job.
+      # Con esto una descarga parada se corta a los 20 s y se reintenta tres veces.
+      - name: Set up apt retries and timeouts
+        run: |
+          printf 'Acquire::Retries "3";\nAcquire::http::Timeout "20";\nAcquire::https::Timeout "20";\n' | sudo tee /etc/apt/apt.conf.d/99-ci-network > /dev/null
+
       - name: Install Playwright browser
         run: npx playwright install chromium --with-deps
 
@@ -204,6 +210,13 @@ jobs:
       - name: Install dependencies
         if: steps.filter.outputs.showroom == 'true'
         run: npm ci
+
+      # El espejo de apt de los runners a veces deja una descarga colgada hasta el tope del job.
+      # Con esto una descarga parada se corta a los 20 s y se reintenta tres veces.
+      - name: Set up apt retries and timeouts
+        if: steps.filter.outputs.showroom == 'true'
+        run: |
+          printf 'Acquire::Retries "3";\nAcquire::http::Timeout "20";\nAcquire::https::Timeout "20";\n' | sudo tee /etc/apt/apt.conf.d/99-ci-network > /dev/null
 
       - name: Install Playwright browser
         if: steps.filter.outputs.showroom == 'true'
