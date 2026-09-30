@@ -18,8 +18,8 @@ const NO_PAGINATION_MESSAGES: PaginationMessages = {
 };
 
 /**
- * Aparte de la tabla: cards, logs y colas de picking también paginan. Sin números de página a
- * propósito: exigen un total, que una fuente puede no dar (`total: null`).
+ * Aparte de la tabla: cards, logs y colas de picking también paginan. Solo anterior y siguiente,
+ * sin números de página (Decisión del usuario, 2026-09-26). Ver vault: Tabla §11.
  */
 @Component({
   selector: 'ewms-pagination',

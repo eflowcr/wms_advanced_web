@@ -32,7 +32,7 @@
             "production": {
               // Pendientes de acordar con el CTO; se revisan cuando entren los dominios. Rompen el
               // build, no avisan (paso «Production build and bundle budgets» de ci.yml).
-              // Medidas e historia: vault, 02-Arquitectura/Integracion Continua.md §4.
+              // Medidas: vault, 02-Arquitectura/Integracion Continua.md §4.
               "budgets": [
                 {
                   "type": "initial",

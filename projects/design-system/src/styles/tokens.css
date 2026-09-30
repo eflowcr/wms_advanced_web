@@ -358,7 +358,7 @@
    * Ver vault: Tabla §9. */
   --tree-indent: var(--size-20);
 
-  /* Mínimo por caja de rango: en una columna `sm` se apilan en vez de leerse «D» y «H».
+  /* Mínimo por caja de rango: van lado a lado y la columna crece antes que cortar «Desde» y «Hasta».
    * Ver vault: Tabla §9. */
   --col-filter-min-width: var(--size-72);
   /* Alto máximo de la tabla: la cabecera queda fija y lo demás desplaza adentro. */

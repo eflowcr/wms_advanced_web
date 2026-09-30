@@ -44,8 +44,8 @@ export default defineConfig({
       use: { ...devices['Desktop Chrome'] },
     },
     {
-      // La documentación del catálogo, probada: las 183 aserciones de DS-2 a DS-4, sin
-      // cambios. click-budget va acá y no en smoke: mide la pantalla de ejemplo contra un
+      // La documentación del catálogo, probada, sin cambios.
+      // click-budget va acá y no en smoke: mide la pantalla de ejemplo contra un
       // estándar del vault, que es documentar un número, no comprobar que la app arranca.
       name: 'showroom',
       testMatch: [
