@@ -1332,7 +1332,7 @@
         "drawerTransition": "Drawer entrance (slides in from the edge)",
         "panelWidth": "Expanded panel width",
         "railBackground": "Background of the menu and the bottom bar: navy gradient",
-        "railCorner": "Edge of the menu facing the content, rounded top and bottom",
+        "railCorner": "Top edge of the open menu facing the content, rounded; the bottom ends square",
         "railWidth": "Collapsed rail width",
         "rowHeight": "Row height, open",
         "rowHeightCollapsed": "Row height, folded (icon over label)",

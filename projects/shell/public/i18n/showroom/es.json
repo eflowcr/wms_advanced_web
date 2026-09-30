@@ -1332,7 +1332,7 @@
         "drawerTransition": "Entrada del cajón (se desliza desde el borde)",
         "panelWidth": "Ancho del panel expandido",
         "railBackground": "Fondo del menú y de la barra inferior: degradado navy",
-        "railCorner": "Borde del menú hacia el contenido, redondeado arriba y abajo",
+        "railCorner": "Borde de arriba del menú abierto hacia el contenido, redondeado; abajo termina recto",
         "railWidth": "Ancho del rail colapsado",
         "rowHeight": "Alto de una fila, abierto",
         "rowHeightCollapsed": "Alto de una fila, plegado (ícono sobre etiqueta)",

@@ -200,16 +200,16 @@ describe('NavRail', () => {
     });
   });
 
-  it('rounds the bottom corner always and the top only while open: folded, the column goes on up', async () => {
-    // Plegado, el rail sigue hacia la celda navy de la hamburguesa (decisión del usuario, 2026-09-25).
+  it('ends square at the bottom, and rounds the top only while open: folded, the column goes on up', async () => {
+    // Plegado, el rail sigue hacia la celda navy (2026-09-25); abajo, recto (2026-09-30).
     const panel = (): HTMLElement => fixture.nativeElement.querySelector('nav') as HTMLElement;
-    expect(panel().className).toContain('rounded-br-nav');
+    expect(panel().className).not.toContain('rounded-br-nav');
     expect(panel().className).toContain('rounded-tr-nav');
     expect(panel().className).toContain('overflow-hidden');
 
     host.expanded.set(false);
     await settle();
-    expect(panel().className).toContain('rounded-br-nav');
+    expect(panel().className).not.toContain('rounded-br-nav');
     expect(panel().className).not.toContain('rounded-tr-nav');
 
     // El cajón también es un panel abierto.
