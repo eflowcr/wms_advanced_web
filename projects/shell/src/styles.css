@@ -153,6 +153,7 @@
   --background-color-row-hover: var(--color-row-hover);
   --background-color-row-danger: var(--color-row-danger);
   --background-color-row-warning: var(--color-row-warning);
+  --background-color-row-success: var(--color-row-success);
   --background-color-overlay: var(--color-overlay);
   --background-color-chip: var(--color-chip-bg);
   --background-color-chip-hover: var(--color-chip-bg-hover);

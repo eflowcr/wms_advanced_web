@@ -2291,7 +2291,7 @@ test.describe('DS-3 lote C: la tabla', () => {
 
     const background = (row: string) =>
       page.locator(row).evaluate((element) => getComputedStyle(element).backgroundColor);
-    const plain = `${ROWS}:not(.bg-row-danger):not(.bg-row-warning)`;
+    const plain = `${ROWS}:not(.bg-row-danger):not(.bg-row-warning):not(.bg-row-success)`;
     await page.locator(plain).first().hover();
     const hover = await background(`${plain} >> nth=0`);
 
@@ -2305,6 +2305,12 @@ test.describe('DS-3 lote C: la tabla', () => {
     );
     // La barra lateral sigue en la primera celda: la excepción no se pierde al seleccionar.
     await expect(exception.locator('td').first()).toHaveCSS('box-shadow', /inset/);
+
+    // Completada va en el verde de su badge, sin la barra de las excepciones.
+    const done = page.locator(`${ROWS}.bg-row-success`).first();
+    await expect(done.locator('ewms-badge')).toContainText('Completada');
+    await expect(done.locator('td').first()).toHaveCSS('box-shadow', 'none');
+    expect(await done.evaluate((row) => getComputedStyle(row).backgroundColor)).not.toBe(hover);
 
     // Números en la fuente del cuerpo, con dígitos de ancho fijo.
     const number = page.locator(`${ROWS} td[data-col="packages"]`).first();

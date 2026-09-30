@@ -130,13 +130,17 @@ export const CELL_CLASSES =
 /** La fila de totales, fija abajo: el fondo y la línea fuerte de la cabecera, el texto del cuerpo. */
 export const TOTALS_CELL_CLASSES = 'border-t border-strong bg-secondary px-3 text-primary';
 
-/** Las dos excepciones que tiñen (decisión del usuario): con todas teñidas, ninguna destaca. */
+/** Las dos excepciones: tiñen la fila y llevan la barra lateral. */
 export type RowException = 'danger' | 'warning';
 
+/** Lo que tiñe: las excepciones y lo completado, en verde como su badge; `neutral` no tiñe. */
+export type RowTint = RowException | 'success';
+
 /** Escritas enteras: Tailwind escanea texto y no ve una clase armada con plantilla. */
-const EXCEPTION_TINT: Readonly<Record<RowException, string>> = {
+const ROW_TINT: Readonly<Record<RowTint, string>> = {
   danger: 'bg-row-danger',
   warning: 'bg-row-warning',
+  success: 'bg-row-success',
 };
 
 const EXCEPTION_MARK: Readonly<Record<RowException, string>> = {
@@ -147,15 +151,15 @@ const EXCEPTION_MARK: Readonly<Record<RowException, string>> = {
 /**
  * La matriz de fila (Tabla §23). Seleccionada gana al tinte; la excepción sigue en el badge y en
  * la marca lateral. Siempre con fondo: una celda fijada lo hereda y transparente dejaría ver lo
- * que pasa por debajo al desplazar. Hover y foco: un paso sobre la superficie.
+ * que pasa por debajo. Hover y foco: un paso sobre la superficie.
  */
-export function rowClasses(selected: boolean, exception: RowException | null): string {
+export function rowClasses(selected: boolean, tint: RowTint | null): string {
   // Un solo fondo por fila: dos utilidades de color las decide el orden de la hoja, no el atributo.
   if (selected) {
     return 'group bg-row-selected';
   }
-  return exception
-    ? `group ${EXCEPTION_TINT[exception]}`
+  return tint
+    ? `group ${ROW_TINT[tint]}`
     : 'group bg-surface hover:bg-row-hover focus-within:bg-row-hover';
 }
 

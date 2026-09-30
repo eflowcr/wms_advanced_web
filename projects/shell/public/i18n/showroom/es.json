@@ -2757,6 +2757,7 @@
         "rowHeightMd": "Alto de fila, densidad md",
         "rowHeightSm": "Alto de fila, densidad sm",
         "selectedRow": "Fila seleccionada",
+        "successTint": "Tinte de fila «Completada»",
         "warningTint": "Tinte de fila «En proceso»"
       },
       "toggle": "El toggle vive <b>dentro de la primera columna de datos</b>, junto al texto, nunca en una columna aparte; una fila sin hijos recibe un <code>.tree-toggle-spacer</code> del mismo ancho para que el texto de todas las filas empiece en el mismo sitio. Es el vocabulario que fija la Nomenclatura.",
@@ -2863,7 +2864,7 @@
         "title": "Orden por varias columnas"
       },
       "polish": {
-        "text": "Solo las excepciones tiñen la fila, con una barra lateral que sobrevive a la selección; números y fechas con dígitos alineados; un texto cortado muestra el completo al pasar o al enfocar; la sombra de lo fijado aparece solo con algo debajo.",
+        "text": "Las excepciones tiñen la fila, con una barra lateral que sobrevive a la selección, y lo completado va en verde; números y fechas con dígitos alineados; un texto cortado muestra el completo al pasar o al enfocar; la sombra de lo fijado aparece solo con algo debajo.",
         "title": "Pulido y estados"
       },
       "selection": {
@@ -2963,6 +2964,7 @@
         "normal": "Normal",
         "selected": "Seleccionada",
         "selectedDanger": "Seleccionada + excepción",
+        "success": "Completada",
         "warning": "Excepción warning"
       },
       "title": "La matriz de fila"
@@ -2988,7 +2990,7 @@
       },
       "caption": "Cada estado, y las dos señales que produce",
       "disabled": "<b>Disabled no está en la matriz, y no es un hueco:</b> una fila no se puede deshabilitar, porque una fila no es un control. Hover y foco están arriba, con su fondo; en la demo se recorren de verdad.",
-      "intro": "Los cuatro estados de fila, con las señales que produce cada uno, salidas del mismo diccionario. <b>Solo las excepciones tiñen la fila</b> —«Con incidencia» y «En proceso»—; las demás llevan solo el badge. Con todas teñidas, ninguna llamaba la atención.",
+      "intro": "Los cuatro estados de fila, con las señales que produce cada uno, salidas del mismo diccionario. <b>Tiñen la fila las excepciones y lo completado</b>: «Con incidencia» y «En proceso» con su barra lateral, «Completada» en el verde de su badge. «Pendiente» lleva solo el badge.",
       "noTint": "sin tinte"
     },
     "variants": {

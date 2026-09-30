@@ -418,7 +418,7 @@ describe('Table', () => {
       expect(textOf(0)).toContain('d:2026-01-15');
     });
 
-    it('draws a badge from the dictionary; tints the row from THE SAME one, ONLY AN EXCEPTION', () => {
+    it('draws a badge from the dictionary; tints the row from THE SAME one, never a neutral one', () => {
       const badge = bodyRows()[1]?.querySelector('ewms-badge');
       expect(badge?.textContent).toContain('Con incidencia');
       expect(badge?.querySelector('svg')).not.toBeNull();
@@ -426,7 +426,7 @@ describe('Table', () => {
       expect(bodyRows()[1]?.className).toContain('bg-row-danger');
       // La barra lateral va en la primera celda (la casilla), no en la fila.
       expect(cellsOf(1)[0]?.className).toContain('shadow-row-mark-danger');
-      // Pendiente es `neutral`: solo el badge; con todas teñidas ninguna llama la atención.
+      // Pendiente es `neutral`: solo el badge, sin tinte ni barra.
       expect(bodyRows()[0]?.className).toContain('hover:bg-row-hover');
       expect(cellsOf(0)[0]?.className).not.toContain('shadow-row-mark');
     });

@@ -100,11 +100,11 @@ const MATRIX_STATES: readonly MatrixAxis[] = [
   { id: 'tint', label: 'showroom.table.states.axes.tint' },
 ];
 
-/** Tintes de fila escritos completos para que Tailwind vea cada clase. Solo las excepciones tiñen. */
+/** Tintes de fila escritos completos para que Tailwind vea cada clase. `neutral` no tiñe. */
 const TINTS: Readonly<Record<string, string>> = {
   neutral: 'bg-surface',
   warning: 'bg-row-warning',
-  success: 'bg-surface',
+  success: 'bg-row-success',
   danger: 'bg-row-danger',
 };
 
@@ -125,7 +125,8 @@ interface RowMatrixEntry {
  * t(showroom.table.rowMatrix.states.normal, showroom.common.states.hover,
  *   showroom.table.rowMatrix.states.focus, showroom.table.rowMatrix.innerRing,
  *   showroom.table.rowMatrix.states.selected, showroom.table.rowMatrix.states.danger,
- *   showroom.table.rowMatrix.states.warning, showroom.table.rowMatrix.states.selectedDanger)
+ *   showroom.table.rowMatrix.states.warning, showroom.table.rowMatrix.states.success,
+ *   showroom.table.rowMatrix.states.selectedDanger)
  */
 const ROW_MATRIX: readonly RowMatrixEntry[] = [
   {
@@ -177,6 +178,14 @@ const ROW_MATRIX: readonly RowMatrixEntry[] = [
     cell: 'shadow-row-mark-warning',
   },
   {
+    id: 'success',
+    state: 'showroom.table.rowMatrix.states.success',
+    background: '--color-row-success',
+    mark: '—',
+    row: 'bg-row-success',
+    cell: '',
+  },
+  {
     id: 'selected-danger',
     state: 'showroom.table.rowMatrix.states.selectedDanger',
     background: '--color-row-selected',
@@ -186,7 +195,7 @@ const ROW_MATRIX: readonly RowMatrixEntry[] = [
   },
 ];
 
-const TINTED: ReadonlySet<string> = new Set(['warning', 'danger']);
+const TINTED: ReadonlySet<string> = new Set(['warning', 'success', 'danger']);
 
 /**
  * Verificada contra table.ts. `description` es la clave de su texto.
@@ -330,6 +339,7 @@ const PROPS: readonly PropRow[] = [
  *   showroom.table.anatomy.parts.headerBorder, showroom.table.anatomy.parts.rowBorder,
  *   showroom.table.anatomy.parts.selectedRow, showroom.table.anatomy.parts.hoverRow,
  *   showroom.table.anatomy.parts.dangerTint, showroom.table.anatomy.parts.warningTint,
+ *   showroom.table.anatomy.parts.successTint,
  *   showroom.table.anatomy.parts.exceptionMark, showroom.table.anatomy.parts.pinShadow,
  *   showroom.table.anatomy.parts.focusRing, showroom.table.anatomy.parts.maxHeight,
  *   showroom.table.anatomy.parts.resizeStep)
@@ -345,6 +355,7 @@ const ANATOMY = [
   { part: 'showroom.table.anatomy.parts.hoverRow', token: '--color-row-hover' },
   { part: 'showroom.table.anatomy.parts.dangerTint', token: '--color-row-danger' },
   { part: 'showroom.table.anatomy.parts.warningTint', token: '--color-row-warning' },
+  { part: 'showroom.table.anatomy.parts.successTint', token: '--color-row-success' },
   { part: 'showroom.table.anatomy.parts.exceptionMark', token: '--row-mark-width' },
   { part: 'showroom.table.anatomy.parts.pinShadow', token: '--shadow-pin-start' },
   { part: 'showroom.table.anatomy.parts.focusRing', token: '--focus-ring-shadow' },

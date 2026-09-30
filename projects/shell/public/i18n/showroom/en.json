@@ -2757,6 +2757,7 @@
         "rowHeightMd": "Row height, md density",
         "rowHeightSm": "Row height, sm density",
         "selectedRow": "Selected row",
+        "successTint": "“Completed” row tint",
         "warningTint": "“In progress” row tint"
       },
       "toggle": "The toggle lives <b>inside the first data column</b>, next to the text, never in a column of its own; a row without children gets a <code>.tree-toggle-spacer</code> of the same width so that the text of every row starts in the same place. It is the vocabulary set by the Naming convention.",
@@ -2863,7 +2864,7 @@
         "title": "Sorting by several columns"
       },
       "polish": {
-        "text": "Only the exceptions tint the row, with a side bar that survives selection; numbers and dates with aligned digits; truncated text shows in full on hover or on focus; the shadow of what is pinned appears only when there is something underneath.",
+        "text": "Exceptions tint the row, with a side bar that survives selection, and completed rows go green; numbers and dates with aligned digits; truncated text shows in full on hover or on focus; the shadow of what is pinned appears only when there is something underneath.",
         "title": "Polish and states"
       },
       "selection": {
@@ -2963,6 +2964,7 @@
         "normal": "Normal",
         "selected": "Selected",
         "selectedDanger": "Selected + exception",
+        "success": "Completed",
         "warning": "Warning exception"
       },
       "title": "The row matrix"
@@ -2988,7 +2990,7 @@
       },
       "caption": "Each state, and the two signals it produces",
       "disabled": "<b>Disabled is not in the matrix, and it is not a gap:</b> a row cannot be disabled, because a row is not a control. Hover and focus are above, with their background; in the demo you can really move through them.",
-      "intro": "The four row states, with the signals each one produces, all from the same dictionary. <b>Only the exceptions tint the row</b> —“With issue” and “In progress”—; the rest carry only the badge. With every row tinted, none of them stood out.",
+      "intro": "The four row states, with the signals each one produces, out of the same dictionary. <b>Exceptions and completed rows are tinted</b>: “With issue” and “In progress” with their side bar, “Completed” in the green of its badge. “Pending” carries only the badge.",
       "noTint": "no tint"
     },
     "variants": {

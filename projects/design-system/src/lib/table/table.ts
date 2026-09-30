@@ -575,8 +575,10 @@ export class Table<T> implements TableContext {
     return state === 'danger' || state === 'warning' ? state : null;
   }
 
+  /** Tiñen las excepciones y lo completado; `neutral` va sin tinte. Ver vault: Tabla §23. */
   protected rowClassesFor(flat: FlatRow<T>): string {
-    return rowClasses(this.isSelected(flat), this.exceptionOf(flat));
+    const state = this.resolveRowState()?.(flat.row) ?? null;
+    return rowClasses(this.isSelected(flat), state === 'neutral' ? null : state);
   }
 
   /** La marca va en la primera celda de la fila, sea la casilla o la primera columna. */
