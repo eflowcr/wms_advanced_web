@@ -2,6 +2,8 @@ import { InjectionToken, type Signal, type WritableSignal } from '@angular/core'
 import type { FilterChip } from '../filters/filter-chips';
 import type { TableColumn } from './column';
 import type { TableFilters } from './table-filters';
+import type { TableSavedViews } from './table-saved-views';
+import type { SavedTableView } from './table-saved-views.types';
 import type { TableTreeState } from './table-tree-state';
 import type { TableViewState } from './table-view';
 import type { MenuItem, TableDensity } from './table.types';
@@ -45,6 +47,9 @@ export interface TableContext {
   /** Lo del árbol que ofrece Vista, sin el tipo de fila (la barra no lo conoce). */
   readonly tree: Pick<TableTreeState<unknown>, 'anyExpandable' | 'expandAll' | 'collapseAll'>;
   resetView(): void;
+  /** Las vistas con nombre; sin store o sin `viewsKey`, `enabled` es falso. */
+  readonly savedViews: TableSavedViews;
+  deleteSavedView(view: SavedTableView): Promise<boolean>;
 }
 
 export const TABLE_CONTEXT = new InjectionToken<TableContext>('TABLE_CONTEXT');

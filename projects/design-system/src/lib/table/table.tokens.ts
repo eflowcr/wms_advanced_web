@@ -36,6 +36,25 @@ export interface TableMessages {
   readonly expandAll: string;
   readonly collapseAll: string;
   readonly density: string;
+
+  // Vistas guardadas, en Vista. Ver vault: Tabla §29.
+  readonly views: string;
+  /** La vista declarada, sin guardar: siempre está. */
+  readonly viewInitial: string;
+  readonly viewName: string;
+  readonly saveAsNew: string;
+  readonly saveChanges: string;
+  readonly renameView: string;
+  readonly duplicateView: string;
+  readonly deleteView: string;
+  readonly defaultView: string;
+  /** «¿Eliminar la vista Pendientes de hoy?» */
+  readonly deleteViewTitle: (name: string) => string;
+  /** El botón Vista con una vista puesta: «Pendientes de hoy», o «… (modificada)». */
+  readonly viewModified: (name: string) => string;
+  readonly viewCopyName: (name: string) => string;
+  /** En la lista: «Pendientes de hoy (por defecto)». */
+  readonly viewDefaultLabel: (name: string) => string;
   readonly densityMd: string;
   readonly densitySm: string;
 

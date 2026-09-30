@@ -20,6 +20,11 @@ import { TableColumn } from './column';
 import { DetailTemplate, EmptyTemplate, Table } from './table';
 import type { TablePage, TableQuery, TableSource } from './table-source';
 import {
+  EWMS_TABLE_VIEW_STORE,
+  InMemoryTableViewStore,
+  TABLE_VIEWS_VERSION,
+} from './table-saved-views.types';
+import {
   EWMS_TABLE_FORMATTERS,
   EWMS_TABLE_MESSAGES,
   type TableFormatters,
@@ -87,6 +92,19 @@ const MESSAGES: TableMessages = {
   expandAll: 'Expandir todo',
   collapseAll: 'Contraer todo',
   density: 'Densidad',
+  views: 'Vistas guardadas',
+  viewInitial: 'Vista inicial',
+  viewName: 'Nombre de la vista',
+  saveAsNew: 'Guardar como nueva',
+  saveChanges: 'Guardar cambios',
+  renameView: 'Renombrar',
+  duplicateView: 'Duplicar',
+  deleteView: 'Eliminar vista',
+  defaultView: 'Abrir por defecto',
+  deleteViewTitle: (name) => `¿Eliminar la vista ${name}?`,
+  viewModified: (name) => `${name} (modificada)`,
+  viewCopyName: (name) => `${name} (copia)`,
+  viewDefaultLabel: (name) => `${name} (por defecto)`,
   densityMd: 'Media',
   densitySm: 'Compacta',
   setAll: 'Todos',
@@ -2372,6 +2390,185 @@ describe('Table columns', () => {
 });
 
 // Exportar: CSV en el cliente con una fuente en memoria; con una remota, solo la petición.
+describe('Table saved views', () => {
+  @Component({
+    template: `
+      <ewms-table
+        [source]="source"
+        [trackBy]="byId"
+        [columnChooser]="true"
+        viewsKey="expediciones"
+        ariaLabel="Expediciones"
+      >
+        <ewms-column key="code" header="Código" [sortable]="true" [filterable]="true" />
+        <ewms-column key="packages" header="Bultos" type="number" [filterable]="true" />
+      </ewms-table>
+    `,
+    imports: [Table, TableColumn],
+  })
+  class ViewsHost {
+    readonly source = new ArrayTableSource<Row>(ROWS, ['code']);
+    readonly byId = (row: Row): unknown => row.id;
+  }
+
+  let fixture: ComponentFixture<ViewsHost>;
+  let store: InMemoryTableViewStore;
+
+  async function start(withStore = true): Promise<void> {
+    await TestBed.configureTestingModule({
+      imports: [ViewsHost],
+      providers: withStore
+        ? [...TABLE_PROVIDERS, { provide: EWMS_TABLE_VIEW_STORE, useValue: store }]
+        : TABLE_PROVIDERS,
+    }).compileComponents();
+    fixture = TestBed.createComponent(ViewsHost);
+    document.body.appendChild(fixture.nativeElement);
+    await settle();
+    await settle();
+  }
+
+  beforeEach(() => {
+    store = new InMemoryTableViewStore();
+  });
+
+  afterEach(() => {
+    fixture.nativeElement.remove();
+    clearOverlays();
+  });
+
+  /** Las escrituras y lecturas del store son promesas: una vuelta más de tareas. */
+  const settle = async (): Promise<void> => {
+    await stabilise(fixture);
+    await new Promise((resolve) => setTimeout(resolve));
+    await stabilise(fixture);
+  };
+  const viewButton = (): HTMLButtonElement =>
+    fixture.nativeElement.querySelector('[data-view-menu] button') as HTMLButtonElement;
+  const inPanel = <E extends Element>(selector: string): E =>
+    document.querySelector(`.cdk-overlay-container ${selector}`) as E;
+
+  async function click(selector: string): Promise<void> {
+    inPanel<HTMLElement>(`${selector} button`).click();
+    await settle();
+  }
+
+  async function openView(): Promise<void> {
+    if (!inPanel('[data-saved-views]')) {
+      viewButton().click();
+      await settle();
+    }
+  }
+
+  async function name(value: string): Promise<void> {
+    const input = inPanel<HTMLInputElement>('[data-view-name] input');
+    input.value = value;
+    input.dispatchEvent(new Event('input'));
+    await settle();
+  }
+
+  it('SAVES THE VIEW WITH A NAME, says when it changed, and brings it back', async () => {
+    await start();
+    await openView();
+    expect(inPanel('[data-view-option=""]')).not.toBeNull();
+    await name('Compacta');
+    await click('[data-view-create]');
+    expect(viewButton().textContent?.trim()).toBe('Compacta');
+
+    // La densidad cambia: la vista puesta queda «modificada» y «Guardar cambios» se habilita.
+    inPanel<HTMLInputElement>('[data-density="sm"] input').click();
+    await settle();
+    expect(viewButton().textContent?.trim()).toBe('Compacta (modificada)');
+    expect(inPanel<HTMLButtonElement>('[data-view-save] button').disabled).toBe(false);
+
+    // «Restablecer vista» vuelve a la vista puesta, no a lo declarado.
+    await click('[data-reset-view]');
+    expect(viewButton().textContent?.trim()).toBe('Compacta');
+
+    inPanel<HTMLInputElement>('[data-density="sm"] input').click();
+    await settle();
+    await click('[data-view-save]');
+    expect((await store.read('expediciones'))?.views[0]?.state.view.density).toBe('sm');
+    await expectNoAxeViolations(document.querySelector('.cdk-overlay-container')!);
+  });
+
+  it('opens with the default view: its filters, its order and its density', async () => {
+    await store.write('expediciones', {
+      version: TABLE_VIEWS_VERSION,
+      views: [
+        {
+          id: 'x',
+          name: 'Grandes',
+          state: {
+            view: {
+              order: ['packages', 'code'],
+              hidden: [],
+              widths: {},
+              pinned: {},
+              density: 'sm',
+            },
+            filters: { packages: { min: 100 } },
+            sort: [{ key: 'code', direction: 'desc' }],
+          },
+        },
+      ],
+      defaultId: 'x',
+    });
+    await start();
+    expect(viewButton().textContent?.trim()).toBe('Grandes');
+    const heads = [...fixture.nativeElement.querySelectorAll('thead tr:first-child th[data-col]')];
+    expect(heads.map((th) => (th as HTMLElement).dataset['col'])).toEqual(['packages', 'code']);
+    expect(fixture.nativeElement.querySelector('[data-chip="packages"]')?.textContent).toContain(
+      '≥ n:100',
+    );
+    // La caja del filtro dice lo mismo que el chip.
+    const min = fixture.nativeElement.querySelector(
+      '[data-filter="packages"] input',
+    ) as HTMLInputElement;
+    expect(min.value).toBe('100');
+  });
+
+  it('renames, duplicates, sets the default, and deletes only after asking', async () => {
+    await start();
+    await openView();
+    await name('Mía');
+    await click('[data-view-create]');
+    await name('Mía de verdad');
+    await click('[data-view-rename]');
+    expect(viewButton().textContent?.trim()).toBe('Mía de verdad');
+    await openView();
+    await click('[data-view-duplicate]');
+    expect(viewButton().textContent?.trim()).toBe('Mía de verdad (copia)');
+    await openView();
+    await click('[data-view-default]');
+    const withDefault = await store.read('expediciones');
+    expect(withDefault?.defaultId).toBe(withDefault?.views[1]?.id);
+
+    // Eliminar pregunta con el diálogo del sistema; cancelado, la vista sigue.
+    await openView();
+    await click('[data-view-delete]');
+    (document.querySelectorAll('ewms-confirm-dialog button')[0] as HTMLElement).click();
+    await settle();
+    expect((await store.read('expediciones'))?.views.length).toBe(2);
+
+    await openView();
+    await click('[data-view-delete]');
+    (document.querySelectorAll('ewms-confirm-dialog button')[1] as HTMLElement).click();
+    await settle();
+    const left = await store.read('expediciones');
+    expect(left?.views.map((view) => view.name)).toEqual(['Mía de verdad']);
+    expect(left?.defaultId).toBeNull();
+    expect(viewButton().textContent?.trim()).toBe('Vista');
+    expect(document.activeElement).toBe(viewButton());
+  });
+
+  it('without a store there are no saved views, and the panel is as it was', async () => {
+    await start(false);
+    viewButton().click();
+    await settle();
+    expect(inPanel('[data-saved-views]')).toBeNull();
+  });
+});
+
 describe('Table export', () => {
   @Component({
     template: `

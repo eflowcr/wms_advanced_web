@@ -46,8 +46,8 @@ export type TableAggregate = 'sum' | 'avg' | 'count' | 'min' | 'max';
 export type TableTotalsScope = 'selected' | 'filtered' | 'all' | 'page';
 
 /**
- * Lo que el usuario configuró, en memoria: sale por `(viewChange)` y no se guarda en el
- * navegador. Guardar vistas llega con backend. Anchos en píxeles CSS medidos.
+ * Lo que el usuario configuró, en memoria: sale por `(viewChange)`, y una vista guardada lo
+ * lleva al store de la aplicación (Tabla §29). Anchos en píxeles CSS medidos.
  */
 export interface TableView {
   /** Todas las claves, visibles u ocultas, en el orden del usuario. */

@@ -165,6 +165,28 @@ export class TableFilters {
     this.write(column.key(), this.setState(column) === 'all' ? [] : undefined);
   }
 
+  /** Una vista guardada: los valores y lo que muestra cada caja, sin pasar por la espera. */
+  restore(values: Readonly<Record<string, TableFilterValue>>): void {
+    for (const key of Object.keys(this.values())) {
+      this.clear(key);
+    }
+    for (const column of this.host.columns()) {
+      const value = values[column.key()];
+      if (value === undefined) {
+        continue;
+      }
+      if (typeof value === 'string') {
+        this.textBox(column, 'text').value.set(value);
+      } else if (isNumberRange(value)) {
+        this.textBox(column, 'min').value.set(value.min === undefined ? '' : String(value.min));
+        this.textBox(column, 'max').value.set(value.max === undefined ? '' : String(value.max));
+      } else if (isDateRange(value)) {
+        this.dateBox(column).set(value);
+      }
+      this.write(column.key(), value);
+    }
+  }
+
   clearAll(): void {
     for (const key of Object.keys(this.values())) {
       this.clear(key);

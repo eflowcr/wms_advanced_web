@@ -2073,6 +2073,74 @@ test.describe('DS-3 lote C: la tabla', () => {
     expect(results.violations).toEqual([]);
   });
 
+  test('A SAVED VIEW SURVIVES A RELOAD, per user and table, and the default opens by itself', async ({
+    page,
+  }) => {
+    await page.goto(TABLE);
+    await ready(page);
+
+    // Un filtro y la densidad compacta, guardados con nombre.
+    await page.locator(`${DEMO} [data-filters-toggle] button`).click();
+    await page.locator(`${DEMO} [data-filter="packages"] input`).first().fill('100');
+    await expect(page.locator(`${DEMO} [data-chip="packages"]`)).toBeVisible();
+    const viewButton = page.locator(`${DEMO} [data-view-menu] button`);
+    await viewButton.click();
+    const panel = page.getByRole('dialog', { name: 'Vista' });
+    await panel.locator('[data-density="sm"] input').check();
+    await panel.getByLabel('Nombre de la vista').fill('Grandes');
+    await panel.locator('[data-view-create] button').click();
+    await panel.locator('[data-view-default] button').click();
+    await expect(viewButton).toHaveText(/Grandes/);
+    const results = await axe(page).include('[role="dialog"]').analyze();
+    expect(results.violations).toEqual([]);
+
+    // Guardada por usuario y tabla, con su versión (leído como la E2E del idioma, sin tocar el
+    // almacenamiento desde la prueba).
+    const state = await page.context().storageState();
+    const keys = state.origins.flatMap(({ localStorage: items }) => items.map((item) => item.name));
+    expect(keys.filter((key) => key.startsWith('ewms.tableViews.'))).toEqual([
+      'ewms.tableViews.Operador.showroom.shipments',
+    ]);
+
+    await page.reload();
+    await ready(page);
+    await expect(viewButton).toHaveText(/Grandes/);
+    await expect(page.locator(`${DEMO} [data-chip="packages"]`)).toContainText('≥ 100');
+    const row = page.locator(`${ROWS}`).first();
+    expect(Math.round((await row.boundingBox())!.height)).toBe(32);
+  });
+
+  test('A VIEW OF ANOTHER VERSION IS DISCARDED, and the table opens as declared', async ({
+    browser,
+    baseURL,
+  }) => {
+    const context = await browser.newContext({
+      locale: 'es-CR',
+      storageState: {
+        cookies: [],
+        origins: [
+          {
+            origin: baseURL!,
+            localStorage: [
+              {
+                name: 'ewms.tableViews.Operador.showroom.shipments',
+                value: JSON.stringify({ version: 99, views: [], defaultId: null }),
+              },
+            ],
+          },
+        ],
+      },
+    });
+    const page = await context.newPage();
+    await page.goto(TABLE);
+    await ready(page);
+    await expect(page.locator(`${DEMO} [data-view-menu] button`)).toHaveText(/Vista/);
+    await expect(page.locator(ROWS)).toHaveCount(12);
+    const state = await context.storageState();
+    expect(JSON.stringify(state)).not.toContain('ewms.tableViews.');
+    await context.close();
+  });
+
   test('THE TOOLBAR IS FOUR CONTROLS, and at 390 px it takes two rows at most', async ({
     page,
   }) => {

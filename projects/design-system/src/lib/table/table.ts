@@ -93,6 +93,8 @@ import { TableColumnMenu, type ColumnAction } from './table-column-menu';
 import { TableKeyboard } from './table-keyboard';
 import { TableMenu } from './table-menu';
 import { TableSortState } from './table-sort';
+import { TableSavedViews } from './table-saved-views';
+import { EWMS_TABLE_VIEW_STORE, type SavedTableView } from './table-saved-views.types';
 import { aggregateOf, totalsRows } from './table-totals';
 import { TableWindow } from './table-window';
 import { TableTreeState } from './table-tree-state';
@@ -122,6 +124,7 @@ export class EmptyTemplate {
 }
 
 let nextTableId = 0;
+let nextViewId = 0;
 
 /** La clave del chip de la búsqueda: una columna no puede llamarse así (`key` es un nombre). */
 const SEARCH_CHIP = ':search';
@@ -201,6 +204,9 @@ export class Table<T> implements TableContext {
   readonly exportable = input<boolean>(false);
 
   readonly density = input<TableDensity>('md');
+
+  /** Con una clave estable y un store provisto, la tabla ofrece vistas guardadas. Ver vault: Tabla §29. */
+  readonly viewsKey = input<string | null>(null);
 
   readonly pageSize = input<number>(50);
 
@@ -451,6 +457,9 @@ export class Table<T> implements TableContext {
       },
     });
 
+    // Con las columnas ya declaradas: la vista por defecto se aplica sobre ellas.
+    afterNextRender(() => void this.savedViews.load());
+
     // Medir en fase de lectura: sin esto la primera ventana se calcula con altura cero.
     afterNextRender({
       read: () => {
@@ -507,14 +516,55 @@ export class Table<T> implements TableContext {
 
   readonly layout = new TableViewState(this.columns, this.densityChoice, this.selectable);
 
-  /** «Restablecer vista» solo se habilita si algo cambió, densidad incluida. */
-  readonly viewChanged = computed(
-    () => this.layout.customised() || this.densityChoice() !== this.density(),
+  /** Las vistas con nombre, en el store que provea la aplicación. */
+  readonly savedViews = new TableSavedViews({
+    store: inject(EWMS_TABLE_VIEW_STORE, { optional: true }),
+    key: () => this.viewsKey(),
+    capture: () => ({
+      view: this.layout.view(),
+      filters: this.filtering.values(),
+      sort: this.sorting.list(),
+    }),
+    apply: (state) => {
+      this.layout.restore(state.view);
+      this.densityChoice.set(state.view.density);
+      this.filtering.restore(state.filters);
+      this.sorting.list.set(state.sort);
+      this.pageIndex.set(0);
+    },
+    newId: () => `${Date.now().toString(36)}-${++nextViewId}`,
+  });
+
+  /** «Restablecer vista» solo se habilita si algo cambió: respecto de la vista puesta, o de lo declarado. */
+  readonly viewChanged = computed(() =>
+    this.savedViews.active() !== null
+      ? this.savedViews.modified()
+      : this.layout.customised() || this.densityChoice() !== this.density(),
   );
 
   resetView(): void {
+    if (this.savedViews.active() !== null) {
+      this.savedViews.revert();
+      return;
+    }
     this.layout.reset();
     this.densityChoice.set(this.density());
+  }
+
+  /** Eliminar una vista es destructivo: se confirma con el diálogo del sistema. */
+  async deleteSavedView(view: SavedTableView): Promise<boolean> {
+    const text = this.text();
+    const ok = await this.dialogs.confirm({
+      title: text.deleteViewTitle(view.name),
+      body: text.confirmBody,
+      variant: 'danger',
+      confirmLabel: text.deleteView,
+      cancelLabel: text.confirmCancel,
+    });
+    if (ok) {
+      this.savedViews.remove(view.id);
+    }
+    return ok;
   }
 
   protected readonly drag = new TableColumnDrag({

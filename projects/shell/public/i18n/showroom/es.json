@@ -2929,7 +2929,8 @@
       "selectionChange": "La selección. Una salida, no un valor de formulario: la tabla no es un CVA.",
       "source": "<b>Obligatoria.</b> De dónde salen las filas. Una interfaz: la tabla no conoce HTTP.",
       "trackBy": "Identifica la fila, y TAMBIÉN la selección: por eso la selección sobrevive al cambio de página.",
-      "viewChange": "Orden, columnas ocultas, anchos, fijadas y densidad: en memoria, para quien quiera guardarlas."
+      "viewChange": "Orden, columnas ocultas, anchos, fijadas y densidad: en memoria, para quien quiera guardarlas.",
+      "viewsKey": "Clave estable de la tabla: con ella, Vista guarda vistas con nombre (filtros, columnas, orden, anchos y densidad) en el store de la aplicación, por usuario."
     },
     "purpose": {
       "notCard": "<b>Si son tres datos de un registro, va Card.</b> Una tabla de una fila es una ficha con cabeceras de más.",

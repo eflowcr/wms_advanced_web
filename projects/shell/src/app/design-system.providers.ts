@@ -8,6 +8,7 @@ import {
   EWMS_PAGINATION_MESSAGES,
   EWMS_FAVORITE_LABELS,
   EWMS_FAVORITES_STORE,
+  EWMS_TABLE_VIEW_STORE,
   EWMS_SELECT_MESSAGES,
   EWMS_SHORTCUT_HELP_MESSAGES,
   EWMS_SEARCH_BOX_MESSAGES,
@@ -36,6 +37,7 @@ import { TranslocoLocaleService } from '@jsverse/transloco-locale';
 import { menuEntryFor } from './layout/menu';
 import { RouteTitles } from './route-titles';
 import { SHORTCUT_MAP } from './shortcuts.map';
+import { BrowserTableViewStore } from './table-views.store';
 
 /**
  * Llena una vez los tokens de textos y formatos del design system, que no habla
@@ -86,6 +88,12 @@ export function provideEwmsDesignSystem(): Provider[] {
       useClass: InMemoryFavoritesStore,
     },
     Favorites,
+    // Las vistas de las tablas, en el navegador por usuario y tabla (ADR 0019). Con backend de
+    // preferencias solo cambia esta línea.
+    {
+      provide: EWMS_TABLE_VIEW_STORE,
+      useFactory: () => new BrowserTableViewStore(),
+    },
     {
       provide: EWMS_FAVORITE_LABELS,
       useFactory: favoriteLabels,
@@ -227,6 +235,37 @@ function tableMessages(): TableMessages {
     get density() {
       return transloco.translate('ds.table.density');
     },
+    get views() {
+      return transloco.translate('ds.table.views');
+    },
+    get viewInitial() {
+      return transloco.translate('ds.table.viewInitial');
+    },
+    get viewName() {
+      return transloco.translate('ds.table.viewName');
+    },
+    get saveAsNew() {
+      return transloco.translate('ds.table.saveAsNew');
+    },
+    get saveChanges() {
+      return transloco.translate('ds.table.saveChanges');
+    },
+    get renameView() {
+      return transloco.translate('ds.table.renameView');
+    },
+    get duplicateView() {
+      return transloco.translate('ds.table.duplicateView');
+    },
+    get deleteView() {
+      return transloco.translate('ds.table.deleteView');
+    },
+    get defaultView() {
+      return transloco.translate('ds.table.defaultView');
+    },
+    deleteViewTitle: (name) => transloco.translate('ds.table.deleteViewTitle', { name }),
+    viewModified: (name) => transloco.translate('ds.table.viewModified', { name }),
+    viewCopyName: (name) => transloco.translate('ds.table.viewCopyName', { name }),
+    viewDefaultLabel: (name) => transloco.translate('ds.table.viewDefaultLabel', { name }),
     get densityMd() {
       return transloco.translate('ds.table.densityMd');
     },

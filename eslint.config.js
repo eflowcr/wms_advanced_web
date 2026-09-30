@@ -44,7 +44,8 @@ const COMPONENT_STYLES_MESSAGE =
 /** Regla 9: nada de la sesión vive en el navegador; la única excepción escrita es el idioma (ADR 0008). */
 const STORAGE_MESSAGE =
   'El almacenamiento del navegador está prohibido (PLN-WMS-003 §4): nada de la sesión vive en el ' +
-  'navegador. La única excepción escrita es el idioma de la interfaz (ADR 0008); otra pide su ADR.';
+  'navegador. Las excepciones escritas son el idioma de la interfaz (ADR 0008) y las vistas de ' +
+  'tabla (ADR 0019); otra pide su ADR.';
 
 /** Con Trusted Types en la CSP, un sumidero con una cadena lanza en ejecución: acá falla antes. */
 const CODE_SINK_MESSAGE =

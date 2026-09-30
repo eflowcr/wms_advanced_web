@@ -6,6 +6,7 @@ import {
   DestroyRef,
   ElementRef,
   inject,
+  linkedSignal,
   signal,
 } from '@angular/core';
 import { Button } from '../button/button';
@@ -17,6 +18,7 @@ import { RadioGroup } from '../radio/radio-group';
 import { SplitButton, type SplitAction } from '../split-button/split-button';
 import { TABLE_CONTEXT } from './table-context';
 import { TablePopover } from './table-popover';
+import type { SavedTableView } from './table-saved-views.types';
 
 /**
  * La barra propia de la Tabla: buscar · Filtros · Vista · Exportar, y los chips de los filtros
@@ -54,6 +56,25 @@ export class TableToolbar {
 
   protected runExport(id: string): void {
     this.table.runExport(id === 'copy' ? 'copy' : 'csv-selected');
+  }
+
+  /** Vista dice cuál está puesta, y si cambió desde que se guardó. */
+  protected readonly viewLabel = computed(() => {
+    const text = this.table.text();
+    const active = this.table.savedViews.active();
+    if (active === null) {
+      return text.view;
+    }
+    return this.table.savedViews.modified() ? text.viewModified(active.name) : active.name;
+  });
+
+  /** El nombre para crear o renombrar: arranca con el de la vista puesta. */
+  protected readonly viewName = linkedSignal(() => this.table.savedViews.active()?.name ?? '');
+
+  /** El diálogo cierra el panel: el foco vuelve al botón Vista, que siempre está. */
+  protected async deleteView(view: SavedTableView): Promise<void> {
+    await this.table.deleteSavedView(view);
+    this.host.nativeElement.querySelector<HTMLElement>('[data-view-menu] button')?.focus();
   }
 
   /** El valor vive en el contexto de la tabla; el grupo solo lo muestra y lo escribe. */

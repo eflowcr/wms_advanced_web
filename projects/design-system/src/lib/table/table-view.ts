@@ -30,7 +30,7 @@ export interface ColumnPosition {
 
 /**
  * Lo que el usuario configura de las columnas —orden, ocultas, anchos— y cómo se fijan y miden.
- * Vive en memoria y sale por `(viewChange)`; nunca va al navegador. Interna. Ver vault: Tabla §14.
+ * Vive en memoria y sale por `(viewChange)`; una vista guardada la restaura. Interna. Ver vault: Tabla §14.
  */
 export class TableViewState {
   private readonly hidden = signal<ReadonlySet<string>>(new Set());
@@ -124,6 +124,23 @@ export class TableViewState {
     this.hidden.set(new Set());
     this.widths.set({});
     this.pins.set({});
+  }
+
+  /** Vuelve a una vista guardada: lo que coincide con lo declarado no se marca. */
+  restore(view: TableView): void {
+    const declared = this.columns().map((column) => column.key());
+    const sameOrder = view.order.length === declared.length && view.order.every((key, i) => key === declared[i]);
+    this.order.set(sameOrder ? null : [...view.order]);
+    this.hidden.set(new Set(view.hidden));
+    this.widths.set({ ...view.widths });
+    const pins: Record<string, TablePin | null> = {};
+    for (const column of this.columns()) {
+      const pin = view.pinned[column.key()] ?? null;
+      if (pin !== column.pinned()) {
+        pins[column.key()] = pin;
+      }
+    }
+    this.pins.set(pins);
   }
 
   /** Posición entre las visibles, base 1. */

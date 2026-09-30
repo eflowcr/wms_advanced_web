@@ -2929,7 +2929,8 @@
       "selectionChange": "The selection. An output, not a form value: the table is not a CVA.",
       "source": "<b>Required.</b> Where the rows come from. An interface: the table knows nothing about HTTP.",
       "trackBy": "Identifies the row, AND the selection too: that is why the selection survives a change of page.",
-      "viewChange": "Sorting, hidden columns, widths, pinned columns and density: in memory, for whoever wants to save them."
+      "viewChange": "Sorting, hidden columns, widths, pinned columns and density: in memory, for whoever wants to save them.",
+      "viewsKey": "Stable key of the table: with it, View saves named views (filters, columns, order, widths and density) in the application store, per user."
     },
     "purpose": {
       "notCard": "<b>If it is three facts about one record, use Card.</b> A one-row table is a record card with headers to spare.",
