@@ -253,6 +253,8 @@
   --color-row-hover: var(--navy-97);
   --color-row-danger: var(--color-danger-surface);
   --color-row-warning: var(--color-warning-surface);
+  /* Completada: el verde del badge, sin barra lateral (decisión del usuario, 2026-09-30). */
+  --color-row-success: var(--color-success-surface);
   /* La excepción conserva su marca lateral aunque la fila esté seleccionada. */
   --row-mark-width: var(--size-3);
   --shadow-row-mark-danger: inset var(--row-mark-width) 0 0 var(--color-danger-solid);

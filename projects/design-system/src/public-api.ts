@@ -98,6 +98,7 @@ export {
   type RowMenuEvent,
   type RowState,
   type TableChildren,
+  type TableColumnLimit,
   type TableColumnType,
   type TableColumnWidth,
   type TableDensity,
@@ -105,6 +106,7 @@ export {
   type ExportRequest,
   type TableAggregate,
   type TablePin,
+  type TableTotalsScope,
   type TableView,
 } from './lib/table/table.types';
 // Las claves de `TableMessages.columnActions`, que llena el consumidor.

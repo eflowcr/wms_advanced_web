@@ -1332,7 +1332,7 @@
         "drawerTransition": "Drawer entrance (slides in from the edge)",
         "panelWidth": "Expanded panel width",
         "railBackground": "Background of the menu and the bottom bar: navy gradient",
-        "railCorner": "Edge of the menu facing the content, rounded top and bottom",
+        "railCorner": "Top edge of the open menu facing the content, rounded; the bottom ends square",
         "railWidth": "Collapsed rail width",
         "rowHeight": "Row height, open",
         "rowHeightCollapsed": "Row height, folded (icon over label)",
@@ -2757,6 +2757,7 @@
         "rowHeightMd": "Row height, md density",
         "rowHeightSm": "Row height, sm density",
         "selectedRow": "Selected row",
+        "successTint": "“Completed” row tint",
         "warningTint": "“In progress” row tint"
       },
       "toggle": "The toggle lives <b>inside the first data column</b>, next to the text, never in a column of its own; a row without children gets a <code>.tree-toggle-spacer</code> of the same width so that the text of every row starts in the same place. It is the vocabulary set by the Naming convention.",
@@ -2863,7 +2864,7 @@
         "title": "Sorting by several columns"
       },
       "polish": {
-        "text": "Only the exceptions tint the row, with a side bar that survives selection; numbers and dates with aligned digits; truncated text shows in full on hover or on focus; the shadow of what is pinned appears only when there is something underneath.",
+        "text": "Exceptions tint the row, with a side bar that survives selection, and completed rows go green; numbers and dates with aligned digits; truncated text shows in full on hover or on focus; the shadow of what is pinned appears only when there is something underneath.",
         "title": "Polish and states"
       },
       "selection": {
@@ -2875,8 +2876,8 @@
         "title": "Set filter"
       },
       "statusBar": {
-        "text": "At the foot: how many rows, how many are selected, and Packages added up (<code>aggregate=\"sum\"</code>) over the selection if there is one, or over what is on screen.",
-        "title": "Status bar and aggregates"
+        "text": "A totals row fixed at the foot, aligned with each column: Packages added up (<code>aggregate=\\\"sum\\\"</code>, also <code>avg</code>, <code>count</code>, <code>min</code> and <code>max</code>) over the selection if there is one, or over everything filtered, and it says whose total it is. The status bar counts rows.",
+        "title": "Totals row"
       },
       "title": "The differentiators, one by one"
     },
@@ -2915,6 +2916,7 @@
       "children": "A function, or the name of a property. With it there is a tree and the role is treegrid; without it, grid.",
       "columnChooser": "Column chooser in the toolbar. The last visible column cannot be hidden.",
       "columnExtras": "Initial pinning (the user changes it in the ⋮ menu), no checkbox in View, or the total at the foot.",
+      "columnLimits": "The least and the most the user can resize it to, by the width names. Without them, the table limits.",
       "density": "The density it starts with; after that it is chosen in the toolbar. Row height by token.",
       "exportRequest": "Only with a remote source: the table does not download, it says what the user asked for.",
       "exportable": "Export: CSV on the client with ArrayTableSource; with a remote source, (exportRequest).",
@@ -2927,7 +2929,8 @@
       "selectionChange": "The selection. An output, not a form value: the table is not a CVA.",
       "source": "<b>Required.</b> Where the rows come from. An interface: the table knows nothing about HTTP.",
       "trackBy": "Identifies the row, AND the selection too: that is why the selection survives a change of page.",
-      "viewChange": "Sorting, hidden columns, widths, pinned columns and density: in memory, for whoever wants to save them."
+      "viewChange": "Sorting, hidden columns, widths, pinned columns and density: in memory, for whoever wants to save them.",
+      "viewsKey": "Stable key of the table: with it, View saves named views (filters, columns, order, widths and density) in the application store, per user."
     },
     "purpose": {
       "notCard": "<b>If it is three facts about one record, use Card.</b> A one-row table is a record card with headers to spare.",
@@ -2962,6 +2965,7 @@
         "normal": "Normal",
         "selected": "Selected",
         "selectedDanger": "Selected + exception",
+        "success": "Completed",
         "warning": "Warning exception"
       },
       "title": "The row matrix"
@@ -2987,7 +2991,7 @@
       },
       "caption": "Each state, and the two signals it produces",
       "disabled": "<b>Disabled is not in the matrix, and it is not a gap:</b> a row cannot be disabled, because a row is not a control. Hover and focus are above, with their background; in the demo you can really move through them.",
-      "intro": "The four row states, with the signals each one produces, all from the same dictionary. <b>Only the exceptions tint the row</b> —“With issue” and “In progress”—; the rest carry only the badge. With every row tinted, none of them stood out.",
+      "intro": "The four row states, with the signals each one produces, out of the same dictionary. <b>Exceptions and completed rows are tinted</b>: “With issue” and “In progress” with their side bar, “Completed” in the green of its badge. “Pending” carries only the badge.",
       "noTint": "no tint"
     },
     "variants": {

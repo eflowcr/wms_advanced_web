@@ -1,5 +1,6 @@
 import { InjectionToken } from '@angular/core';
 import type { ColumnAction } from './table-column-menu';
+import type { TableAggregate, TableTotalsScope } from './table.types';
 
 // Textos y formatos se proveen una vez, no por tabla (ADR 0008): la biblioteca define los
 // tokens y el shell o el showroom los llenan. Ver vault: Tabla §2.
@@ -26,6 +27,8 @@ export interface TableMessages {
   readonly filters: (active: number) => string;
   /** También la acción del estado vacío con filtros puestos. */
   readonly clearFilters: string;
+  /** El nombre del chip de la búsqueda rápida: «Búsqueda: 0403». */
+  readonly searchChip: string;
   /** El botón que agrupa columnas, densidad y «Restablecer vista». */
   readonly view: string;
   readonly resetView: string;
@@ -33,6 +36,25 @@ export interface TableMessages {
   readonly expandAll: string;
   readonly collapseAll: string;
   readonly density: string;
+
+  // Vistas guardadas, en Vista. Ver vault: Tabla §29.
+  readonly views: string;
+  /** La vista declarada, sin guardar: siempre está. */
+  readonly viewInitial: string;
+  readonly viewName: string;
+  readonly saveAsNew: string;
+  readonly saveChanges: string;
+  readonly renameView: string;
+  readonly duplicateView: string;
+  readonly deleteView: string;
+  readonly defaultView: string;
+  /** «¿Eliminar la vista Pendientes de hoy?» */
+  readonly deleteViewTitle: (name: string) => string;
+  /** El botón Vista con una vista puesta: «Pendientes de hoy», o «… (modificada)». */
+  readonly viewModified: (name: string) => string;
+  readonly viewCopyName: (name: string) => string;
+  /** En la lista: «Pendientes de hoy (por defecto)». */
+  readonly viewDefaultLabel: (name: string) => string;
   readonly densityMd: string;
   readonly densitySm: string;
 
@@ -41,6 +63,8 @@ export interface TableMessages {
   readonly setNone: string;
   /** Texto del botón: «Estado: todos», «Estado: 2 de 4», «Estado: ninguno». */
   readonly setSummary: (column: string, chosen: number, total: number) => string;
+  /** Lo visible del botón, sin la columna: «Todos», «2 de 4», «Ninguno». */
+  readonly setChosen: (chosen: number, total: number) => string;
 
   // Columnas: selector y separador de ancho.
   readonly columns: string;
@@ -63,6 +87,10 @@ export interface TableMessages {
   /** «1 seleccionada», «3 seleccionadas». */
   readonly selectedCount: (count: number) => string;
   readonly clearSelection: string;
+  /** La confirmación de una acción destructiva (fila o masiva): «¿Anular 3 filas?». */
+  readonly confirmTitle: (action: string, rows: number) => string;
+  readonly confirmBody: string;
+  readonly confirmCancel: string;
   /** Lo copiado con Ctrl+C: «3 filas copiadas». */
   readonly copied: (rows: number) => string;
 
@@ -83,12 +111,14 @@ export interface TableMessages {
   // Barra de estado.
   /** «12 de 340 filas», o «12 filas» con `total` null. */
   readonly rowsShown: (shown: number, total: number | null) => string;
-  /** La etiqueta del agregado: «Bultos seleccionados», «Promedio de bultos en pantalla». */
-  readonly aggregate: (
-    kind: 'sum' | 'avg' | 'count',
-    column: string,
-    scope: 'selected' | 'shown',
-  ) => string;
+
+  // Fila de totales. Ver vault: Tabla §17.
+  /** El nombre de la operación, que el lector oye antes del número: «Suma», «Máximo». */
+  readonly aggregate: (kind: TableAggregate) => string;
+  /** De qué es el total: «Total de 3 seleccionadas», «Total de esta página (50 filas)». */
+  readonly totalsScope: (scope: TableTotalsScope, rows: number) => string;
+  /** Lo que se oye en lugar de «—»: la fuente no da el total. */
+  readonly totalUnavailable: string;
 }
 
 /** Solo lo que se muestra: ordenar y filtrar usan el valor crudo. Ver vault: Tabla §2. */

@@ -2,6 +2,7 @@ import {
   afterNextRender,
   ChangeDetectionStrategy,
   Component,
+  computed,
   ElementRef,
   inject,
   signal,
@@ -57,6 +58,7 @@ const TEMPLATE_SNIPPET = [
   '  [quickFilter]="true"',
   '  [columnChooser]="true"',
   '  [exportable]="true"',
+  '  viewsKey="showroom.shipments"',
   '  [bulkActions]="bulkActions()"',
   "  [ariaLabel]=\"'showroom.table.demo.ariaLabel' | transloco\"",
   '  (rowActivate)="open($event)"',
@@ -65,7 +67,7 @@ const TEMPLATE_SNIPPET = [
   '  (queryChange)="query.set($event)"',
   '>',
   "  <ewms-column key=\"code\" [header]=\"'showroom.table.columns.code' | transloco\" width=\"md\" pinned=\"start\" [sortable]=\"true\" [filterable]=\"true\" />",
-  "  <ewms-column key=\"customer\" [header]=\"'showroom.table.columns.customerItem' | transloco\" width=\"fill\" [filterable]=\"true\" />",
+  "  <ewms-column key=\"customer\" [header]=\"'showroom.table.columns.customerItem' | transloco\" width=\"fill\" maxWidth=\"lg\" [filterable]=\"true\" />",
   "  <ewms-column key=\"date\" [header]=\"'showroom.table.columns.date' | transloco\" type=\"date\" width=\"md\" [sortable]=\"true\" [filterable]=\"true\" />",
   "  <ewms-column key=\"packages\" [header]=\"'showroom.table.columns.packages' | transloco\" type=\"number\" width=\"sm\" aggregate=\"sum\" [sortable]=\"true\" [filterable]=\"true\" />",
   "  <ewms-column key=\"status\" [header]=\"'showroom.table.columns.status' | transloco\" type=\"badge\" width=\"md\" [badges]=\"statuses()\" [filterable]=\"true\" />",
@@ -99,11 +101,11 @@ const MATRIX_STATES: readonly MatrixAxis[] = [
   { id: 'tint', label: 'showroom.table.states.axes.tint' },
 ];
 
-/** Tintes de fila escritos completos para que Tailwind vea cada clase. Solo las excepciones tiñen. */
+/** Tintes de fila escritos completos para que Tailwind vea cada clase. `neutral` no tiñe. */
 const TINTS: Readonly<Record<string, string>> = {
   neutral: 'bg-surface',
   warning: 'bg-row-warning',
-  success: 'bg-surface',
+  success: 'bg-row-success',
   danger: 'bg-row-danger',
 };
 
@@ -124,7 +126,8 @@ interface RowMatrixEntry {
  * t(showroom.table.rowMatrix.states.normal, showroom.common.states.hover,
  *   showroom.table.rowMatrix.states.focus, showroom.table.rowMatrix.innerRing,
  *   showroom.table.rowMatrix.states.selected, showroom.table.rowMatrix.states.danger,
- *   showroom.table.rowMatrix.states.warning, showroom.table.rowMatrix.states.selectedDanger)
+ *   showroom.table.rowMatrix.states.warning, showroom.table.rowMatrix.states.success,
+ *   showroom.table.rowMatrix.states.selectedDanger)
  */
 const ROW_MATRIX: readonly RowMatrixEntry[] = [
   {
@@ -176,6 +179,14 @@ const ROW_MATRIX: readonly RowMatrixEntry[] = [
     cell: 'shadow-row-mark-warning',
   },
   {
+    id: 'success',
+    state: 'showroom.table.rowMatrix.states.success',
+    background: '--color-row-success',
+    mark: '—',
+    row: 'bg-row-success',
+    cell: '',
+  },
+  {
     id: 'selected-danger',
     state: 'showroom.table.rowMatrix.states.selectedDanger',
     background: '--color-row-selected',
@@ -185,7 +196,7 @@ const ROW_MATRIX: readonly RowMatrixEntry[] = [
   },
 ];
 
-const TINTED: ReadonlySet<string> = new Set(['warning', 'danger']);
+const TINTED: ReadonlySet<string> = new Set(['warning', 'success', 'danger']);
 
 /**
  * Verificada contra table.ts. `description` es la clave de su texto.
@@ -194,6 +205,7 @@ const TINTED: ReadonlySet<string> = new Set(['warning', 'danger']);
  *   showroom.table.props.quickFilter, showroom.table.props.density,
  *   showroom.table.props.columnChooser, showroom.table.props.exportable,
  *   showroom.table.props.bulkActions, showroom.table.props.columnExtras,
+ *   showroom.table.props.columnLimits, showroom.table.props.viewsKey,
  *   showroom.table.props.trackBy, showroom.table.props.pageSize, showroom.table.props.rowActivate,
  *   showroom.table.props.selectionChange, showroom.table.props.viewChange,
  *   showroom.table.props.bulkAction, showroom.table.props.exportRequest,
@@ -255,6 +267,12 @@ const PROPS: readonly PropRow[] = [
     description: 'showroom.table.props.exportable',
   },
   {
+    name: 'viewsKey',
+    type: 'string | null',
+    default: 'null',
+    description: 'showroom.table.props.viewsKey',
+  },
+  {
     name: 'bulkActions',
     type: 'readonly MenuItem[]',
     default: '[]',
@@ -265,6 +283,12 @@ const PROPS: readonly PropRow[] = [
     type: "'start' | 'end' · boolean · 'sum' | 'avg' | 'count'",
     default: 'null · true · null',
     description: 'showroom.table.props.columnExtras',
+  },
+  {
+    name: 'ewms-column: minWidth · maxWidth',
+    type: "'sm' | 'md' | 'lg' · 'sm' | 'md' | 'lg'",
+    default: 'null · null',
+    description: 'showroom.table.props.columnLimits',
   },
   {
     name: 'trackBy',
@@ -322,6 +346,7 @@ const PROPS: readonly PropRow[] = [
  *   showroom.table.anatomy.parts.headerBorder, showroom.table.anatomy.parts.rowBorder,
  *   showroom.table.anatomy.parts.selectedRow, showroom.table.anatomy.parts.hoverRow,
  *   showroom.table.anatomy.parts.dangerTint, showroom.table.anatomy.parts.warningTint,
+ *   showroom.table.anatomy.parts.successTint,
  *   showroom.table.anatomy.parts.exceptionMark, showroom.table.anatomy.parts.pinShadow,
  *   showroom.table.anatomy.parts.focusRing, showroom.table.anatomy.parts.maxHeight,
  *   showroom.table.anatomy.parts.resizeStep)
@@ -337,6 +362,7 @@ const ANATOMY = [
   { part: 'showroom.table.anatomy.parts.hoverRow', token: '--color-row-hover' },
   { part: 'showroom.table.anatomy.parts.dangerTint', token: '--color-row-danger' },
   { part: 'showroom.table.anatomy.parts.warningTint', token: '--color-row-warning' },
+  { part: 'showroom.table.anatomy.parts.successTint', token: '--color-row-success' },
   { part: 'showroom.table.anatomy.parts.exceptionMark', token: '--row-mark-width' },
   { part: 'showroom.table.anatomy.parts.pinShadow', token: '--shadow-pin-start' },
   { part: 'showroom.table.anatomy.parts.focusRing', token: '--focus-ring-shadow' },
@@ -469,6 +495,14 @@ export class ShowroomTable {
   // --------------------------------------------------------------- lote D
 
   protected readonly rowActions = injectRowActions();
+  /** Anular no aplica a lo ya completado: con una función, la tabla lo decide fila por fila. */
+  protected readonly rowActionsOf = computed(() => {
+    const items = this.rowActions();
+    return (row: ShipmentRow): readonly MenuItem[] =>
+      items.map((item) =>
+        item.id === 'anular' ? { ...item, disabled: row.status === 'completada' } : item,
+      );
+  });
   protected readonly bulkActions = injectBulkActions();
   protected readonly lazyChildren = lazyChildren;
 

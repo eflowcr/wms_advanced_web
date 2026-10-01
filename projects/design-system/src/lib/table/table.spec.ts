@@ -20,6 +20,11 @@ import { TableColumn } from './column';
 import { DetailTemplate, EmptyTemplate, Table } from './table';
 import type { TablePage, TableQuery, TableSource } from './table-source';
 import {
+  EWMS_TABLE_VIEW_STORE,
+  InMemoryTableViewStore,
+  TABLE_VIEWS_VERSION,
+} from './table-saved-views.types';
+import {
   EWMS_TABLE_FORMATTERS,
   EWMS_TABLE_MESSAGES,
   type TableFormatters,
@@ -81,17 +86,33 @@ const MESSAGES: TableMessages = {
   sortedDescending: 'Orden descendente',
   filters: (active) => (active === 0 ? 'Filtros' : `Filtros (${active})`),
   clearFilters: 'Limpiar filtros',
+  searchChip: 'Búsqueda',
   view: 'Vista',
   resetView: 'Restablecer vista',
   expandAll: 'Expandir todo',
   collapseAll: 'Contraer todo',
   density: 'Densidad',
+  views: 'Vistas guardadas',
+  viewInitial: 'Vista inicial',
+  viewName: 'Nombre de la vista',
+  saveAsNew: 'Guardar como nueva',
+  saveChanges: 'Guardar cambios',
+  renameView: 'Renombrar',
+  duplicateView: 'Duplicar',
+  deleteView: 'Eliminar vista',
+  defaultView: 'Abrir por defecto',
+  deleteViewTitle: (name) => `¿Eliminar la vista ${name}?`,
+  viewModified: (name) => `${name} (modificada)`,
+  viewCopyName: (name) => `${name} (copia)`,
+  viewDefaultLabel: (name) => `${name} (por defecto)`,
   densityMd: 'Media',
   densitySm: 'Compacta',
   setAll: 'Todos',
   setNone: 'Ninguno',
   setSummary: (column, chosen, total) =>
     chosen === total ? `${column}: todos` : `${column}: ${chosen} de ${total}`,
+  setChosen: (chosen, total) =>
+    chosen === total ? 'Todos' : chosen === 0 ? 'Ninguno' : `${chosen} de ${total}`,
   columns: 'Columnas',
   resizeColumn: (column) => `Ancho de la columna ${column}`,
   moveEarlier: (column) => `Subir ${column}`,
@@ -113,6 +134,9 @@ const MESSAGES: TableMessages = {
   sortPriority: (sorted, priority) => `${sorted}, prioridad ${priority}`,
   selectedCount: (count) => `${count} seleccionadas`,
   clearSelection: 'Quitar selección',
+  confirmTitle: (action, rows) => `¿${action} ${rows} ${rows === 1 ? 'fila' : 'filas'}?`,
+  confirmBody: 'Esta acción no se puede deshacer.',
+  confirmCancel: 'Cancelar',
   copied: (rows) => `${rows} filas copiadas`,
   loading: 'Cargando…',
   loadFailed: 'No se pudo cargar la tabla.',
@@ -123,7 +147,9 @@ const MESSAGES: TableMessages = {
   exportSelected: 'CSV de lo seleccionado',
   copyAll: 'Copiar al portapapeles',
   rowsShown: (shown, total) => (total === null ? `${shown} filas` : `${shown} de ${total} filas`),
-  aggregate: (kind, column, scope) => `${kind} ${column} ${scope}`,
+  aggregate: (kind) => kind,
+  totalsScope: (scope, rows) => `${scope} ${rows}`,
+  totalUnavailable: 'sin total',
 };
 
 // El paginador y los chips piden los suyos por su propio token, como el Select.
@@ -137,6 +163,8 @@ const PAGE_WORDS: PaginationMessages = {
 const CHIP_WORDS: FilterChipsMessages = {
   clearFilters: 'Limpiar filtros',
   removeFilter: (column) => `Quitar el filtro ${column}`,
+  activeCount: (count) =>
+    count === 0 ? 'Sin filtros activos' : count === 1 ? '1 filtro activo' : `${count} filtros activos`,
 };
 
 const DATE_WORDS = {
@@ -184,6 +212,7 @@ const TABLE_PROVIDERS = [
       (rowActivate)="activated = $event.row.code"
       (selectionChange)="selection = $event"
       (queryChange)="lastQuery = $event"
+      (filtersCleared)="cleared = cleared + 1"
       [bulkActions]="bulk"
       (bulkAction)="lastBulk = $event"
     >
@@ -224,6 +253,7 @@ class TestHost {
   activated = '';
   selection: readonly Row[] = [];
   lastQuery: TableQuery | null = null;
+  cleared = 0;
   readonly bulk: readonly MenuItem[] = [
     { id: 'imprimir', label: 'Imprimir etiquetas' },
     { id: 'anular', label: 'Anular', variant: 'danger' },
@@ -322,6 +352,42 @@ describe('Table', () => {
     });
   });
 
+  describe('one frame', () => {
+    /** jsdom no maqueta: la caja dice cuánto mide y cuánto desplaza, como un navegador. */
+    async function scrollTo(left: number): Promise<void> {
+      const box = fixture.nativeElement.querySelector('[data-scroll-box]') as HTMLElement;
+      Object.defineProperty(box, 'clientWidth', { configurable: true, value: 300 });
+      Object.defineProperty(box, 'scrollWidth', { configurable: true, value: 500 });
+      box.scrollLeft = left;
+      box.dispatchEvent(new Event('scroll'));
+      await settle();
+    }
+    const edge = (side: string): HTMLElement | null =>
+      fixture.nativeElement.querySelector(`[data-edge="${side}"]`);
+
+    it('is the only border around the table, with the status bar inside', () => {
+      const frames = fixture.nativeElement.querySelectorAll('[data-table-frame]');
+      expect(frames.length).toBe(1);
+      expect(frames[0].querySelector('[data-scroll-box]')).not.toBeNull();
+      expect(frames[0].querySelector('ewms-table-status')).not.toBeNull();
+    });
+
+    it('SAYS THERE ARE MORE COLUMNS on the side they are, and hides it from the reader', async () => {
+      await scrollTo(0);
+      expect(edge('start')).toBeNull();
+      expect(edge('end')?.getAttribute('aria-hidden')).toBe('true');
+      expect(edge('end')?.className).toContain('pointer-events-none');
+
+      await scrollTo(100);
+      expect(edge('start')).not.toBeNull();
+      expect(edge('end')).not.toBeNull();
+
+      await scrollTo(200);
+      expect(edge('start')).not.toBeNull();
+      expect(edge('end')).toBeNull();
+    });
+  });
+
   describe('the tree', () => {
     it('Vista expands everything that needs no request, and folds it all back', async () => {
       (fixture.nativeElement.querySelector('[data-view-menu] button') as HTMLElement).click();
@@ -370,7 +436,7 @@ describe('Table', () => {
       expect(textOf(0)).toContain('d:2026-01-15');
     });
 
-    it('draws a badge from the dictionary; tints the row from THE SAME one, ONLY AN EXCEPTION', () => {
+    it('draws a badge from the dictionary; tints the row from THE SAME one, never a neutral one', () => {
       const badge = bodyRows()[1]?.querySelector('ewms-badge');
       expect(badge?.textContent).toContain('Con incidencia');
       expect(badge?.querySelector('svg')).not.toBeNull();
@@ -378,7 +444,7 @@ describe('Table', () => {
       expect(bodyRows()[1]?.className).toContain('bg-row-danger');
       // La barra lateral va en la primera celda (la casilla), no en la fila.
       expect(cellsOf(1)[0]?.className).toContain('shadow-row-mark-danger');
-      // Pendiente es `neutral`: solo el badge; con todas teñidas ninguna llama la atención.
+      // Pendiente es `neutral`: solo el badge, sin tinte ni barra.
       expect(bodyRows()[0]?.className).toContain('hover:bg-row-hover');
       expect(cellsOf(0)[0]?.className).not.toContain('shadow-row-mark');
     });
@@ -616,6 +682,7 @@ describe('Table', () => {
       );
 
       (bar.querySelector('[data-bulk-action="imprimir"] button') as HTMLElement).click();
+      await settle();
       expect(host.lastBulk?.item.id).toBe('imprimir');
       expect(host.lastBulk?.rows.map((row) => row.code)).toEqual(['EXP-0001', 'EXP-0003']);
 
@@ -858,6 +925,24 @@ describe('Table', () => {
       expect(bodyRows().length).toBe(1);
     });
 
+    it('THE FILTER ROW WEIGHS LESS THAN THE HEADER, and the strong line goes down with it', async () => {
+      const head = (): HTMLElement =>
+        fixture.nativeElement.querySelector('thead th[data-col="code"]') as HTMLElement;
+      expect(head().className).toContain('border-strong');
+
+      toggle().click();
+      await settle();
+      // Arriba una línea sutil; abajo, la fuerte que separa del cuerpo. Aire arriba y abajo.
+      expect(head().className).toContain('border-default');
+      expect(head().className).not.toContain('border-strong');
+      const cell = filterRow().querySelector('td:last-child') as HTMLElement;
+      expect(cell.className).toContain('border-strong');
+      expect(cell.className).toContain('bg-canvas');
+      expect(cell.className).toContain('py-2');
+      // Los campos son Small y conservan su borde de control.
+      expect(filterRow().querySelector('[data-filter="code"] input')?.className).toContain('h-8');
+    });
+
     it('the chip × takes that filter off, box included; «Limpiar filtros» takes them all', async () => {
       await filterCode('0002');
       chips()[0]!.querySelector('button')!.click();
@@ -874,6 +959,71 @@ describe('Table', () => {
       await settle();
       expect(host.lastQuery?.filters).toEqual({});
       expect(toggle().textContent?.trim()).toBe('Filtros');
+    });
+
+    it('THE CHIPS SAY HOW MANY, and the reader hears the count only when it changes', async () => {
+      const live = (): string =>
+        fixture.nativeElement.querySelector('[data-filter-count-live]')?.textContent?.trim() ?? '';
+      const count = (): string =>
+        fixture.nativeElement.querySelector('[data-filter-count]')?.textContent?.trim() ?? '';
+      // Al nacer la región existe y está callada: una tabla que carga no anuncia nada.
+      expect(fixture.nativeElement.querySelector('[data-filter-count-live]').getAttribute('role')).toBe(
+        'status',
+      );
+      expect(live()).toBe('');
+      expect(count()).toBe('');
+
+      await filterCode('EXP');
+      expect(count()).toBe('1 filtro activo');
+      expect(live()).toBe('1 filtro activo');
+
+      const min = fixture.nativeElement.querySelector(
+        '[data-filter="packages"] input',
+      ) as HTMLInputElement;
+      min.value = '100';
+      min.dispatchEvent(new Event('input'));
+      await settle();
+      expect(count()).toBe('2 filtros activos');
+      expect(live()).toBe('2 filtros activos');
+
+      // Cambiar el valor de un filtro puesto no mueve la cuenta: nada nuevo que decir.
+      await filterCode('EXP-0');
+      expect(live()).toBe('2 filtros activos');
+
+      (fixture.nativeElement.querySelector('[data-clear-filters]') as HTMLButtonElement).click();
+      await settle();
+      expect(count()).toBe('');
+      expect(live()).toBe('Sin filtros activos');
+    });
+
+    it('THE SEARCH IS A CHIP TOO: its × empties the box; «Limpiar filtros» takes search and columns', async () => {
+      const search = (): HTMLInputElement =>
+        fixture.nativeElement.querySelector('[data-quick-filter] input') as HTMLInputElement;
+      search().value = '0002';
+      search().dispatchEvent(new Event('input'));
+      await settle();
+      expect(chips().map((chip) => chip.textContent?.replace(/\s+/g, ' ').trim())).toEqual([
+        'Búsqueda: 0002',
+      ]);
+      expect(host.lastQuery?.search).toBe('0002');
+
+      chips()[0]!.querySelector('button')!.click();
+      await settle();
+      expect(search().value).toBe('');
+      expect(host.lastQuery?.search).toBe('');
+      expect(chips().length).toBe(0);
+
+      search().value = 'EXP';
+      search().dispatchEvent(new Event('input'));
+      await filterCode('0001');
+      expect(chips().map((chip) => chip.dataset['chip'])).toEqual([':search', 'code']);
+      (fixture.nativeElement.querySelector('[data-clear-filters]') as HTMLButtonElement).click();
+      await settle();
+      expect(host.lastQuery?.search).toBe('');
+      expect(host.lastQuery?.filters).toEqual({});
+      expect(search().value).toBe('');
+      // Los chips no limpian lo de la pantalla: eso es del estado vacío (`filtersCleared`).
+      expect(host.cleared).toBe(0);
     });
 
     it('writes each chip in the shape of its column: ranges with their bounds', async () => {
@@ -911,6 +1061,10 @@ describe('Table', () => {
         fixture.nativeElement.querySelector('[data-filter="status"] button') as HTMLButtonElement;
       const box = (selector: string): HTMLInputElement =>
         document.querySelector(`${selector} input`) as HTMLInputElement;
+      /** El nombre accesible entero, y lo que se ve: la cuenta sola, bajo la cabecera que nombra. */
+      const name = (): string => trigger().querySelector('.sr-only')?.textContent?.trim() ?? '';
+      const caption = (): string =>
+        trigger().querySelector('.sr-only')?.nextElementSibling?.textContent?.trim() ?? '';
 
       async function openSet(): Promise<void> {
         toggle().click();
@@ -923,7 +1077,8 @@ describe('Table', () => {
 
       it('opens with every state ticked, and unticking one drops its rows', async () => {
         await openSet();
-        expect(trigger().textContent?.trim()).toBe('Estado: todos');
+        expect(name()).toBe('Estado: todos');
+        expect(caption()).toBe('Todos');
         expect(box('[data-set-all]').checked).toBe(true);
 
         box('[data-set-option="pendiente"]').click();
@@ -932,7 +1087,9 @@ describe('Table', () => {
           expect.stringContaining('EXP-0002'),
         ]);
         expect(host.lastQuery?.filters).toEqual({ status: ['con-incidencia'] });
-        expect(trigger().textContent?.trim()).toBe('Estado: 1 de 2');
+        // Lo que se ve está dentro del nombre (WCAG 2.5.3): la cabecera ya dice la columna.
+        expect(name()).toBe('Estado: 1 de 2');
+        expect(caption()).toBe('1 de 2');
         expect(box('[data-set-all]').getAttribute('aria-checked')).toBe('mixed');
         expect(chips()[0]?.textContent).toContain('Estado: Con incidencia');
         await expectNoAxeViolations(document.querySelector('.cdk-overlay-container')!);
@@ -944,6 +1101,7 @@ describe('Table', () => {
         await settle();
         expect(bodyRows().length).toBe(0);
         expect(chips()[0]?.textContent).toContain('Estado: Ninguno');
+        expect(caption()).toBe('Ninguno');
 
         box('[data-set-all]').click();
         await settle();
@@ -971,18 +1129,30 @@ describe('Table', () => {
     });
   });
 
-  describe('the status bar', () => {
+  describe('the status bar and the totals row', () => {
     const status = (): string =>
       (fixture.nativeElement.querySelector('[data-table-status]') as HTMLElement).textContent
         ?.replace(/\s+/g, ' ')
         .trim() ?? '';
+    const total = (key: string): HTMLElement =>
+      fixture.nativeElement.querySelector(`tfoot [data-total="${key}"]`) as HTMLElement;
+    const said = (key: string): string =>
+      total(key).textContent?.replace(/\s+/g, ' ').trim() ?? '';
 
-    it('counts what is on screen against the total, and adds up a number column', () => {
-      // Las raíces de la página: 1200 + 900 + 40, sin contar dos veces las hijas.
-      expect(status()).toBe('3 de 3 filas sum Bultos shown: n:2140');
+    it('the status bar counts rows; the totals sit in a footer, one cell per column', () => {
+      expect(status()).toBe('3 de 3 filas');
+      const foot = fixture.nativeElement.querySelector('tfoot[data-totals]') as HTMLElement;
+      expect(foot.className).toContain('sticky');
+      expect(foot.className).toContain('bottom-0');
+      // Alineada: tantas celdas como la cabecera, en el mismo orden.
+      const heads = [...fixture.nativeElement.querySelectorAll('thead tr:first-child th')];
+      expect(foot.querySelectorAll('td').length).toBe(heads.length);
+      // Todo lo filtrado de la fuente en memoria, sin contar dos veces las hijas: 1200 + 900 + 40.
+      expect(said('packages')).toBe('sum: n:2140');
+      expect(total('code').textContent?.trim()).toBe('all 3');
     });
 
-    it('OVER THE SELECTION WHEN THERE IS ONE, and says how many', async () => {
+    it('OVER THE SELECTION WHEN THERE IS ONE, and says whose total it is', async () => {
       const boxes = [
         ...fixture.nativeElement.querySelectorAll('tbody input[type="checkbox"]'),
       ] as HTMLInputElement[];
@@ -991,18 +1161,48 @@ describe('Table', () => {
         box.dispatchEvent(new Event('change'));
       }
       await settle();
-      expect(status()).toBe('3 de 3 filas 2 seleccionadas sum Bultos selected: n:1240');
+      expect(status()).toBe('3 de 3 filas 2 seleccionadas');
+      expect(said('packages')).toBe('sum: n:1240');
+      expect(total('code').textContent?.trim()).toBe('selected 2');
     });
 
-    it('averages and counts, and says «N filas» when the source does not count', async () => {
+    it('with a filter it is the total of the filtered rows, not only the page', async () => {
+      const box = fixture.nativeElement.querySelector('[data-filter="code"] input') as HTMLInputElement;
+      box.value = '0002';
+      box.dispatchEvent(new Event('input'));
+      await settle();
+      expect(total('code').textContent?.trim()).toBe('filtered 1');
+      expect(said('packages')).toBe('sum: n:900');
+    });
+
+    it('averages, counts, and a remote source that does not count shows a dash, never a number', async () => {
       host.aggregate.set('avg');
       await settle();
-      expect(status()).toContain('avg Bultos shown: n:713.3333333333334');
+      expect(said('packages')).toBe('avg: n:713.3333333333334');
+      host.aggregate.set('max');
+      await settle();
+      expect(said('packages')).toBe('max: n:1200');
 
+      // Remota con total: la página, y lo dice.
       host.aggregate.set('count');
+      host.source.set({ load: () => of({ rows: ROWS, page: 0, pageSize: 3, total: 30 }) });
+      await settle();
+      expect(total('code').textContent?.trim()).toBe('page 3');
+      expect(said('packages')).toBe('count: n:3');
+
+      // Remota que no cuenta: «—», y el lector oye por qué.
       host.source.set({ load: () => of({ rows: ROWS, page: 0, pageSize: 50, total: null }) });
       await settle();
-      expect(status()).toBe('3 filas count Bultos shown: n:3');
+      expect(status()).toBe('3 filas');
+      expect(said('packages')).toBe('count: —sin total');
+      expect(total('packages').querySelector('[aria-hidden="true"]')?.textContent).toBe('—');
+    });
+
+    it('has no footer when no column adds up, and no axe violations when it has one', async () => {
+      await expectNoAxeViolations(fixture.nativeElement);
+      host.aggregate.set(null);
+      await settle();
+      expect(fixture.nativeElement.querySelector('tfoot')).toBeNull();
     });
   });
 
@@ -1266,7 +1466,7 @@ const MENU: readonly MenuItem[] = [
       [source]="source"
       [trackBy]="byId"
       [isRowMaster]="isMaster"
-      [menuItems]="menu()"
+      [menuItems]="perRow ?? menu()"
       ariaLabel="Expediciones"
       (rowMenu)="chosen = $event.item.id + ':' + $event.row.code"
     >
@@ -1287,6 +1487,7 @@ class DetailHost {
   readonly byId = (row: Row): unknown => row.id;
   readonly isMaster = (row: Row): boolean => row.packages > 100;
   readonly menu = signal<readonly MenuItem[]>(MENU);
+  perRow: ((row: Row) => readonly MenuItem[]) | null = null;
 
   readonly codeOf = (row: unknown): string => (row as Row).code;
 
@@ -1482,12 +1683,35 @@ describe('Table master/detail', () => {
     // Y con un clic.
     kebab(0)?.click();
     await settle();
-    entries()[3]?.click();
+    entries()[2]?.click();
     await settle();
+    expect(host.chosen).toBe('duplicar:EXP-0001');
+  });
+
+  it('A DESTRUCTIVE ENTRY ASKS FIRST, with the system dialog; cancelled, nothing is emitted', async () => {
+    const answer = async (which: 0 | 1): Promise<void> => {
+      await settle();
+      const buttons = [...document.querySelectorAll('ewms-confirm-dialog button')] as HTMLElement[];
+      expect(document.querySelector('ewms-confirm-dialog h2')?.textContent).toBe('¿Anular 1 fila?');
+      buttons[which]!.click();
+      await settle();
+      await new Promise((resolve) => setTimeout(resolve));
+    };
+
+    kebab(0)?.click();
+    await settle();
+    entries()[3]?.click();
+    await answer(0);
+    expect(host.chosen).toBe('');
+
+    kebab(0)?.click();
+    await settle();
+    entries()[3]?.click();
+    await answer(1);
     expect(host.chosen).toBe('anular:EXP-0001');
   });
 
-  it('gives the focus back to the row on Escape', async () => {
+  it('gives the focus back to the ⋯ that opened it on Escape', async () => {
     kebab(0)?.click();
     await settle();
     press('Escape');
@@ -1495,7 +1719,29 @@ describe('Table master/detail', () => {
     await Promise.resolve();
 
     expect(menu()).toBeNull();
-    expect((document.activeElement as HTMLElement).dataset['cell']).toBe('0-0');
+    expect(document.activeElement).toBe(kebab(0));
+  });
+
+  it('ENTER AND SPACE ON THE ⋯ ARE THE BUTTON’S: the grid lets them through', () => {
+    for (const key of ['Enter', ' ']) {
+      const event = new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true });
+      kebab(0)!.dispatchEvent(event);
+      // Sin `preventDefault`, el navegador convierte la tecla en el clic que abre el menú.
+      expect(event.defaultPrevented, key).toBe(false);
+    }
+  });
+
+  it('decides its entries row by row when given a function', async () => {
+    host.perRow = (row) => [{ id: 'anular', label: 'Anular', disabled: row.packages > 100 }];
+    await settle();
+    kebab(0)?.click();
+    await settle();
+    expect(entries()[0]?.getAttribute('aria-disabled')).toBe('true');
+    press('Escape');
+    await settle();
+    kebab(2)?.click();
+    await settle();
+    expect(entries()[0]?.getAttribute('aria-disabled')).toBeNull();
   });
 
   it('opens from the keyboard with Shift+F10 and with the menu key', async () => {
@@ -1809,6 +2055,8 @@ describe('Table columns', () => {
   const STEP = 16;
   const MIN = 72;
   const FIT = 400;
+  /** El ancho `md`, que `maxWidth="md"` lee como tope de la columna. */
+  const MD = 160;
 
   @Component({
     template: `
@@ -1821,7 +2069,7 @@ describe('Table columns', () => {
         (viewChange)="view = $event"
       >
         <ewms-column key="packages" header="Bultos" type="number" />
-        <ewms-column key="code" header="Código" pinned="start" [hideable]="false" />
+        <ewms-column key="code" header="Código" pinned="start" [hideable]="false" maxWidth="md" />
         <ewms-column key="date" header="Fecha" type="date" />
         <ewms-column key="actions" header="Acciones" type="actions" pinned="end" />
       </ewms-table>
@@ -1855,6 +2103,7 @@ describe('Table columns', () => {
     document.documentElement.style.setProperty('--col-resize-step', pixels(STEP));
     document.documentElement.style.setProperty('--col-filter-min-width', pixels(MIN));
     document.documentElement.style.setProperty('--col-fit-max-width', pixels(FIT));
+    document.documentElement.style.setProperty('--col-width-md', pixels(MD));
     await TestBed.configureTestingModule({
       imports: [ColumnsHost],
       providers: TABLE_PROVIDERS,
@@ -1869,6 +2118,7 @@ describe('Table columns', () => {
     document.documentElement.style.removeProperty('--col-resize-step');
     document.documentElement.style.removeProperty('--col-filter-min-width');
     document.documentElement.style.removeProperty('--col-fit-max-width');
+    document.documentElement.style.removeProperty('--col-width-md');
     fixture.nativeElement.remove();
     clearOverlays();
   });
@@ -1903,6 +2153,8 @@ describe('Table columns', () => {
     box.dispatchEvent(new Event('scroll'));
     await settle();
     expect(header('code').className).toContain('after:shadow-pin-start');
+    // Con fijadas en los dos bordes, su sombra ya avisa: no hay degradado encima.
+    expect(fixture.nativeElement.querySelector('[data-edge]')).toBeNull();
     expect(header('actions').className).toContain('sticky');
     expect(header('actions').style.right).toBe(pixels(0));
     // La casilla se queda con ellas, a la izquierda.
@@ -2082,6 +2334,36 @@ describe('Table columns', () => {
     expect(header('packages').style.width).toBe(pixels(MIN));
   });
 
+  it('EACH COLUMN HAS ITS OWN LIMITS: Home and End go to them, and nothing passes them', async () => {
+    // Sin tope propio, los de la tabla: el mínimo de los filtros y el de «Ajustar al contenido».
+    expect(separator('date').getAttribute('aria-valuemin')).toBe(String(MIN));
+    expect(separator('date').getAttribute('aria-valuemax')).toBe(String(FIT));
+    // Con `maxWidth="md"`, el ancho de ese nombre.
+    const handle = separator('code');
+    expect(handle.getAttribute('aria-valuemax')).toBe(String(MD));
+
+    handle.dispatchEvent(new KeyboardEvent('keydown', { key: 'End', bubbles: true }));
+    await settle();
+    expect(header('code').style.width).toBe(pixels(MD));
+    expect(handle.getAttribute('aria-valuenow')).toBe(String(MD));
+    handle.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+    await settle();
+    expect(header('code').style.width).toBe(pixels(MD));
+
+    handle.dispatchEvent(new KeyboardEvent('keydown', { key: 'Home', bubbles: true }));
+    await settle();
+    expect(fixture.componentInstance.view?.widths).toEqual({ code: MIN });
+
+    // El arrastre tampoco lo pasa, y el ancho sale en la vista: es lo que se recuerda.
+    handle.dispatchEvent(new MouseEvent('pointerdown', { clientX: 100, bubbles: true }));
+    handle.dispatchEvent(new MouseEvent('pointermove', { clientX: 900, bubbles: true }));
+    handle.dispatchEvent(new MouseEvent('pointerup', { clientX: 900, bubbles: true }));
+    await settle();
+    expect(fixture.componentInstance.view?.widths).toEqual({ code: MD });
+    // Sigue fijada, con su separador intacto.
+    expect(header('code').className).toContain('sticky');
+  });
+
   it('LETS GO OF THE PINS when they would take more than half the box', async () => {
     const box = fixture.nativeElement.querySelector('[data-scroll-box]') as HTMLElement;
     Object.defineProperty(box, 'clientWidth', { configurable: true, value: 274 });
@@ -2108,6 +2390,185 @@ describe('Table columns', () => {
 });
 
 // Exportar: CSV en el cliente con una fuente en memoria; con una remota, solo la petición.
+describe('Table saved views', () => {
+  @Component({
+    template: `
+      <ewms-table
+        [source]="source"
+        [trackBy]="byId"
+        [columnChooser]="true"
+        viewsKey="expediciones"
+        ariaLabel="Expediciones"
+      >
+        <ewms-column key="code" header="Código" [sortable]="true" [filterable]="true" />
+        <ewms-column key="packages" header="Bultos" type="number" [filterable]="true" />
+      </ewms-table>
+    `,
+    imports: [Table, TableColumn],
+  })
+  class ViewsHost {
+    readonly source = new ArrayTableSource<Row>(ROWS, ['code']);
+    readonly byId = (row: Row): unknown => row.id;
+  }
+
+  let fixture: ComponentFixture<ViewsHost>;
+  let store: InMemoryTableViewStore;
+
+  async function start(withStore = true): Promise<void> {
+    await TestBed.configureTestingModule({
+      imports: [ViewsHost],
+      providers: withStore
+        ? [...TABLE_PROVIDERS, { provide: EWMS_TABLE_VIEW_STORE, useValue: store }]
+        : TABLE_PROVIDERS,
+    }).compileComponents();
+    fixture = TestBed.createComponent(ViewsHost);
+    document.body.appendChild(fixture.nativeElement);
+    await settle();
+    await settle();
+  }
+
+  beforeEach(() => {
+    store = new InMemoryTableViewStore();
+  });
+
+  afterEach(() => {
+    fixture.nativeElement.remove();
+    clearOverlays();
+  });
+
+  /** Las escrituras y lecturas del store son promesas: una vuelta más de tareas. */
+  const settle = async (): Promise<void> => {
+    await stabilise(fixture);
+    await new Promise((resolve) => setTimeout(resolve));
+    await stabilise(fixture);
+  };
+  const viewButton = (): HTMLButtonElement =>
+    fixture.nativeElement.querySelector('[data-view-menu] button') as HTMLButtonElement;
+  const inPanel = <E extends Element>(selector: string): E =>
+    document.querySelector(`.cdk-overlay-container ${selector}`) as E;
+
+  async function click(selector: string): Promise<void> {
+    inPanel<HTMLElement>(`${selector} button`).click();
+    await settle();
+  }
+
+  async function openView(): Promise<void> {
+    if (!inPanel('[data-saved-views]')) {
+      viewButton().click();
+      await settle();
+    }
+  }
+
+  async function name(value: string): Promise<void> {
+    const input = inPanel<HTMLInputElement>('[data-view-name] input');
+    input.value = value;
+    input.dispatchEvent(new Event('input'));
+    await settle();
+  }
+
+  it('SAVES THE VIEW WITH A NAME, says when it changed, and brings it back', async () => {
+    await start();
+    await openView();
+    expect(inPanel('[data-view-option=""]')).not.toBeNull();
+    await name('Compacta');
+    await click('[data-view-create]');
+    expect(viewButton().textContent?.trim()).toBe('Compacta');
+
+    // La densidad cambia: la vista puesta queda «modificada» y «Guardar cambios» se habilita.
+    inPanel<HTMLInputElement>('[data-density="sm"] input').click();
+    await settle();
+    expect(viewButton().textContent?.trim()).toBe('Compacta (modificada)');
+    expect(inPanel<HTMLButtonElement>('[data-view-save] button').disabled).toBe(false);
+
+    // «Restablecer vista» vuelve a la vista puesta, no a lo declarado.
+    await click('[data-reset-view]');
+    expect(viewButton().textContent?.trim()).toBe('Compacta');
+
+    inPanel<HTMLInputElement>('[data-density="sm"] input').click();
+    await settle();
+    await click('[data-view-save]');
+    expect((await store.read('expediciones'))?.views[0]?.state.view.density).toBe('sm');
+    await expectNoAxeViolations(document.querySelector('.cdk-overlay-container')!);
+  });
+
+  it('opens with the default view: its filters, its order and its density', async () => {
+    await store.write('expediciones', {
+      version: TABLE_VIEWS_VERSION,
+      views: [
+        {
+          id: 'x',
+          name: 'Grandes',
+          state: {
+            view: {
+              order: ['packages', 'code'],
+              hidden: [],
+              widths: {},
+              pinned: {},
+              density: 'sm',
+            },
+            filters: { packages: { min: 100 } },
+            sort: [{ key: 'code', direction: 'desc' }],
+          },
+        },
+      ],
+      defaultId: 'x',
+    });
+    await start();
+    expect(viewButton().textContent?.trim()).toBe('Grandes');
+    const heads = [...fixture.nativeElement.querySelectorAll('thead tr:first-child th[data-col]')];
+    expect(heads.map((th) => (th as HTMLElement).dataset['col'])).toEqual(['packages', 'code']);
+    expect(fixture.nativeElement.querySelector('[data-chip="packages"]')?.textContent).toContain(
+      '≥ n:100',
+    );
+    // La caja del filtro dice lo mismo que el chip.
+    const min = fixture.nativeElement.querySelector(
+      '[data-filter="packages"] input',
+    ) as HTMLInputElement;
+    expect(min.value).toBe('100');
+  });
+
+  it('renames, duplicates, sets the default, and deletes only after asking', async () => {
+    await start();
+    await openView();
+    await name('Mía');
+    await click('[data-view-create]');
+    await name('Mía de verdad');
+    await click('[data-view-rename]');
+    expect(viewButton().textContent?.trim()).toBe('Mía de verdad');
+    await openView();
+    await click('[data-view-duplicate]');
+    expect(viewButton().textContent?.trim()).toBe('Mía de verdad (copia)');
+    await openView();
+    await click('[data-view-default]');
+    const withDefault = await store.read('expediciones');
+    expect(withDefault?.defaultId).toBe(withDefault?.views[1]?.id);
+
+    // Eliminar pregunta con el diálogo del sistema; cancelado, la vista sigue.
+    await openView();
+    await click('[data-view-delete]');
+    (document.querySelectorAll('ewms-confirm-dialog button')[0] as HTMLElement).click();
+    await settle();
+    expect((await store.read('expediciones'))?.views.length).toBe(2);
+
+    await openView();
+    await click('[data-view-delete]');
+    (document.querySelectorAll('ewms-confirm-dialog button')[1] as HTMLElement).click();
+    await settle();
+    const left = await store.read('expediciones');
+    expect(left?.views.map((view) => view.name)).toEqual(['Mía de verdad']);
+    expect(left?.defaultId).toBeNull();
+    expect(viewButton().textContent?.trim()).toBe('Vista');
+    expect(document.activeElement).toBe(viewButton());
+  });
+
+  it('without a store there are no saved views, and the panel is as it was', async () => {
+    await start(false);
+    viewButton().click();
+    await settle();
+    expect(inPanel('[data-saved-views]')).toBeNull();
+  });
+});
+
 describe('Table export', () => {
   @Component({
     template: `

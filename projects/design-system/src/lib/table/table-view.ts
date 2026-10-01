@@ -1,13 +1,26 @@
 import { computed, signal, type Signal } from '@angular/core';
 import { readPixels } from '../tokens/read-token';
 import type { TableColumn } from './column';
-import { COLUMN_WIDTH, type TableDensity, type TablePin, type TableView } from './table.types';
+import {
+  COLUMN_WIDTH,
+  type TableColumnLimit,
+  type TableDensity,
+  type TablePin,
+  type TableView,
+} from './table.types';
 
 /** El paso del teclado al redimensionar y el mínimo de una columna, por token. */
 const RESIZE_STEP_TOKEN = '--col-resize-step';
 const MIN_WIDTH_TOKEN = '--col-filter-min-width';
-/** Tope de «Ajustar al contenido»: un texto larguísimo no se lleva la tabla entera. */
+/** Tope de «Ajustar al contenido» y del arrastre: un texto larguísimo no se lleva la tabla. */
 const FIT_MAX_TOKEN = '--col-fit-max-width';
+
+/** Los topes por columna se nombran como los anchos y leen su mismo token. */
+const LIMIT_TOKEN: Readonly<Record<TableColumnLimit, string>> = {
+  sm: '--col-width-sm',
+  md: '--col-width-md',
+  lg: '--col-width-lg',
+};
 
 /** Dónde cae una columna movida, para anunciarlo: «Cliente, posición 2 de 5». */
 export interface ColumnPosition {
@@ -17,7 +30,7 @@ export interface ColumnPosition {
 
 /**
  * Lo que el usuario configura de las columnas —orden, ocultas, anchos— y cómo se fijan y miden.
- * Vive en memoria y sale por `(viewChange)`; nunca va al navegador. Interna. Ver vault: Tabla §14.
+ * Vive en memoria y sale por `(viewChange)`; una vista guardada la restaura. Interna. Ver vault: Tabla §14.
  */
 export class TableViewState {
   private readonly hidden = signal<ReadonlySet<string>>(new Set());
@@ -113,6 +126,23 @@ export class TableViewState {
     this.pins.set({});
   }
 
+  /** Vuelve a una vista guardada: lo que coincide con lo declarado no se marca. */
+  restore(view: TableView): void {
+    const declared = this.columns().map((column) => column.key());
+    const sameOrder = view.order.length === declared.length && view.order.every((key, i) => key === declared[i]);
+    this.order.set(sameOrder ? null : [...view.order]);
+    this.hidden.set(new Set(view.hidden));
+    this.widths.set({ ...view.widths });
+    const pins: Record<string, TablePin | null> = {};
+    for (const column of this.columns()) {
+      const pin = view.pinned[column.key()] ?? null;
+      if (pin !== column.pinned()) {
+        pins[column.key()] = pin;
+      }
+    }
+    this.pins.set(pins);
+  }
+
   /** Posición entre las visibles, base 1. */
   positionOf(column: TableColumn): ColumnPosition {
     const visible = this.visibleColumns();
@@ -159,12 +189,25 @@ export class TableViewState {
     return this.widths()[column.key()] ?? null;
   }
 
-  /** Sin token de mínimo no se achica nada: un número inventado sería una copia. */
+  /** El mínimo de la columna: el suyo, o el de la tabla. Sin token, ninguno. */
+  minOf(column: TableColumn): number | null {
+    const own = column.minWidth();
+    return readPixels(own === null ? MIN_WIDTH_TOKEN : LIMIT_TOKEN[own]);
+  }
+
+  /** El máximo de la columna: el suyo, o el tope de «Ajustar al contenido». */
+  maxOf(column: TableColumn): number | null {
+    const own = column.maxWidth();
+    return readPixels(own === null ? FIT_MAX_TOKEN : LIMIT_TOKEN[own]);
+  }
+
+  /** Entre los topes de la columna; sin token no se recorta ese lado (un número sería copia). */
   resize(column: TableColumn, pixels: number): void {
-    const min = readPixels(MIN_WIDTH_TOKEN) ?? pixels;
+    const min = this.minOf(column) ?? pixels;
+    const max = Math.max(min, this.maxOf(column) ?? pixels);
     this.widths.update((current) => ({
       ...current,
-      [column.key()]: Math.round(Math.max(min, pixels)),
+      [column.key()]: Math.round(Math.min(max, Math.max(min, pixels))),
     }));
   }
 
@@ -188,6 +231,7 @@ export class TableViewState {
     }
     const widest = Math.max(...[...cells].map(naturalWidth));
     this.resize(column, Math.min(max, widest));
+    // El tope de la columna, si es menor, lo aplica `resize`.
   }
 
   /** Desplazamiento de cada celda fijada, medido en el DOM: depende de lo que mide cada columna. */
@@ -218,6 +262,20 @@ export class TableViewState {
       this.scrolled.set({ start, end });
     }
   }
+
+  /**
+   * La sombra que avisa de columnas fuera de vista, por borde. Donde hay fijadas no hace falta: la
+   * suya ya lo dice. Ver vault: Tabla §14.
+   */
+  readonly edges = computed(() => {
+    const scrolled = this.scrolled();
+    const pinnedAt = (pin: TablePin): boolean =>
+      this.pinning() && this.visibleColumns().some((column) => this.pinnedOf(column) === pin);
+    return {
+      start: scrolled.start && !pinnedAt('start'),
+      end: scrolled.end && !pinnedAt('end'),
+    };
+  });
 
   /** Celdas cuyo texto no entra: solo esas llevan tooltip con el texto completo. */
   readonly clipped = signal<ReadonlySet<string>>(new Set());
@@ -330,8 +388,6 @@ export class TableViewState {
     return this.width(column) ?? this.measuredWidths()[column.key()] ?? 0;
   }
 
-  readonly minColumnWidth = readPixels(MIN_WIDTH_TOKEN);
-
   /** Arrastre: la captura del puntero sigue al separador aunque el cursor salga de la cabecera. */
   startResize(event: PointerEvent, column: TableColumn): void {
     const handle = event.currentTarget as HTMLElement;
@@ -350,11 +406,20 @@ export class TableViewState {
     event.preventDefault();
   }
 
+  /** Flechas: un paso. Inicio y Fin: los topes, como el separador de ventanas de las APG. */
   onResizeKey(event: KeyboardEvent, column: TableColumn): void {
     // Con Alt es el atajo de mover columna, no un paso de ancho.
-    if (!event.altKey && (event.key === 'ArrowLeft' || event.key === 'ArrowRight')) {
+    if (event.altKey) {
+      return;
+    }
+    const edge =
+      event.key === 'Home' ? this.minOf(column) : event.key === 'End' ? this.maxOf(column) : null;
+    if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
       event.preventDefault();
       this.step(column, this.widthNow(column), event.key === 'ArrowRight' ? 1 : -1);
+    } else if (edge !== null) {
+      event.preventDefault();
+      this.resize(column, edge);
     }
   }
 

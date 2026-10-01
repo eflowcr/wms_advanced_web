@@ -29,11 +29,13 @@ import { Checkbox } from '../checkbox/checkbox';
 import { Icon } from '../icon/icon';
 import { Button } from '../button/button';
 import { DatePicker } from '../date-picker/date-picker';
+import { DialogService } from '../dialog/dialog.service';
 import {
   EmptyState,
   type EmptyStateAction,
   type EmptyStateKind,
 } from '../empty-state/empty-state';
+import type { FilterChip } from '../filters/filter-chips';
 import { KeyboardShortcuts } from '../keyboard/keyboard-shortcuts';
 import { Input as TextInput } from '../input/input';
 import { Pagination } from '../pagination/pagination';
@@ -65,6 +67,8 @@ import {
 } from './table.tokens';
 import {
   CELL_CLASSES,
+  FILTER_CELL_CLASSES,
+  TOTALS_CELL_CLASSES,
   HEADER_CELL_CLASSES,
   ROW_HEIGHT,
   TABLE_CLASSES,
@@ -81,6 +85,7 @@ import {
   type RowMenuEvent,
   type RowState,
   type TableChildren,
+  type TableAggregate,
   type TableDensity,
   type TableView,
 } from './table.types';
@@ -88,6 +93,9 @@ import { TableColumnMenu, type ColumnAction } from './table-column-menu';
 import { TableKeyboard } from './table-keyboard';
 import { TableMenu } from './table-menu';
 import { TableSortState } from './table-sort';
+import { TableSavedViews } from './table-saved-views';
+import { EWMS_TABLE_VIEW_STORE, type SavedTableView } from './table-saved-views.types';
+import { aggregateOf, totalsRows } from './table-totals';
 import { TableWindow } from './table-window';
 import { TableTreeState } from './table-tree-state';
 import type { FlatRow } from './tree';
@@ -116,8 +124,25 @@ export class EmptyTemplate {
 }
 
 let nextTableId = 0;
+let nextViewId = 0;
+
+/** La clave del chip de la búsqueda: una columna no puede llamarse así (`key` es un nombre). */
+const SEARCH_CHIP = ':search';
 
 const EMPTY_PAGE: TablePage<never> = { rows: [], page: 0, pageSize: 0, total: 0 };
+
+/** El total de una columna: su operación y el número ya formateado, o `null` («—»). */
+interface TotalValue {
+  readonly kind: TableAggregate;
+  readonly text: string | null;
+}
+
+interface Totals {
+  readonly label: string;
+  /** La columna que lleva la etiqueta: la primera visible que no agrega. */
+  readonly labelKey: string | null;
+  readonly values: Readonly<Record<string, TotalValue>>;
+}
 
 /** La tabla de datos: árbol aplanado, estado de fila como dato. Ver vault: Tabla. */
 @Component({
@@ -156,7 +181,8 @@ export class Table<T> implements TableContext {
 
   readonly isRowMaster = input<((row: T) => boolean) | null>(null);
 
-  readonly menuItems = input<readonly MenuItem[]>([]);
+  /** Las acciones de fila; una función las decide por fila (deshabilitar lo que no aplica). */
+  readonly menuItems = input<readonly MenuItem[] | ((row: T) => readonly MenuItem[])>([]);
 
   /** Acciones sobre lo seleccionado: la barra las muestra con «3 seleccionadas». */
   readonly bulkActions = input<readonly MenuItem[]>([]);
@@ -178,6 +204,9 @@ export class Table<T> implements TableContext {
   readonly exportable = input<boolean>(false);
 
   readonly density = input<TableDensity>('md');
+
+  /** Con una clave estable y un store provisto, la tabla ofrece vistas guardadas. Ver vault: Tabla §29. */
+  readonly viewsKey = input<string | null>(null);
 
   readonly pageSize = input<number>(50);
 
@@ -217,8 +246,15 @@ export class Table<T> implements TableContext {
   readonly filterRowId = `${this.tableId}-filters`;
 
   protected readonly tableClasses = TABLE_CLASSES;
-  protected readonly headerCellClasses = HEADER_CELL_CLASSES;
+  protected readonly filterCellClasses = FILTER_CELL_CLASSES;
+  protected readonly totalsCellClasses = TOTALS_CELL_CLASSES;
   protected readonly cellClasses = CELL_CLASSES;
+
+  /** Con la fila de filtros abierta, la línea fuerte baja con ella: arriba queda una sutil. */
+  protected readonly headerCellClasses = computed(
+    () =>
+      `${HEADER_CELL_CLASSES} ${this.filtersOpen() && this.anyFilterable() ? 'border-default' : 'border-strong'}`,
+  );
 
   readonly text = computed(() => ({
     ...this.providedMessages,
@@ -276,10 +312,7 @@ export class Table<T> implements TableContext {
 
   /** Búsqueda y filtros de columna; los de pantalla los limpia quien los tiene. */
   clearQuery(): void {
-    this.searchText.set('');
-    this.search.set('');
-    this.pageIndex.set(0);
-    this.filtering.clearAll();
+    this.clearChips();
     this.filtersCleared.emit();
   }
 
@@ -293,10 +326,37 @@ export class Table<T> implements TableContext {
   readonly pageRows = computed(() => this.page().rows);
   readonly pageTotal = computed(() => this.page().total);
 
-  /** Al pie: con una columna que agrega, o cuando ya hay barra (filtrar sin decir cuántas quedan…). */
-  protected readonly showStatus = computed(
-    () => this.showToolbar() || this.columns().some((column) => column.aggregate() !== null),
-  );
+  /** Al pie, con la barra: filtrar sin decir cuántas filas quedan sirve poco. */
+  protected readonly showStatus = computed(() => this.showToolbar());
+
+  /**
+   * La fila de totales: una celda por columna, con el agregado de las que lo declaran y, en la
+   * primera que no agrega, de qué filas es. Sin columnas que agreguen, no hay fila. Ver vault: Tabla §17.
+   */
+  protected readonly totals = computed<Totals | null>(() => {
+    const columns = this.visibleColumns().filter(
+      (column) => column.type() === 'number' && column.aggregate() !== null,
+    );
+    if (columns.length === 0) {
+      return null;
+    }
+    const page = this.page();
+    const { scope, count, rows } = totalsRows({
+      selected: this.selection.rows(),
+      matching: this.source().matching?.(this.query()),
+      page: page.rows,
+      total: page.total,
+      filtered: this.search() !== '' || this.filtering.count() > 0,
+    });
+    const values: Record<string, TotalValue> = {};
+    for (const column of columns) {
+      const kind = column.aggregate()!;
+      const value = rows === null ? null : aggregateOf(kind, rows, column.key());
+      values[column.key()] = { kind, text: value === null ? null : this.format().number(value) };
+    }
+    const label = this.visibleColumns().find((column) => values[column.key()] === undefined);
+    return { label: this.text().totalsScope(scope, count), labelKey: label?.key() ?? null, values };
+  });
 
   protected readonly pageCount = computed(() => {
     const total = this.page().total;
@@ -397,6 +457,9 @@ export class Table<T> implements TableContext {
       },
     });
 
+    // Con las columnas ya declaradas: la vista por defecto se aplica sobre ellas.
+    afterNextRender(() => void this.savedViews.load());
+
     // Medir en fase de lectura: sin esto la primera ventana se calcula con altura cero.
     afterNextRender({
       read: () => {
@@ -453,14 +516,55 @@ export class Table<T> implements TableContext {
 
   readonly layout = new TableViewState(this.columns, this.densityChoice, this.selectable);
 
-  /** «Restablecer vista» solo se habilita si algo cambió, densidad incluida. */
-  readonly viewChanged = computed(
-    () => this.layout.customised() || this.densityChoice() !== this.density(),
+  /** Las vistas con nombre, en el store que provea la aplicación. */
+  readonly savedViews = new TableSavedViews({
+    store: inject(EWMS_TABLE_VIEW_STORE, { optional: true }),
+    key: () => this.viewsKey(),
+    capture: () => ({
+      view: this.layout.view(),
+      filters: this.filtering.values(),
+      sort: this.sorting.list(),
+    }),
+    apply: (state) => {
+      this.layout.restore(state.view);
+      this.densityChoice.set(state.view.density);
+      this.filtering.restore(state.filters);
+      this.sorting.list.set(state.sort);
+      this.pageIndex.set(0);
+    },
+    newId: () => `${Date.now().toString(36)}-${++nextViewId}`,
+  });
+
+  /** «Restablecer vista» solo se habilita si algo cambió: respecto de la vista puesta, o de lo declarado. */
+  readonly viewChanged = computed(() =>
+    this.savedViews.active() !== null
+      ? this.savedViews.modified()
+      : this.layout.customised() || this.densityChoice() !== this.density(),
   );
 
   resetView(): void {
+    if (this.savedViews.active() !== null) {
+      this.savedViews.revert();
+      return;
+    }
     this.layout.reset();
     this.densityChoice.set(this.density());
+  }
+
+  /** Eliminar una vista es destructivo: se confirma con el diálogo del sistema. */
+  async deleteSavedView(view: SavedTableView): Promise<boolean> {
+    const text = this.text();
+    const ok = await this.dialogs.confirm({
+      title: text.deleteViewTitle(view.name),
+      body: text.confirmBody,
+      variant: 'danger',
+      confirmLabel: text.deleteView,
+      cancelLabel: text.confirmCancel,
+    });
+    if (ok) {
+      this.savedViews.remove(view.id);
+    }
+    return ok;
   }
 
   protected readonly drag = new TableColumnDrag({
@@ -521,8 +625,10 @@ export class Table<T> implements TableContext {
     return state === 'danger' || state === 'warning' ? state : null;
   }
 
+  /** Tiñen las excepciones y lo completado; `neutral` va sin tinte. Ver vault: Tabla §23. */
   protected rowClassesFor(flat: FlatRow<T>): string {
-    return rowClasses(this.isSelected(flat), this.exceptionOf(flat));
+    const state = this.resolveRowState()?.(flat.row) ?? null;
+    return rowClasses(this.isSelected(flat), state === 'neutral' ? null : state);
   }
 
   /** La marca va en la primera celda de la fila, sea la casilla o la primera columna. */
@@ -622,16 +728,56 @@ export class Table<T> implements TableContext {
     none: () => this.text().setNone,
   });
 
+  /** Todo lo que filtra, un chip cada uno: la búsqueda primero y después las columnas. */
+  readonly chips = computed<readonly FilterChip[]>(() => {
+    const search = this.search();
+    const columns = this.filtering.chips();
+    return search === ''
+      ? columns
+      : [{ key: SEARCH_CHIP, column: this.text().searchChip, value: search }, ...columns];
+  });
+
+  removeChip(key: string): void {
+    if (key === SEARCH_CHIP) {
+      this.clearSearch();
+    } else {
+      this.filtering.clear(key);
+    }
+  }
+
+  /** «Limpiar filtros» de los chips: búsqueda y columnas. Los de pantalla tienen sus chips. */
+  clearChips(): void {
+    this.clearSearch();
+    this.filtering.clearAll();
+  }
+
+  private clearSearch(): void {
+    this.searchText.set('');
+    this.search.set('');
+    this.pageIndex.set(0);
+  }
+
   /** Las opciones de un filtro de conjunto: el diccionario de la columna, en su orden. */
   protected setOptions(column: TableColumn): readonly { key: string; label: string }[] {
     return Object.entries(column.badges()).map(([key, badge]) => ({ key, label: badge.label }));
   }
 
+  /** El nombre accesible del botón del filtro: «Estado: 2 de 4». */
   protected setLabel(column: TableColumn): string {
-    const header = column.header() || column.key();
+    const [chosen, total] = this.setCount(column);
+    return this.text().setSummary(column.header() || column.key(), chosen, total);
+  }
+
+  /** Lo que se ve: «2 de 4». La cabecera, justo encima, ya nombra la columna. */
+  protected setCaption(column: TableColumn): string {
+    const [chosen, total] = this.setCount(column);
+    return this.text().setChosen(chosen, total);
+  }
+
+  private setCount(column: TableColumn): readonly [number, number] {
     const options = this.setOptions(column);
     const chosen = options.filter((option) => this.filtering.isChosen(column, option.key));
-    return this.text().setSummary(header, chosen.length, options.length);
+    return [chosen.length, options.length];
   }
 
   /** Oculta por defecto: se muestra lo que se usa. Ocultar no borra filtros (hay chips). */
@@ -702,9 +848,28 @@ export class Table<T> implements TableContext {
   }
 
   runBulk(item: MenuItem): void {
-    if (!item.disabled) {
-      this.bulkAction.emit({ item, rows: this.selection.rows() });
+    if (item.disabled) {
+      return;
     }
+    const rows = this.selection.rows();
+    void this.confirmed(item, rows.length).then((ok) => ok && this.bulkAction.emit({ item, rows }));
+  }
+
+  private readonly dialogs = inject(DialogService);
+
+  /** Lo destructivo se confirma con el diálogo del sistema; lo demás sale sin preguntar. */
+  private async confirmed(item: MenuItem, rows: number): Promise<boolean> {
+    if (item.variant !== 'danger') {
+      return true;
+    }
+    const text = this.text();
+    return this.dialogs.confirm({
+      title: text.confirmTitle(item.label, rows),
+      body: text.confirmBody,
+      variant: 'danger',
+      confirmLabel: item.label,
+      cancelLabel: text.confirmCancel,
+    });
   }
 
   private emitSelection(): void {
@@ -803,19 +968,38 @@ export class Table<T> implements TableContext {
 
   protected readonly menu = new TableMenu<FlatRow<T>>({
     id: `${this.tableId}-menu`,
-    items: () => this.menuItems(),
+    items: (flat) => {
+      const items = this.menuItems();
+      return typeof items === 'function' ? items(flat.row) : items;
+    },
     label: () => this.text().rowMenu,
     template: () => this.menuTemplate(),
     injector: this.injector,
     viewContainerRef: this.viewContainerRef,
     document: this.host.nativeElement.ownerDocument,
-    closed: (row) => {
+    // Abierto desde el ⋯, el foco vuelve al ⋯; con clic derecho o Shift+F10, a la celda.
+    closed: (row, anchor) => {
+      const kebab = anchor?.isConnected ? anchor.closest<HTMLElement>('[data-kebab]') : null;
+      if (kebab) {
+        kebab.querySelector('button')?.focus();
+        return;
+      }
       const index = this.rows().findIndex((flat) => flat.key === row.key);
       if (index >= 0) {
         this.keys.moveFocus(index, this.keys.focusColumn());
       }
     },
-    chosen: (row, item) => this.rowMenu.emit({ row: row.row, item }),
+    // Lo destructivo espera a que el foco vuelva: el diálogo lo devuelve adonde lo encontró.
+    chosen: (row, item) =>
+      item.variant === 'danger'
+        ? afterNextRender(
+            () =>
+              void this.confirmed(item, 1).then(
+                (ok) => ok && this.rowMenu.emit({ row: row.row, item }),
+              ),
+            { injector: this.injector },
+          )
+        : this.rowMenu.emit({ row: row.row, item }),
   });
 
   /** Un solo panel para los dos menús: el que esté abierto. */

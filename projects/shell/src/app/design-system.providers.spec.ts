@@ -29,7 +29,8 @@ const MESSAGE_TOKENS = Object.entries(designSystem).filter(([name]) =>
 
 /** Argumentos que tienen sentido para una función de mensajes; el resto recibe números. */
 const SAMPLE_ARGUMENTS: Readonly<Record<string, readonly unknown[]>> = {
-  aggregate: ['sum', 'Bultos', 'shown'],
+  aggregate: ['sum'],
+  totalsScope: ['filtered', 3],
   minDate: [new Date(2026, 2, 16)],
   maxDate: [new Date(2026, 2, 16)],
 };
@@ -120,15 +121,21 @@ describe('the design-system texts the shell provides', () => {
     expect(table.setSummary('Estado', 4, 4)).toBe('Estado: todos');
     expect(table.setSummary('Estado', 2, 4)).toBe('Estado: 2 de 4');
     expect(table.setSummary('Estado', 0, 4)).toBe('Estado: ninguno');
+    expect(table.setChosen(4, 4)).toBe('Todos');
+    expect(table.setChosen(2, 4)).toBe('2 de 4');
+    expect(table.setChosen(0, 4)).toBe('Ninguno');
     expect(table.rowsShown(12, 340)).toBe('12 de 340 filas');
     expect(table.rowsShown(12, null)).toBe('12 filas');
     expect(table.selectedCount(1)).toBe('1 seleccionada');
     expect(table.selectedCount(3)).toBe('3 seleccionadas');
     expect(table.copied(1)).toBe('1 fila copiada');
     expect(table.copied(4)).toBe('4 filas copiadas');
-    expect(table.aggregate('sum', 'Bultos', 'selected')).toBe('Bultos seleccionados');
-    expect(table.aggregate('avg', 'Bultos', 'shown')).toBe('Promedio de Bultos en pantalla');
-    expect(table.aggregate('count', 'Bultos', 'shown')).toBe('Filas con Bultos en pantalla');
+    expect(table.aggregate('sum')).toBe('Suma');
+    expect(table.aggregate('max')).toBe('Máximo');
+    expect(table.totalsScope('selected', 1)).toBe('Total de 1 seleccionada');
+    expect(table.totalsScope('filtered', 12)).toBe('Total de 12 filas filtradas');
+    expect(table.totalsScope('all', 340)).toBe('Total de 340 filas');
+    expect(table.totalsScope('page', 50)).toBe('Total de esta página (50 filas)');
     // `null` es un total legítimo y el mensaje lo refleja.
     expect(select.results(3, 340)).toBe('3 de 340 resultados');
     expect(select.results(3, null)).toBe('3 resultados');

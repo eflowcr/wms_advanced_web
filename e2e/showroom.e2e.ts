@@ -1906,6 +1906,39 @@ test.describe('DS-3 lote C: la tabla', () => {
     await expect(page.locator(`${DEMO} [data-chip]`)).toHaveCount(0);
   });
 
+  test('THE CHIPS ARE THE SIGNAL with the row closed: search and columns, how many, and one clear', async ({
+    page,
+  }) => {
+    await page.goto(TABLE);
+    await ready(page);
+
+    const toggle = page.locator(`${DEMO} [data-filters-toggle] button`);
+    await page.locator(`${DEMO} [data-quick-filter] input`).fill('EXP-2026-04');
+    await toggle.click();
+    await page.locator(`${DEMO} [data-filter="packages"] input`).first().fill('100');
+    await toggle.click();
+    await expect(page.locator(`${DEMO} [data-filter-row]`)).toBeHidden();
+
+    // Cerrada la fila, los chips dicen todo: cuántos, cuáles y con qué valor.
+    await expect(page.locator(`${DEMO} [data-filter-count]`)).toHaveText('2 filtros activos');
+    await expect(page.locator(`${DEMO} [data-chip=":search"]`)).toContainText('Búsqueda: EXP-2026-04');
+    await expect(page.locator(`${DEMO} [data-chip="packages"]`)).toContainText('Bultos: ≥ 100');
+    await expect(toggle).toHaveText(/Filtros \(1\)/);
+    await expect(page.locator(`${DEMO} [data-filter-count-live]`)).toHaveText('2 filtros activos');
+
+    const results = await axe(page).include(`${DEMO} ewms-table-toolbar`).analyze();
+    expect(results.violations).toEqual([]);
+
+    // El × quita solo ese filtro; «Limpiar filtros», todo lo demás.
+    await page.getByRole('button', { name: 'Quitar el filtro Búsqueda' }).click();
+    await expect(page.locator(`${DEMO} [data-quick-filter] input`)).toHaveValue('');
+    await expect(page.locator(`${DEMO} [data-filter-count]`)).toHaveText('1 filtro activo');
+    await page.locator(`${DEMO} [data-clear-filters]`).click();
+    await expect(page.locator(`${DEMO} [data-chip]`)).toHaveCount(0);
+    await expect(page.locator(`${DEMO} [data-filter-count-live]`)).toHaveText('Sin filtros activos');
+    await expect(page.locator(ROWS)).toHaveCount(12);
+  });
+
   test('the Estado filter is a set: «Con incidencia» plus «En proceso», and nothing else', async ({
     page,
   }) => {
@@ -1925,7 +1958,9 @@ test.describe('DS-3 lote C: la tabla', () => {
       'aria-checked',
       'mixed',
     );
-    await expect(trigger).toHaveText(/Estado: 2 de 4/);
+    // Se ve la cuenta sola, bajo la cabecera que ya nombra la columna; el nombre la contiene.
+    await expect(trigger).toHaveAccessibleName('Estado: 2 de 4');
+    await expect(trigger.locator('[aria-hidden="true"]', { hasText: '2 de 4' })).toBeVisible();
 
     const badges = page.locator(`${ROWS} ewms-badge`);
     for (const text of await badges.allTextContents()) {
@@ -1987,6 +2022,123 @@ test.describe('DS-3 lote C: la tabla', () => {
     await reset.click();
     await expect(page.locator(`${DEMO} th[data-col="date"]`)).toHaveCount(1);
     await expect(reset).toBeDisabled();
+  });
+
+  test('RESIZE WITH THE MOUSE OR THE KEYS, between the limits of each column, and the pins hold', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto(TABLE);
+    await ready(page);
+
+    const header = page.locator(`${DEMO} th[data-col="customer"]`);
+    const handle = page.locator(`${DEMO} [data-resize="customer"]`);
+    const width = async (): Promise<number> => Math.round((await header.boundingBox())!.width);
+
+    // Con el mouse: el separador sigue al puntero.
+    const start = await width();
+    const grip = (await handle.boundingBox())!;
+    await page.mouse.move(grip.x + grip.width / 2, grip.y + grip.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(grip.x + grip.width / 2 - 40, grip.y + grip.height / 2, { steps: 4 });
+    await page.mouse.up();
+    expect(await width()).toBeLessThan(start);
+
+    // Con el teclado: Fin al tope de la columna (`maxWidth="lg"`), Inicio al mínimo.
+    const max = Number(await handle.getAttribute('aria-valuemax'));
+    const min = Number(await handle.getAttribute('aria-valuemin'));
+    expect(max).toBeGreaterThan(min);
+    await handle.focus();
+    await page.keyboard.press('End');
+    await expect(handle).toHaveAttribute('aria-valuenow', String(max));
+    await page.keyboard.press('ArrowRight');
+    await expect(handle).toHaveAttribute('aria-valuenow', String(max));
+    await page.keyboard.press('Home');
+    await expect(handle).toHaveAttribute('aria-valuenow', String(min));
+
+    // Doble clic: al contenido, nunca pasado el tope.
+    await handle.dblclick();
+    expect(Number(await handle.getAttribute('aria-valuenow'))).toBeLessThanOrEqual(max);
+
+    // La fijada sigue en su lugar, y la columna se sigue moviendo con el teclado.
+    await expect(page.locator(`${DEMO} th[data-col="code"]`)).toHaveClass(/sticky/);
+    await handle.focus();
+    await page.keyboard.press('Alt+Shift+ArrowRight');
+    await expect(page.locator(`${DEMO} thead tr:first-child th[data-col]`).nth(2)).toHaveAttribute(
+      'data-col',
+      'customer',
+    );
+
+    const results = await axe(page).include(`${DEMO} ewms-table`).analyze();
+    expect(results.violations).toEqual([]);
+  });
+
+  test('A SAVED VIEW SURVIVES A RELOAD, per user and table, and the default opens by itself', async ({
+    page,
+  }) => {
+    await page.goto(TABLE);
+    await ready(page);
+
+    // Un filtro y la densidad compacta, guardados con nombre.
+    await page.locator(`${DEMO} [data-filters-toggle] button`).click();
+    await page.locator(`${DEMO} [data-filter="packages"] input`).first().fill('100');
+    await expect(page.locator(`${DEMO} [data-chip="packages"]`)).toBeVisible();
+    const viewButton = page.locator(`${DEMO} [data-view-menu] button`);
+    await viewButton.click();
+    const panel = page.getByRole('dialog', { name: 'Vista' });
+    await panel.locator('[data-density="sm"] input').check();
+    await panel.getByLabel('Nombre de la vista').fill('Grandes');
+    await panel.locator('[data-view-create] button').click();
+    await panel.locator('[data-view-default] button').click();
+    await expect(viewButton).toHaveText(/Grandes/);
+    const results = await axe(page).include('[role="dialog"]').analyze();
+    expect(results.violations).toEqual([]);
+
+    // Guardada por usuario y tabla, con su versión (leído como la E2E del idioma, sin tocar el
+    // almacenamiento desde la prueba).
+    const state = await page.context().storageState();
+    const keys = state.origins.flatMap(({ localStorage: items }) => items.map((item) => item.name));
+    expect(keys.filter((key) => key.startsWith('ewms.tableViews.'))).toEqual([
+      'ewms.tableViews.Operador.showroom.shipments',
+    ]);
+
+    await page.reload();
+    await ready(page);
+    await expect(viewButton).toHaveText(/Grandes/);
+    await expect(page.locator(`${DEMO} [data-chip="packages"]`)).toContainText('≥ 100');
+    const row = page.locator(`${ROWS}`).first();
+    expect(Math.round((await row.boundingBox())!.height)).toBe(32);
+  });
+
+  test('A VIEW OF ANOTHER VERSION IS DISCARDED, and the table opens as declared', async ({
+    browser,
+    baseURL,
+  }) => {
+    const context = await browser.newContext({
+      locale: 'es-CR',
+      storageState: {
+        cookies: [],
+        origins: [
+          {
+            origin: baseURL!,
+            localStorage: [
+              {
+                name: 'ewms.tableViews.Operador.showroom.shipments',
+                value: JSON.stringify({ version: 99, views: [], defaultId: null }),
+              },
+            ],
+          },
+        ],
+      },
+    });
+    const page = await context.newPage();
+    await page.goto(TABLE);
+    await ready(page);
+    await expect(page.locator(`${DEMO} [data-view-menu] button`)).toHaveText(/Vista/);
+    await expect(page.locator(ROWS)).toHaveCount(12);
+    const state = await context.storageState();
+    expect(JSON.stringify(state)).not.toContain('ewms.tableViews.');
+    await context.close();
   });
 
   test('THE TOOLBAR IS FOUR CONTROLS, and at 390 px it takes two rows at most', async ({
@@ -2055,7 +2207,7 @@ test.describe('DS-3 lote C: la tabla', () => {
     expect(results.violations).toEqual([]);
   });
 
-  test('the status bar counts the rows and adds up Bultos: on screen, then over the selection', async ({
+  test('THE TOTALS ROW sits at the foot, aligned with its column: all rows, then the selection', async ({
     page,
   }) => {
     await page.goto(TABLE);
@@ -2065,19 +2217,36 @@ test.describe('DS-3 lote C: la tabla', () => {
     await expect(status.locator('[data-status-rows]')).toHaveText('12 de 12 filas');
     const packages = page.locator(`${ROWS} td:nth-child(5)`);
     const numbers = (await packages.allTextContents()).map((text) => Number(text.replace(/\D/g, '')));
-    const onScreen = numbers.reduce((total, value) => total + value, 0);
+    const all =numbers.reduce((total, value) => total + value, 0);
     // es-CR, el locale de la app en español (LANGUAGE_LOCALES): agrupa también los de cuatro cifras.
-    await expect(status.locator('[data-aggregate="packages"]')).toHaveText(
-      `Bultos en pantalla: ${new Intl.NumberFormat('es-CR').format(onScreen)}`,
-    );
+    const shown = (value: number): string => new Intl.NumberFormat('es-CR').format(value);
+
+    const total = page.locator(`${DEMO} tfoot [data-total="packages"]`);
+    const scope = page.locator(`${DEMO} tfoot [data-totals-scope]`);
+    await expect(scope).toHaveText('Total de 12 filas');
+    await expect(total).toHaveText(new RegExp(`Suma:\\s*${shown(all)}`));
+
+    // Alineado con su columna: el mismo borde derecho que la cabecera de Bultos.
+    const head = (await page.locator(`${DEMO} th[data-col="packages"]`).boundingBox())!;
+    const foot = (await total.boundingBox())!;
+    expect(Math.round(foot.x)).toBe(Math.round(head.x));
+    expect(Math.round(foot.width)).toBe(Math.round(head.width));
+
+    // Fija abajo: con la caja desplazada, el pie sigue en su borde inferior.
+    const box = page.locator(`${DEMO} [data-scroll-box]`);
+    const boxBottom = await box.evaluate((element) => element.getBoundingClientRect().bottom);
+    const footBottom = await total.evaluate((cell) => cell.getBoundingClientRect().bottom);
+    expect(Math.abs(boxBottom - footBottom)).toBeLessThanOrEqual(20);
+
+    const results = await axe(page).include(`${DEMO} tfoot`).analyze();
+    expect(results.violations).toEqual([]);
 
     const boxes = page.locator(`${ROWS} input[type="checkbox"]`);
     await boxes.nth(0).click();
     await boxes.nth(1).click();
     await expect(status.locator('[data-status-selected]')).toHaveText('2 seleccionadas');
-    await expect(status.locator('[data-aggregate="packages"]')).toHaveText(
-      `Bultos seleccionados: ${new Intl.NumberFormat('es-CR').format(numbers[0]! + numbers[1]!)}`,
-    );
+    await expect(scope).toHaveText('Total de 2 seleccionadas');
+    await expect(total).toHaveText(new RegExp(`Suma:\\s*${shown(numbers[0]! + numbers[1]!)}`));
   });
 
   test('export: a real CSV download, with a BOM, the filtered rows and Excel-readable values', async ({
@@ -2190,7 +2359,7 @@ test.describe('DS-3 lote C: la tabla', () => {
 
     const background = (row: string) =>
       page.locator(row).evaluate((element) => getComputedStyle(element).backgroundColor);
-    const plain = `${ROWS}:not(.bg-row-danger):not(.bg-row-warning)`;
+    const plain = `${ROWS}:not(.bg-row-danger):not(.bg-row-warning):not(.bg-row-success)`;
     await page.locator(plain).first().hover();
     const hover = await background(`${plain} >> nth=0`);
 
@@ -2204,6 +2373,12 @@ test.describe('DS-3 lote C: la tabla', () => {
     );
     // La barra lateral sigue en la primera celda: la excepción no se pierde al seleccionar.
     await expect(exception.locator('td').first()).toHaveCSS('box-shadow', /inset/);
+
+    // Completada va en el verde de su badge, sin la barra de las excepciones.
+    const done = page.locator(`${ROWS}.bg-row-success`).first();
+    await expect(done.locator('ewms-badge')).toContainText('Completada');
+    await expect(done.locator('td').first()).toHaveCSS('box-shadow', 'none');
+    expect(await done.evaluate((row) => getComputedStyle(row).backgroundColor)).not.toBe(hover);
 
     // Números en la fuente del cuerpo, con dígitos de ancho fijo.
     const number = page.locator(`${ROWS} td[data-col="packages"]`).first();
@@ -2263,6 +2438,41 @@ test.describe('DS-3 lote D: detalle, menú, ventana y paginador', () => {
   // kebab, with the entries it was given» y «replaces the browser menu on a right click rather
   // than adding a second». Acá queda el camino de teclado, que sí necesita navegador.
 
+  test('THE ⋯ OF A ROW: keys all the way, back to the ⋯, and a destructive entry asks first', async ({
+    page,
+  }) => {
+    await page.goto(TABLE);
+    await ready(page);
+
+    // Enter abre, las flechas saltan lo deshabilitado, Escape cierra y devuelve el foco al ⋯.
+    const kebab = page.locator(`${DETAIL} [data-kebab="0"] button`);
+    await kebab.focus();
+    await page.keyboard.press('Enter');
+    const menu = page.getByRole('menu');
+    await expect(menu).toBeVisible();
+    const results = await axe(page).include('[role="menu"]').analyze();
+    expect(results.violations).toEqual([]);
+    await page.keyboard.press('Escape');
+    await expect(menu).toHaveCount(0);
+    await expect(kebab).toBeFocused();
+
+    // Anular pregunta con el diálogo del sistema; cancelar no hace nada, confirmar lo emite.
+    const choice = page.locator(`${DETAIL} [data-menu-choice]`);
+    const before = await choice.textContent();
+    await page.keyboard.press('Space');
+    await menu.getByRole('menuitem', { name: 'Anular' }).click();
+    const dialog = page.getByRole('alertdialog').or(page.getByRole('dialog'));
+    await expect(dialog).toContainText('¿Anular 1 fila?');
+    await dialog.getByRole('button', { name: 'Cancelar' }).click();
+    await expect(choice).toHaveText(before ?? '');
+    await expect(kebab).toBeFocused();
+
+    await page.keyboard.press('Enter');
+    await menu.getByRole('menuitem', { name: 'Anular' }).click();
+    await dialog.getByRole('button', { name: 'Anular' }).click();
+    await expect(choice).toContainText('Anular');
+  });
+
   test('the menu opens with Shift+F10 and gives the focus back on Escape', async ({ page }) => {
     await page.goto(TABLE);
     await ready(page);
@@ -2316,6 +2526,23 @@ test.describe('DS-3 lote D: detalle, menú, ventana y paginador', () => {
 
     // Los espaciadores sostienen la barra de desplazamiento al largo de la tabla entera.
     await expect(page.locator(`${VIRTUAL} [data-spacer="after"]`)).toBeAttached();
+  });
+
+  test('RESIZING KEEPS THE WINDOW: five thousand rows, a wider column, still a handful drawn', async ({
+    page,
+  }) => {
+    await page.goto(TABLE);
+    await ready(page);
+    await page.locator('[data-load-all]').click();
+    await expect(page.locator('[data-loaded-count]')).toContainText('5000');
+
+    const handle = page.locator(`${VIRTUAL} [data-resize="aisle"]`);
+    await handle.focus();
+    await page.keyboard.press('End');
+    await expect(handle).toHaveAttribute('aria-valuenow', (await handle.getAttribute('aria-valuemax'))!);
+    const drawn = page.locator(`${VIRTUAL} [data-row]`);
+    expect(await drawn.count()).toBeLessThan(80);
+    await expect(page.locator(`${VIRTUAL} table`)).toHaveAttribute('aria-rowcount', '5000');
   });
 
   test('the window moves with the scroll, and the index stays absolute', async ({ page }) => {
@@ -2418,6 +2645,75 @@ test.describe('DS-3 lote D: detalle, menú, ventana y paginador', () => {
       expect(fits, `box ${index} fits its placeholder`).toBe(true);
     }
   });
+
+  for (const width of [1280, 1024, 768]) {
+    const DEMO = '[data-demo-table]';
+    test(`ONE FRAME AND A LIGHT FILTER ROW at ${width} px: nothing cut, nothing touching, an edge that says there is more`, async ({
+      page,
+    }) => {
+      await page.setViewportSize({ width, height: 900 });
+      await page.goto(TABLE);
+      await ready(page);
+      await page.locator(`${DEMO} [data-filters-toggle] button`).click();
+      const filterRow = page.locator(`${DEMO} [data-filter-row]`);
+      await expect(filterRow).toBeVisible();
+
+      // Un solo marco: entre la tabla y la sección no hay otro borde.
+      const borders = await page.locator(`${DEMO} ewms-table`).evaluate((table) => {
+        let count = 0;
+        for (let node = table.parentElement; node && node.tagName !== 'SECTION'; node = node.parentElement) {
+          count += getComputedStyle(node).borderTopWidth === '0px' ? 0 : 1;
+        }
+        return count;
+      });
+      expect(borders, 'frames around the table').toBe(0);
+
+      // La fila de filtros pesa menos que la cabecera y deja aire antes y después de sus campos.
+      const look = await page.locator(DEMO).evaluate((demo) => {
+        const head = demo.querySelector<HTMLElement>('thead th[data-col="code"]')!;
+        const cell = demo.querySelector<HTMLElement>('[data-filter-row] td:last-child')!;
+        const field = demo.querySelector<HTMLElement>('[data-filter="code"] input')!;
+        const [c, f] = [cell.getBoundingClientRect(), field.getBoundingClientRect()];
+        return {
+          differentGround: getComputedStyle(head).backgroundColor !== getComputedStyle(cell).backgroundColor,
+          air: Math.min(f.top - c.top, c.bottom - f.bottom),
+        };
+      });
+      expect(look.differentGround).toBe(true);
+      expect(look.air).toBeGreaterThanOrEqual(8);
+
+      // «Desde» y «Hasta»: una línea, sin tocarse, con el marcador entero.
+      const numbers = filterRow.locator('[data-filter="packages"] input');
+      const [from, to] = [(await numbers.nth(0).boundingBox())!, (await numbers.nth(1).boundingBox())!];
+      expect(Math.round(from.y)).toBe(Math.round(to.y));
+      expect(to.x - (from.x + from.width)).toBeGreaterThanOrEqual(8);
+
+      // Estado nunca se corta: el botón entra en su columna y su texto en el botón.
+      const status = filterRow.locator('[data-filter="status"] button');
+      const clipped = await status.evaluate((button) => {
+        const cell = button.closest('td')!.getBoundingClientRect();
+        const own = button.getBoundingClientRect();
+        return button.scrollWidth > button.clientWidth || own.right > cell.right + 0.5;
+      });
+      expect(clipped).toBe(false);
+      await expect(status).toHaveAccessibleName('Estado: todos');
+
+      // Antes de desplazar: al final, una fijada tapa a medias el campo que pasa por debajo.
+      const results = await axe(page).include(`${DEMO} ewms-table`).analyze();
+      expect(results.violations).toEqual([]);
+
+      // Hay más columnas a la derecha: el borde lo dice; al final, ya no.
+      const box = page.locator(`${DEMO} [data-scroll-box]`);
+      const overflows = await box.evaluate((element) => element.scrollWidth > element.clientWidth);
+      await expect(page.locator(`${DEMO} [data-edge="end"]`)).toHaveCount(overflows ? 1 : 0);
+      await box.evaluate((element) => {
+        element.scrollLeft = element.scrollWidth;
+        element.dispatchEvent(new Event('scroll'));
+      });
+      await expect(page.locator(`${DEMO} [data-edge="end"]`)).toHaveCount(0);
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    });
+  }
 
   test('polish: the header stays while the rows scroll, only exceptions are tinted, dates read in a column', async ({
     page,

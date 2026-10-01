@@ -33,7 +33,7 @@
 
     <!-- Vista: columnas, densidad y volver a lo declarado, en un solo lugar (antes eran dos botones). -->
     <ewms-table-popover
-      [label]="text.view"
+      [label]="viewLabel()"
       icon="controls"
       [iconOnly]="compact()"
       [panelLabel]="text.view"
@@ -104,7 +104,87 @@
           </ewms-button>
         </div>
       }
-      <!-- Habilitado solo si algo difiere de lo declarado: orden, visibles, anchos, fijadas o densidad. -->
+      @if (table.savedViews.enabled()) {
+        <!-- Vistas con nombre: elegir una la pone; lo de abajo actúa sobre la puesta. Ver vault: Tabla §29. -->
+        <div class="flex flex-col gap-2 border-t border-default pt-2" data-saved-views>
+          <ewms-radio-group
+            [label]="text.views"
+            [name]="table.tableId + '-views'"
+            [value]="table.savedViews.activeId() ?? ''"
+            (valueChange)="table.savedViews.choose($any($event) || null)"
+          >
+            <ewms-radio value="" [label]="text.viewInitial" data-view-option="" />
+            @for (view of table.savedViews.views(); track view.id) {
+              <ewms-radio
+                [value]="view.id"
+                [label]="
+                  view.id === table.savedViews.defaultId() ? text.viewDefaultLabel(view.name) : view.name
+                "
+                [attr.data-view-option]="view.id"
+              />
+            }
+          </ewms-radio-group>
+          <ewms-input size="sm" [label]="text.viewName" [(value)]="viewName" data-view-name />
+          <div class="flex flex-wrap gap-2">
+            <ewms-button
+              variant="secondary"
+              size="sm"
+              [disabled]="viewName().trim() === ''"
+              data-view-create
+              (click)="table.savedViews.create(viewName().trim())"
+            >
+              {{ text.saveAsNew }}
+            </ewms-button>
+            @if (table.savedViews.active(); as active) {
+              <ewms-button
+                variant="secondary"
+                size="sm"
+                [disabled]="!table.savedViews.modified()"
+                data-view-save
+                (click)="table.savedViews.saveChanges()"
+              >
+                {{ text.saveChanges }}
+              </ewms-button>
+              <ewms-button
+                variant="ghost"
+                size="sm"
+                [disabled]="viewName().trim() === '' || viewName().trim() === active.name"
+                data-view-rename
+                (click)="table.savedViews.rename(active.id, viewName().trim())"
+              >
+                {{ text.renameView }}
+              </ewms-button>
+              <ewms-button
+                variant="ghost"
+                size="sm"
+                data-view-duplicate
+                (click)="table.savedViews.duplicate(active.id, text.viewCopyName(active.name))"
+              >
+                {{ text.duplicateView }}
+              </ewms-button>
+              <ewms-button
+                variant="ghost"
+                size="sm"
+                [pressed]="table.savedViews.defaultId() === active.id"
+                data-view-default
+                (click)="table.savedViews.toggleDefault(active.id)"
+              >
+                {{ text.defaultView }}
+              </ewms-button>
+              <ewms-button
+                variant="danger"
+                size="sm"
+                icon="trash"
+                data-view-delete
+                (click)="deleteView(active)"
+              >
+                {{ text.deleteView }}
+              </ewms-button>
+            }
+          </div>
+        </div>
+      }
+      <!-- Habilitado solo si algo difiere de la vista puesta, o de lo declarado sin ninguna. -->
       <div class="border-t border-default pt-2">
         <ewms-button
           variant="ghost"
@@ -170,7 +250,7 @@
 
 <!-- Los chips son la misma pieza que la barra de filtros de pantalla (ver vault: Patron-Filtros). -->
 <ewms-filter-chips
-  [chips]="table.filtering.chips()"
-  (remove)="table.filtering.clear($event)"
-  (clearAll)="table.filtering.clearAll()"
+  [chips]="table.chips()"
+  (remove)="table.removeChip($event)"
+  (clearAll)="table.clearChips()"
 />

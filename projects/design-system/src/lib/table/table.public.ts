@@ -13,3 +13,13 @@ export {
   type TableSort,
   type TableSource,
 } from './table-source';
+export {
+  EWMS_TABLE_VIEW_STORE,
+  InMemoryTableViewStore,
+  parseTableViews,
+  TABLE_VIEWS_VERSION,
+  type SavedTableView,
+  type TableSavedState,
+  type TableViewStore,
+  type TableViewsDocument,
+} from './table-saved-views.types';

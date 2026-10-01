@@ -80,7 +80,7 @@ describe('favorites keep nothing in the browser', () => {
     }
   });
 
-  it('no line silences them, except the language preference (ADR 0008)', () => {
+  it('no line silences them, except the language preference (ADR 0008) and table views (ADR 0019)', () => {
     const files = execFileSync('git', ['ls-files', '-z'], { cwd: ROOT, encoding: 'utf8' })
       .split('\0')
       .filter((file) => /\.(ts|mts|cts|js|mjs|cjs|html)$/.test(file));
@@ -97,6 +97,9 @@ describe('favorites keep nothing in the browser', () => {
         }
       }
     }
-    assert.deepEqual(silencing, ['projects/core/src/lib/i18n/language.service.ts']);
+    assert.deepEqual(silencing, [
+      'projects/core/src/lib/i18n/language.service.ts',
+      'projects/shell/src/app/table-views.store.ts',
+    ]);
   });
 });

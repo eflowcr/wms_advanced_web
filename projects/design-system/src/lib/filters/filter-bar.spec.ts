@@ -15,6 +15,8 @@ const MESSAGES: FilterBarMessages = {
 const CHIP_MESSAGES: FilterChipsMessages = {
   clearFilters: 'Limpiar filtros',
   removeFilter: (field) => `Quitar el filtro ${field}`,
+  activeCount: (count) =>
+    count === 0 ? 'Sin filtros activos' : count === 1 ? '1 filtro activo' : `${count} filtros activos`,
 };
 
 const FIELDS: readonly FilterField[] = [

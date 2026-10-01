@@ -52,7 +52,7 @@
     <h2 id="ta-demo" class="text-h2">{{ 'showroom.table.demo.title' | transloco }}</h2>
     <p class="text-secondary" [ewmsProse]="'showroom.table.demo.intro' | transloco"></p>
 
-    <ewms-demo-frame ground="canvas" [label]="'showroom.table.demo.frame' | transloco">
+    <ewms-demo-frame ground="none" [label]="'showroom.table.demo.frame' | transloco">
       <div class="flex flex-col gap-4" data-demo-table>
         <ewms-table
           [source]="shipments"
@@ -63,6 +63,7 @@
           [quickFilter]="true"
           [columnChooser]="true"
           [exportable]="true"
+          viewsKey="showroom.shipments"
           [bulkActions]="bulkActions()"
           [ariaLabel]="'showroom.table.demo.ariaLabel' | transloco"
           (rowActivate)="open($event)"
@@ -82,6 +83,7 @@
             key="customer"
             [header]="'showroom.table.columns.customerItem' | transloco"
             width="fill"
+            maxWidth="lg"
             [filterable]="true"
           />
           <ewms-column
@@ -251,14 +253,14 @@
       [ewmsProse]="'showroom.table.advanced.detail.intro' | transloco"
     ></p>
 
-    <ewms-demo-frame ground="canvas" [label]="'showroom.table.advanced.detail.frame' | transloco">
+    <ewms-demo-frame ground="none" [label]="'showroom.table.advanced.detail.frame' | transloco">
       <div class="flex flex-col gap-4" data-demo-detalle>
         <ewms-table
           [source]="headers"
           rowState="status"
           [trackBy]="byId"
           [isRowMaster]="isMaster"
-          [menuItems]="rowActions()"
+          [menuItems]="rowActionsOf()"
           [ariaLabel]="'showroom.table.advanced.detail.ariaLabel' | transloco"
           (rowMenu)="choose($event)"
         >
@@ -362,7 +364,7 @@
       [ewmsProse]="'showroom.table.advanced.lazy.intro' | transloco"
     ></p>
 
-    <ewms-demo-frame ground="canvas" [label]="'showroom.table.advanced.lazy.frame' | transloco">
+    <ewms-demo-frame ground="none" [label]="'showroom.table.advanced.lazy.frame' | transloco">
       <div data-demo-perezosa>
         <ewms-table
           [source]="lazy"
@@ -408,7 +410,7 @@
       {{ 'showroom.table.advanced.virtual.sample' | transloco }}
     </p>
 
-    <ewms-demo-frame ground="canvas" [label]="'showroom.table.advanced.virtual.frame' | transloco">
+    <ewms-demo-frame ground="none" [label]="'showroom.table.advanced.virtual.frame' | transloco">
       <div class="flex flex-col gap-3" data-demo-virtual>
         <div class="flex flex-wrap items-center gap-3">
           <ewms-button
@@ -476,7 +478,7 @@
     ></p>
 
     <ewms-demo-frame
-      ground="canvas"
+      ground="none"
       [label]="'showroom.table.advanced.pagination.frame' | transloco"
     >
       <div data-demo-paginada>

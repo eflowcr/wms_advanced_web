@@ -8,6 +8,7 @@ import {
   EWMS_PAGINATION_MESSAGES,
   EWMS_FAVORITE_LABELS,
   EWMS_FAVORITES_STORE,
+  EWMS_TABLE_VIEW_STORE,
   EWMS_SELECT_MESSAGES,
   EWMS_SHORTCUT_HELP_MESSAGES,
   EWMS_SEARCH_BOX_MESSAGES,
@@ -36,6 +37,7 @@ import { TranslocoLocaleService } from '@jsverse/transloco-locale';
 import { menuEntryFor } from './layout/menu';
 import { RouteTitles } from './route-titles';
 import { SHORTCUT_MAP } from './shortcuts.map';
+import { BrowserTableViewStore } from './table-views.store';
 
 /**
  * Llena una vez los tokens de textos y formatos del design system, que no habla
@@ -86,6 +88,12 @@ export function provideEwmsDesignSystem(): Provider[] {
       useClass: InMemoryFavoritesStore,
     },
     Favorites,
+    // Las vistas de las tablas, en el navegador por usuario y tabla (ADR 0019). Con backend de
+    // preferencias solo cambia esta línea.
+    {
+      provide: EWMS_TABLE_VIEW_STORE,
+      useFactory: () => new BrowserTableViewStore(),
+    },
     {
       provide: EWMS_FAVORITE_LABELS,
       useFactory: favoriteLabels,
@@ -209,6 +217,9 @@ function tableMessages(): TableMessages {
     get clearFilters() {
       return transloco.translate('ds.table.clearFilters');
     },
+    get searchChip() {
+      return transloco.translate('ds.table.searchChip');
+    },
     get view() {
       return transloco.translate('ds.table.view');
     },
@@ -224,6 +235,37 @@ function tableMessages(): TableMessages {
     get density() {
       return transloco.translate('ds.table.density');
     },
+    get views() {
+      return transloco.translate('ds.table.views');
+    },
+    get viewInitial() {
+      return transloco.translate('ds.table.viewInitial');
+    },
+    get viewName() {
+      return transloco.translate('ds.table.viewName');
+    },
+    get saveAsNew() {
+      return transloco.translate('ds.table.saveAsNew');
+    },
+    get saveChanges() {
+      return transloco.translate('ds.table.saveChanges');
+    },
+    get renameView() {
+      return transloco.translate('ds.table.renameView');
+    },
+    get duplicateView() {
+      return transloco.translate('ds.table.duplicateView');
+    },
+    get deleteView() {
+      return transloco.translate('ds.table.deleteView');
+    },
+    get defaultView() {
+      return transloco.translate('ds.table.defaultView');
+    },
+    deleteViewTitle: (name) => transloco.translate('ds.table.deleteViewTitle', { name }),
+    viewModified: (name) => transloco.translate('ds.table.viewModified', { name }),
+    viewCopyName: (name) => transloco.translate('ds.table.viewCopyName', { name }),
+    viewDefaultLabel: (name) => transloco.translate('ds.table.viewDefaultLabel', { name }),
     get densityMd() {
       return transloco.translate('ds.table.densityMd');
     },
@@ -240,6 +282,12 @@ function tableMessages(): TableMessages {
       chosen === total
         ? transloco.translate('ds.table.setSummaryAll', { column })
         : transloco.translate('ds.table.setSummary', { column, chosen, total }),
+    setChosen: (chosen, total) =>
+      chosen === total
+        ? transloco.translate('ds.table.setAll')
+        : chosen === 0
+          ? transloco.translate('ds.table.setNone')
+          : transloco.translate('ds.table.setChosen', { chosen, total }),
     get columns() {
       return transloco.translate('ds.table.columns');
     },
@@ -288,6 +336,13 @@ function tableMessages(): TableMessages {
     get clearSelection() {
       return transloco.translate('ds.table.clearSelection');
     },
+    confirmTitle: (action, rows) => transloco.translate('ds.table.confirmTitle', { action, rows }),
+    get confirmBody() {
+      return transloco.translate('ds.table.confirmBody');
+    },
+    get confirmCancel() {
+      return transloco.translate('ds.table.confirmCancel');
+    },
     copied: (rows) => transloco.translate('ds.table.copied', { rows }),
     get loading() {
       return transloco.translate('ds.table.loading');
@@ -318,14 +373,29 @@ function tableMessages(): TableMessages {
         ? transloco.translate('ds.table.rowsShown', { shown })
         : transloco.translate('ds.table.rowsShownOf', { shown, total }),
     // Una clave por combinación, literal: transloco-keys-manager lee la fuente (ver arriba).
-    aggregate: (kind, column, scope) => {
-      /** t(ds.table.sumSelected, ds.table.sumShown, ds.table.avgSelected, ds.table.avgShown, ds.table.countSelected, ds.table.countShown) */
+    aggregate: (kind) => {
+      /** t(ds.table.aggregateSum, ds.table.aggregateAvg, ds.table.aggregateCount, ds.table.aggregateMin, ds.table.aggregateMax) */
       const keys = {
-        sum: { selected: 'ds.table.sumSelected', shown: 'ds.table.sumShown' },
-        avg: { selected: 'ds.table.avgSelected', shown: 'ds.table.avgShown' },
-        count: { selected: 'ds.table.countSelected', shown: 'ds.table.countShown' },
+        sum: 'ds.table.aggregateSum',
+        avg: 'ds.table.aggregateAvg',
+        count: 'ds.table.aggregateCount',
+        min: 'ds.table.aggregateMin',
+        max: 'ds.table.aggregateMax',
       } as const;
-      return transloco.translate(keys[kind][scope], { column });
+      return transloco.translate(keys[kind]);
+    },
+    totalsScope: (scope, rows) => {
+      /** t(ds.table.totalsSelected, ds.table.totalsFiltered, ds.table.totalsAll, ds.table.totalsPage) */
+      const keys = {
+        selected: 'ds.table.totalsSelected',
+        filtered: 'ds.table.totalsFiltered',
+        all: 'ds.table.totalsAll',
+        page: 'ds.table.totalsPage',
+      } as const;
+      return transloco.translate(keys[scope], { rows });
+    },
+    get totalUnavailable() {
+      return transloco.translate('ds.table.totalUnavailable');
     },
   };
 }
@@ -377,6 +447,7 @@ function filterChipsMessages(): FilterChipsMessages {
   const transloco = injectTranslator();
   return {
     removeFilter: (column) => transloco.translate('ds.filterChips.removeFilter', { column }),
+    activeCount: (count) => transloco.translate('ds.filterChips.activeCount', { count }),
     get clearFilters() {
       return transloco.translate('ds.filterChips.clearFilters');
     },

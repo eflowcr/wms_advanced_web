@@ -1332,7 +1332,7 @@
         "drawerTransition": "Entrada del cajón (se desliza desde el borde)",
         "panelWidth": "Ancho del panel expandido",
         "railBackground": "Fondo del menú y de la barra inferior: degradado navy",
-        "railCorner": "Borde del menú hacia el contenido, redondeado arriba y abajo",
+        "railCorner": "Borde de arriba del menú abierto hacia el contenido, redondeado; abajo termina recto",
         "railWidth": "Ancho del rail colapsado",
         "rowHeight": "Alto de una fila, abierto",
         "rowHeightCollapsed": "Alto de una fila, plegado (ícono sobre etiqueta)",
@@ -2757,6 +2757,7 @@
         "rowHeightMd": "Alto de fila, densidad md",
         "rowHeightSm": "Alto de fila, densidad sm",
         "selectedRow": "Fila seleccionada",
+        "successTint": "Tinte de fila «Completada»",
         "warningTint": "Tinte de fila «En proceso»"
       },
       "toggle": "El toggle vive <b>dentro de la primera columna de datos</b>, junto al texto, nunca en una columna aparte; una fila sin hijos recibe un <code>.tree-toggle-spacer</code> del mismo ancho para que el texto de todas las filas empiece en el mismo sitio. Es el vocabulario que fija la Nomenclatura.",
@@ -2863,7 +2864,7 @@
         "title": "Orden por varias columnas"
       },
       "polish": {
-        "text": "Solo las excepciones tiñen la fila, con una barra lateral que sobrevive a la selección; números y fechas con dígitos alineados; un texto cortado muestra el completo al pasar o al enfocar; la sombra de lo fijado aparece solo con algo debajo.",
+        "text": "Las excepciones tiñen la fila, con una barra lateral que sobrevive a la selección, y lo completado va en verde; números y fechas con dígitos alineados; un texto cortado muestra el completo al pasar o al enfocar; la sombra de lo fijado aparece solo con algo debajo.",
         "title": "Pulido y estados"
       },
       "selection": {
@@ -2875,8 +2876,8 @@
         "title": "Filtro de conjunto"
       },
       "statusBar": {
-        "text": "Al pie: cuántas filas, cuántas seleccionadas, y Bultos sumados (<code>aggregate=\"sum\"</code>) sobre la selección si la hay, o sobre lo que está en pantalla.",
-        "title": "Barra de estado y agregados"
+        "text": "Una fila de totales fija abajo, alineada con cada columna: Bultos sumados (<code>aggregate=\\\"sum\\\"</code>, también <code>avg</code>, <code>count</code>, <code>min</code> y <code>max</code>) sobre la selección si la hay, o sobre todo lo filtrado, y dice de qué filas es. La barra de estado cuenta filas.",
+        "title": "Fila de totales"
       },
       "title": "Los diferenciadores, uno por uno"
     },
@@ -2915,6 +2916,7 @@
       "children": "Una función, o el nombre de una propiedad. Con esto hay árbol y el rol es treegrid; sin esto, grid.",
       "columnChooser": "Selector de columnas en la barra. La última visible no se oculta.",
       "columnExtras": "Fijado inicial (el usuario lo cambia en el menú ⋮), sin casilla en Vista, o la suma al pie.",
+      "columnLimits": "Lo menos y lo más que el usuario puede redimensionarla, con los nombres del ancho. Sin ellos, los topes de la tabla.",
       "density": "Con qué densidad arranca; después se elige en la barra. Alto de fila por token.",
       "exportRequest": "Solo con fuente remota: la tabla no descarga, dice qué pidió el usuario.",
       "exportable": "Exportar: CSV en el cliente con ArrayTableSource; con fuente remota, (exportRequest).",
@@ -2927,7 +2929,8 @@
       "selectionChange": "La selección. Una salida, no un valor de formulario: la tabla no es un CVA.",
       "source": "<b>Obligatoria.</b> De dónde salen las filas. Una interfaz: la tabla no conoce HTTP.",
       "trackBy": "Identifica la fila, y TAMBIÉN la selección: por eso la selección sobrevive al cambio de página.",
-      "viewChange": "Orden, columnas ocultas, anchos, fijadas y densidad: en memoria, para quien quiera guardarlas."
+      "viewChange": "Orden, columnas ocultas, anchos, fijadas y densidad: en memoria, para quien quiera guardarlas.",
+      "viewsKey": "Clave estable de la tabla: con ella, Vista guarda vistas con nombre (filtros, columnas, orden, anchos y densidad) en el store de la aplicación, por usuario."
     },
     "purpose": {
       "notCard": "<b>Si son tres datos de un registro, va Card.</b> Una tabla de una fila es una ficha con cabeceras de más.",
@@ -2962,6 +2965,7 @@
         "normal": "Normal",
         "selected": "Seleccionada",
         "selectedDanger": "Seleccionada + excepción",
+        "success": "Completada",
         "warning": "Excepción warning"
       },
       "title": "La matriz de fila"
@@ -2987,7 +2991,7 @@
       },
       "caption": "Cada estado, y las dos señales que produce",
       "disabled": "<b>Disabled no está en la matriz, y no es un hueco:</b> una fila no se puede deshabilitar, porque una fila no es un control. Hover y foco están arriba, con su fondo; en la demo se recorren de verdad.",
-      "intro": "Los cuatro estados de fila, con las señales que produce cada uno, salidas del mismo diccionario. <b>Solo las excepciones tiñen la fila</b> —«Con incidencia» y «En proceso»—; las demás llevan solo el badge. Con todas teñidas, ninguna llamaba la atención.",
+      "intro": "Los cuatro estados de fila, con las señales que produce cada uno, salidas del mismo diccionario. <b>Tiñen la fila las excepciones y lo completado</b>: «Con incidencia» y «En proceso» con su barra lateral, «Completada» en el verde de su badge. «Pendiente» lleva solo el badge.",
       "noTint": "sin tinte"
     },
     "variants": {

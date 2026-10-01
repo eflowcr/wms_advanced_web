@@ -10,6 +10,8 @@ import {
   EWMS_SELECT_MESSAGES,
   EWMS_SHORTCUT_HELP_MESSAGES,
   EWMS_SPLIT_BUTTON_MESSAGES,
+  EWMS_TABLE_VIEW_STORE,
+  InMemoryTableViewStore,
   EWMS_TABLE_FORMATTERS,
   EWMS_TABLE_MESSAGES,
   parseTableDate,
@@ -25,6 +27,9 @@ import showroomEn from '../../../shell/public/i18n/showroom/en.json';
 import showroomEs from '../../../shell/public/i18n/showroom/es.json';
 /* eslint-enable no-restricted-imports */
 import { SHOWROOM_SCOPE } from './catalog';
+
+const activeFilters = (count: number): string =>
+  count === 0 ? 'Sin filtros activos' : count === 1 ? '1 filtro activo' : `${count} filtros activos`;
 
 /**
  * Soporte de las specs del catálogo, fuera del build (tsconfig.lib.json). Los diccionarios reales
@@ -80,11 +85,25 @@ const TABLE_MESSAGES: TableMessages = {
   sortedDescending: 'Orden descendente',
   filters: (active) => (active === 0 ? 'Filtros' : `Filtros (${active})`),
   clearFilters: 'Limpiar filtros',
+  searchChip: 'Búsqueda',
   view: 'Vista',
   resetView: 'Restablecer vista',
   expandAll: 'Expandir todo',
   collapseAll: 'Contraer todo',
   density: 'Densidad',
+  views: 'Vistas guardadas',
+  viewInitial: 'Vista inicial',
+  viewName: 'Nombre de la vista',
+  saveAsNew: 'Guardar como nueva',
+  saveChanges: 'Guardar cambios',
+  renameView: 'Renombrar',
+  duplicateView: 'Duplicar',
+  deleteView: 'Eliminar vista',
+  defaultView: 'Abrir por defecto',
+  deleteViewTitle: (name) => `¿Eliminar la vista ${name}?`,
+  viewModified: (name) => `${name} (modificada)`,
+  viewCopyName: (name) => `${name} (copia)`,
+  viewDefaultLabel: (name) => `${name} (por defecto)`,
   densityMd: 'Media',
   densitySm: 'Compacta',
   setAll: 'Todos',
@@ -95,6 +114,8 @@ const TABLE_MESSAGES: TableMessages = {
     }
     return chosen === 0 ? `${column}: ninguno` : `${column}: ${chosen} de ${total}`;
   },
+  setChosen: (chosen, total) =>
+    chosen === total ? 'Todos' : chosen === 0 ? 'Ninguno' : `${chosen} de ${total}`,
   columns: 'Columnas',
   resizeColumn: (column) => `Ancho de la columna ${column}`,
   moveEarlier: (column) => `Subir ${column}`,
@@ -116,6 +137,9 @@ const TABLE_MESSAGES: TableMessages = {
   sortPriority: (sorted, priority) => `${sorted}, prioridad ${priority}`,
   selectedCount: (count) => (count === 1 ? '1 seleccionada' : `${count} seleccionadas`),
   clearSelection: 'Quitar selección',
+  confirmTitle: (action, rows) => `¿${action} ${rows} ${rows === 1 ? 'fila' : 'filas'}?`,
+  confirmBody: 'Esta acción no se puede deshacer.',
+  confirmCancel: 'Cancelar',
   copied: (rows) => (rows === 1 ? '1 fila copiada' : `${rows} filas copiadas`),
   loading: 'Cargando…',
   loadFailed: 'No se pudieron cargar las filas.',
@@ -126,13 +150,16 @@ const TABLE_MESSAGES: TableMessages = {
   exportSelected: 'CSV de lo seleccionado',
   copyAll: 'Copiar al portapapeles',
   rowsShown: (shown, total) => (total === null ? `${shown} filas` : `${shown} de ${total} filas`),
-  aggregate: (kind, column, scope) => {
-    const where = scope === 'selected' ? 'seleccionados' : 'en pantalla';
-    if (kind === 'avg') {
-      return `Promedio de ${column} ${where}`;
-    }
-    return kind === 'count' ? `Filas con ${column} ${where}` : `${column} ${where}`;
-  },
+  aggregate: (kind) =>
+    ({ sum: 'Suma', avg: 'Promedio', count: 'Cuenta', min: 'Mínimo', max: 'Máximo' })[kind],
+  totalsScope: (scope, rows) =>
+    ({
+      selected: `Total de ${rows} seleccionadas`,
+      filtered: `Total de ${rows} filas filtradas`,
+      all: `Total de ${rows} filas`,
+      page: `Total de esta página (${rows} filas)`,
+    })[scope],
+  totalUnavailable: 'Total no disponible: la fuente no lo da',
 };
 
 const DAY = new Intl.DateTimeFormat('es', { day: '2-digit', month: '2-digit', year: 'numeric' });
@@ -199,6 +226,7 @@ export function provideDesignSystemTextsTesting(): Provider[] {
       useValue: {
         clearFilters: 'Limpiar filtros',
         removeFilter: (column: string) => `Quitar el filtro ${column}`,
+        activeCount: (count: number) => activeFilters(count),
       },
     },
     {
@@ -236,6 +264,8 @@ export function provideDesignSystemTextsTesting(): Provider[] {
       },
     },
     { provide: EWMS_SPLIT_BUTTON_MESSAGES, useValue: { moreActions: 'Más opciones' } },
+    // En memoria: el shell provee el del navegador; una prueba no deja vistas en el siguiente.
+    { provide: EWMS_TABLE_VIEW_STORE, useFactory: () => new InMemoryTableViewStore() },
     {
       provide: EWMS_SEARCH_BOX_MESSAGES,
       useValue: { submit: 'Buscar', clear: 'Limpiar la búsqueda' },

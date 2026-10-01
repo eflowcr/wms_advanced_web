@@ -1489,7 +1489,7 @@ describe('ShowroomTable', () => {
     expect(
       element.querySelectorAll('[data-block="5-matriz"] ewms-state-matrix ewms-badge').length,
     ).toBe(4);
-    // Y la matriz de fila: siete estados, con la marca lateral donde hay excepción.
+    // Y la matriz de fila: ocho estados, con la marca lateral donde hay excepción.
     const states = [...element.querySelectorAll('[data-row-state]')];
     expect(states.map((row) => row.getAttribute('data-row-state'))).toEqual([
       'normal',
@@ -1498,9 +1498,11 @@ describe('ShowroomTable', () => {
       'selected',
       'danger',
       'warning',
+      'success',
       'selected-danger',
     ]);
-    expect(states[6]?.querySelector('.shadow-row-mark-danger')).not.toBeNull();
+    expect(states[6]?.querySelector('.bg-row-success')).not.toBeNull();
+    expect(states[7]?.querySelector('.shadow-row-mark-danger')).not.toBeNull();
   });
 
   it('falls back to nothing for a variant no state carries', async () => {

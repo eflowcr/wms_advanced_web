@@ -56,7 +56,7 @@
                 "fonts": true
               },
               "outputHashing": "all",
-              // La compuerta de ruta crítica lee este stats.json (fuera de browser/: no se sirve).
+              // La compuerta de ruta crítica lee el browser-stats.json que esto escribe (fuera de browser/).
               "statsJson": true
             },
             "development": {

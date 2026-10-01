@@ -41,7 +41,12 @@ let nextPopoverId = 0;
         [controls]="isOpen() ? panelId : null"
         (click)="toggle()"
       >
-        {{ label() }}
+        @if (caption()) {
+          <!-- Se ve lo corto; el nombre accesible es el entero, que contiene lo que se ve (2.5.3). -->
+          <span class="sr-only">{{ label() }}</span><span aria-hidden="true">{{ caption() }}</span>
+        } @else {
+          {{ label() }}
+        }
       </ewms-button>
     </span>
     <ng-template #panel>
@@ -63,6 +68,8 @@ export class TablePopover {
   readonly label = input.required<string>();
   readonly icon = input<IconName | null>(null);
   readonly iconOnly = input<boolean>(false);
+  /** Texto visible más corto que `label`, que sigue siendo el nombre accesible. */
+  readonly caption = input<string>('');
   /** Nombre del panel si no es el texto del botón (un filtro dice su columna, no su resumen). */
   readonly panelLabel = input<string>('');
 

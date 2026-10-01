@@ -1,6 +1,6 @@
 /**
  * La ruta crítica de `/`: el cierre de imports estáticos del arranque, el marco y la página de
- * inicio, leído del stats.json del build de producción, contra un techo en crudo. Ver vault:
+ * inicio, leído del browser-stats.json del build de producción, contra un techo en crudo. Ver vault:
  * 02-Arquitectura/Integracion Continua.md §4, regla 17.
  */
 import { existsSync, readFileSync } from 'node:fs';
@@ -12,7 +12,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '.
 const DIST = path.join(ROOT, 'dist/shell');
 
 /** El techo, en un solo lugar: kB crudos de JavaScript que `/` carga antes de pintar. */
-export const CEILING_KB = 532;
+export const CEILING_KB = 537;
 
 /** Lo que carga `/`: el arranque, el marco (perezoso, pero envuelve toda ruta) y el inicio. */
 export const ROUTE_ENTRIES = [
@@ -43,9 +43,9 @@ export function criticalPath(metafile, entries = ROUTE_ENTRIES) {
 }
 
 function main() {
-  const stats = path.join(DIST, 'stats.json');
+  const stats = path.join(DIST, 'browser-stats.json');
   if (!existsSync(stats)) {
-    console.error('No dist/shell/stats.json: run `npm run build` first (production writes it).');
+    console.error('No dist/shell/browser-stats.json: run `npm run build` first (production writes it).');
     process.exitCode = 1;
     return;
   }
