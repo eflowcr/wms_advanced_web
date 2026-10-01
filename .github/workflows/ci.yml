@@ -101,7 +101,7 @@ jobs:
       - name: Production build and bundle budgets
         run: npm run build
 
-      # Regla 17: lo que `/` carga antes de pintar, contra su techo; lee el stats.json del build.
+      # Regla 17: lo que `/` carga antes de pintar, contra su techo; lee el browser-stats.json del build.
       - name: Critical path of / (static closure against its ceiling)
         run: npm run lint:critical-path
 
