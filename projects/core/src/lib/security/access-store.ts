@@ -14,6 +14,8 @@ export class AccessStore {
   private gatewayValue: SecurityGateway | null = null;
   private cancel = new AbortController();
   private unsubscribe: (() => void) | undefined;
+  private running: Promise<void> | null = null;
+  private pending: Promise<void> | null = null;
   readonly actor = signal<Actor | null>(null);
   readonly status = signal<'idle' | 'loading' | 'ready' | 'error'>('idle');
   readonly grants = signal<Grants>({});
@@ -34,23 +36,44 @@ export class AccessStore {
 
   select(actor: Actor | null): Promise<void> {
     this.actor.set(actor);
-    return this.refresh();
+    return this.read();
   }
 
-  async refresh(): Promise<void> {
+  /** Con una lectura en vuelo, las peticiones se juntan en una sola relectura al terminar (RFE-02). */
+  refresh(): Promise<void> {
+    const running = this.running;
+    if (!running) return this.read();
+    this.pending ??= running.then(() => {
+      this.pending = null;
+      return this.refresh();
+    });
+    return this.pending;
+  }
+
+  private read(): Promise<void> {
     this.cancel.abort();
     this.cancel = new AbortController();
     const signal = this.cancel.signal;
     this.generation.update((n) => n + 1);
     this.grants.set({});
     this.user.set(null);
-    if (!this.gatewayValue) {
+    const gateway = this.gatewayValue;
+    if (!gateway) {
       this.status.set('error');
-      return;
+      this.running = null;
+      return Promise.resolve();
     }
     this.status.set('loading');
+    const run: Promise<void> = this.load(gateway, signal).finally(() => {
+      if (this.running === run) this.running = null;
+    });
+    this.running = run;
+    return run;
+  }
+
+  private async load(gateway: SecurityGateway, signal: AbortSignal): Promise<void> {
     try {
-      const result = await this.gatewayValue.access(this.actor(), signal);
+      const result = await gateway.access(this.actor(), signal);
       if (signal.aborted) return;
       this.grants.set(result.grants);
       this.user.set(result.user);

@@ -2,6 +2,7 @@ import { Component, computed, inject } from '@angular/core';
 import { SessionContext } from '@ewms/core';
 import { AccessStore, type Actor } from '@ewms/core/security';
 import { Select, type SelectOption } from '@ewms/design-system';
+import { setDemoSession } from '../demo-mode';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { toSignal } from '@angular/core/rxjs-interop';
 
@@ -66,6 +67,7 @@ export class DemoContext {
     void this.select({ ...actor, warehouseId: warehouseId!, ownerId: ownerId! });
   }
   private async select(actor: Actor): Promise<void> {
+    setDemoSession?.(actor);
     await this.access.select(actor);
     const user = this.access.user();
     if (user)

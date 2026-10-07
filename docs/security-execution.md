@@ -30,8 +30,9 @@ Ejecución cerrada siguiendo el loop inspeccionar/probar/implementar/verificar/c
 
 | Contrato | Responsabilidad |
 | --- | --- |
-| `@ewms/core/security` | Catálogo cerrado, tipos, unión/procedencia, estado de acceso y guard |
+| `@ewms/core/security` | Catálogo cerrado, tipos, unión/procedencia, estado de acceso, guard, `HttpSecurityGateway` y el interceptor de 403 |
 | `@ewms/security` | Rutas y pantallas lazy; adaptador `MemorySecurityGateway` |
+| `securitySimulatorInterceptor` (shell) | Servidor simulado del contrato HTTP, solo en desarrollo y demostración; la franja fija la sesión simulada |
 | `@ewms/core/locale` | Proveedor de formatos en el entorno diferido del shell |
 | `SecurityGateway` | Lecturas y escrituras asíncronas, actor/contexto, `AbortSignal`, versiones y suscripción a cambios |
 | `Table.allowExport` | Predicado genérico del consumidor que controla CSV y copiado al ejecutar; el DS no conoce capacidades |

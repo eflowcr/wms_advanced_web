@@ -11,13 +11,14 @@ import { firstValueFrom } from 'rxjs';
 
 /**
  * La configuración de ejecución: un artefacto, muchos ambientes (DEV-011), sin secretos en el
- * bundle (Estructura §5). Hoy sin campos: ninguno lo nombra un documento. **(pendiente)**: URL
- * del API, nombre de la cabecera de traza y destino de la telemetría. Ver vault: ADR 0017.
+ * bundle (Estructura §5). `securityApiUrl` es la URL del Security Core. Ver vault: ADR 0017.
  */
-export type RuntimeConfig = Readonly<Record<never, never>>;
+export interface RuntimeConfig {
+  readonly securityApiUrl?: string;
+}
 
 /** Los campos que la configuración admite; uno nuevo entra acá con el documento que lo nombra. */
-export const RUNTIME_CONFIG_FIELDS: readonly string[] = [];
+export const RUNTIME_CONFIG_FIELDS: readonly string[] = ['securityApiUrl'];
 
 /** Junto a index.html, relativa a <base href>; el despliegue la reemplaza por ambiente. */
 export const RUNTIME_CONFIG_URL = 'config.json';
@@ -38,6 +39,10 @@ export function parseRuntimeConfig(value: unknown): RuntimeConfig {
   const unknown = Object.keys(value).filter((key) => !RUNTIME_CONFIG_FIELDS.includes(key));
   if (unknown.length > 0) {
     throw new RuntimeConfigInvalidError(`unknown field(s) ${unknown.join(', ')}`);
+  }
+  const url = (value as Record<string, unknown>)['securityApiUrl'];
+  if (url !== undefined && (typeof url !== 'string' || url === '')) {
+    throw new RuntimeConfigInvalidError('securityApiUrl must be a non-empty string');
   }
   return value as RuntimeConfig;
 }

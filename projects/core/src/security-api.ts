@@ -2,3 +2,5 @@
 export * from './lib/security/access';
 export * from './lib/security/access-store';
 export * from './lib/security/access-guard';
+export * from './lib/security/http-security-gateway';
+export * from './lib/security/security-access.interceptor';

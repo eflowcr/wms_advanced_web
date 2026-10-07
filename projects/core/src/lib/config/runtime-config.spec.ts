@@ -14,8 +14,19 @@ describe('parseRuntimeConfig', () => {
     expect(parseRuntimeConfig({})).toEqual({});
   });
 
-  it('knows no field yet: no document names one', () => {
-    expect(RUNTIME_CONFIG_FIELDS).toEqual([]);
+  it('knows the Security Core URL, the field that 05-API names', () => {
+    expect(RUNTIME_CONFIG_FIELDS).toEqual(['securityApiUrl']);
+    expect(parseRuntimeConfig({ securityApiUrl: '/api/v1/security' })).toEqual({
+      securityApiUrl: '/api/v1/security',
+    });
+  });
+
+  it('rejects a Security Core URL that is not a non-empty text', () => {
+    for (const value of [42, '', null, ['/api']]) {
+      expect(() => parseRuntimeConfig({ securityApiUrl: value }), JSON.stringify(value)).toThrow(
+        /securityApiUrl/,
+      );
+    }
   });
 
   it('rejects a field it does not know, a typo included', () => {

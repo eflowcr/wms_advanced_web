@@ -55,6 +55,30 @@ describe('storage sinks', () => {
   allows(`const storage = new Map<string, string>();`);
 });
 
+// RFE-02 de REQ-FE-SEC-002: solo AccessStore consulta los permisos efectivos al gateway.
+describe('effective access is queried only by AccessStore', () => {
+  forbids(`gateway.access(actor, signal);`);
+  forbids(`this.gateway.access(actor, signal);`);
+  forbids(`store.gateway.access(actor, signal);`);
+  forbids(`this.gatewayValue!.access(actor, signal);`);
+  allows(`router.access(path);`);
+  allows(`gateway.snapshot(request);`);
+
+  it('AccessStore may query it and still keeps every sink rule', async () => {
+    const file = 'projects/core/src/lib/security/access-store.ts';
+    assert.deepEqual(await securityErrors(`this.gatewayValue!.access(actor, signal);`, file), []);
+    assert.notEqual((await securityErrors(`document.body.innerHTML = '';`, file)).length, 0);
+    assert.notEqual((await securityErrors(`localStorage.setItem('k', 'v');`, file)).length, 0);
+  });
+
+  it('a spec may query it and still keeps every sink rule', async () => {
+    const file = 'projects/core/src/lib/probe.spec.ts';
+    assert.deepEqual(await securityErrors(`gateway.access(actor, signal);`, file), []);
+    assert.notEqual((await securityErrors(`document.write('<p></p>');`, file)).length, 0);
+    assert.notEqual((await securityErrors(`sessionStorage.clear();`, file)).length, 0);
+  });
+});
+
 describe('the storage message', () => {
   it('names nothing that does not exist, and asks for no line exception', async () => {
     const messages = (await securityErrors(`localStorage.getItem('k');`)).map((m) => m.message);

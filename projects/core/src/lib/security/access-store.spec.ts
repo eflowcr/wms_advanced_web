@@ -116,4 +116,33 @@ describe('AccessStore', () => {
       await TestBed.runInInjectionContext(() => accessGuard({} as never, { url: '/' } as never)),
     ).toBe(true);
   });
+  it('joins refreshes requested during a read into one follow-up read', async () => {
+    await store.connect(gateway, actor);
+    expect(gateway.access).toHaveBeenCalledTimes(1);
+
+    await Promise.all([store.refresh(), store.refresh(), store.refresh(), store.refresh()]);
+
+    expect(gateway.access).toHaveBeenCalledTimes(3);
+  });
+  it('a write during an in-flight read ends with the new grants', async () => {
+    await store.connect(gateway, actor);
+    let stale: (result: AccessResult) => void = () => undefined;
+    gateway.access = vi
+      .fn()
+      .mockImplementationOnce(
+        () =>
+          new Promise<AccessResult>((resolve) => {
+            stale = resolve;
+          }),
+      )
+      .mockResolvedValue({ grants: { 'users.edit': ['p'] }, user: null });
+    const first = store.refresh();
+    const afterWrite = store.refresh();
+    stale({ grants: { 'users.view': ['p'] }, user: null });
+    await Promise.all([first, afterWrite]);
+
+    expect(gateway.access).toHaveBeenCalledTimes(2);
+    expect(store.can('users.edit')).toBe(true);
+    expect(store.can('users.view')).toBe(false);
+  });
 });
