@@ -2,9 +2,7 @@
 
 Angular workspace for the eWMS Advance WMS: the web console shell, the
 `@ewms/design-system` component library with its internal catalogue at
-`/design-system`, and every CI gate wired and blocking. Product screens arrive
-with the first business domain, once the backend exists; until then the menu
-destinations render an "under construction" page.
+`/design-system`, and every CI gate wired and blocking. Security and Users are implemented with synthetic asynchronous data and scoped profile grants. Production defaults to deny until a trusted identity provider connects.
 
 Design decisions, component specs and the working log live in the team vault
 (Obsidian), not in this repository.
@@ -62,6 +60,7 @@ projects/
   shared/           @ewms/shared          leaf utilities (filters in the URL), depends on nothing
   api-client/       @ewms/api-client      reserved for the client generated from OpenAPI (empty until the backend publishes it), depends on nothing
   testing/          @ewms/testing         dev-only test helpers
+  domains/security/ @ewms/security        profiles, scoped assignments and users
 e2e/                Playwright specs (*.e2e.ts)
 ```
 
@@ -80,8 +79,8 @@ Figma is archived design reference, not a live dependency. Where Figma and this
 file disagree, this file wins: it is what compiles. See ADR 0005.
 
 <!--
-  projects/domains/ does not exist yet. The eight business domains land there,
-  one library each, once the primitives exist:
+  projects/domains/security is implemented. The other business domains land
+  beside it, one library each:
 
       security, inventory, kardex, decisions, audit, outbox, extensibility, tasks
 
@@ -132,10 +131,16 @@ boundary with one allowed and one forbidden import, and runs in `npm test`.
 - Files in kebab-case, with no type suffix: `button.ts`, never
   `button.component.ts`.
 - Selector prefixes: `ewms-` for the design system, `app-` for the shell.
-  Domain prefixes (`inv-`, `sec-`) arrive with `projects/domains/`.
+  Domain prefixes follow their module (`sec-` for Security, `inv-` for Inventory).
 - Standalone components and lazy routes only. No NgModules.
 - Signals by default: `input()`, `output()`, `computed()`.
 - Forms: **Signal Forms** (ADR 0013). A field implements `FormValueControl` or
   `FormCheckboxControl` with `model()`, and the `[ewmsForm]` pattern submits with
   `submit()`. Importing `@angular/forms` is a lint error.
 - OnPush is the Angular 22 default and is not configured per component.
+
+## Security and Users
+
+Run `npm start`, then open `/configuracion/perfiles` or `/configuracion/usuarios`. Development offers Administrator, Consultation and Limited operation scenarios and exact A/X or B/Y contexts. Reload resets all synthetic changes.
+
+`npm run build:demo` writes `dist/shell-demo`; `npm run build` writes the separate production artifact with no synthetic identity connected. `npm run e2e:domain` verifies demo flows. The replaceable application port is `@ewms/core/security`; locale formatters use `@ewms/core/locale` in the lazy shell environment. See [execution and contracts](docs/security-execution.md).

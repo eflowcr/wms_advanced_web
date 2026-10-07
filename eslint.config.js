@@ -22,7 +22,7 @@ const DOMAINS = [
 ];
 
 /** Lo que un dominio puede importar del workspace; nunca otro dominio (Estructura §3). */
-const DOMAIN_ALLOWED = ['@ewms/design-system', '@ewms/core', '@ewms/shared', '@ewms/api-client'];
+const DOMAIN_ALLOWED = ['@ewms/design-system', '@ewms/core', '@ewms/core/security', '@ewms/shared', '@ewms/api-client'];
 
 /** El sistema de diseño no conoce el router: es presentación (ADR 0014). */
 const NO_ROUTER = {
@@ -231,7 +231,7 @@ module.exports = tseslint.config(
                 'Deep relative import across projects. Import the library through its @ewms/* alias instead.',
             },
             {
-              group: ['@ewms/*/**'],
+              group: ['@ewms/*/**', '!@ewms/core/security', '!@ewms/core/locale'],
               message:
                 "Reaching past a library's public-api.ts is forbidden. Import the bare alias, e.g. '@ewms/shared'.",
             },
@@ -282,6 +282,8 @@ module.exports = tseslint.config(
     },
   },
 
+  { files: ['projects/domains/security/**/*.ts'], rules: { '@angular-eslint/component-selector': ['error', { type: 'element', prefix: 'sec', style: 'kebab-case' }] } },
+
   // ------------------------------------------------------------ las fronteras
   ...boundary('shared', 'projects/shared', [], NO_LEGACY_FORMS),
   ...boundary('api-client', 'projects/api-client', [], NO_LEGACY_FORMS),
@@ -306,6 +308,8 @@ module.exports = tseslint.config(
       '@ewms/design-system',
       '@ewms/showroom',
       '@ewms/core',
+      '@ewms/core/security',
+      '@ewms/core/locale',
       '@ewms/shared',
       '@ewms/api-client',
       ...DOMAINS,

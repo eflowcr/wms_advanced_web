@@ -1,0 +1,29 @@
+{
+  "extends": "../../../tsconfig.json",
+  "compilerOptions": {
+    "outDir": "../../../out-tsc/lib",
+    "declaration": true,
+    "declarationMap": true,
+    "types": [],
+    "paths": {
+      "@ewms/core": [
+        "../../../dist/core"
+      ],
+      "@ewms/core/security": [
+        "../../../dist/core/types/ewms-core-security.d.ts"
+      ],
+      "@ewms/design-system": [
+        "../../../dist/design-system"
+      ],
+      "@ewms/shared": [
+        "../../../dist/shared"
+      ]
+    }
+  },
+  "include": [
+    "src/**/*.ts"
+  ],
+  "exclude": [
+    "**/*.spec.ts"
+  ]
+}

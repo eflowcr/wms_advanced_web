@@ -11,7 +11,7 @@ import { compile } from 'tailwindcss';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const ENTRY = path.join(ROOT, 'projects/shell/src/styles.css');
-const UI_SOURCES = /^projects\/(?:design-system\/src\/lib|showroom\/src|shell\/src)\//;
+const UI_SOURCES = /^projects\/(?:design-system\/src\/lib|showroom\/src|shell\/src|domains\/security\/src)\//;
 
 async function loadStylesheet(id, base) {
   const file =
@@ -60,7 +60,7 @@ export function unscanned(scanned, drawing) {
 }
 
 describe('Tailwind sources', () => {
-  it('scans the UI code of the three libraries that draw, and nothing else', async () => {
+  it('scans the UI code of the libraries that draw, and nothing else', async () => {
     const files = await scannedFiles();
 
     const outside = files.filter((file) => !UI_SOURCES.test(file) || file.endsWith('.spec.ts'));
@@ -69,6 +69,7 @@ describe('Tailwind sources', () => {
       'projects/shell/src/app/layout/main-layout.html',
       'projects/design-system/src/lib/navigation/nav-rail.ts',
       'projects/showroom/src/lib/ui/prose.ts',
+      'projects/domains/security/src/lib/security-page.html',
     ]) {
       assert.ok(files.includes(expected), `${expected} no se escanea`);
     }

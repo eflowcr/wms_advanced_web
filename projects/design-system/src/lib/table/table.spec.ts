@@ -207,6 +207,7 @@ const TABLE_PROVIDERS = [
       [trackBy]="byId"
       [selectable]="selectable()"
       [quickFilter]="true"
+      [allowExport]="allowExport()"
       [density]="density()"
       ariaLabel="Expediciones"
       (rowActivate)="activated = $event.row.code"
@@ -242,6 +243,7 @@ const TABLE_PROVIDERS = [
   imports: [Table, TableColumn, EmptyTemplate],
 })
 class TestHost {
+  readonly allowExport = signal<() => boolean>(() => true);
   readonly statuses = STATUSES;
   readonly source = signal<TableSource<Row>>(new ArrayTableSource(ROWS, ['code']));
   readonly withTree = signal(true);
@@ -290,6 +292,22 @@ describe('Table', () => {
   });
 
   const settle = (): Promise<void> => stabilise(fixture);
+
+  it('checks the export gate for direct and keyboard copies', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText } });
+    const component = fixture.debugElement.query(By.directive(Table));
+    host.allowExport.set(() => false);
+    await settle();
+    const table = component.componentInstance as Table<Row>;
+    table.runExport('csv');
+    table.runExport('csv-selected');
+    table.runExport('copy');
+    const row = fixture.nativeElement.querySelector('tbody tr td') as HTMLElement;
+    expect(row).not.toBeNull();
+    row.dispatchEvent(new KeyboardEvent('keydown', { key: 'c', ctrlKey: true, bubbles: true }));
+    expect(writeText).not.toHaveBeenCalled();
+  });
 
   function grid(): HTMLElement {
     return fixture.nativeElement.querySelector('table') as HTMLElement;

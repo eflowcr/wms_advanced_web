@@ -1,0 +1,263 @@
+<section #root class="flex min-w-0 flex-col gap-6 p-4" data-security-page>
+  <header class="flex flex-col gap-2">
+    <h1 class="text-h1 text-primary">{{ 'shell.menu.profiles' | transloco }}</h1>
+    <p class="text-p text-secondary">{{ 'security.intro' | transloco }}</p>
+  </header>
+  @if (error()) {
+    <p role="alert" class="rounded-md border border-danger bg-danger-surface p-3 text-danger">
+      {{ 'security.errors.' + error() | transloco }}
+    </p>
+    <ewms-button variant="secondary" (click)="cancel(); load()">{{
+      'security.reload' | transloco
+    }}</ewms-button>
+  }
+  @if (!access.can('profiles.view')) {
+    <ewms-empty-state kind="no-access" [title]="'security.noAccess' | transloco" />
+  } @else if (!snapshot()) {
+    <p role="status" class="text-secondary">{{ 'security.loading' | transloco }}</p>
+  } @else {
+    @if (dirty()) {
+      <p role="status" class="text-caption text-warning">{{ 'security.unsaved' | transloco }}</p>
+    }
+    <section
+      class="flex flex-col gap-4 rounded-md border border-default bg-surface p-4"
+      aria-labelledby="profiles-title"
+    >
+      <h2 id="profiles-title" class="text-h2">{{ 'security.profiles' | transloco }}</h2>
+      <div class="flex flex-wrap items-end gap-3">
+        <div class="min-w-0 flex-1 basis-80">
+          <ewms-select
+            [label]="'security.profile' | transloco"
+            [options]="profiles()"
+            [value]="profileId()"
+            [disabled]="dirty()"
+            (valueChange)="chooseProfile($event)"
+          />
+        </div>
+        @if (access.can('profiles.manage')) {
+          <ewms-button [disabled]="dirty()" (click)="begin(true)">{{
+            'security.createProfile' | transloco
+          }}</ewms-button>
+          <ewms-button
+            variant="secondary"
+            data-profile-edit
+            [disabled]="dirty() || !selectedProfile()"
+            (click)="begin(false)"
+            >{{ 'security.editProfile' | transloco }}</ewms-button
+          >
+        }
+      </div>
+      @if (draft()) {
+        <form
+          [ewmsForm]="profileForm"
+          [ewmsFormAction]="saveProfile"
+          #pattern="ewmsForm"
+          class="flex flex-col gap-3"
+          data-profile-form
+        >
+          <ewms-input [label]="'security.name' | transloco" [formField]="profileForm.name" />
+          <div class="flex flex-wrap gap-2">
+            <ewms-button variant="secondary" (click)="cancel()">{{
+              'security.cancel' | transloco
+            }}</ewms-button>
+            <ewms-button type="submit" [loading]="pattern.busy()">{{
+              'security.reviewSave' | transloco
+            }}</ewms-button>
+          </div>
+        </form>
+      }
+      <div
+        class="flex flex-col gap-2 rounded-md border border-default bg-surface p-3"
+        data-profile-summary
+        aria-live="polite"
+      >
+        <h3 class="text-h3 text-primary">
+          {{ profileSummary().name || ('security.profile' | transloco) }}
+        </h3>
+        <p class="text-p text-secondary">
+          {{
+            'security.profileCounts'
+              | transloco: { screens: profileSummary().screens, actions: profileSummary().actions }
+          }}
+        </p>
+        <p class="text-caption text-secondary">
+          {{ (draft() ? 'security.draftSummary' : 'security.profileSummaryHint') | transloco }}
+        </p>
+      </div>
+      <ewms-input
+        data-screen-search
+        [label]="'security.searchScreens' | transloco"
+        [value]="search()"
+        (valueChange)="search.set($event)"
+      />
+      <ewms-checkbox
+        data-granted-filter
+        [label]="'security.onlyGranted' | transloco"
+        [checked]="onlyGranted()"
+        (checkedChange)="onlyGranted.set($event)"
+      />
+      <p class="text-caption text-secondary">{{ 'security.grantHint' | transloco }}</p>
+      <div class="flex flex-col gap-5" data-permission-matrix>
+        @for (module of modules(); track module.labelKey) {
+          <section
+            class="flex min-w-0 flex-col gap-3"
+            data-permission-module
+            [attr.aria-labelledby]="'module-' + module.labelKey"
+          >
+            <h3 [id]="'module-' + module.labelKey" class="text-h3 text-primary">
+              {{ module.labelKey | transloco }}
+            </h3>
+            <div class="grid grid-cols-fields gap-3">
+              @for (screen of module.screens; track screen.id) {
+                <fieldset class="flex min-w-0 flex-col gap-3 rounded-md border border-default p-3">
+                  <legend class="text-h4 text-primary">{{ screen.labelKey | transloco }}</legend>
+                  <p class="text-caption text-secondary">
+                    {{ 'security.screenStatus.' + screen.status | transloco }}
+                  </p>
+                  <p
+                    class="text-caption"
+                    [class.text-primary]="granted(screen.id + '.view')"
+                    [class.text-secondary]="!granted(screen.id + '.view')"
+                  >
+                    {{ grantState(screen) | transloco }}
+                    @if (screen.actions.length && granted(screen.id + '.view')) {
+                      <span>
+                        ·
+                        {{
+                          'security.actionCounts'
+                            | transloco
+                              : { count: actionCount(screen), total: screen.actions.length }
+                        }}</span
+                      >
+                    }
+                  </p>
+                  <ewms-checkbox
+                    [label]="'security.capabilities.view' | transloco"
+                    [checked]="screen.status === 'internal' || granted(screen.id + '.view')"
+                    [disabled]="
+                      !draft() ||
+                      !access.can('profiles.manage') ||
+                      busy() ||
+                      screen.status === 'internal'
+                    "
+                    (checkedChange)="toggle(screen, screen.id + '.view', $event)"
+                  />
+                  @for (action of screen.actions; track action) {
+                    <ewms-checkbox
+                      [label]="'security.capabilities.' + action | transloco"
+                      [checked]="granted(action)"
+                      [disabled]="!draft() || !access.can('profiles.manage') || busy()"
+                      (checkedChange)="toggle(screen, action, $event)"
+                    />
+                  }
+                </fieldset>
+              }
+            </div>
+          </section>
+        } @empty {
+          <ewms-empty-state kind="no-results" [title]="'security.noResults' | transloco" />
+        }
+      </div>
+    </section>
+    <section
+      class="flex flex-col gap-4 rounded-md border border-default bg-surface p-4"
+      aria-labelledby="assignments-title"
+    >
+      <h2 id="assignments-title" class="text-h2">{{ 'security.usersScope' | transloco }}</h2>
+      <p class="text-caption text-secondary">{{ 'security.assignmentHint' | transloco }}</p>
+      <div class="grid grid-cols-fields gap-3">
+        <ewms-select
+          [label]="'security.user' | transloco"
+          [options]="users()"
+          [value]="userId()"
+          [disabled]="dirty()"
+          (valueChange)="chooseUser($event)"
+        />
+        <ewms-select
+          [label]="'security.context' | transloco"
+          [options]="contexts()"
+          [value]="context()"
+          (valueChange)="chooseContext($event)"
+        />
+        @if (access.can('profiles.assign')) {
+          <ewms-select
+            [label]="'security.profile' | transloco"
+            [options]="profiles()"
+            [value]="assignmentProfile()"
+            (valueChange)="chooseAssignmentProfile($event)"
+          />
+        }
+      </div>
+      @if (access.can('profiles.assign')) {
+        <div class="flex flex-wrap gap-2">
+          <ewms-button
+            variant="secondary"
+            [disabled]="draft() !== null || !canAssignContext()"
+            (click)="addAssignment()"
+            >{{ 'security.addAssignment' | transloco }}</ewms-button
+          >
+          @if (assignments()) {
+            <ewms-button variant="secondary" (click)="cancel()">{{
+              'security.cancel' | transloco
+            }}</ewms-button>
+            <ewms-button [loading]="busy()" (click)="saveAssignments()">{{
+              'security.reviewSave' | transloco
+            }}</ewms-button>
+          }
+        </div>
+      }
+      <ul class="flex flex-col gap-3" data-assignments>
+        @for (assignment of shownAssignments(); track $index) {
+          <li
+            class="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-default bg-surface p-3"
+          >
+            <span
+              >{{ profileName(assignment.profileId) }} · {{ assignment.warehouseId }} /
+              {{ assignment.ownerId }}</span
+            >
+            @if (access.can('profiles.assign')) {
+              <ewms-button
+                variant="ghost"
+                [disabled]="draft() !== null || !canAssign(assignment)"
+                [ariaLabel]="
+                  'security.removeAssignmentLabel'
+                    | transloco
+                      : {
+                          profile: profileName(assignment.profileId),
+                          context: assignment.warehouseId + '/' + assignment.ownerId,
+                        }
+                "
+                (click)="removeAssignment(assignment)"
+                >{{ 'security.remove' | transloco }}</ewms-button
+              >
+            }
+          </li>
+        } @empty {
+          <li>
+            <ewms-empty-state kind="no-data" [title]="'security.noAssignments' | transloco" />
+          </li>
+        }
+      </ul>
+      @if (access.can('profiles.inspect')) {
+        <h3 class="text-h3">{{ 'security.effective' | transloco }}</h3>
+        <p class="text-caption text-secondary">{{ 'security.savedAccessHint' | transloco }}</p>
+        <div data-effective-access>
+          @if (inspecting()) {
+            <p role="status">{{ 'security.loading' | transloco }}</p>
+          } @else if (result().length) {
+            <dl class="flex flex-col gap-2">
+              @for (entry of result(); track entry.capability) {
+                <div class="flex flex-wrap justify-between gap-2 border-b border-default py-2">
+                  <dt>{{ capabilityLabel(entry.capability) }}</dt>
+                  <dd class="text-secondary">{{ entry.sources }}</dd>
+                </div>
+              }
+            </dl>
+          } @else {
+            <ewms-empty-state kind="no-access" [title]="'security.noGrants' | transloco" />
+          }
+        </div>
+      }
+    </section>
+  }
+</section>

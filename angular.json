@@ -30,9 +30,6 @@
           },
           "configurations": {
             "production": {
-              // Pendientes de acordar con el CTO; se revisan cuando entren los dominios. Rompen el
-              // build, no avisan (paso «Production build and bundle budgets» de ci.yml).
-              // Medidas: vault, 02-Arquitectura/Integracion Continua.md §4.
               "budgets": [
                 {
                   "type": "initial",
@@ -45,8 +42,6 @@
                   "maximumError": "8kB"
                 }
               ],
-              // inlineCritical apagado por la CSP de index.html (PLN-WMS-003 §4): escribiría
-              // un <style> y un onload en línea, bloqueados. Ver vault: Integracion Continua §11.
               "optimization": {
                 "scripts": true,
                 "styles": {
@@ -56,13 +51,27 @@
                 "fonts": true
               },
               "outputHashing": "all",
-              // La compuerta de ruta crítica lee el browser-stats.json que esto escribe (fuera de browser/).
               "statsJson": true
             },
             "development": {
               "optimization": false,
               "extractLicenses": false,
-              "sourceMap": true
+              "sourceMap": true,
+              "fileReplacements": [
+                {
+                  "replace": "projects/shell/src/app/demo-mode.ts",
+                  "with": "projects/shell/src/app/demo-mode.enabled.ts"
+                }
+              ]
+            },
+            "demo": {
+              "fileReplacements": [
+                {
+                  "replace": "projects/shell/src/app/demo-mode.ts",
+                  "with": "projects/shell/src/app/demo-mode.enabled.ts"
+                }
+              ],
+              "outputPath": "dist/shell-demo"
             }
           },
           "defaultConfiguration": "production"
@@ -252,6 +261,34 @@
           "options": {
             "tsConfig": "projects/testing/tsconfig.spec.json",
             "runnerConfig": "vitest.config.ts",
+            "coverage": true
+          }
+        }
+      }
+    },
+    "security": {
+      "projectType": "library",
+      "root": "projects/domains/security",
+      "sourceRoot": "projects/domains/security/src",
+      "prefix": "sec",
+      "architect": {
+        "build": {
+          "builder": "@angular/build:ng-packagr",
+          "configurations": {
+            "production": {
+              "tsConfig": "projects/domains/security/tsconfig.lib.prod.json"
+            },
+            "development": {
+              "tsConfig": "projects/domains/security/tsconfig.lib.json"
+            }
+          },
+          "defaultConfiguration": "production"
+        },
+        "test": {
+          "builder": "@angular/build:unit-test",
+          "options": {
+            "tsConfig": "projects/domains/security/tsconfig.spec.json",
+            "runnerConfig": "vitest.security.config.ts",
             "coverage": true
           }
         }

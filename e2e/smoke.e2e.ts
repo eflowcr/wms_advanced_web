@@ -13,12 +13,16 @@ const KNOWN_CODE = 'EXP-2026-0403';
 
 test.describe('the application is alive', () => {
   test('the shell boots and renders the home page', async ({ page }) => {
-    const dictionary = page.waitForRequest((request) => /\/i18n\/es\.json(\?|$)/.test(request.url()));
+    const dictionary = page.waitForRequest((request) =>
+      /\/i18n\/es\.json(\?|$)/.test(request.url()),
+    );
     await page.goto('/');
 
     await expect(page.getByRole('heading', { name: 'eWMS Advance' })).toBeVisible();
     // Cada petición sale con su traza W3C (AUD-003/004); la del diccionario sirve de muestra.
-    expect((await dictionary).headers()['traceparent']).toMatch(/^00-[0-9a-f]{32}-[0-9a-f]{16}-00$/);
+    expect((await dictionary).headers()['traceparent']).toMatch(
+      /^00-[0-9a-f]{32}-[0-9a-f]{16}-00$/,
+    );
     // Y el diccionario se pide con la huella de su contenido: ningún caché sirve uno viejo.
     expect((await dictionary).url()).toMatch(/\/i18n\/es\.json\?v=[0-9a-f]{10}$/);
     // Es el artefacto de producción: las utilidades `ng` de depuración solo existen en desarrollo.
@@ -35,8 +39,9 @@ test.describe('the application is alive', () => {
           return (error as Error).name;
         }
       };
-      const factory = (window as { trustedTypes?: { createPolicy(name: string, rules: object): unknown } })
-        .trustedTypes;
+      const factory = (
+        window as { trustedTypes?: { createPolicy(name: string, rules: object): unknown } }
+      ).trustedTypes;
       return {
         html: outcome(() => new DOMParser().parseFromString('<b>x</b>', 'text/html')),
         policy: outcome(() => factory?.createPolicy('probe', {})),
@@ -146,45 +151,21 @@ test.describe('the App Shell', () => {
     await expect(page.locator('[data-shell-search] input')).toBeFocused();
   });
 
-  test('a route opens a tab, and Delete closes it onto its neighbour', async ({ page }) => {
-    await page.goto('/');
-    await page.locator('[data-nav-item="catalogs"]').click();
-    await page.locator('[data-nav-item="articles"]').click();
-    await expect(page).toHaveTitle(/Art[ií]culos|Articles/);
-    await page.locator('[data-nav-item="clients"]').click();
-    await page.locator('[data-nav-item="lots"]').click();
-
-    const tabs = page.locator('[data-tab]');
-    await expect(tabs).toHaveCount(4);
-
-    // Una SPA no reemplaza el documento: sin la región viva, el lector de pantalla calla al navegar.
-    await expect(page.locator('[data-route-announce]')).toHaveText(/Lotes|Lots/);
-
-    await page.locator('[data-tab][aria-selected="true"]').press('Delete');
-
-    await expect(tabs).toHaveCount(3);
-    // Queda la vecina y no la primera: cerrar la cuarta y caer en el tablero es un salto que nadie pidió.
-    await expect(page.locator('[data-tab][aria-selected="true"]')).toHaveText(/Clientes|Customers/);
-    await expect(page.locator('[data-page-heading]')).toBeFocused();
-  });
-
-  test('a menu entry with no screen is a PAGE, never a 404, and says nothing to the console', async ({
+  test('protected operational routes default to deny without a connected identity', async ({
     page,
   }) => {
     test.setTimeout(UNDER_CONSTRUCTION.length * ROUTE_BUDGET_MS);
     const watch = await watchConsole(page);
-    for (const { url, heading } of UNDER_CONSTRUCTION) {
-      const response = await page.goto(url);
-
-      expect(response?.status(), `${url} no respondió`).toBeLessThan(400);
-      // No sirve main h1: la página anfitriona tiene un segundo main oculto (el aviso de fallo al arrancar).
-      // El h1 dice de quién es la pantalla: sin eso, el comodín que lleva al Dashboard pasaría.
-      const title = page.locator('[data-page-heading]');
-      await expect(title, `${url} no es su pantalla`).toHaveText(heading);
-      // WCAG 2.4.2: la pestaña dice la pantalla antes que la marca, y dice la misma que el h1.
-      await expect(page, `${url} no tituló la pestaña`).toHaveTitle(
-        `${await title.innerText()} · eWMS Advance`,
-      );
+    for (const { url } of [
+      ...UNDER_CONSTRUCTION,
+      { url: '/configuracion/usuarios' },
+      { url: '/configuracion/perfiles' },
+    ]) {
+      await page.goto(url);
+      await expect(page).toHaveURL(/\/\?access=denied$/);
+      await expect(page.locator('[data-page-heading]')).toHaveText('eWMS Advance');
+      await expect(page.locator('[data-security-demo]')).toHaveCount(0);
+      await expect(page.locator('[data-users-page], [data-security-page]')).toHaveCount(0);
       await watch.clean(url);
     }
   });
@@ -243,17 +224,8 @@ test.describe('the App Shell', () => {
     const overflow = await header.evaluate((el) => el.scrollWidth - el.clientWidth);
     expect(overflow, 'la cabecera se desborda a 375 px').toBeLessThanOrEqual(0);
 
-    // La hoja atrapa el foco y Escape lo devuelve: innegociable sea cual sea la forma del menú
-    // (decisión del usuario 2026-09-19).
-    const more = page.locator('[data-nav-bottom-more]');
-    await more.click();
-    const sheet = page.locator('[data-nav-bottom-sheet]');
-    await expect(sheet).toBeVisible();
-    expect(await sheet.evaluate((el) => el.contains(document.activeElement))).toBe(true);
-
-    await page.keyboard.press('Escape');
-    await expect(sheet).toHaveCount(0);
-    await expect(more).toBeFocused();
+    // Solo hay dos destinos internos autorizados; no hace falta una hoja Más.
+    await expect(page.locator('[data-nav-bottom-more]')).toHaveCount(0);
   });
 
   test('at 1024 px the open menu is a drawer: it traps the focus, and Escape or the veil give it back', async ({
@@ -302,7 +274,7 @@ test.describe('the App Shell', () => {
     await expect(drawer).toHaveCSS('animation-name', 'none');
   });
 
-  test('open, the drawer and the «Más» sheet are modal: the page under their veil is inert until they close', async ({
+  test('the drawer is modal: the page under its veil is inert until it closes', async ({
     page,
   }) => {
     const underVeil = (selector: string): Promise<boolean> =>
@@ -323,32 +295,20 @@ test.describe('the App Shell', () => {
     await page.keyboard.press('Escape');
     await expect(modal).toHaveCount(0);
     await expect(page.locator('[inert]')).toHaveCount(0);
-
-    await page.setViewportSize({ width: 375, height: 812 });
-    await page.locator('[data-nav-bottom-more]').click();
-    const sheet = page.locator('[data-nav-bottom-sheet]');
-    await expect(sheet).toHaveAttribute('aria-modal', 'true');
-    await expect(sheet).toHaveAttribute('role', 'dialog');
-    expect(await underVeil('#main')).toBe(true);
-    expect(await underVeil('[data-nav-bottom]')).toBe(true);
-    await page.keyboard.press('Escape');
-    await expect(sheet).toHaveCount(0);
-    await expect(page.locator('[inert]')).toHaveCount(0);
-    await expect(page.locator('[data-nav-bottom-more]')).toBeFocused();
   });
 
   test('any navigation closes the drawer: the logo, going back, and a wider window leave none open', async ({
     page,
   }) => {
     await page.setViewportSize({ width: 1024, height: 768 });
-    await page.goto('/catalogos/articulos');
-    await expect(page.locator('[data-page-heading]')).toBeVisible();
+    await page.goto('/design-system');
+    await expect(page.locator('#main h1')).toBeVisible();
     const drawer = page.locator('[data-nav-drawer]');
     const hamburger = page.locator('[data-rail-toggle] button');
 
     // Elegir la pantalla que ya está abierta no navega, y el cajón se cierra igual.
     await hamburger.click();
-    await drawer.locator('[data-nav-item="articles"]').click();
+    await drawer.locator('[data-nav-item="design-system"]').click();
     await expect(drawer).toHaveCount(0);
 
     // El logo está en la cabecera, encima del velo: navega sin pasar por el menú.
@@ -362,7 +322,7 @@ test.describe('the App Shell', () => {
     await hamburger.click();
     await expect(drawer).toBeVisible();
     await page.goBack();
-    await expect(page).toHaveURL(/\/catalogos\/articulos$/);
+    await expect(page).toHaveURL(/\/design-system$/);
     await expect(drawer).toHaveCount(0);
 
     // Desde 1280 el menú es panel; al volver a 1024 no reaparece un cajón que quedó abierto.
@@ -377,10 +337,9 @@ test.describe('the App Shell', () => {
 
   test('a favourite is ONE click from anywhere, and is lost on reload', async ({ page }) => {
     await page.goto('/');
-    await page.locator('[data-nav-item="catalogs"]').click();
-    await page.locator('[data-nav-item="articles"]').click();
+    await page.locator('[data-nav-item="design-system"]').click();
     // La estrella marca la pantalla que se ve: sin esperar la navegación, marcaba el Dashboard.
-    await expect(page).toHaveURL(/\/catalogos\/articulos$/);
+    await expect(page).toHaveURL(/\/design-system$/);
 
     await page.locator('[data-app-header] [data-favorite-toggle] button').click();
     const entry = page.locator('ewms-nav-rail [data-favorite]');
@@ -389,7 +348,7 @@ test.describe('the App Shell', () => {
     await page.locator('[data-nav-item="dashboard"]').click();
     await expect(page).toHaveURL(/\/$/);
     await entry.click();
-    await expect(page).toHaveURL(/\/catalogos\/articulos$/);
+    await expect(page).toHaveURL(/\/design-system$/);
 
     // La limitación se afirma (REQ-FE-DS4-002 v1.2, PACQ-01.5): la lista vive en memoria, sin storage.
     // Cuando se conecten las preferencias del Security Core esta prueba falla: ahí se reescriben los documentos.

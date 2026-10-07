@@ -167,27 +167,29 @@ test.describe('favourites: one list, and the route as the identity', () => {
   // en español en inglés (ADR 0008). Solo cambia el idioma; el nombre se resuelve al dibujar.
   test('a favourite follows the language, in the rail and in the catalogue', async ({ page }) => {
     await page.goto('/');
-    await page.locator('[data-nav-item="catalogs"]').click();
-    await page.locator('[data-nav-item="articles"]').click();
+    await page.locator('[data-nav-item="design-system"]').click();
+    await page.locator('[data-sidebar] a[href="/design-system/components/button"]').click();
     // La estrella marca la pantalla que se ve: sin esperar la navegación, marcaba el Dashboard.
-    await expect(page).toHaveURL(/\/catalogos\/articulos$/);
+    await expect(page).toHaveURL(/\/design-system\/components\/button$/);
     await page.locator('[data-app-header] [data-favorite-toggle] button').click();
 
-    const inRail = page.locator('ewms-nav-rail [data-favorite="/catalogos/articulos"]');
-    await expect(inRail).toHaveText('Artículos');
+    const inRail = page.locator('ewms-nav-rail [data-favorite="/design-system/components/button"]');
+    await expect(inRail).toHaveText('Botón');
 
     await chooseLanguage(page, 'Idioma', 'en');
-    await expect(inRail).toHaveText('Articles');
+    await expect(inRail).toHaveText('Button');
 
     // La barra del catálogo lee la misma lista y le pide el nombre a la app: sigue el idioma
     // aunque el catálogo sea solo en español.
     await page.locator('[data-nav-item="design-system"]').click();
-    const inSidebar = page.locator('[data-sidebar] [data-favorite="/catalogos/articulos"]');
-    await expect(inSidebar).toHaveText('Articles');
+    const inSidebar = page.locator(
+      '[data-sidebar] [data-favorite="/design-system/components/button"]',
+    );
+    await expect(inSidebar).toHaveText('Button');
 
     await chooseLanguage(page, 'Language', 'es');
-    await expect(inSidebar).toHaveText('Artículos');
-    await expect(inRail).toHaveText('Artículos');
+    await expect(inSidebar).toHaveText('Botón');
+    await expect(inRail).toHaveText('Botón');
   });
 });
 
@@ -549,7 +551,9 @@ test.describe('the search box', () => {
       ),
     );
     // Dos cuadros: la detección de cambios ya corrió, y una búsqueda se vería acá.
-    await page.evaluate(() => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done))));
+    await page.evaluate(
+      () => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done))),
+    );
     expect(await last.textContent()).toBe(before);
 
     await field.press('Enter');
@@ -600,7 +604,7 @@ test.describe('accessibility', () => {
       page,
     }) => {
       const watch = await watchConsole(page);
-      await page.goto(url);
+      await page.goto(`http://localhost:4401${url}`);
       await expect(page.locator('[data-page-heading]')).toHaveText(heading);
       await ready(page);
       const results = await axe(page).analyze();
@@ -1081,7 +1085,7 @@ test.describe('keyboard only', () => {
     test(`${url} (under construction): the tab order reaches every control, once`, async ({
       page,
     }) => {
-      await page.goto(url);
+      await page.goto(`http://localhost:4401${url}`);
       await expect(page.locator('[data-page-heading]')).toHaveText(heading);
       await ready(page);
       await expectTabCycle(page, url);
@@ -1921,7 +1925,9 @@ test.describe('DS-3 lote C: la tabla', () => {
 
     // Cerrada la fila, los chips dicen todo: cuántos, cuáles y con qué valor.
     await expect(page.locator(`${DEMO} [data-filter-count]`)).toHaveText('2 filtros activos');
-    await expect(page.locator(`${DEMO} [data-chip=":search"]`)).toContainText('Búsqueda: EXP-2026-04');
+    await expect(page.locator(`${DEMO} [data-chip=":search"]`)).toContainText(
+      'Búsqueda: EXP-2026-04',
+    );
     await expect(page.locator(`${DEMO} [data-chip="packages"]`)).toContainText('Bultos: ≥ 100');
     await expect(toggle).toHaveText(/Filtros \(1\)/);
     await expect(page.locator(`${DEMO} [data-filter-count-live]`)).toHaveText('2 filtros activos');
@@ -1935,7 +1941,9 @@ test.describe('DS-3 lote C: la tabla', () => {
     await expect(page.locator(`${DEMO} [data-filter-count]`)).toHaveText('1 filtro activo');
     await page.locator(`${DEMO} [data-clear-filters]`).click();
     await expect(page.locator(`${DEMO} [data-chip]`)).toHaveCount(0);
-    await expect(page.locator(`${DEMO} [data-filter-count-live]`)).toHaveText('Sin filtros activos');
+    await expect(page.locator(`${DEMO} [data-filter-count-live]`)).toHaveText(
+      'Sin filtros activos',
+    );
     await expect(page.locator(ROWS)).toHaveCount(12);
   });
 
@@ -2036,13 +2044,14 @@ test.describe('DS-3 lote C: la tabla', () => {
     const width = async (): Promise<number> => Math.round((await header.boundingBox())!.width);
 
     // Con el mouse: el separador sigue al puntero.
+    await handle.scrollIntoViewIfNeeded();
     const start = await width();
     const grip = (await handle.boundingBox())!;
     await page.mouse.move(grip.x + grip.width / 2, grip.y + grip.height / 2);
     await page.mouse.down();
     await page.mouse.move(grip.x + grip.width / 2 - 40, grip.y + grip.height / 2, { steps: 4 });
     await page.mouse.up();
-    expect(await width()).toBeLessThan(start);
+    await expect.poll(width).toBeLessThan(start);
 
     // Con el teclado: Fin al tope de la columna (`maxWidth="lg"`), Inicio al mínimo.
     const max = Number(await handle.getAttribute('aria-valuemax'));
@@ -2216,8 +2225,10 @@ test.describe('DS-3 lote C: la tabla', () => {
     const status = page.locator(`${DEMO} [data-table-status]`);
     await expect(status.locator('[data-status-rows]')).toHaveText('12 de 12 filas');
     const packages = page.locator(`${ROWS} td:nth-child(5)`);
-    const numbers = (await packages.allTextContents()).map((text) => Number(text.replace(/\D/g, '')));
-    const all =numbers.reduce((total, value) => total + value, 0);
+    const numbers = (await packages.allTextContents()).map((text) =>
+      Number(text.replace(/\D/g, '')),
+    );
+    const all = numbers.reduce((total, value) => total + value, 0);
     // es-CR, el locale de la app en español (LANGUAGE_LOCALES): agrupa también los de cuatro cifras.
     const shown = (value: number): string => new Intl.NumberFormat('es-CR').format(value);
 
@@ -2539,7 +2550,10 @@ test.describe('DS-3 lote D: detalle, menú, ventana y paginador', () => {
     const handle = page.locator(`${VIRTUAL} [data-resize="aisle"]`);
     await handle.focus();
     await page.keyboard.press('End');
-    await expect(handle).toHaveAttribute('aria-valuenow', (await handle.getAttribute('aria-valuemax'))!);
+    await expect(handle).toHaveAttribute(
+      'aria-valuenow',
+      (await handle.getAttribute('aria-valuemax'))!,
+    );
     const drawn = page.locator(`${VIRTUAL} [data-row]`);
     expect(await drawn.count()).toBeLessThan(80);
     await expect(page.locator(`${VIRTUAL} table`)).toHaveAttribute('aria-rowcount', '5000');
@@ -2661,7 +2675,11 @@ test.describe('DS-3 lote D: detalle, menú, ventana y paginador', () => {
       // Un solo marco: entre la tabla y la sección no hay otro borde.
       const borders = await page.locator(`${DEMO} ewms-table`).evaluate((table) => {
         let count = 0;
-        for (let node = table.parentElement; node && node.tagName !== 'SECTION'; node = node.parentElement) {
+        for (
+          let node = table.parentElement;
+          node && node.tagName !== 'SECTION';
+          node = node.parentElement
+        ) {
           count += getComputedStyle(node).borderTopWidth === '0px' ? 0 : 1;
         }
         return count;
@@ -2675,7 +2693,8 @@ test.describe('DS-3 lote D: detalle, menú, ventana y paginador', () => {
         const field = demo.querySelector<HTMLElement>('[data-filter="code"] input')!;
         const [c, f] = [cell.getBoundingClientRect(), field.getBoundingClientRect()];
         return {
-          differentGround: getComputedStyle(head).backgroundColor !== getComputedStyle(cell).backgroundColor,
+          differentGround:
+            getComputedStyle(head).backgroundColor !== getComputedStyle(cell).backgroundColor,
           air: Math.min(f.top - c.top, c.bottom - f.bottom),
         };
       });
@@ -2684,7 +2703,10 @@ test.describe('DS-3 lote D: detalle, menú, ventana y paginador', () => {
 
       // «Desde» y «Hasta»: una línea, sin tocarse, con el marcador entero.
       const numbers = filterRow.locator('[data-filter="packages"] input');
-      const [from, to] = [(await numbers.nth(0).boundingBox())!, (await numbers.nth(1).boundingBox())!];
+      const [from, to] = [
+        (await numbers.nth(0).boundingBox())!,
+        (await numbers.nth(1).boundingBox())!,
+      ];
       expect(Math.round(from.y)).toBe(Math.round(to.y));
       expect(to.x - (from.x + from.width)).toBeGreaterThanOrEqual(8);
 
@@ -2711,7 +2733,9 @@ test.describe('DS-3 lote D: detalle, menú, ventana y paginador', () => {
         element.dispatchEvent(new Event('scroll'));
       });
       await expect(page.locator(`${DEMO} [data-edge="end"]`)).toHaveCount(0);
-      expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
+        true,
+      );
     });
   }
 

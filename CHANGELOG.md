@@ -12,6 +12,9 @@ Hasta acá el proyecto estaba en `0.0.0`. Lo que contiene, por pull request fusi
 
 ### Agregado
 
+- Seguridad y Usuarios: perfiles, concesiones positivas, asignaciones exactas por almacén/propietario, procedencia y administración con control de versión; adaptador asíncrono sintético y demostración separada de producción.
+- Control común de acceso en rutas, navegación, pestañas, favoritos y acciones; exportación/copiar independiente de consulta. Documentación del módulo, contratos y decisiones en la bóveda.
+- Matriz de permisos agrupada por módulo, resumen del perfil y borrador, búsqueda de pantallas/módulos y filtro de concesiones con recuperación de foco.
 - Compuertas de CI bloqueantes y Dependabot sobre `main`/`development` (#4).
 - DS-2 a DS-4: sistema de diseño, showroom y patrones (#9, #12).
 - DS-5: App Shell, navegación, favoritos y la suite E2E en tres niveles (#13).
@@ -23,6 +26,7 @@ Hasta acá el proyecto estaba en `0.0.0`. Lo que contiene, por pull request fusi
 
 ### Cambiado
 
+- Protección contra fórmulas en CSV y copiado para Excel, incluidos encabezados; los números legítimos conservan su formato.
 - Optimización de CI, pruebas y comentarios (#16); comentarios en español en todo el
   repositorio (#17, #18).
 - Cierres técnicos sin errores ni desviaciones (#15, #24, #25).

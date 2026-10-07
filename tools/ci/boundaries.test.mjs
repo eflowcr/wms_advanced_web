@@ -101,6 +101,8 @@ describe('testing: everything, it is dev only', () => {
 describe('a domain: design-system, core, shared and api-client, never another domain', () => {
   allows(DOMAIN, '@ewms/design-system');
   allows(DOMAIN, '@ewms/core');
+  allows(DOMAIN, '@ewms/core/security');
+  forbids(DOMAIN, '@ewms/core/private');
   allows(DOMAIN, '@ewms/shared');
   allows(DOMAIN, '@ewms/api-client');
   forbids(DOMAIN, '@ewms/kardex');

@@ -99,7 +99,7 @@ test('no retries, in CI either: an unstable test is fixed, never retried', async
   assert.match(config, /^\s*retries: 0,\s*$/m);
 });
 
-test('the domain level runs in CI, even while it has no test', async () => {
+test('the domain level requires tests in CI', async () => {
   // Una compuerta que ningún job llama es muda, como lo fueron la 13 y la 14 hasta DS-5.
   const workflow = (await readFile(WORKFLOW, 'utf8'))
     .split(/\r?\n/)
@@ -107,7 +107,7 @@ test('the domain level runs in CI, even while it has no test', async () => {
     .join('\n');
 
   assert.match(workflow, /--project=domain\b/);
-  assert.match(workflow, /--pass-with-no-tests\b/);
+  assert.doesNotMatch(workflow, /--pass-with-no-tests\b/);
 });
 
 test('smoke and domain are two commands: a smoke that finds no test fails', async () => {
@@ -121,7 +121,7 @@ test('smoke and domain are two commands: a smoke that finds no test fails', asyn
   assert.equal(smoke.length, 1, 'one smoke command in the smoke job');
   assert.doesNotMatch(smoke[0] ?? '', /--pass-with-no-tests|--project=domain/);
   assert.equal(domain.length, 1, 'one domain command in the smoke job');
-  assert.match(domain[0] ?? '', /--pass-with-no-tests\b/);
+  assert.doesNotMatch(domain[0] ?? '', /--pass-with-no-tests\b/);
 });
 
 /**

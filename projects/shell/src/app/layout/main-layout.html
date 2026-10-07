@@ -159,6 +159,7 @@
         <!-- Lugar fijo de favoritos en la navegación (REQ-FE-DS4-002 RFE-04). -->
         <ewms-favorites-nav
           navRailTop
+          [visible]="visibleFavorite"
           ground="navy"
           [label]="'shell.favorites.title' | transloco"
           [emptyLabel]="'shell.favorites.empty' | transloco"
@@ -228,7 +229,11 @@
         class="isolate min-w-0 flex-1 [&_h1:focus]:outline-none [&_h1:focus-visible]:rounded-sm [&_h1:focus-visible]:shadow-(--focus-ring-shadow)"
         tabindex="-1"
       >
-        <router-outlet />
+        @defer (when access.demo()) { <app-demo-context /> }
+        @if (!routeAccessible()) {
+          <p role="status" class="p-4 text-secondary">{{ 'security.accessChanging' | transloco }}</p>
+        }
+        <div [hidden]="!routeAccessible()"><router-outlet /></div>
       </main>
     </div>
   </div>
@@ -272,6 +277,7 @@
     >
       <ewms-favorites-nav
         navBottomTop
+        [visible]="visibleFavorite"
         ground="navy"
         [label]="'shell.favorites.title' | transloco"
         [emptyLabel]="'shell.favorites.empty' | transloco"

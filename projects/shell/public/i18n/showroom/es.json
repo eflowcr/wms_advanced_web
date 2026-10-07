@@ -2829,6 +2829,7 @@
       "ariaLabel": "Expediciones",
       "componentLines": "líneas: la fuente, cómo se identifica una fila, el diccionario de estados, y las acciones masivas con lo que hace cada una, que es lógica de la pantalla y no de la tabla.",
       "componentTitle": "Y el componente entero",
+      "exportAllowed": "Permitir exportar y copiar",
       "frame": "El componente real, con su fuente en memoria",
       "intro": "<b>Expanda una expedición, y después una línea.</b> Cabecera → línea → serie o lote. Doce expediciones sintéticas generadas con semilla, siempre las mismas; ningún dato real de ningún cliente.",
       "lastActivated": "Última fila activada:",
@@ -2909,6 +2910,7 @@
     },
     "notApplicable": "Uno: <b>variantes</b>, porque la tabla no tiene variantes visuales. Está escrito arriba en lugar de borrado.",
     "props": {
+      "allowExport": "Comprueba autorización vigente al exportar CSV o copiar TSV, también desde el teclado. El consumidor proporciona la política.",
       "ariaLabel": "<b>Obligatoria.</b> Nombra la grilla. Una tabla sin nombre es una tabla que nadie puede pedir.",
       "bulkAction": "La acción masiva elegida, con las filas seleccionadas de cualquier página.",
       "bulkActions": "Acciones sobre lo seleccionado; la barra las muestra con «3 seleccionadas».",

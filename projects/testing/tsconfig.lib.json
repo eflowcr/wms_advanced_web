@@ -9,7 +9,8 @@
     "types": [],
     // Como en showroom: al empaquetar, `@ewms/core` se toma ya construido y no desde el fuente.
     "paths": {
-      "@ewms/core": ["../../dist/core"]
+      "@ewms/core": ["../../dist/core"],
+      "@ewms/core/locale": ["../../dist/core/types/ewms-core-locale.d.ts"]
     }
   },
   "include": ["src/**/*.ts"],

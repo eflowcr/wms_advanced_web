@@ -1,4 +1,5 @@
 import { makeEnvironmentProviders, type EnvironmentProviders } from '@angular/core';
+import { provideEwmsLocale } from '@ewms/core/locale';
 import { provideEwmsI18n } from '@ewms/core';
 import { TRANSLOCO_LOADER, type Translation, type TranslocoLoader } from '@jsverse/transloco';
 import { of, throwError, type Observable } from 'rxjs';
@@ -22,6 +23,7 @@ export function provideI18nTesting(
   };
   return makeEnvironmentProviders([
     provideEwmsI18n(),
+    provideEwmsLocale(),
     { provide: TRANSLOCO_LOADER, useValue: loader },
   ]);
 }

@@ -59,20 +59,24 @@ export default defineConfig({
       use: { ...devices['Desktop Chrome'] },
     },
     {
-      // Vacío a propósito y declarado igual: el primer dominio de DS-6 trae pruebas, y sin
-      // este proyecto irían a `showroom`, que es como una suite partida deja de estarlo.
+      // El dominio verifica exclusivamente el artefacto sintético, separado de producción.
       name: 'domain',
       testMatch: 'domains/**/*.e2e.ts',
-      use: { ...devices['Desktop Chrome'] },
+      use: { ...devices['Desktop Chrome'], baseURL: 'http://localhost:4401' },
     },
   ],
 
   // El artefacto que se despliega: build de producción servido estático, así la vigilancia de
   // consola y CSP mira lo mismo que un usuario. Ver vault: Integracion Continua §4.1.
-  webServer: {
+  webServer: [{
     command: `npm run build && node tools/e2e/serve.mjs --port ${PORT}`,
     url: BASE_URL,
     reuseExistingServer: !CI,
     timeout: 180_000,
-  },
+  }, {
+    command: `npm run build:demo && node tools/e2e/serve.mjs --port 4401 --root dist/shell-demo/browser`,
+    url: 'http://localhost:4401',
+    reuseExistingServer: !CI,
+    timeout: 180_000,
+  }],
 });

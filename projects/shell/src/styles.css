@@ -21,6 +21,7 @@
 @source '../../design-system/src/lib';
 @source '../../showroom/src';
 @source '../../shell/src';
+@source '../../domains/security/src';
 @source not '../../**/*.spec.ts';
 
 /*

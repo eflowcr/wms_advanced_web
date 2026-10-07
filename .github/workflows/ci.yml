@@ -145,13 +145,13 @@ jobs:
       - name: Install Playwright browser
         run: npx playwright install chromium --with-deps
 
-      # Sin --pass-with-no-tests: un smoke que no encuentra pruebas falla.
+      # Una suite que no encuentra pruebas falla.
       - name: Playwright smoke suite
         run: npm run e2e:smoke
 
-      # El nivel de dominio corre en cada PR; vacío hoy, la bandera lo deja pasar sin pruebas.
+      # Seguridad verifica sus flujos sintéticos en cada PR y exige encontrar pruebas.
       - name: Playwright domain suite
-        run: npm run e2e -- --project=domain --pass-with-no-tests
+        run: npm run e2e -- --project=domain
 
       - name: Upload Playwright report
         if: failure()

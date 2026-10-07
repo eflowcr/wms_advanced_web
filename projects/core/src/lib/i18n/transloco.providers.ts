@@ -11,10 +11,9 @@ import {
   provideTranslocoMissingHandler,
   provideTranslocoTranspiler,
 } from '@jsverse/transloco';
-import { provideTranslocoLocale } from '@jsverse/transloco-locale';
 import { IcuTranspiler } from './icu.transpiler';
 import { LanguageService } from './language.service';
-import { DEFAULT_LANGUAGE, LANGUAGE_LOCALES, LANGUAGES } from './language.types';
+import { DEFAULT_LANGUAGE, LANGUAGES } from './language.types';
 import { EwmsMissingHandler } from './missing-handler';
 import { NoFallbackStrategy } from './no-fallback.strategy';
 import { DICTIONARY_VERSIONS, HttpTranslocoLoader } from './transloco.loader';
@@ -49,7 +48,6 @@ export function provideEwmsI18n(
     provideTranslocoMissingHandler(EwmsMissingHandler),
     provideTranslocoFallbackStrategy(NoFallbackStrategy),
     // Sin mapeo de moneda a propósito: el código de moneda es dato del registro.
-    ...provideTranslocoLocale({ langToLocaleMapping: { ...LANGUAGE_LOCALES } }),
     provideAppInitializer(() => inject(LanguageService).init()),
   ]);
 }

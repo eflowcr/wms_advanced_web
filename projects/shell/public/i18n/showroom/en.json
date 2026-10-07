@@ -2829,6 +2829,7 @@
       "ariaLabel": "Shipments",
       "componentLines": "lines: the source, how a row is identified, the status dictionary, and the bulk actions with what each one does, which is screen logic and not table logic.",
       "componentTitle": "And the whole component",
+      "exportAllowed": "Allow export and copy",
       "frame": "The real component, with its source in memory",
       "intro": "<b>Expand a shipment, and then a line.</b> Header → line → serial number or lot. Twelve synthetic shipments generated from a seed, always the same ones; no real data from any customer.",
       "lastActivated": "Last row activated:",
@@ -2909,6 +2910,7 @@
     },
     "notApplicable": "One: <b>variants</b>, because the table has no visual variants. It is written above rather than deleted.",
     "props": {
+      "allowExport": "Checks current authorization for CSV export and TSV copy, including keyboard execution. The consumer supplies the policy.",
       "ariaLabel": "<b>Required.</b> Names the grid. A table with no name is a table nobody can ask for.",
       "bulkAction": "The chosen bulk action, with the selected rows from any page.",
       "bulkActions": "Actions on the selection; the toolbar shows them next to “3 selected”.",
