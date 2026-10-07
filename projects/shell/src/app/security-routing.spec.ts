@@ -1,6 +1,5 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { SessionContext } from '@ewms/core';
 import {
   AccessStore,
   AuthSession,
@@ -50,8 +49,5 @@ describe('startSession', () => {
       { userId: 'reader', warehouseId: 'B', ownerId: 'Y' },
       SECURITY_DEMO,
     );
-    const context = TestBed.inject(SessionContext);
-    expect(context.user()).toEqual({ name: 'Rosa  Consulta', initials: 'RC' });
-    expect(context.warehouse().code).toBe('B');
   });
 });

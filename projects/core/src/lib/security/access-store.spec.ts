@@ -76,17 +76,50 @@ describe('AccessStore', () => {
     await first;
     expect(store.can('users.view')).toBe(false);
   });
-  it('aborts pending writes, reacts to revocation and remains closed on failure', async () => {
+  it('a re-read of the same context keeps grants and operations until the new grants arrive', async () => {
     await store.connect(gateway, actor);
     const signal = store.request('users.view').signal;
-    gateway.access = vi.fn().mockResolvedValue({ grants: {}, user: null });
+    const generation = store.generation();
+    let answer: (result: AccessResult) => void = () => undefined;
+    gateway.access = vi.fn(
+      () =>
+        new Promise<AccessResult>((resolve) => {
+          answer = resolve;
+        }),
+    );
     listener();
+
+    expect(store.status()).toBe('ready');
+    expect(store.can('users.view')).toBe(true);
+    expect(signal.aborted).toBe(false);
+    answer({ grants: { 'users.edit': ['p'] }, user: null });
+    await vi.waitFor(() => expect(store.can('users.edit')).toBe(true));
+
+    expect(store.can('users.view')).toBe(false);
+    expect(store.can('users.edit')).toBe(true);
+    expect(signal.aborted).toBe(false);
+    expect(store.generation()).toBe(generation);
+  });
+  it('a context change empties, aborts operations and starts a new generation', async () => {
+    await store.connect(gateway, actor);
+    const signal = store.request('users.view').signal;
+    const generation = store.generation();
+    const changing = store.select({ ...actor, warehouseId: 'B', ownerId: 'Y' });
+
     expect(signal.aborted).toBe(true);
     expect(store.can('users.view')).toBe(false);
-    await Promise.resolve();
+    expect(store.generation()).toBe(generation + 1);
+    await changing;
+  });
+  it('a failed re-read closes everything and aborts operations', async () => {
+    await store.connect(gateway, actor);
+    const signal = store.request('users.view').signal;
     gateway.access = vi.fn().mockRejectedValue(new Error('offline'));
     await store.refresh();
+
     expect(store.status()).toBe('error');
+    expect(store.can('users.view')).toBe(false);
+    expect(signal.aborted).toBe(true);
     await store.connect(gateway, actor);
     await store.select(null);
     expect(() => store.request('users.view')).toThrow();

@@ -1,5 +1,5 @@
 import { HttpClient, HttpContext, HttpErrorResponse, HttpParams } from '@angular/common/http';
-import { inject, Injectable, InjectionToken, signal, type Signal } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { firstValueFrom, fromEvent, type Observable } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import {
@@ -15,13 +15,9 @@ import {
   SecurityError,
   type SecurityErrorCode,
 } from './access';
+import { SECURITY_API_URL } from './security-api-url';
 import { ACCESS_QUERY } from './security-access.interceptor';
 
-/** URL base del Security Core; el shell la lee de la configuración de ejecución. Sin ella, nada sale. */
-export const SECURITY_API_URL = new InjectionToken<Signal<string | undefined>>('SECURITY_API_URL', {
-  providedIn: 'root',
-  factory: () => signal(undefined),
-});
 
 const VALID_CODES = new Set<SecurityErrorCode>([
   'denied',

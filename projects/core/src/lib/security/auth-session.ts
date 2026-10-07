@@ -1,8 +1,9 @@
 import { HttpClient, HttpContext, HttpContextToken, HttpErrorResponse } from '@angular/common/http';
 import { inject, Injectable, signal, type Signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
+import { sameContext } from './access';
 import { AccessStore } from './access-store';
-import { SECURITY_API_URL } from './http-security-gateway';
+import { SECURITY_API_URL } from './security-api-url';
 
 /** Marca las peticiones de sesión: no llevan token ni disparan otra renovación. */
 export const SESSION_REQUEST = new HttpContextToken<boolean>(() => false);
@@ -44,6 +45,8 @@ export abstract class AuthSession {
   /** Una sola renovación en vuelo para todos los que la pidan; `false` cierra la sesión. */
   abstract renew(): Promise<boolean>;
   abstract signOut(): Promise<void>;
+  /** Adopta la sesión que el servidor emitió por otra vía, como el cambio de almacén. */
+  abstract adopt(grant: SessionGrant): void;
 }
 
 /** Adaptador sobre el contrato HTTP propuesto en 05-API; ver vault: Seguridad y usuarios. */
@@ -66,9 +69,10 @@ export class HttpAuthSession extends AuthSession {
     const url = this.url('/session');
     if (!url) throw new AuthError('unavailable');
     try {
-      this.accept(await firstValueFrom(this.http.post<SessionGrant>(url, credentials, options())));
+      this.adopt(await firstValueFrom(this.http.post<SessionGrant>(url, credentials, options())));
     } catch (err) {
-      const rejected = err instanceof HttpErrorResponse && (err.status === 400 || err.status === 401);
+      const rejected =
+        err instanceof HttpErrorResponse && (err.status === 400 || err.status === 401);
       throw new AuthError(rejected ? 'invalidCredentials' : 'unavailable');
     }
   }
@@ -93,7 +97,7 @@ export class HttpAuthSession extends AuthSession {
     const url = this.url('/session/refresh');
     if (!url) return false;
     try {
-      this.accept(await firstValueFrom(this.http.post<SessionGrant>(url, null, options())));
+      this.adopt(await firstValueFrom(this.http.post<SessionGrant>(url, null, options())));
       return true;
     } catch {
       this.end();
@@ -101,9 +105,15 @@ export class HttpAuthSession extends AuthSession {
     }
   }
 
-  private accept(grant: SessionGrant): void {
+  /** La sesión del servidor manda: si los permisos son de otra persona o contexto, se releen. */
+  adopt(grant: SessionGrant): void {
     this.accessToken = grant.accessToken;
     this.current.set(grant.session);
+    const { userId, warehouseId, ownerId } = grant.session;
+    const actor = this.access.actor();
+    if (this.access.status() === 'idle' || !actor) return;
+    if (actor.userId !== userId || !sameContext(actor, grant.session))
+      void this.access.select({ userId, warehouseId, ownerId });
   }
 
   private end(): void {

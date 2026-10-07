@@ -464,6 +464,9 @@ export class SecurityPage {
     try {
       await operation();
       complete();
+      // Cada pantalla recarga lo que acaba de escribir: releer permisos no recarga datos.
+      this.snapshot.set(null);
+      void this.load();
       this.toasts.show('success', this.i18n.translate('security.saved'));
       this.pendingFocus = '[data-profile-edit] button';
     } catch (error) {

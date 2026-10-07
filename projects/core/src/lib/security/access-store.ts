@@ -12,7 +12,10 @@ import {
 @Injectable({ providedIn: 'root' })
 export class AccessStore {
   private gatewayValue: SecurityGateway | null = null;
+  /** Las operaciones de las pantallas: solo un cambio de actor o contexto las aborta. */
   private cancel = new AbortController();
+  /** La consulta de permisos en vuelo. */
+  private reading = new AbortController();
   private unsubscribe: (() => void) | undefined;
   private running: Promise<void> | null = null;
   private pending: Promise<void> | null = null;
@@ -39,26 +42,23 @@ export class AccessStore {
     this.unsubscribe?.();
     this.unsubscribe = undefined;
     this.gatewayValue = null;
-    this.cancel.abort();
-    this.cancel = new AbortController();
+    this.reading.abort();
     this.running = null;
-    this.generation.update((n) => n + 1);
+    this.close();
     this.actor.set(null);
-    this.grants.set({});
-    this.user.set(null);
     this.demo.set(false);
     this.status.set('idle');
   }
 
   select(actor: Actor | null): Promise<void> {
     this.actor.set(actor);
-    return this.read();
+    return this.read(true);
   }
 
   /** Con una lectura en vuelo, las peticiones se juntan en una sola relectura al terminar (RFE-02). */
   refresh(): Promise<void> {
     const running = this.running;
-    if (!running) return this.read();
+    if (!running) return this.read(false);
     this.pending ??= running.then(() => {
       this.pending = null;
       return this.refresh();
@@ -66,20 +66,23 @@ export class AccessStore {
     return this.pending;
   }
 
-  private read(): Promise<void> {
-    this.cancel.abort();
-    this.cancel = new AbortController();
-    const signal = this.cancel.signal;
-    this.generation.update((n) => n + 1);
-    this.grants.set({});
-    this.user.set(null);
+  /**
+   * Un contexto nuevo vacía, aborta y abre otra generación. Releer el mismo conserva concesiones
+   * y operaciones hasta que llegan las nuevas: menú y pestañas no parpadean (C1).
+   */
+  private read(newContext: boolean): Promise<void> {
+    this.reading.abort();
+    this.reading = new AbortController();
+    const signal = this.reading.signal;
+    if (newContext) this.close();
     const gateway = this.gatewayValue;
     if (!gateway) {
+      this.close();
       this.status.set('error');
       this.running = null;
       return Promise.resolve();
     }
-    this.status.set('loading');
+    if (newContext || !this.ready()) this.status.set('loading');
     const run: Promise<void> = this.load(gateway, signal).finally(() => {
       if (this.running === run) this.running = null;
     });
@@ -95,8 +98,18 @@ export class AccessStore {
       this.user.set(result.user);
       this.status.set('ready');
     } catch {
-      if (!signal.aborted) this.status.set('error');
+      if (signal.aborted) return;
+      this.close();
+      this.status.set('error');
     }
+  }
+
+  private close(): void {
+    this.cancel.abort();
+    this.cancel = new AbortController();
+    this.generation.update((n) => n + 1);
+    this.grants.set({});
+    this.user.set(null);
   }
 
   can(capability: string): boolean {

@@ -186,6 +186,7 @@
       "notice": "Simulación con datos sintéticos en memoria. Se reinicia al recargar. El backend debe autorizar cada operación y su alcance.",
       "operator": "Operación limitada",
       "reader": "Consulta",
+      "taskRunning": "Simular una tarea en ejecución",
       "title": "Demostración de seguridad"
     },
     "dependencyBody": "Para conceder esta acción también debe conceder acceso a {{screen}}.",
@@ -370,6 +371,13 @@
     "underConstruction": {
       "body": "La navegación ya es la definitiva. La pantalla llega con su dominio; mientras tanto, esta página existe para que el menú no lleve a ningún sitio roto.",
       "title": "Esta pantalla todavía no está construida"
+    },
+    "warehouse": {
+      "denied": "No tiene una asignación vigente en ese almacén.",
+      "label": "Almacén activo",
+      "option": "Almacén {{ warehouse }} / Propietario {{ owner }}",
+      "taskInProgress": "No se puede cambiar de almacén mientras hay una tarea en ejecución.",
+      "unavailable": "No se pudo cambiar de almacén. Vuelva a intentarlo; si el problema continúa, avise a soporte."
     }
   }
 }

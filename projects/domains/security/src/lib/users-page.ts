@@ -238,6 +238,9 @@ export class UsersPage {
     try {
       await operation();
       complete();
+      // Cada pantalla recarga lo que acaba de escribir: releer permisos no recarga datos.
+      this.rows.set(null);
+      void this.load();
       this.toasts.show('success', this.i18n.translate('security.saved'));
       this.pendingFocus = '[data-user-create] button, [data-user-filters] input';
     } catch (error) {

@@ -23,6 +23,7 @@ import {
   resetSimulator,
   securitySimulatorInterceptor,
   setSimulatedSession,
+  setSimulatedTaskRunning,
   setSimulatorFailure,
 } from './security-simulator.interceptor';
 
@@ -237,6 +238,45 @@ describe('securitySimulatorInterceptor', () => {
     await firstValueFrom(http.delete(`${BASE}/session`));
     expect((await rejection(http.get(`${BASE}/users`))).status).toBe(401);
     expect((await rejection(http.post(`${BASE}/session/refresh`, null))).status).toBe(401);
+  });
+
+  it('lists only the contexts where the person has an assignment', async () => {
+    token = setSimulatedSession({ userId: 'operator', warehouseId: 'A', ownerId: 'X' });
+    const contexts = await firstValueFrom(http.get(`${BASE}/session/contexts`));
+    expect(contexts).toEqual([
+      { warehouseId: 'A', ownerId: 'X' },
+      { warehouseId: 'B', ownerId: 'Y' },
+    ]);
+  });
+
+  it('switches the active context of the session and serves the new one', async () => {
+    token = setSimulatedSession(admin);
+    const grant = await firstValueFrom(
+      http.put<SessionGrant>(`${BASE}/session/context`, { warehouseId: 'B', ownerId: 'Y' }),
+    );
+    expect(grant.session).toMatchObject({ userId: 'admin', warehouseId: 'B', ownerId: 'Y' });
+    token = grant.accessToken;
+    const snapshot = await firstValueFrom(http.get<SecuritySnapshot>(`${BASE}/snapshot`));
+    expect(snapshot.contexts).toBeDefined();
+  });
+
+  it('refuses a context without assignment and a change during a running task', async () => {
+    token = setSimulatedSession(admin);
+    const unknown = await rejection(
+      http.put(`${BASE}/session/context`, { warehouseId: 'Z', ownerId: 'Q' }),
+    );
+    expect(unknown.status).toBe(403);
+    setSimulatedTaskRunning(true);
+    const locked = await rejection(
+      http.put(`${BASE}/session/context`, { warehouseId: 'B', ownerId: 'Y' }),
+    );
+    expect(locked.status).toBe(409);
+    expect(locked.error).toMatchObject({ type: 'urn:ewms:security:taskInProgress' });
+    setSimulatedTaskRunning(false);
+    const grant = await firstValueFrom(
+      http.put<SessionGrant>(`${BASE}/session/context`, { warehouseId: 'B', ownerId: 'Y' }),
+    );
+    expect(grant.session.warehouseId).toBe('B');
   });
 
   it('answers unknown routes with 404', async () => {

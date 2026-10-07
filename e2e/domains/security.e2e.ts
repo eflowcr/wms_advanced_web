@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 import { watchConsole } from '../console-watch';
-import { openSignedIn, signIn } from '../session';
+import { chooseScenario, openSignedIn, signIn } from '../session';
 
 test('module search and grant filter preserve hidden permissions and preview the draft', async ({
   page,
@@ -101,8 +101,7 @@ test('a scoped screen action enables its button and operation without granting o
   await page.getByRole('button', { name: 'Revisar y guardar', exact: true }).click();
   await page.getByRole('dialog').getByRole('button', { name: 'Guardar', exact: true }).click();
   await expect(page.locator('[data-effective-access]')).toContainText('Alta de usuarios');
-  await page.locator('[data-security-demo]').getByLabel('Escenario').click();
-  await page.getByRole('option', { name: 'Consulta', exact: true }).click();
+  await chooseScenario(page, 'Consulta', 'Rosa Consulta');
   await page.locator('[data-nav-item="settings"]').click();
   await page.locator('[data-nav-item="users"]').click();
   await page.getByRole('button', { name: 'Crear usuario', exact: true }).click();
@@ -115,7 +114,7 @@ test('a scoped screen action enables its button and operation without granting o
   await page.getByText('Usuario con concesión', { exact: true }).dblclick();
   await expect(page.locator('[data-user-form]')).toHaveCount(0);
   await expect(page.locator('[data-users-page] [data-export]')).toHaveCount(0);
-  await page.locator('[data-security-demo]').getByLabel('Almacén / propietario').click();
+  await page.locator('[data-warehouse-switcher]').getByLabel('Almacén activo').click();
   await page.getByRole('option', { name: 'Almacén B / Propietario Y', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Crear usuario', exact: true })).toHaveCount(0);
   await expect(page.locator('[data-users-page]')).not.toContainText('Usuario con concesión');
@@ -126,12 +125,10 @@ test('limited operation loses editing on a context change and discards its draft
   page,
 }) => {
   await openSignedIn(page, '/configuracion/usuarios');
-  const demo = page.locator('[data-security-demo]');
-  await demo.getByLabel('Escenario').click();
-  await page.getByRole('option', { name: 'Operación limitada', exact: true }).click();
+  await chooseScenario(page, 'Operación limitada', 'Luis Operación');
   await page.getByRole('button', { name: 'Crear usuario', exact: true }).click();
   await page.locator('[data-user-form]').getByLabel('Nombre').fill('Borrador anterior');
-  await demo.getByLabel('Almacén / propietario').click();
+  await page.locator('[data-warehouse-switcher]').getByLabel('Almacén activo').click();
   await page.getByRole('option', { name: 'Almacén B / Propietario Y', exact: true }).click();
   await expect(page.locator('[data-user-form]')).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Crear usuario', exact: true })).toHaveCount(0);
@@ -145,8 +142,7 @@ test('revocation while Security is open hides data and redirects without a loop'
   await openSignedIn(page, '/configuracion/perfiles');
   await expect(page.locator('[data-permission-matrix]')).toBeVisible();
   await page.locator('[data-app-header] [data-favorite-toggle] button').click();
-  await page.locator('[data-security-demo]').getByLabel('Escenario').click();
-  await page.getByRole('option', { name: 'Operación limitada', exact: true }).click();
+  await chooseScenario(page, 'Operación limitada', 'Luis Operación');
   await expect(page).toHaveURL(/\/\?access=denied$/);
   await expect(page.locator('[data-security-page]')).toHaveCount(0);
   await expect(page.locator('[data-nav-item="profiles"]')).toHaveCount(0);
@@ -222,8 +218,7 @@ test('consultation cannot create, export, copy or administer, including keyboard
 }) => {
   await context.grantPermissions(['clipboard-read', 'clipboard-write']);
   await openSignedIn(page, '/configuracion/usuarios');
-  await page.locator('[data-security-demo]').getByLabel('Escenario').click();
-  await page.getByRole('option', { name: 'Consulta' }).click();
+  await chooseScenario(page, 'Consulta', 'Rosa Consulta');
   await expect(page.getByRole('button', { name: 'Crear usuario', exact: true })).toHaveCount(0);
   await page.keyboard.press('Alt+n');
   await expect(page.locator('[data-user-form]')).toHaveCount(0);

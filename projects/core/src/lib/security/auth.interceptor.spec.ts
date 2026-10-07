@@ -6,7 +6,7 @@ import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { AuthSession, SESSION_REQUEST } from './auth-session';
 import { authInterceptor } from './auth.interceptor';
-import { SECURITY_API_URL } from './http-security-gateway';
+import { SECURITY_API_URL } from './security-api-url';
 
 const BASE = '/api/v1/security';
 

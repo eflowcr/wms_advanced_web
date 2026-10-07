@@ -1,5 +1,4 @@
 import { inject } from '@angular/core';
-import { SessionContext } from '@ewms/core';
 import { AccessStore, accessGuard, AuthSession, HttpSecurityGateway } from '@ewms/core/security';
 import type { ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
 import { SECURITY_DEMO } from './demo-mode';
@@ -7,22 +6,10 @@ import { SECURITY_DEMO } from './demo-mode';
 /** Con la sesión ya abierta, conecta los permisos efectivos de quien la abrió, una vez por sesión. */
 export async function startSession(): Promise<void> {
   const access = inject(AccessStore);
-  const context = inject(SessionContext);
   const info = inject(AuthSession).session();
   if (!info || access.status() !== 'idle') return;
   const actor = { userId: info.userId, warehouseId: info.warehouseId, ownerId: info.ownerId };
   await access.connect(inject(HttpSecurityGateway), actor, SECURITY_DEMO);
-  context.setUser({ name: info.name, initials: initials(info.name) });
-  context.setWarehouse({ code: info.warehouseId, name: info.warehouseId });
-}
-
-function initials(name: string): string {
-  const words = name.trim().split(/\s+/);
-  return words
-    .slice(0, 2)
-    .map((word) => word.charAt(0))
-    .join('')
-    .toUpperCase();
 }
 
 export const authorizeRoute = (route: ActivatedRouteSnapshot, state: RouterStateSnapshot) =>

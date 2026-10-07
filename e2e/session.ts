@@ -15,6 +15,10 @@ export async function serveSession(target: BrowserContext | Page): Promise<void>
     const { pathname } = new URL(route.request().url());
     if (pathname.endsWith('/session/refresh'))
       return route.fulfill({ json: { accessToken: 'e2e-access', session: PERSON } });
+    if (pathname.endsWith('/session/contexts'))
+      return route.fulfill({
+        json: [{ warehouseId: PERSON.warehouseId, ownerId: PERSON.ownerId }],
+      });
     if (pathname.endsWith('/access'))
       return route.fulfill({
         json: { grants: {}, user: { id: PERSON.userId, name: PERSON.name, active: true, version: 1 } },
@@ -49,4 +53,11 @@ export async function signIn(page: Page, user = 'admin'): Promise<void> {
 export async function openSignedIn(page: Page, url: string, user = 'admin'): Promise<void> {
   await page.goto(url);
   await signIn(page, user);
+}
+
+/** La franja cambia de persona iniciando sesión en el simulador: se espera a que la cabecera la muestre. */
+export async function chooseScenario(page: Page, scenario: string, person: string): Promise<void> {
+  await page.locator('[data-security-demo]').getByLabel('Escenario').click();
+  await page.getByRole('option', { name: scenario, exact: true }).click();
+  await expect(page.locator('[data-shell-stamp]').first()).toContainText(person);
 }

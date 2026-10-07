@@ -186,6 +186,7 @@
       "notice": "Synthetic simulation held in memory. Reload resets it. The backend must authorize every operation and its scope.",
       "operator": "Limited operation",
       "reader": "Consultation",
+      "taskRunning": "Simulate a running task",
       "title": "Security demonstration"
     },
     "dependencyBody": "To grant this action, also grant access to {{screen}}.",
@@ -370,6 +371,13 @@
     "underConstruction": {
       "body": "The navigation is already the final one. The screen arrives with its domain; until then this page exists so the menu never leads somewhere broken.",
       "title": "This screen is not built yet"
+    },
+    "warehouse": {
+      "denied": "You have no current assignment in that warehouse.",
+      "label": "Active warehouse",
+      "option": "Warehouse {{ warehouse }} / Owner {{ owner }}",
+      "taskInProgress": "The warehouse cannot change while a task is running.",
+      "unavailable": "The warehouse could not change. Please try again; if the problem continues, contact support."
     }
   }
 }

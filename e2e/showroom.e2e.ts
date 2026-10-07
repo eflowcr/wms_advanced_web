@@ -1088,6 +1088,8 @@ test.describe('keyboard only', () => {
     }) => {
       await openSignedIn(page, `http://localhost:4401${url}`);
       await expect(page.locator('[data-page-heading]')).toHaveText(heading);
+      // Con dos almacenes asignados, el selector diferido de la cabecera es parte del ciclo.
+      await expect(page.locator('[data-warehouse-switcher] input')).toBeVisible();
       await ready(page);
       await expectTabCycle(page, url);
     });

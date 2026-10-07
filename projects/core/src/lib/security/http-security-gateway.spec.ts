@@ -11,7 +11,8 @@ import {
   type SecuritySnapshot,
   type SecurityUser,
 } from './access';
-import { HttpSecurityGateway, SECURITY_API_URL } from './http-security-gateway';
+import { HttpSecurityGateway } from './http-security-gateway';
+import { SECURITY_API_URL } from './security-api-url';
 import { ACCESS_QUERY } from './security-access.interceptor';
 
 describe('HttpSecurityGateway', () => {

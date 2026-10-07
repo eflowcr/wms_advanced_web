@@ -4,7 +4,7 @@ import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { AccessStore } from './access-store';
 import { AuthError, AuthSession, SESSION_REQUEST, type SessionGrant } from './auth-session';
-import { SECURITY_API_URL } from './http-security-gateway';
+import { SECURITY_API_URL } from './security-api-url';
 
 const BASE = '/api/v1/security';
 const grant: SessionGrant = {
@@ -122,5 +122,20 @@ describe('AuthSession', () => {
     expect(auth.token()).toBeNull();
     expect(auth.session()).toBeNull();
     expect(disconnect).toHaveBeenCalled();
+  });
+
+  it('adopts a session the server issued elsewhere and the access follows it', () => {
+    const { auth, access } = setup();
+    access.status.set('ready');
+    access.actor.set({ userId: 'admin', warehouseId: 'A', ownerId: 'X' });
+    const select = vi.spyOn(access, 'select').mockResolvedValue();
+    auth.adopt({ ...grant, accessToken: 'token-3' });
+    expect(select).not.toHaveBeenCalled();
+    const moved = { ...grant.session, warehouseId: 'B', ownerId: 'Y' };
+    auth.adopt({ accessToken: 'token-4', session: moved });
+    expect(auth.token()).toBe('token-4');
+    expect(select).toHaveBeenCalledWith({ userId: 'admin', warehouseId: 'B', ownerId: 'Y' });
+    auth.adopt({ accessToken: 'token-5', session: { ...moved, userId: 'reader' } });
+    expect(select).toHaveBeenLastCalledWith({ userId: 'reader', warehouseId: 'B', ownerId: 'Y' });
   });
 });

@@ -9,7 +9,7 @@ import { Router } from '@angular/router';
 import { from, throwError } from 'rxjs';
 import { catchError, switchMap } from 'rxjs/operators';
 import { AuthSession, SESSION_REQUEST } from './auth-session';
-import { SECURITY_API_URL } from './http-security-gateway';
+import { SECURITY_API_URL } from './security-api-url';
 
 /** La petición ya se repitió tras renovar: un segundo 401 no renueva otra vez. */
 const RENEWED = new HttpContextToken<boolean>(() => false);

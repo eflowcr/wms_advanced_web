@@ -92,6 +92,17 @@
         [removedMessage]="'shell.favorites.removed' | transloco"
       />
 
+      <!-- El almacén activo siempre a la vista; el selector llega diferido, fuera de la ruta crítica. -->
+      @if (viewport.isWide()) {
+        <div class="w-44 shrink-0">
+          @defer (when auth.session()) {
+            <app-warehouse-switcher />
+          } @placeholder {
+            <span class="text-caption text-secondary">{{ session.warehouse().code }}</span>
+          }
+        </div>
+      }
+
       <app-language-switcher />
 
       <ewms-button
@@ -187,6 +198,16 @@
 
     <!-- El pie deja aire para la marca de agua, y bajo 768 px para la barra inferior: nada queda debajo. -->
     <div class="flex min-w-0 flex-1 flex-col gap-3 px-4 pb-20">
+      <!-- Bajo 768 px la cabecera no tiene sitio: el almacén activo encabeza el contenido. -->
+      @if (!viewport.isWide()) {
+        <section class="pt-3" [attr.aria-label]="'shell.warehouse.label' | transloco">
+          @defer (when auth.session()) {
+            <app-warehouse-switcher />
+          } @placeholder {
+            <span class="text-caption text-secondary">{{ session.warehouse().code }}</span>
+          }
+        </section>
+      }
       <!--
         `<nav>` con nombre (lo pidió axe: sin landmark se la saltaba). Fija bajo la cabecera en
         --layer-shell-strip: debajo del velo del cajón y sobre toda la página, que `<main>` aísla.

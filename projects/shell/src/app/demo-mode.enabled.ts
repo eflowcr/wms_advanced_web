@@ -1,6 +1,6 @@
 import type { HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
-import { SECURITY_API_URL, type Actor } from '@ewms/core/security';
+import { SECURITY_API_URL } from '@ewms/core/security';
 import { from } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
 
@@ -17,6 +17,6 @@ export const DEMO_HTTP_INTERCEPTORS: readonly HttpInterceptorFn[] = [
   },
 ];
 
-export const setDemoSession: ((actor: Actor | null) => Promise<void>) | null = async (actor) => {
-  (await simulator()).setSimulatedSession(actor);
+export const setDemoTaskRunning: ((running: boolean) => Promise<void>) | null = async (running) => {
+  (await simulator()).setSimulatedTaskRunning(running);
 };

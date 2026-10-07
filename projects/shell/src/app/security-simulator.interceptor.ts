@@ -8,11 +8,13 @@ import {
 } from '@angular/common/http';
 import { inject } from '@angular/core';
 import {
+  type AccessContext,
   type Actor,
   type Assignment,
   type Profile,
   SECURITY_API_URL,
   SecurityError,
+  sameContext,
   type SecurityErrorCode,
   type SecurityRequest,
   type SecurityUser,
@@ -32,6 +34,7 @@ let session: Actor | null = null;
 let token: string | null = null;
 let issued = 0;
 let nextFailure: SecurityErrorCode | null = null;
+let taskRunning = false;
 
 function issue(): string {
   issued += 1;
@@ -45,6 +48,12 @@ export function resetSimulator(next: MemoryOptions = {}): void {
   session = null;
   token = null;
   nextFailure = null;
+  taskRunning = false;
+}
+
+/** Una tarea en ejecución bloquea el cambio de almacén, como lo haría el servidor (PACQ-09). */
+export function setSimulatedTaskRunning(running: boolean): void {
+  taskRunning = running;
 }
 
 /**
@@ -79,6 +88,7 @@ const STATUS: Readonly<Record<string, number>> = {
   conflict: 409,
   duplicate: 409,
   lastAdmin: 409,
+  taskInProgress: 409,
 };
 
 /** Rechazo con RFC 9457: un `type` estable y ningún detalle interno. */
@@ -93,20 +103,30 @@ function problem(req: HttpRequest<unknown>, code: string, status = STATUS[code] 
 
 const ok = (body: unknown = null) => new HttpResponse({ status: 200, body });
 
-/** La sesión y su token nuevos; el anterior deja de valer. Sin usuario activo, `null`. */
-async function grant(userId: string): Promise<SessionGrant | null> {
+/** Los contextos donde la persona tiene alguna concesión, con su nombre; sin ninguno, ninguno. */
+async function assigned(userId: string) {
   const gateway = await server();
   const signal = new AbortController().signal;
   const { demoSnapshot } = await import('@ewms/security');
+  const found: { context: AccessContext; name: string }[] = [];
   for (const context of demoSnapshot().contexts) {
-    const candidate = { userId, ...context };
-    const { user, grants } = await gateway.access(candidate, signal);
-    if (!user || Object.keys(grants).length === 0) continue;
-    session = { ...candidate };
-    token = issue();
-    return { accessToken: token, session: { ...session, name: user.name } };
+    const { user, grants } = await gateway.access({ userId, ...context }, signal);
+    if (user && Object.keys(grants).length > 0) found.push({ context, name: user.name });
   }
-  return null;
+  return found;
+}
+
+/** La sesión en ese contexto y su token nuevo; el anterior deja de valer. */
+function open(userId: string, context: AccessContext, name: string): SessionGrant {
+  session = { userId, warehouseId: context.warehouseId, ownerId: context.ownerId };
+  token = issue();
+  return { accessToken: token, session: { ...session, name } };
+}
+
+/** La sesión y su token nuevos en el primer contexto asignado. Sin usuario activo, `null`. */
+async function grant(userId: string): Promise<SessionGrant | null> {
+  const [first] = await assigned(userId);
+  return first ? open(userId, first.context, first.name) : null;
 }
 
 /** Inicio, renovación y cierre: no piden token; la renovación usa la sesión, como una cookie. */
@@ -142,6 +162,17 @@ async function answer(req: HttpRequest<unknown>, path: string, actor: Actor) {
   const id = target === undefined ? '' : decodeURIComponent(target);
   const route = `${req.method} ${path.replace(/^\/(users|profiles)\/[^/]+/, '/$1/:id')}`;
   switch (route) {
+    case 'GET /session/contexts':
+      return ok((await assigned(actor.userId)).map(({ context }) => context));
+    case 'PUT /session/context': {
+      if (taskRunning) throw problem(req, 'taskInProgress');
+      const wanted = req.body as AccessContext;
+      const target = (await assigned(actor.userId)).find(({ context }) =>
+        sameContext(context, wanted),
+      );
+      if (!target) throw problem(req, 'denied');
+      return ok(open(actor.userId, target.context, target.name));
+    }
     case 'GET /access':
       return ok(await gateway.access(actor, request.signal));
     case 'GET /snapshot':
