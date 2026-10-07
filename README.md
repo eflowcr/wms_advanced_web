@@ -141,6 +141,6 @@ boundary with one allowed and one forbidden import, and runs in `npm test`.
 
 ## Security and Users
 
-Run `npm start`, then open `/configuracion/perfiles` or `/configuracion/usuarios`. Development offers Administrator, Consultation and Limited operation scenarios and exact A/X or B/Y contexts. Reload resets all synthetic changes.
+Run `npm start` and sign in as `admin`, `reader` or `operator` with any non-empty password (the simulator keeps the session in memory, so a reload asks again), then open `/configuracion/perfiles` or `/configuracion/usuarios`. Development offers Administrator, Consultation and Limited operation scenarios and exact A/X or B/Y contexts. Reload resets all synthetic changes.
 
 `npm run build:demo` writes `dist/shell-demo`; `npm run build` writes the separate production artifact with no synthetic identity connected. `npm run e2e:domain` verifies demo flows. The replaceable application port is `@ewms/core/security`; locale formatters use `@ewms/core/locale` in the lazy shell environment. See [execution and contracts](docs/security-execution.md).

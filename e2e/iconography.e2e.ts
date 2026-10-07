@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './session';
 
 /**
  * Los tokens de icono solo existen en la hoja real: el par ancho / grosor de trazo por tamaño

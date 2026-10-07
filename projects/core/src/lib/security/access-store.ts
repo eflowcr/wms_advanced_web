@@ -34,6 +34,22 @@ export class AccessStore {
     return this.select(actor);
   }
 
+  /** Al cerrar sesión: aborta, olvida el gateway y deja todo cerrado hasta el próximo connect. */
+  disconnect(): void {
+    this.unsubscribe?.();
+    this.unsubscribe = undefined;
+    this.gatewayValue = null;
+    this.cancel.abort();
+    this.cancel = new AbortController();
+    this.running = null;
+    this.generation.update((n) => n + 1);
+    this.actor.set(null);
+    this.grants.set({});
+    this.user.set(null);
+    this.demo.set(false);
+    this.status.set('idle');
+  }
+
   select(actor: Actor | null): Promise<void> {
     this.actor.set(actor);
     return this.read();

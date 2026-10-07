@@ -1,5 +1,5 @@
 import { axe } from './axe';
-import { expect, test } from '@playwright/test';
+import { expect, test } from './session';
 import { KEYBOARD, PAGES, ROUTE_BUDGET_MS, SEARCH_CREATE_EDIT, UNDER_CONSTRUCTION } from './routes';
 import { watchConsole } from './console-watch';
 

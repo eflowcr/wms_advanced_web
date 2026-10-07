@@ -20,7 +20,7 @@ import {
 } from '@angular/router';
 import { filter, map } from 'rxjs';
 import { SessionContext } from '@ewms/core';
-import { AccessStore } from '@ewms/core/security';
+import { AccessStore, AuthSession } from '@ewms/core/security';
 import {
   Breadcrumbs,
   FavoriteToggle,
@@ -94,6 +94,7 @@ export class MainLayout {
 
   protected readonly session = inject(SessionContext);
   protected readonly access = inject(AccessStore);
+  private readonly auth = inject(AuthSession);
   protected readonly routeAccessible = computed(() => this.access.canRoute(this.url()));
   protected readonly visibleFavorite = (favorite: Favorite): boolean => this.access.canRoute(favorite.route);
   protected readonly viewport = inject(Viewport);
@@ -377,5 +378,11 @@ export class MainLayout {
   /** Destino del atajo `/`: el campo real, no el host, que no es enfocable. */
   protected focusSearch(): void {
     this.searchField()?.focus();
+  }
+
+  /** Cierra la sesión en el servidor y en memoria; los permisos quedan cerrados antes de salir. */
+  protected async signOut(): Promise<void> {
+    await this.auth.signOut();
+    await this.router.navigateByUrl('/login');
   }
 }

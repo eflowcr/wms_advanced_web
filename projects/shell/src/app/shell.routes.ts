@@ -1,20 +1,19 @@
 import { provideEwmsLocale } from '@ewms/core/locale';
 import type { Routes } from '@angular/router';
 import { inject, Injector, runInInjectionContext } from '@angular/core';
-import { SECURITY_DEMO } from './demo-mode';
+import { sessionGuard } from '@ewms/core/security';
 
 export const shellRoutes: Routes = [
-  // Marco de aplicación; la identidad operativa se conecta mediante el proveedor de acceso.
+  // Capa autenticada (ADR 0012): sin sesión no entra; con ella, conecta los permisos efectivos.
   {
     path: '',
     providers: [provideEwmsLocale()],
     canMatch: [
+      sessionGuard,
       async () => {
         const injector = inject(Injector);
-        if (SECURITY_DEMO) {
-          const { initializeDemo } = await import('./security-routing');
-          await runInInjectionContext(injector, initializeDemo);
-        }
+        const { startSession } = await import('./security-routing');
+        await runInInjectionContext(injector, startSession);
         return true;
       },
     ],

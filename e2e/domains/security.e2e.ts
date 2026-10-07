@@ -1,12 +1,13 @@
 import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 import { watchConsole } from '../console-watch';
+import { openSignedIn, signIn } from '../session';
 
 test('module search and grant filter preserve hidden permissions and preview the draft', async ({
   page,
 }) => {
   const watch = await watchConsole(page);
-  await page.goto('/configuracion/perfiles');
+  await openSignedIn(page, '/configuracion/perfiles');
   await expect(page.locator('[data-permission-module]')).toHaveCount(3);
   const summary = page.locator('[data-profile-summary]');
   await expect(summary).toContainText('13 pantallas y 7 acciones concedidas');
@@ -48,7 +49,7 @@ test('module search and grant filter preserve hidden permissions and preview the
 
 test('profile grants are saved, assigned and explained by provenance', async ({ page }) => {
   const watch = await watchConsole(page);
-  await page.goto('/configuracion/perfiles');
+  await openSignedIn(page, '/configuracion/perfiles');
   await page.getByRole('button', { name: 'Crear perfil', exact: true }).click();
   await page.locator('[data-profile-form]').getByLabel('Nombre').fill('Exportación adicional');
   const users = page.getByRole('group', { name: 'Usuarios', exact: true });
@@ -75,7 +76,7 @@ test('a scoped screen action enables its button and operation without granting o
   page,
 }) => {
   const watch = await watchConsole(page);
-  await page.goto('/configuracion/perfiles');
+  await openSignedIn(page, '/configuracion/perfiles');
   await page.getByRole('button', { name: 'Crear perfil', exact: true }).click();
   await page.locator('[data-profile-form]').getByLabel('Nombre').fill('Alta de usuarios');
   const users = page.getByRole('group', { name: 'Usuarios', exact: true });
@@ -124,7 +125,7 @@ test('a scoped screen action enables its button and operation without granting o
 test('limited operation loses editing on a context change and discards its draft', async ({
   page,
 }) => {
-  await page.goto('/configuracion/usuarios');
+  await openSignedIn(page, '/configuracion/usuarios');
   const demo = page.locator('[data-security-demo]');
   await demo.getByLabel('Escenario').click();
   await page.getByRole('option', { name: 'Operación limitada', exact: true }).click();
@@ -141,7 +142,7 @@ test('limited operation loses editing on a context change and discards its draft
 test('revocation while Security is open hides data and redirects without a loop', async ({
   page,
 }) => {
-  await page.goto('/configuracion/perfiles');
+  await openSignedIn(page, '/configuracion/perfiles');
   await expect(page.locator('[data-permission-matrix]')).toBeVisible();
   await page.locator('[data-app-header] [data-favorite-toggle] button').click();
   await page.locator('[data-security-demo]').getByLabel('Escenario').click();
@@ -156,7 +157,7 @@ test('revocation while Security is open hides data and redirects without a loop'
 test('authorized routes open tabs and keyboard Delete restores the neighbouring page', async ({
   page,
 }) => {
-  await page.goto('/');
+  await openSignedIn(page, '/');
   await page.locator('[data-nav-item="settings"]').click();
   await page.locator('[data-nav-item="users"]').click();
   await expect(page).toHaveTitle(/Usuarios/);
@@ -173,7 +174,7 @@ test('authorized routes open tabs and keyboard Delete restores the neighbouring 
 test('administrator creates a user, edits a profile and cancels without committing', async ({
   page,
 }) => {
-  await page.goto('/configuracion/usuarios');
+  await openSignedIn(page, '/configuracion/usuarios');
   await expect(page.locator('[data-users-page]')).toBeVisible();
   await page.getByRole('button', { name: 'Crear usuario', exact: true }).click();
   await page.locator('[data-user-form]').getByLabel('Nombre').fill('Usuario de prueba');
@@ -182,7 +183,7 @@ test('administrator creates a user, edits a profile and cancels without committi
     .getByRole('button', { name: 'Guardar', exact: true })
     .click();
   await expect(page.locator('[data-users-page]')).toContainText('Usuario de prueba');
-  await page.goto('/configuracion/perfiles');
+  await openSignedIn(page, '/configuracion/perfiles');
   await page.getByRole('button', { name: 'Editar perfil', exact: true }).click();
   await page.locator('[data-profile-form]').getByLabel('Nombre').fill('Discarded name');
   await page
@@ -196,7 +197,7 @@ test('administrator creates a user, edits a profile and cancels without committi
 test('user search and state filters restrict the visible rows and survive a reload', async ({
   page,
 }) => {
-  await page.goto('/configuracion/usuarios');
+  await openSignedIn(page, '/configuracion/usuarios');
   const table = page.locator('[data-users-page] ewms-table');
   await expect(table).toContainText('Ana Admin');
   const search = page.getByLabel('Buscar por nombre o identificador', { exact: true });
@@ -210,6 +211,7 @@ test('user search and state filters restrict the visible rows and survive a relo
   await expect(table).not.toContainText('Rosa Consulta');
   await expect(page).toHaveURL(/state=inactive/);
   await page.reload();
+  await signIn(page);
   await expect(table).toContainText('Usuario inactivo');
   await expect(table).not.toContainText('Ana Admin');
 });
@@ -219,7 +221,7 @@ test('consultation cannot create, export, copy or administer, including keyboard
   context,
 }) => {
   await context.grantPermissions(['clipboard-read', 'clipboard-write']);
-  await page.goto('/configuracion/usuarios');
+  await openSignedIn(page, '/configuracion/usuarios');
   await page.locator('[data-security-demo]').getByLabel('Escenario').click();
   await page.getByRole('option', { name: 'Consulta' }).click();
   await expect(page.getByRole('button', { name: 'Crear usuario', exact: true })).toHaveCount(0);
@@ -245,7 +247,7 @@ for (const locale of ['es-CR', 'en-US']) {
     for (const width of [1280, 390]) {
       await page.setViewportSize({ width, height: 900 });
       for (const route of ['/configuracion/perfiles', '/configuracion/usuarios']) {
-        await page.goto(route);
+        await openSignedIn(page, route);
         await expect(page.locator('[data-security-page], [data-users-page]')).toBeVisible();
         await expect(
           page.locator(
@@ -273,7 +275,7 @@ for (const locale of ['es-CR', 'en-US']) {
 
 test('mobile navigation sheet traps focus and returns it on Escape', async ({ page }) => {
   await page.setViewportSize({ width: 375, height: 812 });
-  await page.goto('/');
+  await openSignedIn(page, '/');
   const more = page.locator('[data-nav-bottom-more]');
   await more.click();
   const sheet = page.locator('[data-nav-bottom-sheet]');

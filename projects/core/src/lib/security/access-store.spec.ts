@@ -145,4 +145,22 @@ describe('AccessStore', () => {
     expect(store.can('users.edit')).toBe(true);
     expect(store.can('users.view')).toBe(false);
   });
+  it('disconnecting at sign-out closes everything and lets the next session connect', async () => {
+    const unsubscribe = vi.fn();
+    gateway.subscribe = vi.fn(() => unsubscribe);
+    await store.connect(gateway, actor, true);
+    const signal = store.request('users.view').signal;
+    store.disconnect();
+
+    expect(signal.aborted).toBe(true);
+    expect(unsubscribe).toHaveBeenCalled();
+    expect(store.status()).toBe('idle');
+    expect(store.actor()).toBeNull();
+    expect(store.user()).toBeNull();
+    expect(store.demo()).toBe(false);
+    expect(store.can('users.view')).toBe(false);
+    expect(() => store.gateway).toThrow(new SecurityError('unavailable'));
+    await store.connect(gateway, actor);
+    expect(store.can('users.view')).toBe(true);
+  });
 });

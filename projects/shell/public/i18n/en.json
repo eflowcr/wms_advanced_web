@@ -280,6 +280,17 @@
       "label": "Language",
       "unavailable": "The selected language could not be loaded. The interface stays in English; please try again later."
     },
+    "login": {
+      "demoHint": "Demo: sign in as admin, reader or operator, with any password.",
+      "hidePassword": "Hide password",
+      "invalidCredentials": "Incorrect user or password.",
+      "password": "Password",
+      "showPassword": "Show password",
+      "submit": "Sign in",
+      "title": "Sign in",
+      "unavailable": "Sign-in failed. Please try again; if the problem continues, contact support.",
+      "username": "User"
+    },
     "menu": {
       "articles": "Articles",
       "carriers": "Carriers",

@@ -67,7 +67,7 @@ export class DemoContext {
     void this.select({ ...actor, warehouseId: warehouseId!, ownerId: ownerId! });
   }
   private async select(actor: Actor): Promise<void> {
-    setDemoSession?.(actor);
+    await setDemoSession?.(actor);
     await this.access.select(actor);
     const user = this.access.user();
     if (user)

@@ -1,5 +1,6 @@
 import { axe } from './axe';
-import { expect, test, type Locator, type Page } from '@playwright/test';
+import { type Locator, type Page } from '@playwright/test';
+import { expect, openSignedIn, serveSession, test } from './session';
 import { watchConsole } from './console-watch';
 import { chooseLanguage } from './language';
 
@@ -604,7 +605,7 @@ test.describe('accessibility', () => {
       page,
     }) => {
       const watch = await watchConsole(page);
-      await page.goto(`http://localhost:4401${url}`);
+      await openSignedIn(page, `http://localhost:4401${url}`);
       await expect(page.locator('[data-page-heading]')).toHaveText(heading);
       await ready(page);
       const results = await axe(page).analyze();
@@ -1085,7 +1086,7 @@ test.describe('keyboard only', () => {
     test(`${url} (under construction): the tab order reaches every control, once`, async ({
       page,
     }) => {
-      await page.goto(`http://localhost:4401${url}`);
+      await openSignedIn(page, `http://localhost:4401${url}`);
       await expect(page.locator('[data-page-heading]')).toHaveText(heading);
       await ready(page);
       await expectTabCycle(page, url);
@@ -2140,6 +2141,7 @@ test.describe('DS-3 lote C: la tabla', () => {
         ],
       },
     });
+    await serveSession(context);
     const page = await context.newPage();
     await page.goto(TABLE);
     await ready(page);

@@ -1,4 +1,5 @@
-import { expect, test, type Locator, type Page } from '@playwright/test';
+import { type Locator, type Page } from '@playwright/test';
+import { expect, test } from './session';
 /*
  * Único import profundo a projects/ del repo: el alias carga el barril de Angular en Node y falla con
  * «PlatformLocation needs to be compiled using the JIT compiler». HG-02 pide leer los presupuestos de un

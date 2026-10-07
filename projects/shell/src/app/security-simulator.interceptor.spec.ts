@@ -1,6 +1,7 @@
 import {
   HttpClient,
   HttpErrorResponse,
+  type HttpInterceptorFn,
   provideHttpClient,
   withInterceptors,
 } from '@angular/common/http';
@@ -15,6 +16,7 @@ import {
   SECURITY_API_URL,
   type SecuritySnapshot,
   type SecurityUser,
+  type SessionGrant,
 } from '@ewms/core/security';
 import { firstValueFrom, type Observable } from 'rxjs';
 import {
@@ -26,6 +28,11 @@ import {
 
 const BASE = '/api/v1/security';
 const admin: Actor = { userId: 'admin', warehouseId: 'A', ownerId: 'X' };
+
+/** Lo que haría el interceptor de sesión: el token vigente en cada petición. */
+let token: string | null = null;
+const bearer: HttpInterceptorFn = (req, next) =>
+  next(token ? req.clone({ setHeaders: { Authorization: `Bearer ${token}` } }) : req);
 
 async function rejection(request: Observable<unknown>): Promise<HttpErrorResponse> {
   try {
@@ -42,9 +49,10 @@ describe('securitySimulatorInterceptor', () => {
 
   beforeEach(() => {
     resetSimulator({ latency: 0 });
+    token = null;
     TestBed.configureTestingModule({
       providers: [
-        provideHttpClient(withInterceptors([securitySimulatorInterceptor])),
+        provideHttpClient(withInterceptors([bearer, securitySimulatorInterceptor])),
         provideHttpClientTesting(),
         { provide: SECURITY_API_URL, useValue: signal(BASE) },
       ],
@@ -87,7 +95,7 @@ describe('securitySimulatorInterceptor', () => {
   });
 
   it('takes identity and context from the session, not from what the browser claims', async () => {
-    setSimulatedSession({ userId: 'reader', warehouseId: 'A', ownerId: 'X' });
+    token = setSimulatedSession({ userId: 'reader', warehouseId: 'A', ownerId: 'X' });
     const res = await firstValueFrom(
       http.get<AccessResult>(`${BASE}/access`, {
         headers: { 'X-Actor-User-Id': 'admin' },
@@ -99,7 +107,7 @@ describe('securitySimulatorInterceptor', () => {
   });
 
   it('answers access, snapshot, users and inspect for the session', async () => {
-    setSimulatedSession(admin);
+    token = setSimulatedSession(admin);
     const access = await firstValueFrom(http.get<AccessResult>(`${BASE}/access`));
     expect(access.user?.id).toBe('admin');
     expect(access.grants['users.view']?.length).toBeGreaterThan(0);
@@ -119,7 +127,7 @@ describe('securitySimulatorInterceptor', () => {
   });
 
   it('writes profiles, users, status and assignments', async () => {
-    setSimulatedSession(admin);
+    token = setSimulatedSession(admin);
     const profile: Profile = {
       id: 'custom-profile',
       name: 'Custom Profile',
@@ -154,30 +162,90 @@ describe('securitySimulatorInterceptor', () => {
   });
 
   it('a closed session denies again', async () => {
-    setSimulatedSession(admin);
-    setSimulatedSession(null);
+    token = setSimulatedSession(admin);
+    token = setSimulatedSession(null);
     expect((await rejection(http.get(`${BASE}/access`))).status).toBe(401);
   });
 
   it('an inspection without a target is invalid', async () => {
-    setSimulatedSession(admin);
+    token = setSimulatedSession(admin);
     expect((await rejection(http.get(`${BASE}/inspect`))).status).toBe(400);
   });
 
   it('an unexpected failure answers as unavailable', async () => {
-    setSimulatedSession(admin);
+    token = setSimulatedSession(admin);
     const error = await rejection(http.patch(`${BASE}/users/admin/status`, null));
     expect(error.status).toBe(503);
     expect(error.error).toMatchObject({ type: 'urn:ewms:security:unavailable' });
   });
 
+  it('signs in a known active person in their context and serves them with that token', async () => {
+    const grant = await firstValueFrom(
+      http.post<SessionGrant>(`${BASE}/session`, { username: 'reader', password: 'demo' }),
+    );
+    expect(grant.session).toEqual({
+      userId: 'reader',
+      name: 'Rosa Consulta',
+      warehouseId: 'A',
+      ownerId: 'X',
+    });
+    token = grant.accessToken;
+    const access = await firstValueFrom(http.get<AccessResult>(`${BASE}/access`));
+    expect(access.user?.id).toBe('reader');
+  });
+
+  it('rejects unknown, inactive or passwordless sign-ins without saying which', async () => {
+    for (const body of [
+      { username: 'nobody', password: 'demo' },
+      { username: 'inactive', password: 'demo' },
+      { username: 'admin', password: '' },
+      null,
+    ]) {
+      const error = await rejection(http.post(`${BASE}/session`, body));
+      expect(error.status).toBe(401);
+      expect(error.error).toMatchObject({ type: 'urn:ewms:security:invalidCredentials' });
+    }
+  });
+
+  it('a session answers only to its current token', async () => {
+    token = setSimulatedSession(admin);
+    const issued = token;
+    token = 'forged';
+    expect((await rejection(http.get(`${BASE}/users`))).status).toBe(401);
+    token = null;
+    expect((await rejection(http.get(`${BASE}/users`))).status).toBe(401);
+    token = issued;
+    expect(await firstValueFrom(http.get(`${BASE}/users`))).toBeDefined();
+  });
+
+  it('renews with the session cookie and retires the previous token', async () => {
+    expect((await rejection(http.post(`${BASE}/session/refresh`, null))).status).toBe(401);
+    const previous = setSimulatedSession({ ...admin, warehouseId: 'B', ownerId: 'Y' });
+    const grant = await firstValueFrom(
+      http.post<SessionGrant>(`${BASE}/session/refresh`, null),
+    );
+    expect(grant.accessToken).not.toBe(previous);
+    expect(grant.session).toMatchObject({ userId: 'admin', warehouseId: 'B', ownerId: 'Y' });
+    token = previous;
+    expect((await rejection(http.get(`${BASE}/users`))).status).toBe(401);
+    token = grant.accessToken;
+    expect(await firstValueFrom(http.get(`${BASE}/users`))).toBeDefined();
+  });
+
+  it('signing out ends the session and its renewal', async () => {
+    token = setSimulatedSession(admin);
+    await firstValueFrom(http.delete(`${BASE}/session`));
+    expect((await rejection(http.get(`${BASE}/users`))).status).toBe(401);
+    expect((await rejection(http.post(`${BASE}/session/refresh`, null))).status).toBe(401);
+  });
+
   it('answers unknown routes with 404', async () => {
-    setSimulatedSession(admin);
+    token = setSimulatedSession(admin);
     expect((await rejection(http.get(`${BASE}/unknown`))).status).toBe(404);
   });
 
   it('rejects with RFC 9457 Problem Details and a stable type', async () => {
-    setSimulatedSession(admin);
+    token = setSimulatedSession(admin);
     const invalid: Profile = { id: 'bad-profile', name: ' ', grants: ['x'], version: 0 };
     const error = await rejection(http.put(`${BASE}/profiles/bad-profile`, invalid));
     expect(error.status).toBe(400);
@@ -186,7 +254,7 @@ describe('securitySimulatorInterceptor', () => {
   });
 
   it('maps each rejection code to its status', async () => {
-    setSimulatedSession(admin);
+    token = setSimulatedSession(admin);
     const cases = [
       ['denied', 403],
       ['delegation', 403],

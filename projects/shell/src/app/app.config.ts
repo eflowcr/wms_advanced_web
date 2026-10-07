@@ -15,7 +15,11 @@ import {
   traceparentInterceptor,
   withChunkReload,
 } from '@ewms/core';
-import { SECURITY_API_URL, securityAccessInterceptor } from '@ewms/core/security';
+import {
+  authInterceptor,
+  SECURITY_API_URL,
+  securityAccessInterceptor,
+} from '@ewms/core/security';
 import { DEMO_HTTP_INTERCEPTORS } from './demo-mode';
 import { routes } from './app.routes';
 import { CDK_STYLES_FROM_STYLESHEET } from './cdk.providers';
@@ -34,6 +38,7 @@ export const appConfig: ApplicationConfig = {
       withFetch(),
       withInterceptors([
         traceparentInterceptor,
+        authInterceptor,
         securityAccessInterceptor,
         ...DEMO_HTTP_INTERCEPTORS,
       ]),

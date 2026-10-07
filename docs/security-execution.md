@@ -18,7 +18,7 @@ Ejecución cerrada siguiendo el loop inspeccionar/probar/implementar/verificar/c
 
 ## Reproducción
 
-1. En el repositorio, ejecutar `npm start` y abrir `/configuracion/perfiles` (Seguridad) o `/configuracion/usuarios` (Usuarios).
+1. En el repositorio, ejecutar `npm start`, iniciar sesión como `admin`, `reader` u `operator` con cualquier contraseña no vacía y abrir `/configuracion/perfiles` (Seguridad) o `/configuracion/usuarios` (Usuarios). La sesión simulada vive en memoria: recargar pide iniciarla otra vez.
 2. En la franja de demostración elegir actor y contexto exacto A/X o B/Y. Administrador puede gestionar ambos ámbitos; Consulta puede consultar e inspeccionar, sin escribir ni exportar. Operación limitada puede crear/editar usuarios en A/X y solo consultar en B/Y.
 3. Crear un perfil, habilitar una acción y confirmar su dependencia de consulta. Revisar el resumen antes de guardar. Asignarlo a Rosa Consulta en una tupla exacta y comprobar los perfiles de procedencia del acceso resultante.
 4. Abrir Usuarios con Operación limitada, comenzar una edición y cambiar a B/Y: el borrador y los datos anteriores se retiran. Abrir Seguridad con Administrador y cambiar a Operación limitada A/X: se revoca la pantalla, se cierran sus pestañas y se redirige al inicio.
@@ -30,7 +30,7 @@ Ejecución cerrada siguiendo el loop inspeccionar/probar/implementar/verificar/c
 
 | Contrato | Responsabilidad |
 | --- | --- |
-| `@ewms/core/security` | Catálogo cerrado, tipos, unión/procedencia, estado de acceso, guard, `HttpSecurityGateway` y el interceptor de 403 |
+| `@ewms/core/security` | Catálogo cerrado, tipos, unión/procedencia, estado de acceso, guard, `HttpSecurityGateway`, el interceptor de 403 y la sesión (`AuthSession`, `authInterceptor`, `sessionGuard`) |
 | `@ewms/security` | Rutas y pantallas lazy; adaptador `MemorySecurityGateway` |
 | `securitySimulatorInterceptor` (shell) | Servidor simulado del contrato HTTP, solo en desarrollo y demostración; la franja fija la sesión simulada |
 | `@ewms/core/locale` | Proveedor de formatos en el entorno diferido del shell |

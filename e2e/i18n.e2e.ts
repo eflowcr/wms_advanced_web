@@ -1,5 +1,6 @@
 import { axe } from './axe';
-import { expect, test, type Page } from '@playwright/test';
+import { type Page } from '@playwright/test';
+import { expect, test } from './session';
 import { watchConsole, type ConsoleWatch } from './console-watch';
 import { chooseLanguage } from './language';
 

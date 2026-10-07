@@ -280,6 +280,17 @@
       "label": "Idioma",
       "unavailable": "No se pudo cargar el idioma elegido. La interfaz sigue en español; vuelva a intentarlo más tarde."
     },
+    "login": {
+      "demoHint": "Demostración: entre como admin, reader u operator, con cualquier contraseña.",
+      "hidePassword": "Ocultar contraseña",
+      "invalidCredentials": "Usuario o contraseña incorrectos.",
+      "password": "Contraseña",
+      "showPassword": "Mostrar contraseña",
+      "submit": "Entrar",
+      "title": "Iniciar sesión",
+      "unavailable": "No se pudo iniciar sesión. Vuelva a intentarlo; si el problema continúa, avise a soporte.",
+      "username": "Usuario"
+    },
     "menu": {
       "articles": "Artículos",
       "carriers": "Transportistas",
