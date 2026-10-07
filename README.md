@@ -42,7 +42,7 @@ lives in the vault (ADR 0018).
 | `npm run typecheck` | `tsc` in full strict mode |
 | `npm run lint` | ESLint, including the boundary and security rules, zero warnings |
 | `npm test` | Vitest per library + coverage thresholds + axe-core, then the tool tests |
-| `npm run lint:tokens` / `lint:icons` / `lint:i18n` / `lint:shortcuts` / `lint:click-budget` / `lint:ds` | The project's own CI gates |
+| `npm run lint:tokens` / `lint:icons` / `lint:i18n` / `lint:shortcuts` / `lint:click-budget` / `lint:ds` / `lint:permissions` | The project's own CI gates |
 | `npm run e2e:smoke` | Playwright: the app boots, every route answers, the patterns work by keyboard |
 | `npm run e2e:showroom` | Playwright: the whole catalogue (axe, keyboard, overflow, behaviour) |
 | `npm run showroom:capture` | Screenshots of every catalogue page, for review; not a test |

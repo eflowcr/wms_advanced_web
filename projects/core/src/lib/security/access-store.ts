@@ -1,5 +1,6 @@
 import { Injectable, computed, signal } from '@angular/core';
 import {
+  accessCode,
   SCREEN_CATALOG,
   SecurityError,
   type Actor,
@@ -123,7 +124,7 @@ export class AccessStore {
     const screen = SCREEN_CATALOG.find(
       (s) => s.route === path || (s.route !== '/' && path.startsWith(`${s.route}/`)),
     );
-    return screen !== undefined && this.can(`${screen.id}.view`);
+    return screen !== undefined && this.can(accessCode(screen));
   }
 
   request(capability: string): SecurityRequest {

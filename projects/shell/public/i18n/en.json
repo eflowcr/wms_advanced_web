@@ -159,18 +159,18 @@
     "assignmentSummary": "User: {{name}}. Resulting assignments: {{count}}. Added: {{added}}. Removed: {{removed}}.",
     "cancel": "Cancel",
     "capabilities": {
+      "access": "View screen",
       "profiles": {
         "assign": "Manage assignments",
         "inspect": "Inspect effective access",
-        "manage": "Manage profiles"
+        "update": "Manage profiles"
       },
       "users": {
         "create": "Create users",
-        "edit": "Edit users",
+        "deactivate": "Activate / deactivate users",
         "export": "Export / copy users",
-        "status": "Activate / deactivate users"
-      },
-      "view": "View screen"
+        "update": "Edit users"
+      }
     },
     "confirm": "Confirm",
     "context": "Warehouse / owner",

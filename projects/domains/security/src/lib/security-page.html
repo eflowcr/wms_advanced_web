@@ -7,11 +7,11 @@
     <p role="alert" class="rounded-md border border-danger bg-danger-surface p-3 text-danger">
       {{ 'security.errors.' + error() | transloco }}
     </p>
-    <ewms-button variant="secondary" (click)="cancel(); load()">{{
+    <ewms-button variant="secondary" data-effect="none" (click)="cancel(); load()">{{
       'security.reload' | transloco
     }}</ewms-button>
   }
-  @if (!access.can('profiles.view')) {
+  @if (!access.can('security.profiles:access')) {
     <ewms-empty-state kind="no-access" [title]="'security.noAccess' | transloco" />
   } @else if (!snapshot()) {
     <p role="status" class="text-secondary">{{ 'security.loading' | transloco }}</p>
@@ -34,18 +34,20 @@
             (valueChange)="chooseProfile($event)"
           />
         </div>
-        @if (access.can('profiles.manage')) {
-          <ewms-button [disabled]="dirty()" (click)="begin(true)">{{
-            'security.createProfile' | transloco
-          }}</ewms-button>
-          <ewms-button
-            variant="secondary"
-            data-profile-edit
-            [disabled]="dirty() || !selectedProfile()"
-            (click)="begin(false)"
-            >{{ 'security.editProfile' | transloco }}</ewms-button
-          >
-        }
+        <ewms-button
+          *ewmsCan="'security.profiles:update'"
+          [disabled]="dirty()"
+          (click)="begin(true)"
+          >{{ 'security.createProfile' | transloco }}</ewms-button
+        >
+        <ewms-button
+          *ewmsCan="'security.profiles:update'"
+          variant="secondary"
+          data-profile-edit
+          [disabled]="dirty() || !selectedProfile()"
+          (click)="begin(false)"
+          >{{ 'security.editProfile' | transloco }}</ewms-button
+        >
       </div>
       @if (draft()) {
         <form
@@ -57,12 +59,15 @@
         >
           <ewms-input [label]="'security.name' | transloco" [formField]="profileForm.name" />
           <div class="flex flex-wrap gap-2">
-            <ewms-button variant="secondary" (click)="cancel()">{{
+            <ewms-button variant="secondary" data-effect="none" (click)="cancel()">{{
               'security.cancel' | transloco
             }}</ewms-button>
-            <ewms-button type="submit" [loading]="pattern.busy()">{{
-              'security.reviewSave' | transloco
-            }}</ewms-button>
+            <ewms-button
+              *ewmsCan="'security.profiles:update'"
+              type="submit"
+              [loading]="pattern.busy()"
+              >{{ 'security.reviewSave' | transloco }}</ewms-button
+            >
           </div>
         </form>
       }
@@ -116,11 +121,11 @@
                   </p>
                   <p
                     class="text-caption"
-                    [class.text-primary]="granted(screen.id + '.view')"
-                    [class.text-secondary]="!granted(screen.id + '.view')"
+                    [class.text-primary]="granted(accessCode(screen))"
+                    [class.text-secondary]="!granted(accessCode(screen))"
                   >
                     {{ grantState(screen) | transloco }}
-                    @if (screen.actions.length && granted(screen.id + '.view')) {
+                    @if (screen.actions.length && granted(accessCode(screen))) {
                       <span>
                         ·
                         {{
@@ -132,21 +137,21 @@
                     }
                   </p>
                   <ewms-checkbox
-                    [label]="'security.capabilities.view' | transloco"
-                    [checked]="screen.status === 'internal' || granted(screen.id + '.view')"
+                    [label]="'security.capabilities.access' | transloco"
+                    [checked]="screen.status === 'internal' || granted(accessCode(screen))"
                     [disabled]="
                       !draft() ||
-                      !access.can('profiles.manage') ||
+                      !access.can('security.profiles:update') ||
                       busy() ||
                       screen.status === 'internal'
                     "
-                    (checkedChange)="toggle(screen, screen.id + '.view', $event)"
+                    (checkedChange)="toggle(screen, accessCode(screen), $event)"
                   />
                   @for (action of screen.actions; track action) {
                     <ewms-checkbox
-                      [label]="'security.capabilities.' + action | transloco"
+                      [label]="capabilityKey(action) | transloco"
                       [checked]="granted(action)"
-                      [disabled]="!draft() || !access.can('profiles.manage') || busy()"
+                      [disabled]="!draft() || !access.can('security.profiles:update') || busy()"
                       (checkedChange)="toggle(screen, action, $event)"
                     />
                   }
@@ -179,7 +184,7 @@
           [value]="context()"
           (valueChange)="chooseContext($event)"
         />
-        @if (access.can('profiles.assign')) {
+        @if (access.can('security.profiles:assign')) {
           <ewms-select
             [label]="'security.profile' | transloco"
             [options]="profiles()"
@@ -188,24 +193,22 @@
           />
         }
       </div>
-      @if (access.can('profiles.assign')) {
-        <div class="flex flex-wrap gap-2">
-          <ewms-button
-            variant="secondary"
-            [disabled]="draft() !== null || !canAssignContext()"
-            (click)="addAssignment()"
-            >{{ 'security.addAssignment' | transloco }}</ewms-button
-          >
-          @if (assignments()) {
-            <ewms-button variant="secondary" (click)="cancel()">{{
-              'security.cancel' | transloco
-            }}</ewms-button>
-            <ewms-button [loading]="busy()" (click)="saveAssignments()">{{
-              'security.reviewSave' | transloco
-            }}</ewms-button>
-          }
-        </div>
-      }
+      <div *ewmsCan="'security.profiles:assign'" class="flex flex-wrap gap-2">
+        <ewms-button
+          variant="secondary"
+          [disabled]="draft() !== null || !canAssignContext()"
+          (click)="addAssignment()"
+          >{{ 'security.addAssignment' | transloco }}</ewms-button
+        >
+        @if (assignments()) {
+          <ewms-button variant="secondary" data-effect="none" (click)="cancel()">{{
+            'security.cancel' | transloco
+          }}</ewms-button>
+          <ewms-button [loading]="busy()" (click)="saveAssignments()">{{
+            'security.reviewSave' | transloco
+          }}</ewms-button>
+        }
+      </div>
       <ul class="flex flex-col gap-3" data-assignments>
         @for (assignment of shownAssignments(); track $index) {
           <li
@@ -215,22 +218,21 @@
               >{{ profileName(assignment.profileId) }} · {{ assignment.warehouseId }} /
               {{ assignment.ownerId }}</span
             >
-            @if (access.can('profiles.assign')) {
-              <ewms-button
-                variant="ghost"
-                [disabled]="draft() !== null || !canAssign(assignment)"
-                [ariaLabel]="
-                  'security.removeAssignmentLabel'
-                    | transloco
-                      : {
-                          profile: profileName(assignment.profileId),
-                          context: assignment.warehouseId + '/' + assignment.ownerId,
-                        }
-                "
-                (click)="removeAssignment(assignment)"
-                >{{ 'security.remove' | transloco }}</ewms-button
-              >
-            }
+            <ewms-button
+              *ewmsCan="'security.profiles:assign'"
+              variant="ghost"
+              [disabled]="draft() !== null || !canAssign(assignment)"
+              [ariaLabel]="
+                'security.removeAssignmentLabel'
+                  | transloco
+                    : {
+                        profile: profileName(assignment.profileId),
+                        context: assignment.warehouseId + '/' + assignment.ownerId,
+                      }
+              "
+              (click)="removeAssignment(assignment)"
+              >{{ 'security.remove' | transloco }}</ewms-button
+            >
           </li>
         } @empty {
           <li>
@@ -238,7 +240,7 @@
           </li>
         }
       </ul>
-      @if (access.can('profiles.inspect')) {
+      @if (access.can('security.profiles:inspect')) {
         <h3 class="text-h3">{{ 'security.effective' | transloco }}</h3>
         <p class="text-caption text-secondary">{{ 'security.savedAccessHint' | transloco }}</p>
         <div data-effective-access>

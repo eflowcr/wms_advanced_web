@@ -21,7 +21,7 @@ describe('AccessStore', () => {
       access: vi
         .fn()
         .mockResolvedValue({
-          grants: { 'users.view': ['p'] },
+          grants: { 'security.users:access': ['p'] },
           user: { id: 'u', name: 'User', active: true, version: 1 },
         }),
       snapshot: vi.fn(),
@@ -38,16 +38,16 @@ describe('AccessStore', () => {
     };
   });
   it('starts closed and requires available identity for direct execution', async () => {
-    expect(store.can('users.view')).toBe(false);
-    expect(() => store.request('users.view')).toThrow(new SecurityError('denied'));
+    expect(store.can('security.users:access')).toBe(false);
+    expect(() => store.request('security.users:access')).toThrow(new SecurityError('denied'));
     expect(() => store.gateway).toThrow(new SecurityError('unavailable'));
     await store.refresh();
     expect(store.status()).toBe('error');
     await store.connect(gateway, actor, true);
     expect(store.demo()).toBe(true);
     expect(store.gateway).toBe(gateway);
-    expect(store.request('users.view').actor).toEqual(actor);
-    expect(() => store.request('users.export')).toThrow();
+    expect(store.request('security.users:access').actor).toEqual(actor);
+    expect(() => store.request('security.users:export')).toThrow();
     expect(store.canRoute('/configuracion/usuarios?x=1')).toBe(true);
     expect(store.canRoute('/configuracion/usuarios/1')).toBe(true);
     expect(store.canRoute('/configuracion/perfiles')).toBe(false);
@@ -70,15 +70,15 @@ describe('AccessStore', () => {
     const first = store.connect(gateway, actor);
     const second = store.select({ ...actor, warehouseId: 'B', ownerId: 'Y' });
     expect(store.status()).toBe('loading');
-    expect(store.can('users.view')).toBe(false);
+    expect(store.can('security.users:access')).toBe(false);
     await second;
-    late({ grants: { 'users.view': ['p'] }, user: null });
+    late({ grants: { 'security.users:access': ['p'] }, user: null });
     await first;
-    expect(store.can('users.view')).toBe(false);
+    expect(store.can('security.users:access')).toBe(false);
   });
   it('a re-read of the same context keeps grants and operations until the new grants arrive', async () => {
     await store.connect(gateway, actor);
-    const signal = store.request('users.view').signal;
+    const signal = store.request('security.users:access').signal;
     const generation = store.generation();
     let answer: (result: AccessResult) => void = () => undefined;
     gateway.access = vi.fn(
@@ -90,39 +90,39 @@ describe('AccessStore', () => {
     listener();
 
     expect(store.status()).toBe('ready');
-    expect(store.can('users.view')).toBe(true);
+    expect(store.can('security.users:access')).toBe(true);
     expect(signal.aborted).toBe(false);
-    answer({ grants: { 'users.edit': ['p'] }, user: null });
-    await vi.waitFor(() => expect(store.can('users.edit')).toBe(true));
+    answer({ grants: { 'security.users:update': ['p'] }, user: null });
+    await vi.waitFor(() => expect(store.can('security.users:update')).toBe(true));
 
-    expect(store.can('users.view')).toBe(false);
-    expect(store.can('users.edit')).toBe(true);
+    expect(store.can('security.users:access')).toBe(false);
+    expect(store.can('security.users:update')).toBe(true);
     expect(signal.aborted).toBe(false);
     expect(store.generation()).toBe(generation);
   });
   it('a context change empties, aborts operations and starts a new generation', async () => {
     await store.connect(gateway, actor);
-    const signal = store.request('users.view').signal;
+    const signal = store.request('security.users:access').signal;
     const generation = store.generation();
     const changing = store.select({ ...actor, warehouseId: 'B', ownerId: 'Y' });
 
     expect(signal.aborted).toBe(true);
-    expect(store.can('users.view')).toBe(false);
+    expect(store.can('security.users:access')).toBe(false);
     expect(store.generation()).toBe(generation + 1);
     await changing;
   });
   it('a failed re-read closes everything and aborts operations', async () => {
     await store.connect(gateway, actor);
-    const signal = store.request('users.view').signal;
+    const signal = store.request('security.users:access').signal;
     gateway.access = vi.fn().mockRejectedValue(new Error('offline'));
     await store.refresh();
 
     expect(store.status()).toBe('error');
-    expect(store.can('users.view')).toBe(false);
+    expect(store.can('security.users:access')).toBe(false);
     expect(signal.aborted).toBe(true);
     await store.connect(gateway, actor);
     await store.select(null);
-    expect(() => store.request('users.view')).toThrow();
+    expect(() => store.request('security.users:access')).toThrow();
   });
   it('ignores a rejected stale read and a guard redirects without retrying writes', async () => {
     let reject: (reason: Error) => void = () => undefined;
@@ -168,21 +168,21 @@ describe('AccessStore', () => {
             stale = resolve;
           }),
       )
-      .mockResolvedValue({ grants: { 'users.edit': ['p'] }, user: null });
+      .mockResolvedValue({ grants: { 'security.users:update': ['p'] }, user: null });
     const first = store.refresh();
     const afterWrite = store.refresh();
-    stale({ grants: { 'users.view': ['p'] }, user: null });
+    stale({ grants: { 'security.users:access': ['p'] }, user: null });
     await Promise.all([first, afterWrite]);
 
     expect(gateway.access).toHaveBeenCalledTimes(2);
-    expect(store.can('users.edit')).toBe(true);
-    expect(store.can('users.view')).toBe(false);
+    expect(store.can('security.users:update')).toBe(true);
+    expect(store.can('security.users:access')).toBe(false);
   });
   it('disconnecting at sign-out closes everything and lets the next session connect', async () => {
     const unsubscribe = vi.fn();
     gateway.subscribe = vi.fn(() => unsubscribe);
     await store.connect(gateway, actor, true);
-    const signal = store.request('users.view').signal;
+    const signal = store.request('security.users:access').signal;
     store.disconnect();
 
     expect(signal.aborted).toBe(true);
@@ -191,9 +191,9 @@ describe('AccessStore', () => {
     expect(store.actor()).toBeNull();
     expect(store.user()).toBeNull();
     expect(store.demo()).toBe(false);
-    expect(store.can('users.view')).toBe(false);
+    expect(store.can('security.users:access')).toBe(false);
     expect(() => store.gateway).toThrow(new SecurityError('unavailable'));
     await store.connect(gateway, actor);
-    expect(store.can('users.view')).toBe(true);
+    expect(store.can('security.users:access')).toBe(true);
   });
 });

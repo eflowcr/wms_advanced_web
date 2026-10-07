@@ -104,14 +104,14 @@ describe('securitySimulatorInterceptor', () => {
       }),
     );
     expect(res.user?.id).toBe('reader');
-    expect(res.grants['profiles.manage']).toBeUndefined();
+    expect(res.grants['security.profiles:update']).toBeUndefined();
   });
 
   it('answers access, snapshot, users and inspect for the session', async () => {
     token = setSimulatedSession(admin);
     const access = await firstValueFrom(http.get<AccessResult>(`${BASE}/access`));
     expect(access.user?.id).toBe('admin');
-    expect(access.grants['users.view']?.length).toBeGreaterThan(0);
+    expect(access.grants['security.users:access']?.length).toBeGreaterThan(0);
 
     const snapshot = await firstValueFrom(http.get<SecuritySnapshot>(`${BASE}/snapshot`));
     expect(snapshot.users.some((u) => u.id === 'admin')).toBe(true);
@@ -124,7 +124,7 @@ describe('securitySimulatorInterceptor', () => {
         params: { userId: 'reader', warehouseId: 'A', ownerId: 'X' },
       }),
     );
-    expect(inspected['users.view']).toBeDefined();
+    expect(inspected['security.users:access']).toBeDefined();
   });
 
   it('writes profiles, users, status and assignments', async () => {
@@ -132,7 +132,7 @@ describe('securitySimulatorInterceptor', () => {
     const profile: Profile = {
       id: 'custom-profile',
       name: 'Custom Profile',
-      grants: ['dashboard.view', 'users.view'],
+      grants: ['general.dashboard:access', 'security.users:access'],
       version: 0,
     };
     await firstValueFrom(http.put(`${BASE}/profiles/custom-profile`, profile));

@@ -10,7 +10,7 @@ import {
   viewChild,
 } from '@angular/core';
 import { form, FormField, required, minLength, maxLength } from '@angular/forms/signals';
-import { AccessStore, SecurityError, type SecurityUser } from '@ewms/core/security';
+import { Can, AccessStore, SecurityError, type SecurityUser } from '@ewms/core/security';
 import { filtersInUrl } from '@ewms/shared';
 import {
   ArrayTableSource,
@@ -35,6 +35,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 @Component({
   selector: 'sec-users-page',
   imports: [
+    Can,
     Button,
     EmptyState,
     FilterBar,
@@ -111,14 +112,14 @@ export class UsersPage {
     );
   });
   protected readonly byId = (row: SecurityUser): string => row.id;
-  protected readonly allowExport = (): boolean => this.access.can('users.export');
+  protected readonly allowExport = (): boolean => this.access.can('security.users:export');
   protected readonly menuItems = (user: SecurityUser): readonly MenuItem[] => {
     this.language();
     return [
-      ...(this.access.can('users.edit')
+      ...(this.access.can('security.users:update')
         ? [{ id: 'edit', label: this.i18n.translate('security.editUser'), icon: 'edit' as const }]
         : []),
-      ...(this.access.can('users.status')
+      ...(this.access.can('security.users:deactivate')
         ? [
             {
               id: 'status',
@@ -143,10 +144,14 @@ export class UsersPage {
           this.draft.set(null);
         }
         const draft = this.draft();
-        if (ready && draft && !this.access.can(draft.version === 0 ? 'users.create' : 'users.edit'))
+        if (
+          ready &&
+          draft &&
+          !this.access.can(draft.version === 0 ? 'security.users:create' : 'security.users:update')
+        )
           this.draft.set(null);
         this.rows.set(null);
-        if (ready && this.access.can('users.view')) void this.load();
+        if (ready && this.access.can('security.users:access')) void this.load();
       });
     });
   }
@@ -154,7 +159,7 @@ export class UsersPage {
   protected async load(): Promise<void> {
     this.error.set('');
     try {
-      const request = this.access.request('users.view');
+      const request = this.access.request('security.users:access');
       const rows = await this.access.gateway.users(request);
       if (!request.signal.aborted) {
         this.rows.set(rows);
@@ -171,7 +176,7 @@ export class UsersPage {
     this.urlFilters.set(value);
   }
   protected begin(user: SecurityUser | null): void {
-    if (!this.access.can(user ? 'users.edit' : 'users.create')) return;
+    if (!this.access.can(user ? 'security.users:update' : 'security.users:create')) return;
     this.error.set('');
     this.draft.set(
       user ? { ...user } : { id: crypto.randomUUID(), name: '', active: true, version: 0 },
@@ -186,7 +191,7 @@ export class UsersPage {
     this.focus('[data-user-create] button, [data-user-filters] input');
   }
   async canLeave(): Promise<boolean> {
-    if (!this.draft() || !this.access.can('users.view')) return true;
+    if (!this.draft() || !this.access.can('security.users:access')) return true;
     return this.dialogs.confirm({
       title: this.i18n.translate('security.unsaved'),
       body: this.i18n.translate('security.discardBody'),
@@ -198,7 +203,7 @@ export class UsersPage {
   protected readonly save = async (): Promise<void> => {
     const draft = this.draft();
     if (!draft || this.busy()) return;
-    const capability = draft.version === 0 ? 'users.create' : 'users.edit';
+    const capability = draft.version === 0 ? 'security.users:create' : 'security.users:update';
     if (!this.access.can(capability)) {
       this.error.set('denied');
       return;
@@ -214,8 +219,8 @@ export class UsersPage {
     if (event.item.id === 'status') void this.changeStatus(event.row);
   }
   protected async changeStatus(user: SecurityUser): Promise<void> {
-    if (!this.access.can('users.status') || this.busy()) return;
-    const request = this.access.request('users.status');
+    if (!this.access.can('security.users:deactivate') || this.busy()) return;
+    const request = this.access.request('security.users:deactivate');
     if (
       !(await this.dialogs.confirm({
         title: this.i18n.translate(user.active ? 'security.deactivate' : 'security.activate'),

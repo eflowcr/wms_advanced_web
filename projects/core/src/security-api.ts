@@ -9,3 +9,4 @@ export * from './lib/security/auth-session';
 export * from './lib/security/active-context';
 export * from './lib/security/auth.interceptor';
 export * from './lib/security/session-guard';
+export * from './lib/security/can';

@@ -29,6 +29,8 @@ export interface SecuritySnapshot {
 }
 export interface ScreenDefinition {
   readonly id: string;
+  /** Área funcional de la comanda: el primer segmento del código. */
+  readonly module: string;
   readonly labelKey: string;
   readonly route: string;
   readonly status: 'implemented' | 'internal' | 'construction';
@@ -36,10 +38,28 @@ export interface ScreenDefinition {
 }
 export type Grants = Readonly<Record<string, readonly string[]>>;
 
+/** Un permiso de la comanda: módulo, opción y acción, en inglés (`security.users:create`). */
+export interface Permission {
+  readonly module: string;
+  readonly option: string;
+  readonly action: string;
+}
+
+export function parsePermission(code: string): Permission | null {
+  const match = /^([a-z][a-z-]*)\.([a-z][a-z-]*):([a-z][a-z-]*)$/.exec(code);
+  return match ? { module: match[1]!, option: match[2]!, action: match[3]! } : null;
+}
+
+/** La acción Acceder de una pantalla: la que exige el guard y abre sus demás acciones. */
+export function accessCode(screen: Pick<ScreenDefinition, 'id' | 'module'>): string {
+  return `${screen.module}.${screen.id}:access`;
+}
+
 /** Catálogo cerrado: una acción depende del acceso a su pantalla. */
 export const SCREEN_CATALOG: readonly ScreenDefinition[] = [
   {
     id: 'dashboard',
+    module: 'general',
     labelKey: 'shell.menu.dashboard',
     route: '/',
     status: 'internal',
@@ -47,6 +67,7 @@ export const SCREEN_CATALOG: readonly ScreenDefinition[] = [
   },
   {
     id: 'articles',
+    module: 'catalogs',
     route: '/catalogos/articulos',
     labelKey: 'shell.menu.articles',
     status: 'construction',
@@ -54,6 +75,7 @@ export const SCREEN_CATALOG: readonly ScreenDefinition[] = [
   },
   {
     id: 'clients',
+    module: 'catalogs',
     route: '/catalogos/clientes',
     labelKey: 'shell.menu.clients',
     status: 'construction',
@@ -61,6 +83,7 @@ export const SCREEN_CATALOG: readonly ScreenDefinition[] = [
   },
   {
     id: 'suppliers',
+    module: 'catalogs',
     route: '/catalogos/proveedores',
     labelKey: 'shell.menu.suppliers',
     status: 'construction',
@@ -68,6 +91,7 @@ export const SCREEN_CATALOG: readonly ScreenDefinition[] = [
   },
   {
     id: 'locations',
+    module: 'catalogs',
     route: '/catalogos/ubicaciones',
     labelKey: 'shell.menu.locations',
     status: 'construction',
@@ -75,6 +99,7 @@ export const SCREEN_CATALOG: readonly ScreenDefinition[] = [
   },
   {
     id: 'warehouses',
+    module: 'catalogs',
     route: '/catalogos/almacenes',
     labelKey: 'shell.menu.warehouses',
     status: 'construction',
@@ -82,6 +107,7 @@ export const SCREEN_CATALOG: readonly ScreenDefinition[] = [
   },
   {
     id: 'units',
+    module: 'catalogs',
     route: '/catalogos/unidades',
     labelKey: 'shell.menu.units',
     status: 'construction',
@@ -89,6 +115,7 @@ export const SCREEN_CATALOG: readonly ScreenDefinition[] = [
   },
   {
     id: 'lots',
+    module: 'catalogs',
     route: '/catalogos/lotes',
     labelKey: 'shell.menu.lots',
     status: 'construction',
@@ -96,6 +123,7 @@ export const SCREEN_CATALOG: readonly ScreenDefinition[] = [
   },
   {
     id: 'serials',
+    module: 'catalogs',
     route: '/catalogos/series',
     labelKey: 'shell.menu.serials',
     status: 'construction',
@@ -103,6 +131,7 @@ export const SCREEN_CATALOG: readonly ScreenDefinition[] = [
   },
   {
     id: 'carriers',
+    module: 'catalogs',
     route: '/catalogos/transportistas',
     labelKey: 'shell.menu.carriers',
     status: 'construction',
@@ -110,6 +139,7 @@ export const SCREEN_CATALOG: readonly ScreenDefinition[] = [
   },
   {
     id: 'rates',
+    module: 'catalogs',
     route: '/catalogos/tarifas',
     labelKey: 'shell.menu.rates',
     status: 'construction',
@@ -117,20 +147,28 @@ export const SCREEN_CATALOG: readonly ScreenDefinition[] = [
   },
   {
     id: 'users',
+    module: 'security',
     labelKey: 'shell.menu.users',
     route: '/configuracion/usuarios',
     status: 'implemented',
-    actions: ['users.create', 'users.edit', 'users.status', 'users.export'],
+    actions: [
+      'security.users:create',
+      'security.users:update',
+      'security.users:deactivate',
+      'security.users:export',
+    ],
   },
   {
     id: 'profiles',
+    module: 'security',
     labelKey: 'shell.menu.profiles',
     route: '/configuracion/perfiles',
     status: 'implemented',
-    actions: ['profiles.manage', 'profiles.assign', 'profiles.inspect'],
+    actions: ['security.profiles:update', 'security.profiles:assign', 'security.profiles:inspect'],
   },
   {
     id: 'params',
+    module: 'settings',
     route: '/configuracion/parametros',
     labelKey: 'shell.menu.params',
     status: 'construction',
@@ -138,6 +176,7 @@ export const SCREEN_CATALOG: readonly ScreenDefinition[] = [
   },
   {
     id: 'design-system',
+    module: 'general',
     labelKey: 'shell.menu.designSystem',
     route: '/design-system',
     status: 'internal',
@@ -146,7 +185,7 @@ export const SCREEN_CATALOG: readonly ScreenDefinition[] = [
 ];
 
 export function capabilities(): readonly string[] {
-  return SCREEN_CATALOG.flatMap((screen) => [`${screen.id}.view`, ...screen.actions]);
+  return SCREEN_CATALOG.flatMap((screen) => [accessCode(screen), ...screen.actions]);
 }
 
 export function sameContext(a: AccessContext, b: AccessContext): boolean {
@@ -167,7 +206,7 @@ export function effectiveAccess(state: SecuritySnapshot, actor: Actor | null): G
     const profile = state.profiles.find((p) => p.id === assignment.profileId);
     if (!profile) continue;
     for (const screen of SCREEN_CATALOG) {
-      const view = `${screen.id}.view`;
+      const view = accessCode(screen);
       if (!profile.grants.includes(view)) continue;
       for (const capability of [
         view,

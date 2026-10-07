@@ -22,8 +22,8 @@ describe('MemorySecurityGateway', () => {
       gateway.saveUser(reader, { id: 'new', name: 'New user', active: true, version: 0 }),
     ).rejects.toEqual(new SecurityError('denied'));
     const access = await gateway.access(reader.actor, reader.signal);
-    expect(access.grants['users.export']).toBeUndefined();
-    expect(access.grants['profiles.inspect']).toEqual(['read']);
+    expect(access.grants['security.users:export']).toBeUndefined();
+    expect(access.grants['security.profiles:inspect']).toEqual(['read']);
   });
   it('rejects administrative delegation outside actor authority and invalid contexts', async () => {
     const gateway = new MemorySecurityGateway({ latency: 0 });
@@ -45,7 +45,12 @@ describe('MemorySecurityGateway', () => {
       {
         id: 'manager',
         name: 'Manager',
-        grants: ['profiles.view', 'profiles.manage', 'profiles.assign', 'profiles.inspect'],
+        grants: [
+          'security.profiles:access',
+          'security.profiles:update',
+          'security.profiles:assign',
+          'security.profiles:inspect',
+        ],
         version: 1,
       },
     ];
@@ -75,7 +80,7 @@ describe('MemorySecurityGateway', () => {
       gateway.saveProfile(request(), {
         id: 'new',
         name: 'New profile',
-        grants: ['users.export'],
+        grants: ['security.users:export'],
         version: 0,
       }),
     ).rejects.toEqual(new SecurityError('invalid'));
@@ -187,11 +192,11 @@ describe('MemorySecurityGateway', () => {
   it('authorizes inspection in the target context and returns saved provenance', async () => {
     const gateway = new MemorySecurityGateway({ latency: 0 });
     expect(await gateway.inspect(request(), { ...actor, userId: 'operator' })).toMatchObject({
-      'users.create': ['operate'],
+      'security.users:create': ['operate'],
     });
     expect(
       await gateway.inspect(request(), { userId: 'operator', warehouseId: 'B', ownerId: 'Y' }),
-    ).not.toHaveProperty('users.create');
+    ).not.toHaveProperty('security.users:create');
     await expect(gateway.inspect(request(), { ...actor, ownerId: 'Y' })).rejects.toEqual(
       new SecurityError('invalid'),
     );

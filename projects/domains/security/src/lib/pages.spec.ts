@@ -45,16 +45,16 @@ describe('Security page operations', () => {
     page['begin'](true);
     const screen = page['screens']().find((s) => s.id === 'users')!;
     confirmation.mockResolvedValueOnce(false);
-    await page['toggle'](screen, 'users.export', true);
-    expect(page['granted']('users.export')).toBe(false);
-    await page['toggle'](screen, 'users.export', true);
-    expect(page['granted']('users.view')).toBe(true);
-    expect(page['granted']('users.export')).toBe(true);
-    await page['toggle'](screen, 'users.view', false);
-    expect(page['granted']('users.export')).toBe(false);
+    await page['toggle'](screen, 'security.users:export', true);
+    expect(page['granted']('security.users:export')).toBe(false);
+    await page['toggle'](screen, 'security.users:export', true);
+    expect(page['granted']('security.users:access')).toBe(true);
+    expect(page['granted']('security.users:export')).toBe(true);
+    await page['toggle'](screen, 'security.users:access', false);
+    expect(page['granted']('security.users:export')).toBe(false);
     page['cancel']();
     expect(page['draft']()).toBeNull();
-    expect(access.can('users.export')).toBe(true);
+    expect(access.can('security.users:export')).toBe(true);
   });
   it('shows stale edit errors while retaining the draft and does not retry a rejected save', async () => {
     const { gateway } = await setup();
@@ -166,7 +166,7 @@ describe('Users page operations', () => {
     expect(page['draft']()).toBeNull();
     expect(page['menuItems'](user)).toEqual([]);
     expect(page['allowExport']()).toBe(false);
-    expect(() => access.request('users.export')).toThrow(new SecurityError('denied'));
+    expect(() => access.request('security.users:export')).toThrow(new SecurityError('denied'));
   });
   it('retains a user draft on conflict and exposes an explicit reload path', async () => {
     const { gateway } = await setup();

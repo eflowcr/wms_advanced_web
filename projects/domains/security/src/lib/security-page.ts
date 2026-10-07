@@ -11,6 +11,9 @@ import {
 } from '@angular/core';
 import { form, FormField, required, minLength, maxLength } from '@angular/forms/signals';
 import {
+  Can,
+  accessCode,
+  parsePermission,
   AccessStore,
   SCREEN_CATALOG,
   effectiveAccess,
@@ -38,7 +41,17 @@ import { toSignal } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'sec-security-page',
-  imports: [Button, Checkbox, EmptyState, FormField, FormPattern, Input, Select, TranslocoPipe],
+  imports: [
+    Can,
+    Button,
+    Checkbox,
+    EmptyState,
+    FormField,
+    FormPattern,
+    Input,
+    Select,
+    TranslocoPipe,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './security-page.html',
 })
@@ -80,7 +93,7 @@ export class SecurityPage {
         `${this.i18n.translate(s.labelKey)} ${this.i18n.translate(this.moduleKey(s))}`
           .toLocaleLowerCase()
           .includes(query) &&
-        (!this.onlyGranted() || (s.status !== 'internal' && this.granted(`${s.id}.view`))),
+        (!this.onlyGranted() || (s.status !== 'internal' && this.granted(accessCode(s)))),
     );
   });
   protected readonly modules = computed(() =>
@@ -94,7 +107,7 @@ export class SecurityPage {
   protected readonly profileSummary = computed(() => {
     const profile = this.draft() ?? this.selectedProfile();
     const screens = SCREEN_CATALOG.filter(
-      (s) => s.status !== 'internal' && this.granted(`${s.id}.view`),
+      (s) => s.status !== 'internal' && this.granted(accessCode(s)),
     );
     return {
       name: this.draft() ? this.name().name : (profile?.name ?? ''),
@@ -113,7 +126,7 @@ export class SecurityPage {
   }
   protected grantState(screen: ScreenDefinition): string {
     if (screen.status === 'internal') return 'security.grantState.common';
-    if (!this.granted(`${screen.id}.view`)) return 'security.grantState.denied';
+    if (!this.granted(accessCode(screen))) return 'security.grantState.denied';
     return this.partial(screen) ? 'security.partial' : 'security.grantState.complete';
   }
   protected readonly profiles = computed<readonly SelectOption[]>(() =>
@@ -141,7 +154,8 @@ export class SecurityPage {
   protected readonly result = computed(() => {
     const state = this.snapshot();
     const [warehouseId, ownerId] = this.context().split('/');
-    if (!state || !warehouseId || !ownerId || !this.access.can('profiles.inspect')) return [];
+    if (!state || !warehouseId || !ownerId || !this.access.can('security.profiles:inspect'))
+      return [];
     const grants = this.inspected();
     return Object.entries(grants).map(([capability, sources]) => ({
       capability,
@@ -156,7 +170,7 @@ export class SecurityPage {
       const state = this.snapshot();
       const userId = this.userId();
       const context = this.context();
-      const allowed = this.access.can('profiles.inspect');
+      const allowed = this.access.can('security.profiles:inspect');
       untracked(() => {
         this.inspected.set({});
         this.inspecting.set(false);
@@ -165,7 +179,7 @@ export class SecurityPage {
         const [warehouseId, ownerId] = context.split('/');
         if (!warehouseId || !ownerId) return;
         this.inspecting.set(true);
-        const request = this.access.request('profiles.inspect');
+        const request = this.access.request('security.profiles:inspect');
         void this.access.gateway
           .inspect(request, { userId, warehouseId, ownerId })
           .then((grants) => {
@@ -190,10 +204,10 @@ export class SecurityPage {
           this.draft.set(null);
           this.assignments.set(null);
         }
-        if (ready && !this.access.can('profiles.manage')) this.draft.set(null);
-        if (ready && !this.access.can('profiles.assign')) this.assignments.set(null);
+        if (ready && !this.access.can('security.profiles:update')) this.draft.set(null);
+        if (ready && !this.access.can('security.profiles:assign')) this.assignments.set(null);
         this.snapshot.set(null);
-        if (ready && this.access.can('profiles.view')) void this.load();
+        if (ready && this.access.can('security.profiles:access')) void this.load();
       });
     });
   }
@@ -201,7 +215,7 @@ export class SecurityPage {
   protected async load(): Promise<void> {
     this.error.set('');
     try {
-      const request = this.access.request('profiles.view');
+      const request = this.access.request('security.profiles:access');
       const state = await this.access.gateway.snapshot(request);
       if (request.signal.aborted) return;
       this.snapshot.set(state);
@@ -223,7 +237,7 @@ export class SecurityPage {
   }
 
   protected begin(create: boolean): void {
-    if (!this.access.can('profiles.manage')) return;
+    if (!this.access.can('security.profiles:update')) return;
     const profile = create
       ? { id: crypto.randomUUID(), name: '', grants: [], version: 0 }
       : this.selectedProfile();
@@ -240,7 +254,7 @@ export class SecurityPage {
   }
   protected partial(screen: ScreenDefinition): boolean {
     const count = screen.actions.filter((a) => this.granted(a)).length;
-    return this.granted(`${screen.id}.view`) && count < screen.actions.length;
+    return this.granted(accessCode(screen)) && count < screen.actions.length;
   }
 
   protected async toggle(
@@ -249,9 +263,9 @@ export class SecurityPage {
     checked: boolean,
   ): Promise<void> {
     const draft = this.draft();
-    if (!draft || !this.access.can('profiles.manage')) return;
+    if (!draft || !this.access.can('security.profiles:update')) return;
     const grants = new Set(draft.grants);
-    const view = `${screen.id}.view`;
+    const view = accessCode(screen);
     if (checked && capability !== view && !grants.has(view)) {
       const approved = await this.dialogs.confirm({
         title: this.i18n.translate('security.dependencyTitle'),
@@ -262,7 +276,8 @@ export class SecurityPage {
         confirmLabel: this.i18n.translate('security.allowScreen'),
         cancelLabel: this.i18n.translate('security.cancel'),
       });
-      if (!approved || this.draft() !== draft || !this.access.can('profiles.manage')) return;
+      if (!approved || this.draft() !== draft || !this.access.can('security.profiles:update'))
+        return;
       grants.add(view);
     }
     if (checked) grants.add(capability);
@@ -276,11 +291,11 @@ export class SecurityPage {
   protected readonly saveProfile = async (): Promise<void> => {
     const draft = this.draft();
     if (!draft || this.busy()) return;
-    if (!this.access.can('profiles.manage')) {
+    if (!this.access.can('security.profiles:update')) {
       this.error.set('denied');
       return;
     }
-    const request = this.access.request('profiles.manage');
+    const request = this.access.request('security.profiles:update');
     const state = this.snapshot();
     const old = state?.profiles.find((p) => p.id === draft.id);
     const added = draft.grants.filter((g) => !old?.grants.includes(g));
@@ -370,11 +385,11 @@ export class SecurityPage {
   protected async saveAssignments(): Promise<void> {
     const assignments = this.assignments();
     if (!assignments || this.busy()) return;
-    if (!this.access.can('profiles.assign')) {
+    if (!this.access.can('security.profiles:assign')) {
       this.error.set('denied');
       return;
     }
-    const request = this.access.request('profiles.assign');
+    const request = this.access.request('security.profiles:assign');
     const key = (a: Assignment) => `${a.profileId} · ${a.warehouseId}/${a.ownerId}`;
     const describe = (a: Assignment) =>
       `${this.profileName(a.profileId)} · ${a.warehouseId}/${a.ownerId}`;
@@ -424,7 +439,7 @@ export class SecurityPage {
     this.focus('[data-profile-edit] button');
   }
   async canLeave(): Promise<boolean> {
-    if (!this.dirty() || !this.access.can('profiles.view')) return true;
+    if (!this.dirty() || !this.access.can('security.profiles:access')) return true;
     return this.dialogs.confirm({
       title: this.i18n.translate('security.unsaved'),
       body: this.i18n.translate('security.discardBody'),
@@ -444,7 +459,7 @@ export class SecurityPage {
       actor !== null &&
       this.access.ready() &&
       (effectiveAccess(state, { ...actor, warehouseId: row.warehouseId, ownerId: row.ownerId })[
-        'profiles.assign'
+        'security.profiles:assign'
       ]?.length ?? 0) > 0
     );
   }
@@ -452,11 +467,18 @@ export class SecurityPage {
     const [warehouseId, ownerId] = this.context().split('/');
     return this.canAssign({ warehouseId: warehouseId ?? '', ownerId: ownerId ?? '' });
   }
+  /** La clave sale del código: Acceder es común; las demás, `opcion.accion`. */
+  protected capabilityKey(code: string): string {
+    const permission = parsePermission(code);
+    if (!permission || permission.action === 'access') return 'security.capabilities.access';
+    return `security.capabilities.${permission.option}.${permission.action}`;
+  }
+  protected readonly accessCode = accessCode;
   protected capabilityLabel(capability: string): string {
     const screen = SCREEN_CATALOG.find(
-      (s) => `${s.id}.view` === capability || s.actions.includes(capability),
+      (s) => accessCode(s) === capability || s.actions.includes(capability),
     );
-    return `${this.i18n.translate(screen?.labelKey ?? 'shell.menu.profiles')} · ${this.i18n.translate(`security.capabilities.${capability.endsWith('.view') ? 'view' : capability}`)}`;
+    return `${this.i18n.translate(screen?.labelKey ?? 'shell.menu.profiles')} · ${this.i18n.translate(this.capabilityKey(capability))}`;
   }
   private async write(operation: () => Promise<void>, complete: () => void): Promise<void> {
     this.busy.set(true);

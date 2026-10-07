@@ -159,18 +159,18 @@
     "assignmentSummary": "Usuario: {{name}}. Asignaciones resultantes: {{count}}. Añadidas: {{added}}. Retiradas: {{removed}}.",
     "cancel": "Cancelar",
     "capabilities": {
+      "access": "Consultar pantalla",
       "profiles": {
         "assign": "Gestionar asignaciones",
         "inspect": "Consultar acceso resultante",
-        "manage": "Administrar perfiles"
+        "update": "Administrar perfiles"
       },
       "users": {
         "create": "Crear usuarios",
-        "edit": "Editar usuarios",
+        "deactivate": "Activar / desactivar usuarios",
         "export": "Exportar / copiar usuarios",
-        "status": "Activar / desactivar usuarios"
-      },
-      "view": "Consultar pantalla"
+        "update": "Editar usuarios"
+      }
     },
     "confirm": "Confirmar",
     "context": "Almacén / propietario",

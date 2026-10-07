@@ -52,12 +52,12 @@
 /** t(security.screenStatus.implemented) */
 /** t(security.screenStatus.internal) */
 /** t(security.screenStatus.construction) */
-/** t(security.capabilities.view) */
+/** t(security.capabilities.access) */
 /** t(security.capabilities.users.create) */
-/** t(security.capabilities.users.edit) */
-/** t(security.capabilities.users.status) */
+/** t(security.capabilities.users.update) */
+/** t(security.capabilities.users.deactivate) */
 /** t(security.capabilities.users.export) */
-/** t(security.capabilities.profiles.manage) */
+/** t(security.capabilities.profiles.update) */
 /** t(security.capabilities.profiles.assign) */
 /** t(security.capabilities.profiles.inspect) */
 /** t(security.demo.title) */

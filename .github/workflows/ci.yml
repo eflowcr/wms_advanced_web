@@ -97,6 +97,10 @@ jobs:
       - name: Identifiers in English (no Spanish names)
         run: npm run lint:identifiers
 
+      # REQ-FE-SEC-002 RFE-03: botón con efecto bajo *ewmsCan y todo código en el catálogo.
+      - name: Permission catalog (gated buttons, known codes)
+        run: npm run lint:permissions
+
       # Antes que las pruebas: host-page.test.mjs lee la CSP del artefacto. Los presupuestos, en angular.json.
       - name: Production build and bundle budgets
         run: npm run build

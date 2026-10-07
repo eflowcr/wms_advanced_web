@@ -48,7 +48,7 @@ describe('HttpSecurityGateway', () => {
     expect(mock.request.context.get(ACCESS_QUERY)).toBe(true);
 
     const expected = {
-      grants: { 'users.view': ['admin'] },
+      grants: { 'security.users:access': ['admin'] },
       user: { id: 'admin', name: 'Admin', active: true, version: 1 },
     };
     mock.flush(expected);
@@ -94,10 +94,10 @@ describe('HttpSecurityGateway', () => {
         r.params.get('warehouseId') === 'B' &&
         r.params.get('ownerId') === 'Y',
     );
-    mock.flush({ 'users.view': ['read'] });
+    mock.flush({ 'security.users:access': ['read'] });
 
     const result = await promise;
-    expect(result).toEqual({ 'users.view': ['read'] });
+    expect(result).toEqual({ 'security.users:access': ['read'] });
   });
 
   it('fetches users via GET /api/v1/security/users', async () => {

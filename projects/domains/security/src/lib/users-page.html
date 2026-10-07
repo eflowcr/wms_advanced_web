@@ -4,21 +4,23 @@
       <h1 class="text-h1 text-primary">{{ 'shell.menu.users' | transloco }}</h1>
       <p class="text-secondary">{{ 'security.usersIntro' | transloco }}</p>
     </div>
-    @if (access.can('users.create')) {
-      <ewms-button data-user-create [disabled]="draft() !== null" (click)="begin(null)">{{
-        'security.createUser' | transloco
-      }}</ewms-button>
-    }
+    <ewms-button
+      *ewmsCan="'security.users:create'"
+      data-user-create
+      [disabled]="draft() !== null"
+      (click)="begin(null)"
+      >{{ 'security.createUser' | transloco }}</ewms-button
+    >
   </header>
   @if (error()) {
     <p role="alert" class="rounded-md border border-danger bg-danger-surface p-3 text-danger">
       {{ 'security.errors.' + error() | transloco }}
     </p>
-    <ewms-button variant="secondary" (click)="cancel(); load()">{{
+    <ewms-button variant="secondary" data-effect="none" (click)="cancel(); load()">{{
       'security.reload' | transloco
     }}</ewms-button>
   }
-  @if (!access.can('users.view')) {
+  @if (!access.can('security.users:access')) {
     <ewms-empty-state kind="no-access" [title]="'security.noAccess' | transloco" />
   } @else if (!rows()) {
     <p role="status" class="text-secondary">{{ 'security.loading' | transloco }}</p>
@@ -40,12 +42,15 @@
         <ewms-input [label]="'security.name' | transloco" [formField]="userForm.name" />
         <p role="status" class="text-caption text-warning">{{ 'security.unsaved' | transloco }}</p>
         <div class="flex flex-wrap gap-2">
-          <ewms-button variant="secondary" (click)="cancel()">{{
+          <ewms-button variant="secondary" data-effect="none" (click)="cancel()">{{
             'security.cancel' | transloco
           }}</ewms-button
-          ><ewms-button type="submit" [loading]="pattern.busy()">{{
-            'security.save' | transloco
-          }}</ewms-button>
+          ><ewms-button
+            *ewmsCan="user.version === 0 ? 'security.users:create' : 'security.users:update'"
+            type="submit"
+            [loading]="pattern.busy()"
+            >{{ 'security.save' | transloco }}</ewms-button
+          >
         </div>
       </form>
     }
@@ -60,7 +65,7 @@
       [trackBy]="byId"
       [ariaLabel]="'shell.menu.users' | transloco"
       [selectable]="true"
-      [exportable]="access.can('users.export')"
+      [exportable]="access.can('security.users:export')"
       [allowExport]="allowExport"
       [menuItems]="menuItems"
       (rowActivate)="begin($event.row)"

@@ -64,10 +64,10 @@ describe('Security rendered contract', () => {
     expect(root.querySelector('[data-profile-form] input')).not.toBeNull();
     expect(edit.disabled).toBe(true);
     const users = page['screens']().find((screen) => screen.id === 'users')!;
-    await page['toggle'](users, 'users.view', false);
+    await page['toggle'](users, 'security.users:access', false);
     fixture.detectChanges();
     expect(root.querySelectorAll('fieldset').length).toBe(1);
-    expect(page['granted']('profiles.inspect')).toBe(true);
+    expect(page['granted']('security.profiles:inspect')).toBe(true);
     expect(page['profileSummary']()).toEqual({ name: 'Consultation', screens: 1, actions: 1 });
     await vi.waitFor(() => expect(document.activeElement).toBe(filter));
     expect(root.querySelector('[data-profile-summary]')?.textContent).not.toBe(summary);

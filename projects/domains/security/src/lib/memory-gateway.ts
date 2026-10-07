@@ -1,4 +1,5 @@
 import {
+  accessCode,
   capabilities,
   SCREEN_CATALOG,
   SecurityError,
@@ -18,7 +19,12 @@ import {
 import { demoSnapshot } from './security.fixtures';
 export { demoSnapshot } from './security.fixtures';
 
-const ADMIN = ['profiles.view', 'profiles.manage', 'profiles.assign', 'profiles.inspect'];
+const ADMIN = [
+  'security.profiles:access',
+  'security.profiles:update',
+  'security.profiles:assign',
+  'security.profiles:inspect',
+];
 
 export interface MemoryOptions {
   readonly latency?: number;
@@ -67,9 +73,9 @@ export class MemorySecurityGateway implements SecurityGateway {
   }
 
   async snapshot(request: SecurityRequest): Promise<SecuritySnapshot> {
-    await this.authorize(request, 'profiles.view');
+    await this.authorize(request, 'security.profiles:access');
     const scopes = this.state.contexts.filter((c) =>
-      this.allowed({ ...request.actor, ...c }, 'profiles.view'),
+      this.allowed({ ...request.actor, ...c }, 'security.profiles:access'),
     );
     const assignments = this.state.assignments.filter((a) => scopes.some((c) => sameContext(c, a)));
     return structuredClone({
@@ -93,7 +99,7 @@ export class MemorySecurityGateway implements SecurityGateway {
   }
 
   async users(request: SecurityRequest): Promise<readonly SecurityUser[]> {
-    await this.authorize(request, 'users.view');
+    await this.authorize(request, 'security.users:access');
     return structuredClone(
       this.state.users.filter(
         (u) =>
@@ -107,7 +113,7 @@ export class MemorySecurityGateway implements SecurityGateway {
   }
 
   async inspect(request: SecurityRequest, target: Actor): Promise<Grants> {
-    await this.authorize(request, 'profiles.inspect');
+    await this.authorize(request, 'security.profiles:inspect');
     if (
       !this.state.contexts.some((c) => sameContext(c, target)) ||
       !this.state.users.some((u) => u.id === target.userId)
@@ -116,7 +122,7 @@ export class MemorySecurityGateway implements SecurityGateway {
     if (
       !this.allowed(
         { ...request.actor, warehouseId: target.warehouseId, ownerId: target.ownerId },
-        'profiles.inspect',
+        'security.profiles:inspect',
       )
     )
       throw new SecurityError('delegation');
@@ -124,7 +130,7 @@ export class MemorySecurityGateway implements SecurityGateway {
   }
 
   async saveProfile(request: SecurityRequest, profile: Profile): Promise<void> {
-    await this.authorize(request, 'profiles.manage');
+    await this.authorize(request, 'security.profiles:update');
     this.validName(profile.name);
     this.validId(profile.id);
     const previous = this.state.profiles.find((p) => p.id === profile.id);
@@ -143,7 +149,7 @@ export class MemorySecurityGateway implements SecurityGateway {
     for (const screen of SCREEN_CATALOG) {
       if (
         screen.actions.some((a) => profile.grants.includes(a)) &&
-        !profile.grants.includes(`${screen.id}.view`)
+        !profile.grants.includes(accessCode(screen))
       )
         throw new SecurityError('invalid');
     }
@@ -156,7 +162,7 @@ export class MemorySecurityGateway implements SecurityGateway {
         ownerId: context.ownerId,
       };
       if (
-        !this.allowed(actor, 'profiles.manage') ||
+        !this.allowed(actor, 'security.profiles:update') ||
         profile.grants.some((g) => !this.allowed(actor, g))
       )
         throw new SecurityError('delegation');
@@ -179,7 +185,7 @@ export class MemorySecurityGateway implements SecurityGateway {
     assignments: readonly Assignment[],
     version: number,
   ): Promise<void> {
-    await this.authorize(request, 'profiles.assign');
+    await this.authorize(request, 'security.profiles:assign');
     this.version(this.state.version, version);
     if (
       !this.state.users.some((u) => u.id === userId) ||
@@ -199,7 +205,7 @@ export class MemorySecurityGateway implements SecurityGateway {
     const editable = (a: Assignment) =>
       this.allowed(
         { ...request.actor, warehouseId: a.warehouseId, ownerId: a.ownerId },
-        'profiles.assign',
+        'security.profiles:assign',
       );
     if (assignments.some((a) => !editable(a) && !old.some((b) => key(a) === key(b))))
       throw new SecurityError('delegation');
@@ -215,7 +221,7 @@ export class MemorySecurityGateway implements SecurityGateway {
         warehouseId: assignment.warehouseId,
         ownerId: assignment.ownerId,
       };
-      if (!this.allowed(actor, 'profiles.assign')) throw new SecurityError('delegation');
+      if (!this.allowed(actor, 'security.profiles:assign')) throw new SecurityError('delegation');
       const profile = this.state.profiles.find((p) => p.id === assignment.profileId)!;
       if (profile.grants.some((g) => !this.allowed(actor, g)))
         throw new SecurityError('delegation');
@@ -230,7 +236,10 @@ export class MemorySecurityGateway implements SecurityGateway {
   }
 
   async saveUser(request: SecurityRequest, user: SecurityUser): Promise<void> {
-    await this.authorize(request, user.version === 0 ? 'users.create' : 'users.edit');
+    await this.authorize(
+      request,
+      user.version === 0 ? 'security.users:create' : 'security.users:update',
+    );
     const previous = this.state.users.find((u) => u.id === user.id);
     if (!previous && user.version !== 0) throw new SecurityError('conflict');
     this.validName(user.name);
@@ -238,7 +247,7 @@ export class MemorySecurityGateway implements SecurityGateway {
     if (typeof user.active !== 'boolean') throw new SecurityError('invalid');
     this.version(previous?.version ?? 0, user.version);
     if (previous && previous.active !== user.active) throw new SecurityError('invalid');
-    if (previous) this.userAuthority(request.actor, user.id, 'users.edit');
+    if (previous) this.userAuthority(request.actor, user.id, 'security.users:update');
     const saved = { ...user, name: user.name.trim(), version: user.version + 1 };
     const users = previous
       ? this.state.users.map((u) => (u.id === user.id ? saved : u))
@@ -253,12 +262,12 @@ export class MemorySecurityGateway implements SecurityGateway {
     active: boolean,
     version: number,
   ): Promise<void> {
-    await this.authorize(request, 'users.status');
+    await this.authorize(request, 'security.users:deactivate');
     if (typeof active !== 'boolean') throw new SecurityError('invalid');
     const user = this.state.users.find((u) => u.id === id);
     if (!user) throw new SecurityError('invalid');
     this.version(user.version, version);
-    this.userAuthority(request.actor, id, 'users.status');
+    this.userAuthority(request.actor, id, 'security.users:deactivate');
     this.commit(request, {
       ...this.state,
       users: this.state.users.map((u) =>
