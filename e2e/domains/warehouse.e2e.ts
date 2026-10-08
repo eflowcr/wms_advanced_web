@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import AxeBuilder from '@axe-core/playwright';
+import { axe } from '../axe';
 import { watchConsole } from '../console-watch';
 import { openSignedIn } from '../session';
 
@@ -62,9 +62,8 @@ test('the active warehouse is always visible and its selector is accessible', as
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
       true,
     );
-    const result = await new AxeBuilder({ page })
+    const result = await axe(page)
       .include('[data-app-header]')
-      .withTags(['wcag2a', 'wcag2aa', 'wcag21aa', 'wcag22aa'])
       .analyze();
     expect(result.violations).toEqual([]);
   }

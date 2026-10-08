@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import AxeBuilder from '@axe-core/playwright';
+import { axe } from '../axe';
 import { watchConsole } from '../console-watch';
 import { openSignedIn } from '../session';
 
@@ -95,9 +95,8 @@ test('bulk assignment creates explicit rows with their validity, all at once', a
   await bulk.getByLabel('Vigencia', { exact: true }).fill('1/1/2999 – 31/12/2999');
   await bulk.getByLabel('Vigencia', { exact: true }).press('Tab');
   await expect(bulk.locator('[data-bulk-preview]')).toContainText('2 asignaciones nuevas');
-  const result = await new AxeBuilder({ page })
+  const result = await axe(page)
     .include('[data-bulk-assignment]')
-    .withTags(['wcag2a', 'wcag2aa', 'wcag21aa', 'wcag22aa'])
     .analyze();
   expect(result.violations).toEqual([]);
   await bulk.getByRole('button', { name: 'Revisar y guardar', exact: true }).click();

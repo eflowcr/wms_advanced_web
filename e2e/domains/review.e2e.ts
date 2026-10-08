@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import AxeBuilder from '@axe-core/playwright';
+import { axe } from '../axe';
 import { watchConsole } from '../console-watch';
 import { openSignedIn } from '../session';
 
@@ -76,9 +76,8 @@ for (const [locale, t] of Object.entries(TEXT)) {
     await expect(own.locator('[data-review-own]')).toHaveText(t.own);
     await expect(own.getByRole('button')).toHaveCount(0);
 
-    const result = await new AxeBuilder({ page })
+    const result = await axe(page)
       .include('[data-access-review]')
-      .withTags(['wcag2a', 'wcag2aa', 'wcag21aa', 'wcag22aa'])
       .analyze();
     expect(result.violations).toEqual([]);
     await watch.clean(`access review ${locale}`);

@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import AxeBuilder from '@axe-core/playwright';
+import { axe } from '../axe';
 import { watchConsole } from '../console-watch';
 import { chooseScenario, openSignedIn, signIn } from '../session';
 
@@ -257,9 +257,8 @@ for (const locale of ['es-CR', 'en-US']) {
         expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
           true,
         );
-        const result = await new AxeBuilder({ page })
+        const result = await axe(page)
           .include('main#main')
-          .withTags(['wcag2a', 'wcag2aa', 'wcag21aa', 'wcag22aa'])
           .analyze();
         expect(result.violations).toEqual([]);
       }

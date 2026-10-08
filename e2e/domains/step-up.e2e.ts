@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import AxeBuilder from '@axe-core/playwright';
+import { axe } from '../axe';
 import { watchConsole } from '../console-watch';
 import { openSignedIn } from '../session';
 
@@ -36,9 +36,8 @@ test('PACQ-05: a sensitive action completes only after the second factor', async
   await deactivateRosa(page);
   const code = stepUp.getByRole('textbox', { name: 'Código de verificación', exact: true });
   await expect(code).toBeFocused();
-  const result = await new AxeBuilder({ page })
+  const result = await axe(page)
     .include('[data-step-up]')
-    .withTags(['wcag2a', 'wcag2aa', 'wcag21aa', 'wcag22aa'])
     .analyze();
   expect(result.violations).toEqual([]);
   await code.fill('000000');
