@@ -6,6 +6,7 @@ import {
   effectiveAccess,
   inForce,
   internalCapability,
+  isoToday,
   MODULE_CATALOG,
   parsePermission,
 } from './access-rules';
@@ -92,6 +93,11 @@ describe('assignment validity', () => {
     expect(inForce({ validFrom: '2026-10-01', validUntil: null }, '2026-09-30')).toBe(false);
     expect(inForce({ validFrom: null, validUntil: '2026-10-31' }, '2026-11-01')).toBe(false);
     expect(inForce({}, '2026-11-01')).toBe(true);
+  });
+  it('takes the local day, not the UTC one, at both ends of the day', () => {
+    expect(isoToday(new Date(2026, 9, 8, 0, 5))).toBe('2026-10-08');
+    expect(isoToday(new Date(2026, 9, 8, 23, 55))).toBe('2026-10-08');
+    expect(isoToday(new Date(2026, 0, 1, 23, 59))).toBe('2026-01-01');
   });
   it('grants nothing from a scheduled or expired assignment', () => {
     expect(effectiveAccess(dated('2026-11-01', null), actor, '2026-10-07')).toEqual({});

@@ -61,8 +61,11 @@ export function assignableTo(
   );
 }
 
-export function isoToday(): string {
-  return new Date().toISOString().slice(0, 10);
+/** El día local de quien usa la consola, no el de UTC: una vigencia dura hasta el final de su día. */
+export function isoToday(now: Date = new Date()): string {
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${now.getFullYear()}-${month}-${day}`;
 }
 
 export function inForce(validity: Validity, day: string): boolean {

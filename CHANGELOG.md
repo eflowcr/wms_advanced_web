@@ -15,6 +15,7 @@ Hasta acá el proyecto estaba en `0.0.0`. Lo que contiene, por pull request fusi
 - Seguridad y Usuarios: perfiles, concesiones positivas, asignaciones exactas por almacén/propietario, procedencia y administración con control de versión; adaptador asíncrono sintético y demostración separada de producción.
 - Control común de acceso en rutas, navegación, pestañas, favoritos y acciones; exportación/copiar independiente de consulta. Documentación del módulo, contratos y decisiones en la bóveda.
 - Matriz de permisos agrupada por módulo, resumen del perfil y borrador, búsqueda de pantallas/módulos y filtro de concesiones con recuperación de foco.
+- Security Core contra el simulador HTTP del contrato: sesión con token en memoria y renovación en cookie, login y guard de sesión; almacén activo en la cabecera con cambio sin reautenticarse; `*ewmsCan` con códigos `modulo.opcion:accion` y la compuerta `lint:permissions`; afiliación, vigencia, alta masiva y rechazos de la comanda; revisión de accesos por campaña; segundo factor bajo demanda (RFC 9470) con `Idempotency-Key`.
 - Compuertas de CI bloqueantes y Dependabot sobre `main`/`development` (#4).
 - DS-2 a DS-4: sistema de diseño, showroom y patrones (#9, #12).
 - DS-5: App Shell, navegación, favoritos y la suite E2E en tres niveles (#13).
