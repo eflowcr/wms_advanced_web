@@ -12,6 +12,7 @@ import {
   type Actor,
   type Assignment,
   type Profile,
+  type ReviewDecision,
   SECURITY_API_URL,
   SecurityError,
   sameContext,
@@ -173,9 +174,11 @@ const SESSION_ROUTES = new Set(['POST /session', 'POST /session/refresh', 'DELET
 async function answer(req: HttpRequest<unknown>, path: string, actor: Actor) {
   const gateway = await server();
   const request: SecurityRequest = { actor, signal: new AbortController().signal };
-  const target = (/^\/users\/([^/]+)(\/assignments|\/status)?$/.exec(path) ?? [])[1];
+  const target = (/^\/(?:users|reviews)\/([^/]+)(\/assignments|\/status|\/decisions)?$/.exec(
+    path,
+  ) ?? [])[1];
   const id = target === undefined ? '' : decodeURIComponent(target);
-  const route = `${req.method} ${path.replace(/^\/(users|profiles)\/[^/]+/, '/$1/:id')}`;
+  const route = `${req.method} ${path.replace(/^\/(users|profiles|reviews)\/[^/]+/, '/$1/:id')}`;
   switch (route) {
     case 'GET /session/contexts':
       return ok((await assigned(actor.userId)).map(({ context }) => context));
@@ -213,6 +216,14 @@ async function answer(req: HttpRequest<unknown>, path: string, actor: Actor) {
     case 'PUT /users/:id/assignments': {
       const body = req.body as { assignments: readonly Assignment[]; version: number };
       return ok(await gateway.setAssignments(request, id, body.assignments, body.version));
+    }
+    case 'GET /reviews':
+      return ok(await gateway.reviews(request));
+    case 'POST /reviews':
+      return ok(await gateway.startReview(request, req.body as { name: string; dueDate: string }));
+    case 'POST /reviews/:id/decisions': {
+      const body = req.body as { assignment: Assignment; decision: ReviewDecision; version: number };
+      return ok(await gateway.decide(request, id, body.assignment, body.decision, body.version));
     }
     case 'POST /assignments': {
       const body = req.body as { assignments: readonly Assignment[]; version: number };

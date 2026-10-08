@@ -10,7 +10,7 @@ test('module search and grant filter preserve hidden permissions and preview the
   await openSignedIn(page, '/configuracion/perfiles');
   await expect(page.locator('[data-permission-module]')).toHaveCount(3);
   const summary = page.locator('[data-profile-summary]');
-  await expect(summary).toContainText('13 pantallas y 7 acciones concedidas');
+  await expect(summary).toContainText('13 pantallas y 8 acciones concedidas');
   await page.locator('[data-security-page]').getByLabel('Perfil', { exact: true }).first().click();
   await page.getByRole('option', { name: 'Consultation', exact: true }).click();
   await expect(summary).toContainText('2 pantallas y 1 acción concedida');

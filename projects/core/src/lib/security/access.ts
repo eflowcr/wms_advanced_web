@@ -161,7 +161,12 @@ export const SCREEN_CATALOG: readonly ScreenDefinition[] = [
     labelKey: 'shell.menu.profiles',
     route: '/configuracion/perfiles',
     status: 'implemented',
-    actions: ['security.profiles:update', 'security.profiles:assign', 'security.profiles:inspect'],
+    actions: [
+      'security.profiles:update',
+      'security.profiles:assign',
+      'security.profiles:inspect',
+      'security.profiles:review',
+    ],
   },
   {
     id: 'params',

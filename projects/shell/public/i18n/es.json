@@ -178,6 +178,7 @@
       "profiles": {
         "assign": "Gestionar asignaciones",
         "inspect": "Consultar acceso resultante",
+        "review": "Revisar accesos",
         "update": "Administrar perfiles"
       },
       "users": {
@@ -257,6 +258,27 @@
     "reload": "Descartar cambios y recargar",
     "remove": "Retirar",
     "removeAssignmentLabel": "Retirar {{profile}} en {{context}}",
+    "review": {
+      "campaign": "Campaña",
+      "confirm": "Confirmar",
+      "create": "Iniciar",
+      "decidedBy": "Decidió {{ author }} el {{ date }}",
+      "decision": {
+        "confirm": "Confirmada",
+        "revoke": "Retirada"
+      },
+      "dueDate": "Fecha límite",
+      "hint": "Una campaña reúne las asignaciones vigentes que usted puede revisar. Confirme o retire cada una: queda quién decidió y cuándo. Nadie decide sobre su propio acceso.",
+      "name": "Nombre de la campaña",
+      "none": "No hay campañas de revisión",
+      "own": "Su propio acceso lo revisa otra persona.",
+      "progress": "{{ name }}: {{ decided }} de {{ total }} decididas · vence {{ due }}",
+      "revoke": "Retirar",
+      "revokeBody": "Se retirará {{ profile }} de {{ user }} en {{ context }}. El cambio rige en la siguiente petición.",
+      "revokeTitle": "Retirar asignación",
+      "start": "Iniciar campaña",
+      "title": "Revisión de accesos"
+    },
     "reviewSave": "Revisar y guardar",
     "save": "Guardar",
     "saved": "Cambios guardados en la demostración.",

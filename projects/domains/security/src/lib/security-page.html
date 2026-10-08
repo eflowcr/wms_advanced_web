@@ -327,5 +327,8 @@
         </div>
       }
     </section>
+    @if (access.can('security.profiles:review') && snapshot(); as state) {
+      <sec-access-review [snapshot]="state" (changed)="bulkSaved()" />
+    }
   }
 </section>

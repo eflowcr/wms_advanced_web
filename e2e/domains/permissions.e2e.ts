@@ -16,6 +16,7 @@ const ADMIN = [
   'security.users:export',
   'security.profiles:update',
   'security.profiles:assign',
+  'security.profiles:review',
 ];
 const OPERATE = ['security.users:access', 'security.users:create', 'security.users:update'];
 

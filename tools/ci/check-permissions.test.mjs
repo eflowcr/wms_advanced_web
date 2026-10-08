@@ -19,6 +19,7 @@ describe('the catalog', () => {
       'security.profiles:update',
       'security.profiles:assign',
       'security.profiles:inspect',
+      'security.profiles:review',
       'catalogs.articles:access',
       'settings.params:access',
     ]) {

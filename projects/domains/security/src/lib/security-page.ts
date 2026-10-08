@@ -46,12 +46,14 @@ import {
 } from '@ewms/design-system';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { AccessReview } from './access-review';
 import { BulkAssignment } from './bulk-assignment';
 
 @Component({
   selector: 'sec-security-page',
   imports: [
     Can,
+    AccessReview,
     Badge,
     BulkAssignment,
     Button,

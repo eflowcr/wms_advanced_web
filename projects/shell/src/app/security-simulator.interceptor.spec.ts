@@ -9,6 +9,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import {
+  type ReviewCampaign,
   type AccessResult,
   type Actor,
   type Grants,
@@ -211,6 +212,33 @@ describe('securitySimulatorInterceptor', () => {
       }),
     );
     expect(external.error).toMatchObject({ type: 'urn:ewms:security:externalAffiliation' });
+  });
+
+  it('runs an access review campaign over HTTP', async () => {
+    token = setSimulatedSession(admin);
+    await firstValueFrom(http.post(`${BASE}/reviews`, { name: 'Q4', dueDate: '2999-12-31' }));
+    let [campaign] = await firstValueFrom(http.get<ReviewCampaign[]>(`${BASE}/reviews`));
+    const item = campaign!.items.find((i) => i.userId === 'reader')!;
+    await firstValueFrom(
+      http.post(`${BASE}/reviews/${campaign!.id}/decisions`, {
+        assignment: item,
+        decision: 'confirm',
+        version: campaign!.version,
+      }),
+    );
+    [campaign] = await firstValueFrom(http.get<ReviewCampaign[]>(`${BASE}/reviews`));
+    expect(campaign!.items.find((i) => i.userId === 'reader')).toMatchObject({
+      decision: 'confirm',
+      decidedBy: 'admin',
+    });
+    const own = await rejection(
+      http.post(`${BASE}/reviews/${campaign!.id}/decisions`, {
+        assignment: campaign!.items.find((i) => i.userId === 'admin'),
+        decision: 'confirm',
+        version: campaign!.version,
+      }),
+    );
+    expect(own.error).toMatchObject({ type: 'urn:ewms:security:selfAssignment' });
   });
 
   it('a closed session denies again', async () => {

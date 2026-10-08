@@ -178,6 +178,7 @@
       "profiles": {
         "assign": "Manage assignments",
         "inspect": "Inspect effective access",
+        "review": "Review access",
         "update": "Manage profiles"
       },
       "users": {
@@ -257,6 +258,27 @@
     "reload": "Discard changes and reload",
     "remove": "Remove",
     "removeAssignmentLabel": "Remove {{profile}} in {{context}}",
+    "review": {
+      "campaign": "Campaign",
+      "confirm": "Confirm",
+      "create": "Start",
+      "decidedBy": "Decided by {{ author }} on {{ date }}",
+      "decision": {
+        "confirm": "Confirmed",
+        "revoke": "Revoked"
+      },
+      "dueDate": "Due date",
+      "hint": "A campaign gathers the assignments in force that you can review. Confirm or revoke each one: who decided and when is kept. Nobody decides on their own access.",
+      "name": "Campaign name",
+      "none": "There are no review campaigns",
+      "own": "Another person reviews your own access.",
+      "progress": "{{ name }}: {{ decided }} of {{ total }} decided · due {{ due }}",
+      "revoke": "Revoke",
+      "revokeBody": "{{ profile }} will be revoked from {{ user }} in {{ context }}. The change applies on the next request.",
+      "revokeTitle": "Revoke assignment",
+      "start": "Start campaign",
+      "title": "Access review"
+    },
     "reviewSave": "Review and save",
     "save": "Save",
     "saved": "Changes saved in the demonstration.",

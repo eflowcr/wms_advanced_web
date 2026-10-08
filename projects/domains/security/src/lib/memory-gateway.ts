@@ -2,6 +2,8 @@ import {
   accessCode,
   assignableTo,
   capabilities,
+  inForce,
+  isoToday,
   SCREEN_CATALOG,
   SecurityError,
   effectiveAccess,
@@ -10,6 +12,8 @@ import {
   type Assignment,
   type Grants,
   type Profile,
+  type ReviewCampaign,
+  type ReviewDecision,
   type SecurityAdministration,
   type SecurityErrorCode,
   type SecurityGateway,
@@ -27,6 +31,7 @@ const ADMIN = [
   'security.profiles:assign',
   'security.profiles:inspect',
 ];
+const REVIEW = 'security.profiles:review';
 
 export interface MemoryOptions {
   readonly latency?: number;
@@ -53,6 +58,7 @@ export class MemorySecurityGateway implements SecurityGateway, SecurityAdministr
   private nextFailure: SecurityErrorCode | null = null;
   private readonly listeners = new Set<() => void>();
   private readonly createdScopes = new Map<string, Actor>();
+  private campaigns: readonly ReviewCampaign[] = [];
 
   constructor(options: MemoryOptions = {}) {
     this.state = structuredClone(options.state ?? demoSnapshot());
@@ -257,6 +263,80 @@ export class MemorySecurityGateway implements SecurityGateway, SecurityAdministr
     });
   }
 
+  async reviews(request: SecurityRequest): Promise<readonly ReviewCampaign[]> {
+    await this.authorize(request, REVIEW);
+    return structuredClone(
+      this.campaigns.map((c) => ({
+        ...c,
+        items: c.items.filter((i) => this.allowed({ ...request.actor, ...this.scope(i) }, REVIEW)),
+      })),
+    );
+  }
+
+  /** La campaña congela las asignaciones vigentes que quien la inicia puede revisar. */
+  async startReview(
+    request: SecurityRequest,
+    campaign: { readonly name: string; readonly dueDate: string },
+  ): Promise<void> {
+    await this.authorize(request, REVIEW);
+    this.validName(campaign.name);
+    if (!campaign.dueDate || !validDate(campaign.dueDate)) throw new SecurityError('invalid');
+    const today = isoToday();
+    const items = this.state.assignments
+      .filter((a) => inForce(a, today) && this.allowed({ ...request.actor, ...this.scope(a) }, REVIEW))
+      .map((a) => ({ ...a, decision: null, decidedBy: null, decidedAt: null }));
+    if (items.length === 0) throw new SecurityError('invalid');
+    if (request.signal.aborted) throw new SecurityError('aborted');
+    const id = `review-${this.campaigns.length + 1}`;
+    this.campaigns = [
+      ...this.campaigns,
+      { id, name: campaign.name.trim(), dueDate: campaign.dueDate, items, version: 1 },
+    ];
+  }
+
+  /** Nadie decide sobre su propio acceso; retirar quita la asignación con las reglas de siempre. */
+  async decide(
+    request: SecurityRequest,
+    campaignId: string,
+    assignment: Assignment,
+    decision: ReviewDecision,
+    version: number,
+  ): Promise<void> {
+    await this.authorize(request, REVIEW);
+    const campaign = this.campaigns.find((c) => c.id === campaignId);
+    if (!campaign || (decision !== 'confirm' && decision !== 'revoke'))
+      throw new SecurityError('invalid');
+    this.version(campaign.version, version);
+    if (assignment.userId === request.actor.userId) throw new SecurityError('selfAssignment');
+    const key = assignmentKey(assignment);
+    const item = campaign.items.find((i) => assignmentKey(i) === key);
+    if (!item) throw new SecurityError('invalid');
+    if (item.decision) throw new SecurityError('conflict');
+    if (!this.allowed({ ...request.actor, ...this.scope(item) }, REVIEW))
+      throw new SecurityError('delegation');
+    if (decision === 'revoke')
+      this.commit(request, {
+        ...this.state,
+        assignments: this.state.assignments.filter((a) => assignmentKey(a) !== key),
+      });
+    else if (request.signal.aborted) throw new SecurityError('aborted');
+    const decided = {
+      ...item,
+      decision,
+      decidedBy: request.actor.userId,
+      decidedAt: new Date().toISOString(),
+    };
+    this.campaigns = this.campaigns.map((c) =>
+      c.id === campaignId
+        ? {
+            ...c,
+            version: c.version + 1,
+            items: c.items.map((i) => (assignmentKey(i) === key ? decided : i)),
+          }
+        : c,
+    );
+  }
+
   async saveUser(request: SecurityRequest, user: SecurityUser): Promise<void> {
     await this.authorize(
       request,
@@ -304,6 +384,10 @@ export class MemorySecurityGateway implements SecurityGateway, SecurityAdministr
         u.id === id ? { ...u, active, version: version + 1 } : u,
       ),
     });
+  }
+
+  private scope(a: { warehouseId: string; ownerId: string }) {
+    return { warehouseId: a.warehouseId, ownerId: a.ownerId };
   }
 
   /** Usuario, contexto y perfil existentes, y una vigencia con fechas reales y en orden. */

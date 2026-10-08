@@ -70,3 +70,42 @@ describe('SecurityAdministration over HTTP', () => {
     http.verify();
   });
 });
+
+describe('access reviews over HTTP', () => {
+  afterEach(() => TestBed.resetTestingModule());
+  const request = (): SecurityRequest => ({ actor, signal: new AbortController().signal });
+
+  it('lists, starts and decides campaigns without naming the actor', async () => {
+    const { admin, http } = setup();
+    const listed = admin.reviews(request());
+    const list = http.expectOne('/api/v1/security/reviews');
+    expect(list.request.method).toBe('GET');
+    list.flush([]);
+    expect(await listed).toEqual([]);
+
+    const started = admin.startReview(request(), { name: 'Q4', dueDate: '2026-12-31' });
+    const start = http.expectOne('/api/v1/security/reviews');
+    expect(start.request.method).toBe('POST');
+    expect(start.request.body).toEqual({ name: 'Q4', dueDate: '2026-12-31' });
+    start.flush(null);
+    await started;
+
+    const decided = admin.decide(request(), 'r/1', rows[0]!, 'revoke', 3);
+    const decide = http.expectOne('/api/v1/security/reviews/r%2F1/decisions');
+    expect(decide.request.method).toBe('POST');
+    expect(decide.request.body).toEqual({ assignment: rows[0], decision: 'revoke', version: 3 });
+    decide.flush(null);
+    await decided;
+    http.verify();
+  });
+
+  it('translates a rejected decision', async () => {
+    const { admin, http } = setup();
+    const decided = admin.decide(request(), 'r1', rows[0]!, 'confirm', 1);
+    http
+      .expectOne('/api/v1/security/reviews/r1/decisions')
+      .flush({ code: 'selfAssignment' }, { status: 403, statusText: 'Forbidden' });
+    await expect(decided).rejects.toEqual(new SecurityError('selfAssignment'));
+    http.verify();
+  });
+});

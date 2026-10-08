@@ -347,4 +347,55 @@ describe('MemorySecurityGateway', () => {
     );
     expect(listener).toHaveBeenCalledTimes(1);
   });
+  it('runs an access review: author and date per decision, revocation removes the row', async () => {
+    const gateway = new MemorySecurityGateway({ latency: 0 });
+    await expect(
+      gateway.startReview(request({ ...actor, userId: 'reader' }), {
+        name: 'Q4',
+        dueDate: '2026-12-31',
+      }),
+    ).rejects.toEqual(new SecurityError('denied'));
+    await expect(
+      gateway.startReview(request(), { name: 'Q4', dueDate: '2026-02-30' }),
+    ).rejects.toEqual(new SecurityError('invalid'));
+    await gateway.startReview(request(), { name: 'Q4', dueDate: '2026-12-31' });
+    let [campaign] = await gateway.reviews(request());
+    expect(campaign).toMatchObject({ name: 'Q4', dueDate: '2026-12-31', version: 1 });
+    // Solo lo vigente y lo que quien revisa puede decidir: A/X para quien revisa en A/X.
+    expect(campaign!.items.every((i) => i.decision === null)).toBe(true);
+    expect(campaign!.items.length).toBeGreaterThan(0);
+    const reader = campaign!.items.find((i) => i.userId === 'reader' && i.warehouseId === 'A')!;
+    const own = campaign!.items.find((i) => i.userId === 'admin')!;
+    await expect(gateway.decide(request(), campaign!.id, own, 'confirm', 1)).rejects.toEqual(
+      new SecurityError('selfAssignment'),
+    );
+    await gateway.decide(request(), campaign!.id, reader, 'revoke', 1);
+    await expect(gateway.decide(request(), campaign!.id, reader, 'confirm', 1)).rejects.toEqual(
+      new SecurityError('conflict'),
+    );
+    [campaign] = await gateway.reviews(request());
+    expect(campaign!.items.find((i) => i.userId === 'reader' && i.warehouseId === 'A')).toMatchObject({
+      decision: 'revoke',
+      decidedBy: 'admin',
+    });
+    expect(campaign!.version).toBe(2);
+    const state = await gateway.snapshot(request());
+    expect(state.assignments.some((a) => a.userId === 'reader' && a.warehouseId === 'A')).toBe(
+      false,
+    );
+    const operator = campaign!.items.find((i) => i.userId === 'operator')!;
+    await gateway.decide(request(), campaign!.id, operator, 'confirm', 2);
+    [campaign] = await gateway.reviews(request());
+    expect(campaign!.items.find((i) => i.userId === 'operator')?.decidedAt).toMatch(/^\d{4}-/);
+    expect((await gateway.snapshot(request())).assignments).toContainEqual(
+      expect.objectContaining({ userId: 'operator', profileId: operator.profileId }),
+    );
+  });
+  it('keeps the review of a context away from who cannot review it', async () => {
+    const gateway = new MemorySecurityGateway({ latency: 0 });
+    await gateway.startReview(request(), { name: 'Q4', dueDate: '2026-12-31' });
+    await expect(gateway.reviews(request({ ...actor, userId: 'operator' }))).rejects.toEqual(
+      new SecurityError('denied'),
+    );
+  });
 });

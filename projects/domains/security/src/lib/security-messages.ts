@@ -60,6 +60,8 @@
 /** t(security.capabilities.profiles.update) */
 /** t(security.capabilities.profiles.assign) */
 /** t(security.capabilities.profiles.inspect) */
+/** t(security.capabilities.profiles.review) */
+/** t(security.review.decision.confirm, security.review.decision.revoke) */
 /** t(security.demo.title) */
 /** t(security.demo.notice) */
 /** t(security.demo.actor) */
