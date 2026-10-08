@@ -48,7 +48,7 @@ import { deepestTitleKey } from '../route-title-key';
 import { RouteTitles } from '../route-titles';
 import { APP_VERSION } from '../version';
 import { LanguageSwitcher } from './language-switcher';
-import { DemoContext } from './demo-context';
+import { DemoSlot } from './demo-slot';
 import { WarehouseSwitcher } from './warehouse-switcher';
 import { MENU, menuEntryFor, type MenuEntry } from './menu';
 import { MAX_OPEN_TABS, TabsService } from './tabs.service';
@@ -65,7 +65,7 @@ import { MAX_OPEN_TABS, TabsService } from './tabs.service';
     FavoritesNav,
     Button,
     LanguageSwitcher,
-    DemoContext,
+    DemoSlot,
     WarehouseSwitcher,
     NavBottom,
     NavRail,

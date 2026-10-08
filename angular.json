@@ -61,6 +61,10 @@
                 {
                   "replace": "projects/shell/src/app/demo-mode.ts",
                   "with": "projects/shell/src/app/demo-mode.enabled.ts"
+                },
+                {
+                  "replace": "projects/shell/src/app/layout/demo-slot.ts",
+                  "with": "projects/shell/src/app/layout/demo-slot.enabled.ts"
                 }
               ]
             },
@@ -69,6 +73,10 @@
                 {
                   "replace": "projects/shell/src/app/demo-mode.ts",
                   "with": "projects/shell/src/app/demo-mode.enabled.ts"
+                },
+                {
+                  "replace": "projects/shell/src/app/layout/demo-slot.ts",
+                  "with": "projects/shell/src/app/layout/demo-slot.enabled.ts"
                 }
               ],
               "outputPath": "dist/shell-demo"

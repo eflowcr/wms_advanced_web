@@ -251,7 +251,7 @@
         class="isolate min-w-0 flex-1 [&_h1:focus]:outline-none [&_h1:focus-visible]:rounded-sm [&_h1:focus-visible]:shadow-(--focus-ring-shadow)"
         tabindex="-1"
       >
-        @defer (when access.demo()) { <app-demo-context /> }
+        @defer (when access.demo()) { <app-demo-slot /> }
         @if (!routeAccessible()) {
           <p role="status" class="p-4 text-secondary">{{ 'security.accessChanging' | transloco }}</p>
         }
