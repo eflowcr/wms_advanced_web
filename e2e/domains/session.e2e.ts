@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import AxeBuilder from '@axe-core/playwright';
+import { axe } from '../axe';
 import { watchConsole } from '../console-watch';
 import { DEMO_PASSWORD, openSignedIn, signIn } from '../session';
 
@@ -69,17 +69,24 @@ for (const locale of ['es-CR', 'en-US']) {
   test(`sign-in is accessible at desktop and mobile (${locale})`, async ({ browser }) => {
     const context = await browser.newContext({ locale });
     const page = await context.newPage();
-    for (const width of [1280, 390]) {
+    for (const width of [1440, 768, 390]) {
       await page.setViewportSize({ width, height: 900 });
       await page.goto('/login');
       await expect(page.locator('[data-login-form]')).toBeVisible();
+      // axe mide lo asentado: la entrada escalonada termina antes de medir contraste.
+      await page.evaluate(() =>
+        Promise.all(
+          document
+            .getAnimations()
+            .filter((animation) => animation.effect?.getTiming().iterations !== Infinity)
+            .map((animation) => animation.finished),
+        ),
+      );
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
         true,
       );
-      const result = await new AxeBuilder({ page })
-        .withTags(['wcag2a', 'wcag2aa', 'wcag21aa', 'wcag22aa'])
-        .analyze();
-      expect(result.violations).toEqual([]);
+      const result = await axe(page).analyze();
+      expect(result.violations, `${width} px`).toEqual([]);
     }
     await page.locator('input[autocomplete="username"]').focus();
     await page.keyboard.type('admin');
@@ -90,3 +97,20 @@ for (const locale of ['es-CR', 'en-US']) {
     await context.close();
   });
 }
+
+// Con movimiento normal la pantalla se anima; con `reduce`, nada se mueve (la espera, en login.spec).
+test('with reduced motion nothing on sign-in moves', async ({ browser }) => {
+  const moving = await browser.newPage();
+  await moving.goto('/login');
+  await expect(moving.locator('[data-login-form]')).toBeVisible();
+  expect(await moving.evaluate(() => document.getAnimations().length)).toBeGreaterThan(0);
+  await moving.close();
+
+  const context = await browser.newContext({ reducedMotion: 'reduce' });
+  const page = await context.newPage();
+  await page.goto('/login');
+  await expect(page.locator('[data-login-form]')).toBeVisible();
+  expect(await page.evaluate(() => document.getAnimations().length)).toBe(0);
+  await signIn(page);
+  await context.close();
+});

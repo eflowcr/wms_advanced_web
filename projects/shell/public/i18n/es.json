@@ -338,14 +338,20 @@
     },
     "login": {
       "demoHint": "Demostración: entre como admin, reader u operator, con cualquier contraseña.",
+      "entering": "Abriendo su almacén activo…",
+      "headline": "Todo el almacén, en movimiento.",
       "hidePassword": "Ocultar contraseña",
       "invalidCredentials": "Usuario o contraseña incorrectos.",
+      "lede": "Recepción, inventario y despacho trazados de punta a punta, en el almacén donde usted trabaja.",
       "password": "Contraseña",
       "showPassword": "Mostrar contraseña",
       "submit": "Entrar",
+      "submitting": "Entrando…",
+      "subtitle": "Ingrese con su usuario de eWMS.",
       "title": "Iniciar sesión",
       "unavailable": "No se pudo iniciar sesión. Vuelva a intentarlo; si el problema continúa, avise a soporte.",
-      "username": "Usuario"
+      "username": "Usuario",
+      "welcome": "Bienvenido"
     },
     "menu": {
       "articles": "Artículos",

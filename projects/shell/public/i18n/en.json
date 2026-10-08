@@ -338,14 +338,20 @@
     },
     "login": {
       "demoHint": "Demo: sign in as admin, reader or operator, with any password.",
+      "entering": "Opening your active warehouse…",
+      "headline": "Your whole warehouse, in motion.",
       "hidePassword": "Hide password",
       "invalidCredentials": "Incorrect user or password.",
+      "lede": "Receiving, inventory and shipping traced end to end, in the warehouse where you work.",
       "password": "Password",
       "showPassword": "Show password",
       "submit": "Sign in",
+      "submitting": "Signing in…",
+      "subtitle": "Use your eWMS account.",
       "title": "Sign in",
       "unavailable": "Sign-in failed. Please try again; if the problem continues, contact support.",
-      "username": "User"
+      "username": "User",
+      "welcome": "Welcome"
     },
     "menu": {
       "articles": "Articles",

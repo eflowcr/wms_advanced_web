@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1000" aria-hidden="true">
+  <!--
+    Panel de marca del login, en el lenguaje de nav-routes.svg: rutas que fluyen, almacenes y puntos de
+    paso que respiran; quieto con prefers-reduced-motion. Color blue-63 escrito: una imagen no lee las
+    variables. El trazo se repite cada 16 unidades y corre 96 por ciclo. Ver vault: App-Shell.
+  -->
+  <style>
+    path { fill: none; stroke: #7c93f2; stroke-width: 1.5; stroke-dasharray: 6 10; stroke-opacity: 0.4; animation: flow 6s linear infinite; }
+    path:nth-of-type(even) { stroke-opacity: 0.28; animation-delay: -3s; }
+    rect { fill: #7c93f2; fill-opacity: 0.16; stroke: #7c93f2; stroke-width: 1.5; stroke-opacity: 0.75; animation: breathe 5s ease-in-out infinite; }
+    circle { fill: #7c93f2; opacity: 0.8; animation: breathe 5s ease-in-out infinite; }
+    .ring { fill: none; stroke: #7c93f2; stroke-width: 1.2; opacity: 0; transform-box: fill-box; transform-origin: center; animation: ring 5s ease-out infinite; }
+    .late { animation-delay: -1.67s; }
+    .later { animation-delay: -3.33s; }
+    @keyframes flow { to { stroke-dashoffset: -96; } }
+    @keyframes breathe { 50% { opacity: 0.35; } }
+    @keyframes ring { 0% { opacity: 0.6; transform: scale(1); } 70%, 100% { opacity: 0; transform: scale(2.6); } }
+    @media (prefers-reduced-motion: reduce) { path, rect, circle, .ring { animation: none; } }
+  </style>
+  <path d="M-20 260 C 120 230, 260 170, 380 120 S 520 170, 580 190" />
+  <path d="M380 120 C 420 40, 520 10, 640 -20" />
+  <path d="M580 190 C 640 230, 650 290, 660 330 S 690 430, 700 480" />
+  <path d="M580 190 C 660 160, 740 120, 830 100" />
+  <path d="M-20 760 C 40 740, 90 720, 130 700 C 300 640, 520 560, 700 480 C 760 490, 800 495, 830 500" />
+  <path d="M700 480 C 660 620, 620 700, 600 820" />
+  <path d="M130 700 C 230 690, 330 760, 420 760 S 540 800, 600 820" />
+  <path d="M600 820 C 680 870, 740 930, 780 950 S 830 980, 840 1020" />
+  <rect x="566" y="176" width="28" height="28" rx="6" />
+  <rect class="late" x="686" y="466" width="28" height="28" rx="6" />
+  <rect class="later" x="586" y="806" width="28" height="28" rx="6" />
+  <rect class="late" x="116" y="686" width="28" height="28" rx="6" />
+  <circle cx="380" cy="120" r="4" />
+  <circle class="late" cx="660" cy="330" r="3.5" />
+  <circle class="later" cx="420" cy="760" r="3.5" />
+  <circle class="late" cx="780" cy="950" r="3" />
+  <rect class="ring" x="566" y="176" width="28" height="28" rx="6" />
+  <rect class="ring late" x="686" y="466" width="28" height="28" rx="6" />
+  <rect class="ring later" x="586" y="806" width="28" height="28" rx="6" />
+</svg>

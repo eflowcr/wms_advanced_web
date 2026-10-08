@@ -1,6 +1,6 @@
 /**
  * Tokens sin huecos: todo token de tokens.css lo consume código de producción, o su excepción dice
- * por qué; y el color que nav-routes.svg escribe literal es el de su token. Ver vault: Nomenclatura
+ * por qué; y el color que una imagen de marca escribe literal es el de su token. Ver vault: Nomenclatura
  * de Componentes y Tokens.
  */
 import assert from 'node:assert/strict';
@@ -11,7 +11,14 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const TOKENS_FILE = 'projects/design-system/src/styles/tokens.css';
-const NAV_ROUTES = 'projects/shell/public/brand/nav-routes.svg';
+const BRAND = 'projects/shell/public/brand';
+/** Cada imagen de marca que escribe su color a mano, con el token de ese color. */
+const HAND_COLOURED = {
+  'nav-routes.svg': '--blue-63',
+  'login-routes.svg': '--blue-63',
+  'login-trace.svg': '--navy-97',
+  'ewms-wordmark-on-dark.svg': '--navy-97',
+};
 const read = (file) => readFile(path.join(ROOT, file), 'utf8');
 
 /**
@@ -23,7 +30,7 @@ const NOT_PRODUCTION = /\.spec\.ts$|\.testing\.ts$|^projects\/testing\/|^project
 /** Token → por qué ningún código de producción lo consume. Agregar uno es una decisión escrita. */
 const UNUSED_ON_PURPOSE = {
   '--blue-63':
-    'nav-routes.svg lo escribe literal: servido como imagen, un SVG no lee variables. Lo ata al token la prueba del color, abajo.',
+    'nav-routes.svg y login-routes.svg lo escriben literal: servido como imagen, un SVG no lee variables. Los ata al token la prueba del color, abajo.',
   '--color-brand-blue':
     'El azul de marca, sin utilidad en el tema a propósito: el azul es solo acción. Lo muestran las páginas Marca y Color del catálogo.',
 };
@@ -84,9 +91,12 @@ test('a spec or a catalogue page naming a token is not a use of it', () => {
   assert.ok(!NOT_PRODUCTION.test('projects/showroom/src/lib/layout/showroom-layout.html'));
 });
 
-test('the colour nav-routes.svg writes by hand is the value of --blue-63', async () => {
-  assert.deepEqual(strayColors(await read(NAV_ROUTES), await read(TOKENS_FILE), '--blue-63'), []);
-});
+for (const [file, token] of Object.entries(HAND_COLOURED)) {
+  test(`the colour ${file} writes by hand is the value of ${token}`, async () => {
+    const svg = await read(`${BRAND}/${file}`);
+    assert.deepEqual(strayColors(svg, await read(TOKENS_FILE), token), []);
+  });
+}
 
 test('the colour check catches a hand-written colour that drifted from its token', () => {
   const tokens = '  --blue-63: #7c93f2;\n';

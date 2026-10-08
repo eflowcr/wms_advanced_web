@@ -322,8 +322,9 @@
   <p class="sr-only" role="status" data-route-announce>{{ routeAnnouncement() }}</p>
 
   <!--
-    El único toast outlet: una cola y una región aria-live, para no anunciar dos veces.
-    Las severidades se traducen acá porque el design system no habla idiomas (ADR 0008).
+    El toast outlet del marco (el login lleva el suyo): una cola y una región aria-live, para no
+    anunciar dos veces. Las severidades se traducen acá porque el design system no habla idiomas
+    (ADR 0008).
   -->
   <ewms-toast-outlet
     [severityLabels]="{

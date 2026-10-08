@@ -189,6 +189,8 @@ const DESIGN_SYSTEM = [
   'parentOf',
   'parseTableDate',
   'parseTableViews',
+  'readMilliseconds',
+  'readPixels',
 ];
 
 describe('the public API of @ewms/design-system', () => {
