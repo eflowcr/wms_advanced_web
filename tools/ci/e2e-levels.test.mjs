@@ -7,7 +7,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import test from 'node:test';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const WORKFLOW = path.join(ROOT, '.github', 'workflows', 'ci.yml');
@@ -108,6 +108,19 @@ test('the domain level requires tests in CI', async () => {
 
   assert.match(workflow, /--project=domain\b/);
   assert.doesNotMatch(workflow, /--pass-with-no-tests\b/);
+});
+
+test('each run builds only the artifact its projects test', async () => {
+  // Smoke y catálogo prueban producción; dominio, la demostración: ninguno compila el otro.
+  const config = pathToFileURL(path.join(ROOT, 'playwright.config.ts')).href;
+  const { webServersFor } = await import(config);
+  const ports = (argv) => webServersFor(argv).map((server) => new URL(server.url).port);
+  assert.deepEqual(ports(['--project=smoke']), ['4400']);
+  assert.deepEqual(ports(['--project=showroom']), ['4400']);
+  assert.deepEqual(ports(['--project=domain']), ['4401']);
+  assert.deepEqual(ports(['--project', 'domain']), ['4401']);
+  assert.deepEqual(ports(['--project=smoke', '--project=domain']), ['4400', '4401']);
+  assert.deepEqual(ports([]), ['4400', '4401']);
 });
 
 test('smoke and domain are two commands: a smoke that finds no test fails', async () => {
