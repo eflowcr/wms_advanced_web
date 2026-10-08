@@ -199,3 +199,30 @@ describe('the public API of @ewms/design-system', () => {
     assert.deepEqual(exportedNames(file), [...DESIGN_SYSTEM].sort());
   });
 });
+
+// Las entradas de seguridad exportan lo que se importa fuera de su biblioteca (ADR 0015).
+const CORE_SECURITY = [
+  'AccessContext', 'AccessResult', 'AccessStore', 'ActiveContext', 'Actor', 'Affiliation',
+  'Assignment', 'AuthError', 'AuthErrorCode', 'AuthSession', 'Can', 'ContextChangeCode',
+  'ContextChangeError', 'Grants', 'HttpSecurityGateway', 'Profile', 'ReviewCampaign',
+  'ReviewDecision', 'ReviewItem', 'SCREEN_CATALOG', 'SECURITY_API_URL', 'SENSITIVE_CAPABILITIES',
+  'STEP_UP', 'ScreenDefinition', 'SecurityAdministration', 'SecurityError', 'SecurityErrorCode',
+  'SecurityGateway', 'SecurityRequest', 'SecuritySnapshot', 'SecurityUser', 'SessionGrant',
+  'SessionInfo', 'accessCode', 'accessGuard', 'assignableTo', 'authInterceptor', 'capabilities',
+  'effectiveAccess', 'inForce', 'internalCapability', 'isoToday', 'parsePermission',
+  'safeReturnUrl', 'sameContext', 'securityAccessInterceptor', 'sessionGuard',
+];
+const CORE_LOCALE = ['provideEwmsLocale'];
+const SECURITY = ['MemoryOptions', 'MemorySecurityGateway', 'demoSnapshot', 'securityRoutes', 'userRoutes'];
+
+describe('the public API of the security entry points', () => {
+  for (const [alias, file, names] of [
+    ['@ewms/core/security', 'projects/core/src/security-api.ts', CORE_SECURITY],
+    ['@ewms/core/locale', 'projects/core/src/locale-api.ts', CORE_LOCALE],
+    ['@ewms/security', 'projects/domains/security/src/public-api.ts', SECURITY],
+  ]) {
+    it(`${alias} exports exactly what is imported outside its library`, () => {
+      assert.deepEqual(exportedNames(path.join(ROOT, file)), [...names].sort());
+    });
+  }
+});
