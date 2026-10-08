@@ -49,7 +49,7 @@ describe('HttpSecurityGateway', () => {
 
     const expected = {
       grants: { 'security.users:access': ['admin'] },
-      user: { id: 'admin', name: 'Admin', active: true, version: 1 },
+      user: { id: 'admin', name: 'Admin', active: true, version: 1, affiliation: 'internal' },
     };
     mock.flush(expected);
 
@@ -106,7 +106,7 @@ describe('HttpSecurityGateway', () => {
     expect(mock.request.method).toBe('GET');
 
     const users: readonly SecurityUser[] = [
-      { id: 'admin', name: 'Admin', active: true, version: 1 },
+      { id: 'admin', name: 'Admin', active: true, version: 1, affiliation: 'internal' },
     ];
     mock.flush(users);
 
@@ -153,7 +153,14 @@ describe('HttpSecurityGateway', () => {
   });
 
   it('saves user via PUT /api/v1/security/users/:id', async () => {
-    const user: SecurityUser = { id: 'u1', name: 'User 1', active: true, version: 1 };
+    const user: SecurityUser = {
+      id: 'u1',
+      name: 'User 1',
+      active: true,
+      version: 1,
+      affiliation: 'external',
+      companyId: 'Y',
+    };
     const promise = gateway.saveUser(req, user);
     const mock = httpMock.expectOne('/api/v1/security/users/u1');
     expect(mock.request.method).toBe('PUT');
@@ -196,6 +203,9 @@ describe('HttpSecurityGateway', () => {
     await testError(403, { type: 'urn:ewms:security:selfEscalation' }, 'selfEscalation');
     await testError(403, { type: 'urn:ewms:security:delegation' }, 'delegation');
     await testError(400, { type: 'urn:ewms:security:invalid' }, 'invalid');
+    await testError(403, { type: 'urn:ewms:security:selfAssignment' }, 'selfAssignment');
+    await testError(409, { code: 'externalAffiliation' }, 'externalAffiliation');
+    await testError(409, { type: 'urn:ewms:security:dependency' }, 'dependency');
     await testError(403, null, 'denied');
     await testError(401, null, 'denied');
     await testError(409, null, 'conflict');
@@ -203,6 +213,18 @@ describe('HttpSecurityGateway', () => {
     await testError(500, { type: 'urn:ewms:unknown' }, 'unavailable');
     await testError(500, { code: 'unknown-code' }, 'unavailable');
     await testError(503, null, 'unavailable');
+  });
+
+  it('keeps the profiles in conflict that the server names for segregation of duties', async () => {
+    const promise = gateway.users(req);
+    httpMock.expectOne('/api/v1/security/users').flush(
+      { type: 'urn:ewms:security:segregation', code: 'segregation', conflicts: ['admin', 7, 'audit'] },
+      { status: 409, statusText: 'Conflict' },
+    );
+    const error = (await promise.catch((e: unknown) => e)) as SecurityError;
+    expect(error).toBeInstanceOf(SecurityError);
+    expect(error.code).toBe('segregation');
+    expect(error.conflicts).toEqual(['admin', 'audit']);
   });
 
   it('translates AbortError and aborted signal into SecurityError aborted', async () => {

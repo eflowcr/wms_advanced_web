@@ -5,11 +5,15 @@ export interface AccessContext {
 export interface Actor extends AccessContext {
   readonly userId: string;
 }
+/** Interna o externa (C5): un externo pertenece a una compañía, el propietario de sus contextos. */
+export type Affiliation = 'internal' | 'external';
 export interface SecurityUser {
   readonly id: string;
   readonly name: string;
   readonly active: boolean;
   readonly version: number;
+  readonly affiliation: Affiliation;
+  readonly companyId?: string | null;
 }
 export interface Profile {
   readonly id: string;
@@ -17,7 +21,12 @@ export interface Profile {
   readonly grants: readonly string[];
   readonly version: number;
 }
-export interface Assignment extends Actor {
+/** Vigencia inclusiva en 'YYYY-MM-DD'; sin una fecha, queda abierta por ese lado. */
+export interface Validity {
+  readonly validFrom?: string | null;
+  readonly validUntil?: string | null;
+}
+export interface Assignment extends Actor, Validity {
   readonly profileId: string;
 }
 export interface SecuritySnapshot {
@@ -37,18 +46,6 @@ export interface ScreenDefinition {
   readonly actions: readonly string[];
 }
 export type Grants = Readonly<Record<string, readonly string[]>>;
-
-/** Un permiso de la comanda: módulo, opción y acción, en inglés (`security.users:create`). */
-export interface Permission {
-  readonly module: string;
-  readonly option: string;
-  readonly action: string;
-}
-
-export function parsePermission(code: string): Permission | null {
-  const match = /^([a-z][a-z-]*)\.([a-z][a-z-]*):([a-z][a-z-]*)$/.exec(code);
-  return match ? { module: match[1]!, option: match[2]!, action: match[3]! } : null;
-}
 
 /** La acción Acceder de una pantalla: la que exige el guard y abre sus demás acciones. */
 export function accessCode(screen: Pick<ScreenDefinition, 'id' | 'module'>): string {
@@ -192,34 +189,6 @@ export function sameContext(a: AccessContext, b: AccessContext): boolean {
   return a.warehouseId === b.warehouseId && a.ownerId === b.ownerId;
 }
 
-export function effectiveAccess(state: SecuritySnapshot, actor: Actor | null): Grants {
-  if (
-    actor === null ||
-    !state.users.some((u) => u.id === actor.userId && u.active) ||
-    !state.contexts.some((c) => sameContext(c, actor))
-  )
-    return {};
-  const result: Record<string, string[]> = {};
-  for (const assignment of state.assignments.filter(
-    (a) => a.userId === actor.userId && sameContext(a, actor),
-  )) {
-    const profile = state.profiles.find((p) => p.id === assignment.profileId);
-    if (!profile) continue;
-    for (const screen of SCREEN_CATALOG) {
-      const view = accessCode(screen);
-      if (!profile.grants.includes(view)) continue;
-      for (const capability of [
-        view,
-        ...screen.actions.filter((action) => profile.grants.includes(action)),
-      ]) {
-        const sources = (result[capability] ??= []);
-        if (!sources.includes(profile.id)) sources.push(profile.id);
-      }
-    }
-  }
-  return result;
-}
-
 export interface AccessResult {
   readonly grants: Grants;
   readonly user: SecurityUser | null;
@@ -258,10 +227,18 @@ export type SecurityErrorCode =
   | 'lastAdmin'
   | 'selfEscalation'
   | 'delegation'
+  | 'selfAssignment'
+  | 'segregation'
+  | 'externalAffiliation'
+  | 'dependency'
   | 'unavailable'
   | 'aborted';
+/** `conflicts`: los perfiles en conflicto que nombra el servidor ante `segregation`. */
 export class SecurityError extends Error {
-  constructor(readonly code: SecurityErrorCode) {
+  constructor(
+    readonly code: SecurityErrorCode,
+    readonly conflicts: readonly string[] = [],
+  ) {
     super(code);
   }
 }

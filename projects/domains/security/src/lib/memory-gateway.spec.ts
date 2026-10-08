@@ -4,10 +4,18 @@ import {
   type Actor,
   type Profile,
   type SecurityRequest,
+  type SecurityUser,
 } from '@ewms/core/security';
 import { MemorySecurityGateway, demoSnapshot } from './memory-gateway';
 
 const actor: Actor = { userId: 'admin', warehouseId: 'A', ownerId: 'X' };
+const newUser: SecurityUser = {
+  id: 'new',
+  name: 'New user',
+  active: true,
+  version: 0,
+  affiliation: 'internal',
+};
 const request = (value = actor): SecurityRequest => ({
   actor: value,
   signal: new AbortController().signal,
@@ -19,7 +27,7 @@ describe('MemorySecurityGateway', () => {
     const reader = request({ ...actor, userId: 'reader' });
     expect((await gateway.users(reader)).length).toBeGreaterThan(0);
     await expect(
-      gateway.saveUser(reader, { id: 'new', name: 'New user', active: true, version: 0 }),
+      gateway.saveUser(reader, { ...newUser }),
     ).rejects.toEqual(new SecurityError('denied'));
     const access = await gateway.access(reader.actor, reader.signal);
     expect(access.grants['security.users:export']).toBeUndefined();
@@ -83,7 +91,7 @@ describe('MemorySecurityGateway', () => {
         grants: ['security.users:export'],
         version: 0,
       }),
-    ).rejects.toEqual(new SecurityError('invalid'));
+    ).rejects.toEqual(new SecurityError('dependency'));
     await expect(
       gateway.saveProfile(request(), { id: 'new', name: 'Administrator', grants: [], version: 0 }),
     ).rejects.toEqual(new SecurityError('duplicate'));
@@ -95,7 +103,7 @@ describe('MemorySecurityGateway', () => {
     );
     const state = await gateway.snapshot(request());
     await expect(gateway.setAssignments(request(), 'admin', [], state.version)).rejects.toEqual(
-      new SecurityError('lastAdmin'),
+      new SecurityError('selfAssignment'),
     );
     const profile = state.profiles.find((p) => p.id === 'admin')!;
     await expect(gateway.saveProfile(request(), { ...profile, grants: [] })).rejects.toEqual(
@@ -122,7 +130,7 @@ describe('MemorySecurityGateway', () => {
       gateway.saveUser(request(), { ...user, name: 'Second' }),
     ]);
     expect(edits.filter((r) => r.status === 'fulfilled')).toHaveLength(1);
-    const row = { id: 'new', name: 'New user', active: true, version: 0 };
+    const row = { ...newUser };
     const creates = await Promise.allSettled([
       gateway.saveUser(request(), row),
       gateway.saveUser(request(), row),
@@ -134,7 +142,7 @@ describe('MemorySecurityGateway', () => {
     const abort = new AbortController();
     const pending = gateway.saveUser(
       { actor, signal: abort.signal },
-      { id: 'new', name: 'New user', active: true, version: 0 },
+      { ...newUser },
     );
     abort.abort();
     await expect(pending).rejects.toEqual(new SecurityError('aborted'));
@@ -142,7 +150,7 @@ describe('MemorySecurityGateway', () => {
     await expect(gateway.users(request())).rejects.toEqual(new SecurityError('unavailable'));
     gateway.failNext('conflict');
     await expect(
-      gateway.saveUser(request(), { id: 'new', name: 'New user', active: true, version: 0 }),
+      gateway.saveUser(request(), { ...newUser }),
     ).rejects.toEqual(new SecurityError('conflict'));
     expect((await gateway.users(request())).some((u) => u.id === 'new')).toBe(false);
   });
@@ -153,6 +161,7 @@ describe('MemorySecurityGateway', () => {
       name: 'Scoped user',
       active: true,
       version: 0,
+      affiliation: 'internal',
     });
     await expect(
       gateway.saveUser(request({ ...actor, userId: 'operator' }), {
@@ -160,6 +169,7 @@ describe('MemorySecurityGateway', () => {
         name: 'Outside scope',
         active: true,
         version: 1,
+        affiliation: 'internal',
       }),
     ).rejects.toEqual(new SecurityError('delegation'));
   });
@@ -203,5 +213,138 @@ describe('MemorySecurityGateway', () => {
     await expect(gateway.inspect(request({ ...actor, userId: 'operator' }), actor)).rejects.toEqual(
       new SecurityError('denied'),
     );
+  });
+  it('rejects any change to the assignments of the actor, even removing one (C6)', async () => {
+    const gateway = new MemorySecurityGateway({ latency: 0 });
+    const state = await gateway.snapshot(request());
+    const own = state.assignments.filter((a) => a.userId === 'admin');
+    await expect(
+      gateway.setAssignments(request(), 'admin', own.slice(1), state.version),
+    ).rejects.toEqual(new SecurityError('selfAssignment'));
+    await expect(
+      gateway.addAssignments(request(), [{ ...own[0]!, profileId: 'read' }], state.version),
+    ).rejects.toEqual(new SecurityError('selfAssignment'));
+  });
+  it('rejects internal modules and other companies for an external user (C5)', async () => {
+    const gateway = new MemorySecurityGateway({ latency: 0 });
+    const scoped = request({ ...actor, warehouseId: 'B', ownerId: 'Y' });
+    const state = await gateway.snapshot(scoped);
+    const own = state.assignments.filter((a) => a.userId === 'external');
+    expect(own.length).toBeGreaterThan(0);
+    const add = (profileId: string, warehouseId: string, ownerId: string) =>
+      gateway.setAssignments(
+        scoped,
+        'external',
+        [...own, { userId: 'external', profileId, warehouseId, ownerId }],
+        state.version,
+      );
+    await expect(add('read', 'B', 'Y')).rejects.toEqual(new SecurityError('externalAffiliation'));
+    await expect(add('catalogs', 'A', 'X')).rejects.toEqual(
+      new SecurityError('externalAffiliation'),
+    );
+    const user = (await gateway.users(scoped)).find((u) => u.id === 'reader')!;
+    await expect(
+      gateway.saveUser(scoped, { ...user, affiliation: 'external', companyId: 'Y' }),
+    ).rejects.toEqual(new SecurityError('externalAffiliation'));
+    await expect(
+      gateway.saveUser(scoped, { ...newUser, affiliation: 'external', companyId: null }),
+    ).rejects.toEqual(new SecurityError('invalid'));
+    await expect(
+      gateway.saveUser(scoped, { ...newUser, affiliation: 'internal', companyId: 'Y' }),
+    ).rejects.toEqual(new SecurityError('invalid'));
+    await gateway.saveUser(scoped, { ...newUser, affiliation: 'external', companyId: 'Y' });
+  });
+  it('rejects static segregation of duties naming the profiles in conflict', async () => {
+    const gateway = new MemorySecurityGateway({ latency: 0 });
+    const state = await gateway.snapshot(request());
+    const own = state.assignments.filter((a) => a.userId === 'reader');
+    const error = (await gateway
+      .setAssignments(
+        request(),
+        'reader',
+        [
+          ...own,
+          { userId: 'reader', profileId: 'admin', warehouseId: 'A', ownerId: 'X' },
+          { userId: 'reader', profileId: 'audit', warehouseId: 'A', ownerId: 'X' },
+        ],
+        state.version,
+      )
+      .catch((e: unknown) => e)) as SecurityError;
+    expect(error).toBeInstanceOf(SecurityError);
+    expect(error.code).toBe('segregation');
+    expect(error.conflicts).toEqual(['admin', 'audit']);
+    // En contextos distintos no hay conflicto: la regla mira lo que una persona tiene a la vez.
+    await gateway.setAssignments(
+      request(),
+      'reader',
+      [
+        ...own,
+        { userId: 'reader', profileId: 'admin', warehouseId: 'B', ownerId: 'Y' },
+        { userId: 'reader', profileId: 'audit', warehouseId: 'A', ownerId: 'X' },
+      ],
+      state.version,
+    );
+  });
+  it('validates and honors the validity of an assignment', async () => {
+    const gateway = new MemorySecurityGateway({ latency: 0 });
+    const state = await gateway.snapshot(request());
+    const row = { userId: 'operator', profileId: 'read', warehouseId: 'A', ownerId: 'X' };
+    const others = state.assignments.filter(
+      (a) => a.userId === 'operator' && a.warehouseId !== 'A',
+    );
+    for (const bad of [
+      { validFrom: '2026-02-30' },
+      { validUntil: 'tomorrow' },
+      { validFrom: '2026-12-01', validUntil: '2026-11-01' },
+    ])
+      await expect(
+        gateway.setAssignments(
+          request(),
+          'operator',
+          [...others, { ...row, ...bad }],
+          state.version,
+        ),
+      ).rejects.toEqual(new SecurityError('invalid'));
+    await gateway.setAssignments(
+      request(),
+      'operator',
+      [...others, { ...row, validUntil: '2000-01-01' }],
+      state.version,
+    );
+    const operator = { userId: 'operator', warehouseId: 'A', ownerId: 'X' };
+    expect((await gateway.access(operator, new AbortController().signal)).grants).toEqual({});
+  });
+  it('adds a bulk assignment as explicit rows, all or none', async () => {
+    const gateway = new MemorySecurityGateway({ latency: 0 });
+    const state = await gateway.snapshot(request());
+    const rows = ['reader', 'operator'].map((userId) => ({
+      userId,
+      profileId: 'audit',
+      warehouseId: 'A',
+      ownerId: 'X',
+      validUntil: '2999-12-31',
+    }));
+    const listener = vi.fn();
+    gateway.subscribe(listener);
+    await expect(
+      gateway.addAssignments(request(), [...rows, rows[0]!], state.version),
+    ).rejects.toEqual(new SecurityError('duplicate'));
+    await expect(gateway.addAssignments(request(), [], state.version)).rejects.toEqual(
+      new SecurityError('invalid'),
+    );
+    await expect(
+      gateway.addAssignments(request({ ...actor, userId: 'reader' }), rows, state.version),
+    ).rejects.toEqual(new SecurityError('denied'));
+    expect(listener).not.toHaveBeenCalled();
+    await gateway.addAssignments(request(), rows, state.version);
+    const saved = await gateway.snapshot(request());
+    expect(saved.assignments.filter((a) => a.profileId === 'audit')).toEqual(rows);
+    await expect(gateway.addAssignments(request(), rows, saved.version)).rejects.toEqual(
+      new SecurityError('duplicate'),
+    );
+    await expect(gateway.addAssignments(request(), rows, state.version)).rejects.toEqual(
+      new SecurityError('conflict'),
+    );
+    expect(listener).toHaveBeenCalledTimes(1);
   });
 });

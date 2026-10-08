@@ -2,7 +2,12 @@ import { ApplicationInitStatus } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { EMPTY } from 'rxjs';
 import { AccessStore } from '@ewms/core/security';
-import { DialogService, KeyboardShortcuts, ToastService } from '@ewms/design-system';
+import {
+  DialogService,
+  EWMS_DATE_PICKER_MESSAGES,
+  KeyboardShortcuts,
+  ToastService,
+} from '@ewms/design-system';
 import { provideI18nTesting } from '@ewms/testing';
 import { TRANSLOCO_MISSING_HANDLER, TranslocoService } from '@jsverse/transloco';
 import { MemorySecurityGateway } from './memory-gateway';
@@ -17,6 +22,10 @@ describe('Security rendered contract', () => {
         { provide: DialogService, useValue: { confirm: vi.fn().mockResolvedValue(true) } },
         { provide: ToastService, useValue: { show: vi.fn() } },
         { provide: KeyboardShortcuts, useValue: { register: vi.fn(), events: EMPTY } },
+        {
+          provide: EWMS_DATE_PICKER_MESSAGES,
+          useValue: { chooseDate: 'date', previousMonth: 'previous', nextMonth: 'next' },
+        },
       ],
     });
     await TestBed.inject(ApplicationInitStatus).donePromise;
@@ -83,5 +92,16 @@ describe('Security rendered contract', () => {
     expect(root.querySelector('[data-permission-matrix]')?.textContent).toContain(
       'security.noResults',
     );
+    // C6: con sus propias asignaciones elegidas, la pantalla no ofrece editarlas y dice por qué.
+    page['chooseUser']('admin');
+    fixture.detectChanges();
+    expect(root.querySelector('[data-own-assignments]')).not.toBeNull();
+    expect(root.querySelector('[data-assignments] [data-ewms-can]')).toBeNull();
+    expect(root.textContent).not.toContain('security.addAssignment');
+    page['chooseUser']('reader');
+    fixture.detectChanges();
+    expect(root.querySelector('[data-own-assignments]')).toBeNull();
+    expect(root.querySelector('[data-assignments] [data-ewms-can]')).not.toBeNull();
+    expect(root.querySelector('[data-validity]')?.textContent).toContain('security.validityRange');
   });
 });

@@ -9,10 +9,18 @@ export function demoSnapshot(): SecuritySnapshot {
     version: 1,
     contexts,
     users: [
-      { id: 'admin', name: 'Ana Admin', active: true, version: 1 },
-      { id: 'reader', name: 'Rosa Consulta', active: true, version: 1 },
-      { id: 'operator', name: 'Luis Operación', active: true, version: 1 },
-      { id: 'inactive', name: 'Usuario inactivo', active: false, version: 1 },
+      { id: 'admin', name: 'Ana Admin', active: true, version: 1, affiliation: 'internal' },
+      { id: 'reader', name: 'Rosa Consulta', active: true, version: 1, affiliation: 'internal' },
+      { id: 'operator', name: 'Luis Operación', active: true, version: 1, affiliation: 'internal' },
+      { id: 'inactive', name: 'Usuario inactivo', active: false, version: 1, affiliation: 'internal' },
+      {
+        id: 'external',
+        name: 'Carla Externa',
+        active: true,
+        version: 1,
+        affiliation: 'external',
+        companyId: 'Y',
+      },
     ],
     profiles: [
       {
@@ -65,16 +73,46 @@ export function demoSnapshot(): SecuritySnapshot {
         ],
         version: 1,
       },
-    ],
-    assignments: contexts.flatMap((context) => [
-      { userId: 'admin', profileId: 'admin', ...context },
-      { userId: 'reader', profileId: 'read', ...context },
       {
-        userId: 'operator',
-        profileId: context.warehouseId === 'A' ? 'operate' : 'read',
-        ...context,
+        id: 'catalogs',
+        name: 'Catalog consultation',
+        grants: [
+          'general.dashboard:access',
+          'catalogs.articles:access',
+          'catalogs.clients:access',
+          'catalogs.locations:access',
+        ],
+        version: 1,
       },
-      { userId: 'inactive', profileId: 'read', ...context },
-    ]),
+      {
+        id: 'audit',
+        name: 'Access audit',
+        grants: [
+          'general.dashboard:access',
+          'security.users:access',
+          'security.profiles:access',
+          'security.profiles:inspect',
+        ],
+        version: 1,
+      },
+    ],
+    assignments: [
+      ...contexts.flatMap((context) => [
+        { userId: 'admin', profileId: 'admin', ...context },
+        { userId: 'reader', profileId: 'read', ...context },
+        {
+          userId: 'operator',
+          profileId: context.warehouseId === 'A' ? 'operate' : 'read',
+          ...context,
+        },
+        { userId: 'inactive', profileId: 'read', ...context },
+      ]),
+      { userId: 'external', profileId: 'catalogs', warehouseId: 'B', ownerId: 'Y' },
+    ],
   };
+}
+
+/** Separación de funciones de la demostración: quien administra no audita en el mismo contexto. */
+export function demoSegregation(): readonly (readonly [string, string])[] {
+  return [['admin', 'audit']];
 }

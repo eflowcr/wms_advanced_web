@@ -1,7 +1,12 @@
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { of } from 'rxjs';
-import { AccessStore, SecurityError } from '@ewms/core/security';
+import {
+  AccessStore,
+  ActiveContext,
+  SENSITIVE_CAPABILITIES,
+  SecurityError,
+} from '@ewms/core/security';
 import { DialogService, KeyboardShortcuts, ToastService } from '@ewms/design-system';
 import { TranslocoService } from '@jsverse/transloco';
 import { MemorySecurityGateway } from './memory-gateway';
@@ -12,9 +17,10 @@ const admin = { userId: 'admin', warehouseId: 'A', ownerId: 'X' };
 const confirmation = vi.fn().mockResolvedValue(true);
 const toast = vi.fn();
 
-async function setup(userId = 'admin') {
+async function setup(userId = 'admin', sensitive: readonly string[] | null = null) {
   TestBed.configureTestingModule({
     providers: [
+      ...(sensitive ? [{ provide: SENSITIVE_CAPABILITIES, useValue: sensitive }] : []),
       {
         provide: TranslocoService,
         useValue: { langChanges$: of('es'), translate: (key: string) => key },
@@ -24,6 +30,16 @@ async function setup(userId = 'admin') {
       { provide: KeyboardShortcuts, useValue: { register: vi.fn() } },
       { provide: ActivatedRoute, useValue: { queryParams: of({}), snapshot: { queryParams: {} } } },
       { provide: Router, useValue: { navigate: vi.fn() } },
+      {
+        provide: ActiveContext,
+        useValue: {
+          contexts: () =>
+            Promise.resolve([
+              { warehouseId: 'A', ownerId: 'X' },
+              { warehouseId: 'B', ownerId: 'Y' },
+            ]),
+        },
+      },
     ],
   });
   const gateway = new MemorySecurityGateway({ latency: 0 });
@@ -31,6 +47,14 @@ async function setup(userId = 'admin') {
   await access.connect(gateway, { ...admin, userId }, true);
   confirmation.mockResolvedValue(true);
   return { gateway, access };
+}
+
+async function securityPage() {
+  const fixture = TestBed.createComponent(SecurityPage);
+  fixture.detectChanges();
+  await fixture.whenStable();
+  await fixture.componentInstance['load']();
+  return fixture.componentInstance;
 }
 
 describe('Security page operations', () => {
@@ -121,6 +145,68 @@ describe('Security page operations', () => {
       { userId: 'reader', profileId: 'read', warehouseId: 'B', ownerId: 'Y' },
     ]);
   });
+
+  it('never offers editing the own assignments (C6)', async () => {
+    await setup();
+    const page = await securityPage();
+    page['chooseUser']('admin');
+    expect(page['ownSelection']()).toBe(true);
+    page['addAssignment']();
+    page['removeAssignment'](page['shownAssignments']()[0]!);
+    expect(page['assignments']()).toBeNull();
+    page['chooseUser']('reader');
+    expect(page['ownSelection']()).toBe(false);
+  });
+  it('offers an external user only its company and profiles without internal modules (C5)', async () => {
+    await setup();
+    const page = await securityPage();
+    page['chooseUser']('external');
+    expect(page['assignmentProfiles']().map((o) => o.value)).toEqual(['catalogs']);
+    expect(page['contexts']().map((o) => o.value)).toEqual(['B/Y']);
+    expect(page['context']()).toBe('B/Y');
+    page['chooseUser']('reader');
+    expect(page['assignmentProfiles']().map((o) => o.value)).toContain('admin');
+    expect(page['contexts']()).toHaveLength(2);
+  });
+  it('shows the segregation rejection with the profiles in conflict and keeps the draft', async () => {
+    await setup();
+    const page = await securityPage();
+    page['chooseUser']('reader');
+    for (const profile of ['admin', 'audit']) {
+      page['chooseAssignmentProfile'](profile);
+      page['addAssignment']();
+    }
+    await page['saveAssignments']();
+    expect(page['error']()).toBe('segregation');
+    expect(page['conflictNames']()).toBe('Administrator, Access audit');
+    expect(page['assignments']()).not.toBeNull();
+  });
+  it('saves the validity of a new assignment and tells scheduled from expired', async () => {
+    const { gateway } = await setup();
+    const page = await securityPage();
+    page['chooseUser']('operator');
+    page['chooseAssignmentProfile']('audit');
+    page['chooseContext']('B/Y');
+    page['chooseValidity']({ from: '2999-11-01', to: '2999-11-30' });
+    page['addAssignment']();
+    await page['saveAssignments']();
+    const saved = await gateway.snapshot({ actor: admin, signal: new AbortController().signal });
+    const row = saved.assignments.find((a) => a.userId === 'operator' && a.profileId === 'audit')!;
+    expect(row).toMatchObject({ validFrom: '2999-11-01', validUntil: '2999-11-30' });
+    expect(page['validityState'](row)).toBe('scheduled');
+    expect(page['validityState']({ ...row, validFrom: null, validUntil: '2000-01-01' })).toBe(
+      'expired',
+    );
+    expect(page['validityState']({ ...row, validFrom: null, validUntil: null })).toBe('inForce');
+  });
+  it('marks the sensitive permissions of the catalog and none by default', async () => {
+    await setup();
+    expect((await securityPage())['sensitive']('security.users:deactivate')).toBe(false);
+    TestBed.resetTestingModule();
+    TestBed.overrideComponent(SecurityPage, { set: { template: '' } });
+    await setup('admin', ['security.users:deactivate']);
+    expect((await securityPage())['sensitive']('security.users:deactivate')).toBe(true);
+  });
 });
 
 describe('Users page operations', () => {
@@ -134,7 +220,7 @@ describe('Users page operations', () => {
     await page['load']();
     page['begin'](null);
     const id = page['draft']()!.id;
-    page['name'].set({ name: '=1+1' });
+    page['model'].set({ name: '=1+1', affiliation: 'internal', companyId: '' });
     await page['save']();
     expect(page['draft']()).toBeNull();
     const user = (await gateway.users({ actor: admin, signal: new AbortController().signal })).find(
@@ -142,7 +228,7 @@ describe('Users page operations', () => {
     )!;
     expect(user.name).toBe('=1+1');
     page['begin'](user);
-    page['name'].set({ name: 'Discarded' });
+    page['model'].set({ name: 'Discarded', affiliation: 'internal', companyId: '' });
     page['cancel']();
     expect(user.name).toBe('=1+1');
     await page['changeStatus'](user);
@@ -182,5 +268,33 @@ describe('Users page operations', () => {
     expect(page['error']()).toBe('conflict');
     page['cancel']();
     expect(await page.canLeave()).toBe(true);
+  });
+
+  it('creates an external user of a company and shows the affiliation', async () => {
+    const { gateway } = await setup();
+    const fixture = TestBed.createComponent(UsersPage);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const page = fixture.componentInstance;
+    await page['load']();
+    page['begin'](null);
+    const id = page['draft']()!.id;
+    page['model'].set({ name: 'Proveedor externo', affiliation: 'external', companyId: '' });
+    expect(page['userForm']().valid()).toBe(false);
+    page['model'].set({ name: 'Proveedor externo', affiliation: 'external', companyId: 'Y' });
+    expect(page['userForm']().valid()).toBe(true);
+    await page['save']();
+    const user = (await gateway.users({ actor: admin, signal: new AbortController().signal })).find(
+      (u) => u.id === id,
+    );
+    expect(user).toMatchObject({ affiliation: 'external', companyId: 'Y' });
+    page['begin'](user!);
+    page['model'].update((m) => ({ ...m, affiliation: 'internal' }));
+    await page['save']();
+    expect(
+      (await gateway.users({ actor: admin, signal: new AbortController().signal })).find(
+        (u) => u.id === id,
+      ),
+    ).toMatchObject({ affiliation: 'internal', companyId: null });
   });
 });

@@ -1,5 +1,6 @@
 import {
   accessCode,
+  assignableTo,
   capabilities,
   SCREEN_CATALOG,
   SecurityError,
@@ -9,6 +10,7 @@ import {
   type Assignment,
   type Grants,
   type Profile,
+  type SecurityAdministration,
   type SecurityErrorCode,
   type SecurityGateway,
   type SecurityRequest,
@@ -16,8 +18,8 @@ import {
   type SecurityUser,
 } from '@ewms/core/security';
 
-import { demoSnapshot } from './security.fixtures';
-export { demoSnapshot } from './security.fixtures';
+import { demoSegregation, demoSnapshot } from './security.fixtures';
+export { demoSegregation, demoSnapshot } from './security.fixtures';
 
 const ADMIN = [
   'security.profiles:access',
@@ -29,12 +31,25 @@ const ADMIN = [
 export interface MemoryOptions {
   readonly latency?: number;
   readonly state?: SecuritySnapshot;
+  /** Parejas de perfiles que una persona no tiene a la vez en un mismo contexto. */
+  readonly segregation?: readonly (readonly [string, string])[];
+}
+
+const assignmentKey = (a: Assignment) =>
+  JSON.stringify([a.userId, a.profileId, a.warehouseId, a.ownerId]);
+
+/** 'YYYY-MM-DD' que existe en el calendario; vacío vale como abierto. */
+function validDate(value: string | null | undefined): boolean {
+  if (value === null || value === undefined) return true;
+  const date = /^\d{4}-\d{2}-\d{2}$/.test(value) ? new Date(`${value}T00:00:00Z`) : null;
+  return date !== null && !Number.isNaN(date.getTime()) && date.toISOString().startsWith(value);
 }
 
 /** Simulación en memoria; sus comprobaciones no sustituyen autorización del servidor. */
-export class MemorySecurityGateway implements SecurityGateway {
+export class MemorySecurityGateway implements SecurityGateway, SecurityAdministration {
   private state: SecuritySnapshot;
   private readonly latency: number;
+  private readonly segregation: readonly (readonly [string, string])[];
   private nextFailure: SecurityErrorCode | null = null;
   private readonly listeners = new Set<() => void>();
   private readonly createdScopes = new Map<string, Actor>();
@@ -42,6 +57,7 @@ export class MemorySecurityGateway implements SecurityGateway {
   constructor(options: MemoryOptions = {}) {
     this.state = structuredClone(options.state ?? demoSnapshot());
     this.latency = options.latency ?? 120;
+    this.segregation = options.segregation ?? demoSegregation();
     for (const user of this.state.users) {
       const assignment = this.state.assignments.find((a) => a.userId === user.id);
       if (assignment)
@@ -151,7 +167,7 @@ export class MemorySecurityGateway implements SecurityGateway {
         screen.actions.some((a) => profile.grants.includes(a)) &&
         !profile.grants.includes(accessCode(screen))
       )
-        throw new SecurityError('invalid');
+        throw new SecurityError('dependency');
     }
     const affected = this.state.assignments.filter((a) => a.profileId === profile.id);
     const contexts = affected.length ? affected : [request.actor];
@@ -186,19 +202,14 @@ export class MemorySecurityGateway implements SecurityGateway {
     version: number,
   ): Promise<void> {
     await this.authorize(request, 'security.profiles:assign');
+    if (userId === request.actor.userId) throw new SecurityError('selfAssignment');
     this.version(this.state.version, version);
     if (
       !this.state.users.some((u) => u.id === userId) ||
-      assignments.some(
-        (a) =>
-          a.userId !== userId ||
-          !this.state.contexts.some((c) => sameContext(c, a)) ||
-          !this.state.profiles.some((p) => p.id === a.profileId),
-      )
+      assignments.some((a) => a.userId !== userId || !this.validRow(a))
     )
       throw new SecurityError('invalid');
-    const key = (a: Assignment) =>
-      JSON.stringify([a.userId, a.profileId, a.warehouseId, a.ownerId]);
+    const key = assignmentKey;
     if (new Set(assignments.map(key)).size !== assignments.length)
       throw new SecurityError('duplicate');
     const old = this.state.assignments.filter((a) => a.userId === userId);
@@ -215,23 +226,34 @@ export class MemorySecurityGateway implements SecurityGateway {
       ...writableOld.filter((a) => !writableNext.some((b) => key(a) === key(b))),
       ...writableNext.filter((a) => !writableOld.some((b) => key(a) === key(b))),
     ];
-    for (const assignment of changed) {
-      const actor = {
-        ...request.actor,
-        warehouseId: assignment.warehouseId,
-        ownerId: assignment.ownerId,
-      };
-      if (!this.allowed(actor, 'security.profiles:assign')) throw new SecurityError('delegation');
-      const profile = this.state.profiles.find((p) => p.id === assignment.profileId)!;
-      if (profile.grants.some((g) => !this.allowed(actor, g)))
-        throw new SecurityError('delegation');
-    }
+    for (const assignment of changed) this.delegable(request, assignment);
     this.commit(request, {
       ...this.state,
       assignments: [
         ...this.state.assignments.filter((a) => a.userId !== userId || !editable(a)),
         ...writableNext,
       ],
+    });
+  }
+
+  async addAssignments(
+    request: SecurityRequest,
+    assignments: readonly Assignment[],
+    version: number,
+  ): Promise<void> {
+    await this.authorize(request, 'security.profiles:assign');
+    if (assignments.length === 0) throw new SecurityError('invalid');
+    this.version(this.state.version, version);
+    if (assignments.some((a) => a.userId === request.actor.userId))
+      throw new SecurityError('selfAssignment');
+    if (assignments.some((a) => !this.state.users.some((u) => u.id === a.userId) || !this.validRow(a)))
+      throw new SecurityError('invalid');
+    const keys = [...this.state.assignments, ...assignments].map(assignmentKey);
+    if (new Set(keys).size !== keys.length) throw new SecurityError('duplicate');
+    for (const assignment of assignments) this.delegable(request, assignment);
+    this.commit(request, {
+      ...this.state,
+      assignments: [...this.state.assignments, ...assignments],
     });
   }
 
@@ -245,10 +267,18 @@ export class MemorySecurityGateway implements SecurityGateway {
     this.validName(user.name);
     this.validId(user.id);
     if (typeof user.active !== 'boolean') throw new SecurityError('invalid');
+    const owners = this.state.contexts.map((c) => c.ownerId);
+    const company = user.companyId ?? null;
+    if (
+      user.affiliation === 'external'
+        ? company === null || !owners.includes(company)
+        : user.affiliation !== 'internal' || company !== null
+    )
+      throw new SecurityError('invalid');
     this.version(previous?.version ?? 0, user.version);
     if (previous && previous.active !== user.active) throw new SecurityError('invalid');
     if (previous) this.userAuthority(request.actor, user.id, 'security.users:update');
-    const saved = { ...user, name: user.name.trim(), version: user.version + 1 };
+    const saved = { ...user, name: user.name.trim(), companyId: company, version: user.version + 1 };
     const users = previous
       ? this.state.users.map((u) => (u.id === user.id ? saved : u))
       : [...this.state.users, saved];
@@ -274,6 +304,49 @@ export class MemorySecurityGateway implements SecurityGateway {
         u.id === id ? { ...u, active, version: version + 1 } : u,
       ),
     });
+  }
+
+  /** Usuario, contexto y perfil existentes, y una vigencia con fechas reales y en orden. */
+  private validRow(a: Assignment): boolean {
+    return (
+      this.state.contexts.some((c) => sameContext(c, a)) &&
+      this.state.profiles.some((p) => p.id === a.profileId) &&
+      validDate(a.validFrom) &&
+      validDate(a.validUntil) &&
+      !(a.validFrom && a.validUntil && a.validFrom > a.validUntil)
+    );
+  }
+
+  /** Quien asigna tiene autoridad en ese contexto y sobre cada permiso del perfil. */
+  private delegable(request: SecurityRequest, assignment: Assignment): void {
+    const actor = {
+      ...request.actor,
+      warehouseId: assignment.warehouseId,
+      ownerId: assignment.ownerId,
+    };
+    if (!this.allowed(actor, 'security.profiles:assign')) throw new SecurityError('delegation');
+    const profile = this.state.profiles.find((p) => p.id === assignment.profileId)!;
+    if (profile.grants.some((g) => !this.allowed(actor, g))) throw new SecurityError('delegation');
+  }
+
+  /** Las reglas estáticas del estado resultante: afiliación externa y separación de funciones. */
+  private staticRules(next: SecuritySnapshot): void {
+    for (const a of next.assignments) {
+      const user = next.users.find((u) => u.id === a.userId);
+      const profile = next.profiles.find((p) => p.id === a.profileId);
+      if (user && profile && !assignableTo(user, profile, a))
+        throw new SecurityError('externalAffiliation');
+    }
+    for (const pair of this.segregation) {
+      const clash = next.assignments.find(
+        (a) =>
+          a.profileId === pair[0] &&
+          next.assignments.some(
+            (b) => b.profileId === pair[1] && b.userId === a.userId && sameContext(a, b),
+          ),
+      );
+      if (clash) throw new SecurityError('segregation', [...pair]);
+    }
   }
 
   private allowed(actor: Actor, capability: string): boolean {
@@ -329,6 +402,7 @@ export class MemorySecurityGateway implements SecurityGateway {
 
   private commit(request: SecurityRequest, next: SecuritySnapshot): void {
     if (request.signal.aborted) throw new SecurityError('aborted');
+    this.staticRules(next);
     for (const context of this.state.contexts) {
       const actor = { ...request.actor, ...context };
       const old = effectiveAccess(this.state, actor);

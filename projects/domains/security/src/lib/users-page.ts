@@ -10,7 +10,14 @@ import {
   viewChild,
 } from '@angular/core';
 import { form, FormField, required, minLength, maxLength } from '@angular/forms/signals';
-import { Can, AccessStore, SecurityError, type SecurityUser } from '@ewms/core/security';
+import {
+  Can,
+  AccessStore,
+  ActiveContext,
+  SecurityError,
+  type Affiliation,
+  type SecurityUser,
+} from '@ewms/core/security';
 import { filtersInUrl } from '@ewms/shared';
 import {
   ArrayTableSource,
@@ -21,6 +28,9 @@ import {
   FormPattern,
   Input,
   KeyboardShortcuts,
+  Radio,
+  RadioGroup,
+  Select,
   Table,
   TableColumn,
   ToastService,
@@ -28,6 +38,7 @@ import {
   type FilterValues,
   type MenuItem,
   type RowMenuEvent,
+  type SelectOption,
 } from '@ewms/design-system';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -42,6 +53,9 @@ import { toSignal } from '@angular/core/rxjs-interop';
     FormField,
     FormPattern,
     Input,
+    Radio,
+    RadioGroup,
+    Select,
     Table,
     TableColumn,
     TranslocoPipe,
@@ -54,6 +68,7 @@ export class UsersPage {
   private readonly i18n = inject(TranslocoService);
   private readonly dialogs = inject(DialogService);
   private readonly toasts = inject(ToastService);
+  private readonly contexts = inject(ActiveContext);
   private readonly language = toSignal(this.i18n.langChanges$);
   private readonly root = viewChild<ElementRef<HTMLElement>>('root');
   protected readonly rows = signal<readonly SecurityUser[] | null>(null);
@@ -62,12 +77,22 @@ export class UsersPage {
   protected readonly busy = signal(false);
   private pendingFocus: string | null = null;
   private actorKey = '';
-  private readonly name = signal({ name: '' });
-  protected readonly userForm = form(this.name, (path) => {
+  protected readonly model = signal({
+    name: '',
+    affiliation: 'internal' as Affiliation,
+    companyId: '',
+  });
+  /** Un externo pertenece a una compañía (C5): el propietario de los contextos que se le asignan. */
+  protected readonly userForm = form(this.model, (path) => {
     required(path.name);
     minLength(path.name, 2);
     maxLength(path.name, 80);
+    required(path.companyId, {
+      when: ({ valueOf }) => valueOf(path.affiliation) === 'external',
+    });
   });
+  protected readonly external = computed(() => this.model().affiliation === 'external');
+  protected readonly companies = signal<readonly SelectOption[]>([]);
   private readonly urlFilters = filtersInUrl(['search', 'state']);
   protected readonly filters = computed<FilterValues>(() => {
     const value = this.urlFilters.value();
@@ -107,6 +132,8 @@ export class UsersPage {
       rows.map((u) => ({
         ...u,
         stateLabel: this.i18n.translate(u.active ? 'security.active' : 'security.inactive'),
+        affiliationLabel: this.i18n.translate(`security.affiliation.${u.affiliation}`),
+        company: u.companyId ?? '—',
       })),
       ['name', 'id'],
     );
@@ -160,7 +187,7 @@ export class UsersPage {
     this.error.set('');
     try {
       const request = this.access.request('security.users:access');
-      const rows = await this.access.gateway.users(request);
+      const [rows] = await Promise.all([this.access.gateway.users(request), this.loadCompanies()]);
       if (!request.signal.aborted) {
         this.rows.set(rows);
         if (this.pendingFocus) {
@@ -179,12 +206,24 @@ export class UsersPage {
     if (!this.access.can(user ? 'security.users:update' : 'security.users:create')) return;
     this.error.set('');
     this.draft.set(
-      user ? { ...user } : { id: crypto.randomUUID(), name: '', active: true, version: 0 },
+      user
+        ? { ...user }
+        : { id: crypto.randomUUID(), name: '', active: true, version: 0, affiliation: 'internal' },
     );
-    this.name.set({ name: user?.name ?? '' });
+    this.model.set({
+      name: user?.name ?? '',
+      affiliation: user?.affiliation ?? 'internal',
+      companyId: user?.companyId ?? '',
+    });
     this.userForm().reset();
     this.focus('[data-user-form] input');
   }
+  /** Las compañías que se ofrecen: los propietarios de los contextos de quien administra. */
+  private async loadCompanies(): Promise<void> {
+    const owners = new Set((await this.contexts.contexts()).map((c) => c.ownerId));
+    this.companies.set([...owners].map((id) => ({ value: id, label: id })));
+  }
+
   protected cancel(): void {
     this.draft.set(null);
     this.error.set('');
@@ -209,8 +248,15 @@ export class UsersPage {
       return;
     }
     const request = this.access.request(capability);
+    const { name, affiliation, companyId } = this.model();
+    const user = {
+      ...draft,
+      name,
+      affiliation,
+      companyId: affiliation === 'external' ? companyId : null,
+    };
     await this.write(
-      () => this.access.gateway.saveUser(request, { ...draft, name: this.name().name }),
+      () => this.access.gateway.saveUser(request, user),
       () => this.draft.set(null),
     );
   };

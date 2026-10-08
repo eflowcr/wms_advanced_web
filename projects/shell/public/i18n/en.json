@@ -154,9 +154,24 @@
     "activate": "Activate user",
     "active": "Active",
     "addAssignment": "Add assignment",
+    "affiliation": {
+      "external": "External",
+      "internal": "Internal",
+      "label": "Affiliation"
+    },
     "allowScreen": "Grant screen access",
     "assignmentHint": "Each assignment keeps the profile, warehouse and owner together. Individual permissions cannot be edited here.",
     "assignmentSummary": "User: {{name}}. Resulting assignments: {{count}}. Added: {{added}}. Removed: {{removed}}.",
+    "bulk": {
+      "contexts": "Contexts",
+      "hint": "Choose people, contexts and one profile: each combination creates an explicit assignment. You are not on the list.",
+      "open": "Bulk assignment",
+      "rows": "{count, plural, =0 {No new assignments} one {# new assignment} other {# new assignments}}",
+      "skipped": "{count, plural, one {# combination is skipped} other {# combinations are skipped}}: it already exists or an external user cannot receive that profile.",
+      "summary": "{{ count }} assignments of the profile {{ profile }} will be created at once. Skipped combinations: {{ skipped }}.",
+      "title": "Bulk assignment",
+      "users": "People"
+    },
     "cancel": "Cancel",
     "capabilities": {
       "access": "View screen",
@@ -172,6 +187,8 @@
         "update": "Edit users"
       }
     },
+    "company": "Company",
+    "companyHint": "An external user only receives profiles without internal modules, in contexts of their company.",
     "confirm": "Confirm",
     "context": "Warehouse / owner",
     "continueEditing": "Keep editing",
@@ -202,9 +219,13 @@
       "conflict": "The information changed while you were editing. Your draft is retained; discard changes and reload to review the current version.",
       "delegation": "This change affects permissions or contexts you cannot administer.",
       "denied": "You do not have permission for this operation.",
+      "dependency": "An action requires access to its screen: grant “View screen” before the action.",
       "duplicate": "That name or assignment already exists.",
+      "externalAffiliation": "An external user cannot receive profiles of internal modules or scopes of another company.",
       "invalid": "Review the name, permissions and selected context.",
       "lastAdmin": "This change would leave a warehouse and owner without an authorized administrator.",
+      "segregation": "The assignment violates segregation of duties: {{ profiles }} cannot coexist for the same person in the same context.",
+      "selfAssignment": "Nobody can change their own assignments. Ask another person with authority to make the change.",
       "selfEscalation": "You cannot expand your own permissions.",
       "unavailable": "Information could not be loaded or saved. Use the button to try again; writes are never retried automatically."
     },
@@ -226,6 +247,8 @@
     "noResults": "No screens match your search.",
     "none": "None",
     "onlyGranted": "Only with permissions",
+    "open": "no limit",
+    "ownAssignments": "Your own assignments cannot be changed from your account: another person with authority makes the change.",
     "partial": "Partial access: this profile does not grant every action.",
     "profile": "Profile",
     "profileCounts": "{screens, plural, one {# screen} other {# screens}} and {actions, plural, one {# action granted} other {# actions granted}}",
@@ -245,6 +268,7 @@
     },
     "searchScreens": "Search screens or modules",
     "searchUsers": "Search by name or identifier",
+    "sensitive": "Sensitive",
     "state": "Status",
     "statusConfirm": "The status of {{name}} will change. Profile assignments are retained.",
     "summary": "Review changes",
@@ -252,7 +276,15 @@
     "unsaved": "There are unsaved changes. Cancel discards them.",
     "user": "User",
     "usersIntro": "Manage demonstration users. Assign profiles in Security.",
-    "usersScope": "Users and scope"
+    "usersScope": "Users and scope",
+    "validity": "Validity",
+    "validityHint": "Optional. Without dates, the assignment applies from today and never expires.",
+    "validityRange": "Valid: {{ from }} to {{ to }}",
+    "validityState": {
+      "expired": "Expired",
+      "inForce": "In force",
+      "scheduled": "Scheduled"
+    }
   },
   "shell": {
     "breadcrumbs": {

@@ -13,9 +13,14 @@ import { form, FormField, required, minLength, maxLength } from '@angular/forms/
 import {
   Can,
   accessCode,
+  assignableTo,
+  inForce,
+  internalCapability,
+  isoToday,
   parsePermission,
   AccessStore,
   SCREEN_CATALOG,
+  SENSITIVE_CAPABILITIES,
   effectiveAccess,
   SecurityError,
   type Assignment,
@@ -25,8 +30,10 @@ import {
   type SecuritySnapshot,
 } from '@ewms/core/security';
 import {
+  Badge,
   Button,
   Checkbox,
+  DatePicker,
   DialogService,
   EmptyState,
   FormPattern,
@@ -34,17 +41,22 @@ import {
   KeyboardShortcuts,
   Select,
   ToastService,
+  type DateRange,
   type SelectOption,
 } from '@ewms/design-system';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { BulkAssignment } from './bulk-assignment';
 
 @Component({
   selector: 'sec-security-page',
   imports: [
     Can,
+    Badge,
+    BulkAssignment,
     Button,
     Checkbox,
+    DatePicker,
     EmptyState,
     FormField,
     FormPattern,
@@ -60,10 +72,17 @@ export class SecurityPage {
   private readonly i18n = inject(TranslocoService);
   private readonly dialogs = inject(DialogService);
   private readonly toasts = inject(ToastService);
+  private readonly sensitiveCodes = inject(SENSITIVE_CAPABILITIES);
   private readonly language = toSignal(this.i18n.langChanges$);
   private readonly root = viewChild<ElementRef<HTMLElement>>('root');
   protected readonly snapshot = signal<SecuritySnapshot | null>(null);
   protected readonly error = signal('');
+  private readonly conflicts = signal<readonly string[]>([]);
+  protected readonly conflictNames = computed(() =>
+    this.conflicts().map((id) => this.profileName(id)).join(', '),
+  );
+  protected readonly validity = signal<DateRange | null>(null);
+  protected readonly bulkOpen = signal(false);
   protected readonly busy = signal(false);
   protected readonly profileId = signal('admin');
   protected readonly userId = signal('reader');
@@ -135,12 +154,28 @@ export class SecurityPage {
   protected readonly users = computed<readonly SelectOption[]>(() =>
     (this.snapshot()?.users ?? []).map((u) => ({ value: u.id, label: u.name })),
   );
-  protected readonly contexts = computed<readonly SelectOption[]>(() =>
-    (this.snapshot()?.contexts ?? []).map((c) => ({
-      value: `${c.warehouseId}/${c.ownerId}`,
-      label: `${c.warehouseId} / ${c.ownerId}`,
-    })),
+  protected readonly selectedUser = computed(
+    () => this.snapshot()?.users.find((u) => u.id === this.userId()) ?? null,
   );
+  /** Nadie modifica sus propias asignaciones (C6): la pantalla no lo ofrece. */
+  protected readonly ownSelection = computed(() => this.userId() === this.access.actor()?.userId);
+  /** A un externo solo se le ofrecen contextos de su compañía (C5). */
+  protected readonly contexts = computed<readonly SelectOption[]>(() => {
+    const user = this.selectedUser();
+    return (this.snapshot()?.contexts ?? [])
+      .filter((c) => user?.affiliation !== 'external' || c.ownerId === user.companyId)
+      .map((c) => ({
+        value: `${c.warehouseId}/${c.ownerId}`,
+        label: `${c.warehouseId} / ${c.ownerId}`,
+      }));
+  });
+  /** Y solo perfiles sin módulos internos. El servidor decide; esto es presentación. */
+  protected readonly assignmentProfiles = computed<readonly SelectOption[]>(() => {
+    const user = this.selectedUser();
+    return (this.snapshot()?.profiles ?? [])
+      .filter((p) => user?.affiliation !== 'external' || !p.grants.some(internalCapability))
+      .map((p) => ({ value: p.id, label: p.name }));
+  });
   protected readonly selectedProfile = computed(
     () => this.snapshot()?.profiles.find((p) => p.id === this.profileId()) ?? null,
   );
@@ -335,7 +370,17 @@ export class SecurityPage {
     if (typeof value === 'string' && !this.dirty()) this.profileId.set(value);
   }
   protected chooseUser(value: unknown): void {
-    if (typeof value === 'string' && !this.dirty()) this.userId.set(value);
+    if (typeof value !== 'string' || this.dirty()) return;
+    this.userId.set(value);
+    const contexts = this.contexts();
+    if (!contexts.some((c) => c.value === this.context()))
+      this.context.set(String(contexts[0]?.value ?? ''));
+    const profiles = this.assignmentProfiles();
+    if (!profiles.some((p) => p.value === this.assignmentProfile()))
+      this.assignmentProfile.set(String(profiles[0]?.value ?? ''));
+  }
+  protected chooseValidity(value: unknown): void {
+    this.validity.set(value && typeof value === 'object' ? (value as DateRange) : null);
   }
   protected chooseAssignmentProfile(value: unknown): void {
     if (typeof value === 'string') this.assignmentProfile.set(value);
@@ -345,7 +390,7 @@ export class SecurityPage {
   }
 
   protected addAssignment(): void {
-    if (!this.canAssignContext()) return;
+    if (this.ownSelection() || !this.canAssignContext()) return;
     const [warehouseId, ownerId] = this.context().split('/');
     if (
       !warehouseId ||
@@ -355,12 +400,21 @@ export class SecurityPage {
       this.error.set('invalid');
       return;
     }
-    const row = {
+    const { from, to } = this.validity() ?? {};
+    const row: Assignment = {
       userId: this.userId(),
       profileId: this.assignmentProfile(),
       warehouseId,
       ownerId,
+      ...(from ? { validFrom: from } : {}),
+      ...(to ? { validUntil: to } : {}),
     };
+    const user = this.selectedUser();
+    const profile = this.snapshot()?.profiles.find((p) => p.id === row.profileId);
+    if (user && profile && !assignableTo(user, profile, row)) {
+      this.error.set('externalAffiliation');
+      return;
+    }
     const assignments = this.shownAssignments();
     if (
       assignments.some(
@@ -375,7 +429,7 @@ export class SecurityPage {
     this.assignments.set([...assignments, row]);
   }
   protected removeAssignment(row: Assignment): void {
-    if (!this.canAssign(row)) return;
+    if (this.ownSelection() || !this.canAssign(row)) return;
     this.startAssignments();
     this.assignments.set(this.shownAssignments().filter((a) => a !== row));
   }
@@ -436,6 +490,7 @@ export class SecurityPage {
     this.draft.set(null);
     this.assignments.set(null);
     this.error.set('');
+    this.conflicts.set([]);
     this.focus('[data-profile-edit] button');
   }
   async canLeave(): Promise<boolean> {
@@ -447,6 +502,23 @@ export class SecurityPage {
       confirmLabel: this.i18n.translate('security.discard'),
       cancelLabel: this.i18n.translate('security.continueEditing'),
     });
+  }
+  protected sensitive(code: string): boolean {
+    return this.sensitiveCodes.includes(code);
+  }
+  /** Vigente, programada o vencida hoy; las fechas son inclusivas. */
+  protected validityState(row: Assignment): 'inForce' | 'scheduled' | 'expired' {
+    const day = isoToday();
+    if (inForce(row, day)) return 'inForce';
+    return row.validFrom && day < row.validFrom ? 'scheduled' : 'expired';
+  }
+  protected openBulk(): void {
+    if (this.access.can('security.profiles:assign') && !this.dirty()) this.bulkOpen.set(true);
+  }
+  protected bulkSaved(): void {
+    this.bulkOpen.set(false);
+    this.snapshot.set(null);
+    void this.load();
   }
   protected profileName(id: string): string {
     return this.snapshot()?.profiles.find((p) => p.id === id)?.name ?? id;
@@ -500,6 +572,7 @@ export class SecurityPage {
   private showError(error: unknown): void {
     if (error instanceof SecurityError && error.code === 'aborted') return;
     this.error.set(error instanceof SecurityError ? error.code : 'unavailable');
+    this.conflicts.set(error instanceof SecurityError ? error.conflicts : []);
   }
   private focus(selector: string): void {
     setTimeout(() => this.root()?.nativeElement.querySelector<HTMLElement>(selector)?.focus());

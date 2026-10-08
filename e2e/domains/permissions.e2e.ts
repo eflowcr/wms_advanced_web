@@ -3,8 +3,8 @@ import { openSignedIn } from '../session';
 
 /**
  * PACQ-06 (criterio E1): en cada almacén activo, ningún botón del DOM tiene una acción fuera de
- * los permisos efectivos. `*ewmsCan` marca lo que pinta con `data-ewms-can`; los permisos
- * esperados son los de los datos de demostración del simulador.
+ * los permisos efectivos: lo que pinta `*ewmsCan` (`data-ewms-can`) y las acciones de fila y la
+ * exportación de Usuarios, que arma la tabla. Los permisos son los de la demostración.
  */
 
 const READ = ['security.users:access', 'security.profiles:access', 'security.profiles:inspect'];
@@ -34,6 +34,31 @@ async function shownCodes(page: Page): Promise<string[]> {
     .evaluateAll((nodes) => nodes.map((node) => node.getAttribute('data-ewms-can') ?? ''));
 }
 
+/** Lo que la tabla de Usuarios ofrece fuera de `*ewmsCan`, con el código que lo concede. */
+const ROW_ACTIONS: Readonly<Record<string, string>> = {
+  'Editar usuario': 'security.users:update',
+  'Desactivar usuario': 'security.users:deactivate',
+  'Activar usuario': 'security.users:deactivate',
+};
+
+async function tableCodes(page: Page): Promise<string[]> {
+  const users = page.locator('[data-users-page]');
+  if ((await users.count()) === 0) return [];
+  await expect(users.locator('tbody tr').first()).toBeVisible();
+  const codes = (await users.locator('[data-export]').count()) ? ['security.users:export'] : [];
+  const rows = await users.locator('tbody tr').count();
+  for (let row = 0; row < rows; row++) {
+    const kebab = users.locator(`[data-kebab="${row}"] button`);
+    if ((await kebab.count()) === 0) continue;
+    await kebab.click();
+    for (const item of await page.getByRole('menuitem').allTextContents())
+      codes.push(ROW_ACTIONS[item.trim()] ?? `unknown: ${item.trim()}`);
+    await page.keyboard.press('Escape');
+    await expect(page.getByRole('menuitem')).toHaveCount(0);
+  }
+  return codes;
+}
+
 async function visit(page: Page, route: string): Promise<void> {
   await page.evaluate((url) => history.pushState(null, '', url), route);
   await page.evaluate(() => dispatchEvent(new PopStateEvent('popstate')));
@@ -55,7 +80,7 @@ for (const { user, grants } of PEOPLE) {
       for (const route of SCREENS) {
         await visit(page, route);
         const allowed: readonly string[] = grants[context];
-        for (const code of await shownCodes(page)) {
+        for (const code of [...(await shownCodes(page)), ...(await tableCodes(page))]) {
           expect(allowed, `${user} ${context} ${route}`).toContain(code);
           seen.add(code);
         }

@@ -27,6 +27,10 @@ const VALID_CODES = new Set<SecurityErrorCode>([
   'lastAdmin',
   'selfEscalation',
   'delegation',
+  'selfAssignment',
+  'segregation',
+  'externalAffiliation',
+  'dependency',
   'unavailable',
   'aborted',
 ]);
@@ -36,7 +40,7 @@ function isSecurityErrorCode(value: string): value is SecurityErrorCode {
 }
 
 /** Traduce una respuesta HTTP con RFC 9457 a un SecurityError de la consola. */
-function parseProblemError(err: unknown, signal?: AbortSignal): Error {
+export function parseProblemError(err: unknown, signal?: AbortSignal): Error {
   if (signal?.aborted || (err instanceof Error && err.name === 'AbortError')) {
     return new SecurityError('aborted');
   }
@@ -44,8 +48,12 @@ function parseProblemError(err: unknown, signal?: AbortSignal): Error {
     const body = err.error as Record<string, unknown> | null;
     if (body && typeof body === 'object') {
       const code = body['code'];
+      const conflicts = body['conflicts'];
       if (typeof code === 'string' && isSecurityErrorCode(code)) {
-        return new SecurityError(code);
+        return new SecurityError(
+          code,
+          Array.isArray(conflicts) ? conflicts.filter((c) => typeof c === 'string') : [],
+        );
       }
       const typeStr = body['type'];
       if (typeof typeStr === 'string') {

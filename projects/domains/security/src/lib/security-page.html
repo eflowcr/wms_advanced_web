@@ -5,7 +5,7 @@
   </header>
   @if (error()) {
     <p role="alert" class="rounded-md border border-danger bg-danger-surface p-3 text-danger">
-      {{ 'security.errors.' + error() | transloco }}
+      {{ 'security.errors.' + error() | transloco: { profiles: conflictNames() } }}
     </p>
     <ewms-button variant="secondary" data-effect="none" (click)="cancel(); load()">{{
       'security.reload' | transloco
@@ -148,12 +148,21 @@
                     (checkedChange)="toggle(screen, accessCode(screen), $event)"
                   />
                   @for (action of screen.actions; track action) {
-                    <ewms-checkbox
-                      [label]="capabilityKey(action) | transloco"
-                      [checked]="granted(action)"
-                      [disabled]="!draft() || !access.can('security.profiles:update') || busy()"
-                      (checkedChange)="toggle(screen, action, $event)"
-                    />
+                    <div class="flex flex-wrap items-center gap-2">
+                      <ewms-checkbox
+                        [label]="capabilityKey(action) | transloco"
+                        [checked]="granted(action)"
+                        [disabled]="!draft() || !access.can('security.profiles:update') || busy()"
+                        (checkedChange)="toggle(screen, action, $event)"
+                      />
+                      @if (sensitive(action)) {
+                        <ewms-badge
+                          variant="warning"
+                          data-sensitive
+                          [label]="'security.sensitive' | transloco"
+                        />
+                      }
+                    </div>
                   }
                 </fieldset>
               }
@@ -168,8 +177,25 @@
       class="flex flex-col gap-4 rounded-md border border-default bg-surface p-4"
       aria-labelledby="assignments-title"
     >
-      <h2 id="assignments-title" class="text-h2">{{ 'security.usersScope' | transloco }}</h2>
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <h2 id="assignments-title" class="text-h2">{{ 'security.usersScope' | transloco }}</h2>
+        <ewms-button
+          *ewmsCan="'security.profiles:assign'"
+          variant="secondary"
+          data-bulk-open
+          [disabled]="dirty() || bulkOpen()"
+          (click)="openBulk()"
+          >{{ 'security.bulk.open' | transloco }}</ewms-button
+        >
+      </div>
       <p class="text-caption text-secondary">{{ 'security.assignmentHint' | transloco }}</p>
+      @if (bulkOpen() && snapshot(); as state) {
+        <sec-bulk-assignment
+          [snapshot]="state"
+          (saved)="bulkSaved()"
+          (closed)="bulkOpen.set(false)"
+        />
+      }
       <div class="grid grid-cols-fields gap-3">
         <ewms-select
           [label]="'security.user' | transloco"
@@ -184,55 +210,95 @@
           [value]="context()"
           (valueChange)="chooseContext($event)"
         />
-        @if (access.can('security.profiles:assign')) {
+        @if (access.can('security.profiles:assign') && !ownSelection()) {
           <ewms-select
             [label]="'security.profile' | transloco"
-            [options]="profiles()"
+            [options]="assignmentProfiles()"
             [value]="assignmentProfile()"
             (valueChange)="chooseAssignmentProfile($event)"
           />
+          <ewms-date-picker
+            mode="range"
+            [label]="'security.validity' | transloco"
+            [hint]="'security.validityHint' | transloco"
+            [value]="validity()"
+            (valueChange)="chooseValidity($event)"
+          />
         }
       </div>
-      <div *ewmsCan="'security.profiles:assign'" class="flex flex-wrap gap-2">
-        <ewms-button
-          variant="secondary"
-          [disabled]="draft() !== null || !canAssignContext()"
-          (click)="addAssignment()"
-          >{{ 'security.addAssignment' | transloco }}</ewms-button
-        >
-        @if (assignments()) {
-          <ewms-button variant="secondary" data-effect="none" (click)="cancel()">{{
-            'security.cancel' | transloco
-          }}</ewms-button>
-          <ewms-button [loading]="busy()" (click)="saveAssignments()">{{
-            'security.reviewSave' | transloco
-          }}</ewms-button>
-        }
-      </div>
+      @if (selectedUser(); as user) {
+        <p class="text-caption text-secondary" data-affiliation>
+          {{ 'security.affiliation.' + user.affiliation | transloco }}
+          @if (user.companyId) {
+            <span>· {{ 'security.company' | transloco }} {{ user.companyId }}</span>
+          }
+        </p>
+      }
+      @if (ownSelection()) {
+        <p role="note" class="text-caption text-warning" data-own-assignments>
+          {{ 'security.ownAssignments' | transloco }}
+        </p>
+      }
+      @if (!ownSelection()) {
+        <div *ewmsCan="'security.profiles:assign'" class="flex flex-wrap gap-2">
+          <ewms-button
+            variant="secondary"
+            [disabled]="draft() !== null || !canAssignContext()"
+            (click)="addAssignment()"
+            >{{ 'security.addAssignment' | transloco }}</ewms-button
+          >
+          @if (assignments()) {
+            <ewms-button variant="secondary" data-effect="none" (click)="cancel()">{{
+              'security.cancel' | transloco
+            }}</ewms-button>
+            <ewms-button [loading]="busy()" (click)="saveAssignments()">{{
+              'security.reviewSave' | transloco
+            }}</ewms-button>
+          }
+        </div>
+      }
       <ul class="flex flex-col gap-3" data-assignments>
         @for (assignment of shownAssignments(); track $index) {
           <li
             class="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-default bg-surface p-3"
           >
-            <span
-              >{{ profileName(assignment.profileId) }} · {{ assignment.warehouseId }} /
-              {{ assignment.ownerId }}</span
-            >
-            <ewms-button
-              *ewmsCan="'security.profiles:assign'"
-              variant="ghost"
-              [disabled]="draft() !== null || !canAssign(assignment)"
-              [ariaLabel]="
-                'security.removeAssignmentLabel'
-                  | transloco
-                    : {
-                        profile: profileName(assignment.profileId),
-                        context: assignment.warehouseId + '/' + assignment.ownerId,
-                      }
-              "
-              (click)="removeAssignment(assignment)"
-              >{{ 'security.remove' | transloco }}</ewms-button
-            >
+            <span class="flex flex-col gap-1">
+              <span
+                >{{ profileName(assignment.profileId) }} · {{ assignment.warehouseId }} /
+                {{ assignment.ownerId }}</span
+              >
+              <span class="text-caption text-secondary" data-validity>
+                {{
+                  'security.validityRange'
+                    | transloco
+                      : {
+                          from: assignment.validFrom || ('security.open' | transloco),
+                          to: assignment.validUntil || ('security.open' | transloco),
+                        }
+                }}
+              </span>
+            </span>
+            <ewms-badge
+              [variant]="validityState(assignment) === 'inForce' ? 'success' : 'neutral'"
+              [label]="'security.validityState.' + validityState(assignment) | transloco"
+            />
+            @if (!ownSelection()) {
+              <ewms-button
+                *ewmsCan="'security.profiles:assign'"
+                variant="ghost"
+                [disabled]="draft() !== null || !canAssign(assignment)"
+                [ariaLabel]="
+                  'security.removeAssignmentLabel'
+                    | transloco
+                      : {
+                          profile: profileName(assignment.profileId),
+                          context: assignment.warehouseId + '/' + assignment.ownerId,
+                        }
+                "
+                (click)="removeAssignment(assignment)"
+                >{{ 'security.remove' | transloco }}</ewms-button
+              >
+            }
           </li>
         } @empty {
           <li>

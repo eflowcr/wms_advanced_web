@@ -22,7 +22,7 @@ describe('AccessStore', () => {
         .fn()
         .mockResolvedValue({
           grants: { 'security.users:access': ['p'] },
-          user: { id: 'u', name: 'User', active: true, version: 1 },
+          user: { id: 'u', name: 'User', active: true, version: 1, affiliation: 'internal' },
         }),
       snapshot: vi.fn(),
       inspect: vi.fn(),

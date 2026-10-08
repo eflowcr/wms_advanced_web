@@ -84,20 +84,35 @@ const STATUS: Readonly<Record<string, number>> = {
   denied: 403,
   selfEscalation: 403,
   delegation: 403,
+  selfAssignment: 403,
   invalid: 400,
   conflict: 409,
   duplicate: 409,
   lastAdmin: 409,
   taskInProgress: 409,
+  segregation: 409,
+  externalAffiliation: 409,
+  dependency: 409,
 };
 
-/** Rechazo con RFC 9457: un `type` estable y ningún detalle interno. */
-function problem(req: HttpRequest<unknown>, code: string, status = STATUS[code] ?? 503) {
+/** Rechazo con RFC 9457: un `type` estable, los perfiles en conflicto y ningún detalle interno. */
+function problem(
+  req: HttpRequest<unknown>,
+  code: string,
+  status = STATUS[code] ?? 503,
+  conflicts: readonly string[] = [],
+) {
   return new HttpErrorResponse({
     url: req.url,
     status,
     headers: new HttpHeaders({ 'Content-Type': 'application/problem+json' }),
-    error: { type: `urn:ewms:security:${code}`, status, instance: req.url, code },
+    error: {
+      type: `urn:ewms:security:${code}`,
+      status,
+      instance: req.url,
+      code,
+      ...(conflicts.length ? { conflicts } : {}),
+    },
   });
 }
 
@@ -199,6 +214,10 @@ async function answer(req: HttpRequest<unknown>, path: string, actor: Actor) {
       const body = req.body as { assignments: readonly Assignment[]; version: number };
       return ok(await gateway.setAssignments(request, id, body.assignments, body.version));
     }
+    case 'POST /assignments': {
+      const body = req.body as { assignments: readonly Assignment[]; version: number };
+      return ok(await gateway.addAssignments(request, body.assignments, body.version));
+    }
     default:
       throw problem(req, 'notFound', 404);
   }
@@ -226,8 +245,8 @@ export function simulate(req: HttpRequest<unknown>, base: string): Observable<Ht
   return from(answering).pipe(
     catchError((err: unknown): Observable<never> => {
       if (err instanceof HttpErrorResponse) return throwError(() => err);
-      const code = err instanceof SecurityError ? err.code : 'unavailable';
-      return throwError(() => problem(req, code));
+      if (!(err instanceof SecurityError)) return throwError(() => problem(req, 'unavailable'));
+      return throwError(() => problem(req, err.code, undefined, err.conflicts));
     }),
   );
 }

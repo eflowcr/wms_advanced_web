@@ -77,4 +77,7 @@
 /** t(security.errors.delegation) */
 /** t(security.errors.unavailable) */
 /** t(security.errors.aborted) */
+/** t(security.errors.selfAssignment, security.errors.segregation, security.errors.externalAffiliation, security.errors.dependency) */
+/** t(security.affiliation.label, security.affiliation.internal, security.affiliation.external, security.company, security.companyHint) */
+/** t(security.validityState.inForce, security.validityState.scheduled, security.validityState.expired) */
 /** t(security.discardBody, security.discard, security.continueEditing) */

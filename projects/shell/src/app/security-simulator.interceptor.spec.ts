@@ -139,7 +139,13 @@ describe('securitySimulatorInterceptor', () => {
     let snapshot = await firstValueFrom(http.get<SecuritySnapshot>(`${BASE}/snapshot`));
     expect(snapshot.profiles.some((p) => p.id === 'custom-profile')).toBe(true);
 
-    const user: SecurityUser = { id: 'new-user', name: 'New Test User', active: true, version: 0 };
+    const user: SecurityUser = {
+      id: 'new-user',
+      name: 'New Test User',
+      active: true,
+      version: 0,
+      affiliation: 'internal',
+    };
     await firstValueFrom(http.put(`${BASE}/users/new-user`, user));
     await firstValueFrom(
       http.patch(`${BASE}/users/new-user/status`, { active: false, version: 1 }),
@@ -160,6 +166,51 @@ describe('securitySimulatorInterceptor', () => {
     );
     snapshot = await firstValueFrom(http.get<SecuritySnapshot>(`${BASE}/snapshot`));
     expect(snapshot.assignments.some((a) => a.profileId === 'custom-profile')).toBe(true);
+  });
+
+  it('adds a bulk assignment and rejects the rules of the comanda with a stable type', async () => {
+    token = setSimulatedSession(admin);
+    let snapshot = await firstValueFrom(http.get<SecuritySnapshot>(`${BASE}/snapshot`));
+    const rows = ['reader', 'operator'].map((userId) => ({
+      userId,
+      profileId: 'audit',
+      warehouseId: 'B',
+      ownerId: 'Y',
+    }));
+    await firstValueFrom(
+      http.post(`${BASE}/assignments`, { assignments: rows, version: snapshot.version }),
+    );
+    snapshot = await firstValueFrom(http.get<SecuritySnapshot>(`${BASE}/snapshot`));
+    expect(snapshot.assignments.filter((a) => a.profileId === 'audit')).toEqual(rows);
+
+    const own = await rejection(
+      http.post(`${BASE}/assignments`, {
+        assignments: [{ ...rows[0]!, userId: 'admin' }],
+        version: snapshot.version,
+      }),
+    );
+    expect(own.status).toBe(403);
+    expect(own.error).toMatchObject({ type: 'urn:ewms:security:selfAssignment' });
+
+    const clash = await rejection(
+      http.post(`${BASE}/assignments`, {
+        assignments: [{ ...rows[0]!, profileId: 'admin' }],
+        version: snapshot.version,
+      }),
+    );
+    expect(clash.status).toBe(409);
+    expect(clash.error).toMatchObject({
+      type: 'urn:ewms:security:segregation',
+      conflicts: ['admin', 'audit'],
+    });
+
+    const external = await rejection(
+      http.post(`${BASE}/assignments`, {
+        assignments: [{ ...rows[0]!, userId: 'external' }],
+        version: snapshot.version,
+      }),
+    );
+    expect(external.error).toMatchObject({ type: 'urn:ewms:security:externalAffiliation' });
   });
 
   it('a closed session denies again', async () => {

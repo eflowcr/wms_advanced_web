@@ -1,5 +1,6 @@
-// La compuerta de catálogo, ejercitada (PACQ-07): falla con lo que tiene que fallar y deja pasar lo
-// correcto. `npm run test:tools`. Ver vault: 04-Requisitos/REQ-FE-SEC-002.
+// La compuerta de catálogo, ejercitada (PACQ-07): falla con lo que tiene que fallar y deja pasar
+// lo correcto. `npm run test:tools`.
+// Ver vault: 04-Requisitos/REQ-FE-SEC-002 - Security Core en la consola.
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { catalogCodes, checkCodes, checkTemplate } from './check-permissions.mjs';

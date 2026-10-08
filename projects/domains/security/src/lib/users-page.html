@@ -40,6 +40,21 @@
           {{ 'security.identifier' | transloco }}: {{ user.id }}
         </p>
         <ewms-input [label]="'security.name' | transloco" [formField]="userForm.name" />
+        <ewms-radio-group
+          [label]="'security.affiliation.label' | transloco"
+          [formField]="userForm.affiliation"
+        >
+          <ewms-radio value="internal" [label]="'security.affiliation.internal' | transloco" />
+          <ewms-radio value="external" [label]="'security.affiliation.external' | transloco" />
+        </ewms-radio-group>
+        @if (external()) {
+          <ewms-select
+            [label]="'security.company' | transloco"
+            [hint]="'security.companyHint' | transloco"
+            [options]="companies()"
+            [formField]="userForm.companyId"
+          />
+        }
         <p role="status" class="text-caption text-warning">{{ 'security.unsaved' | transloco }}</p>
         <div class="flex flex-wrap gap-2">
           <ewms-button variant="secondary" data-effect="none" (click)="cancel()">{{
@@ -81,6 +96,18 @@
         key="name"
         [header]="'security.name' | transloco"
         width="fill"
+        [sortable]="true"
+      />
+      <ewms-column
+        key="affiliationLabel"
+        [header]="'security.affiliation.label' | transloco"
+        width="md"
+        [sortable]="true"
+      />
+      <ewms-column
+        key="company"
+        [header]="'security.company' | transloco"
+        width="sm"
         [sortable]="true"
       />
       <ewms-column
