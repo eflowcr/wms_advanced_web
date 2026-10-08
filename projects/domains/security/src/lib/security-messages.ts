@@ -62,14 +62,6 @@
 /** t(security.capabilities.profiles.inspect) */
 /** t(security.capabilities.profiles.review) */
 /** t(security.review.decision.confirm, security.review.decision.revoke) */
-/** t(security.demo.title) */
-/** t(security.demo.notice) */
-/** t(security.demo.actor) */
-/** t(security.demo.admin) */
-/** t(security.demo.reader) */
-/** t(security.demo.operator) */
-/** t(security.demo.ax) */
-/** t(security.demo.by) */
 /** t(security.errors.denied) */
 /** t(security.errors.invalid) */
 /** t(security.errors.duplicate) */

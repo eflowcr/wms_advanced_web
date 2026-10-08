@@ -1,0 +1,9 @@
+{
+  "actor": "Scenario",
+  "admin": "Administrator",
+  "notice": "Synthetic simulation held in memory. Reload resets it. The backend must authorize every operation and its scope.",
+  "operator": "Limited operation",
+  "reader": "Consultation",
+  "taskRunning": "Simulate a running task",
+  "title": "Security demonstration"
+}

@@ -196,17 +196,6 @@
     "createProfile": "Create profile",
     "createUser": "Create user",
     "deactivate": "Deactivate user",
-    "demo": {
-      "actor": "Scenario",
-      "admin": "Administrator",
-      "ax": "Warehouse A / Owner X",
-      "by": "Warehouse B / Owner Y",
-      "notice": "Synthetic simulation held in memory. Reload resets it. The backend must authorize every operation and its scope.",
-      "operator": "Limited operation",
-      "reader": "Consultation",
-      "taskRunning": "Simulate a running task",
-      "title": "Security demonstration"
-    },
     "dependencyBody": "To grant this action, also grant access to {{screen}}.",
     "dependencyTitle": "This action requires screen access",
     "discard": "Discard and leave",

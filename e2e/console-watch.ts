@@ -65,7 +65,7 @@ export async function watchConsole(page: Page): Promise<ConsoleWatch> {
           .flatMap((element) => names.map((name) => element.getAttribute(name) ?? ''));
         const text = [...texts, ...attributes].join('\n');
         const keys = text.match(
-          /\b(?:shell|showroom|security|ds|common)\.[A-Za-z0-9_]+(?:\.[A-Za-z0-9_]+)*\b/g,
+          /\b(?:shell|showroom|security|demo|ds|common)\.[A-Za-z0-9_]+(?:\.[A-Za-z0-9_]+)*\b/g,
         );
         return [...new Set(keys ?? [])].map((key) => `i18n — clave sin traducir: ${key}`);
       });

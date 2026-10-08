@@ -21,7 +21,8 @@
             "assets": [
               {
                 "glob": "**/*",
-                "input": "projects/shell/public"
+                "input": "projects/shell/public",
+                "ignore": ["i18n/demo/**"]
               }
             ],
             "styles": [
@@ -57,6 +58,18 @@
               "optimization": false,
               "extractLicenses": false,
               "sourceMap": true,
+              "assets": [
+                {
+                  "glob": "**/*",
+                  "input": "projects/shell/public",
+                  "ignore": ["i18n/demo/**"]
+                },
+                {
+                  "glob": "**/*",
+                  "input": "projects/shell/public/i18n/demo",
+                  "output": "i18n/demo"
+                }
+              ],
               "fileReplacements": [
                 {
                   "replace": "projects/shell/src/app/demo-mode.ts",
@@ -69,6 +82,18 @@
               ]
             },
             "demo": {
+              "assets": [
+                {
+                  "glob": "**/*",
+                  "input": "projects/shell/public",
+                  "ignore": ["i18n/demo/**"]
+                },
+                {
+                  "glob": "**/*",
+                  "input": "projects/shell/public/i18n/demo",
+                  "output": "i18n/demo"
+                }
+              ],
               "fileReplacements": [
                 {
                   "replace": "projects/shell/src/app/demo-mode.ts",
