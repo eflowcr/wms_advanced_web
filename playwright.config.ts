@@ -14,8 +14,8 @@ function requestedProjects(argv: readonly string[]): readonly string[] {
 }
 
 /**
- * Cada corrida compila solo los artefactos que prueban sus proyectos: smoke, producción; dominio,
- * la demostración; el catálogo, los dos («En construcción» se abre con permisos). Ver vault: IC §4.1.
+ * Cada corrida compila solo lo que prueban sus proyectos: smoke, producción; dominio, demostración;
+ * el catálogo, los dos («En construcción» abre con permisos). Ver vault: Integracion Continua §4.1.
  */
 export function webServersFor(argv: readonly string[]) {
   const requested = requestedProjects(argv);
