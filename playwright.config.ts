@@ -14,8 +14,8 @@ function requestedProjects(argv: readonly string[]): readonly string[] {
 }
 
 /**
- * Cada corrida compila solo el artefacto que prueban sus proyectos: smoke y catálogo, producción;
- * dominio, la demostración. Ver vault: Integracion Continua §4.1.
+ * Cada corrida compila solo los artefactos que prueban sus proyectos: smoke, producción; dominio,
+ * la demostración; el catálogo, los dos («En construcción» se abre con permisos). Ver vault: IC §4.1.
  */
 export function webServersFor(argv: readonly string[]) {
   const requested = requestedProjects(argv);
@@ -31,7 +31,7 @@ export function webServersFor(argv: readonly string[]) {
           },
         ]
       : []),
-    ...(runs('domain')
+    ...(runs('domain') || runs('showroom')
       ? [
           {
             command: `npm run build:demo && node tools/e2e/serve.mjs --port ${DEMO_PORT} --root dist/shell-demo/browser`,

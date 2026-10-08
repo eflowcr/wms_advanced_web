@@ -111,12 +111,12 @@ test('the domain level requires tests in CI', async () => {
 });
 
 test('each run builds only the artifact its projects test', async () => {
-  // Smoke y catálogo prueban producción; dominio, la demostración: ninguno compila el otro.
+  // Smoke prueba producción y dominio la demostración; el catálogo abre las dos.
   const config = pathToFileURL(path.join(ROOT, 'playwright.config.ts')).href;
   const { webServersFor } = await import(config);
   const ports = (argv) => webServersFor(argv).map((server) => new URL(server.url).port);
   assert.deepEqual(ports(['--project=smoke']), ['4400']);
-  assert.deepEqual(ports(['--project=showroom']), ['4400']);
+  assert.deepEqual(ports(['--project=showroom']), ['4400', '4401']);
   assert.deepEqual(ports(['--project=domain']), ['4401']);
   assert.deepEqual(ports(['--project', 'domain']), ['4401']);
   assert.deepEqual(ports(['--project=smoke', '--project=domain']), ['4400', '4401']);
