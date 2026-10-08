@@ -15,7 +15,7 @@ import { Subject } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
 import { Button } from '../button/button';
 import { DatePicker, type DatePickerValue } from '../date-picker/date-picker';
-import { EWMS_DATE_PICKER_MESSAGES } from '../date-picker/date-picker.types';
+import { EWMS_DATE_PICKER_MESSAGES } from '../date-picker/date-picker.tokens';
 import { Input as TextInput } from '../input/input';
 import { Select, type SelectOption } from '../select/select';
 import { DELAY_SEARCH_INPUT_TOKEN } from '../select/select.types';

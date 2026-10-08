@@ -217,10 +217,16 @@ describe('HttpSecurityGateway', () => {
 
   it('keeps the profiles in conflict that the server names for segregation of duties', async () => {
     const promise = gateway.users(req);
-    httpMock.expectOne('/api/v1/security/users').flush(
-      { type: 'urn:ewms:security:segregation', code: 'segregation', conflicts: ['admin', 7, 'audit'] },
-      { status: 409, statusText: 'Conflict' },
-    );
+    httpMock
+      .expectOne('/api/v1/security/users')
+      .flush(
+        {
+          type: 'urn:ewms:security:segregation',
+          code: 'segregation',
+          conflicts: ['admin', 7, 'audit'],
+        },
+        { status: 409, statusText: 'Conflict' },
+      );
     const error = (await promise.catch((e: unknown) => e)) as SecurityError;
     expect(error).toBeInstanceOf(SecurityError);
     expect(error.code).toBe('segregation');
@@ -269,7 +275,9 @@ describe('HttpSecurityGateway', () => {
 
 describe('HttpSecurityGateway without a configured URL', () => {
   it('rejects as unavailable and sends nothing', async () => {
-    TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting()] });
+    TestBed.configureTestingModule({
+      providers: [provideHttpClient(), provideHttpClientTesting()],
+    });
     const gateway = TestBed.inject(HttpSecurityGateway);
     const httpMock = TestBed.inject(HttpTestingController);
     const signal = new AbortController().signal;

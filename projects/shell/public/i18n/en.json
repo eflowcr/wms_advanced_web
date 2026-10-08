@@ -228,6 +228,7 @@
       "segregation": "The assignment violates segregation of duties: {{ profiles }} cannot coexist for the same person in the same context.",
       "selfAssignment": "Nobody can change their own assignments. Ask another person with authority to make the change.",
       "selfEscalation": "You cannot expand your own permissions.",
+      "stepUpCancelled": "The action was not carried out: the second-factor verification was cancelled.",
       "unavailable": "Information could not be loaded or saved. Use the button to try again; writes are never retried automatically."
     },
     "general": "General",
@@ -406,6 +407,14 @@
       "title": "Keyboard shortcuts"
     },
     "skipToContent": "Skip to content",
+    "stepUp": {
+      "body": "This action requires a second factor. If you cancel, the action is not carried out.",
+      "cancel": "Cancel",
+      "failed": "The code is not valid. Try again or cancel.",
+      "otp": "Verification code",
+      "title": "Confirm your identity",
+      "verify": "Verify"
+    },
     "tabs": {
       "label": "Open documents",
       "limit": "No more than {{ max }} tabs can be open at once. Close one to open another.",

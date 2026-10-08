@@ -1,21 +1,4 @@
-import { InjectionToken } from '@angular/core';
-
 export type DatePickerMode = 'single' | 'range';
-
-/**
- * Textos ya traducidos, provistos una vez. `locale` es un getter en el shell: LOCALE_ID se fija
- * al arrancar y la app cambia de idioma sin recargar. Sin él se usa LOCALE_ID.
- */
-export interface DatePickerMessages {
-  readonly chooseDate: string;
-  readonly previousMonth: string;
-  readonly nextMonth: string;
-  readonly locale?: string;
-}
-
-export const EWMS_DATE_PICKER_MESSAGES = new InjectionToken<DatePickerMessages>(
-  'EWMS_DATE_PICKER_MESSAGES',
-);
 
 /** Una celda del mes; `iso` null es relleno antes del 1 o después del último día. */
 export interface CalendarCell {

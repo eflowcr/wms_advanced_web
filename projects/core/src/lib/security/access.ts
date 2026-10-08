@@ -236,6 +236,7 @@ export type SecurityErrorCode =
   | 'segregation'
   | 'externalAffiliation'
   | 'dependency'
+  | 'stepUpCancelled'
   | 'unavailable'
   | 'aborted';
 /** `conflicts`: los perfiles en conflicto que nombra el servidor ante `segregation`. */

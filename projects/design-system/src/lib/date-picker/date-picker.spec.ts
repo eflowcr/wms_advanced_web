@@ -3,7 +3,8 @@ import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { disabled, form, FormField } from '@angular/forms/signals';
 import { expectNoAxeViolations } from '@ewms/testing';
 import { DatePicker, type DatePickerValue } from './date-picker';
-import { EWMS_DATE_PICKER_MESSAGES, type DatePickerMode } from './date-picker.types';
+import { EWMS_DATE_PICKER_MESSAGES } from './date-picker.tokens';
+import { type DatePickerMode } from './date-picker.types';
 
 @Component({
   template: `

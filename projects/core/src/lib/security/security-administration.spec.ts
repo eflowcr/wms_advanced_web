@@ -45,10 +45,12 @@ describe('SecurityAdministration over HTTP', () => {
   it('translates a rejection with its conflicts and cancels on abort', async () => {
     const { admin, http } = setup();
     const promise = admin.addAssignments({ actor, signal: new AbortController().signal }, rows, 4);
-    http.expectOne('/api/v1/security/assignments').flush(
-      { code: 'segregation', conflicts: ['admin', 'audit'] },
-      { status: 409, statusText: 'Conflict' },
-    );
+    http
+      .expectOne('/api/v1/security/assignments')
+      .flush(
+        { code: 'segregation', conflicts: ['admin', 'audit'] },
+        { status: 409, statusText: 'Conflict' },
+      );
     const error = (await promise.catch((e: unknown) => e)) as SecurityError;
     expect(error.code).toBe('segregation');
     expect(error.conflicts).toEqual(['admin', 'audit']);

@@ -22,8 +22,8 @@ import {
   type SessionGrant,
 } from '@ewms/core/security';
 import type { MemoryOptions, MemorySecurityGateway } from '@ewms/security';
-import { from, type Observable, throwError } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { from, type Observable, of, throwError } from 'rxjs';
+import { catchError, tap } from 'rxjs/operators';
 
 /**
  * El servidor simulado del contrato (ADR 0022). Solo entra al artefacto de demostración y al de
@@ -36,6 +36,16 @@ let token: string | null = null;
 let issued = 0;
 let nextFailure: SecurityErrorCode | null = null;
 let taskRunning = false;
+let reinforcedAt: number | null = null;
+/** Respuestas por `Idempotency-Key`: repetir una escritura no la aplica dos veces. */
+const replies = new Map<string, unknown>();
+
+/**
+ * Solo la demostración: el catálogo no declara sensibles (la lista es del CTO); el servidor
+ * simulado pide segundo factor al activar o desactivar un usuario para mostrar el flujo.
+ */
+const STEP_UP_ROUTES = new Set(['PATCH /users/:id/status']);
+const STEP_UP_MAX_AGE = 300;
 
 function issue(): string {
   issued += 1;
@@ -50,6 +60,8 @@ export function resetSimulator(next: MemoryOptions = {}): void {
   token = null;
   nextFailure = null;
   taskRunning = false;
+  reinforcedAt = null;
+  replies.clear();
 }
 
 /** Una tarea en ejecución bloquea el cambio de almacén, como lo haría el servidor (PACQ-09). */
@@ -119,6 +131,22 @@ function problem(
 
 const ok = (body: unknown = null) => new HttpResponse({ status: 200, body });
 
+/** El desafío de RFC 9470: un 401 que pide un factor reciente, sin renovar el token. */
+function challenge(req: HttpRequest<unknown>) {
+  const value =
+    'Bearer error="insufficient_user_authentication", ' +
+    `acr_values="urn:ewms:acr:otp", max_age=${STEP_UP_MAX_AGE}`;
+  return new HttpErrorResponse({
+    url: req.url,
+    status: 401,
+    headers: new HttpHeaders({ 'WWW-Authenticate': value }),
+    error: { type: 'urn:ewms:security:stepUpRequired', status: 401 },
+  });
+}
+
+const reinforced = () =>
+  reinforcedAt !== null && Date.now() - reinforcedAt < STEP_UP_MAX_AGE * 1000;
+
 /** Los contextos donde la persona tiene alguna concesión, con su nombre; sin ninguno, ninguno. */
 async function assigned(userId: string) {
   const gateway = await server();
@@ -148,6 +176,7 @@ async function grant(userId: string): Promise<SessionGrant | null> {
 /** Inicio, renovación y cierre: no piden token; la renovación usa la sesión, como una cookie. */
 async function sessionRoute(req: HttpRequest<unknown>, route: string) {
   if (route === 'POST /session') {
+    reinforcedAt = null;
     const body = req.body as { username?: unknown; password?: unknown } | null;
     const { username, password } = body ?? {};
     const valid = typeof username === 'string' && typeof password === 'string' && password !== '';
@@ -166,6 +195,7 @@ async function sessionRoute(req: HttpRequest<unknown>, route: string) {
   }
   session = null;
   token = null;
+  reinforcedAt = null;
   return ok();
 }
 
@@ -179,7 +209,18 @@ async function answer(req: HttpRequest<unknown>, path: string, actor: Actor) {
   ) ?? [])[1];
   const id = target === undefined ? '' : decodeURIComponent(target);
   const route = `${req.method} ${path.replace(/^\/(users|profiles|reviews)\/[^/]+/, '/$1/:id')}`;
+  if (STEP_UP_ROUTES.has(route) && !reinforced()) throw challenge(req);
   switch (route) {
+    case 'POST /session/step-up': {
+      // La demostración acepta cualquier código de seis dígitos salvo 000000, que rechaza.
+      const code = (req.body as { code?: unknown } | null)?.code;
+      if (typeof code !== 'string' || !/^\d{6}$/.test(code) || code === '000000')
+        throw problem(req, 'invalid');
+      const { user } = await gateway.access(actor, request.signal);
+      reinforcedAt = Date.now();
+      token = issue();
+      return ok({ accessToken: token, session: { ...actor, name: user?.name ?? '' } });
+    }
     case 'GET /session/contexts':
       return ok((await assigned(actor.userId)).map(({ context }) => context));
     case 'PUT /session/context': {
@@ -222,7 +263,11 @@ async function answer(req: HttpRequest<unknown>, path: string, actor: Actor) {
     case 'POST /reviews':
       return ok(await gateway.startReview(request, req.body as { name: string; dueDate: string }));
     case 'POST /reviews/:id/decisions': {
-      const body = req.body as { assignment: Assignment; decision: ReviewDecision; version: number };
+      const body = req.body as {
+        assignment: Assignment;
+        decision: ReviewDecision;
+        version: number;
+      };
       return ok(await gateway.decide(request, id, body.assignment, body.decision, body.version));
     }
     case 'POST /assignments': {
@@ -250,10 +295,15 @@ export function simulate(req: HttpRequest<unknown>, base: string): Observable<Ht
   const failure = nextFailure;
   nextFailure = null;
   if (failure) return throwError(() => problem(req, failure));
+  const key = req.method === 'GET' ? null : req.headers.get('Idempotency-Key');
+  if (key && replies.has(key)) return of(ok(replies.get(key)));
   const answering = SESSION_ROUTES.has(route)
     ? sessionRoute(req, route)
     : answer(req, path, actor!);
   return from(answering).pipe(
+    tap((response) => {
+      if (key) replies.set(key, response.body);
+    }),
     catchError((err: unknown): Observable<never> => {
       if (err instanceof HttpErrorResponse) return throwError(() => err);
       if (!(err instanceof SecurityError)) return throwError(() => problem(req, 'unavailable'));

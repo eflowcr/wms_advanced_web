@@ -148,6 +148,12 @@ describe('securitySimulatorInterceptor', () => {
       affiliation: 'internal',
     };
     await firstValueFrom(http.put(`${BASE}/users/new-user`, user));
+    // Activar o desactivar pide segundo factor en la demostración.
+    token = (
+      await firstValueFrom(
+        http.post<{ accessToken: string }>(`${BASE}/session/step-up`, { code: '123456' }),
+      )
+    ).accessToken;
     await firstValueFrom(
       http.patch(`${BASE}/users/new-user/status`, { active: false, version: 1 }),
     );
@@ -241,6 +247,37 @@ describe('securitySimulatorInterceptor', () => {
     expect(own.error).toMatchObject({ type: 'urn:ewms:security:selfAssignment' });
   });
 
+  it('asks for a second factor, accepts a valid code and applies an Idempotency-Key once', async () => {
+    token = setSimulatedSession(admin);
+    const write = (key: string, active: boolean, version: number) =>
+      http.patch(
+        `${BASE}/users/reader/status`,
+        { active, version },
+        { headers: { 'Idempotency-Key': key } },
+      );
+    const challenged = await rejection(write('k1', false, 1));
+    expect(challenged.status).toBe(401);
+    expect(challenged.headers.get('WWW-Authenticate')).toContain(
+      'error="insufficient_user_authentication"',
+    );
+    expect((await rejection(http.post(`${BASE}/session/step-up`, { code: '000000' }))).status).toBe(
+      400,
+    );
+    const grant = await firstValueFrom(
+      http.post<{ accessToken: string }>(`${BASE}/session/step-up`, {
+        factor: 'otp',
+        code: '123456',
+      }),
+    );
+    token = grant.accessToken;
+    await firstValueFrom(write('k1', false, 1));
+    // La misma clave no se aplica dos veces: la versión vieja no choca y el estado no cambia.
+    await firstValueFrom(write('k1', false, 1));
+    const users = await firstValueFrom(http.get<SecurityUser[]>(`${BASE}/users`));
+    expect(users.find((u) => u.id === 'reader')).toMatchObject({ active: false, version: 2 });
+    expect((await rejection(write('k2', false, 1))).status).toBe(409);
+  });
+
   it('a closed session denies again', async () => {
     token = setSimulatedSession(admin);
     token = setSimulatedSession(null);
@@ -254,6 +291,11 @@ describe('securitySimulatorInterceptor', () => {
 
   it('an unexpected failure answers as unavailable', async () => {
     token = setSimulatedSession(admin);
+    token = (
+      await firstValueFrom(
+        http.post<{ accessToken: string }>(`${BASE}/session/step-up`, { code: '123456' }),
+      )
+    ).accessToken;
     const error = await rejection(http.patch(`${BASE}/users/admin/status`, null));
     expect(error.status).toBe(503);
     expect(error.error).toMatchObject({ type: 'urn:ewms:security:unavailable' });
@@ -301,9 +343,7 @@ describe('securitySimulatorInterceptor', () => {
   it('renews with the session cookie and retires the previous token', async () => {
     expect((await rejection(http.post(`${BASE}/session/refresh`, null))).status).toBe(401);
     const previous = setSimulatedSession({ ...admin, warehouseId: 'B', ownerId: 'Y' });
-    const grant = await firstValueFrom(
-      http.post<SessionGrant>(`${BASE}/session/refresh`, null),
-    );
+    const grant = await firstValueFrom(http.post<SessionGrant>(`${BASE}/session/refresh`, null));
     expect(grant.accessToken).not.toBe(previous);
     expect(grant.session).toMatchObject({ userId: 'admin', warehouseId: 'B', ownerId: 'Y' });
     token = previous;

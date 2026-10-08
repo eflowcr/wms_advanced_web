@@ -124,7 +124,10 @@ describe('affiliation', () => {
   });
   it('declares every screen module and marks security administration as internal', () => {
     for (const screen of SCREEN_CATALOG)
-      expect(MODULE_CATALOG.some((m) => m.id === screen.module), screen.module).toBe(true);
+      expect(
+        MODULE_CATALOG.some((m) => m.id === screen.module),
+        screen.module,
+      ).toBe(true);
     expect(internalCapability('security.users:access')).toBe(true);
     expect(internalCapability('catalogs.articles:access')).toBe(false);
   });

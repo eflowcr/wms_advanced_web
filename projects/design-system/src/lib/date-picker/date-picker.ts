@@ -39,7 +39,6 @@ import {
   addDays,
   addMonths,
   DATE_PANEL_CLASSES,
-  EWMS_DATE_PICKER_MESSAGES,
   firstDayOfWeek,
   formatDate,
   monthTitle,
@@ -53,8 +52,10 @@ import {
   type CalendarCell,
   type DatePickerMode,
 } from './date-picker.types';
+import { EWMS_DATE_PICKER_MESSAGES } from './date-picker.tokens';
 
-export type { DatePickerMessages, DatePickerMode } from './date-picker.types';
+export type { DatePickerMode } from './date-picker.types';
+export type { DatePickerMessages } from './date-picker.tokens';
 
 export type DatePickerValue = string | DateRange | null;
 

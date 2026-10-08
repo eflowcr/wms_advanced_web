@@ -13,3 +13,4 @@ export * from './lib/security/session-guard';
 export * from './lib/security/can';
 export * from './lib/security/security-administration';
 export * from './lib/security/sensitive-capabilities';
+export * from './lib/security/step-up';

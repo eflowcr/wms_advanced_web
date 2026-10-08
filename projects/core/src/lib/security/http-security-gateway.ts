@@ -18,7 +18,6 @@ import {
 import { SECURITY_API_URL } from './security-api-url';
 import { ACCESS_QUERY } from './security-access.interceptor';
 
-
 const VALID_CODES = new Set<SecurityErrorCode>([
   'denied',
   'invalid',
@@ -31,6 +30,7 @@ const VALID_CODES = new Set<SecurityErrorCode>([
   'segregation',
   'externalAffiliation',
   'dependency',
+  'stepUpCancelled',
   'unavailable',
   'aborted',
 ]);

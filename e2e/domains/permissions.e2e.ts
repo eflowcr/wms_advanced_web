@@ -60,9 +60,22 @@ async function tableCodes(page: Page): Promise<string[]> {
   return codes;
 }
 
+/** La raíz de cada pantalla: la anterior deja el DOM; la de destino aparece o el guard redirige. */
+const ROOTS: Readonly<Record<string, string>> = {
+  '/configuracion/usuarios': '[data-users-page]',
+  '/configuracion/perfiles': '[data-security-page]',
+};
+
 async function visit(page: Page, route: string): Promise<void> {
   await page.evaluate((url) => history.pushState(null, '', url), route);
   await page.evaluate(() => dispatchEvent(new PopStateEvent('popstate')));
+  for (const [path, root] of Object.entries(ROOTS))
+    if (path !== route) await expect(page.locator(root)).toHaveCount(0);
+  await expect
+    .poll(
+      async () => (await page.locator(ROOTS[route]!).count()) > 0 || !page.url().endsWith(route),
+    )
+    .toBe(true);
 }
 
 for (const { user, grants } of PEOPLE) {

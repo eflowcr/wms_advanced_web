@@ -2,6 +2,7 @@ import { provideHttpClient, withFetch, withInterceptors } from '@angular/common/
 import {
   ApplicationConfig,
   computed,
+  EnvironmentInjector,
   inject,
   provideBrowserGlobalErrorListeners,
 } from '@angular/core';
@@ -19,6 +20,7 @@ import {
   authInterceptor,
   SECURITY_API_URL,
   securityAccessInterceptor,
+  STEP_UP,
 } from '@ewms/core/security';
 import { DEMO_HTTP_INTERCEPTORS } from './demo-mode';
 import { routes } from './app.routes';
@@ -50,6 +52,15 @@ export const appConfig: ApplicationConfig = {
       useFactory: () => {
         const runtime = inject(RuntimeConfigStore);
         return computed(() => runtime.config()?.securityApiUrl);
+      },
+    },
+    // El diálogo del segundo factor carga con el primer desafío, fuera de la ruta crítica (ADR 0026).
+    {
+      provide: STEP_UP,
+      useFactory: () => {
+        const injector = inject(EnvironmentInjector);
+        return async (challenge: string) =>
+          (await import('./step-up/step-up-dialog')).verifySecondFactor(injector, challenge);
       },
     },
     // Cada diccionario con la huella de su contenido en la URL: ningún caché sirve uno viejo.

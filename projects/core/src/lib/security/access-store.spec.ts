@@ -18,12 +18,10 @@ describe('AccessStore', () => {
     });
     store = TestBed.inject(AccessStore);
     gateway = {
-      access: vi
-        .fn()
-        .mockResolvedValue({
-          grants: { 'security.users:access': ['p'] },
-          user: { id: 'u', name: 'User', active: true, version: 1, affiliation: 'internal' },
-        }),
+      access: vi.fn().mockResolvedValue({
+        grants: { 'security.users:access': ['p'] },
+        user: { id: 'u', name: 'User', active: true, version: 1, affiliation: 'internal' },
+      }),
       snapshot: vi.fn(),
       inspect: vi.fn(),
       users: vi.fn(),

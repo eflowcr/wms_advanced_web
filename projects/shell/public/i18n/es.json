@@ -228,6 +228,7 @@
       "segregation": "La asignación viola la separación de funciones: {{ profiles }} no pueden coexistir para la misma persona en el mismo contexto.",
       "selfAssignment": "Nadie puede modificar sus propias asignaciones. Pida el cambio a otra persona con autoridad.",
       "selfEscalation": "No puede ampliar sus propios permisos.",
+      "stepUpCancelled": "La acción no se ejecutó: se canceló la verificación del segundo factor.",
       "unavailable": "No se pudo cargar o guardar la información. Intente de nuevo mediante el botón; no se repiten escrituras automáticamente."
     },
     "general": "General",
@@ -406,6 +407,14 @@
       "title": "Atajos de teclado"
     },
     "skipToContent": "Saltar al contenido",
+    "stepUp": {
+      "body": "Esta acción exige un segundo factor. Si cancela, la acción no se ejecuta.",
+      "cancel": "Cancelar",
+      "failed": "El código no es válido. Intente de nuevo o cancele.",
+      "otp": "Código de verificación",
+      "title": "Confirme su identidad",
+      "verify": "Verificar"
+    },
     "tabs": {
       "label": "Documentos abiertos",
       "limit": "No se pueden abrir más de {{ max }} pestañas a la vez. Cierre alguna para abrir otra.",

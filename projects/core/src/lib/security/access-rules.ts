@@ -50,7 +50,11 @@ export function internalCapability(code: string): boolean {
  * Lo que la consola ofrece a un externo: perfiles sin módulos internos, en contextos de su
  * compañía. Es presentación: el servidor decide y rechaza con `externalAffiliation`.
  */
-export function assignableTo(user: SecurityUser, profile: Profile, context: AccessContext): boolean {
+export function assignableTo(
+  user: SecurityUser,
+  profile: Profile,
+  context: AccessContext,
+): boolean {
   return (
     user.affiliation === 'internal' ||
     (context.ownerId === user.companyId && !profile.grants.some(internalCapability))
