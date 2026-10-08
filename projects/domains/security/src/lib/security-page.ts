@@ -283,7 +283,7 @@ export class SecurityPage {
     this.name.set({ name: profile.name });
     this.profileForm().reset();
     this.error.set('');
-    this.focus('input');
+    this.focus('[data-profile-form] input');
   }
 
   protected granted(capability: string): boolean {

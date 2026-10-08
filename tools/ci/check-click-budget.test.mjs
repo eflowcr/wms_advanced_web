@@ -14,6 +14,7 @@ import { promisify } from 'node:util';
 import {
   BUDGET_FILE,
   BUDGET_TEST,
+  BUDGET_TESTS,
   importsBudgets,
   lineOf,
   statedBudgets,
@@ -123,6 +124,15 @@ describe('the repository itself', () => {
       'OPEN_FAVORITE_MAX_CLICKS',
     ]) {
       assert.ok(source.includes(name), `${BUDGET_TEST} never uses ${name}`);
+    }
+  });
+
+  it('the domain end-to-end test reads them too, and the gate watches it', async () => {
+    const domain = 'e2e/domains/clicks.e2e.ts';
+    assert.deepEqual(BUDGET_TESTS, [BUDGET_TEST, domain]);
+    const source = await readFile(path.join(ROOT, domain), 'utf8');
+    for (const name of ['SEARCH_MAX_CLICKS', 'CREATE_MAX_CLICKS', 'EDIT_MAX_CLICKS']) {
+      assert.ok(source.includes(name), `${domain} never uses ${name}`);
     }
   });
 });

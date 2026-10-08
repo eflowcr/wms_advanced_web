@@ -103,6 +103,9 @@ describe('Security page, rendered', () => {
     button(fixture, 'security.createProfile').click();
     await fixture.whenStable();
     expect(root(fixture).querySelector('[data-profile-form]')).not.toBeNull();
+    await vi.waitFor(() =>
+      expect(document.activeElement).toBe(root(fixture).querySelector('[data-profile-form] input')),
+    );
     expect(root(fixture).querySelector('[data-unsaved], [role="status"]')).not.toBeNull();
     const users = boxes(fixture, 'shell.menu.users');
     expect(root(fixture).querySelector('[data-sensitive]')).not.toBeNull();

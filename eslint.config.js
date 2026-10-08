@@ -355,7 +355,7 @@ module.exports = tseslint.config(
   },
 
   /*
-   * El único import profundo a projects/ es un disable con su razón en e2e/click-budget.e2e.ts:
+   * El único import profundo a projects/ es un disable con su razón en e2e/click-budget.ts:
    * el barril cargaría Angular en Node. Ver vault: Integracion Continua §11.
    */
 
