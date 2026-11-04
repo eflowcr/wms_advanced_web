@@ -3,7 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { AuthSession, SECURITY_API_URL } from '@ewms/core/security';
-import { SECOND_FACTOR } from './second-factor';
+import { OtpFactor } from './second-factor';
 
 describe('OTP second factor', () => {
   function setup(url: string | undefined) {
@@ -18,12 +18,12 @@ describe('OTP second factor', () => {
     });
     return {
       adopt,
-      factor: TestBed.inject(SECOND_FACTOR),
+      factor: TestBed.inject(OtpFactor),
       http: TestBed.inject(HttpTestingController),
     };
   }
 
-  it('is the default adapter and adopts the reinforced session the server returns', async () => {
+  it('adopts the reinforced session the server returns', async () => {
     const { adopt, factor, http } = setup('/api/v1/security');
     expect(factor.inputKey).toBe('shell.stepUp.otp');
     const verified = factor.verify(' 123456 ');

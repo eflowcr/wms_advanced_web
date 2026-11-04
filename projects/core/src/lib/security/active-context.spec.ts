@@ -3,6 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { ActiveContext, ContextChangeError } from './active-context';
+import { HttpActiveContext } from './http-active-context';
 import { AuthSession, SESSION_REQUEST, type SessionGrant } from './auth-session';
 import { SECURITY_API_URL } from './security-api-url';
 
@@ -20,6 +21,7 @@ function setup(url: string | null = BASE) {
       provideHttpClientTesting(),
       { provide: SECURITY_API_URL, useValue: signal(url ?? undefined) },
       { provide: AuthSession, useValue: { adopt } },
+      { provide: ActiveContext, useExisting: HttpActiveContext },
     ],
   });
   return {

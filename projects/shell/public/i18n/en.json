@@ -333,6 +333,7 @@
       "invalidCredentials": "Incorrect user or password.",
       "lede": "Receiving, inventory and shipping traced end to end, in the warehouse where you work.",
       "password": "Password",
+      "secondFactorCancelled": "Two-step verification was cancelled. Sign in again and enter the code to continue.",
       "showPassword": "Show password",
       "submit": "Sign in",
       "submitting": "Signing in…",

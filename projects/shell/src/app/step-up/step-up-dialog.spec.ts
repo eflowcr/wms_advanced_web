@@ -7,7 +7,7 @@ import { expectNoAxeViolations, provideI18nTesting } from '@ewms/testing';
 import { Subject } from 'rxjs';
 import { provideEwmsDesignSystem } from '../design-system.providers';
 import { DICTIONARIES } from '../i18n.testing';
-import { SECOND_FACTOR, type SecondFactor } from './second-factor';
+import { SECOND_FACTOR, type SecondFactor } from './second-factor.token';
 import { StepUpDialog, verifySecondFactor } from './step-up-dialog';
 
 const CHALLENGE = 'Bearer error="insufficient_user_authentication", acr_values="urn:ewms:acr:otp"';

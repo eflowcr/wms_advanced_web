@@ -333,6 +333,7 @@
       "invalidCredentials": "Usuario o contraseña incorrectos.",
       "lede": "Recepción, inventario y despacho trazados de punta a punta, en el almacén donde usted trabaja.",
       "password": "Contraseña",
+      "secondFactorCancelled": "Se canceló la verificación en dos pasos. Inicie sesión de nuevo e ingrese el código para entrar.",
       "showPassword": "Mostrar contraseña",
       "submit": "Entrar",
       "submitting": "Entrando…",

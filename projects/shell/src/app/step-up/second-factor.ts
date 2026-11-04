@@ -1,16 +1,8 @@
 import { HttpClient } from '@angular/common/http';
-import { inject, Injectable, InjectionToken } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { AuthSession, SECURITY_API_URL, type SessionGrant } from '@ewms/core/security';
 import { firstValueFrom } from 'rxjs';
-
-/**
- * Un tipo de segundo factor para el diálogo genérico (ADR 0026). `inputKey` nombra el campo que
- * pide, o `null` si no pide nada escrito. `verify` deja la sesión con el token reforzado.
- */
-export interface SecondFactor {
-  readonly inputKey: string | null;
-  verify(value: string): Promise<void>;
-}
+import type { SecondFactor } from './second-factor.token';
 
 /** t(shell.stepUp.otp) */
 /** El primer adaptador: un código de un solo uso, validado por el Security Core. */
@@ -30,8 +22,3 @@ export class OtpFactor implements SecondFactor {
     );
   }
 }
-
-export const SECOND_FACTOR = new InjectionToken<SecondFactor>('SECOND_FACTOR', {
-  providedIn: 'root',
-  factory: () => inject(OtpFactor),
-});

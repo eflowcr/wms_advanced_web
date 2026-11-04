@@ -3,7 +3,7 @@ import { inject, Injectable } from '@angular/core';
 import { firstValueFrom, fromEvent, type Observable } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { type Assignment, SecurityError, type SecurityRequest } from './access';
-import { parseProblemError } from './http-security-gateway';
+import { parseProblemError } from './problem-error';
 import { SECURITY_API_URL } from './security-api-url';
 
 /** Confirmar o retirar una asignación en una revisión de accesos. */

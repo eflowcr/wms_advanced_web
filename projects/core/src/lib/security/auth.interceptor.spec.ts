@@ -227,6 +227,31 @@ describe('authInterceptor with a second factor (RFC 9470)', () => {
     backend.expectNone(`${BASE}/users/u1/status`);
   });
 
+  it('the 428 mfa_required of the Go API asks for the factor like RFC 9470', async () => {
+    const result = firstValueFrom(http.post(`${BASE}/auth/switch-warehouse`, { x: 1 }));
+    backend
+      .expectOne(`${BASE}/auth/switch-warehouse`)
+      .flush(
+        { error: 'mfa_required', message: 'step-up' },
+        { status: 428, statusText: 'Precondition Required' },
+      );
+    await vi.waitFor(() => expect(verify).toHaveBeenCalledTimes(1));
+    const retry = backend.expectOne(`${BASE}/auth/switch-warehouse`);
+    expect(retry.request.headers.get('Authorization')).toBe('Bearer token-stepped');
+    retry.flush({ ok: true });
+    expect(await result).toEqual({ ok: true });
+    expect(renew).not.toHaveBeenCalled();
+  });
+
+  it('another 428 is not a second-factor challenge', async () => {
+    const result = firstValueFrom(http.post(`${BASE}/auth/switch-warehouse`, {}));
+    backend
+      .expectOne(`${BASE}/auth/switch-warehouse`)
+      .flush({ error: 'other' }, { status: 428, statusText: 'Precondition Required' });
+    await expect(result).rejects.toMatchObject({ status: 428 });
+    expect(verify).not.toHaveBeenCalled();
+  });
+
   it('a second challenge after the factor is not asked again', async () => {
     const result = firstValueFrom(http.patch(`${BASE}/users/u1/status`, { active: false }));
     backend.expectOne(`${BASE}/users/u1/status`).flush(null, challenge);

@@ -15,3 +15,6 @@ export * from './lib/security/can';
 export * from './lib/security/security-administration.public';
 export * from './lib/security/sensitive-capabilities';
 export * from './lib/security/step-up';
+export * from './lib/security/core-auth-session.public';
+export * from './lib/security/core-security-gateway.public';
+export * from './lib/security/core-active-context.public';

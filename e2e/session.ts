@@ -1,27 +1,37 @@
 import { test as base, expect, type BrowserContext, type Page } from '@playwright/test';
 
 /**
- * La sesión en las E2E (ADR 0022). Producción no tiene simulador: `page.route` responde como el
- * Security Core con una sesión sin concesiones, igual que la denegación por defecto. No es un spec.
+ * La sesión en las E2E (ADR 0022). Producción no tiene simulador: `page.route` responde como la
+ * API Go del Security Core con una sesión sin concesiones, igual que la denegación por defecto.
+ * No es un spec.
  */
 
 const SECURITY = '**/api/v1/security/**';
 
 /** Quien abre la sesión de producción; las vistas de tabla se guardan con su nombre. */
-const PERSON = { userId: 'e2e', name: 'Operador', warehouseId: '0001', ownerId: 'ePrac' };
+const PERSON = { userId: 'e2e', name: 'Operador', warehouseId: '0001', ownerId: '' };
 
 export async function serveSession(target: BrowserContext | Page): Promise<void> {
   await target.route(SECURITY, (route) => {
     const { pathname } = new URL(route.request().url());
-    if (pathname.endsWith('/session/refresh'))
-      return route.fulfill({ json: { accessToken: 'e2e-access', session: PERSON } });
-    if (pathname.endsWith('/session/contexts'))
+    if (pathname.endsWith('/auth/refresh'))
+      return route.fulfill({ json: { access_token: 'e2e-access', expires_in: 900 } });
+    if (pathname.endsWith('/auth/me'))
       return route.fulfill({
-        json: [{ warehouseId: PERSON.warehouseId, ownerId: PERSON.ownerId }],
+        json: {
+          principal_id: PERSON.userId,
+          username: PERSON.userId,
+          display_name: PERSON.name,
+          active_warehouse_id: PERSON.warehouseId,
+        },
       });
-    if (pathname.endsWith('/access'))
+    if (pathname.endsWith('/auth/contexts'))
       return route.fulfill({
-        json: { grants: {}, user: { id: PERSON.userId, name: PERSON.name, active: true, version: 1 } },
+        json: [{ warehouse_id: PERSON.warehouseId, owner_id: PERSON.ownerId }],
+      });
+    if (pathname.endsWith('/security/effective-permissions'))
+      return route.fulfill({
+        json: { principal_id: PERSON.userId, active_warehouse_id: PERSON.warehouseId, permissions: [] },
       });
     return route.fulfill({ status: 404, json: {} });
   });

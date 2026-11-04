@@ -204,7 +204,8 @@ describe('the public API of @ewms/design-system', () => {
 const CORE_SECURITY = [
   'AccessContext', 'AccessResult', 'AccessStore', 'ActiveContext', 'Actor', 'Affiliation',
   'Assignment', 'AuthError', 'AuthErrorCode', 'AuthSession', 'Can', 'ContextChangeCode',
-  'ContextChangeError', 'Grants', 'HttpSecurityGateway', 'Profile', 'ReviewCampaign',
+  'ContextChangeError', 'CoreActiveContext', 'CoreAuthSession', 'CoreSecurityGateway', 'Grants',
+  'HttpActiveContext', 'HttpAuthSession', 'HttpSecurityGateway', 'Profile', 'ReviewCampaign',
   'ReviewDecision', 'ReviewItem', 'SCREEN_CATALOG', 'SECURITY_API_URL', 'SENSITIVE_CAPABILITIES',
   'STEP_UP', 'ScreenDefinition', 'SecurityAdministration', 'SecurityError', 'SecurityErrorCode',
   'SecurityGateway', 'SecurityRequest', 'SecuritySnapshot', 'SecurityUser', 'SessionGrant',

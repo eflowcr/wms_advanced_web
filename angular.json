@@ -78,6 +78,10 @@
                 {
                   "replace": "projects/shell/src/app/layout/demo-slot.ts",
                   "with": "projects/shell/src/app/layout/demo-slot.enabled.ts"
+                },
+                {
+                  "replace": "projects/shell/src/app/security-adapters.ts",
+                  "with": "projects/shell/src/app/security-adapters.enabled.ts"
                 }
               ]
             },
@@ -102,9 +106,18 @@
                 {
                   "replace": "projects/shell/src/app/layout/demo-slot.ts",
                   "with": "projects/shell/src/app/layout/demo-slot.enabled.ts"
+                },
+                {
+                  "replace": "projects/shell/src/app/security-adapters.ts",
+                  "with": "projects/shell/src/app/security-adapters.enabled.ts"
                 }
               ],
               "outputPath": "dist/shell-demo"
+            },
+            "api": {
+              "optimization": false,
+              "extractLicenses": false,
+              "sourceMap": true
             }
           },
           "defaultConfiguration": "production"
@@ -117,6 +130,10 @@
             },
             "development": {
               "buildTarget": "shell:build:development"
+            },
+            "api": {
+              "buildTarget": "shell:build:api",
+              "proxyConfig": "tools/dev/api-proxy.mjs"
             }
           },
           "defaultConfiguration": "development"

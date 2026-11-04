@@ -4,6 +4,7 @@ import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { AccessStore } from './access-store';
 import { AuthError, AuthSession, SESSION_REQUEST, type SessionGrant } from './auth-session';
+import { HttpAuthSession } from './http-auth-session';
 import { SECURITY_API_URL } from './security-api-url';
 
 const BASE = '/api/v1/security';
@@ -18,6 +19,7 @@ function setup(url: string | null = BASE) {
       provideHttpClient(),
       provideHttpClientTesting(),
       { provide: SECURITY_API_URL, useValue: signal(url ?? undefined) },
+      { provide: AuthSession, useExisting: HttpAuthSession },
     ],
   });
   return {

@@ -6,3 +6,4 @@ export {
   type SessionGrant,
   type SessionInfo,
 } from './auth-session';
+export { HttpAuthSession } from './http-auth-session';

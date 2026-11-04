@@ -2,16 +2,22 @@ import { provideEwmsLocale } from '@ewms/core/locale';
 import type { Routes } from '@angular/router';
 import { inject, Injector, runInInjectionContext } from '@angular/core';
 import { sessionGuard } from '@ewms/core/security';
+import { AREA_PROVIDERS } from './security-adapters';
 
 export const shellRoutes: Routes = [
   // Capa autenticada (ADR 0012): sin sesión no entra; con ella, conecta los permisos efectivos.
   {
     path: '',
-    providers: [provideEwmsLocale()],
+    providers: [provideEwmsLocale(), ...AREA_PROVIDERS],
+    // En serie: el router corre los `canMatch` a la vez, y los permisos se conectan con la sesión
+    // ya recuperada, por lenta que sea la renovación (ADR 0028).
     canMatch: [
-      sessionGuard,
-      async () => {
+      async (route, segments, current) => {
         const injector = inject(Injector);
+        const allowed = await runInInjectionContext(injector, () =>
+          sessionGuard(route, segments, current),
+        );
+        if (allowed !== true) return allowed;
         const { startSession } = await import('./security-routing');
         await runInInjectionContext(injector, startSession);
         return true;

@@ -28,9 +28,10 @@ import { SECURITY_DEMO } from '../demo-mode';
 import { provideEwmsDesignSystem } from '../design-system.providers';
 import { LanguageSwitcher } from '../layout/language-switcher';
 
-/** t(shell.login.invalidCredentials, shell.login.unavailable) */
+/** t(shell.login.invalidCredentials, shell.login.secondFactorCancelled, shell.login.unavailable) */
 const FAILURE: Readonly<Record<AuthErrorCode, string>> = {
   invalidCredentials: 'shell.login.invalidCredentials',
+  secondFactorCancelled: 'shell.login.secondFactorCancelled',
   unavailable: 'shell.login.unavailable',
 };
 

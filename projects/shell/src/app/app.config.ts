@@ -22,7 +22,7 @@ import {
   securityAccessInterceptor,
   STEP_UP,
 } from '@ewms/core/security';
-import { DEMO_HTTP_INTERCEPTORS } from './demo-mode';
+import { DEMO_HTTP_INTERCEPTORS, SECURITY_PROVIDERS } from './demo-mode';
 import { routes } from './app.routes';
 import { CDK_STYLES_FROM_STYLESHEET } from './cdk.providers';
 import { DICTIONARY_VERSIONS } from './dictionary-versions.generated';
@@ -46,6 +46,7 @@ export const appConfig: ApplicationConfig = {
       ]),
     ),
     provideRuntimeConfig(),
+    ...SECURITY_PROVIDERS,
     // La URL del Security Core sale de config.json, por ambiente; es la propuesta de 05-API.
     {
       provide: SECURITY_API_URL,

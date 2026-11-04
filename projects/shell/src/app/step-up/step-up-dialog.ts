@@ -13,7 +13,7 @@ import { Button, DialogService, FormPattern, Input } from '@ewms/design-system';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { firstValueFrom } from 'rxjs';
 import { provideEwmsDesignSystem } from '../design-system.providers';
-import { SECOND_FACTOR } from './second-factor';
+import { SECOND_FACTOR } from './second-factor.token';
 
 /**
  * Diálogo genérico de segundo factor ante el desafío de RFC 9470: no supone el tipo; el

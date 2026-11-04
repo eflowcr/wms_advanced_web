@@ -21,9 +21,16 @@ function withToken(req: HttpRequest<unknown>, token: string | null): HttpRequest
   return token ? req.clone({ setHeaders: { Authorization: `Bearer ${token}` } }) : req;
 }
 
-/** El desafío de segundo factor de RFC 9470 también es un 401, pero no se arregla renovando. */
+/**
+ * El desafío de segundo factor: el 401 de RFC 9470, que no se arregla renovando, o el 428
+ * `mfa_required` de la API Go. Ver vault: Requerimientos de la API para el login.
+ */
 function isStepUp(err: HttpErrorResponse): boolean {
-  return /insufficient_user_authentication/.test(err.headers.get('WWW-Authenticate') ?? '');
+  if (err.status === 428) return (err.error as { error?: unknown } | null)?.error === 'mfa_required';
+  return (
+    err.status === 401 &&
+    /insufficient_user_authentication/.test(err.headers.get('WWW-Authenticate') ?? '')
+  );
 }
 
 /**
@@ -47,7 +54,7 @@ export const authInterceptor: HttpInterceptorFn = (original, next) => {
       const challenged = err instanceof HttpErrorResponse && isStepUp(err);
       if (
         !(err instanceof HttpErrorResponse) ||
-        err.status !== 401 ||
+        (err.status !== 401 && !challenged) ||
         req.context.get(challenged ? STEPPED : RENEWED) ||
         (challenged && !stepUp)
       )
