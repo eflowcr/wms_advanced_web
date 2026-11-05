@@ -38,47 +38,53 @@ const FAILURE: Readonly<Record<AuthErrorCode, string>> = {
 const SPLIT_BREAKPOINT_TOKEN = '--breakpoint-login-split';
 const WELCOME_DELAY_TOKEN = '--delay-login-welcome';
 
-/** Dos columnas desde el corte; debajo, banda de marca con la tarjeta, o con la hoja bajo 768 px. */
-type LoginLayout = 'split' | 'band' | 'sheet';
+/** Dos columnas desde el corte; debajo, marca arriba y tarjeta, compacta bajo 768 px. */
+type LoginLayout = 'split' | 'band' | 'compact';
 
 type Phase = 'idle' | 'sending' | 'welcome';
 
 const FRAME_CLASSES: Readonly<Record<LoginLayout, string>> = {
-  split: 'flex min-h-screen',
-  band: 'flex min-h-screen flex-col',
-  sheet: 'flex min-h-screen flex-col',
+  split: 'relative isolate flex min-h-screen overflow-hidden',
+  band: 'relative isolate flex min-h-screen flex-col overflow-hidden',
+  compact: 'relative isolate flex min-h-screen flex-col overflow-hidden',
+};
+
+const SCRIM_CLASSES: Readonly<Record<LoginLayout, string>> = {
+  split: 'absolute inset-0 bg-(image:--login-scrim-split)',
+  band: 'absolute inset-0 bg-(image:--login-scrim-stacked)',
+  compact: 'absolute inset-0 bg-(image:--login-scrim-stacked)',
 };
 
 const BRAND_CLASSES: Readonly<Record<LoginLayout, string>> = {
-  split: 'relative flex flex-11 overflow-hidden bg-(image:--gradient-login) text-on-dark',
-  band: 'relative flex h-(--login-band-height) shrink-0 overflow-hidden bg-(image:--gradient-login) text-on-dark',
-  sheet:
-    'relative flex h-(--login-band-height) shrink-0 overflow-hidden bg-(image:--gradient-login) text-on-dark',
+  split: 'relative flex flex-11 overflow-hidden text-on-dark',
+  band: 'relative flex shrink-0 overflow-hidden text-on-dark',
+  compact: 'relative flex shrink-0 overflow-hidden text-on-dark',
 };
 
 const BRAND_CONTENT_CLASSES: Readonly<Record<LoginLayout, string>> = {
   split: 'flex flex-1 flex-col justify-between gap-12 p-12',
-  band: 'flex flex-1 flex-col gap-10 px-6 pt-4 pb-12',
-  sheet: 'flex flex-1 flex-col gap-10 px-4 pt-4 pb-12',
+  band: 'flex flex-1 flex-col gap-10 px-6 pt-4 pb-10',
+  compact: 'flex flex-1 flex-col gap-8 px-4 pt-4 pb-8',
 };
 
 const COLUMN_CLASSES: Readonly<Record<LoginLayout, string>> = {
-  split: 'flex min-w-0 flex-9 flex-col',
-  band: 'relative flex flex-1 flex-col -mt-(--login-sheet-overlap) px-6',
-  sheet: 'relative flex flex-1 flex-col -mt-(--login-sheet-overlap) rounded-t-dialog bg-surface',
+  split: 'relative flex min-w-0 flex-9 flex-col',
+  band: 'relative flex flex-1 flex-col px-6',
+  compact: 'relative flex flex-1 flex-col px-4',
 };
 
 const PLACE_CLASSES: Readonly<Record<LoginLayout, string>> = {
   split: 'flex flex-1 items-center justify-center px-6',
   band: 'flex w-full flex-1 items-start justify-center',
-  sheet: 'flex w-full flex-1',
+  compact: 'flex w-full flex-1 items-start justify-center',
 };
 
 const CARD_CLASSES: Readonly<Record<LoginLayout, string>> = {
   split:
     'flex w-full max-w-(--login-card-width) flex-col gap-6 rounded-dialog border border-default bg-surface p-8 shadow-dialog',
   band: 'flex w-full max-w-(--login-card-width) flex-col gap-6 rounded-dialog border border-default bg-surface p-8 shadow-dialog',
-  sheet: 'flex w-full flex-col gap-6 px-4 pt-8 pb-6',
+  compact:
+    'flex w-full flex-col gap-6 rounded-dialog border border-default bg-surface p-6 shadow-dialog',
 };
 
 /**
@@ -101,9 +107,27 @@ const CARD_CLASSES: Readonly<Record<LoginLayout, string>> = {
   ],
   providers: [provideEwmsDesignSystem()],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  host: { class: 'block min-h-screen bg-canvas' },
+  host: { class: 'block min-h-screen bg-brand-navy' },
   template: `
     <div [class]="frame()">
+      <!-- La escena, a pantalla completa y fuera del árbol accesible; el velo sostiene el texto blanco. -->
+      <div
+        aria-hidden="true"
+        class="pointer-events-none absolute inset-0 bg-(image:--gradient-login)"
+        data-login-scene
+      >
+        <img
+          class="absolute inset-0 size-full object-cover object-right"
+          src="/brand/login-scene.webp"
+          srcset="/brand/login-scene-960.webp 960w, /brand/login-scene.webp 1920w"
+          sizes="100vw"
+          width="1920"
+          height="1086"
+          decoding="async"
+          alt=""
+        />
+        <div [class]="scrim()"></div>
+      </div>
       <div [class]="brand()">
         <!-- Decoración: las rutas, la traza del éxito y el mensaje de marca, fuera del árbol accesible. -->
         <div aria-hidden="true" [class]="brandContent()" data-login-brand>
@@ -258,7 +282,9 @@ const CARD_CLASSES: Readonly<Record<LoginLayout, string>> = {
             </p>
           </main>
         </div>
-        <footer class="p-6 text-center text-caption text-secondary">{{ brandOwner }}</footer>
+        <footer class="p-6 text-center text-caption text-on-dark">
+          {{ brandOwner }}
+        </footer>
       </div>
     </div>
 
@@ -304,11 +330,12 @@ export class Login {
     if (this.split()) {
       return 'split';
     }
-    return this.viewport.isWide() ? 'band' : 'sheet';
+    return this.viewport.isWide() ? 'band' : 'compact';
   });
   /** Bajo 768 px los campos y el botón miden 48 px. */
-  protected readonly controlSize = computed(() => (this.layout() === 'sheet' ? 'lg' : 'md'));
+  protected readonly controlSize = computed(() => (this.layout() === 'compact' ? 'lg' : 'md'));
   protected readonly frame = computed(() => FRAME_CLASSES[this.layout()]);
+  protected readonly scrim = computed(() => SCRIM_CLASSES[this.layout()]);
   protected readonly brand = computed(() => BRAND_CLASSES[this.layout()]);
   protected readonly brandContent = computed(() => BRAND_CONTENT_CLASSES[this.layout()]);
   protected readonly column = computed(() => COLUMN_CLASSES[this.layout()]);

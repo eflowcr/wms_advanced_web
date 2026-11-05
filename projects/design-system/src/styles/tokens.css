@@ -43,7 +43,10 @@
   --navy-7-a06: rgb(1 15 66 / 0.06);
   --navy-7-a08: rgb(1 15 66 / 0.08);
   --navy-7-a10: rgb(1 15 66 / 0.1);
+  --navy-7-a35: rgb(1 15 66 / 0.35);
   --navy-7-a50: rgb(1 15 66 / 0.5);
+  --navy-7-a80: rgb(1 15 66 / 0.8);
+  --navy-7-a90: rgb(1 15 66 / 0.9);
   /* Matiz azul translúcido para la cabecera (decisión del usuario, 2026-09-25). */
   --blue-96-a90: rgb(240 243 253 / 0.9);
 
@@ -95,8 +98,7 @@
   --size-640: 640px;
   --size-768: 768px;
   --size-1280: 1280px;
-  /* Login: alto de la banda móvil, ancho de la tarjeta y corte de las dos columnas. */
-  --size-300: 300px;
+  /* Login: ancho de la tarjeta y corte de las dos columnas. */
   --size-420: 420px;
   --size-1024: 1024px;
   /* Anchos de columna de la Tabla (DS-3 lote C). */
@@ -325,13 +327,25 @@
   /* Giro del spinner: una vuelta por segundo a velocidad constante (@keyframes en styles.css). */
   --animate-spin: spin var(--ms-1000) linear infinite;
 
-  /* Login (decisión del usuario, 2026-10-08): panel de marca (55 %) con el degradado del menú a
-   * 160°, tarjeta de 420 y banda móvil de 300 con la hoja montada 24 encima. Ver vault: App-Shell. */
+  /* Login (decisión del usuario, 2026-11-05): escena a pantalla completa sobre el degradado del menú,
+   * con un velo navy que sostiene el texto blanco; tarjeta de 420 flotando. Ver vault: App-Shell. */
   --gradient-login: linear-gradient(160deg, var(--navy-7), var(--navy-13) 55%, var(--navy-23));
+  --login-scrim-split: linear-gradient(
+    90deg,
+    var(--navy-7-a90),
+    var(--navy-7-a80) 55%,
+    var(--navy-7-a35) 75%,
+    var(--navy-7-a10)
+  );
+  --login-scrim-stacked: linear-gradient(
+    180deg,
+    var(--navy-7-a90),
+    var(--navy-7-a80) 30%,
+    var(--navy-7-a50) 55%,
+    var(--navy-7-a90)
+  );
   --login-card-width: var(--size-420);
   --login-copy-max-width: var(--size-480);
-  --login-band-height: var(--size-300);
-  --login-sheet-overlap: var(--size-24);
   /* Entrada escalonada: cada pieza declara su `--login-step` y sale 50 ms después de la anterior. */
   --login-rise-distance: var(--size-12);
   --animate-login-rise: login-rise var(--ms-300) var(--ease-out)

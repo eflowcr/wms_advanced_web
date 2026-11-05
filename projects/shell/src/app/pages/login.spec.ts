@@ -91,7 +91,9 @@ describe('Login', () => {
     }
     // Como en el navegador: lo tecleado se dibuja antes de que alguien pulse Entrar.
     await fixture.whenStable();
-    root().querySelector('form')!.dispatchEvent(new Event('submit', { cancelable: true }));
+    root()
+      .querySelector('form')!
+      .dispatchEvent(new Event('submit', { cancelable: true }));
     await fixture.whenStable();
     await new Promise((resolve) => setTimeout(resolve));
     fixture.detectChanges();
@@ -182,7 +184,7 @@ describe('Login', () => {
     expect(root().querySelector('h1')?.textContent?.trim()).toBe('Iniciar sesión');
   });
 
-  it('splits in two columns, then a band over a card, then a sheet with 48 px controls', async () => {
+  it('splits in two columns, then the brand over a card, then a compact card with 48 px controls', async () => {
     setToken('--breakpoint-login-split', pixels(1024));
     setToken('--breakpoint-nav-bottom', pixels(768));
     const resize = stubScreen(1440);
@@ -200,10 +202,10 @@ describe('Login', () => {
     const banner = root().querySelector('header:has([data-language-switcher])');
     expect(banner?.classList).toContain('absolute');
 
-    // Bajo 768 px `Viewport` también contesta: la tarjeta se vuelve hoja y los controles crecen.
+    // Bajo 768 px `Viewport` también contesta: la tarjeta se compacta y los controles crecen.
     resize(390);
     await fixture.whenStable();
-    expect(card().classList).not.toContain('rounded-dialog');
+    expect(card().classList).toContain('p-6');
     expect(field('username').classList).toContain('h-12');
     expect(root().querySelector('button[type="submit"]')?.classList).toContain('h-12');
   });
