@@ -237,6 +237,8 @@ for (const locale of ['es-CR', 'en-US']) {
   test(`Security and Users are accessible without global overflow at desktop and mobile (${locale})`, async ({
     browser,
   }) => {
+    // Cuatro inicios de sesión y cuatro escaneos axe: el doble del tiempo de una prueba.
+    test.setTimeout(60_000);
     const context = await browser.newContext({ locale });
     const page = await context.newPage();
     for (const width of [1280, 390]) {
@@ -257,9 +259,7 @@ for (const locale of ['es-CR', 'en-US']) {
         expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
           true,
         );
-        const result = await axe(page)
-          .include('main#main')
-          .analyze();
+        const result = await axe(page).include('main#main').analyze();
         expect(result.violations).toEqual([]);
       }
     }

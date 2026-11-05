@@ -46,8 +46,10 @@ test.describe('i18n with a Spanish browser', () => {
 
     await expect(page.getByRole('navigation', { name: 'Main menu' })).toBeVisible();
     await expect(page.getByRole('treeitem', { name: 'Design system' })).toBeVisible();
-    await expect(page.getByText('No packages')).toBeVisible();
-    await expect(page.getByText('1,250 packages')).toBeVisible();
+    await expect(page.locator('[data-page-heading]')).toHaveText('Hello, Operador');
+    await expect(
+      page.getByText('Choose a module to start working in your active warehouse.'),
+    ).toBeVisible();
     // Mismo documento: la marca puesta antes del cambio sigue ahí.
     expect(
       await page.evaluate(() => (window as unknown as { beforeSwitch?: boolean }).beforeSwitch),
