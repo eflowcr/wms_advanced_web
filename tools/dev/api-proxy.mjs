@@ -8,6 +8,8 @@ export default {
   [PREFIX]: {
     target,
     changeOrigin: true,
+    // X-Forwarded-Host: la API compara el origen de la cookie con la consola, no con su propio host.
+    xfwd: true,
     pathRewrite: { [`^${PREFIX}`]: '' },
     cookiePathRewrite: { '/auth': `${PREFIX}/auth` },
   },

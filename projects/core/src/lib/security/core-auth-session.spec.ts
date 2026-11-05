@@ -55,7 +55,10 @@ describe('CoreAuthSession (lazy facade)', () => {
     await vi.waitFor(() => expect(auth.token()).toBe('acc-0'));
     auth.adopt({ accessToken: 'acc-1', session: { ...session, warehouseId: 'W2' } });
     expect(auth.session()?.warehouseId).toBe('W2');
-    await expect(auth.verifyPasscode('123456')).rejects.toThrow();
+    const verifying = auth.verifyPasscode('123456');
+    (await vi.waitFor(() => http.expectOne(`${BASE}/auth/step-up`))).flush({ access_token: 'acc-2' });
+    await verifying;
+    expect(auth.token()).toBe('acc-2');
     const leaving = auth.signOut();
     expect(auth.token()).toBeNull();
     http.expectOne(`${BASE}/auth/terminate`).flush({});

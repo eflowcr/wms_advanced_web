@@ -198,15 +198,15 @@ describe('CoreAuthAdapter (API Go)', () => {
     expect(auth.session()).toBeNull();
   });
 
-  it('a step-up inside the session verifies with its session id and swaps the token', async () => {
+  it('a step-up inside the session goes to /auth/step-up with the bearer and swaps the token', async () => {
     const { auth, http } = setup();
     const signing = auth.signIn({ username: 'ana', password: 'x' });
     await answerLogin(http, { access_token: 'acc-6', session_id: 's-6', principal_id: 'p-1' });
     await signing;
 
-    const verifying = auth.verifyPasscode('654321');
-    const verify = http.expectOne(`${BASE}/auth/verify-mfa`);
-    expect(verify.request.body).toEqual({ session_id: 's-6', passcode: '654321' });
+    const verifying = auth.verifyPasscode(' 654321 ');
+    const verify = http.expectOne(`${BASE}/auth/step-up`);
+    expect(verify.request.body).toEqual({ passcode: '654321' });
     expect(verify.request.context.get(SESSION_REQUEST)).toBe(false);
     verify.flush({ access_token: 'acc-6-mfa' });
     await verifying;
@@ -263,7 +263,7 @@ describe('CoreAuthAdapter (API Go)', () => {
     await answerLogin(http, { access_token: 'acc-8', session_id: 's-8', principal_id: 'p-1' });
     await signing;
     const verifying = auth.verifyPasscode('111111');
-    http.expectOne(`${BASE}/auth/verify-mfa`).flush({});
+    http.expectOne(`${BASE}/auth/step-up`).flush({});
     await verifying;
     expect(auth.token()).toBe('acc-8');
   });

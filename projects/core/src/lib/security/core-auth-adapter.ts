@@ -97,16 +97,21 @@ export class CoreAuthAdapter extends AuthSession {
 
   /** Valida el código del segundo factor: el del login en curso o el de una acción sensible. */
   async verifyPasscode(passcode: string): Promise<void> {
-    const url = this.url('/auth/verify-mfa');
     const pending = this.pending;
-    const sessionId = pending ? pending.sessionId : this.sessionId;
-    if (!url || !sessionId) throw new AuthError('unavailable');
-    const body = { session_id: sessionId, passcode: passcode.trim() };
-    const reply = await firstValueFrom(
-      this.http.post<TokenBody>(url, body, pending ? sessionOptions() : undefined),
-    );
-    if (pending) await this.establish({ ...reply, session_id: sessionId }, pending.username);
-    else this.accessToken = token(reply) ?? this.accessToken;
+    const code = passcode.trim();
+    if (!pending) {
+      // La elevación de la sesión en curso: el servidor la toma del Bearer.
+      const url = this.url('/auth/step-up');
+      if (!url || !this.accessToken) throw new AuthError('unavailable');
+      const reply = await firstValueFrom(this.http.post<TokenBody>(url, { passcode: code }));
+      this.accessToken = token(reply) ?? this.accessToken;
+      return;
+    }
+    const url = this.url('/auth/verify-mfa');
+    if (!url || !pending.sessionId) throw new AuthError('unavailable');
+    const body = { session_id: pending.sessionId, passcode: code };
+    const reply = await firstValueFrom(this.http.post<TokenBody>(url, body, sessionOptions()));
+    await this.establish({ ...reply, session_id: pending.sessionId }, pending.username);
   }
 
   async signOut(): Promise<void> {
