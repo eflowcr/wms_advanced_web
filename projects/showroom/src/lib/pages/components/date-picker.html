@@ -85,6 +85,20 @@
         </p>
       </div>
     </ewms-demo-frame>
+    <p class="text-secondary" [ewmsProse]="'showroom.datePicker.time.intro' | transloco"></p>
+    <ewms-demo-frame ground="canvas" [label]="'showroom.datePicker.time.frame' | transloco">
+      <div class="flex max-w-80 flex-col gap-3" data-demo-time>
+        <ewms-date-picker
+          [label]="'showroom.datePicker.time.label' | transloco"
+          [withTime]="true"
+          [formField]="form.departure"
+        />
+        <p class="text-caption text-secondary">
+          {{ 'showroom.datePicker.demo.value' | transloco }}
+          <span class="font-mono text-primary" data-demo-time-value>{{ show(departure()) }}</span>
+        </p>
+      </div>
+    </ewms-demo-frame>
   </section>
 
   <!-- ========================================================= 5. Matriz de estados -->

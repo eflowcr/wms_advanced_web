@@ -26,8 +26,8 @@ import { from, type Observable, of, throwError } from 'rxjs';
 import { catchError, tap } from 'rxjs/operators';
 
 /**
- * El servidor simulado del contrato (ADR 0022). Solo entra al artefacto de demostración y al de
- * desarrollo por fileReplacements. La sesión vive en memoria: recargar la página la termina.
+ * El servidor simulado del contrato (ADR 0022). Solo entra, por fileReplacements, al artefacto
+ * sintético de las E2E. La sesión vive en memoria: recargar la página la termina.
  */
 let options: MemoryOptions = {};
 let backend: Promise<MemorySecurityGateway> | null = null;

@@ -11,7 +11,7 @@ import { TokenValue } from '../../ui/token-value';
  * Verificada contra date-picker.ts.
  * t(showroom.datePicker.props.label, showroom.datePicker.props.mode,
  *   showroom.datePicker.props.limits, showroom.datePicker.props.size,
- *   showroom.datePicker.props.texts)
+ *   showroom.datePicker.props.texts, showroom.datePicker.props.withTime)
  */
 const PROPS: readonly PropRow[] = [
   {
@@ -43,6 +43,12 @@ const PROPS: readonly PropRow[] = [
     type: 'string · boolean',
     default: "'' · false",
     description: 'showroom.datePicker.props.texts',
+  },
+  {
+    name: 'withTime',
+    type: 'boolean',
+    default: 'false',
+    description: 'showroom.datePicker.props.withTime',
   },
 ];
 
@@ -87,9 +93,14 @@ export class ShowroomDatePicker {
   protected readonly anatomy = ANATOMY;
   protected readonly today = today();
 
-  protected readonly model = signal<{ delivery: DatePickerValue; dateRange: DatePickerValue }>({
+  protected readonly model = signal<{
+    delivery: DatePickerValue;
+    dateRange: DatePickerValue;
+    departure: DatePickerValue;
+  }>({
     delivery: null,
     dateRange: { from: '2026-09-01', to: '2026-09-15' },
+    departure: '2026-09-15T14:30',
   });
 
   protected readonly form = signalForm(this.model);
@@ -98,16 +109,23 @@ export class ShowroomDatePicker {
 
   protected readonly period = computed(() => this.form.dateRange().value());
 
+  protected readonly departure = computed(() => this.form.departure().value());
+
   protected readonly snippet = [
     '<ewms-date-picker',
-    "  [label]=\"'expediciones.entrega' | transloco\"",
+    '  [label]="\'expediciones.entrega\' | transloco"',
     '  [formField]="alta.entrega"',
     '  [minDate]="hoy"',
     '/>',
     '<ewms-date-picker',
-    "  [label]=\"'reportes.periodo' | transloco\"",
+    '  [label]="\'reportes.periodo\' | transloco"',
     '  mode="range"',
     '  [formField]="alta.periodo"',
+    '/>',
+    '<ewms-date-picker',
+    '  [label]="\'despachos.salida\' | transloco"',
+    '  [withTime]="true"',
+    '  [formField]="alta.salida"',
     '/>',
   ].join('\n');
 

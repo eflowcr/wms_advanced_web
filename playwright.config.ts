@@ -4,7 +4,7 @@ import { defineConfig, devices } from '@playwright/test';
 const PORT = 4400;
 const BASE_URL = `http://localhost:${PORT}`;
 const CI = Boolean(process.env['CI']);
-const DEMO_PORT = 4401;
+const SYNTHETIC_PORT = 4401;
 
 /** Los proyectos que pide la línea de comandos; sin `--project`, todos. */
 function requestedProjects(argv: readonly string[]): readonly string[] {
@@ -14,8 +14,8 @@ function requestedProjects(argv: readonly string[]): readonly string[] {
 }
 
 /**
- * Cada corrida compila solo lo que prueban sus proyectos: smoke, producción; dominio, demostración;
- * el catálogo, los dos («En construcción» abre con permisos). Ver vault: Integracion Continua §4.1.
+ * Cada corrida compila solo lo que prueban sus proyectos: smoke, producción; dominio, el artefacto
+ * sintético; el catálogo, los dos («En construcción» abre con permisos). Ver vault: Integracion Continua §4.1.
  */
 export function webServersFor(argv: readonly string[]) {
   const requested = requestedProjects(argv);
@@ -34,8 +34,8 @@ export function webServersFor(argv: readonly string[]) {
     ...(runs('domain') || runs('showroom')
       ? [
           {
-            command: `npm run build:demo && node tools/e2e/serve.mjs --port ${DEMO_PORT} --root dist/shell-demo/browser`,
-            url: `http://localhost:${DEMO_PORT}`,
+            command: `npm run build:e2e && node tools/e2e/serve.mjs --port ${SYNTHETIC_PORT} --root dist/shell-e2e/browser`,
+            url: `http://localhost:${SYNTHETIC_PORT}`,
             reuseExistingServer: !CI,
             timeout: 180_000,
           },
@@ -46,7 +46,7 @@ export function webServersFor(argv: readonly string[]) {
 
 /**
  * E2E en e2e/*.e2e.ts (Vitest no las toma), en tres niveles con su disparador en ci.yml: smoke
- * (todo PR y push), showroom (el catálogo) y domain (la demostración). Todo corre en `npm run e2e`.
+ * (todo PR y push), showroom (el catálogo) y domain (el artefacto sintético). Todo en `npm run e2e`.
  * Ver vault: Integracion Continua §4.1 y §11.
  */
 export default defineConfig({
@@ -101,7 +101,7 @@ export default defineConfig({
       // El dominio verifica exclusivamente el artefacto sintético, separado de producción.
       name: 'domain',
       testMatch: 'domains/**/*.e2e.ts',
-      use: { ...devices['Desktop Chrome'], baseURL: `http://localhost:${DEMO_PORT}` },
+      use: { ...devices['Desktop Chrome'], baseURL: `http://localhost:${SYNTHETIC_PORT}` },
     },
   ],
 

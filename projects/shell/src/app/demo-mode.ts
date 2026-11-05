@@ -6,7 +6,7 @@ import { SECOND_FACTOR, type SecondFactor } from './step-up/second-factor.token'
 export const SECURITY_DEMO = false;
 export const DEMO_HTTP_INTERCEPTORS: readonly HttpInterceptorFn[] = [];
 /**
- * Fuera de la demostración la sesión habla con la API Go del Security Core (ADR 0028). Al
+ * En desarrollo y producción la sesión habla con la API Go del Security Core (ADR 0028). Al
  * arrancar va solo la sesión; el área autenticada y el diálogo eligen sus adaptadores al cargar.
  */
 export const SECURITY_PROVIDERS: readonly Provider[] = [

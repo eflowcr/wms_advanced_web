@@ -77,6 +77,8 @@ test.describe('i18n with a Spanish browser', () => {
   });
 
   test('formats numbers, dates and plurals with the locale of each language', async ({ page }) => {
+    // Los ejemplos viven en la portada del catálogo interno, con los diccionarios reales.
+    await page.goto('/design-system');
     const sample = (name: string) => page.locator(`[data-sample="${name}"]`);
     // es-CR agrupa miles con espacio duro; si un número de 4 cifras se agrupa depende de los datos
     // ICU del runtime, de ahí el \s?.

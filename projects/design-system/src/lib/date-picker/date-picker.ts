@@ -21,6 +21,7 @@ import {
 } from '@angular/core';
 import type { FormValueControl, ValidationError } from '@angular/forms/signals';
 import { Button } from '../button/button';
+import { Input } from '../input/input';
 import {
   FIELD_BASE_CLASSES,
   FIELD_FONT_SIZES,
@@ -41,11 +42,15 @@ import {
   DATE_PANEL_CLASSES,
   firstDayOfWeek,
   formatDate,
+  formatDateTime,
   monthTitle,
   monthWeeks,
   parseDates,
+  parseDateTime,
   parseIso,
+  splitDateTime,
   toIso,
+  toTime,
   RANGE_SEPARATOR,
   weekdayNames,
   weekPosition,
@@ -62,14 +67,13 @@ export type DatePickerValue = string | DateRange | null;
 let nextDatePickerId = 0;
 
 /**
- * Campo con la caja de `ewms-input` y un calendario propio (APG *date picker dialog*): el
- * `<input type="date">` ignora el idioma de la app y no toma tokens. Valor 'YYYY-MM-DD', o el
- * `DateRange` de la tabla. Ver vault: Date-Picker.
+ * Calendario propio (APG *date picker dialog*): el nativo ignora el idioma de la app. Valor
+ * 'YYYY-MM-DD', 'YYYY-MM-DDTHH:mm' con `withTime`, o el `DateRange` de la tabla. Ver vault: Date-Picker.
  */
 @Component({
   selector: 'ewms-date-picker',
   templateUrl: './date-picker.html',
-  imports: [Button],
+  imports: [Button, Input],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { class: 'block' },
 })
@@ -79,6 +83,8 @@ export class DatePicker implements FormValueControl<DatePickerValue>, OnDestroy 
 
   readonly label = input.required<string>();
   readonly mode = input<DatePickerMode>('single');
+  /** Suma hora y minutos (24 h) a una fecha sola; en `mode="range"` no aplica. */
+  readonly withTime = input<boolean>(false);
   /**
    * 'YYYY-MM-DD'; los días fuera del rango se ven y no se eligen. `minDate`/`maxDate` y no
    * `min`/`max`: esos dos nombres son del contrato `FormUiControl`, con otro tipo.
@@ -131,6 +137,12 @@ export class DatePicker implements FormValueControl<DatePickerValue>, OnDestroy 
   /** Primer extremo de un rango, mientras se elige el segundo. */
   protected readonly pendingStart = signal<string | null>(null);
 
+  /** Con hora, elegir un día no cierra: día y hora quedan en borrador hasta «Aplicar». */
+  protected readonly timeEnabled = computed(() => this.withTime() && this.mode() === 'single');
+  protected readonly draftDay = signal<string | null>(null);
+  protected readonly hour = signal('00');
+  protected readonly minute = signal('00');
+
   /** Getter en el shell: se lee en cada uso para seguir al idioma activo. */
   private locale(): string {
     return this.words.locale ?? this.localeId;
@@ -181,7 +193,9 @@ export class DatePicker implements FormValueControl<DatePickerValue>, OnDestroy 
 
   protected readonly fontSize = computed(() => FIELD_FONT_SIZES[this.size()]);
 
-  protected readonly weeks = computed(() => monthWeeks(this.focused(), firstDayOfWeek(this.locale())));
+  protected readonly weeks = computed(() =>
+    monthWeeks(this.focused(), firstDayOfWeek(this.locale())),
+  );
   /** El idioma no es una señal: leer `focused` hace que se recalcule al abrir y al moverse. */
   protected readonly weekdays = computed(() => {
     this.focused();
@@ -194,7 +208,9 @@ export class DatePicker implements FormValueControl<DatePickerValue>, OnDestroy 
       return '';
     }
     if (typeof value === 'string') {
-      return formatDate(value, this.locale());
+      return this.timeEnabled()
+        ? formatDateTime(value, this.locale())
+        : formatDate(value, this.locale());
     }
     const from = formatDate(value.from, this.locale());
     const to = formatDate(value.to, this.locale());
@@ -215,7 +231,7 @@ export class DatePicker implements FormValueControl<DatePickerValue>, OnDestroy 
   protected isSelected(iso: string): boolean {
     const value = this.value();
     if (this.mode() === 'single') {
-      return value === iso;
+      return (this.timeEnabled() ? this.draftDay() : value) === iso;
     }
     const pending = this.pendingStart();
     if (pending) {
@@ -257,9 +273,16 @@ export class DatePicker implements FormValueControl<DatePickerValue>, OnDestroy 
       return;
     }
     const value = this.value();
-    const start = typeof value === 'string' ? value : this.range().from;
+    const start = typeof value === 'string' ? value.slice(0, 10) : this.range().from;
     this.focused.set(parseIso(start) ? start! : this.clamp(this.today));
     this.pendingStart.set(null);
+    if (this.timeEnabled()) {
+      const { date, time } = splitDateTime(typeof value === 'string' ? value : null);
+      const [hour = '00', minute = '00'] = (time ?? '').split(':').filter(Boolean);
+      this.draftDay.set(date);
+      this.hour.set(hour);
+      this.minute.set(minute);
+    }
 
     this.overlayRef ??= this.createOverlay();
     this.overlayRef.attach(new TemplatePortal(this.panelTemplate(), this.viewContainerRef));
@@ -324,6 +347,10 @@ export class DatePicker implements FormValueControl<DatePickerValue>, OnDestroy 
       return;
     }
     this.focused.set(iso);
+    if (this.timeEnabled()) {
+      this.draftDay.set(iso);
+      return;
+    }
     if (this.mode() === 'single') {
       this.value.set(iso);
     } else {
@@ -334,6 +361,19 @@ export class DatePicker implements FormValueControl<DatePickerValue>, OnDestroy 
       }
       this.value.set(start <= iso ? { from: start, to: iso } : { from: iso, to: start });
     }
+    this.touch.emit();
+    this.close(true);
+  }
+
+  /** El día en borrador, o el del foco si no se eligió ninguno; la hora fuera de rango se recorta. */
+  protected applyTime(): void {
+    const day = this.draftDay() ?? this.focused();
+    if (this.isOutside(day)) {
+      return;
+    }
+    const clampPart = (text: string, max: number) =>
+      Math.min(max, Math.max(0, Math.trunc(Number(text)) || 0));
+    this.value.set(`${day}T${toTime(clampPart(this.hour(), 23), clampPart(this.minute(), 59))}`);
     this.touch.emit();
     this.close(true);
   }
@@ -362,21 +402,26 @@ export class DatePicker implements FormValueControl<DatePickerValue>, OnDestroy 
     }
   }
 
-  /** Esc cierra desde cualquier parte del panel; Tab no se escapa del diálogo modal. */
+  /** Esc cierra desde cualquier parte del panel; Tab no se escapa; Enter en la hora aplica. */
   protected onPanelKeydown(event: KeyboardEvent): void {
     if (event.key === 'Escape') {
       event.preventDefault();
       this.close(true);
       return;
     }
+    if (event.key === 'Enter' && (event.target as HTMLElement).closest('[data-date-time] input')) {
+      event.preventDefault();
+      this.applyTime();
+      return;
+    }
     if (event.key !== 'Tab') {
       return;
     }
     const panel = event.currentTarget as HTMLElement;
+    // En orden del documento: anterior, siguiente, el día activo y, con hora, sus campos y «Aplicar».
     const stops = [
-      ...panel.querySelectorAll<HTMLElement>('button'),
-      panel.querySelector<HTMLElement>(`[data-date="${this.focused()}"]`),
-    ].filter((element): element is HTMLElement => element !== null);
+      ...panel.querySelectorAll<HTMLElement>(`button, input, [data-date="${this.focused()}"]`),
+    ];
     const index = stops.indexOf(document.activeElement as HTMLElement);
     const next = (index + (event.shiftKey ? -1 : 1) + stops.length) % stops.length;
     event.preventDefault();
@@ -390,6 +435,10 @@ export class DatePicker implements FormValueControl<DatePickerValue>, OnDestroy 
   /** Lo escrito se interpreta en el idioma activo; lo que no es fecha vuelve al valor real. */
   protected commitText(): void {
     const text = this.text().trim();
+    if (this.timeEnabled()) {
+      this.commitDateTime(text);
+      return;
+    }
     const dates = text === '' ? [] : parseDates(text, this.locale());
     const unreadable = text !== '' && dates.length === 0;
     if (unreadable || dates.some((date) => date === null || this.isOutside(date))) {
@@ -404,6 +453,15 @@ export class DatePicker implements FormValueControl<DatePickerValue>, OnDestroy 
     } else {
       const to = second ?? first;
       this.value.set(first <= to ? { from: first, to } : { from: to, to: first });
+    }
+    this.showValue();
+  }
+
+  private commitDateTime(text: string): void {
+    const parsed = text === '' ? null : parseDateTime(text, this.locale());
+    const unreadable = text !== '' && (parsed === null || this.isOutside(parsed.slice(0, 10)));
+    if (!unreadable) {
+      this.value.set(parsed);
     }
     this.showValue();
   }

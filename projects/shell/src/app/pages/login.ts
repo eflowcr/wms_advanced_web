@@ -24,7 +24,6 @@ import {
 } from '@ewms/design-system';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { BRAND_EDITION, BRAND_NAME, BRAND_OWNER, BRAND_TAGLINE } from '../brand';
-import { SECURITY_DEMO } from '../demo-mode';
 import { provideEwmsDesignSystem } from '../design-system.providers';
 import { LanguageSwitcher } from '../layout/language-switcher';
 
@@ -264,14 +263,6 @@ const CARD_CLASSES: Readonly<Record<LoginLayout, string>> = {
                   }
                 </ewms-button>
               </form>
-              @if (demo) {
-                <p
-                  class="border-t border-default pt-4 text-caption text-secondary motion-safe:animate-login-rise [--login-step:4]"
-                  data-login-demo
-                >
-                  {{ 'shell.login.demoHint' | transloco }}
-                </p>
-              }
             }
             <!-- Vivo desde el principio: una región que nace con el texto no siempre se anuncia. -->
             <p role="status" class="sr-only">
@@ -311,7 +302,6 @@ export class Login {
   protected readonly brandEdition = BRAND_EDITION;
   protected readonly brandTagline = BRAND_TAGLINE;
   protected readonly brandOwner = BRAND_OWNER;
-  protected readonly demo = SECURITY_DEMO;
   protected readonly failure = signal('');
   private readonly phase = signal<Phase>('idle');
   protected readonly welcome = computed(() => this.phase() === 'welcome');

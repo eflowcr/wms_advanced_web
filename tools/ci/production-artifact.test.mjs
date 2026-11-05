@@ -1,6 +1,6 @@
 /**
- * El artefacto de producción no lleva el simulador del Security Core, la franja de demostración ni
- * sus textos: entran solo por fileReplacements y el scope `demo` (ADR 0022). Sin dist/ falla.
+ * Desarrollo y producción hablan con la API real: el simulador, la franja y sus textos entran solo
+ * al artefacto sintético de las E2E, por fileReplacements y el scope `demo` (ADR 0022).
  */
 import assert from 'node:assert/strict';
 import { existsSync } from 'node:fs';
@@ -58,6 +58,17 @@ test('finds every marker in a chunk that carries the demo band', () => {
   const chunk = `t("app-demo-context");x("data-security-demo");y("security.demo.notice")`;
   assert.deepEqual(demoMarkersIn(chunk), ['app-demo-context', 'data-security-demo', 'security.demo.']);
   assert.deepEqual(demoMarkersIn('const ok = "app-home";'), []);
+});
+
+test('only the synthetic E2E configuration swaps in the simulator', async () => {
+  const angular = JSON.parse(await readFile(path.join(ROOT, 'angular.json'), 'utf8'));
+  const configurations = angular.projects.shell.architect.build.configurations;
+  const swapping = Object.entries(configurations)
+    .filter(([, config]) => (config.fileReplacements ?? []).length > 0)
+    .map(([name]) => name);
+  assert.deepEqual(swapping, ['e2e']);
+  const serve = angular.projects.shell.architect.serve.configurations;
+  assert.ok(Object.values(serve).every((config) => !config.buildTarget.endsWith(':e2e')));
 });
 
 test('the production build carries neither the simulator nor the demo band', async () => {

@@ -938,8 +938,8 @@
     "contract": {
       "keyboardTitle": "Teclado (APG <i>date picker dialog</i>)",
       "keysCalendar": "En el calendario: <kbd>← →</kbd> un día, <kbd>↑ ↓</kbd> una semana, <kbd>RePág</kbd> / <kbd>AvPág</kbd> un mes (con <kbd>Mayús</kbd>, un año), <kbd>Inicio</kbd> / <kbd>Fin</kbd> la semana, <kbd>Enter</kbd> elige.",
-      "keysDialog": "<kbd>Esc</kbd> cierra sin elegir y devuelve el foco al botón; <kbd>Tab</kbd> no sale del diálogo. En el campo, <kbd>Alt</kbd>+<kbd>↓</kbd> lo abre.",
-      "messages": "Los textos (elegir fecha, mes anterior, mes siguiente) y el locale se proveen una vez con <code>EWMS_DATE_PICKER_MESSAGES</code>. El locale es un getter en el shell porque la app cambia de idioma sin recargar; sin él se usa <code>LOCALE_ID</code>."
+      "keysDialog": "<kbd>Esc</kbd> cierra sin elegir y devuelve el foco al botón; <kbd>Tab</kbd> no sale del diálogo. En el campo, <kbd>Alt</kbd>+<kbd>↓</kbd> lo abre. Con <code>withTime</code>, <kbd>Enter</kbd> en la hora o en los minutos aplica.",
+      "messages": "Los textos (elegir fecha, mes anterior, mes siguiente, hora, minutos, aplicar) y el locale se proveen una vez con <code>EWMS_DATE_PICKER_MESSAGES</code>. El locale es un getter en el shell porque la app cambia de idioma sin recargar; sin él se usa <code>LOCALE_ID</code>."
     },
     "demo": {
       "delivery": {
@@ -957,12 +957,13 @@
       "limits": "<code>'YYYY-MM-DD'</code>. Los días fuera se ven, se recorren y no se eligen.",
       "mode": "Una fecha <code>'YYYY-MM-DD'</code>, o el <code>DateRange</code> <code>'{ from, to }'</code> de la tabla.",
       "size": "La caja del Input.",
-      "texts": "Como en el Input. El hint va por <code>aria-describedby</code>."
+      "texts": "Como en el Input. El hint va por <code>aria-describedby</code>.",
+      "withTime": "Suma hora y minutos de 24 h: el valor es <code>'YYYY-MM-DDTHH:mm'</code>, hora local. Solo con <code>mode=\"single\"</code>."
     },
     "purpose": {
       "knownDate": "<b>Para una fecha que se conoce de memoria</b> (nacimiento, vencimiento de un lote impreso): escribirla es más rápido que recorrer años; el campo lo acepta igual.",
       "native": "Propio y no <code><input type=\"date\"></code>: el nativo muestra el formato del sistema operativo aunque la app esté en otro idioma, y no toma tokens.",
-      "noTime": "<b>Para una hora</b>: no la tiene.",
+      "noTime": "<b>Para una hora sola, sin día</b>: es un campo de fecha. La hora va junto a una fecha, con <code>withTime</code>.",
       "solves": "Una fecha, o un período, <b>en el idioma de la app</b>: se escribe como se lee acá (16/3/2026) o se elige en un calendario que se recorre entero con teclado. El valor es <code>'YYYY-MM-DD'</code>, sin zona horaria."
     },
     "sizes": {
@@ -971,6 +972,11 @@
     "states": {
       "days": "El campo es la caja del Input: default, foco, error y deshabilitado son los de su matriz. En el calendario, un día puede ser <b>hoy</b> (aro), <b>elegido</b> (fondo de acción), <b>fuera de rango</b> (gris, se recorre y no se elige) y <b>activo</b> (anillo de foco). Se ven de verdad abriendo la demo.",
       "title": "Los del Input, y cuatro de día"
+    },
+    "time": {
+      "frame": "Fecha y hora",
+      "intro": "<code>[withTime]=\"true\"</code>: el calendario suma hora y minutos de 24 h. Elegir el día no cierra; <b>Aplicar</b>, o <kbd>Enter</kbd> en la hora, guarda <code>'YYYY-MM-DDTHH:mm'</code>. Escrita, va después de la fecha: 16/3/2026 14:30; sin hora, 00:00.",
+      "label": "Salida del camión"
     },
     "variants": {
       "frame": "Un período",
@@ -996,6 +1002,13 @@
     "notThis": {
       "text": "No es una galería de marketing ni el lugar donde se decide cómo se ve algo. Lo que se ve acá sale de los componentes reales compilados: si el showroom y la ficha del vault no coinciden, <b>gana el código</b> y la ficha se corrige.",
       "title": "Qué no es"
+    },
+    "samples": {
+      "amount": "Monto: {{ amount }}",
+      "netWeight": "Peso neto: {{ weight }} kg",
+      "title": "Ejemplos de idioma y formato regional",
+      "today": "Hoy es {{ date }}",
+      "unitsFound": "{count, plural, =0 {Sin bultos} one {# bulto} other {# bultos}}"
     },
     "title": "Showroom del sistema de diseño"
   },

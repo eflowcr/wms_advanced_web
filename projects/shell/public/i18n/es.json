@@ -7,7 +7,10 @@
   },
   "ds": {
     "datePicker": {
+      "apply": "Aplicar",
       "chooseDate": "Elegir fecha",
+      "hour": "Hora",
+      "minute": "Minutos",
       "nextMonth": "Mes siguiente",
       "previousMonth": "Mes anterior"
     },
@@ -271,7 +274,7 @@
     },
     "reviewSave": "Revisar y guardar",
     "save": "Guardar",
-    "saved": "Cambios guardados en la demostración.",
+    "saved": "Cambios guardados.",
     "savedAccessHint": "Estas concesiones corresponden a las asignaciones guardadas. Los cambios del borrador se aplican al guardar.",
     "screenStatus": {
       "construction": "En construcción: solo acceso a la ruta, sin acciones operativas",
@@ -287,7 +290,7 @@
     "summaryBody": "Perfil: {{name}}. Concesiones añadidas: {{added}}. Concesiones retiradas: {{removed}}. Usuarios afectados: {{affected}}.",
     "unsaved": "Hay cambios sin guardar. Cancelar los descarta.",
     "user": "Usuario",
-    "usersIntro": "Gestione usuarios de la demostración. Los perfiles se asignan en Seguridad.",
+    "usersIntro": "Gestione los usuarios de la consola. Los perfiles se asignan en Seguridad.",
     "usersScope": "Usuarios y alcance",
     "validity": "Vigencia",
     "validityHint": "Opcional. Sin fechas, la asignación rige desde hoy y no vence.",
@@ -312,21 +315,20 @@
       "title": "Favoritos"
     },
     "home": {
-      "intro": "Scaffold de la fase DS-0. Las pantallas del producto llegan más adelante.",
-      "samples": {
-        "amount": "Monto: {{ amount }}",
-        "netWeight": "Peso neto: {{ weight }} kg",
-        "title": "Ejemplos de idioma y formato regional",
-        "today": "Hoy es {{ date }}",
-        "unitsFound": "{count, plural, =0 {Sin bultos} one {# bulto} other {# bultos}}"
-      }
+      "empty": {
+        "description": "Pida a un administrador de eWMS que le asigne un perfil con acceso a los módulos que necesita.",
+        "title": "Todavía no tiene módulos asignados"
+      },
+      "greeting": "Hola, {{ name }}",
+      "intro": "Elija un módulo para empezar a trabajar en su almacén activo.",
+      "modules": "Sus módulos",
+      "title": "Inicio"
     },
     "languageSwitcher": {
       "label": "Idioma",
       "unavailable": "No se pudo cargar el idioma elegido. La interfaz sigue en español; vuelva a intentarlo más tarde."
     },
     "login": {
-      "demoHint": "Demostración: entre como admin, reader u operator, con cualquier contraseña.",
       "entering": "Abriendo su almacén activo…",
       "headline": "Todo el almacén, en movimiento.",
       "hidePassword": "Ocultar contraseña",

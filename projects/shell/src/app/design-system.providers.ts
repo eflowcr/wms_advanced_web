@@ -594,6 +594,15 @@ function datePickerMessages(): DatePickerMessages {
     get nextMonth() {
       return transloco.translate('ds.datePicker.nextMonth');
     },
+    get hour() {
+      return transloco.translate('ds.datePicker.hour');
+    },
+    get minute() {
+      return transloco.translate('ds.datePicker.minute');
+    },
+    get apply() {
+      return transloco.translate('ds.datePicker.apply');
+    },
     get locale() {
       lang();
       return locale.getLocale();

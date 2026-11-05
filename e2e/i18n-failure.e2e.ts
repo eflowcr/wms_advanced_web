@@ -103,13 +103,15 @@ test.describe('case A: a dictionary other than the default does not load', () =>
     );
     await expect(page.locator('html')).toHaveAttribute('lang', 'es');
     await expect(page.getByLabel('Idioma', { exact: true })).toHaveValue('Español');
-    await expect(page.locator('[data-sample="plural"]').first()).toHaveText('Sin bultos');
+    await expect(page.locator('[data-page-heading]')).toHaveText('Hola, Operador');
 
     // Sigue funcionando: la navegación y el render en español continúan.
     await page.getByRole('treeitem', { name: 'Sistema de diseño' }).click();
     await expect(page).toHaveURL(/\/design-system$/);
     await page.getByRole('treeitem', { name: 'Dashboard' }).click();
-    await expect(page.getByText('Sin bultos')).toBeVisible();
+    await expect(
+      page.getByText('Elija un módulo para empezar a trabajar en su almacén activo.'),
+    ).toBeVisible();
 
     // Todo el estado de almacenamiento del contexto, serializado: la elección fallida no está.
     expect(JSON.stringify(await page.context().storageState())).not.toContain('ewms.lang');

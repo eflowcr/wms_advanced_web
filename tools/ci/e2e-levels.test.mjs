@@ -111,7 +111,7 @@ test('the domain level requires tests in CI', async () => {
 });
 
 test('each run builds only the artifact its projects test', async () => {
-  // Smoke prueba producción y dominio la demostración; el catálogo abre las dos.
+  // Smoke prueba producción y dominio el artefacto sintético; el catálogo abre los dos.
   const config = pathToFileURL(path.join(ROOT, 'playwright.config.ts')).href;
   const { webServersFor } = await import(config);
   const ports = (argv) => webServersFor(argv).map((server) => new URL(server.url).port);

@@ -1298,16 +1298,22 @@ describe('ShowroomDialog', () => {
 });
 
 describe('ShowroomDatePicker', () => {
-  it('prints the value the form holds: an ISO date, or the table DateRange', async () => {
+  it('prints the value the form holds: an ISO date, the DateRange, or date and time', async () => {
     const { fixture, element } = await render(ShowroomDatePicker);
     expect(element.querySelector('[data-demo-date-value]')?.textContent).toBe('null');
     expect(element.querySelector('[data-demo-range-value]')?.textContent).toContain(
       '"from":"2026-09-01"',
     );
+    expect(element.querySelector('[data-demo-time-value]')?.textContent).toContain(
+      '2026-09-15T14:30',
+    );
+    expect(element.querySelector<HTMLInputElement>('[data-demo-time] input')?.value).toBe(
+      '15/9/2026 14:30',
+    );
     const page = fixture.componentInstance as unknown as {
-      model: { set(value: { delivery: string; dateRange: null }): void };
+      model: { set(value: { delivery: string; dateRange: null; departure: null }): void };
     };
-    page.model.set({ delivery: '2099-01-02', dateRange: null });
+    page.model.set({ delivery: '2099-01-02', dateRange: null, departure: null });
     await fixture.whenStable();
     expect(element.querySelector('[data-demo-date-value]')?.textContent).toContain('2099-01-02');
   });

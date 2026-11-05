@@ -3,7 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import {
   AccessStore,
   AuthSession,
-  HttpSecurityGateway,
+  CoreSecurityGateway,
   type SessionInfo,
 } from '@ewms/core/security';
 import { SECURITY_DEMO } from './demo-mode';
@@ -20,7 +20,7 @@ describe('startSession', () => {
     TestBed.configureTestingModule({
       providers: [
         { provide: AuthSession, useValue: { session } },
-        { provide: HttpSecurityGateway, useValue: gateway },
+        { provide: CoreSecurityGateway, useValue: gateway },
       ],
     });
     access = TestBed.inject(AccessStore);

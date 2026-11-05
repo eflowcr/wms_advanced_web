@@ -11,6 +11,10 @@ export interface DatePickerMessages {
   readonly chooseDate: string;
   readonly previousMonth: string;
   readonly nextMonth: string;
+  /** Los tres de la hora: solo se leen con `withTime`. */
+  readonly hour: string;
+  readonly minute: string;
+  readonly apply: string;
   readonly locale?: string;
 }
 

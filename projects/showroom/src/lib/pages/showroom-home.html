@@ -15,6 +15,36 @@
     </div>
   </section>
 
+  <!-- Un ejemplo de cada caso de i18n con los diccionarios reales; las E2E de idioma los leen. -->
+  <section class="flex flex-col gap-2" aria-labelledby="home-samples">
+    <h2 id="home-samples" class="text-h2">{{ 'showroom.home.samples.title' | transloco }}</h2>
+    <ul class="flex list-disc flex-col gap-1 pl-6 text-p">
+      @for (count of unitCounts; track count) {
+        <li data-sample="plural">
+          {{ 'showroom.home.samples.unitsFound' | transloco: { count } }}
+        </li>
+      }
+      <li data-sample="date">
+        {{
+          'showroom.home.samples.today'
+            | transloco: { date: (today | translocoDate: { dateStyle: 'long' }) }
+        }}
+      </li>
+      <li data-sample="number">
+        {{
+          'showroom.home.samples.netWeight'
+            | transloco: { weight: (netWeightKg | translocoDecimal) }
+        }}
+      </li>
+      <li data-sample="currency">
+        {{
+          'showroom.home.samples.amount'
+            | transloco: { amount: (amount | translocoCurrency: 'symbol' : {} : amountCurrency) }
+        }}
+      </li>
+    </ul>
+  </section>
+
   @for (section of catalog; track section.id) {
     <section class="flex flex-col gap-4" [attr.aria-labelledby]="'index-' + section.id">
       <h2 [id]="'index-' + section.id" class="text-h2">{{ section.title | transloco }}</h2>

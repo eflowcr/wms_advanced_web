@@ -10,7 +10,7 @@ import { filter } from 'rxjs/operators';
 const SIMULATED_PASSWORD = 'demo';
 
 /**
- * Franja del artefacto de demostración: cambia de persona iniciando sesión en el simulador y
+ * Franja del artefacto sintético de las E2E: cambia de persona iniciando sesión en el simulador y
  * simula una tarea en ejecución. El almacén se cambia en la cabecera, como en producción.
  */
 @Component({

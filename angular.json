@@ -57,67 +57,48 @@
             "development": {
               "optimization": false,
               "extractLicenses": false,
-              "sourceMap": true,
-              "assets": [
-                {
-                  "glob": "**/*",
-                  "input": "projects/shell/public",
-                  "ignore": ["i18n/demo/**"]
-                },
-                {
-                  "glob": "**/*",
-                  "input": "projects/shell/public/i18n/demo",
-                  "output": "i18n/demo"
-                }
-              ],
-              "fileReplacements": [
-                {
-                  "replace": "projects/shell/src/app/demo-mode.ts",
-                  "with": "projects/shell/src/app/demo-mode.enabled.ts"
-                },
-                {
-                  "replace": "projects/shell/src/app/layout/demo-slot.ts",
-                  "with": "projects/shell/src/app/layout/demo-slot.enabled.ts"
-                },
-                {
-                  "replace": "projects/shell/src/app/security-adapters.ts",
-                  "with": "projects/shell/src/app/security-adapters.enabled.ts"
-                }
-              ]
-            },
-            "demo": {
-              "assets": [
-                {
-                  "glob": "**/*",
-                  "input": "projects/shell/public",
-                  "ignore": ["i18n/demo/**"]
-                },
-                {
-                  "glob": "**/*",
-                  "input": "projects/shell/public/i18n/demo",
-                  "output": "i18n/demo"
-                }
-              ],
-              "fileReplacements": [
-                {
-                  "replace": "projects/shell/src/app/demo-mode.ts",
-                  "with": "projects/shell/src/app/demo-mode.enabled.ts"
-                },
-                {
-                  "replace": "projects/shell/src/app/layout/demo-slot.ts",
-                  "with": "projects/shell/src/app/layout/demo-slot.enabled.ts"
-                },
-                {
-                  "replace": "projects/shell/src/app/security-adapters.ts",
-                  "with": "projects/shell/src/app/security-adapters.enabled.ts"
-                }
-              ],
-              "outputPath": "dist/shell-demo"
-            },
-            "api": {
-              "optimization": false,
-              "extractLicenses": false,
               "sourceMap": true
+            },
+            "e2e": {
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "380kB",
+                  "maximumError": "380kB"
+                },
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "4kB",
+                  "maximumError": "8kB"
+                }
+              ],
+              "assets": [
+                {
+                  "glob": "**/*",
+                  "input": "projects/shell/public",
+                  "ignore": ["i18n/demo/**"]
+                },
+                {
+                  "glob": "**/*",
+                  "input": "projects/shell/public/i18n/demo",
+                  "output": "i18n/demo"
+                }
+              ],
+              "fileReplacements": [
+                {
+                  "replace": "projects/shell/src/app/demo-mode.ts",
+                  "with": "projects/shell/src/app/demo-mode.enabled.ts"
+                },
+                {
+                  "replace": "projects/shell/src/app/layout/demo-slot.ts",
+                  "with": "projects/shell/src/app/layout/demo-slot.enabled.ts"
+                },
+                {
+                  "replace": "projects/shell/src/app/security-adapters.ts",
+                  "with": "projects/shell/src/app/security-adapters.enabled.ts"
+                }
+              ],
+              "outputPath": "dist/shell-e2e"
             }
           },
           "defaultConfiguration": "production"
@@ -129,10 +110,7 @@
               "buildTarget": "shell:build:production"
             },
             "development": {
-              "buildTarget": "shell:build:development"
-            },
-            "api": {
-              "buildTarget": "shell:build:api",
+              "buildTarget": "shell:build:development",
               "proxyConfig": "tools/dev/api-proxy.mjs"
             }
           },

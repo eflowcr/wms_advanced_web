@@ -29,7 +29,11 @@ import showroomEs from '../../../shell/public/i18n/showroom/es.json';
 import { SHOWROOM_SCOPE } from './catalog';
 
 const activeFilters = (count: number): string =>
-  count === 0 ? 'Sin filtros activos' : count === 1 ? '1 filtro activo' : `${count} filtros activos`;
+  count === 0
+    ? 'Sin filtros activos'
+    : count === 1
+      ? '1 filtro activo'
+      : `${count} filtros activos`;
 
 /**
  * Soporte de las specs del catálogo, fuera del build (tsconfig.lib.json). Los diccionarios reales
@@ -276,6 +280,9 @@ export function provideDesignSystemTextsTesting(): Provider[] {
         chooseDate: 'Elegir fecha',
         previousMonth: 'Mes anterior',
         nextMonth: 'Mes siguiente',
+        hour: 'Hora',
+        minute: 'Minutos',
+        apply: 'Aplicar',
         locale: 'es-CR',
       },
     },

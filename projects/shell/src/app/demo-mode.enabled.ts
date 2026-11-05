@@ -7,7 +7,7 @@ import { from } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
 
 export const SECURITY_DEMO = true;
-/** La demostración usa los adaptadores del contrato propuesto, que responde el simulador. */
+/** El artefacto sintético de las E2E usa el contrato propuesto, que responde el simulador. */
 export const SECURITY_PROVIDERS: readonly Provider[] = [
   { provide: AuthSession, useExisting: HttpAuthSession },
   { provide: SECOND_FACTOR, useExisting: OtpFactor },

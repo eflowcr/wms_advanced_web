@@ -18,7 +18,7 @@ test.describe('the application is alive', () => {
     );
     await page.goto('/');
 
-    await expect(page.getByRole('heading', { name: 'eWMS Advance' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Hola, Operador' })).toBeVisible();
     // Cada petición sale con su traza W3C (AUD-003/004); la del diccionario sirve de muestra.
     expect((await dictionary).headers()['traceparent']).toMatch(
       /^00-[0-9a-f]{32}-[0-9a-f]{16}-00$/,
@@ -163,7 +163,7 @@ test.describe('the App Shell', () => {
     ]) {
       await page.goto(url);
       await expect(page).toHaveURL(/\/\?access=denied$/);
-      await expect(page.locator('[data-page-heading]')).toHaveText('eWMS Advance');
+      await expect(page.locator('[data-page-heading]')).toHaveText('Hola, Operador');
       await expect(page.locator('[data-security-demo]')).toHaveCount(0);
       await expect(page.locator('[data-users-page], [data-security-page]')).toHaveCount(0);
       await watch.clean(url);
@@ -362,7 +362,7 @@ test.describe('the App Shell', () => {
 // Las de cada componente se escanean en showroom.
 test('the application chrome has no axe violations', async ({ page }) => {
   await page.goto('/');
-  await expect(page.getByRole('heading', { name: 'eWMS Advance' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Hola, Operador' })).toBeVisible();
 
   const results = await axe(page).analyze();
   expect(results.violations, JSON.stringify(results.violations, null, 2)).toEqual([]);

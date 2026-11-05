@@ -88,7 +88,12 @@
 
     <!-- La grilla no se enfoca: se enfoca la celda activa (tabindex itinerante), y su tecla sube hasta acá. -->
     <!-- eslint-disable-next-line @angular-eslint/template/interactive-supports-focus -->
-    <table role="grid" class="border-collapse" [attr.aria-labelledby]="titleId" (keydown)="onGridKeydown($event)">
+    <table
+      role="grid"
+      class="border-collapse"
+      [attr.aria-labelledby]="titleId"
+      (keydown)="onGridKeydown($event)"
+    >
       <thead>
         <tr>
           @for (day of weekdays(); track day.long) {
@@ -122,5 +127,32 @@
         }
       </tbody>
     </table>
+
+    <!-- Con hora: dos campos numéricos de 24 h y «Aplicar»; Enter en un campo también aplica. -->
+    @if (timeEnabled()) {
+      <div class="flex flex-col gap-2 border-t border-default pt-2" data-date-time>
+        <div class="grid grid-cols-2 gap-2">
+          <ewms-input
+            type="number"
+            size="sm"
+            [label]="words.hour"
+            [(value)]="hour"
+            data-date-hour
+          />
+          <ewms-input
+            type="number"
+            size="sm"
+            [label]="words.minute"
+            [(value)]="minute"
+            data-date-minute
+          />
+        </div>
+        <span class="flex justify-end">
+          <ewms-button size="sm" data-date-apply (click)="applyTime()">{{
+            words.apply
+          }}</ewms-button>
+        </span>
+      </div>
+    }
   </div>
 </ng-template>

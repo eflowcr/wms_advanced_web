@@ -7,7 +7,10 @@
   },
   "ds": {
     "datePicker": {
+      "apply": "Apply",
       "chooseDate": "Choose date",
+      "hour": "Hour",
+      "minute": "Minutes",
       "nextMonth": "Next month",
       "previousMonth": "Previous month"
     },
@@ -271,7 +274,7 @@
     },
     "reviewSave": "Review and save",
     "save": "Save",
-    "saved": "Changes saved in the demonstration.",
+    "saved": "Changes saved.",
     "savedAccessHint": "These grants reflect saved assignments. Draft changes take effect when saved.",
     "screenStatus": {
       "construction": "Under construction: route access only, no operational actions",
@@ -287,7 +290,7 @@
     "summaryBody": "Profile: {{name}}. Added grants: {{added}}. Removed grants: {{removed}}. Affected users: {{affected}}.",
     "unsaved": "There are unsaved changes. Cancel discards them.",
     "user": "User",
-    "usersIntro": "Manage demonstration users. Assign profiles in Security.",
+    "usersIntro": "Manage console users. Assign profiles in Security.",
     "usersScope": "Users and scope",
     "validity": "Validity",
     "validityHint": "Optional. Without dates, the assignment applies from today and never expires.",
@@ -312,21 +315,20 @@
       "title": "Favourites"
     },
     "home": {
-      "intro": "DS-0 phase scaffold. The product screens arrive later.",
-      "samples": {
-        "amount": "Amount: {{ amount }}",
-        "netWeight": "Net weight: {{ weight }} kg",
-        "title": "Language and regional format samples",
-        "today": "Today is {{ date }}",
-        "unitsFound": "{count, plural, =0 {No packages} one {# package} other {# packages}}"
-      }
+      "empty": {
+        "description": "Ask an eWMS administrator to assign you a profile with access to the modules you need.",
+        "title": "You have no modules assigned yet"
+      },
+      "greeting": "Hello, {{ name }}",
+      "intro": "Choose a module to start working in your active warehouse.",
+      "modules": "Your modules",
+      "title": "Home"
     },
     "languageSwitcher": {
       "label": "Language",
       "unavailable": "The selected language could not be loaded. The interface stays in English; please try again later."
     },
     "login": {
-      "demoHint": "Demo: sign in as admin, reader or operator, with any password.",
       "entering": "Opening your active warehouse…",
       "headline": "Your whole warehouse, in motion.",
       "hidePassword": "Hide password",
