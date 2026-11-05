@@ -1,0 +1,11 @@
+node_modules
+dist
+coverage
+test-results
+playwright-report
+.angular
+.git
+.github
+.vscode
+**/*.log
+**/.tsconfig.*.json.*

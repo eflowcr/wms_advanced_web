@@ -1,0 +1,59 @@
+version: '3'
+
+# Servidor: /opt/wms/advanced/web, en la misma línea que el Taskfile de la API.
+
+vars:
+  SERVICE: '{{.SERVICE | default "wms_advanced_web"}}'
+
+tasks:
+  default:
+    desc: Muestra la lista de tareas disponibles en el servidor
+    cmds:
+      - task --list
+
+  deploy:
+    desc: Descarga la imagen más reciente y recrea el contenedor (pull + up -d)
+    cmds:
+      - echo "⬇️ Descargando imagen más reciente..."
+      - docker compose pull {{.SERVICE}}
+      - echo "🚀 Recreando contenedor {{.SERVICE}}..."
+      - docker compose up -d {{.SERVICE}}
+      - task: ps
+
+  pull:
+    desc: Descarga la imagen más reciente del registro
+    cmds:
+      - docker compose pull {{.SERVICE}}
+
+  up:
+    desc: Inicia el contenedor en segundo plano
+    cmds:
+      - docker compose up -d
+
+  down:
+    desc: Detiene el contenedor
+    cmds:
+      - docker compose down
+
+  restart:
+    desc: Reinicia el contenedor de la consola
+    cmds:
+      - docker compose restart {{.SERVICE}}
+
+  ps:
+    desc: Muestra el estado del contenedor
+    cmds:
+      - docker compose ps
+
+  logs:
+    desc: Sigue los logs en tiempo real
+    cmds:
+      - docker compose logs -f --tail=100 {{.SERVICE}}
+
+  check:
+    desc: Comprueba la consola y el paso a la API desde el propio servidor
+    cmds:
+      - curl -s -o /dev/null -w "consola /            %{http_code}\n" localhost:${WEB_PORT:-8081}/
+      - curl -s -o /dev/null -w "ruta de la app       %{http_code}\n" localhost:${WEB_PORT:-8081}/catalogos/articulos
+      - curl -s -o /dev/null -w "archivo inexistente  %{http_code}\n" localhost:${WEB_PORT:-8081}/no-existe.js
+      - curl -s -o /dev/null -w "API /auth/me         %{http_code}\n" localhost:${WEB_PORT:-8081}/api/v1/security/auth/me
