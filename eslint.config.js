@@ -22,7 +22,7 @@ const DOMAINS = [
 ];
 
 /** Lo que un dominio puede importar del workspace; nunca otro dominio (Estructura §3). */
-const DOMAIN_ALLOWED = ['@ewms/design-system', '@ewms/core', '@ewms/shared', '@ewms/api-client'];
+const DOMAIN_ALLOWED = ['@ewms/design-system', '@ewms/core', '@ewms/core/security', '@ewms/shared', '@ewms/api-client'];
 
 /** El sistema de diseño no conoce el router: es presentación (ADR 0014). */
 const NO_ROUTER = {
@@ -51,6 +51,79 @@ const STORAGE_MESSAGE =
 const CODE_SINK_MESSAGE =
   'Escribir HTML o código desde una cadena está prohibido (XSS; Trusted Types en la CSP): ' +
   'arme el DOM con una plantilla o con createElement.';
+
+/** Sumideros de código y de almacenamiento, y hojas de componente: valen en todo el código. */
+const SECURITY_SYNTAX = [
+  {
+    selector: 'MemberExpression[property.name=/^bypassSecurityTrust/]',
+    message:
+      'bypassSecurityTrust* disables Angular sanitisation and is forbidden. Sanitise the value instead.',
+  },
+  {
+    selector: "MemberExpression[property.name='innerHTML']",
+    message:
+      'Raw innerHTML is forbidden (XSS). Render through a template, or sanitise via DomSanitizer.sanitize().',
+  },
+  {
+    // Leer outerHTML no ejecuta nada; asignarlo sí.
+    selector: "AssignmentExpression > MemberExpression.left[property.name='outerHTML']",
+    message: CODE_SINK_MESSAGE,
+  },
+  {
+    selector: "MemberExpression[property.name='insertAdjacentHTML']",
+    message: CODE_SINK_MESSAGE,
+  },
+  {
+    selector: "MemberExpression[object.name='document'][property.name=/^(write|writeln)$/]",
+    message: CODE_SINK_MESSAGE,
+  },
+  {
+    // Atrapa `localStorage.setItem(...)`.
+    selector: 'MemberExpression[object.name=/^(localStorage|sessionStorage|indexedDB)$/]',
+    message: STORAGE_MESSAGE,
+  },
+  {
+    // `window.localStorage` y `globalThis.indexedDB`: no-restricted-globals no ve propiedades.
+    selector: 'MemberExpression[property.name=/^(localStorage|sessionStorage|indexedDB)$/]',
+    message: STORAGE_MESSAGE,
+  },
+  {
+    // `window['localStorage']`: el nombre llega como cadena, no como identificador.
+    selector:
+      'MemberExpression[computed=true][property.value=/^(localStorage|sessionStorage|indexedDB)$/]',
+    message: STORAGE_MESSAGE,
+  },
+  {
+    selector:
+      "MemberExpression[property.name='cookie']:matches([object.name='document'], [object.property.name='document'])",
+    message: STORAGE_MESSAGE,
+  },
+  {
+    // `styles: [...]` o `styles: '...'`, solo como clave directa de los
+    // metadatos de @Component({...}), claves entre comillas incluidas.
+    selector:
+      "Decorator > CallExpression[callee.name='Component'] > ObjectExpression > Property:matches([key.name='styles'], [key.value='styles'])",
+    message: COMPONENT_STYLES_MESSAGE,
+  },
+  {
+    // `styleUrl: '...'` y la forma vieja `styleUrls: [...]`, que se inyecta igual.
+    selector:
+      "Decorator > CallExpression[callee.name='Component'] > ObjectExpression > Property:matches([key.name=/^styleUrls?$/], [key.value=/^styleUrls?$/])",
+    message: COMPONENT_STYLES_MESSAGE,
+  },
+];
+
+/**
+ * RFE-02 (REQ-FE-SEC-002): solo AccessStore consulta los permisos efectivos al gateway de
+ * seguridad. Se reconoce por el nombre del receptor; otro `.access(` no se toca.
+ */
+const GATEWAY_ACCESS = {
+  selector:
+    "CallExpression > MemberExpression.callee[property.name='access']:matches([object.name=/[Gg]ateway/], [object.property.name=/[Gg]ateway/], [object.expression.name=/[Gg]ateway/], [object.expression.property.name=/[Gg]ateway/])",
+  message:
+    'Only AccessStore queries effective access from the security gateway (RFE-02): read ' +
+    'AccessStore.can() or its signals instead.',
+};
 
 /**
  * El sistema de diseño no habla ningún idioma (ADR 0008): el texto llega ya traducido como
@@ -157,66 +230,7 @@ module.exports = tseslint.config(
         { name: 'sessionStorage', message: STORAGE_MESSAGE },
         { name: 'indexedDB', message: STORAGE_MESSAGE },
       ],
-      'no-restricted-syntax': [
-        'error',
-        {
-          selector: 'MemberExpression[property.name=/^bypassSecurityTrust/]',
-          message:
-            'bypassSecurityTrust* disables Angular sanitisation and is forbidden. Sanitise the value instead.',
-        },
-        {
-          selector: "MemberExpression[property.name='innerHTML']",
-          message:
-            'Raw innerHTML is forbidden (XSS). Render through a template, or sanitise via DomSanitizer.sanitize().',
-        },
-        {
-          // Leer outerHTML no ejecuta nada; asignarlo sí.
-          selector: "AssignmentExpression > MemberExpression.left[property.name='outerHTML']",
-          message: CODE_SINK_MESSAGE,
-        },
-        {
-          selector: "MemberExpression[property.name='insertAdjacentHTML']",
-          message: CODE_SINK_MESSAGE,
-        },
-        {
-          selector: "MemberExpression[object.name='document'][property.name=/^(write|writeln)$/]",
-          message: CODE_SINK_MESSAGE,
-        },
-        {
-          // Atrapa `localStorage.setItem(...)`.
-          selector: 'MemberExpression[object.name=/^(localStorage|sessionStorage|indexedDB)$/]',
-          message: STORAGE_MESSAGE,
-        },
-        {
-          // `window.localStorage` y `globalThis.indexedDB`: no-restricted-globals no ve propiedades.
-          selector: 'MemberExpression[property.name=/^(localStorage|sessionStorage|indexedDB)$/]',
-          message: STORAGE_MESSAGE,
-        },
-        {
-          // `window['localStorage']`: el nombre llega como cadena, no como identificador.
-          selector:
-            'MemberExpression[computed=true][property.value=/^(localStorage|sessionStorage|indexedDB)$/]',
-          message: STORAGE_MESSAGE,
-        },
-        {
-          selector:
-            "MemberExpression[property.name='cookie']:matches([object.name='document'], [object.property.name='document'])",
-          message: STORAGE_MESSAGE,
-        },
-        {
-          // `styles: [...]` o `styles: '...'`, solo como clave directa de los
-          // metadatos de @Component({...}), claves entre comillas incluidas.
-          selector:
-            "Decorator > CallExpression[callee.name='Component'] > ObjectExpression > Property:matches([key.name='styles'], [key.value='styles'])",
-          message: COMPONENT_STYLES_MESSAGE,
-        },
-        {
-          // `styleUrl: '...'` y la forma vieja `styleUrls: [...]`, que se inyecta igual.
-          selector:
-            "Decorator > CallExpression[callee.name='Component'] > ObjectExpression > Property:matches([key.name=/^styleUrls?$/], [key.value=/^styleUrls?$/])",
-          message: COMPONENT_STYLES_MESSAGE,
-        },
-      ],
+      'no-restricted-syntax': ['error', ...SECURITY_SYNTAX, GATEWAY_ACCESS],
 
       // ------------------------------------ imports profundos entre proyectos
       // Todo cruce pasa por el alias @ewms/*; una ruta relativa hacia el src/ de otro
@@ -231,7 +245,7 @@ module.exports = tseslint.config(
                 'Deep relative import across projects. Import the library through its @ewms/* alias instead.',
             },
             {
-              group: ['@ewms/*/**'],
+              group: ['@ewms/*/**', '!@ewms/core/security', '!@ewms/core/locale'],
               message:
                 "Reaching past a library's public-api.ts is forbidden. Import the bare alias, e.g. '@ewms/shared'.",
             },
@@ -282,6 +296,19 @@ module.exports = tseslint.config(
     },
   },
 
+  { files: ['projects/domains/security/**/*.ts'], rules: { '@angular-eslint/component-selector': ['error', { type: 'element', prefix: 'sec', style: 'kebab-case' }] } },
+
+  // RFE-02: consulta AccessStore; el simulador hace de servidor y una spec prueba gateways.
+  // Los sumideros siguen vigentes en los tres.
+  {
+    files: [
+      'projects/core/src/lib/security/access-store.ts',
+      'projects/shell/src/app/security-simulator.interceptor.ts',
+      '**/*.spec.ts',
+    ],
+    rules: { 'no-restricted-syntax': ['error', ...SECURITY_SYNTAX] },
+  },
+
   // ------------------------------------------------------------ las fronteras
   ...boundary('shared', 'projects/shared', [], NO_LEGACY_FORMS),
   ...boundary('api-client', 'projects/api-client', [], NO_LEGACY_FORMS),
@@ -306,6 +333,8 @@ module.exports = tseslint.config(
       '@ewms/design-system',
       '@ewms/showroom',
       '@ewms/core',
+      '@ewms/core/security',
+      '@ewms/core/locale',
       '@ewms/shared',
       '@ewms/api-client',
       ...DOMAINS,
@@ -326,7 +355,7 @@ module.exports = tseslint.config(
   },
 
   /*
-   * El único import profundo a projects/ es un disable con su razón en e2e/click-budget.e2e.ts:
+   * El único import profundo a projects/ es un disable con su razón en e2e/click-budget.ts:
    * el barril cargaría Angular en Node. Ver vault: Integracion Continua §11.
    */
 

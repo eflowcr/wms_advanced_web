@@ -1,6 +1,7 @@
 import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import { expect, test, type Page } from '@playwright/test';
+import { type Page } from '@playwright/test';
+import { expect, test } from '../session';
 import { EMPTY_STATE, FILTERS, FORM, PAGES, SEARCH_CREATE_EDIT, TABLE } from '../routes';
 
 /**

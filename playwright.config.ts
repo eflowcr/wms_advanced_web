@@ -4,10 +4,49 @@ import { defineConfig, devices } from '@playwright/test';
 const PORT = 4400;
 const BASE_URL = `http://localhost:${PORT}`;
 const CI = Boolean(process.env['CI']);
+const SYNTHETIC_PORT = 4401;
+
+/** Los proyectos que pide la línea de comandos; sin `--project`, todos. */
+function requestedProjects(argv: readonly string[]): readonly string[] {
+  return argv.flatMap((arg, index) =>
+    arg.startsWith('--project=') ? [arg.slice('--project='.length)] : arg === '--project' ? [argv[index + 1] ?? ''] : [],
+  );
+}
+
+/**
+ * Cada corrida compila solo lo que prueban sus proyectos: smoke, producción; dominio, el artefacto
+ * sintético; el catálogo, los dos («En construcción» abre con permisos). Ver vault: Integracion Continua §4.1.
+ */
+export function webServersFor(argv: readonly string[]) {
+  const requested = requestedProjects(argv);
+  const runs = (name: string): boolean => requested.length === 0 || requested.includes(name);
+  return [
+    ...(runs('smoke') || runs('showroom')
+      ? [
+          {
+            command: `npm run build && node tools/e2e/serve.mjs --port ${PORT}`,
+            url: BASE_URL,
+            reuseExistingServer: !CI,
+            timeout: 180_000,
+          },
+        ]
+      : []),
+    ...(runs('domain') || runs('showroom')
+      ? [
+          {
+            command: `npm run build:e2e && node tools/e2e/serve.mjs --port ${SYNTHETIC_PORT} --root dist/shell-e2e/browser`,
+            url: `http://localhost:${SYNTHETIC_PORT}`,
+            reuseExistingServer: !CI,
+            timeout: 180_000,
+          },
+        ]
+      : []),
+  ];
+}
 
 /**
  * E2E en e2e/*.e2e.ts (Vitest no las toma), en tres niveles con su disparador en ci.yml: smoke
- * (todo PR y push), showroom (el catálogo) y domain (DS-6, vacío). Todo corre en `npm run e2e`.
+ * (todo PR y push), showroom (el catálogo) y domain (el artefacto sintético). Todo en `npm run e2e`.
  * Ver vault: Integracion Continua §4.1 y §11.
  */
 export default defineConfig({
@@ -59,20 +98,14 @@ export default defineConfig({
       use: { ...devices['Desktop Chrome'] },
     },
     {
-      // Vacío a propósito y declarado igual: el primer dominio de DS-6 trae pruebas, y sin
-      // este proyecto irían a `showroom`, que es como una suite partida deja de estarlo.
+      // El dominio verifica exclusivamente el artefacto sintético, separado de producción.
       name: 'domain',
       testMatch: 'domains/**/*.e2e.ts',
-      use: { ...devices['Desktop Chrome'] },
+      use: { ...devices['Desktop Chrome'], baseURL: `http://localhost:${SYNTHETIC_PORT}` },
     },
   ],
 
   // El artefacto que se despliega: build de producción servido estático, así la vigilancia de
   // consola y CSP mira lo mismo que un usuario. Ver vault: Integracion Continua §4.1.
-  webServer: {
-    command: `npm run build && node tools/e2e/serve.mjs --port ${PORT}`,
-    url: BASE_URL,
-    reuseExistingServer: !CI,
-    timeout: 180_000,
-  },
+  webServer: webServersFor(process.argv),
 });

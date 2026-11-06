@@ -20,9 +20,9 @@ export interface SessionWarehouse {
 }
 
 /**
- * Asiento del Security Core: el estado de sesión y almacén activo de PLN-WMS-002 §5, sintético,
- * en memoria y sin persistir (PLN-WMS-003 §4). No es autenticación: ni token ni login ni guard
- * hasta que haya backend. Ver vault: 08-Sistema-de-Diseno/Componentes/App-Shell.
+ * Lo que la cabecera muestra de la sesión y el almacén activo (PLN-WMS-002 §5), en memoria y sin
+ * persistir (PLN-WMS-003 §4); la autenticación es de AuthSession.
+ * Ver vault: 08-Sistema-de-Diseno/Componentes/App-Shell.
  */
 @Injectable({ providedIn: 'root' })
 export class SessionContext {

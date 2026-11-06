@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { CEILING_KB, criticalPath, ROUTE_ENTRIES } from './check-critical-path.mjs';
 
-const [MAIN, LAYOUT, HOME] = ROUTE_ENTRIES;
+const [MAIN, LAYOUT, HOME, ROUTES, GUARD] = ROUTE_ENTRIES;
 const METAFILE = {
   outputs: {
     'main.js': {
@@ -25,17 +25,21 @@ const METAFILE = {
     'nested.js': { imports: [] },
     'home.js': { entryPoint: HOME, imports: [{ path: 'shared.js', kind: 'import-statement' }] },
     'catalog.js': { entryPoint: 'projects/showroom/src/lib/catalog.ts', imports: [] },
+    'routes.js': { entryPoint: ROUTES, imports: [{ path: 'shared.js', kind: 'import-statement' }] },
+    'guard.js': { entryPoint: GUARD, imports: [{ path: 'core.js', kind: 'import-statement' }] },
   },
 };
 
 describe('criticalPath', () => {
-  it('follows static imports from the three entries, once each', () => {
+  it('follows startup, layout, home and required lazy route configuration, once each', () => {
     assert.deepEqual(criticalPath(METAFILE).sort(), [
       'core.js',
+      'guard.js',
       'home.js',
       'layout.js',
       'main.js',
       'nested.js',
+      'routes.js',
       'shared.js',
     ]);
   });

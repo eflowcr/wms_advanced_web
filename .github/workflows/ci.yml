@@ -97,6 +97,10 @@ jobs:
       - name: Identifiers in English (no Spanish names)
         run: npm run lint:identifiers
 
+      # REQ-FE-SEC-002 RFE-03: botón con efecto bajo *ewmsCan y todo código en el catálogo.
+      - name: Permission catalog (gated buttons, known codes)
+        run: npm run lint:permissions
+
       # Antes que las pruebas: host-page.test.mjs lee la CSP del artefacto. Los presupuestos, en angular.json.
       - name: Production build and bundle budgets
         run: npm run build
@@ -145,13 +149,13 @@ jobs:
       - name: Install Playwright browser
         run: npx playwright install chromium --with-deps
 
-      # Sin --pass-with-no-tests: un smoke que no encuentra pruebas falla.
+      # Una suite que no encuentra pruebas falla.
       - name: Playwright smoke suite
         run: npm run e2e:smoke
 
-      # El nivel de dominio corre en cada PR; vacío hoy, la bandera lo deja pasar sin pruebas.
+      # Seguridad verifica sus flujos sintéticos en cada PR y exige encontrar pruebas.
       - name: Playwright domain suite
-        run: npm run e2e -- --project=domain --pass-with-no-tests
+        run: npm run e2e -- --project=domain
 
       - name: Upload Playwright report
         if: failure()

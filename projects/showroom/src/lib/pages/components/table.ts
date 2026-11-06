@@ -10,6 +10,7 @@ import {
 import {
   ArrayTableSource,
   Badge,
+  Checkbox,
   Button,
   DESIGN_SYSTEM_VERSION,
   DetailTemplate,
@@ -58,6 +59,7 @@ const TEMPLATE_SNIPPET = [
   '  [quickFilter]="true"',
   '  [columnChooser]="true"',
   '  [exportable]="true"',
+  '  [allowExport]="allowExport"',
   '  viewsKey="showroom.shipments"',
   '  [bulkActions]="bulkActions()"',
   "  [ariaLabel]=\"'showroom.table.demo.ariaLabel' | transloco\"",
@@ -203,7 +205,7 @@ const TINTED: ReadonlySet<string> = new Set(['warning', 'success', 'danger']);
  * t(showroom.table.props.source, showroom.table.props.ariaLabel, showroom.table.props.children,
  *   showroom.table.props.rowState, showroom.table.props.selectable,
  *   showroom.table.props.quickFilter, showroom.table.props.density,
- *   showroom.table.props.columnChooser, showroom.table.props.exportable,
+ *   showroom.table.props.columnChooser, showroom.table.props.exportable, showroom.table.props.allowExport,
  *   showroom.table.props.bulkActions, showroom.table.props.columnExtras,
  *   showroom.table.props.columnLimits, showroom.table.props.viewsKey,
  *   showroom.table.props.trackBy, showroom.table.props.pageSize, showroom.table.props.rowActivate,
@@ -259,6 +261,12 @@ const PROPS: readonly PropRow[] = [
     type: 'boolean',
     default: 'false',
     description: 'showroom.table.props.columnChooser',
+  },
+  {
+    name: 'allowExport',
+    type: '() => boolean',
+    default: '() => true',
+    description: 'showroom.table.props.allowExport',
   },
   {
     name: 'exportable',
@@ -442,6 +450,7 @@ const LOG = {
   selector: 'ewms-showroom-table',
   imports: [
     Badge,
+    Checkbox,
     Button,
     DetailTemplate,
     Table,
@@ -460,6 +469,8 @@ const LOG = {
 export class ShowroomTable {
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
 
+  protected readonly exportAllowed = signal(true);
+  protected readonly allowExport = () => this.exportAllowed();
   protected readonly version = DESIGN_SYSTEM_VERSION;
   protected readonly props = PROPS;
   protected readonly anatomy = ANATOMY;

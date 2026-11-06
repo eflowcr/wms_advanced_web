@@ -121,6 +121,9 @@ export * from './lib/keyboard/shortcuts-host';
 export * from './lib/keyboard/scan-detector';
 export * from './lib/keyboard/keyboard.public';
 
+// Lo que TypeScript necesita como número (un plazo, un corte) se lee de tokens.css, no se copia.
+export * from './lib/tokens/read-token';
+
 // Navegación (DS-5): ninguna pieza conoce el router; navega el shell. `Viewport` se exporta para
 // que shell y navegación den una sola respuesta al punto de corte (si no, barra y rail a la vez).
 export * from './lib/navigation/nav-rail';

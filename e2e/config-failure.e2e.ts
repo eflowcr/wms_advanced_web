@@ -1,5 +1,5 @@
 import { axe } from './axe';
-import { expect, test } from '@playwright/test';
+import { expect, test } from './session';
 
 /**
  * Sin configuración de ejecución válida la app no arranca, y lo dice con el aviso estático de

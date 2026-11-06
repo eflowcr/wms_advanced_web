@@ -1,8 +1,6 @@
 import { DOCUMENT } from '@angular/common';
-import { DestroyRef, Directive, inject } from '@angular/core';
-import { DialogService } from '../dialog/dialog.service';
+import { DestroyRef, Directive, ErrorHandler, Injector, PendingTasks, inject } from '@angular/core';
 import { KeyboardShortcuts } from './keyboard-shortcuts';
-import { ShortcutHelp, SHORTCUT_HELP_TITLE_ID } from './shortcut-help';
 import { EWMS_SHORTCUT_HELP_MESSAGES, EWMS_SHORTCUT_MAP } from './shortcuts.types';
 
 /**
@@ -15,7 +13,11 @@ import { EWMS_SHORTCUT_HELP_MESSAGES, EWMS_SHORTCUT_MAP } from './shortcuts.type
 })
 export class ShortcutsHost {
   private readonly shortcuts = inject(KeyboardShortcuts);
-  private readonly dialog = inject(DialogService);
+  private readonly injector = inject(Injector);
+  private readonly errors = inject(ErrorHandler);
+  private readonly lifetime = inject(DestroyRef);
+  private opening = false;
+  private readonly pending = inject(PendingTasks);
   private readonly messages = inject(EWMS_SHORTCUT_HELP_MESSAGES);
 
   constructor() {
@@ -29,7 +31,11 @@ export class ShortcutsHost {
     };
 
     doc.addEventListener('keydown', onKeydown);
-    this.shortcuts.register('help', () => this.openHelp());
+    this.shortcuts.register('help', () => {
+      void this.pending.run(() =>
+        this.openHelp().catch((error: unknown) => this.errors.handleError(error)),
+      );
+    });
 
     inject(DestroyRef).onDestroy(() => {
       doc.removeEventListener('keydown', onKeydown);
@@ -38,10 +44,21 @@ export class ShortcutsHost {
   }
 
   /** RFE-07: el CDK devuelve el foco. Vive en la librería para no escribir la lista dos veces. */
-  private openHelp(): void {
-    this.dialog.open<void, void, ShortcutHelp>(ShortcutHelp, {
-      ariaLabelledBy: SHORTCUT_HELP_TITLE_ID,
-      ariaLabel: this.messages.title,
-    });
+  private async openHelp(): Promise<void> {
+    if (this.opening) return;
+    this.opening = true;
+    try {
+      const [{ DialogService }, { ShortcutHelp, SHORTCUT_HELP_TITLE_ID }] = await Promise.all([
+        import('../dialog/dialog.service'),
+        import('./shortcut-help'),
+      ]);
+      if (this.lifetime.destroyed) return;
+      this.injector.get(DialogService).open(ShortcutHelp, {
+        ariaLabelledBy: SHORTCUT_HELP_TITLE_ID,
+        ariaLabel: this.messages.title,
+      });
+    } finally {
+      this.opening = false;
+    }
   }
 }

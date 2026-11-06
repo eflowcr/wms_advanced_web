@@ -1,0 +1,48 @@
+version: '3'
+
+# Build y publicación de la imagen de la consola, en la misma línea que wms_advanced_api.
+# Ver vault: 0029 - Despliegue de la consola con nginx.
+
+vars:
+  REGISTRY: '{{.REGISTRY | default "epracsupply"}}'
+  IMAGE_NAME: '{{.IMAGE_NAME | default "wms_advanced_web"}}'
+  TAG: '{{.TAG | default "latest"}}'
+  PLATFORM: '{{.PLATFORM | default "linux/amd64"}}'
+  FULL_IMAGE: '{{.REGISTRY}}/{{.IMAGE_NAME}}'
+
+tasks:
+  default:
+    desc: Muestra la lista de tareas disponibles
+    cmds:
+      - task --list
+
+  test:
+    desc: Pruebas unitarias, lints y build de producción
+    cmds:
+      - npm test
+      - npm run lint
+      - npm run build
+
+  build:
+    desc: Construye la imagen Docker (por defecto linux/amd64)
+    cmds:
+      - echo "🔨 Construyendo imagen {{.FULL_IMAGE}}:{{.TAG}} para {{.PLATFORM}}..."
+      - docker build --platform {{.PLATFORM}} -t {{.FULL_IMAGE}}:{{.TAG}} -t {{.FULL_IMAGE}}:latest .
+
+  push:
+    desc: Publica la imagen en el registro (ej. epracsupply/wms_advanced_web)
+    cmds:
+      - echo "🚀 Publicando imagen {{.FULL_IMAGE}}:{{.TAG}}..."
+      - docker push {{.FULL_IMAGE}}:{{.TAG}}
+      - |
+        if [ "{{.TAG}}" != "latest" ]; then
+          echo "🚀 Publicando tag latest..."
+          docker push {{.FULL_IMAGE}}:latest
+        fi
+
+  release:
+    desc: Flujo completo (test -> build -> push)
+    cmds:
+      - task: test
+      - task: build
+      - task: push

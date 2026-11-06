@@ -40,7 +40,7 @@ export const ROUTE_BUDGET_MS = 3_000;
  * vez por control, y la página entera en inglés.
  */
 /**
- * Los trece destinos del menú sin pantalla: van a «En construcción», nunca a un 404. El router
+ * Los once destinos sin implementación: van a «En construcción» con permiso de consulta. El router
  * los deriva de `shell/layout/menu.ts`; acá se declaran porque e2e no importa de `projects/`.
  * Si una ruta se cae del menú, la prueba de smoke que las recorre pierde el `h1` que espera.
  */
@@ -55,8 +55,6 @@ export const UNDER_CONSTRUCTION = [
   { url: '/catalogos/series', heading: /^(Series|Serial numbers)$/ },
   { url: '/catalogos/transportistas', heading: /^(Transportistas|Carriers)$/ },
   { url: '/catalogos/tarifas', heading: /^(Tarifas|Rates)$/ },
-  { url: '/configuracion/usuarios', heading: /^(Usuarios|Users)$/ },
-  { url: '/configuracion/perfiles', heading: /^(Perfiles|Profiles)$/ },
   { url: '/configuracion/parametros', heading: /^(Parámetros|Parameters)$/ },
 ] as const;
 

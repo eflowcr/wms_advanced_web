@@ -1,5 +1,6 @@
 import { axe } from './axe';
-import { expect, test, type Page } from '@playwright/test';
+import { type Page } from '@playwright/test';
+import { expect, test } from './session';
 import { watchConsole, type ConsoleWatch } from './console-watch';
 import { chooseLanguage } from './language';
 
@@ -45,8 +46,10 @@ test.describe('i18n with a Spanish browser', () => {
 
     await expect(page.getByRole('navigation', { name: 'Main menu' })).toBeVisible();
     await expect(page.getByRole('treeitem', { name: 'Design system' })).toBeVisible();
-    await expect(page.getByText('No packages')).toBeVisible();
-    await expect(page.getByText('1,250 packages')).toBeVisible();
+    await expect(page.locator('[data-page-heading]')).toHaveText('Hello, Operador');
+    await expect(
+      page.getByText('Choose a module to start working in your active warehouse.'),
+    ).toBeVisible();
     // Mismo documento: la marca puesta antes del cambio sigue ahí.
     expect(
       await page.evaluate(() => (window as unknown as { beforeSwitch?: boolean }).beforeSwitch),
@@ -76,6 +79,8 @@ test.describe('i18n with a Spanish browser', () => {
   });
 
   test('formats numbers, dates and plurals with the locale of each language', async ({ page }) => {
+    // Los ejemplos viven en la portada del catálogo interno, con los diccionarios reales.
+    await page.goto('/design-system');
     const sample = (name: string) => page.locator(`[data-sample="${name}"]`);
     // es-CR agrupa miles con espacio duro; si un número de 4 cifras se agrupa depende de los datos
     // ICU del runtime, de ahí el \s?.

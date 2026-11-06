@@ -1,0 +1,127 @@
+<section #root class="flex min-w-0 flex-col gap-4 p-4" data-users-page>
+  <header class="flex flex-wrap items-center justify-between gap-3">
+    <div class="flex flex-col gap-2">
+      <h1 class="text-h1 text-primary">{{ 'shell.menu.users' | transloco }}</h1>
+      <p class="text-secondary">{{ 'security.usersIntro' | transloco }}</p>
+    </div>
+    <ewms-button
+      *ewmsCan="'security.users:create'"
+      data-user-create
+      [disabled]="draft() !== null"
+      (click)="begin(null)"
+      >{{ 'security.createUser' | transloco }}</ewms-button
+    >
+  </header>
+  @if (error()) {
+    <p role="alert" class="rounded-md border border-danger bg-danger-surface p-3 text-danger">
+      {{ 'security.errors.' + error() | transloco }}
+    </p>
+    <ewms-button variant="secondary" data-effect="none" (click)="cancel(); load()">{{
+      'security.reload' | transloco
+    }}</ewms-button>
+  }
+  @if (!access.can('security.users:access')) {
+    <ewms-empty-state kind="no-access" [title]="'security.noAccess' | transloco" />
+  } @else if (!rows()) {
+    <p role="status" class="text-secondary">{{ 'security.loading' | transloco }}</p>
+  } @else {
+    @if (draft(); as user) {
+      <form
+        [ewmsForm]="userForm"
+        [ewmsFormAction]="save"
+        #pattern="ewmsForm"
+        class="flex flex-col gap-3 rounded-md border border-default bg-surface p-4"
+        data-user-form
+      >
+        <h2 class="text-h2">
+          {{ (user.version === 0 ? 'security.createUser' : 'security.editUser') | transloco }}
+        </h2>
+        <p class="break-all text-caption text-secondary">
+          {{ 'security.identifier' | transloco }}: {{ user.id }}
+        </p>
+        <ewms-input [label]="'security.name' | transloco" [formField]="userForm.name" />
+        <ewms-radio-group
+          [label]="'security.affiliation.label' | transloco"
+          [formField]="userForm.affiliation"
+        >
+          <ewms-radio value="internal" [label]="'security.affiliation.internal' | transloco" />
+          <ewms-radio value="external" [label]="'security.affiliation.external' | transloco" />
+        </ewms-radio-group>
+        @if (external()) {
+          <ewms-select
+            [label]="'security.company' | transloco"
+            [hint]="'security.companyHint' | transloco"
+            [options]="companies()"
+            [formField]="userForm.companyId"
+          />
+        }
+        <p role="status" class="text-caption text-warning">{{ 'security.unsaved' | transloco }}</p>
+        <div class="flex flex-wrap gap-2">
+          <ewms-button variant="secondary" data-effect="none" (click)="cancel()">{{
+            'security.cancel' | transloco
+          }}</ewms-button
+          ><ewms-button
+            *ewmsCan="user.version === 0 ? 'security.users:create' : 'security.users:update'"
+            type="submit"
+            [loading]="pattern.busy()"
+            >{{ 'security.save' | transloco }}</ewms-button
+          >
+        </div>
+      </form>
+    }
+    <ewms-filter-bar
+      data-user-filters
+      [fields]="fields()"
+      [value]="filters()"
+      (valueChange)="filter($event)"
+    />
+    <ewms-table
+      [source]="table()"
+      [trackBy]="byId"
+      [ariaLabel]="'shell.menu.users' | transloco"
+      [selectable]="true"
+      [exportable]="access.can('security.users:export')"
+      [allowExport]="allowExport"
+      [menuItems]="menuItems"
+      (rowActivate)="begin($event.row)"
+      (rowMenu)="onMenu($event)"
+    >
+      <ewms-column
+        key="id"
+        [header]="'security.identifier' | transloco"
+        width="md"
+        [sortable]="true"
+      />
+      <ewms-column
+        key="name"
+        [header]="'security.name' | transloco"
+        width="fill"
+        [sortable]="true"
+      />
+      <ewms-column
+        key="affiliationLabel"
+        [header]="'security.affiliation.label' | transloco"
+        width="md"
+        [sortable]="true"
+      />
+      <ewms-column
+        key="company"
+        [header]="'security.company' | transloco"
+        width="sm"
+        [sortable]="true"
+      />
+      <ewms-column
+        key="stateLabel"
+        [header]="'security.state' | transloco"
+        width="md"
+        [sortable]="true"
+      />
+      <ewms-column
+        key="actions"
+        [header]="'security.actions' | transloco"
+        type="actions"
+        width="sm"
+      />
+    </ewms-table>
+  }
+</section>

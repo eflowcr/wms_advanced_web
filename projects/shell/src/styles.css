@@ -21,6 +21,7 @@
 @source '../../design-system/src/lib';
 @source '../../showroom/src';
 @source '../../shell/src';
+@source '../../domains/security/src';
 @source not '../../**/*.spec.ts';
 
 /*
@@ -115,6 +116,8 @@
   /* Animaciones: el token en tokens.css y los @keyframes más abajo; siempre con `motion-safe:`. */
   --animate-nav-drawer: var(--animate-nav-drawer);
   --animate-spin: var(--animate-spin);
+  --animate-login-rise: var(--animate-login-rise);
+  --animate-login-alert: var(--animate-login-alert);
 
   --shadow-sm: var(--shadow-sm);
   --shadow-md: var(--shadow-md);
@@ -164,6 +167,7 @@
   --text-color-secondary: var(--color-text-secondary);
   --text-color-disabled: var(--color-text-disabled);
   --text-color-on-dark: var(--color-text-on-dark);
+  --text-color-on-dark-secondary: var(--color-text-on-dark-secondary);
   --text-color-on-primary: var(--color-text-on-primary);
   --text-color-danger: var(--color-danger-text);
   --text-color-warning: var(--color-warning-text);
@@ -268,6 +272,21 @@
 @keyframes spin {
   to {
     rotate: 360deg;
+  }
+}
+
+/* Login: cada pieza sube y aparece; el error baja apenas. Con `motion-safe:`, nada con `reduce`. */
+@keyframes login-rise {
+  from {
+    opacity: 0;
+    translate: 0 var(--login-rise-distance);
+  }
+}
+
+@keyframes login-alert {
+  from {
+    opacity: 0;
+    translate: 0 calc(var(--login-alert-distance) * -1);
   }
 }
 

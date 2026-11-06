@@ -938,8 +938,8 @@
     "contract": {
       "keyboardTitle": "Keyboard (APG <i>date picker dialog</i>)",
       "keysCalendar": "In the calendar: <kbd>← →</kbd> one day, <kbd>↑ ↓</kbd> one week, <kbd>Page Up</kbd> / <kbd>Page Down</kbd> one month (with <kbd>Shift</kbd>, one year), <kbd>Home</kbd> / <kbd>End</kbd> the week, <kbd>Enter</kbd> picks.",
-      "keysDialog": "<kbd>Esc</kbd> closes without picking and returns the focus to the button; <kbd>Tab</kbd> does not leave the dialog. In the field, <kbd>Alt</kbd>+<kbd>↓</kbd> opens it.",
-      "messages": "The texts (choose date, previous month, next month) and the locale are provided once with <code>EWMS_DATE_PICKER_MESSAGES</code>. The locale is a getter in the shell because the app changes language without reloading; without it, <code>LOCALE_ID</code> is used."
+      "keysDialog": "<kbd>Esc</kbd> closes without picking and returns the focus to the button; <kbd>Tab</kbd> does not leave the dialog. In the field, <kbd>Alt</kbd>+<kbd>↓</kbd> opens it. With <code>withTime</code>, <kbd>Enter</kbd> in the hour or the minutes applies.",
+      "messages": "The texts (choose date, previous month, next month, hour, minutes, apply) and the locale are provided once with <code>EWMS_DATE_PICKER_MESSAGES</code>. The locale is a getter in the shell because the app changes language without reloading; without it, <code>LOCALE_ID</code> is used."
     },
     "demo": {
       "delivery": {
@@ -957,12 +957,13 @@
       "limits": "<code>'YYYY-MM-DD'</code>. Days outside it are shown and can be walked through, but not picked.",
       "mode": "A <code>'YYYY-MM-DD'</code> date, or the table’s <code>DateRange</code> <code>'{ from, to }'</code>.",
       "size": "The Input’s box.",
-      "texts": "As in the Input. The hint goes through <code>aria-describedby</code>."
+      "texts": "As in the Input. The hint goes through <code>aria-describedby</code>.",
+      "withTime": "Adds a 24-hour hour and minutes: the value is <code>'YYYY-MM-DDTHH:mm'</code>, local time. Only with <code>mode=\"single\"</code>."
     },
     "purpose": {
       "knownDate": "<b>For a date known by heart</b> (a date of birth, the expiry of a printed lot): typing it is quicker than going through the years; the field accepts it all the same.",
       "native": "Our own, not <code><input type=\"date\"></code>: the native one shows the operating system’s format even when the app is in another language, and it takes no tokens.",
-      "noTime": "<b>For a time of day</b>: it has none.",
+      "noTime": "<b>For a time of day without a date</b>: this is a date field. A time goes along with a date, with <code>withTime</code>.",
       "solves": "A date, or a period, <b>in the app’s language</b>: it is typed the way it reads here (3/16/2026) or picked from a calendar you can walk through entirely with the keyboard. The value is <code>'YYYY-MM-DD'</code>, with no time zone."
     },
     "sizes": {
@@ -971,6 +972,11 @@
     "states": {
       "days": "The field is the Input’s box: default, focus, error and disabled are the ones in its matrix. In the calendar, a day can be <b>today</b> (ring), <b>selected</b> (action background), <b>out of range</b> (grey, it can be walked through but not picked) and <b>active</b> (focus ring). You can see them for real by opening the demo.",
       "title": "The Input’s, plus four for days"
+    },
+    "time": {
+      "frame": "Date and time",
+      "intro": "<code>[withTime]=\"true\"</code>: the calendar adds a 24-hour hour and minutes. Picking the day does not close it; <b>Apply</b>, or <kbd>Enter</kbd> in the hour, saves <code>'YYYY-MM-DDTHH:mm'</code>. Typed, it goes after the date: 3/16/2026 14:30; with no time, 00:00.",
+      "label": "Truck departure"
     },
     "variants": {
       "frame": "A period",
@@ -996,6 +1002,13 @@
     "notThis": {
       "text": "It is not a marketing gallery, nor the place where the look of something is decided. What you see here comes from the real, compiled components: if the showroom and the vault sheet disagree, <b>the code wins</b> and the sheet gets corrected.",
       "title": "What it is not"
+    },
+    "samples": {
+      "amount": "Amount: {{ amount }}",
+      "netWeight": "Net weight: {{ weight }} kg",
+      "title": "Language and regional format samples",
+      "today": "Today is {{ date }}",
+      "unitsFound": "{count, plural, =0 {No packages} one {# package} other {# packages}}"
     },
     "title": "Design system showroom"
   },
@@ -2829,6 +2842,7 @@
       "ariaLabel": "Shipments",
       "componentLines": "lines: the source, how a row is identified, the status dictionary, and the bulk actions with what each one does, which is screen logic and not table logic.",
       "componentTitle": "And the whole component",
+      "exportAllowed": "Allow export and copy",
       "frame": "The real component, with its source in memory",
       "intro": "<b>Expand a shipment, and then a line.</b> Header → line → serial number or lot. Twelve synthetic shipments generated from a seed, always the same ones; no real data from any customer.",
       "lastActivated": "Last row activated:",
@@ -2909,6 +2923,7 @@
     },
     "notApplicable": "One: <b>variants</b>, because the table has no visual variants. It is written above rather than deleted.",
     "props": {
+      "allowExport": "Checks current authorization for CSV export and TSV copy, including keyboard execution. The consumer supplies the policy.",
       "ariaLabel": "<b>Required.</b> Names the grid. A table with no name is a table nobody can ask for.",
       "bulkAction": "The chosen bulk action, with the selected rows from any page.",
       "bulkActions": "Actions on the selection; the toolbar shows them next to “3 selected”.",

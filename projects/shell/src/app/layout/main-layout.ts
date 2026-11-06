@@ -20,6 +20,7 @@ import {
 } from '@angular/router';
 import { filter, map } from 'rxjs';
 import { SessionContext } from '@ewms/core';
+import { AccessStore, AuthSession } from '@ewms/core/security';
 import {
   Breadcrumbs,
   FavoriteToggle,
@@ -47,6 +48,8 @@ import { deepestTitleKey } from '../route-title-key';
 import { RouteTitles } from '../route-titles';
 import { APP_VERSION } from '../version';
 import { LanguageSwitcher } from './language-switcher';
+import { DemoSlot } from './demo-slot';
+import { WarehouseSwitcher } from './warehouse-switcher';
 import { MENU, menuEntryFor, type MenuEntry } from './menu';
 import { MAX_OPEN_TABS, TabsService } from './tabs.service';
 
@@ -62,6 +65,8 @@ import { MAX_OPEN_TABS, TabsService } from './tabs.service';
     FavoritesNav,
     Button,
     LanguageSwitcher,
+    DemoSlot,
+    WarehouseSwitcher,
     NavBottom,
     NavRail,
     NgTemplateOutlet,
@@ -90,6 +95,11 @@ export class MainLayout {
   private readonly routeTitles = inject(RouteTitles);
 
   protected readonly session = inject(SessionContext);
+  protected readonly access = inject(AccessStore);
+  protected readonly auth = inject(AuthSession);
+  protected readonly routeAccessible = computed(() => this.access.canRoute(this.url()));
+  protected readonly visibleFavorite = (favorite: Favorite): boolean =>
+    this.access.canRoute(favorite.route);
   protected readonly viewport = inject(Viewport);
 
   protected readonly brandName = BRAND_NAME;
@@ -144,14 +154,20 @@ export class MainLayout {
   /** menu.ts guarda claves; leer `activeLang()` redibuja el menú sin recargar. */
   protected readonly navItems = computed<readonly NavItem[]>(() => {
     this.activeLang();
-    return MENU.map((entry) => this.toNavItem(entry));
+    return MENU.filter((entry) =>
+      entry.children
+        ? entry.children.some((child) => this.access.canRoute(child.route ?? ''))
+        : this.access.canRoute(entry.route ?? ''),
+    ).map((entry) => this.toNavItem(entry));
   });
 
   /** El destino del menú de la ruta actual: marca el menú y cierra la miga. */
   private readonly activeEntry = computed(() => menuEntryFor(this.url()));
   protected readonly activeId = computed(() => this.activeEntry()?.id ?? null);
 
-  protected readonly tabs = this.tabsService.tabs;
+  protected readonly tabs = computed(() =>
+    this.tabsService.tabs().filter((tab) => this.access.canRoute(tab.route)),
+  );
   protected readonly activeTabId = this.tabsService.activeRoute;
 
   /**
@@ -184,6 +200,17 @@ export class MainLayout {
   });
 
   constructor() {
+    effect(() => {
+      const status = this.access.status();
+      const allowed = this.routeAccessible();
+      if (status !== 'loading')
+        untracked(() => {
+          for (const tab of this.tabsService.tabs()) {
+            if (!this.access.canRoute(tab.route)) this.tabsService.close(tab.route);
+          }
+          if (!allowed) void this.router.navigateByUrl('/?access=denied');
+        });
+    });
     // Cambio de ruta: abrir la pestaña, mover el foco y anunciar el título, en un
     // solo efecto para que ninguno se olvide. En una SPA el navegador no hace ninguno.
     effect(() => {
@@ -269,16 +296,18 @@ export class MainLayout {
   }
 
   protected onNavItemSelect(item: NavItem): void {
-    if (item.route !== undefined) {
+    if (item.route !== undefined && this.access.canRoute(item.route)) {
       void this.router.navigateByUrl(item.route);
     }
   }
 
   protected onFavoriteSelect(favorite: Favorite): void {
+    if (!this.access.canRoute(favorite.route)) return;
     void this.router.navigateByUrl(favorite.route);
   }
 
   protected onTabSelect(tab: Tab): void {
+    if (!this.access.canRoute(tab.id)) return;
     void this.router.navigateByUrl(tab.id);
   }
 
@@ -335,7 +364,11 @@ export class MainLayout {
       ...(entry.route === undefined ? {} : { route: entry.route }),
       ...(entry.children === undefined
         ? {}
-        : { children: entry.children.map((child) => this.toNavItem(child)) }),
+        : {
+            children: entry.children
+              .filter((child) => this.access.canRoute(child.route ?? ''))
+              .map((child) => this.toNavItem(child)),
+          }),
     };
   }
 
@@ -359,5 +392,11 @@ export class MainLayout {
   /** Destino del atajo `/`: el campo real, no el host, que no es enfocable. */
   protected focusSearch(): void {
     this.searchField()?.focus();
+  }
+
+  /** Cierra la sesión en el servidor y en memoria; los permisos quedan cerrados antes de salir. */
+  protected async signOut(): Promise<void> {
+    await this.auth.signOut();
+    await this.router.navigateByUrl('/login');
   }
 }

@@ -5,9 +5,9 @@
     "prepare": "git config core.hooksPath .githooks",
     "start": "ng serve shell",
     "build": "ng build shell",
-    "build:libs": "ng build shared && ng build api-client && ng build core && ng build design-system && ng build showroom && ng build testing",
+    "build:libs": "ng build shared && ng build api-client && ng build core && ng build design-system && ng build showroom && ng build testing && ng build security",
     "typecheck": "tsc -p tsconfig.typecheck.json",
-    "test": "ng test shell --no-watch && ng test core --no-watch && ng test design-system --no-watch && ng test shared --no-watch && ng test showroom --no-watch && npm run test:tools",
+    "test": "ng test shell --no-watch && ng test core --no-watch && ng test design-system --no-watch && ng test shared --no-watch && ng test showroom --no-watch && ng test security --no-watch && npm run test:tools",
     "test:tools": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test \"tools/**/*.test.mjs\"",
     "lint": "eslint . --max-warnings=0",
     "lint:tokens": "node tools/ci/check-design-tokens.mjs",
@@ -19,6 +19,7 @@
     "lint:comments": "node tools/ci/check-comments.mjs",
     "lint:identifiers": "node tools/ci/check-identifiers.mjs",
     "lint:critical-path": "node tools/ci/check-critical-path.mjs",
+    "lint:permissions": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON tools/ci/check-permissions.mjs",
     "i18n:format": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON tools/ci/check-i18n.mjs --write",
     "i18n:versions": "node tools/i18n/dictionary-versions.mjs",
     "icons:build": "node tools/icons/build-icons.mjs",
@@ -29,7 +30,8 @@
     "e2e:showroom": "playwright test --project=showroom",
     "e2e:domain": "playwright test --project=domain",
     "showroom:capture": "playwright test --config playwright.capture.config.ts",
-    "audit:ci": "npm audit --audit-level=high"
+    "audit:ci": "npm audit --audit-level=high",
+    "build:e2e": "ng build shell --configuration production,e2e"
   },
   "private": true,
   "packageManager": "npm@11.19.0",
@@ -69,6 +71,9 @@
     "typescript": "~6.0.2",
     "typescript-eslint": "8.70.0",
     "vitest": "^4.0.8"
+  },
+  "overrides": {
+    "vite": "8.3.5"
   },
   "engines": {
     "node": ">=24.15.0 <25",

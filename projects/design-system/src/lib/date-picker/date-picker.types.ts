@@ -1,21 +1,4 @@
-import { InjectionToken } from '@angular/core';
-
 export type DatePickerMode = 'single' | 'range';
-
-/**
- * Textos ya traducidos, provistos una vez. `locale` es un getter en el shell: LOCALE_ID se fija
- * al arrancar y la app cambia de idioma sin recargar. Sin él se usa LOCALE_ID.
- */
-export interface DatePickerMessages {
-  readonly chooseDate: string;
-  readonly previousMonth: string;
-  readonly nextMonth: string;
-  readonly locale?: string;
-}
-
-export const EWMS_DATE_PICKER_MESSAGES = new InjectionToken<DatePickerMessages>(
-  'EWMS_DATE_PICKER_MESSAGES',
-);
 
 /** Una celda del mes; `iso` null es relleno antes del 1 o después del último día. */
 export interface CalendarCell {
@@ -56,7 +39,11 @@ export function addMonths(iso: string, months: number): string {
   const date = parseIso(iso)!;
   const target = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + months, 1));
   const last = new Date(Date.UTC(target.getUTCFullYear(), target.getUTCMonth() + 1, 0));
-  return toIso(target.getUTCFullYear(), target.getUTCMonth() + 1, Math.min(date.getUTCDate(), last.getUTCDate()));
+  return toIso(
+    target.getUTCFullYear(),
+    target.getUTCMonth() + 1,
+    Math.min(date.getUTCDate(), last.getUTCDate()),
+  );
 }
 
 /** Posición en la semana, 0 = primer día según el idioma. */
@@ -111,9 +98,11 @@ export function weekdayNames(
 }
 
 export function monthTitle(iso: string, locale: string): string {
-  return new Intl.DateTimeFormat(locale, { month: 'long', year: 'numeric', timeZone: 'UTC' }).format(
-    parseIso(iso)!,
-  );
+  return new Intl.DateTimeFormat(locale, {
+    month: 'long',
+    year: 'numeric',
+    timeZone: 'UTC',
+  }).format(parseIso(iso)!);
 }
 
 export function formatDate(iso: string | null | undefined, locale: string): string {
@@ -153,4 +142,45 @@ export function parseDates(text: string, locale: string): (string | null)[] {
     dates.push(iso === written ? iso : null);
   }
   return numbers.length % 3 === 0 ? dates : [null];
+}
+
+// ---- Fecha y hora como 'YYYY-MM-DDTHH:mm', hora local de pared, sin zona ni segundos. ----
+
+/** 'HH:mm' de 24 h; null si la hora no está entre 0 y 23 o los minutos entre 0 y 59. */
+export function toTime(hour: number, minute: number): string | null {
+  const valid = (value: number, max: number) =>
+    Number.isInteger(value) && value >= 0 && value <= max;
+  return valid(hour, 23) && valid(minute, 59)
+    ? `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`
+    : null;
+}
+
+/** Parte un valor en día y hora; un 'YYYY-MM-DD' solo trae día. */
+export function splitDateTime(value: string | null | undefined): {
+  readonly date: string | null;
+  readonly time: string | null;
+} {
+  const [date = '', time = ''] = (value ?? '').split('T');
+  const [hour, minute] = time.split(':').map(Number);
+  const validTime = /^\d{2}:\d{2}$/.test(time) ? toTime(hour!, minute!) : null;
+  return { date: parseIso(date) ? date : null, time: validTime };
+}
+
+/** El día en el formato del idioma y la hora en 24 h: 16/3/2026 14:30. */
+export function formatDateTime(value: string | null | undefined, locale: string): string {
+  const { date, time } = splitDateTime(value);
+  const day = formatDate(date, locale);
+  return day && time ? `${day} ${time}` : day;
+}
+
+/** Día en el orden del idioma y, opcional, hora y minutos (00:00 si faltan). Null si no se lee. */
+export function parseDateTime(text: string, locale: string): string | null {
+  const numbers = text.match(/\d+/g) ?? [];
+  if (numbers.length !== 3 && numbers.length !== 5) {
+    return null;
+  }
+  const [date] = parseDates(numbers.slice(0, 3).join('/'), locale);
+  const [hour = '0', minute = '0'] = numbers.slice(3);
+  const time = toTime(Number(hour), Number(minute));
+  return date && time ? `${date}T${time}` : null;
 }

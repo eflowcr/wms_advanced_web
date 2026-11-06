@@ -1,17 +1,14 @@
-import { expect, test, type Locator, type Page } from '@playwright/test';
-/*
- * Único import profundo a projects/ del repo: el alias carga el barril de Angular en Node y falla con
- * «PlatformLocation needs to be compiled using the JIT compiler». HG-02 pide leer los presupuestos de un
- * solo archivo; tools/ci/check-click-budget.mjs falla si este import desaparece.
- */
-// eslint-disable-next-line no-restricted-imports -- ver la nota de arriba
+import { type Locator, type Page } from '@playwright/test';
+import { expect, test } from './session';
+// HG-02: las cifras se leen de un solo archivo; tools/ci/check-click-budget.mjs falla sin este import.
 import {
   CANCEL_MAX_CLICKS,
   CREATE_MAX_CLICKS,
   EDIT_MAX_CLICKS,
   OPEN_FAVORITE_MAX_CLICKS,
   SEARCH_MAX_CLICKS,
-} from '../projects/shared/src/lib/click-budget';
+  clicker,
+} from './click-budget';
 
 /*
  * Cuenta clics (REQ-FE-DS4-003 RFE-03) y prueba reglas de teclado (REQ-FE-DS4-001). Los clics los cuenta
@@ -25,18 +22,6 @@ const KEYBOARD = '/design-system/patterns/keyboard';
 
 /** Expedición que existe en los datos de la demo. */
 const KNOWN_CODE = 'EXP-2026-0403';
-
-/** Las acciones de teclado no pasan por este contador, a propósito. */
-function clicker(): { click: (locator: Locator) => Promise<void>; total: () => number } {
-  let total = 0;
-  return {
-    click: async (locator: Locator): Promise<void> => {
-      total += 1;
-      await locator.click();
-    },
-    total: () => total,
-  };
-}
 
 async function resetPageCounter(page: Page): Promise<void> {
   // Por evaluate y no por clicks.click: la pantalla ignora este botón, el contador de la prueba no.

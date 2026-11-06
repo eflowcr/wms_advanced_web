@@ -65,8 +65,10 @@ function main() {
   const at = process.argv.indexOf('--port');
   const port = at === -1 ? 4400 : Number(process.argv[at + 1]);
   const contract = process.argv.includes('--headers');
-  createStaticServer({ contract }).listen(port, () =>
-    console.log(`dist/shell/browser en http://localhost:${port}${contract ? ' (contrato)' : ''}`),
+  const rootAt = process.argv.indexOf('--root');
+  const root = rootAt === -1 ? DIST : path.resolve(process.argv[rootAt + 1]);
+  createStaticServer({ root, contract }).listen(port, () =>
+    console.log(`${root} en http://localhost:${port}${contract ? ' (contrato)' : ''}`),
   );
 }
 

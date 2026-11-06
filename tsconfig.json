@@ -1,8 +1,3 @@
-/*
- * Los alias @ewms/* apuntan al public-api.ts de cada biblioteca, no a dist/: se compila sin
- * construirlas antes, y cruzar una frontera solo es legal por ellos.
- * Ver vault: Integracion Continua §11.
- */
 {
   "compileOnSave": false,
   "compilerOptions": {
@@ -24,6 +19,15 @@
       ],
       "@ewms/testing": [
         "./projects/testing/src/public-api.ts"
+      ],
+      "@ewms/security": [
+        "./projects/domains/security/src/public-api.ts"
+      ],
+      "@ewms/core/security": [
+        "./projects/core/src/security-api.ts"
+      ],
+      "@ewms/core/locale": [
+        "./projects/core/src/locale-api.ts"
       ]
     },
     "noImplicitOverride": true,
@@ -38,7 +42,7 @@
     "module": "preserve",
     "strict": true,
     "noUncheckedIndexedAccess": true,
-    "exactOptionalPropertyTypes": true,
+    "exactOptionalPropertyTypes": true
   },
   "angularCompilerOptions": {
     "enableI18nLegacyMessageIdFormat": false,
@@ -88,6 +92,12 @@
     },
     {
       "path": "./projects/testing/tsconfig.spec.json"
+    },
+    {
+      "path": "./projects/domains/security/tsconfig.lib.json"
+    },
+    {
+      "path": "./projects/domains/security/tsconfig.spec.json"
     }
   ]
 }

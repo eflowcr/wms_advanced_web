@@ -202,6 +202,8 @@ export class Table<T> implements TableContext {
 
   /** «Exportar» en la barra: CSV en el cliente con `ArrayTableSource`; si no, `(exportRequest)`. */
   readonly exportable = input<boolean>(false);
+  /** Se consulta al ejecutar, también desde menú, selección y teclado. */
+  readonly allowExport = input<() => boolean>(() => true);
 
   readonly density = input<TableDensity>('md');
 
@@ -882,6 +884,7 @@ export class Table<T> implements TableContext {
    * seleccionado. Una fuente remota recibe la consulta por `(exportRequest)`. Ver vault: Tabla §16.
    */
   runExport(kind: 'csv' | 'csv-selected' | 'copy'): void {
+    if (!this.allowExport()()) return;
     const selectedOnly = kind === 'csv-selected';
     const all = this.source().matching?.(this.query());
     if (all === undefined && kind !== 'copy') {
@@ -909,6 +912,7 @@ export class Table<T> implements TableContext {
    * en Excel tal cual. Solo columnas visibles, en su orden. Ver vault: Tabla §15.
    */
   private copy(flat: FlatRow<T>): void {
+    if (!this.allowExport()()) return;
     const rows = this.selection.count() > 0 ? this.selection.rows() : [flat.row];
     const text = toTsv(exportMatrix(this.visibleColumns(), rows));
     void navigator.clipboard?.writeText(text).then(

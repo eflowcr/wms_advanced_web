@@ -46,16 +46,29 @@ export function exportMatrix(
 
 /** Tabulaciones, como las pega Excel. Un tabulador o salto adentro partiría la celda. */
 export function toTsv(matrix: readonly (readonly string[])[]): string {
-  return matrix
-    .map((line) => line.map((cell) => cell.replace(/[\t\r\n]+/g, ' ')).join('\t'))
-    .join('\n');
+  const quote = (cell: string): string => {
+    const text = spreadsheetText(cell.replace(/[\t\r\n]+/g, ' '), "'");
+    return text.includes('"') ? `"${text.replace(/"/g, '""')}"` : text;
+  };
+  return matrix.map((line) => line.map(quote).join('\t')).join('\n');
 }
 
 /** RFC 4180: comillas si hace falta, comillas dobladas adentro, CRLF entre filas. */
 export function toCsv(matrix: readonly (readonly string[])[]): string {
-  const quote = (cell: string): string =>
-    /[",\r\n]/.test(cell) ? `"${cell.replace(/"/g, '""')}"` : cell;
+  const quote = (cell: string): string => {
+    const text = spreadsheetText(cell, '\t');
+    return /[",;\t\r\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+  };
   return matrix.map((line) => line.map(quote).join(',')).join('\r\n');
+}
+
+/** Texto para Excel: tabulador entre comillas en CSV, apóstrofo en TSV. Ver vault: Tabla §16. */
+function spreadsheetText(cell: string, prefix: string): string {
+  const numeric = /^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:e[+-]?\d+)?$/i.test(cell);
+  if (numeric && Number.isFinite(Number(cell))) {
+    return cell;
+  }
+  return /^\s*[=+\-@＝＋－＠]/u.test(cell) ? prefix + cell : cell;
 }
 
 /**

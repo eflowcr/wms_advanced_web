@@ -200,6 +200,7 @@ describe('Favorites', () => {
       [expanded]="expanded()"
       [activeRoute]="activeRoute()"
       [ground]="ground()"
+      [visible]="visible()"
       (favoriteSelect)="chosen = $event.route"
     />
   `,
@@ -215,6 +216,7 @@ class TestHost {
   readonly expanded = signal(true);
   readonly activeRoute = signal<string | null>(null);
   readonly ground = signal<'navy' | 'surface'>('surface');
+  readonly visible = signal<(favorite: Favorite) => boolean>(() => true);
   chosen: string | null = null;
 }
 
@@ -303,6 +305,20 @@ describe('the star and the block, together', () => {
     await settle();
 
     expect(host.chosen).toBe('/articulos');
+  });
+
+  it('the consumer predicate hides a destination from the block without unmarking it', async () => {
+    star().click();
+    host.visible.set((favorite) => favorite.route !== '/articulos');
+    await settle();
+
+    expect(fixture.nativeElement.querySelector('[data-favorite="/articulos"]')).toBeNull();
+    expect(fixture.nativeElement.querySelector('[data-favorites-empty]')).not.toBeNull();
+    expect(star().getAttribute('aria-pressed')).toBe('true');
+
+    host.visible.set(() => true);
+    await settle();
+    expect(fixture.nativeElement.querySelector('[data-favorite="/articulos"]')).not.toBeNull();
   });
 
   it('the block marks the favourite you are looking at', async () => {

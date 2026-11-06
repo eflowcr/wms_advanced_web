@@ -7,7 +7,10 @@
   },
   "ds": {
     "datePicker": {
+      "apply": "Aplicar",
       "chooseDate": "Elegir fecha",
+      "hour": "Hora",
+      "minute": "Minutos",
       "nextMonth": "Mes siguiente",
       "previousMonth": "Mes anterior"
     },
@@ -147,6 +150,157 @@
       "views": "Vistas guardadas"
     }
   },
+  "security": {
+    "accessChanging": "El acceso está cambiando o no está disponible. El contenido protegido permanece oculto.",
+    "actionCounts": "{{ count }} de {{ total }} acciones",
+    "actions": "Acciones",
+    "activate": "Activar usuario",
+    "active": "Activo",
+    "addAssignment": "Añadir asignación",
+    "affiliation": {
+      "external": "Externa",
+      "internal": "Interna",
+      "label": "Afiliación"
+    },
+    "allowScreen": "Conceder acceso a la pantalla",
+    "assignmentHint": "Cada asignación conserva el perfil, almacén y propietario juntos. Aquí no se editan permisos individuales.",
+    "assignmentSummary": "Usuario: {{name}}. Asignaciones resultantes: {{count}}. Añadidas: {{added}}. Retiradas: {{removed}}.",
+    "bulk": {
+      "contexts": "Contextos",
+      "hint": "Elija personas, contextos y un perfil: cada combinación genera una asignación explícita. Usted no figura en la lista.",
+      "open": "Asignación masiva",
+      "rows": "{count, plural, =0 {Ninguna asignación nueva} one {# asignación nueva} other {# asignaciones nuevas}}",
+      "skipped": "{count, plural, one {# combinación se omite} other {# combinaciones se omiten}}: ya existe o un usuario externo no puede recibir ese perfil.",
+      "summary": "Se crearán {{ count }} asignaciones del perfil {{ profile }}, todas a la vez. Combinaciones omitidas: {{ skipped }}.",
+      "title": "Asignación masiva",
+      "users": "Personas"
+    },
+    "cancel": "Cancelar",
+    "capabilities": {
+      "access": "Consultar pantalla",
+      "profiles": {
+        "assign": "Gestionar asignaciones",
+        "inspect": "Consultar acceso resultante",
+        "review": "Revisar accesos",
+        "update": "Administrar perfiles"
+      },
+      "users": {
+        "create": "Crear usuarios",
+        "deactivate": "Activar / desactivar usuarios",
+        "export": "Exportar / copiar usuarios",
+        "update": "Editar usuarios"
+      }
+    },
+    "company": "Compañía",
+    "companyHint": "Un usuario externo solo recibe perfiles sin módulos internos, en contextos de su compañía.",
+    "confirm": "Confirmar",
+    "context": "Almacén / propietario",
+    "continueEditing": "Seguir editando",
+    "createProfile": "Crear perfil",
+    "createUser": "Crear usuario",
+    "deactivate": "Desactivar usuario",
+    "dependencyBody": "Para conceder esta acción también debe conceder acceso a {{screen}}.",
+    "dependencyTitle": "La acción requiere acceso a la pantalla",
+    "discard": "Descartar y salir",
+    "discardBody": "Al salir se descartarán los cambios sin guardar.",
+    "draftSummary": "Vista previa del borrador. Revisa y guarda para aplicar los cambios.",
+    "editProfile": "Editar perfil",
+    "editUser": "Editar usuario",
+    "effective": "Acceso resultante y procedencia",
+    "errors": {
+      "aborted": "La operación se canceló por un cambio de contexto.",
+      "conflict": "La información cambió mientras la editaba. Su borrador se conserva; descarte los cambios y recargue para revisar la versión actual.",
+      "delegation": "El cambio afecta permisos o contextos que no puede administrar.",
+      "denied": "No dispone de permiso para esta operación.",
+      "dependency": "Una acción requiere el acceso a su pantalla: conceda «Consultar pantalla» antes que la acción.",
+      "duplicate": "Ese nombre o esa asignación ya existe.",
+      "externalAffiliation": "Un usuario externo no puede recibir perfiles de módulos internos ni ámbitos de otra compañía.",
+      "invalid": "Revise el nombre, los permisos y el contexto seleccionado.",
+      "lastAdmin": "El cambio dejaría un almacén y propietario sin administrador autorizado.",
+      "segregation": "La asignación viola la separación de funciones: {{ profiles }} no pueden coexistir para la misma persona en el mismo contexto.",
+      "selfAssignment": "Nadie puede modificar sus propias asignaciones. Pida el cambio a otra persona con autoridad.",
+      "selfEscalation": "No puede ampliar sus propios permisos.",
+      "stepUpCancelled": "La acción no se ejecutó: se canceló la verificación del segundo factor.",
+      "unavailable": "No se pudo cargar o guardar la información. Intente de nuevo mediante el botón; no se repiten escrituras automáticamente."
+    },
+    "general": "General",
+    "grantHint": "Una casilla sin marcar no concede acceso desde este perfil. Otro perfil aplicable puede concederlo. Las acciones requieren acceso a su pantalla.",
+    "grantState": {
+      "common": "Acceso común · no configurable",
+      "complete": "Acceso completo",
+      "denied": "Sin acceso"
+    },
+    "identifier": "Identificador",
+    "inactive": "Inactivo",
+    "intro": "Configure perfiles y sus asignaciones para cada almacén y propietario.",
+    "loading": "Cargando información de acceso…",
+    "name": "Nombre",
+    "noAccess": "No dispone de acceso en este contexto.",
+    "noAssignments": "Este usuario no tiene perfiles asignados.",
+    "noGrants": "Sin concesiones en este contexto.",
+    "noResults": "No hay pantallas que coincidan.",
+    "none": "Ninguno",
+    "onlyGranted": "Solo con permisos",
+    "open": "sin límite",
+    "ownAssignments": "Sus propias asignaciones no se modifican desde su cuenta: el cambio lo hace otra persona con autoridad.",
+    "partial": "Acceso parcial: este perfil no concede todas las acciones.",
+    "profile": "Perfil",
+    "profileCounts": "{screens, plural, one {# pantalla} other {# pantallas}} y {actions, plural, one {# acción concedida} other {# acciones concedidas}}",
+    "profileSummaryHint": "Concesiones del perfil completo. El acceso efectivo depende de sus asignaciones y del contexto.",
+    "profiles": "Perfiles",
+    "reload": "Descartar cambios y recargar",
+    "remove": "Retirar",
+    "removeAssignmentLabel": "Retirar {{profile}} en {{context}}",
+    "review": {
+      "campaign": "Campaña",
+      "confirm": "Confirmar",
+      "create": "Iniciar",
+      "decidedBy": "Decidió {{ author }} el {{ date }}",
+      "decision": {
+        "confirm": "Confirmada",
+        "revoke": "Retirada"
+      },
+      "dueDate": "Fecha límite",
+      "hint": "Una campaña reúne las asignaciones vigentes que usted puede revisar. Confirme o retire cada una: queda quién decidió y cuándo. Nadie decide sobre su propio acceso.",
+      "name": "Nombre de la campaña",
+      "none": "No hay campañas de revisión",
+      "own": "Su propio acceso lo revisa otra persona.",
+      "progress": "{{ name }}: {{ decided }} de {{ total }} decididas · vence {{ due }}",
+      "revoke": "Retirar",
+      "revokeBody": "Se retirará {{ profile }} de {{ user }} en {{ context }}. El cambio rige en la siguiente petición.",
+      "revokeTitle": "Retirar asignación",
+      "start": "Iniciar campaña",
+      "title": "Revisión de accesos"
+    },
+    "reviewSave": "Revisar y guardar",
+    "save": "Guardar",
+    "saved": "Cambios guardados.",
+    "savedAccessHint": "Estas concesiones corresponden a las asignaciones guardadas. Los cambios del borrador se aplican al guardar.",
+    "screenStatus": {
+      "construction": "En construcción: solo acceso a la ruta, sin acciones operativas",
+      "implemented": "Pantalla implementada",
+      "internal": "Pantalla interna del shell"
+    },
+    "searchScreens": "Buscar pantallas o módulos",
+    "searchUsers": "Buscar por nombre o identificador",
+    "sensitive": "Sensible",
+    "state": "Estado",
+    "statusConfirm": "Se cambiará el estado de {{name}}. Sus asignaciones se conservan.",
+    "summary": "Revisar cambios",
+    "summaryBody": "Perfil: {{name}}. Concesiones añadidas: {{added}}. Concesiones retiradas: {{removed}}. Usuarios afectados: {{affected}}.",
+    "unsaved": "Hay cambios sin guardar. Cancelar los descarta.",
+    "user": "Usuario",
+    "usersIntro": "Gestione los usuarios de la consola. Los perfiles se asignan en Seguridad.",
+    "usersScope": "Usuarios y alcance",
+    "validity": "Vigencia",
+    "validityHint": "Opcional. Sin fechas, la asignación rige desde hoy y no vence.",
+    "validityRange": "Vigencia: {{ from }} a {{ to }}",
+    "validityState": {
+      "expired": "Vencida",
+      "inForce": "Vigente",
+      "scheduled": "Programada"
+    }
+  },
   "shell": {
     "breadcrumbs": {
       "expand": "Mostrar {{ hidden }} niveles ocultos",
@@ -161,18 +315,35 @@
       "title": "Favoritos"
     },
     "home": {
-      "intro": "Scaffold de la fase DS-0. Las pantallas del producto llegan más adelante.",
-      "samples": {
-        "amount": "Monto: {{ amount }}",
-        "netWeight": "Peso neto: {{ weight }} kg",
-        "title": "Ejemplos de idioma y formato regional",
-        "today": "Hoy es {{ date }}",
-        "unitsFound": "{count, plural, =0 {Sin bultos} one {# bulto} other {# bultos}}"
-      }
+      "empty": {
+        "description": "Pida a un administrador de eWMS que le asigne un perfil con acceso a los módulos que necesita.",
+        "title": "Todavía no tiene módulos asignados"
+      },
+      "greeting": "Hola, {{ name }}",
+      "intro": "Elija un módulo para empezar a trabajar en su almacén activo.",
+      "modules": "Sus módulos",
+      "title": "Inicio"
     },
     "languageSwitcher": {
       "label": "Idioma",
       "unavailable": "No se pudo cargar el idioma elegido. La interfaz sigue en español; vuelva a intentarlo más tarde."
+    },
+    "login": {
+      "entering": "Abriendo su almacén activo…",
+      "headline": "Todo el almacén, en movimiento.",
+      "hidePassword": "Ocultar contraseña",
+      "invalidCredentials": "Usuario o contraseña incorrectos.",
+      "lede": "Recepción, inventario y despacho trazados de punta a punta, en el almacén donde usted trabaja.",
+      "password": "Contraseña",
+      "secondFactorCancelled": "Se canceló la verificación en dos pasos. Inicie sesión de nuevo e ingrese el código para entrar.",
+      "showPassword": "Mostrar contraseña",
+      "submit": "Entrar",
+      "submitting": "Entrando…",
+      "subtitle": "Ingrese con su usuario de eWMS.",
+      "title": "Iniciar sesión",
+      "unavailable": "No se pudo iniciar sesión. Vuelva a intentarlo; si el problema continúa, avise a soporte.",
+      "username": "Usuario",
+      "welcome": "Bienvenido"
     },
     "menu": {
       "articles": "Artículos",
@@ -185,7 +356,7 @@
       "locations": "Ubicaciones",
       "lots": "Lotes",
       "params": "Parámetros",
-      "profiles": "Perfiles",
+      "profiles": "Seguridad",
       "rates": "Tarifas",
       "serials": "Series",
       "settings": "Configuración",
@@ -234,6 +405,14 @@
       "title": "Atajos de teclado"
     },
     "skipToContent": "Saltar al contenido",
+    "stepUp": {
+      "body": "Esta acción exige un segundo factor. Si cancela, la acción no se ejecuta.",
+      "cancel": "Cancelar",
+      "failed": "El código no es válido. Intente de nuevo o cancele.",
+      "otp": "Código de verificación",
+      "title": "Confirme su identidad",
+      "verify": "Verificar"
+    },
     "tabs": {
       "label": "Documentos abiertos",
       "limit": "No se pueden abrir más de {{ max }} pestañas a la vez. Cierre alguna para abrir otra.",
@@ -253,6 +432,13 @@
     "underConstruction": {
       "body": "La navegación ya es la definitiva. La pantalla llega con su dominio; mientras tanto, esta página existe para que el menú no lleve a ningún sitio roto.",
       "title": "Esta pantalla todavía no está construida"
+    },
+    "warehouse": {
+      "denied": "No tiene una asignación vigente en ese almacén.",
+      "label": "Almacén activo",
+      "option": "Almacén {{ warehouse }} / Propietario {{ owner }}",
+      "taskInProgress": "No se puede cambiar de almacén mientras hay una tarea en ejecución.",
+      "unavailable": "No se pudo cambiar de almacén. Vuelva a intentarlo; si el problema continúa, avise a soporte."
     }
   }
 }

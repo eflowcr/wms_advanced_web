@@ -1,4 +1,5 @@
 import type { IconName } from '@ewms/design-system';
+import { SCREEN_CATALOG } from '@ewms/core/security';
 
 /** Entrada del menú sin traducir: `labelKey` y no `label`, las palabras son del diccionario. */
 export interface MenuEntry {
@@ -12,62 +13,33 @@ export interface MenuEntry {
   readonly children?: readonly MenuEntry[];
 }
 
-/**
- * Menú estático: el real dependerá de permisos del Security Core (PLN-WMS-005), que no existe.
- * Solo Dashboard y el design system tienen pantalla; las otras trece van a «En construcción»,
- * nunca a un 404. Ver vault: 08-Sistema-de-Diseno/Componentes/App-Shell.
- */
+/** Destinos derivados del catálogo; el shell filtra por la autorización vigente. */
 // El marcador de abajo declara las claves al extractor, que no ve `entry.labelKey`. Va en una
 // sola línea (parte por comas: un `*` de continuación entraría en la clave), y citarlo en prosa
 // también registra claves. Si una clave falta de un lado, la compuerta 12 falla.
 /** t(shell.menu.dashboard, shell.menu.catalogs, shell.menu.articles, shell.menu.clients, shell.menu.suppliers, shell.menu.locations, shell.menu.warehouses, shell.menu.units, shell.menu.lots, shell.menu.serials, shell.menu.carriers, shell.menu.rates, shell.menu.settings, shell.menu.users, shell.menu.profiles, shell.menu.params, shell.menu.designSystem, shell.menu.short.settings, shell.menu.short.designSystem) */
+function destination(id: string, icon: IconName): MenuEntry {
+  const screen = SCREEN_CATALOG.find((entry) => entry.id === id)!;
+  return { id, icon, labelKey: screen.labelKey, route: screen.route };
+}
+
 export const MENU: readonly MenuEntry[] = [
-  { id: 'dashboard', labelKey: 'shell.menu.dashboard', icon: 'dashboard', route: '/' },
+  destination('dashboard', 'dashboard'),
   {
     id: 'catalogs',
     labelKey: 'shell.menu.catalogs',
     icon: 'inventory',
     children: [
-      {
-        id: 'articles',
-        labelKey: 'shell.menu.articles',
-        icon: 'package',
-        route: '/catalogos/articulos',
-      },
-      {
-        id: 'clients',
-        labelKey: 'shell.menu.clients',
-        icon: 'operator',
-        route: '/catalogos/clientes',
-      },
-      {
-        id: 'suppliers',
-        labelKey: 'shell.menu.suppliers',
-        icon: 'dock',
-        route: '/catalogos/proveedores',
-      },
-      {
-        id: 'locations',
-        labelKey: 'shell.menu.locations',
-        icon: 'location',
-        route: '/catalogos/ubicaciones',
-      },
-      {
-        id: 'warehouses',
-        labelKey: 'shell.menu.warehouses',
-        icon: 'warehouse',
-        route: '/catalogos/almacenes',
-      },
-      { id: 'units', labelKey: 'shell.menu.units', icon: 'weight', route: '/catalogos/unidades' },
-      { id: 'lots', labelKey: 'shell.menu.lots', icon: 'lot', route: '/catalogos/lotes' },
-      { id: 'serials', labelKey: 'shell.menu.serials', icon: 'serial', route: '/catalogos/series' },
-      {
-        id: 'carriers',
-        labelKey: 'shell.menu.carriers',
-        icon: 'shipment',
-        route: '/catalogos/transportistas',
-      },
-      { id: 'rates', labelKey: 'shell.menu.rates', icon: 'order', route: '/catalogos/tarifas' },
+      destination('articles', 'package'),
+      destination('clients', 'operator'),
+      destination('suppliers', 'dock'),
+      destination('locations', 'location'),
+      destination('warehouses', 'warehouse'),
+      destination('units', 'weight'),
+      destination('lots', 'lot'),
+      destination('serials', 'serial'),
+      destination('carriers', 'shipment'),
+      destination('rates', 'order'),
     ],
   },
   {
@@ -76,24 +48,9 @@ export const MENU: readonly MenuEntry[] = [
     shortLabelKey: 'shell.menu.short.settings',
     icon: 'settings',
     children: [
-      {
-        id: 'users',
-        labelKey: 'shell.menu.users',
-        icon: 'operator',
-        route: '/configuracion/usuarios',
-      },
-      {
-        id: 'profiles',
-        labelKey: 'shell.menu.profiles',
-        icon: 'crew',
-        route: '/configuracion/perfiles',
-      },
-      {
-        id: 'params',
-        labelKey: 'shell.menu.params',
-        icon: 'controls',
-        route: '/configuracion/parametros',
-      },
+      destination('users', 'operator'),
+      destination('profiles', 'crew'),
+      destination('params', 'controls'),
     ],
   },
   {
@@ -104,6 +61,7 @@ export const MENU: readonly MenuEntry[] = [
     route: '/design-system',
   },
 ];
+
 
 /** Todos los destinos del árbol, aplanados. */
 export const MENU_DESTINATIONS: readonly MenuEntry[] = MENU.flatMap((entry) =>
@@ -133,4 +91,4 @@ export function menuEntryFor(url: string): MenuEntry | undefined {
 }
 
 /** Rutas con pantalla; el resto del menú se deriva a «En construcción» en app.routes.ts. */
-export const BUILT_ROUTES: readonly string[] = ['/', '/design-system'];
+export const BUILT_ROUTES: readonly string[] = SCREEN_CATALOG.filter((s) => s.status !== 'construction').map((s) => s.route);

@@ -1,13 +1,7 @@
-# `domain` — el tercer nivel de la suite, todavía vacío
+# Domain E2E
 
-Aquí van los E2E de los dominios verticales (DS-6): recepción, picking,
-despacho, inventario. Hoy no hay ninguno, y la carpeta existe igual.
+Security and Users use the explicit synthetic artifact at port 4401. Production smoke and showroom use port 4400. Playwright builds both into separate output directories; reload resets the demo data.
 
-La razón es la de siempre con las fronteras de este repositorio: **una
-frontera es barata cuando está vacía.** El día que llegue el primer dominio,
-el único sitio donde poner sus pruebas sería `showroom`, y así es como una
-suite que se dividió deja de estar dividida.
+Run `npm run e2e:domain`. CI requires this suite to find and pass tests. The scenarios cover Administrator, Consultation, Limited operation, context changes, revocation, provenance, keyboard, ES/EN, mobile and accessibility.
 
-El proyecto se declara en `playwright.config.ts` con `testMatch:
-'domains/**/*.e2e.ts'`. Correr `npm run e2e:domain` sin archivos aquí no
-encuentra pruebas y lo dice; `npm run e2e` completo no se ve afectado.
+The grouped permission matrix covers module search, the granted-only filter, global draft counts, hidden grants, cancellation and focus recovery. A complete flow grants one dependent action, assigns it in A/X, creates a user through its newly enabled button and verifies that B/Y retains consultation. Accessibility waits for the matrix and table to load before scanning their controls. Console checks include untranslated Security keys.

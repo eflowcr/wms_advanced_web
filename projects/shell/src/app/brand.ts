@@ -6,3 +6,9 @@ export const BRAND_NAME = 'eWMS Advance';
 
 /** La edición, escrita junto al wordmark eWMS en la cabecera. */
 export const BRAND_EDITION = 'Advance';
+
+/** El tagline del logo, en inglés en todo idioma: es parte de la marca. */
+export const BRAND_TAGLINE = 'Warehouse Management System';
+
+/** Quien firma el producto, al pie del login. */
+export const BRAND_OWNER = '© ePRAC SUPPLY';

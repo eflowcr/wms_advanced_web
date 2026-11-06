@@ -1,0 +1,83 @@
+version: '3'
+
+# Servidor: /opt/wms/advanced/sqlserver. API y consola juntas; cada una se puede desplegar sola.
+
+vars:
+  API: wms_advanced_api_sqlserver
+  WEB: wms_advanced_web
+
+tasks:
+  default:
+    desc: Muestra la lista de tareas disponibles en el servidor
+    cmds:
+      - task --list
+
+  deploy:
+    desc: Descarga las imágenes más recientes y recrea API y consola
+    cmds:
+      - docker compose pull
+      - docker compose up -d
+      - task: ps
+
+  deploy:api:
+    desc: Descarga y recrea solo la API
+    cmds:
+      - docker compose pull {{.API}}
+      - docker compose up -d {{.API}}
+      - task: ps
+
+  deploy:web:
+    desc: Descarga y recrea solo la consola
+    cmds:
+      - docker compose pull {{.WEB}}
+      - docker compose up -d {{.WEB}}
+      - task: ps
+
+  up:
+    desc: Inicia los contenedores en segundo plano
+    cmds:
+      - docker compose up -d
+
+  down:
+    desc: Detiene los contenedores
+    cmds:
+      - docker compose down
+
+  restart:
+    desc: Reinicia API y consola
+    cmds:
+      - docker compose restart
+
+  ps:
+    desc: Muestra el estado de los contenedores
+    cmds:
+      - docker compose ps
+
+  logs:
+    desc: Sigue los logs de la API
+    cmds:
+      - docker compose logs -f --tail=100 {{.API}}
+
+  logs:web:
+    desc: Sigue los logs de la consola
+    cmds:
+      - docker compose logs -f --tail=100 {{.WEB}}
+
+  sh:
+    desc: Abre una terminal dentro del contenedor de la API
+    cmds:
+      - docker compose exec {{.API}} /bin/sh
+
+  check:
+    desc: Comprueba la consola, sus rutas y el paso a la API
+    cmds:
+      - curl -s -o /dev/null -w "consola /            %{http_code}\n" localhost:${WEB_PORT:-8081}/
+      - curl -s -o /dev/null -w "ruta de la app       %{http_code}\n" localhost:${WEB_PORT:-8081}/catalogos/articulos
+      - curl -s -o /dev/null -w "archivo inexistente  %{http_code}\n" localhost:${WEB_PORT:-8081}/no-existe.js
+      - curl -s -o /dev/null -w "API por la consola   %{http_code}\n" localhost:${WEB_PORT:-8081}/api/v1/security/auth/me
+      - curl -s -o /dev/null -w "API directa          %{http_code}\n" localhost:${PORT:-8080}/auth/me
+
+  prune:
+    desc: Limpia imágenes viejas y capas huérfanas para liberar disco
+    cmds:
+      - docker image prune -af

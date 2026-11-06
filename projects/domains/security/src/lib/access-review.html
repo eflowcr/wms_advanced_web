@@ -1,0 +1,126 @@
+<section
+  class="flex flex-col gap-4 rounded-md border border-default bg-surface p-4"
+  aria-labelledby="review-title"
+  data-access-review
+>
+  <div class="flex flex-wrap items-center justify-between gap-3">
+    <h2 id="review-title" class="text-h2">{{ 'security.review.title' | transloco }}</h2>
+    <ewms-button
+      *ewmsCan="'security.profiles:review'"
+      variant="secondary"
+      data-review-open
+      [disabled]="starting() || busy()"
+      (click)="starting.set(true)"
+      >{{ 'security.review.start' | transloco }}</ewms-button
+    >
+  </div>
+  <p class="text-caption text-secondary">{{ 'security.review.hint' | transloco }}</p>
+  @if (error()) {
+    <p role="alert" class="rounded-md border border-danger bg-danger-surface p-3 text-danger">
+      {{ 'security.errors.' + error() | transloco: { profiles: '' } }}
+    </p>
+  }
+  @if (starting()) {
+    <form
+      [ewmsForm]="startForm"
+      [ewmsFormAction]="start"
+      #pattern="ewmsForm"
+      class="grid grid-cols-fields gap-3"
+      data-review-form
+    >
+      <ewms-input [label]="'security.review.name' | transloco" [formField]="startForm.name" />
+      <ewms-date-picker
+        [label]="'security.review.dueDate' | transloco"
+        [formField]="startForm.dueDate"
+      />
+      <div class="flex flex-wrap items-end gap-2">
+        <ewms-button variant="secondary" data-effect="none" (click)="starting.set(false)">{{
+          'security.cancel' | transloco
+        }}</ewms-button>
+        <ewms-button
+          *ewmsCan="'security.profiles:review'"
+          type="submit"
+          [loading]="pattern.busy()"
+          >{{ 'security.review.create' | transloco }}</ewms-button
+        >
+      </div>
+    </form>
+  }
+  @if (campaigns() === null) {
+    <p role="status" class="text-secondary">{{ 'security.loading' | transloco }}</p>
+  } @else if (campaign(); as current) {
+    @if (campaignOptions().length > 1) {
+      <ewms-select
+        [label]="'security.review.campaign' | transloco"
+        [options]="campaignOptions()"
+        [value]="current.id"
+        (valueChange)="chooseCampaign($event)"
+      />
+    }
+    <p class="text-p text-primary" data-review-progress aria-live="polite">
+      {{
+        'security.review.progress'
+          | transloco
+            : {
+                name: current.name,
+                decided: progress().decided,
+                total: progress().total,
+                due: current.dueDate,
+              }
+      }}
+    </p>
+    <ul class="flex flex-col gap-3" data-review-items>
+      @for (item of current.items; track $index) {
+        <li
+          class="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-default bg-surface p-3"
+        >
+          <span class="flex flex-col gap-1">
+            <span
+              >{{ userName(item.userId) }} · {{ profileName(item.profileId) }} ·
+              {{ item.warehouseId }} / {{ item.ownerId }}</span
+            >
+            @if (item.decision) {
+              <span class="text-caption text-secondary" data-review-author>
+                {{
+                  'security.review.decidedBy'
+                    | transloco: { author: authorName(item), date: item.decidedAt }
+                }}
+              </span>
+            } @else if (own(item)) {
+              <span class="text-caption text-warning" data-review-own>
+                {{ 'security.review.own' | transloco }}
+              </span>
+            }
+          </span>
+          @if (item.decision) {
+            <ewms-badge
+              [variant]="item.decision === 'confirm' ? 'success' : 'neutral'"
+              [label]="'security.review.decision.' + item.decision | transloco"
+            />
+          } @else if (!own(item)) {
+            <span class="flex flex-wrap gap-2">
+              <ewms-button
+                *ewmsCan="'security.profiles:review'"
+                variant="secondary"
+                size="sm"
+                [disabled]="busy()"
+                (click)="decide(item, 'confirm')"
+                >{{ 'security.review.confirm' | transloco }}</ewms-button
+              >
+              <ewms-button
+                *ewmsCan="'security.profiles:review'"
+                variant="ghost"
+                size="sm"
+                [disabled]="busy()"
+                (click)="decide(item, 'revoke')"
+                >{{ 'security.review.revoke' | transloco }}</ewms-button
+              >
+            </span>
+          }
+        </li>
+      }
+    </ul>
+  } @else {
+    <ewms-empty-state kind="no-data" [title]="'security.review.none' | transloco" />
+  }
+</section>

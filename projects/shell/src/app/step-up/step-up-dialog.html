@@ -1,0 +1,28 @@
+<form
+  [ewmsForm]="stepUpForm"
+  [ewmsFormAction]="verify"
+  #pattern="ewmsForm"
+  class="flex w-full max-w-120 flex-col gap-4 rounded-dialog border border-default border-solid bg-surface p-6 shadow-dialog"
+  data-step-up
+>
+  <h2 [id]="titleId" class="text-h3 text-primary">{{ 'shell.stepUp.title' | transloco }}</h2>
+  <p class="text-p text-secondary">{{ 'shell.stepUp.body' | transloco }}</p>
+  @if (factor.inputKey; as key) {
+    <ewms-input
+      [label]="key | transloco"
+      autocomplete="one-time-code"
+      [formField]="stepUpForm.value"
+    />
+  }
+  @if (failed()) {
+    <p role="alert" class="text-caption text-danger">{{ 'shell.stepUp.failed' | transloco }}</p>
+  }
+  <div class="flex flex-wrap justify-end gap-2">
+    <ewms-button variant="secondary" (click)="cancel()">{{
+      'shell.stepUp.cancel' | transloco
+    }}</ewms-button>
+    <ewms-button type="submit" [loading]="pattern.busy()">{{
+      'shell.stepUp.verify' | transloco
+    }}</ewms-button>
+  </div>
+</form>

@@ -1,7 +1,7 @@
 import { Component, signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { expectNoAxeViolations } from '@ewms/testing';
-import { EWMS_DATE_PICKER_MESSAGES } from '../date-picker/date-picker.types';
+import { EWMS_DATE_PICKER_MESSAGES } from '../date-picker/date-picker.tokens';
 import { EWMS_SELECT_MESSAGES } from '../select/select.types';
 import { EWMS_FILTER_CHIPS_MESSAGES, type FilterChipsMessages } from './filter-chips.types';
 import { FilterBar, type FilterField, type FilterValues } from './filter-bar';

@@ -1,0 +1,47 @@
+# Servidor: /opt/wms/advanced/sqlserver. API y consola en la misma carpeta y la misma red; la consola
+# (nginx) sirve los estáticos y pasa /api/v1/security/* a la API. La API toma su base y secretos de .env.
+# Ver vault: 0029 - Despliegue de la consola con nginx.
+x-common: &common
+  restart: unless-stopped
+  networks: [wms_dev_net_sqlserver]
+  logging:
+    driver: json-file
+    options:
+      max-size: "5m"
+      max-file: "2"
+
+services:
+  wms_advanced_api_sqlserver:
+    <<: *common
+    image: epracsupply/wms_advanced_api:latest
+    container_name: wms_advanced_api_sqlserver
+    mem_limit: 250m
+    mem_reservation: 100m
+    cpu_shares: 512
+    ports:
+      - "${PORT:-8080}:8080"
+    env_file:
+      - .env
+    environment:
+      - PORT=8080
+      - DB_DRIVER=${DB_DRIVER:-sqlserver}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  wms_advanced_web:
+    <<: *common
+    image: epracsupply/wms_advanced_web:latest
+    container_name: wms_advanced_web
+    mem_limit: 128m
+    mem_reservation: 32m
+    cpu_shares: 256
+    depends_on:
+      - wms_advanced_api_sqlserver
+    ports:
+      - "${WEB_PORT:-8081}:8080"
+    environment:
+      - API_UPSTREAM=http://wms_advanced_api_sqlserver:8080
+
+networks:
+  wms_dev_net_sqlserver:
+    name: wms_dev_net_sqlserver

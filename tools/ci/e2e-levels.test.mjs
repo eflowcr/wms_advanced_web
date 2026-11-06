@@ -7,7 +7,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import test from 'node:test';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const WORKFLOW = path.join(ROOT, '.github', 'workflows', 'ci.yml');
@@ -99,7 +99,7 @@ test('no retries, in CI either: an unstable test is fixed, never retried', async
   assert.match(config, /^\s*retries: 0,\s*$/m);
 });
 
-test('the domain level runs in CI, even while it has no test', async () => {
+test('the domain level requires tests in CI', async () => {
   // Una compuerta que ningún job llama es muda, como lo fueron la 13 y la 14 hasta DS-5.
   const workflow = (await readFile(WORKFLOW, 'utf8'))
     .split(/\r?\n/)
@@ -107,7 +107,20 @@ test('the domain level runs in CI, even while it has no test', async () => {
     .join('\n');
 
   assert.match(workflow, /--project=domain\b/);
-  assert.match(workflow, /--pass-with-no-tests\b/);
+  assert.doesNotMatch(workflow, /--pass-with-no-tests\b/);
+});
+
+test('each run builds only the artifact its projects test', async () => {
+  // Smoke prueba producción y dominio el artefacto sintético; el catálogo abre los dos.
+  const config = pathToFileURL(path.join(ROOT, 'playwright.config.ts')).href;
+  const { webServersFor } = await import(config);
+  const ports = (argv) => webServersFor(argv).map((server) => new URL(server.url).port);
+  assert.deepEqual(ports(['--project=smoke']), ['4400']);
+  assert.deepEqual(ports(['--project=showroom']), ['4400', '4401']);
+  assert.deepEqual(ports(['--project=domain']), ['4401']);
+  assert.deepEqual(ports(['--project', 'domain']), ['4401']);
+  assert.deepEqual(ports(['--project=smoke', '--project=domain']), ['4400', '4401']);
+  assert.deepEqual(ports([]), ['4400', '4401']);
 });
 
 test('smoke and domain are two commands: a smoke that finds no test fails', async () => {
@@ -121,7 +134,7 @@ test('smoke and domain are two commands: a smoke that finds no test fails', asyn
   assert.equal(smoke.length, 1, 'one smoke command in the smoke job');
   assert.doesNotMatch(smoke[0] ?? '', /--pass-with-no-tests|--project=domain/);
   assert.equal(domain.length, 1, 'one domain command in the smoke job');
-  assert.match(domain[0] ?? '', /--pass-with-no-tests\b/);
+  assert.doesNotMatch(domain[0] ?? '', /--pass-with-no-tests\b/);
 });
 
 /**

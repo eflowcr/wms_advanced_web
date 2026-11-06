@@ -66,6 +66,8 @@ export class FavoritesNav {
   protected readonly textInset = computed(() => (this.ground() === 'navy' ? 'px-4' : ''));
 
   readonly favoriteSelect = output<Favorite>();
+  /** El consumidor puede filtrar destinos sin acoplar el componente a rutas. */
+  readonly visible = input<(favorite: Favorite) => boolean>(() => true);
 
   private readonly favorites = inject(Favorites);
   private readonly labels = inject(EWMS_FAVORITE_LABELS);
@@ -75,6 +77,7 @@ export class FavoritesNav {
   protected readonly shown = computed<readonly FavoriteRow[]>(() =>
     this.favorites
       .list()
+      .filter((favorite) => this.visible()(favorite))
       .slice(0, FAVORITES_SHOWN)
       .map((favorite) => ({
         favorite,

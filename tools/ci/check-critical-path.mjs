@@ -12,13 +12,15 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '.
 const DIST = path.join(ROOT, 'dist/shell');
 
 /** El techo, en un solo lugar: kB crudos de JavaScript que `/` carga antes de pintar. */
-export const CEILING_KB = 537;
+export const CEILING_KB = 538;
 
 /** Lo que carga `/`: el arranque, el marco (perezoso, pero envuelve toda ruta) y el inicio. */
 export const ROUTE_ENTRIES = [
   'projects/shell/src/main.ts',
   'projects/shell/src/app/layout/main-layout.ts',
   'projects/shell/src/app/pages/home.ts',
+  'projects/shell/src/app/shell.routes.ts',
+  'projects/shell/src/app/security-routing.ts',
 ];
 
 /** Los archivos de salida que `/` necesita: cada entrada y todo lo que importa estáticamente. */

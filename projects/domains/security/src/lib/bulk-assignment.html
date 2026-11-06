@@ -1,0 +1,72 @@
+<section
+  class="flex flex-col gap-4 rounded-md border border-default bg-surface p-4"
+  aria-labelledby="bulk-title"
+  data-bulk-assignment
+>
+  <h3 id="bulk-title" class="text-h3 text-primary">{{ 'security.bulk.title' | transloco }}</h3>
+  <p class="text-caption text-secondary">{{ 'security.bulk.hint' | transloco }}</p>
+  @if (error()) {
+    <p role="alert" class="rounded-md border border-danger bg-danger-surface p-3 text-danger">
+      {{ 'security.errors.' + error() | transloco: { profiles: conflictNames() } }}
+    </p>
+  }
+  <div class="grid grid-cols-fields gap-4">
+    <fieldset class="flex min-w-0 flex-col gap-2" data-bulk-users>
+      <legend class="text-h4 text-primary">{{ 'security.bulk.users' | transloco }}</legend>
+      @for (user of userOptions(); track user.id) {
+        <ewms-checkbox
+          [label]="user.name"
+          [checked]="users().includes(user.id)"
+          (checkedChange)="toggleUser(user.id, $event)"
+        />
+      }
+    </fieldset>
+    <fieldset class="flex min-w-0 flex-col gap-2" data-bulk-contexts>
+      <legend class="text-h4 text-primary">{{ 'security.bulk.contexts' | transloco }}</legend>
+      @for (context of contextOptions(); track contextKey(context)) {
+        <ewms-checkbox
+          [label]="context.warehouseId + ' / ' + context.ownerId"
+          [checked]="contexts().includes(contextKey(context))"
+          (checkedChange)="toggleContext(contextKey(context), $event)"
+        />
+      }
+    </fieldset>
+  </div>
+  <div class="grid grid-cols-fields gap-3">
+    <ewms-select
+      [label]="'security.profile' | transloco"
+      [options]="profileOptions()"
+      [value]="profileId()"
+      (valueChange)="chooseProfile($event)"
+    />
+    <ewms-date-picker
+      mode="range"
+      [label]="'security.validity' | transloco"
+      [hint]="'security.validityHint' | transloco"
+      [value]="validity()"
+      (valueChange)="chooseValidity($event)"
+    />
+  </div>
+  <div class="flex flex-col gap-2" data-bulk-preview aria-live="polite">
+    <p class="text-p text-primary">
+      {{ 'security.bulk.rows' | transloco: { count: preview().rows.length } }}
+    </p>
+    @if (preview().skipped) {
+      <p class="text-caption text-secondary">
+        {{ 'security.bulk.skipped' | transloco: { count: preview().skipped } }}
+      </p>
+    }
+  </div>
+  <div class="flex flex-wrap gap-2">
+    <ewms-button variant="secondary" data-effect="none" (click)="closed.emit()">{{
+      'security.cancel' | transloco
+    }}</ewms-button>
+    <ewms-button
+      *ewmsCan="'security.profiles:assign'"
+      [disabled]="preview().rows.length === 0"
+      [loading]="busy()"
+      (click)="save()"
+      >{{ 'security.reviewSave' | transloco }}</ewms-button
+    >
+  </div>
+</section>

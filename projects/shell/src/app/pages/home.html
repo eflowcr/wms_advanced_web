@@ -1,25 +1,47 @@
-<!-- `tabindex="-1"` y el marcador: el App Shell pone acá el foco en cada cambio de ruta. -->
-<h1 class="text-h1" tabindex="-1" data-page-heading>{{ brandName }}</h1>
-<p class="text-p text-secondary">{{ 'shell.home.intro' | transloco }}</p>
-
-<!-- Provisional: un ejemplo de cada caso de i18n hasta que haya pantallas reales (i18n.md). -->
-<section class="flex flex-col gap-2" aria-labelledby="home-samples">
-  <h2 id="home-samples" class="text-h3">{{ 'shell.home.samples.title' | transloco }}</h2>
-  <ul class="flex list-disc flex-col gap-1 pl-6 text-p">
-    @for (count of unitCounts; track count) {
-      <li data-sample="plural">{{ 'shell.home.samples.unitsFound' | transloco: { count } }}</li>
+<header class="flex flex-col gap-2">
+  <!-- `tabindex="-1"` y el marcador: el App Shell pone acá el foco en cada cambio de ruta. -->
+  <h1 class="text-h1" tabindex="-1" data-page-heading>
+    @if (name()) {
+      {{ 'shell.home.greeting' | transloco: { name: name() } }}
+    } @else {
+      {{ 'shell.home.title' | transloco }}
     }
-    <li data-sample="date">
-      {{ 'shell.home.samples.today' | transloco: { date: (today | translocoDate: { dateStyle: 'long' }) } }}
-    </li>
-    <li data-sample="number">
-      {{ 'shell.home.samples.netWeight' | transloco: { weight: (netWeightKg | translocoDecimal) } }}
-    </li>
-    <li data-sample="currency">
-      {{
-        'shell.home.samples.amount'
-          | transloco: { amount: (amount | translocoCurrency: 'symbol' : {} : amountCurrency) }
-      }}
-    </li>
-  </ul>
-</section>
+  </h1>
+  <p class="text-p text-secondary">{{ 'shell.home.intro' | transloco }}</p>
+</header>
+
+@if (modules().length > 0) {
+  <section class="flex flex-col gap-4" aria-labelledby="home-modules">
+    <h2 id="home-modules" class="text-h3">{{ 'shell.home.modules' | transloco }}</h2>
+    <ul class="grid grid-cols-index gap-3">
+      @for (module of modules(); track module.id) {
+        <li>
+          <a
+            class="flex h-full items-center gap-3 rounded-md border border-default bg-surface p-4 text-primary outline-none hover:border-strong focus-visible:shadow-(--focus-ring-shadow)"
+            [routerLink]="module.route"
+            [attr.data-home-module]="module.id"
+          >
+            <ewms-icon class="text-(--color-bg-primary)" [name]="module.icon" size="lg" />
+            <span class="flex min-w-0 flex-col">
+              <span class="text-h4">{{ module.labelKey | transloco }}</span>
+              <span class="text-caption text-secondary">{{ module.groupKey | transloco }}</span>
+            </span>
+          </a>
+        </li>
+      }
+    </ul>
+  </section>
+} @else {
+  <!-- Sin `ewms-empty-state`: su chunk entraría a la ruta crítica de `/`; misma composición. -->
+  <section
+    class="flex flex-col items-center gap-3 rounded-md border border-default bg-surface px-6 py-16 text-center"
+    aria-labelledby="home-empty"
+    data-home-empty
+  >
+    <span class="inline-flex rounded-full bg-secondary p-3 text-secondary" aria-hidden="true">
+      <ewms-icon name="lock" size="xl" />
+    </span>
+    <h2 id="home-empty" class="text-h3 text-primary">{{ 'shell.home.empty.title' | transloco }}</h2>
+    <p class="max-w-120 text-secondary">{{ 'shell.home.empty.description' | transloco }}</p>
+  </section>
+}

@@ -36,6 +36,7 @@ export interface TableContext {
   readonly visibleColumns: Signal<readonly TableColumn[]>;
   readonly format: Signal<TableFormatters>;
   readonly exportable: Signal<boolean>;
+  readonly allowExport: Signal<() => boolean>;
   runExport(kind: 'csv' | 'csv-selected' | 'copy'): void;
   readonly bulkActions: Signal<readonly MenuItem[]>;
   runBulk(item: MenuItem): void;

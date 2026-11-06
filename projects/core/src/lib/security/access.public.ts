@@ -1,0 +1,21 @@
+// Nombres públicos de access; el barril los reexporta con `export *` (ver security-api.ts).
+export {
+  SCREEN_CATALOG,
+  SecurityError,
+  accessCode,
+  capabilities,
+  sameContext,
+  type AccessContext,
+  type AccessResult,
+  type Actor,
+  type Affiliation,
+  type Assignment,
+  type Grants,
+  type Profile,
+  type ScreenDefinition,
+  type SecurityErrorCode,
+  type SecurityGateway,
+  type SecurityRequest,
+  type SecuritySnapshot,
+  type SecurityUser,
+} from './access';

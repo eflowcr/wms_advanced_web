@@ -52,6 +52,7 @@
     <h2 id="ta-demo" class="text-h2">{{ 'showroom.table.demo.title' | transloco }}</h2>
     <p class="text-secondary" [ewmsProse]="'showroom.table.demo.intro' | transloco"></p>
 
+    <ewms-checkbox data-export-permission [label]="'showroom.table.demo.exportAllowed' | transloco" [checked]="exportAllowed()" (checkedChange)="exportAllowed.set($event)" />
     <ewms-demo-frame ground="none" [label]="'showroom.table.demo.frame' | transloco">
       <div class="flex flex-col gap-4" data-demo-table>
         <ewms-table
@@ -63,6 +64,7 @@
           [quickFilter]="true"
           [columnChooser]="true"
           [exportable]="true"
+          [allowExport]="allowExport"
           viewsKey="showroom.shipments"
           [bulkActions]="bulkActions()"
           [ariaLabel]="'showroom.table.demo.ariaLabel' | transloco"

@@ -64,6 +64,9 @@ export class Input implements FormValueControl<string> {
 
   readonly placeholder = input<string>('');
 
+  /** Propósito del dato para el navegador y la ayuda técnica (WCAG 1.3.5): `username`, `current-password`. */
+  readonly autocomplete = input<string>('');
+
   readonly hint = input<string>('');
 
   /** Solo dibujo, para las demos del catálogo: quien valida es el formulario. */

@@ -16,11 +16,11 @@ export const BUDGET_FILE = 'projects/shared/src/lib/click-budget.ts';
 export const CONSUMERS = ['projects/showroom/src/lib/pages/patterns'];
 
 /**
- * La prueba e2e. Se buscan los nombres importados y no dígitos sueltos: una prueba está
- * llena de números que no son presupuestos, y una regla que los atrapara se apagaría en
- * una semana. Llega por ruta, a ese solo archivo: el alias arrastra Angular a Node.
+ * Las pruebas e2e. Se buscan los nombres importados y no dígitos sueltos: una prueba está
+ * llena de números que no son presupuestos. Llegan por e2e/click-budget.ts: el alias arrastra Angular.
  */
 export const BUDGET_TEST = 'e2e/click-budget.e2e.ts';
+export const BUDGET_TESTS = [BUDGET_TEST, 'e2e/domains/clicks.e2e.ts'];
 
 /**
  * Un presupuesto impreso como literal («Máximo 2» en una plantilla). La prosa con la
@@ -108,28 +108,30 @@ async function main() {
     }
   }
 
-  // Y la prueba las lee: si no, pasaría una prueba que afirma un 2 tipeado a mano.
-  let testSource = '';
-  try {
-    testSource = await readFile(path.join(ROOT, BUDGET_TEST), 'utf8');
-  } catch {
-    error(BUDGET_TEST, 0, 'is missing. The budgets are advertised and nothing verifies them.');
-    violations += 1;
-  }
-  if (
-    testSource !== '' &&
-    !importsBudgets(
-      testSource,
-      declared.map(([, name]) => name),
-    )
-  ) {
-    error(
-      BUDGET_TEST,
-      0,
-      `does not import the budgets declared in ${BUDGET_FILE}. A test that types ` +
-        'the number in agrees with itself, not with the standard (REQ-FE-DS4-003 HG-02).',
-    );
-    violations += 1;
+  // Y cada prueba las lee: si no, pasaría una prueba que afirma un 2 tipeado a mano.
+  for (const budgetTest of BUDGET_TESTS) {
+    let testSource = '';
+    try {
+      testSource = await readFile(path.join(ROOT, budgetTest), 'utf8');
+    } catch {
+      error(budgetTest, 0, 'is missing. The budgets are advertised and nothing verifies them.');
+      violations += 1;
+    }
+    if (
+      testSource !== '' &&
+      !importsBudgets(
+        testSource,
+        declared.map(([, name]) => name),
+      )
+    ) {
+      error(
+        budgetTest,
+        0,
+        `does not import the budgets declared in ${BUDGET_FILE}. A test that types ` +
+          'the number in agrees with itself, not with the standard (REQ-FE-DS4-003 HG-02).',
+      );
+      violations += 1;
+    }
   }
 
   if (violations > 0) {
@@ -139,7 +141,7 @@ async function main() {
   }
   console.log(
     `Click budget: ${declared.length} budget(s) declared once, in ${BUDGET_FILE}; ` +
-      `${scanned} consumer file(s) and ${BUDGET_TEST} read them rather than restating them.`,
+      `${scanned} consumer file(s) and ${BUDGET_TESTS.join(', ')} read them rather than restating them.`,
   );
 }
 

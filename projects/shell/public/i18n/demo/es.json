@@ -1,0 +1,9 @@
+{
+  "actor": "Escenario",
+  "admin": "Administrador",
+  "notice": "Simulación con datos sintéticos en memoria. Se reinicia al recargar. El backend debe autorizar cada operación y su alcance.",
+  "operator": "Operación limitada",
+  "reader": "Consulta",
+  "taskRunning": "Simular una tarea en ejecución",
+  "title": "Demostración de seguridad"
+}

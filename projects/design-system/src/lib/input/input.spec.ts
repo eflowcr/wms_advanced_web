@@ -33,6 +33,7 @@ const MESSAGES: FormMessages = {
       [showPasswordLabel]="showPasswordLabel()"
       [hidePasswordLabel]="hidePasswordLabel()"
       [clearLabel]="clearLabel()"
+      [autocomplete]="autocomplete()"
       (fieldFocus)="focusCount = focusCount + 1"
       (fieldBlur)="leaveCount = leaveCount + 1"
     />
@@ -52,6 +53,7 @@ class TestHost {
   readonly showPasswordLabel = signal('');
   readonly hidePasswordLabel = signal('');
   readonly clearLabel = signal('');
+  readonly autocomplete = signal('');
 
   focusCount = 0;
   leaveCount = 0;
@@ -151,6 +153,18 @@ describe('Input', () => {
       await settle();
       expect(root().querySelector('textarea')).toBeNull();
       expect(root().querySelector('input')).not.toBeNull();
+    });
+
+    it('declares the purpose of the field only when the consumer names one (WCAG 1.3.5)', async () => {
+      expect(control().hasAttribute('autocomplete')).toBe(false);
+      host.autocomplete.set('current-password');
+      host.type.set('password');
+      await settle();
+      expect(control().getAttribute('autocomplete')).toBe('current-password');
+      host.type.set('textarea');
+      host.autocomplete.set('street-address');
+      await settle();
+      expect(control().getAttribute('autocomplete')).toBe('street-address');
     });
 
     it('keeps the placeholder out of the name: the label is the name', async () => {
